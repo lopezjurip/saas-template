@@ -102,6 +102,24 @@ humane/
 - `app.humane.cl` → `apps/platform` (separate Vercel deployment)
 - `{slug}.humane.cl` → `apps/tenant` — middleware extracts slug, sets `x-tenant-slug` header
 
+## Skills
+
+Agent skills extend Claude Code with reusable capabilities. Installed skills live in `.agents/skills/` (gitignored) and are symlinked into Claude Code automatically.
+
+To install a skill:
+
+```bash
+pnpm dlx skills add <registry-url> --skill <skill-name>
+```
+
+Example — install the `find-skills` skill from the Vercel Labs registry:
+
+```bash
+pnpm dlx skills add https://github.com/vercel-labs/skills --skill find-skills
+```
+
+Skills run with full agent permissions — review a skill's source before using it in production.
+
 ## shadcn/ui in packages/shadcn
 
 shadcn components live in `packages/shadcn`, not inside individual apps.
