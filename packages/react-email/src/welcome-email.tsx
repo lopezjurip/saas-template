@@ -1,4 +1,4 @@
-import { RosettaImpl } from "@packages/rosetta/rosetta";
+import { LocaleProvider, useLocale, useRosetta } from "@packages/rosetta/use-rosetta";
 import {
 	Body,
 	Button,
@@ -21,49 +21,54 @@ export interface WelcomeEmailProps {
 	locale?: string;
 }
 
-const LOCALES = {
-	es: {
-		preview: (p: { empresaNombre: string }) =>
-			`Bienvenido/a a ${p.empresaNombre} — tu acceso a Humane está listo`,
-		heading: (p: { empleadoNombre: string }) => `Bienvenido/a, ${p.empleadoNombre}`,
-		body: (p: { empresaNombre: string }) =>
-			`{{empresaNombre}} está usando Humane para gestionar liquidaciones, vacaciones y documentos laborales. A partir de ahora, tienes acceso a toda esa información en un solo lugar.`,
-		cta: "Ingresar a Humane",
-		support: "Si tienes dudas, puedes escribirle directamente a tu área de RRHH o contactarnos desde la plataforma.",
-		footer: (p: { empresaNombre: string }) =>
-			`Este correo fue enviado porque fuiste registrado/a en Humane por ${p.empresaNombre}. Si crees que es un error, ignora este mensaje.`,
-	},
-	en: {
-		preview: (p: { empresaNombre: string }) =>
-			`Welcome to ${p.empresaNombre} — your Humane access is ready`,
-		heading: (p: { empleadoNombre: string }) => `Welcome, ${p.empleadoNombre}`,
-		body: (p: { empresaNombre: string }) =>
-			`${p.empresaNombre} is using Humane to manage payslips, vacation, and employment documents. From now on, you can access all that information in one place.`,
-		cta: "Sign in to Humane",
-		support: "If you have any questions, reach out to your HR team or contact us from the platform.",
-		footer: (p: { empresaNombre: string }) =>
-			`This email was sent because you were registered in Humane by ${p.empresaNombre}. If you think this is a mistake, you can ignore this message.`,
-	},
-	pt: {
-		preview: (p: { empresaNombre: string }) =>
-			`Bem-vindo/a à ${p.empresaNombre} — seu acesso ao Humane está pronto`,
-		heading: (p: { empleadoNombre: string }) => `Bem-vindo/a, ${p.empleadoNombre}`,
-		body: (p: { empresaNombre: string }) =>
-			`${p.empresaNombre} usa o Humane para gerenciar contracheques, férias e documentos trabalhistas. A partir de agora, você tem acesso a todas essas informações em um só lugar.`,
-		cta: "Entrar no Humane",
-		support: "Se tiver dúvidas, entre em contato com o seu RH ou fale conosco pela plataforma.",
-		footer: (p: { empresaNombre: string }) =>
-			`Este e-mail foi enviado porque você foi registrado/a no Humane por ${p.empresaNombre}. Se achar que é um engano, ignore esta mensagem.`,
-	},
+const LOCALE_ES = {
+	preview: "Bienvenido/a a {{empresaNombre}} — tu acceso a Humane está listo",
+	heading: "Bienvenido/a, {{empleadoNombre}}",
+	body: "{{empresaNombre}} está usando Humane para gestionar liquidaciones, vacaciones y documentos laborales. A partir de ahora, tienes acceso a toda esa información en un solo lugar.",
+	cta: "Ingresar a Humane",
+	support:
+		"Si tienes dudas, puedes escribirle directamente a tu área de RRHH o contactarnos desde la plataforma.",
+	footer:
+		"Este correo fue enviado porque fuiste registrado/a en Humane por {{empresaNombre}}. Si crees que es un error, ignora este mensaje.",
 };
 
-export function WelcomeEmail({
+const LOCALES = {
+	es: LOCALE_ES,
+	en: {
+		preview: "Welcome to {{empresaNombre}} — your Humane access is ready",
+		heading: "Welcome, {{empleadoNombre}}",
+		body: "{{empresaNombre}} is using Humane to manage payslips, vacation, and employment documents. From now on, you can access all that information in one place.",
+		cta: "Sign in to Humane",
+		support: "If you have any questions, reach out to your HR team or contact us from the platform.",
+		footer:
+			"This email was sent because you were registered in Humane by {{empresaNombre}}. If you think this is a mistake, you can ignore this message.",
+	} satisfies typeof LOCALE_ES,
+	pt: {
+		preview: "Bem-vindo/a à {{empresaNombre}} — seu acesso ao Humane está pronto",
+		heading: "Bem-vindo/a, {{empleadoNombre}}",
+		body: "{{empresaNombre}} usa o Humane para gerenciar contracheques, férias e documentos trabalhistas. A partir de agora, você tem acesso a todas essas informações em um só lugar.",
+		cta: "Entrar no Humane",
+		support: "Se tiver dúvidas, entre em contato com o seu RH ou fale conosco pela plataforma.",
+		footer:
+			"Este e-mail foi enviado porque você foi registrado/a no Humane por {{empresaNombre}}. Se achar que é um engano, ignore esta mensagem.",
+	} satisfies typeof LOCALE_ES,
+};
+
+export function WelcomeEmail({ locale = "es-CL", ...props }: WelcomeEmailProps) {
+	return (
+		<LocaleProvider locale={locale}>
+			<WelcomeEmailContent {...props} />
+		</LocaleProvider>
+	);
+}
+
+function WelcomeEmailContent({
 	empleadoNombre,
 	empresaNombre,
 	loginUrl,
-	locale = "es-CL",
-}: WelcomeEmailProps) {
-	const r = RosettaImpl.fromDictionary(LOCALES, locale);
+}: Omit<WelcomeEmailProps, "locale">) {
+	const locale = useLocale();
+	const r = useRosetta(LOCALES);
 
 	return (
 		<Tailwind>

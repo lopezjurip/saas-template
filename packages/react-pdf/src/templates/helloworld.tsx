@@ -1,3 +1,4 @@
+import { LocaleProvider, useLocale, useRosetta } from "@packages/rosetta/use-rosetta";
 import { Document, Link, Page, Text, View } from "@react-pdf/renderer";
 import { tw } from "../lib/tw";
 
@@ -34,7 +35,55 @@ const CARD_HEADERS = [
   { title: "Multi-page", bg: "#7c3aed", body: "Documents span multiple pages. Use the fixed prop for persistent headers/footers, and render page numbers with the built-in render prop." },
 ];
 
-export function HelloWorldTemplate() {
+const LOCALE_EN = {
+  "hero.tagline": "@packages/react-pdf",
+  "hero.title": "Hello, World!",
+  "hero.subtitle": "A showcase of @react-pdf/renderer + react-pdf-tailwind: typography, layout, color, flexbox, links, and multi-page documents — all type-safe.",
+  "section.typography": "Typography",
+  "section.palette": "Color Palette",
+  "section.grid": "Layout Grid",
+  "footer.title": "Hello World — react-pdf showcase",
+  "page2.label": "Page 2",
+  "page2.title": "More Capabilities",
+  "section.progress": "Progress Bars — View + borderRadius",
+  "section.nested": "Nested Layout",
+  "section.links": "Links",
+};
+
+const LOCALES = {
+  en: LOCALE_EN,
+  es: {
+    "hero.tagline": "@packages/react-pdf",
+    "hero.title": "¡Hola, Mundo!",
+    "hero.subtitle": "Demostración de @react-pdf/renderer + react-pdf-tailwind: tipografía, diseño, color, flexbox, enlaces y documentos multipágina — todo con tipos.",
+    "section.typography": "Tipografía",
+    "section.palette": "Paleta de Colores",
+    "section.grid": "Cuadrícula de Diseño",
+    "footer.title": "Hola Mundo — demostración react-pdf",
+    "page2.label": "Página 2",
+    "page2.title": "Más Capacidades",
+    "section.progress": "Barras de Progreso — View + borderRadius",
+    "section.nested": "Diseño Anidado",
+    "section.links": "Enlaces",
+  } satisfies typeof LOCALE_EN,
+};
+
+export interface HelloWorldTemplateProps {
+  /** BCP 47 locale tag. Defaults to "en". */
+  locale?: string;
+}
+
+export function HelloWorldTemplate({ locale = "en" }: HelloWorldTemplateProps) {
+  return (
+    <LocaleProvider locale={locale}>
+      <HelloWorldContent />
+    </LocaleProvider>
+  );
+}
+
+function HelloWorldContent() {
+  const r = useRosetta(LOCALES);
+
   return (
     <Document title="Hello World — react-pdf showcase" author="Humane">
 
@@ -44,14 +93,13 @@ export function HelloWorldTemplate() {
         {/* Hero */}
         <View style={tw("bg-blue-800 py-8 px-12")}>
           <Text style={tw("text-blue-200 text-xs uppercase tracking-widest mb-2")}>
-            @packages/react-pdf
+            {r.t("hero.tagline")}
           </Text>
           <Text style={tw("text-white font-bold text-4xl leading-tight mb-3")}>
-            Hello, World!
+            {r.t("hero.title")}
           </Text>
           <Text style={tw("text-blue-200 text-sm leading-relaxed")}>
-            A showcase of @react-pdf/renderer + react-pdf-tailwind: typography,
-            layout, color, flexbox, links, and multi-page documents — all type-safe.
+            {r.t("hero.subtitle")}
           </Text>
           <View style={tw("flex-row gap-2 mt-4")}>
             {["Typography", "Layout", "Colors", "Links"].map((tag, i) => {
@@ -83,7 +131,7 @@ export function HelloWorldTemplate() {
 
           {/* Typography */}
           <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            Typography
+            {r.t("section.typography")}
           </Text>
           <View style={tw("border-t border-gray-200 mb-5")} />
           <View style={tw("flex-row gap-5 mb-6")}>
@@ -105,7 +153,7 @@ export function HelloWorldTemplate() {
 
           {/* Color palette */}
           <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            Color Palette
+            {r.t("section.palette")}
           </Text>
           <View style={tw("border-t border-gray-200 mb-5")} />
           <View style={tw("flex-row gap-2 mb-6")}>
@@ -123,7 +171,7 @@ export function HelloWorldTemplate() {
 
           {/* Stats grid — two rows of 3 */}
           <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            Layout Grid
+            {r.t("section.grid")}
           </Text>
           <View style={tw("border-t border-gray-200 mb-4")} />
           {[GRID_STATS.slice(0, 3), GRID_STATS.slice(3)].map((row, ri) => (
@@ -140,7 +188,7 @@ export function HelloWorldTemplate() {
 
         {/* Footer */}
         <View style={tw("absolute bottom-5 left-10 right-10 flex-row justify-between items-center border-t border-gray-200 pt-2")} fixed>
-          <Text style={tw("text-xs text-gray-400")}>Hello World — react-pdf showcase</Text>
+          <Text style={tw("text-xs text-gray-400")}>{r.t("footer.title")}</Text>
           <Link src="https://react-pdf.org" style={tw("text-xs text-blue-500 no-underline")}>react-pdf.org</Link>
           <Text style={tw("text-xs text-gray-400")} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
         </View>
@@ -151,15 +199,15 @@ export function HelloWorldTemplate() {
 
         {/* Mini hero */}
         <View style={tw("bg-blue-800 py-5 px-12")}>
-          <Text style={tw("text-blue-200 text-xs uppercase tracking-widest mb-1")}>Page 2</Text>
-          <Text style={tw("text-white font-bold text-2xl leading-tight")}>More Capabilities</Text>
+          <Text style={tw("text-blue-200 text-xs uppercase tracking-widest mb-1")}>{r.t("page2.label")}</Text>
+          <Text style={tw("text-white font-bold text-2xl leading-tight")}>{r.t("page2.title")}</Text>
         </View>
 
         <View style={tw("px-10 py-6")}>
 
           {/* Progress bars */}
           <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            Progress Bars — View + borderRadius
+            {r.t("section.progress")}
           </Text>
           <View style={tw("border-t border-gray-200 mb-5")} />
           <View style={tw("mb-6")}>
@@ -176,7 +224,7 @@ export function HelloWorldTemplate() {
 
           {/* Nested layout */}
           <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            Nested Layout
+            {r.t("section.nested")}
           </Text>
           <View style={tw("border-t border-gray-200 mb-5")} />
           <View style={tw("flex-row gap-3 mb-6")}>
@@ -214,7 +262,7 @@ export function HelloWorldTemplate() {
 
           {/* Links */}
           <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            Links
+            {r.t("section.links")}
           </Text>
           <View style={tw("border-t border-gray-200 mb-5")} />
           <View style={tw("bg-gray-50 border border-gray-200 rounded p-4 flex-row gap-6 items-center")}>
@@ -239,7 +287,7 @@ export function HelloWorldTemplate() {
 
         {/* Footer */}
         <View style={tw("absolute bottom-5 left-10 right-10 flex-row justify-between items-center border-t border-gray-200 pt-2")} fixed>
-          <Text style={tw("text-xs text-gray-400")}>Hello World — react-pdf showcase</Text>
+          <Text style={tw("text-xs text-gray-400")}>{r.t("footer.title")}</Text>
           <Link src="https://react-pdf.org" style={tw("text-xs text-blue-500 no-underline")}>react-pdf.org</Link>
           <Text style={tw("text-xs text-gray-400")} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
         </View>
@@ -249,4 +297,4 @@ export function HelloWorldTemplate() {
   );
 }
 
-export const helloWorldDefaultProps = {};
+export const helloWorldDefaultProps: HelloWorldTemplateProps = {};

@@ -4,7 +4,8 @@
   "private": true,
   "sideEffects": false,
   "exports": {
-    "./*": "./src/*.ts"
+    "./rosetta": "./src/rosetta.ts",
+    "./use-rosetta": "./src/use-rosetta.tsx"
   },
   "scripts": {
     "build:dry": "tsc --noEmit",
@@ -18,6 +19,10 @@
     "@packages/typescript-config": "workspace:*",
     "@types/dlv": "^1.1.5",
     "@types/node": "^24.12.4",
+    "@types/react": "^19.2.15",
     "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
   }
 }
