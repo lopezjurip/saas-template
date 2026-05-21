@@ -2,13 +2,15 @@ import { type NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") ?? "";
-  // In development, hostname is localhost:3002 — skip slug extraction
-  if (hostname.startsWith("localhost")) {
+  const parts = hostname.split(".");
+
+  // bare localhost (e.g. "localhost:8002") has no subdomain — skip
+  if (parts.length === 1) {
     return NextResponse.next();
   }
 
-  // Extract slug from {slug}.humane.cl
-  const slug = hostname.split(".")[0] ?? "";
+  // Extract slug from {slug}.humane.cl or {slug}.localhost:8002
+  const slug = parts[0] ?? "";
   if (!slug) return NextResponse.next();
 
   const response = NextResponse.next();
