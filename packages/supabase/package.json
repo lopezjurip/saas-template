@@ -1,0 +1,24 @@
+{
+  "name": "@packages/supabase",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build:dry": "tsc --noEmit",
+    "generate:types": "supabase gen types --lang=typescript --project-id=SUPABASE_PROJECT_ID --schema public > src/types.ts",
+    "format": "biome check --diagnostic-level=error ."
+  },
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.4.0"
+  },
+  "devDependencies": {
+    "@packages/typescript-config": "workspace:*",
+    "@supabase/supabase-js": "^2.4.0",
+    "@types/node": "^24.12.4",
+    "supabase": "^1.226.3",
+    "typescript": "^6.0.3"
+  }
+}

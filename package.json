@@ -1,0 +1,41 @@
+{
+  "name": "humane-turborepo",
+  "private": true,
+  "packageManager": "pnpm@10.20.0",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "preinstall": "npx --yes only-allow pnpm",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "build:dry": "turbo run build:dry",
+    "generate": "turbo run generate",
+    "test": "turbo run test",
+    "format": "turbo run format && biome check --diagnostic-level=error .",
+    "format:apply": "turbo run format -- --write && biome check --diagnostic-level=error --write .",
+    "format:apply-unsafe": "turbo run format -- --write --unsafe && biome check --diagnostic-level=error --write --unsafe .",
+    "generate:types": "turbo run generate:types --filter=@packages/supabase",
+    "typecheck:landing": "turbo run build:dry --filter=@humane/landing",
+    "typecheck:platform": "turbo run build:dry --filter=@humane/platform",
+    "typecheck:tenant": "turbo run build:dry --filter=@humane/tenant"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.15",
+    "@packages/typescript-config": "workspace:*",
+    "turbo": "^2.9.14",
+    "typescript": "^6.0.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "zod": "4.4.3"
+    },
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "@vercel/speed-insights",
+      "esbuild",
+      "sharp",
+      "supabase"
+    ]
+  }
+}

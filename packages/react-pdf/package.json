@@ -1,0 +1,25 @@
+{
+  "name": "@packages/react-pdf",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build:dry": "tsc --noEmit",
+    "format": "biome check --diagnostic-level=error ."
+  },
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@react-pdf/renderer": "^4.3.0"
+  },
+  "devDependencies": {
+    "@packages/typescript-config": "workspace:*",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.15",
+    "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}

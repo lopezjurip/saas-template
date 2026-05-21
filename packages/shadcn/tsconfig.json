@@ -1,0 +1,6 @@
+{
+  "extends": "@packages/typescript-config/react-library.json",
+  "compilerOptions": {},
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@packages/react-email",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build:dry": "tsc --noEmit",
+    "format": "biome check --diagnostic-level=error ."
+  },
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@react-email/components": "^0.0.35",
+    "@react-email/render": "2.0.8"
+  },
+  "devDependencies": {
+    "@packages/typescript-config": "workspace:*",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.15",
+    "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}

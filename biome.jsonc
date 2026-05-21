@@ -1,0 +1,110 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "root": true,
+  "files": {
+    "includes": [
+      "**/biome.jsonc",
+      "**/package.json",
+      "**/tsconfig.json",
+      "**/turbo.json",
+      "!**/node_modules",
+      "!**/.github",
+      "!**/.turbo",
+      "!**/.next",
+      "!**/.vercel",
+      "!**/.temp",
+      "!**/.claude/worktrees"
+    ]
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "lineWidth": 120,
+    "indentWidth": 2,
+    "indentStyle": "space"
+  },
+  "json": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "security": {
+        "noDangerouslySetInnerHtml": "warn"
+      },
+      "nursery": {
+        "noFloatingPromises": "error"
+      },
+      "a11y": {
+        "noStaticElementInteractions": "off",
+        "noNoninteractiveElementToInteractiveRole": "off",
+        "noRedundantAlt": "off",
+        "useAriaPropsSupportedByRole": "off",
+        "noRedundantRoles": "off",
+        "noSvgWithoutTitle": "off",
+        "useFocusableInteractive": "off",
+        "useKeyWithClickEvents": "off",
+        "useMediaCaption": "off",
+        "useSemanticElements": "off",
+        "useValidAnchor": "off",
+        "useValidAriaProps": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "off",
+        "noUnreachable": "off",
+        "useExhaustiveDependencies": "off"
+      },
+      "performance": {
+        "noAccumulatingSpread": "off",
+        "noImgElement": "off"
+      },
+      "complexity": {
+        "noBannedTypes": "warn",
+        "noForEach": "warn",
+        "noStaticOnlyClass": "off",
+        "noThisInStatic": "on",
+        "noUselessConstructor": "off",
+        "noUselessSwitchCase": "off",
+        "useLiteralKeys": "off",
+        "useOptionalChain": "off"
+      },
+      "style": {
+        "noNegationElse": "off",
+        "noNonNullAssertion": "off",
+        "noParameterAssign": "off",
+        "useExponentiationOperator": "off",
+        "noUselessElse": "off",
+        "noInferrableTypes": "off",
+        "useAsConstAssertion": "error",
+        "useEnumInitializers": "error",
+        "useSelfClosingElements": "error",
+        "useSingleVarDeclarator": "error",
+        "noUnusedTemplateLiteral": "error",
+        "useNumberNamespace": "error"
+      },
+      "suspicious": {
+        "noFallthroughSwitchClause": "warn",
+        "noRedeclare": "off",
+        "noAsyncPromiseExecutor": "off",
+        "noExplicitAny": "off",
+        "noArrayIndexKey": "off",
+        "noNonNullAssertedOptionalChain": "off",
+        "useIterableCallbackReturn": "off"
+      }
+    }
+  }
+}

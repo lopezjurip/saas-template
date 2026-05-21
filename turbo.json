@@ -1,0 +1,35 @@
+{
+  "$schema": "./node_modules/turbo/schema.json",
+  "globalDependencies": ["package.json", "pnpm-workspace.yaml", ".env.local"],
+  "ui": "stream",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**", "build/**"],
+      "inputs": ["$TURBO_DEFAULT$", ".env.*local"]
+    },
+    "test": {
+      "outputs": ["coverage/**", "test-results/**"],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "format": {
+      "outputs": []
+    },
+    "generate": {
+      "outputs": []
+    },
+    "build:dry": {
+      "dependsOn": ["^build:dry"],
+      "outputs": [],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "generate:types": {
+      "cache": false,
+      "outputs": ["src/types.ts"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
