@@ -5,7 +5,13 @@
   "sideEffects": false,
   "scripts": {
     "build:dry": "tsc --noEmit",
-    "generate:types": "supabase gen types --lang=typescript --project-id=SUPABASE_PROJECT_ID --schema public > src/types.ts",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:status": "supabase status",
+    "db:migrate:new": "supabase migration new",
+    "db:migrate:up": "supabase migration up",
+    "generate:types": "supabase gen types --lang=typescript --local --schema public > src/types.ts",
     "format": "biome check --diagnostic-level=error ."
   },
   "exports": {

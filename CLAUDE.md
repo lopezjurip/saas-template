@@ -147,6 +147,15 @@ When building Kapso tools:
 Lives at `apps/tenant/app/mcp/[transport]/route.ts`. Exposed at `{slug}.humane.cl/mcp/`.
 Tools to expose: headcount, payroll cost, vacation balances, team status, compliance alerts, employee lookup. Read-only for v1.
 
+## Database Workflow (Prototype Phase)
+
+No incremental migrations yet. All schema lives in a single file: `packages/supabase/supabase/migrations/00000000000000_schema.sql`. To change the schema, edit that file directly and run `pnpm db:reset && pnpm generate:types`. Migrations will be introduced before the first production launch.
+
+- `pnpm db:start` / `pnpm db:stop` — start/stop local Supabase (Docker)
+- `pnpm db:reset` — drop everything, replay schema, run seed
+- `pnpm generate:types` — regenerate `packages/supabase/src/types.ts` from local DB
+- Supabase Studio: `http://127.0.0.1:54323`
+
 ## Multi-tenancy & RLS
 
 Every table with tenant data has `tenant_id` column. Supabase RLS enforces isolation at the DB layer. Never rely on application-level filtering alone.

@@ -1,0 +1,2 @@
+-- Humane schema (prototype phase)
+-- Edit this file directly, then run: pnpm db:reset && pnpm generate:types
