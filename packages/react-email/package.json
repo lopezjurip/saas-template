@@ -4,6 +4,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
+    "dev": "PORT=${PORT:-8101} email dev --port ${PORT:-8101} --dir src/templates",
     "build:dry": "tsc --noEmit",
     "format": "biome check --diagnostic-level=error ."
   },

@@ -102,6 +102,17 @@ humane/
 - `app.humane.cl` → `apps/platform` (separate Vercel deployment)
 - `{slug}.humane.cl` → `apps/tenant` — middleware extracts slug, sets `x-tenant-slug` header
 
+### Local Dev Ports
+
+| Service | Default port | URL |
+|---|---|---|
+| `apps/platform` | 8000 | http://localhost:8000 |
+| `apps/landing` | 8001 | http://localhost:8001 |
+| `apps/tenant` | 8002 | http://localhost:8002 |
+| Supabase Studio | 8100 | http://localhost:8100 |
+| `packages/react-email` | 8101 | http://localhost:8101 |
+| `packages/react-pdf` | 8102 | http://localhost:8102 |
+
 ## Skills
 
 Agent skills extend Claude Code with reusable capabilities. Installed skills live in `.agents/skills/` (gitignored) and are symlinked into Claude Code automatically.
@@ -154,7 +165,7 @@ No incremental migrations yet. All schema lives in a single file: `packages/supa
 - `pnpm db:start` / `pnpm db:stop` — start/stop local Supabase (Docker)
 - `pnpm db:reset` — drop everything, replay schema, run seed
 - `pnpm generate:types` — regenerate `packages/supabase/src/types.ts` from local DB
-- Supabase Studio: `http://127.0.0.1:54323`
+- Supabase Studio: `http://127.0.0.1:8100`
 
 ## Multi-tenancy & RLS
 
