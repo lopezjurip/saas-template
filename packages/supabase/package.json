@@ -24,7 +24,7 @@
     "@packages/typescript-config": "workspace:*",
     "@supabase/supabase-js": "^2.4.0",
     "@types/node": "^24.12.4",
-    "supabase": "^1.226.3",
+    "supabase": "^2.101.0",
     "typescript": "^6.0.3"
   }
 }
