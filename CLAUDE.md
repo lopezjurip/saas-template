@@ -184,6 +184,9 @@ Novedades (attendance, overtime, licencias, vacaciones)
 
 ## Critical Rules
 
+### No barrel index files
+Never create an `index.ts` (or `index.tsx`) whose sole purpose is re-exporting from other files. Import directly from the source file instead.
+
 ### Never Use `DROP ... CASCADE`
 Critical safety rule for SQL. Always explicit.
 
