@@ -21,8 +21,8 @@ build/
 .vercel/
 
 # Supabase
-supabase/.branches
-supabase/.temp
+**/supabase/.branches
+**/supabase/.temp
 
 # OS
 .DS_Store

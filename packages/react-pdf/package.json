@@ -4,20 +4,39 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
+    "dev": "webpack serve --mode development --open",
     "build:dry": "tsc --noEmit",
     "format": "biome check --diagnostic-level=error ."
   },
   "exports": {
-    "./*": "./src/*.ts"
+    "./*": "./src/*.ts",
+    "./templates/*": "./src/templates/*.tsx"
   },
   "dependencies": {
-    "@react-pdf/renderer": "^4.3.0"
+    "@packages/rosetta": "workspace:*",
+    "@react-pdf/renderer": "^4.3.0",
+    "clsx": "^2.1.1",
+    "react-pdf-tailwind": "^3.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/preset-react": "^7.26.0",
     "@packages/typescript-config": "workspace:*",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.15",
-    "typescript": "^6.0.3"
+    "@types/react-dom": "^19.2.3",
+    "babel-loader": "^9.2.1",
+    "css-loader": "^7.1.2",
+    "html-webpack-plugin": "^5.6.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.2",
+    "typescript": "^6.0.3",
+    "webpack": "^5.107.0",
+    "webpack-cli": "^6.0.0",
+    "webpack-dev-server": "^5.2.0"
   },
   "peerDependencies": {
     "react": "^19.0.0"

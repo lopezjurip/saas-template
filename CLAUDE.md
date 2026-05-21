@@ -102,6 +102,24 @@ humane/
 - `app.humane.cl` → `apps/platform` (separate Vercel deployment)
 - `{slug}.humane.cl` → `apps/tenant` — middleware extracts slug, sets `x-tenant-slug` header
 
+## Skills
+
+Agent skills extend Claude Code with reusable capabilities. Installed skills live in `.agents/skills/` (gitignored) and are symlinked into Claude Code automatically.
+
+To install a skill:
+
+```bash
+pnpm dlx skills add <registry-url> --skill <skill-name>
+```
+
+Example — install the `find-skills` skill from the Vercel Labs registry:
+
+```bash
+pnpm dlx skills add https://github.com/vercel-labs/skills --skill find-skills
+```
+
+Skills run with full agent permissions — review a skill's source before using it in production.
+
 ## shadcn/ui in packages/shadcn
 
 shadcn components live in `packages/shadcn`, not inside individual apps.
@@ -128,6 +146,15 @@ When building Kapso tools:
 
 Lives at `apps/tenant/app/mcp/[transport]/route.ts`. Exposed at `{slug}.humane.cl/mcp/`.
 Tools to expose: headcount, payroll cost, vacation balances, team status, compliance alerts, employee lookup. Read-only for v1.
+
+## Database Workflow (Prototype Phase)
+
+No incremental migrations yet. All schema lives in a single file: `packages/supabase/supabase/migrations/00000000000000_schema.sql`. To change the schema, edit that file directly and run `pnpm db:reset && pnpm generate:types`. Migrations will be introduced before the first production launch.
+
+- `pnpm db:start` / `pnpm db:stop` — start/stop local Supabase (Docker)
+- `pnpm db:reset` — drop everything, replay schema, run seed
+- `pnpm generate:types` — regenerate `packages/supabase/src/types.ts` from local DB
+- Supabase Studio: `http://127.0.0.1:54323`
 
 ## Multi-tenancy & RLS
 
@@ -183,6 +210,9 @@ Novedades (attendance, overtime, licencias, vacaciones)
 ```
 
 ## Critical Rules
+
+### No barrel index files
+Never create an `index.ts` (or `index.tsx`) whose sole purpose is re-exporting from other files. Import directly from the source file instead.
 
 ### Never Use `DROP ... CASCADE`
 Critical safety rule for SQL. Always explicit.
