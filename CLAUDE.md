@@ -270,6 +270,14 @@ Critical safety rule for SQL. Always explicit.
 - Follow existing patterns in the codebase
 - Chilean Spanish for user-facing strings, English for code/comments
 
+### Lint + Build (run in parallel)
+After making changes, run these two commands concurrently — they are independent and safe to parallelize:
+
+```bash
+pnpm format:apply-unsafe  # Biome auto-fix including unsafe transforms
+pnpm build:dry            # Turbo type-check / build without emitting output
+```
+
 ### Commit Messages
 Conventional Commits with scope: `type(scope): description`
 - `feat(payroll): add semana corrida calculation`
