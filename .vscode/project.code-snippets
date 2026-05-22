@@ -1,0 +1,10 @@
+{
+    "react profile from useSWRViewer": {
+        "scope": "javascript,typescript,javascriptreact,typescriptreact,html",
+        "prefix": "hookp",
+        "body": [
+            "const { data: { profile } = { [\"profile\"]: null } } = useViewerProfile();",
+            "$0",
+        ]
+    },
+}
