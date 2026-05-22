@@ -641,3 +641,188 @@ create policy "Allow auth admin to read concierge_users."
 drop policy if exists "Allow auth admin to read profile onboarding state." on public.profiles;
 create policy "Allow auth admin to read profile onboarding state."
   on public.profiles as permissive for select to supabase_auth_admin using (true);
+
+-- ============================================================
+-- addresses hierarchy
+-- level0 = country  (ISO 3166-1 alpha-2)
+-- level1 = region   (ISO 3166-2, 5–6 chars)
+-- level2 = province (slug)
+-- level3 = commune  (slug)
+-- ============================================================
+
+create table if not exists public.addresses_level0 (
+  address_level0_id text not null check (length(address_level0_id) = 2),
+
+  address_level0_name text not null check (length(address_level0_name) <= 100),
+  address_level0_disabled_at timestamptz,
+  address_level0_hidden_at timestamptz,
+  address_level0_created_at timestamptz not null default current_timestamp,
+  address_level0_updated_at timestamptz not null default current_timestamp,
+
+  primary key (address_level0_id)
+);
+
+comment on column public.addresses_level0.address_level0_id is e'ISO 3166-1 alpha-2 country code';
+
+create index if not exists addresses_level0_disabled_at_idx
+  on public.addresses_level0 (address_level0_disabled_at)
+  where address_level0_disabled_at is not null;
+create index if not exists addresses_level0_hidden_at_idx
+  on public.addresses_level0 (address_level0_hidden_at)
+  where address_level0_hidden_at is not null;
+create index if not exists addresses_level0_name_idx
+  on public.addresses_level0 (address_level0_name asc nulls last);
+
+drop trigger if exists handle_addresses_level0_updated_at on public.addresses_level0;
+create trigger handle_addresses_level0_updated_at
+  before update on public.addresses_level0
+  for each row execute procedure extensions.moddatetime(address_level0_updated_at);
+
+revoke all on table public.addresses_level0 from anon, authenticated;
+grant select on table public.addresses_level0 to anon, authenticated;
+
+alter table public.addresses_level0 enable row level security;
+
+drop policy if exists "Anyone can select addresses_level0." on public.addresses_level0;
+create policy "Anyone can select addresses_level0."
+  on public.addresses_level0 for select
+  using (address_level0_disabled_at is null);
+
+-- ============================================================
+
+create table if not exists public.addresses_level1 (
+  address_level0_id text not null check (length(address_level0_id) = 2),
+  address_level1_id text not null check (length(address_level1_id) = 5 or length(address_level1_id) = 6),
+
+  address_level1_name text not null check (length(address_level1_name) <= 100),
+  address_level1_disabled_at timestamptz,
+  address_level1_hidden_at timestamptz,
+  address_level1_created_at timestamptz not null default current_timestamp,
+  address_level1_updated_at timestamptz not null default current_timestamp,
+
+  primary key (address_level0_id, address_level1_id),
+
+  constraint fk_addresses_level1_addresses_level0 foreign key (address_level0_id)
+    references public.addresses_level0 (address_level0_id) on delete no action
+);
+
+comment on column public.addresses_level1.address_level1_id is e'ISO 3166-2 code';
+
+create index if not exists addresses_level1_disabled_at_idx
+  on public.addresses_level1 (address_level1_disabled_at)
+  where address_level1_disabled_at is not null;
+create index if not exists addresses_level1_hidden_at_idx
+  on public.addresses_level1 (address_level1_hidden_at)
+  where address_level1_hidden_at is not null;
+create index if not exists addresses_level1_name_idx
+  on public.addresses_level1 (address_level1_name asc nulls last);
+create index if not exists addresses_level1_level0_idx
+  on public.addresses_level1 (address_level0_id);
+
+drop trigger if exists handle_addresses_level1_updated_at on public.addresses_level1;
+create trigger handle_addresses_level1_updated_at
+  before update on public.addresses_level1
+  for each row execute procedure extensions.moddatetime(address_level1_updated_at);
+
+revoke all on table public.addresses_level1 from anon, authenticated;
+grant select on table public.addresses_level1 to anon, authenticated;
+
+alter table public.addresses_level1 enable row level security;
+
+drop policy if exists "Anyone can select addresses_level1." on public.addresses_level1;
+create policy "Anyone can select addresses_level1."
+  on public.addresses_level1 for select
+  using (address_level1_disabled_at is null);
+
+-- ============================================================
+
+create table if not exists public.addresses_level2 (
+  address_level0_id text not null check (length(address_level0_id) = 2),
+  address_level1_id text not null check (length(address_level1_id) = 5 or length(address_level1_id) = 6),
+  address_level2_id text not null check (length(address_level2_id) <= 100),
+
+  address_level2_name text not null check (length(address_level2_name) <= 100),
+  address_level2_disabled_at timestamptz,
+  address_level2_hidden_at timestamptz,
+  address_level2_created_at timestamptz not null default current_timestamp,
+  address_level2_updated_at timestamptz not null default current_timestamp,
+
+  primary key (address_level0_id, address_level1_id, address_level2_id),
+
+  constraint fk_addresses_level2_addresses_level1 foreign key (address_level0_id, address_level1_id)
+    references public.addresses_level1 (address_level0_id, address_level1_id) on delete no action
+);
+
+comment on column public.addresses_level2.address_level2_id is e'Slug';
+
+create index if not exists addresses_level2_disabled_at_idx
+  on public.addresses_level2 (address_level2_disabled_at)
+  where address_level2_disabled_at is not null;
+create index if not exists addresses_level2_hidden_at_idx
+  on public.addresses_level2 (address_level2_hidden_at)
+  where address_level2_hidden_at is not null;
+create index if not exists addresses_level2_name_idx
+  on public.addresses_level2 (address_level2_name asc nulls last);
+create index if not exists addresses_level2_level1_idx
+  on public.addresses_level2 (address_level0_id, address_level1_id);
+
+drop trigger if exists handle_addresses_level2_updated_at on public.addresses_level2;
+create trigger handle_addresses_level2_updated_at
+  before update on public.addresses_level2
+  for each row execute procedure extensions.moddatetime(address_level2_updated_at);
+
+revoke all on table public.addresses_level2 from anon, authenticated;
+grant select on table public.addresses_level2 to anon, authenticated;
+
+alter table public.addresses_level2 enable row level security;
+
+drop policy if exists "Anyone can select addresses_level2." on public.addresses_level2;
+create policy "Anyone can select addresses_level2."
+  on public.addresses_level2 for select
+  using (address_level2_disabled_at is null);
+
+-- ============================================================
+
+create table if not exists public.addresses_level3 (
+  address_level0_id text not null check (length(address_level0_id) = 2),
+  address_level1_id text not null check (length(address_level1_id) = 5 or length(address_level1_id) = 6),
+  address_level2_id text not null check (length(address_level2_id) <= 100),
+  address_level3_id text not null check (length(address_level3_id) <= 100),
+
+  address_level3_name text not null check (length(address_level3_name) <= 100),
+  address_level3_disabled_at timestamptz,
+  address_level3_hidden_at timestamptz,
+  address_level3_created_at timestamptz not null default current_timestamp,
+  address_level3_updated_at timestamptz not null default current_timestamp,
+
+  primary key (address_level0_id, address_level1_id, address_level2_id, address_level3_id),
+
+  constraint fk_addresses_level3_addresses_level2 foreign key (address_level0_id, address_level1_id, address_level2_id)
+    references public.addresses_level2 (address_level0_id, address_level1_id, address_level2_id) on delete no action
+);
+
+create index if not exists addresses_level3_disabled_at_idx
+  on public.addresses_level3 (address_level3_disabled_at)
+  where address_level3_disabled_at is not null;
+create index if not exists addresses_level3_hidden_at_idx
+  on public.addresses_level3 (address_level3_hidden_at)
+  where address_level3_hidden_at is not null;
+create index if not exists addresses_level3_name_idx
+  on public.addresses_level3 (address_level3_name asc nulls last);
+create index if not exists addresses_level3_level2_idx
+  on public.addresses_level3 (address_level0_id, address_level1_id, address_level2_id);
+
+drop trigger if exists handle_addresses_level3_updated_at on public.addresses_level3;
+create trigger handle_addresses_level3_updated_at
+  before update on public.addresses_level3
+  for each row execute procedure extensions.moddatetime(address_level3_updated_at);
+
+revoke all on table public.addresses_level3 from anon, authenticated;
+grant select on table public.addresses_level3 to anon, authenticated;
+
+alter table public.addresses_level3 enable row level security;
+
+drop policy if exists "Anyone can select addresses_level3." on public.addresses_level3;
+create policy "Anyone can select addresses_level3."
+  on public.addresses_level3 for select
+  using (address_level3_disabled_at is null);
