@@ -1,7 +1,5 @@
 /* eslint-disable */
-import * as types from './graphql';
-
-
+import * as types from "./graphql";
 
 /**
  * Map of all GraphQL operations in the project.
@@ -15,17 +13,18 @@ import * as types from './graphql';
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": typeof types.HealthQueryDocument,
+  "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": typeof types.HealthQueryDocument;
 };
 const documents: Documents = {
-    "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": types.HealthQueryDocument,
+  "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": types.HealthQueryDocument,
 };
 
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query HealthQuery {\n    health_current_timestamp\n  }\n"): typeof import('./graphql').HealthQueryDocument;
-
+export function gql(
+  source: "\n  query HealthQuery {\n    health_current_timestamp\n  }\n",
+): typeof import("./graphql").HealthQueryDocument;
 
 export function gql(source: string) {
   return (documents as any)[source] ?? {};

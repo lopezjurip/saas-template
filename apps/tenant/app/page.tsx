@@ -1,5 +1,5 @@
+import type { ResultOf } from "@graphql-typed-document-node/core";
 import { createServerClient } from "@packages/supabase/client.server";
-import { GRAPHY_SERVER_ANON_CREATE } from "~/lib/graphy/graphy.server";
 import { Logo } from "@packages/ui-common/logo";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
@@ -9,9 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
-import type { ResultOf } from "@graphql-typed-document-node/core";
 import { headers } from "next/headers";
 import { gql } from "~/generated/graphql";
+import { GRAPHY_SERVER_ANON_CREATE } from "~/lib/graphy/graphy.server";
 
 const TenantOrganizationsQuery = gql(`
   query TenantOrganizationsQuery($tenantId: Int!) {
@@ -55,9 +55,8 @@ export default async function TenantHomePage() {
 
   const graphy = GRAPHY_SERVER_ANON_CREATE(session);
   const { data } = await graphy.query({ query: TenantOrganizationsQuery, variables: { tenantId } });
-  const orgsInTenant: TenantOrganization[] = (
-    data?.organizationsCollection?.edges?.map((e) => e.node).filter((n): n is TenantOrganization => n != null) ?? []
-  );
+  const orgsInTenant: TenantOrganization[] =
+    data?.organizationsCollection?.edges?.map((e) => e.node).filter((n): n is TenantOrganization => n != null) ?? [];
 
   const fullName = (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "Tú";
   const platformUrl = process.env.NEXT_PUBLIC_PLATFORM_URL ?? "http://localhost:7000";

@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 
 const config: NextConfig = {
-  transpilePackages: ["@packages/debug", "@packages/graphy", "@packages/kapso", "@packages/react-email", "@packages/supabase", "@packages/ui-common"],
+  transpilePackages: [
+    "@packages/debug",
+    "@packages/graphy",
+    "@packages/kapso",
+    "@packages/react-email",
+    "@packages/supabase",
+    "@packages/ui-common",
+  ],
 };
 
 export default config;

@@ -81,7 +81,6 @@ export const FORMAT_CURRENCY_CLF: Intl.NumberFormatOptions = /*#__PURE__*/ {
   roundingMode: "trunc",
 };
 
-
 export function CLAMP(number: number, min: number, max: number) {
   return Math.min(Math.max(number, min), max);
 }
