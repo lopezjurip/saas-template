@@ -34,7 +34,9 @@ export async function middleware(request: NextRequest) {
   }
 
   const { response, supabase } = await updateSession(request);
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     const platformUrl = process.env.NEXT_PUBLIC_PLATFORM_URL ?? "http://localhost:7000";

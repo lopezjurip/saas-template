@@ -72,10 +72,8 @@ export class RosettaImpl<T> {
       throw new Error(`Rosetta: missing translation for key "${String(key)}" in locale "${activeLocale || "<unset>"}"`);
     }
 
-    if (typeof val === "function")
-      return val(params) as any;
-    if (typeof val === "string")
-      return tmpl(val, params ?? {}) as any;
+    if (typeof val === "function") return val(params) as any;
+    if (typeof val === "string") return tmpl(val, params ?? {}) as any;
     return val as any;
   };
 }

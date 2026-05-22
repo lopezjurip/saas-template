@@ -66,7 +66,7 @@ export function CreateTenantForm({ tenantBaseUrl }: { tenantBaseUrl: string }) {
           {slug ? (
             <strong>{tenantBaseUrl.replace("{slug}", slug)}</strong>
           ) : (
-            "{slug}." + tenantBaseUrl.replace("{slug}.", "")
+            `{slug}.${tenantBaseUrl.replace("{slug}.", "")}`
           )}
         </p>
         {form.formState.errors.tenant_slug && (

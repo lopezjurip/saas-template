@@ -1,4 +1,4 @@
-import { LocaleProvider, useLocale, useRosetta } from "@packages/rosetta/use-rosetta";
+import { LocaleProvider, useRosetta } from "@packages/rosetta/use-rosetta";
 import { Document, Link, Page, Text, View } from "@react-pdf/renderer";
 import { tw } from "../lib/tw";
 
@@ -30,15 +30,28 @@ const GRID_STATS = [
 ];
 
 const CARD_HEADERS = [
-  { title: "Flexbox Layout", bg: "#1e40af", body: "react-pdf supports flexbox just like the web — rows, columns, wrap, gap, flex, alignItems, justifyContent. Build complex multi-column documents with ease." },
-  { title: "StyleSheet / tw()", bg: "#059669", body: "Use react-pdf-tailwind's tw() to apply Tailwind utility classes as react-pdf styles. Combine conditionally with clsx — no custom StyleSheet needed." },
-  { title: "Multi-page", bg: "#7c3aed", body: "Documents span multiple pages. Use the fixed prop for persistent headers/footers, and render page numbers with the built-in render prop." },
+  {
+    title: "Flexbox Layout",
+    bg: "#1e40af",
+    body: "react-pdf supports flexbox just like the web — rows, columns, wrap, gap, flex, alignItems, justifyContent. Build complex multi-column documents with ease.",
+  },
+  {
+    title: "StyleSheet / tw()",
+    bg: "#059669",
+    body: "Use react-pdf-tailwind's tw() to apply Tailwind utility classes as react-pdf styles. Combine conditionally with clsx — no custom StyleSheet needed.",
+  },
+  {
+    title: "Multi-page",
+    bg: "#7c3aed",
+    body: "Documents span multiple pages. Use the fixed prop for persistent headers/footers, and render page numbers with the built-in render prop.",
+  },
 ];
 
 const LOCALE_EN = {
   "hero.tagline": "@packages/react-pdf",
   "hero.title": "Hello, World!",
-  "hero.subtitle": "A showcase of @react-pdf/renderer + react-pdf-tailwind: typography, layout, color, flexbox, links, and multi-page documents — all type-safe.",
+  "hero.subtitle":
+    "A showcase of @react-pdf/renderer + react-pdf-tailwind: typography, layout, color, flexbox, links, and multi-page documents — all type-safe.",
   "section.typography": "Typography",
   "section.palette": "Color Palette",
   "section.grid": "Layout Grid",
@@ -55,7 +68,8 @@ const LOCALES = {
   es: {
     "hero.tagline": "@packages/react-pdf",
     "hero.title": "¡Hola, Mundo!",
-    "hero.subtitle": "Demostración de @react-pdf/renderer + react-pdf-tailwind: tipografía, diseño, color, flexbox, enlaces y documentos multipágina — todo con tipos.",
+    "hero.subtitle":
+      "Demostración de @react-pdf/renderer + react-pdf-tailwind: tipografía, diseño, color, flexbox, enlaces y documentos multipágina — todo con tipos.",
     "section.typography": "Tipografía",
     "section.palette": "Paleta de Colores",
     "section.grid": "Cuadrícula de Diseño",
@@ -86,21 +100,13 @@ function HelloWorldContent() {
 
   return (
     <Document title="Hello World — react-pdf showcase" author="Humane">
-
       {/* ── Page 1 ── */}
       <Page size="A4" style={tw("bg-white font-helvetica text-gray-900 text-xs")}>
-
         {/* Hero */}
         <View style={tw("bg-blue-800 py-8 px-12")}>
-          <Text style={tw("text-blue-200 text-xs uppercase tracking-widest mb-2")}>
-            {r.t("hero.tagline")}
-          </Text>
-          <Text style={tw("text-white font-bold text-4xl leading-tight mb-3")}>
-            {r.t("hero.title")}
-          </Text>
-          <Text style={tw("text-blue-200 text-sm leading-relaxed")}>
-            {r.t("hero.subtitle")}
-          </Text>
+          <Text style={tw("text-blue-200 text-xs uppercase tracking-widest mb-2")}>{r.t("hero.tagline")}</Text>
+          <Text style={tw("text-white font-bold text-4xl leading-tight mb-3")}>{r.t("hero.title")}</Text>
+          <Text style={tw("text-blue-200 text-sm leading-relaxed")}>{r.t("hero.subtitle")}</Text>
           <View style={tw("flex-row gap-2 mt-4")}>
             {["Typography", "Layout", "Colors", "Links"].map((tag, i) => {
               const bgs = ["bg-indigo-600", "bg-emerald-600", "bg-violet-700", "bg-amber-600"];
@@ -114,7 +120,6 @@ function HelloWorldContent() {
         </View>
 
         <View style={tw("px-10 py-6")}>
-
           {/* Feature cards */}
           <View style={tw("flex-row gap-3 mb-6")}>
             {CARD_HEADERS.map(({ title, bg, body }) => (
@@ -142,8 +147,8 @@ function HelloWorldContent() {
             </View>
             <View style={tw("flex-1")}>
               <Text style={tw("text-sm text-gray-600 leading-relaxed mb-2")}>
-                Body text at 14pt with 1.6 line-height. Mix Helvetica, Helvetica-Bold,
-                and Helvetica-Oblique for emphasis without registering custom fonts.
+                Body text at 14pt with 1.6 line-height. Mix Helvetica, Helvetica-Bold, and Helvetica-Oblique for
+                emphasis without registering custom fonts.
               </Text>
               <Text style={tw("italic text-xs text-gray-400 leading-relaxed")}>
                 Caption / label — italic, small, muted. For metadata and footnotes.
@@ -158,10 +163,7 @@ function HelloWorldContent() {
           <View style={tw("border-t border-gray-200 mb-5")} />
           <View style={tw("flex-row gap-2 mb-6")}>
             {PALETTE.map(({ color, label }) => (
-              <View
-                key={label}
-                style={{ ...tw("flex-1 h-8 rounded p-1 justify-end"), backgroundColor: color }}
-              >
+              <View key={label} style={{ ...tw("flex-1 h-8 rounded p-1 justify-end"), backgroundColor: color }}>
                 <Text style={tw("text-white font-bold")} wrap={false}>
                   {label}
                 </Text>
@@ -187,16 +189,25 @@ function HelloWorldContent() {
         </View>
 
         {/* Footer */}
-        <View style={tw("absolute bottom-5 left-10 right-10 flex-row justify-between items-center border-t border-gray-200 pt-2")} fixed>
+        <View
+          style={tw(
+            "absolute bottom-5 left-10 right-10 flex-row justify-between items-center border-t border-gray-200 pt-2",
+          )}
+          fixed
+        >
           <Text style={tw("text-xs text-gray-400")}>{r.t("footer.title")}</Text>
-          <Link src="https://react-pdf.org" style={tw("text-xs text-blue-500 no-underline")}>react-pdf.org</Link>
-          <Text style={tw("text-xs text-gray-400")} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+          <Link src="https://react-pdf.org" style={tw("text-xs text-blue-500 no-underline")}>
+            react-pdf.org
+          </Link>
+          <Text
+            style={tw("text-xs text-gray-400")}
+            render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
+          />
         </View>
       </Page>
 
       {/* ── Page 2 ── */}
       <Page size="A4" style={tw("bg-white font-helvetica text-gray-900 text-xs")}>
-
         {/* Mini hero */}
         <View style={tw("bg-blue-800 py-5 px-12")}>
           <Text style={tw("text-blue-200 text-xs uppercase tracking-widest mb-1")}>{r.t("page2.label")}</Text>
@@ -204,7 +215,6 @@ function HelloWorldContent() {
         </View>
 
         <View style={tw("px-10 py-6")}>
-
           {/* Progress bars */}
           <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
             {r.t("section.progress")}
@@ -231,8 +241,8 @@ function HelloWorldContent() {
             <View style={tw("flex-[2] bg-gray-50 border border-gray-200 rounded p-4")}>
               <Text style={tw("font-bold text-base text-blue-800 mb-2")}>Nested Views</Text>
               <Text style={tw("text-xs text-gray-600 leading-relaxed mb-3")}>
-                Views nest arbitrarily deep. Each is a flex container. Combine
-                borders, backgrounds, padding, and rounded corners to build rich layouts.
+                Views nest arbitrarily deep. Each is a flex container. Combine borders, backgrounds, padding, and
+                rounded corners to build rich layouts.
               </Text>
               <View style={tw("flex-row gap-2")}>
                 {["flex", "gap", "wrap", "align", "justify"].map((tag) => (
@@ -271,8 +281,8 @@ function HelloWorldContent() {
               <Link src="https://react-pdf.org" style={tw("text-blue-500 no-underline")}>
                 react-pdf.org
               </Link>{" "}
-              docs cover all primitives. PDFs support clickable hyperlinks out of the
-              box — wrap any Text in a Link with a src prop.
+              docs cover all primitives. PDFs support clickable hyperlinks out of the box — wrap any Text in a Link with
+              a src prop.
             </Text>
             <View style={tw("gap-2")}>
               <Link src="https://react-pdf.org" style={tw("text-sm text-blue-500 no-underline")}>
@@ -286,13 +296,22 @@ function HelloWorldContent() {
         </View>
 
         {/* Footer */}
-        <View style={tw("absolute bottom-5 left-10 right-10 flex-row justify-between items-center border-t border-gray-200 pt-2")} fixed>
+        <View
+          style={tw(
+            "absolute bottom-5 left-10 right-10 flex-row justify-between items-center border-t border-gray-200 pt-2",
+          )}
+          fixed
+        >
           <Text style={tw("text-xs text-gray-400")}>{r.t("footer.title")}</Text>
-          <Link src="https://react-pdf.org" style={tw("text-xs text-blue-500 no-underline")}>react-pdf.org</Link>
-          <Text style={tw("text-xs text-gray-400")} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+          <Link src="https://react-pdf.org" style={tw("text-xs text-blue-500 no-underline")}>
+            react-pdf.org
+          </Link>
+          <Text
+            style={tw("text-xs text-gray-400")}
+            render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
+          />
         </View>
       </Page>
-
     </Document>
   );
 }

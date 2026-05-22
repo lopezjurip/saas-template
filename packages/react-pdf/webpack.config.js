@@ -12,11 +12,7 @@ module.exports = {
     alias: {
       "~": path.resolve(__dirname, "src"),
     },
-    modules: [
-      path.resolve(__dirname, "src"),
-      "node_modules",
-      path.resolve(__dirname, "../../node_modules"),
-    ],
+    modules: [path.resolve(__dirname, "src"), "node_modules", path.resolve(__dirname, "../../node_modules")],
   },
   module: {
     rules: [

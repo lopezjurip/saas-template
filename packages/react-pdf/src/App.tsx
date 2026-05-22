@@ -30,9 +30,7 @@ function App() {
           gap: 12,
         }}
       >
-        <span style={{ color: "#fff", fontFamily: "sans-serif", fontSize: 13, fontWeight: 600 }}>
-          PDF Preview
-        </span>
+        <span style={{ color: "#fff", fontFamily: "sans-serif", fontSize: 13, fontWeight: 600 }}>PDF Preview</span>
         <select
           value={template}
           onChange={(e) => setTemplate(e.target.value)}
@@ -46,11 +44,7 @@ function App() {
         </select>
       </div>
 
-      <PDFViewer
-        width="100%"
-        style={{ flex: 1, border: "none" }}
-        key={template}
-      >
+      <PDFViewer width="100%" style={{ flex: 1, border: "none" }} key={template}>
         <PDFRouter template={template as PDFTemplateID} />
       </PDFViewer>
     </div>
