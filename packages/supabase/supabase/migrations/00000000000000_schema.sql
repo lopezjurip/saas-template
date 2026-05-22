@@ -181,8 +181,7 @@ exception when duplicate_object then null; end $$;
 
 create table if not exists public.tenants (
   tenant_id serial primary key,
-  tenant_slug extensions.citext not null unique
-    check (internal.slug_validate(tenant_slug::text)),
+  tenant_slug extensions.citext not null unique check (internal.slug_validate(tenant_slug::text)),
   tenant_name text not null check (char_length(tenant_name) between 1 and 256),
   tenant_disabled_at timestamptz,
   tenant_created_at timestamptz not null default current_timestamp,
@@ -200,8 +199,7 @@ create trigger handle_tenants_updated_at
 create table if not exists public.organizations (
   organization_id serial primary key,
   tenant_id int not null references public.tenants (tenant_id) on delete cascade,
-  organization_slug extensions.citext not null
-    check (internal.slug_validate(organization_slug::text)),
+  organization_slug extensions.citext not null check (internal.slug_validate(organization_slug::text)),
   organization_name text not null check (char_length(organization_name) between 1 and 256),
   organization_disabled_at timestamptz,
   organization_created_at timestamptz not null default current_timestamp,
@@ -267,6 +265,11 @@ create trigger handle_concierge_users_updated_at
 -- viewer_organization_ids                      : organizations the caller is a member of (from JWT)
 -- viewer_organization_validate(org, roles)     : true iff caller is a member of `org`, optionally role-restricted
 -- viewer_is_concierge                          : true iff caller has the global concierge claim
+-- tenants_organizations_profiles (view)        : active tenant-org memberships for the current viewer
+-- viewer_tenants()                             : setof public.tenants the viewer has access to
+-- viewer_organizations()                       : setof public.organizations the viewer is a member of
+-- viewer_tenant_by_id(id)                      : single tenant by id if the viewer has access
+-- viewer_organization_by_id(id)                : single organization by id if the viewer has access
 
 create or replace function public.viewer_profile(strict boolean default false)
   returns setof public.profiles rows 1
@@ -410,6 +413,99 @@ grant execute on function public.viewer_tenant_validate(int) to authenticated;
 grant execute on function public.viewer_organization_ids() to authenticated;
 grant execute on function public.viewer_organization_validate(int, public.organization_member_role[]) to authenticated;
 grant execute on function public.viewer_is_concierge() to authenticated;
+
+-- Active tenant-org memberships for the current viewer.
+-- Runs as view owner (postgres), bypassing RLS; scoped to the caller
+-- via viewer_profile_id(). Null uid → no rows (safe for unauthenticated).
+-- Used by viewer_tenants/viewer_organizations family below.
+create or replace view public.tenants_organizations_profiles as
+  select
+    t.tenant_id,
+    t.tenant_slug,
+    t.tenant_name,
+    t.tenant_disabled_at,
+    t.tenant_created_at,
+    t.tenant_updated_at,
+    o.organization_id,
+    o.tenant_id             as organization_tenant_id,
+    o.organization_slug,
+    o.organization_name,
+    o.organization_disabled_at,
+    o.organization_created_at,
+    o.organization_updated_at,
+    om.profile_id,
+    om.organization_member_role
+  from public.organization_members om
+  join public.organizations o on o.organization_id = om.organization_id
+  join public.tenants t on t.tenant_id = o.tenant_id
+  where om.profile_id = public.viewer_profile_id()
+    and om.organization_member_disabled_at is null
+    and o.organization_disabled_at is null
+    and t.tenant_disabled_at is null;
+
+revoke all on public.tenants_organizations_profiles from anon, authenticated;
+grant select on public.tenants_organizations_profiles to authenticated;
+
+create or replace function public.viewer_tenants()
+  returns setof public.tenants
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select t.*
+    from public.tenants t
+    where t.tenant_id in (select tenant_id from public.tenants_organizations_profiles);
+  $$;
+
+create or replace function public.viewer_organizations()
+  returns setof public.organizations
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select o.*
+    from public.organizations o
+    where o.organization_id in (select organization_id from public.tenants_organizations_profiles);
+  $$;
+
+create or replace function public.viewer_tenant_by_id(target_tenant_id int)
+  returns setof public.tenants rows 1
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select t.*
+    from public.tenants t
+    where t.tenant_id = target_tenant_id
+      and t.tenant_id in (select tenant_id from public.tenants_organizations_profiles)
+    limit 1;
+  $$;
+
+create or replace function public.viewer_organization_by_id(target_organization_id int)
+  returns setof public.organizations rows 1
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select o.*
+    from public.organizations o
+    where o.organization_id = target_organization_id
+      and o.organization_id in (select organization_id from public.tenants_organizations_profiles)
+    limit 1;
+  $$;
+
+grant execute on function public.viewer_tenants() to authenticated;
+grant execute on function public.viewer_organizations() to authenticated;
+grant execute on function public.viewer_tenant_by_id(int) to authenticated;
+grant execute on function public.viewer_organization_by_id(int) to authenticated;
 
 -- ============================================================
 -- profiles SELECT policy (now that organization_members exists)
