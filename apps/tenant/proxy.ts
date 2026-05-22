@@ -15,7 +15,7 @@ async function resolveTenantIdFromSlug(slug: string): Promise<number | null> {
   return data.tenant_id;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const hostname = request.headers.get("host") ?? "";
   const parts = hostname.split(".");
 

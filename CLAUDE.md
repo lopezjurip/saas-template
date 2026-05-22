@@ -51,7 +51,7 @@ humane/
 │   │   │   ├── (auth)/       # sign in, sign up, password reset
 │   │   │   ├── (account)/    # profile, billing, org switcher
 │   │   │   └── (internal)/   # concierge ops (migrations, escalations, regulatory)
-│   │   ├── middleware.ts
+│   │   ├── proxy.ts
 │   │   ├── styles/globals.css
 │   │   └── next.config.ts
 │   │
@@ -62,7 +62,7 @@ humane/
 │       │   │   ├── manager/  # Manager surface
 │       │   │   └── empleado/ # Employee web surface
 │       │   └── mcp/[transport]/ # MCP endpoint
-│       ├── middleware.ts     # Extracts tenant slug from subdomain
+│       ├── proxy.ts          # Extracts tenant slug from subdomain
 │       ├── styles/globals.css
 │       └── next.config.ts
 │
@@ -100,7 +100,7 @@ humane/
 
 - `www.humane.cl` → `apps/landing` (separate Vercel deployment)
 - `app.humane.cl` → `apps/platform` (separate Vercel deployment)
-- `{slug}.humane.cl` → `apps/tenant` — middleware extracts slug, sets `x-tenant-slug` header
+- `{slug}.humane.cl` → `apps/tenant` — proxy extracts slug, sets `x-tenant-slug` header
 
 ### Local Dev Ports
 
@@ -181,7 +181,7 @@ Two-level model:
 
 Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to filter, cheap in indexes) and, when data is org-scoped, also `organization_id int`. Supabase RLS enforces isolation at the DB layer — never rely on application-level filtering alone.
 
-**Active tenant comes from the subdomain.** `apps/tenant/middleware.ts` resolves `{tenant_slug}.humane.cl` → `tenant_id` via the service-role client and forwards `x-tenant-id` to downstream code. Server-side queries must explicitly `.eq("tenant_id", ...)` with that value. Org switching happens inside the app (per-tab or per-session selection).
+**Active tenant comes from the subdomain.** `apps/tenant/proxy.ts` resolves `{tenant_slug}.humane.cl` → `tenant_id` via the service-role client and forwards `x-tenant-id` to downstream code. Server-side queries must explicitly `.eq("tenant_id", ...)` with that value. Org switching happens inside the app (per-tab or per-session selection).
 
 **JWT carries two arrays** (`public.user_auth_hook` on token issuance):
 - `app_metadata.tenants: [{id, slug}]` — distinct tenants the user has any org membership in
