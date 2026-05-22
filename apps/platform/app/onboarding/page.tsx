@@ -1,9 +1,9 @@
+import { loadOnboardingState, resolveStep } from "./state";
 import { FinishStep } from "./steps/finish-step";
 import { NameStep } from "./steps/name-step";
 import { PasskeyStep } from "./steps/passkey-step";
 import { PasswordStep } from "./steps/password-step";
 import { PhoneStep } from "./steps/phone-step";
-import { loadOnboardingState, resolveStep } from "./state";
 
 type SearchParams = Promise<{ step?: string }>;
 

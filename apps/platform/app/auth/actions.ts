@@ -10,7 +10,7 @@ export async function signInWithOAuth(formData: FormData) {
   const next = String(formData.get("next") ?? "/");
 
   if (!OAUTH_PROVIDER_IDS.has(provider)) {
-    redirect(`/auth/error?reason=unknown_provider`);
+    redirect("/auth/error?reason=unknown_provider");
   }
 
   const headerList = await headers();
@@ -33,9 +33,11 @@ export async function signInWithOAuth(formData: FormData) {
 }
 
 export async function checkEmail(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   if (!email || !email.includes("@")) {
-    redirect(`/auth?error=invalid_email`);
+    redirect("/auth?error=invalid_email");
   }
 
   const supabase = await createServerClient();

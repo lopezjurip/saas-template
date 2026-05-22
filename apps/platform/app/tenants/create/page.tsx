@@ -1,5 +1,11 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@packages/ui-common/shadcn/components/ui/card";
 import { Logo } from "@packages/ui-common/logo";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@packages/ui-common/shadcn/components/ui/card";
 import { CreateTenantForm } from "./create-form";
 
 export default function CreateTenantPage() {

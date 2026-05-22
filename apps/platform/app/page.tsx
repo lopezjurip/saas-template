@@ -1,7 +1,13 @@
 import { createServerClient } from "@packages/supabase/client.server";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@packages/ui-common/shadcn/components/ui/card";
 import { Logo } from "@packages/ui-common/logo";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@packages/ui-common/shadcn/components/ui/card";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -10,7 +16,9 @@ type OrganizationClaim = { id: number; role: string };
 
 export default async function HomePage() {
   const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/auth");

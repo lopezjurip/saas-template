@@ -43,9 +43,7 @@ export default async function AuthEntryPage({ searchParams }: { searchParams: Se
             required
             aria-invalid={error === "invalid_email" ? "true" : undefined}
           />
-          {error === "invalid_email" && (
-            <p className="text-destructive text-xs">Ingresa un correo válido.</p>
-          )}
+          {error === "invalid_email" && <p className="text-destructive text-xs">Ingresa un correo válido.</p>}
         </div>
         <Button type="submit" className="w-full">
           Continuar con correo

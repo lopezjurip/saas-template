@@ -2,7 +2,7 @@
 
 import { createServerClient } from "@packages/supabase/client.server";
 import { headers } from "next/headers";
-import { signupSchema, type SignupValues } from "./schemas";
+import { type SignupValues, signupSchema } from "./schemas";
 
 type ActionResult = { error: string } | { ok: true; email: string };
 

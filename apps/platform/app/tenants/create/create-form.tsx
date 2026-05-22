@@ -62,7 +62,12 @@ export function CreateTenantForm({ tenantBaseUrl }: { tenantBaseUrl: string }) {
           {...form.register("tenant_slug")}
         />
         <p className="text-muted-foreground text-xs">
-          Tu URL será {slug ? <strong>{tenantBaseUrl.replace("{slug}", slug)}</strong> : "{slug}." + tenantBaseUrl.replace("{slug}.", "")}
+          Tu URL será{" "}
+          {slug ? (
+            <strong>{tenantBaseUrl.replace("{slug}", slug)}</strong>
+          ) : (
+            "{slug}." + tenantBaseUrl.replace("{slug}.", "")
+          )}
         </p>
         {form.formState.errors.tenant_slug && (
           <p className="text-destructive text-xs">{form.formState.errors.tenant_slug.message}</p>

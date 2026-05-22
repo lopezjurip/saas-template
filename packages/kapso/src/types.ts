@@ -16,4 +16,8 @@ export type KapsoWebhookPayload = {
 export type KapsoToolResponse =
   | { type: "text"; text: string }
   | { type: "buttons"; text: string; buttons: Array<{ id: string; title: string }> }
-  | { type: "list"; text: string; sections: Array<{ title: string; rows: Array<{ id: string; title: string; description?: string }> }> };
+  | {
+      type: "list";
+      text: string;
+      sections: Array<{ title: string; rows: Array<{ id: string; title: string; description?: string }> }>;
+    };

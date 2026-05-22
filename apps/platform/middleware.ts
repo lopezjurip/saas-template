@@ -13,7 +13,9 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     const url = request.nextUrl.clone();

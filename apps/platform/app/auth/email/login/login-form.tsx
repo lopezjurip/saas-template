@@ -8,7 +8,7 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { sendMagicLink, signInWithPassword } from "./actions";
-import { loginSchema, type LoginValues } from "./schemas";
+import { type LoginValues, loginSchema } from "./schemas";
 
 export function LoginForm({ defaultEmail }: { defaultEmail: string }) {
   const [serverError, setServerError] = useState<string | null>(null);

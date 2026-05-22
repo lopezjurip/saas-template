@@ -46,7 +46,9 @@ export function PasswordStep() {
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div>
         <h2 className="text-sm font-medium">Crea una contraseña</h2>
-        <p className="text-muted-foreground mt-1 text-xs">Para iniciar sesión con tu correo cuando no tengas passkey.</p>
+        <p className="text-muted-foreground mt-1 text-xs">
+          Para iniciar sesión con tu correo cuando no tengas passkey.
+        </p>
       </div>
 
       <div className="flex flex-col gap-1.5">

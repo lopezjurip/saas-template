@@ -3,7 +3,7 @@
 import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { redirect } from "next/navigation";
-import { createTenantSchema, type CreateTenantValues } from "./schemas";
+import { type CreateTenantValues, createTenantSchema } from "./schemas";
 
 type ActionResult = { error: string } | { ok: true; slug: string };
 

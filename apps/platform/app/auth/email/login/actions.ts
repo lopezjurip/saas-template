@@ -3,7 +3,7 @@
 import { createServerClient } from "@packages/supabase/client.server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { loginSchema, magicLinkSchema, type LoginValues, type MagicLinkValues } from "./schemas";
+import { type LoginValues, loginSchema, type MagicLinkValues, magicLinkSchema } from "./schemas";
 
 type ActionResult = { error: string } | { ok: true };
 
