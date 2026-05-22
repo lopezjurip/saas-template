@@ -9,7 +9,7 @@
     "format": "biome check --diagnostic-level=error ."
   },
   "exports": {
-    "./*": "./src/*.ts"
+    "./templates/*": "./src/templates/*.tsx"
   },
   "dependencies": {
     "@packages/rosetta": "workspace:*",
@@ -18,8 +18,10 @@
   },
   "devDependencies": {
     "@packages/typescript-config": "workspace:*",
+    "@react-email/ui": "6.3.1",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.15",
+    "react-email": "^6.3.1",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {

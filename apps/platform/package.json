@@ -6,7 +6,7 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "PORT=${PORT:-7000} next dev --turbo",
+    "dev": "PORT=${PORT:-7003} next dev --turbo",
     "build": "next build",
     "build:dry": "tsc --noEmit",
     "start": "next start",

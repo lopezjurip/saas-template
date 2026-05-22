@@ -1,5 +1,18 @@
 import type { NextConfig } from "next";
 
+const requiredEnvVars = [
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "NEXT_PUBLIC_COOKIE_DOMAIN",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "NEXT_PUBLIC_PLATFORM_URL",
+];
+
+const missing = requiredEnvVars.filter((v) => !process.env[v]);
+if (missing.length > 0) {
+  throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+}
+
 const config: NextConfig = {
   transpilePackages: [
     "@packages/debug",

@@ -1,6 +1,7 @@
 {
   "name": "humane-turborepo",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@10.20.0",
   "engines": {
     "node": "24.x"
@@ -19,6 +20,7 @@
     "db:stop": "pnpm --filter @packages/supabase db:stop",
     "db:reset": "pnpm --filter @packages/supabase db:reset",
     "db:status": "pnpm --filter @packages/supabase db:status",
+    "db:env:development": "node --experimental-strip-types scripts/development/db-env.ts",
     "db:migrate:new": "pnpm --filter @packages/supabase db:migrate:new",
     "db:migrate:up": "pnpm --filter @packages/supabase db:migrate:up",
     "generate:types": "turbo run generate:types --filter=@packages/supabase",

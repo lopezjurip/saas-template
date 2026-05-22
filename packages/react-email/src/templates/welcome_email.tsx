@@ -53,6 +53,13 @@ const LOCALES = {
   } satisfies typeof LOCALE_ES,
 };
 
+WelcomeEmail.PreviewProps = {
+  empleadoNombre: "María González",
+  empresaNombre: "Constructora Ejemplo SpA",
+  loginUrl: "http://localhost:7003",
+  locale: "es-CL",
+} satisfies WelcomeEmailProps;
+
 export function WelcomeEmail({ locale = "es-CL", ...props }: WelcomeEmailProps) {
   return (
     <LocaleProvider locale={locale}>
@@ -60,6 +67,8 @@ export function WelcomeEmail({ locale = "es-CL", ...props }: WelcomeEmailProps) 
     </LocaleProvider>
   );
 }
+
+export default WelcomeEmail;
 
 function WelcomeEmailContent({ empleadoNombre, empresaNombre, loginUrl }: Omit<WelcomeEmailProps, "locale">) {
   const locale = useLocale();

@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "setup": "cp $CONDUCTOR_ROOT_PATH/.env.local ./.env.local; cp $CONDUCTOR_ROOT_PATH/apps/tenant/.env.local ./apps/tenant/.env.local; cp $CONDUCTOR_ROOT_PATH/apps/platform/.env.local ./apps/platform/.env.local; mkdir -p .claude && cp $CONDUCTOR_ROOT_PATH/.claude/settings.local.json ./.claude/settings.local.json; pnpm install",
+    "setup": "cp $CONDUCTOR_ROOT_PATH/.env.local ./.env.local; cp $CONDUCTOR_ROOT_PATH/apps/landing/.env.local ./apps/landing/.env.local; cp $CONDUCTOR_ROOT_PATH/apps/tenant/.env.local ./apps/tenant/.env.local; cp $CONDUCTOR_ROOT_PATH/apps/platform/.env.local ./apps/platform/.env.local; mkdir -p .claude && cp $CONDUCTOR_ROOT_PATH/.claude/settings.local.json ./.claude/settings.local.json; pnpm install",
     "run": "pnpm run -w dev --filter={apps/tenant} -- --port $CONDUCTOR_PORT",
     "archive": "rm -rf node_modules"
   }

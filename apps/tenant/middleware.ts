@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    const platformUrl = process.env.NEXT_PUBLIC_PLATFORM_URL ?? "http://localhost:7000";
+    const platformUrl = process.env.NEXT_PUBLIC_PLATFORM_URL ?? "http://localhost:7003";
     return NextResponse.redirect(`${platformUrl}/auth?next=${encodeURIComponent(request.url)}`);
   }
 
