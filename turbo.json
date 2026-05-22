@@ -23,6 +23,15 @@
       "outputs": [],
       "inputs": ["$TURBO_DEFAULT$"]
     },
+    "generate:graphql": {
+      "dependsOn": ["@packages/supabase#generate:graphql:schema"],
+      "cache": false,
+      "outputs": ["generated/graphql/**"]
+    },
+    "generate:graphql:schema": {
+      "cache": false,
+      "outputs": ["generated/graphql/graphql.schema.json", "generated/graphql/graphql.schema.graphql"]
+    },
     "generate:types": {
       "cache": false,
       "outputs": ["src/types.ts"]

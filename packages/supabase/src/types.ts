@@ -1,299 +1,314 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   public: {
     Tables: {
       organization_members: {
         Row: {
-          organization_id: number;
-          organization_member_created_at: string;
-          organization_member_disabled_at: string | null;
-          organization_member_role: Database["public"]["Enums"]["organization_member_role"];
-          organization_member_updated_at: string;
-          profile_id: string;
-        };
+          organization_id: number
+          organization_member_created_at: string
+          organization_member_disabled_at: string | null
+          organization_member_role: Database["public"]["Enums"]["organization_member_role"]
+          organization_member_updated_at: string
+          profile_id: string
+        }
         Insert: {
-          organization_id: number;
-          organization_member_created_at?: string;
-          organization_member_disabled_at?: string | null;
-          organization_member_role: Database["public"]["Enums"]["organization_member_role"];
-          organization_member_updated_at?: string;
-          profile_id: string;
-        };
+          organization_id: number
+          organization_member_created_at?: string
+          organization_member_disabled_at?: string | null
+          organization_member_role: Database["public"]["Enums"]["organization_member_role"]
+          organization_member_updated_at?: string
+          profile_id: string
+        }
         Update: {
-          organization_id?: number;
-          organization_member_created_at?: string;
-          organization_member_disabled_at?: string | null;
-          organization_member_role?: Database["public"]["Enums"]["organization_member_role"];
-          organization_member_updated_at?: string;
-          profile_id?: string;
-        };
+          organization_id?: number
+          organization_member_created_at?: string
+          organization_member_disabled_at?: string | null
+          organization_member_role?: Database["public"]["Enums"]["organization_member_role"]
+          organization_member_updated_at?: string
+          profile_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "organization_members_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["organization_id"];
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["organization_id"]
           },
           {
-            foreignKeyName: "organization_members_profile_id_fkey";
-            columns: ["profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["profile_id"];
+            foreignKeyName: "organization_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
           },
-        ];
-      };
+        ]
+      }
       organizations: {
         Row: {
-          organization_created_at: string;
-          organization_disabled_at: string | null;
-          organization_id: number;
-          organization_name: string;
-          organization_slug: string;
-          organization_updated_at: string;
-          tenant_id: number;
-        };
+          organization_created_at: string
+          organization_disabled_at: string | null
+          organization_id: number
+          organization_name: string
+          organization_slug: string
+          organization_updated_at: string
+          tenant_id: number
+        }
         Insert: {
-          organization_created_at?: string;
-          organization_disabled_at?: string | null;
-          organization_id?: number;
-          organization_name: string;
-          organization_slug: string;
-          organization_updated_at?: string;
-          tenant_id: number;
-        };
+          organization_created_at?: string
+          organization_disabled_at?: string | null
+          organization_id?: number
+          organization_name: string
+          organization_slug: string
+          organization_updated_at?: string
+          tenant_id: number
+        }
         Update: {
-          organization_created_at?: string;
-          organization_disabled_at?: string | null;
-          organization_id?: number;
-          organization_name?: string;
-          organization_slug?: string;
-          organization_updated_at?: string;
-          tenant_id?: number;
-        };
+          organization_created_at?: string
+          organization_disabled_at?: string | null
+          organization_id?: number
+          organization_name?: string
+          organization_slug?: string
+          organization_updated_at?: string
+          tenant_id?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "organizations_tenant_id_fkey";
-            columns: ["tenant_id"];
-            isOneToOne: false;
-            referencedRelation: "tenants";
-            referencedColumns: ["tenant_id"];
+            foreignKeyName: "organizations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["tenant_id"]
           },
-        ];
-      };
+        ]
+      }
       profiles: {
         Row: {
-          profile_created_at: string;
-          profile_disabled_at: string | null;
-          profile_id: string;
-          profile_name_full: string | null;
-          profile_onboarded_at: string | null;
-          profile_updated_at: string;
-        };
+          profile_created_at: string
+          profile_disabled_at: string | null
+          profile_id: string
+          profile_name_full: string | null
+          profile_onboarded_at: string | null
+          profile_updated_at: string
+        }
         Insert: {
-          profile_created_at?: string;
-          profile_disabled_at?: string | null;
-          profile_id: string;
-          profile_name_full?: string | null;
-          profile_onboarded_at?: string | null;
-          profile_updated_at?: string;
-        };
+          profile_created_at?: string
+          profile_disabled_at?: string | null
+          profile_id: string
+          profile_name_full?: string | null
+          profile_onboarded_at?: string | null
+          profile_updated_at?: string
+        }
         Update: {
-          profile_created_at?: string;
-          profile_disabled_at?: string | null;
-          profile_id?: string;
-          profile_name_full?: string | null;
-          profile_onboarded_at?: string | null;
-          profile_updated_at?: string;
-        };
-        Relationships: [];
-      };
+          profile_created_at?: string
+          profile_disabled_at?: string | null
+          profile_id?: string
+          profile_name_full?: string | null
+          profile_onboarded_at?: string | null
+          profile_updated_at?: string
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
-          tenant_created_at: string;
-          tenant_disabled_at: string | null;
-          tenant_id: number;
-          tenant_name: string;
-          tenant_slug: string;
-          tenant_updated_at: string;
-        };
+          tenant_created_at: string
+          tenant_disabled_at: string | null
+          tenant_id: number
+          tenant_name: string
+          tenant_slug: string
+          tenant_updated_at: string
+        }
         Insert: {
-          tenant_created_at?: string;
-          tenant_disabled_at?: string | null;
-          tenant_id?: number;
-          tenant_name: string;
-          tenant_slug: string;
-          tenant_updated_at?: string;
-        };
+          tenant_created_at?: string
+          tenant_disabled_at?: string | null
+          tenant_id?: number
+          tenant_name: string
+          tenant_slug: string
+          tenant_updated_at?: string
+        }
         Update: {
-          tenant_created_at?: string;
-          tenant_disabled_at?: string | null;
-          tenant_id?: number;
-          tenant_name?: string;
-          tenant_slug?: string;
-          tenant_updated_at?: string;
-        };
-        Relationships: [];
-      };
-    };
+          tenant_created_at?: string
+          tenant_disabled_at?: string | null
+          tenant_id?: number
+          tenant_name?: string
+          tenant_slug?: string
+          tenant_updated_at?: string
+        }
+        Relationships: []
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
-      email_exists: { Args: { email_to_check: string }; Returns: boolean };
-      user_auth_hook: { Args: { event: Json }; Returns: Json };
-      viewer_is_concierge: { Args: never; Returns: boolean };
-      viewer_organization_ids: { Args: never; Returns: number[] };
+      email_exists: { Args: { email_to_check: string }; Returns: boolean }
+      health_current_timestamp: { Args: never; Returns: string }
+      user_auth_hook: { Args: { event: Json }; Returns: Json }
+      viewer_is_concierge: { Args: never; Returns: boolean }
+      viewer_organization_ids: { Args: never; Returns: number[] }
       viewer_organization_validate: {
         Args: {
-          required_roles?: Database["public"]["Enums"]["organization_member_role"][];
-          target_organization_id: number;
-        };
-        Returns: boolean;
-      };
+          required_roles?: Database["public"]["Enums"]["organization_member_role"][]
+          target_organization_id: number
+        }
+        Returns: boolean
+      }
       viewer_profile: {
-        Args: { strict?: boolean };
+        Args: { strict?: boolean }
         Returns: {
-          profile_created_at: string;
-          profile_disabled_at: string | null;
-          profile_id: string;
-          profile_name_full: string | null;
-          profile_onboarded_at: string | null;
-          profile_updated_at: string;
-        };
+          profile_created_at: string
+          profile_disabled_at: string | null
+          profile_id: string
+          profile_name_full: string | null
+          profile_onboarded_at: string | null
+          profile_updated_at: string
+        }
         SetofOptions: {
-          from: "*";
-          to: "profiles";
-          isOneToOne: true;
-          isSetofReturn: true;
-        };
-      };
-      viewer_profile_id: { Args: { strict?: boolean }; Returns: string };
-      viewer_tenant_ids: { Args: never; Returns: number[] };
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: true
+        }
+      }
+      viewer_profile_id: { Args: { strict?: boolean }; Returns: string }
+      viewer_tenant_ids: { Args: never; Returns: number[] }
       viewer_tenant_validate: {
-        Args: { target_tenant_id: number };
-        Returns: boolean;
-      };
-    };
+        Args: { target_tenant_id: number }
+        Returns: boolean
+      }
+    }
     Enums: {
-      organization_member_role: "employee" | "manager" | "accountant" | "owner";
-    };
+      organization_member_role: "employee" | "manager" | "accountant" | "owner"
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R;
+      Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R;
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
       }
       ? R
       : never
-    : never;
+    : never
 
 export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I;
+      Insert: infer I
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I;
+        Insert: infer I
       }
       ? I
       : never
-    : never;
+    : never
 
 export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U;
+      Update: infer U
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U;
+        Update: infer U
       }
       ? U
       : never
-    : never;
+    : never
 
 export type Enums<
-  DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never;
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never;
+    : never
 
 export const Constants = {
   public: {
@@ -301,4 +316,5 @@ export const Constants = {
       organization_member_role: ["employee", "manager", "accountant", "owner"],
     },
   },
-} as const;
+} as const
+

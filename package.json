@@ -22,6 +22,11 @@
     "db:migrate:new": "pnpm --filter @packages/supabase db:migrate:new",
     "db:migrate:up": "pnpm --filter @packages/supabase db:migrate:up",
     "generate:types": "turbo run generate:types --filter=@packages/supabase",
+    "generate:graphql:schema": "pnpm --filter @packages/supabase run generate:graphql:schema",
+    "generate:graphql:schema:local": "pnpm --filter @packages/supabase run generate:graphql:schema:local",
+    "generate:graphql:landing": "pnpm --filter @apps/landing run generate:graphql",
+    "generate:graphql:platform": "pnpm --filter @apps/platform run generate:graphql",
+    "generate:graphql:tenant": "pnpm --filter @apps/tenant run generate:graphql",
     "typecheck:landing": "turbo run build:dry --filter=@apps/landing",
     "typecheck:platform": "turbo run build:dry --filter=@apps/platform",
     "typecheck:tenant": "turbo run build:dry --filter=@apps/tenant"

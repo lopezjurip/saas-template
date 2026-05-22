@@ -1,0 +1,29 @@
+{
+  "name": "@packages/debug",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "exports": {
+    "./react-logger": "./src/react-logger.tsx",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "build:dry": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "format": "biome check --diagnostic-level=error ."
+  },
+  "dependencies": {
+    "diary": "^0.4.5"
+  },
+  "devDependencies": {
+    "@packages/typescript-config": "workspace:*",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.15",
+    "react": "^19.2.6",
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}

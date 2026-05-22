@@ -10,9 +10,12 @@
     "build": "next build",
     "build:dry": "tsc --noEmit",
     "start": "next start",
-    "format": "biome check --diagnostic-level=error ."
+    "format": "biome check --diagnostic-level=error .",
+    "generate:graphql": "graphql-codegen -c graphql.config.ts"
   },
   "dependencies": {
+    "@packages/debug": "workspace:*",
+    "@packages/graphy": "workspace:*",
     "@packages/kapso": "workspace:*",
     "@packages/utils": "workspace:*",
     "@packages/react-email": "workspace:*",
@@ -28,7 +31,11 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^5.0.7",
+    "@graphql-codegen/client-preset": "^4.7.0",
+    "@graphql-typed-document-node/core": "^3.2.0",
     "@packages/typescript-config": "workspace:*",
+    "graphql": "^16.13.2",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.15",

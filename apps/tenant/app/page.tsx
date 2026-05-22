@@ -1,4 +1,5 @@
 import { createServerClient } from "@packages/supabase/client.server";
+import { GRAPHY_SERVER_ANON_CREATE } from "~/lib/graphy/graphy.server";
 import { Logo } from "@packages/ui-common/logo";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
@@ -8,36 +9,55 @@ import {
   CardHeader,
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
+import type { ResultOf } from "@graphql-typed-document-node/core";
 import { headers } from "next/headers";
+import { gql } from "~/generated/graphql";
+
+const TenantOrganizationsQuery = gql(`
+  query TenantOrganizationsQuery($tenantId: Int!) {
+    organizationsCollection(
+      filter: {
+        organization_disabled_at: { is: NULL }
+        tenant_id: { eq: $tenantId }
+      }
+      orderBy: [{ organization_name: AscNullsLast }]
+    ) {
+      edges {
+        node {
+          organization_id
+          organization_name
+          organization_slug
+        }
+      }
+    }
+  }
+`);
+
+type TenantOrganizationsQueryType = ResultOf<typeof TenantOrganizationsQuery>;
+type TenantOrganization = NonNullable<
+  NonNullable<TenantOrganizationsQueryType["organizationsCollection"]>["edges"][number]["node"]
+>;
 
 type OrganizationClaim = { id: number; role: string };
 
 export default async function TenantHomePage() {
   const supabase = await createServerClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
   const headerList = await headers();
 
   const tenantSlug = headerList.get("x-tenant-slug") ?? "";
   const tenantId = Number(headerList.get("x-tenant-id") ?? "0");
 
+  const user = session?.user;
   const allOrgClaims = (user?.app_metadata?.organizations ?? []) as OrganizationClaim[];
 
-  // Look up which of the user's orgs belong to this tenant.
-  // biome-ignore lint/suspicious/noExplicitAny: TS6 + supabase-js inference loses Row type on chained select
-  const orgsInTenantRaw = await (supabase.from("organizations") as any)
-    .select("organization_id, organization_slug, organization_name")
-    .eq("tenant_id", tenantId)
-    .in(
-      "organization_id",
-      allOrgClaims.map((o) => o.id),
-    );
-  const orgsInTenant = (orgsInTenantRaw.data ?? []) as Array<{
-    organization_id: number;
-    organization_slug: string;
-    organization_name: string;
-  }>;
+  const graphy = GRAPHY_SERVER_ANON_CREATE(session);
+  const { data } = await graphy.query({ query: TenantOrganizationsQuery, variables: { tenantId } });
+  const orgsInTenant: TenantOrganization[] = (
+    data?.organizationsCollection?.edges?.map((e) => e.node).filter((n): n is TenantOrganization => n != null) ?? []
+  );
 
   const fullName = (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "Tú";
   const platformUrl = process.env.NEXT_PUBLIC_PLATFORM_URL ?? "http://localhost:7000";

@@ -82,6 +82,21 @@ create or replace function public.email_exists(email_to_check text)
 
 grant execute on function public.email_exists(text) to anon, authenticated;
 
+-- Lightweight liveness probe — returns DB time so callers can verify connectivity and clock.
+create or replace function public.health_current_timestamp()
+  returns timestamptz
+  stable
+  strict
+  parallel safe
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select current_timestamp;
+  $$;
+
+grant execute on function public.health_current_timestamp() to anon, authenticated;
+
 -- ============================================================
 -- profiles
 -- ============================================================

@@ -1,0 +1,946 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+"""A high precision floating point value represented as a string"""
+scalar BigFloat
+
+"""
+Boolean expression comparing fields on type "BigFloat"
+"""
+input BigFloatFilter {
+  eq: BigFloat
+  gt: BigFloat
+  gte: BigFloat
+  in: [BigFloat!]
+  is: FilterIs
+  lt: BigFloat
+  lte: BigFloat
+  neq: BigFloat
+}
+
+"""
+Boolean expression comparing fields on type "BigFloatList"
+"""
+input BigFloatListFilter {
+  containedBy: [BigFloat!]
+  contains: [BigFloat!]
+  eq: [BigFloat!]
+  is: FilterIs
+  overlaps: [BigFloat!]
+}
+
+"""An arbitrary size integer represented as a string"""
+scalar BigInt
+
+"""
+Boolean expression comparing fields on type "BigInt"
+"""
+input BigIntFilter {
+  eq: BigInt
+  gt: BigInt
+  gte: BigInt
+  in: [BigInt!]
+  is: FilterIs
+  lt: BigInt
+  lte: BigInt
+  neq: BigInt
+}
+
+"""
+Boolean expression comparing fields on type "BigIntList"
+"""
+input BigIntListFilter {
+  containedBy: [BigInt!]
+  contains: [BigInt!]
+  eq: [BigInt!]
+  is: FilterIs
+  overlaps: [BigInt!]
+}
+
+"""
+Boolean expression comparing fields on type "Boolean"
+"""
+input BooleanFilter {
+  eq: Boolean
+  is: FilterIs
+}
+
+"""
+Boolean expression comparing fields on type "BooleanList"
+"""
+input BooleanListFilter {
+  containedBy: [Boolean!]
+  contains: [Boolean!]
+  eq: [Boolean!]
+  is: FilterIs
+  overlaps: [Boolean!]
+}
+
+"""
+An opaque string using for tracking a position in results during pagination
+"""
+scalar Cursor
+
+"""A date without time information"""
+scalar Date
+
+"""
+Boolean expression comparing fields on type "Date"
+"""
+input DateFilter {
+  eq: Date
+  gt: Date
+  gte: Date
+  in: [Date!]
+  is: FilterIs
+  lt: Date
+  lte: Date
+  neq: Date
+}
+
+"""
+Boolean expression comparing fields on type "DateList"
+"""
+input DateListFilter {
+  containedBy: [Date!]
+  contains: [Date!]
+  eq: [Date!]
+  is: FilterIs
+  overlaps: [Date!]
+}
+
+"""A date and time"""
+scalar Datetime
+
+"""
+Boolean expression comparing fields on type "Datetime"
+"""
+input DatetimeFilter {
+  eq: Datetime
+  gt: Datetime
+  gte: Datetime
+  in: [Datetime!]
+  is: FilterIs
+  lt: Datetime
+  lte: Datetime
+  neq: Datetime
+}
+
+"""
+Boolean expression comparing fields on type "DatetimeList"
+"""
+input DatetimeListFilter {
+  containedBy: [Datetime!]
+  contains: [Datetime!]
+  eq: [Datetime!]
+  is: FilterIs
+  overlaps: [Datetime!]
+}
+
+enum FilterIs {
+  NOT_NULL
+  NULL
+}
+
+"""
+Boolean expression comparing fields on type "Float"
+"""
+input FloatFilter {
+  eq: Float
+  gt: Float
+  gte: Float
+  in: [Float!]
+  is: FilterIs
+  lt: Float
+  lte: Float
+  neq: Float
+}
+
+"""
+Boolean expression comparing fields on type "FloatList"
+"""
+input FloatListFilter {
+  containedBy: [Float!]
+  contains: [Float!]
+  eq: [Float!]
+  is: FilterIs
+  overlaps: [Float!]
+}
+
+"""
+Boolean expression comparing fields on type "ID"
+"""
+input IDFilter {
+  eq: ID
+}
+
+"""
+Boolean expression comparing fields on type "Int"
+"""
+input IntFilter {
+  eq: Int
+  gt: Int
+  gte: Int
+  in: [Int!]
+  is: FilterIs
+  lt: Int
+  lte: Int
+  neq: Int
+}
+
+"""
+Boolean expression comparing fields on type "IntList"
+"""
+input IntListFilter {
+  containedBy: [Int!]
+  contains: [Int!]
+  eq: [Int!]
+  is: FilterIs
+  overlaps: [Int!]
+}
+
+"""A Javascript Object Notation value serialized as a string"""
+scalar JSON
+
+"""The root type for creating and mutating data"""
+type Mutation {
+  """
+  Deletes zero or more records from the `organization_members` collection
+  """
+  deleteFromorganization_membersCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: organization_membersFilter
+  ): organization_membersDeleteResponse!
+  """Deletes zero or more records from the `organizations` collection"""
+  deleteFromorganizationsCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: organizationsFilter
+  ): organizationsDeleteResponse!
+  """Deletes zero or more records from the `profiles` collection"""
+  deleteFromprofilesCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: profilesFilter
+  ): profilesDeleteResponse!
+  """Deletes zero or more records from the `tenants` collection"""
+  deleteFromtenantsCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: tenantsFilter
+  ): tenantsDeleteResponse!
+  """Adds one or more `organization_members` records to the collection"""
+  insertIntoorganization_membersCollection(objects: [organization_membersInsertInput!]!): organization_membersInsertResponse
+  """Adds one or more `organizations` records to the collection"""
+  insertIntoorganizationsCollection(objects: [organizationsInsertInput!]!): organizationsInsertResponse
+  """Adds one or more `profiles` records to the collection"""
+  insertIntoprofilesCollection(objects: [profilesInsertInput!]!): profilesInsertResponse
+  """Adds one or more `tenants` records to the collection"""
+  insertIntotenantsCollection(objects: [tenantsInsertInput!]!): tenantsInsertResponse
+  """Updates zero or more records in the `organization_members` collection"""
+  updateorganization_membersCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: organization_membersFilter
+    """
+    Fields that are set will be updated for all records matching the `filter`
+    """
+    set: organization_membersUpdateInput!
+  ): organization_membersUpdateResponse!
+  """Updates zero or more records in the `organizations` collection"""
+  updateorganizationsCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: organizationsFilter
+    """
+    Fields that are set will be updated for all records matching the `filter`
+    """
+    set: organizationsUpdateInput!
+  ): organizationsUpdateResponse!
+  """Updates zero or more records in the `profiles` collection"""
+  updateprofilesCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: profilesFilter
+    """
+    Fields that are set will be updated for all records matching the `filter`
+    """
+    set: profilesUpdateInput!
+  ): profilesUpdateResponse!
+  """Updates zero or more records in the `tenants` collection"""
+  updatetenantsCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: tenantsFilter
+    """
+    Fields that are set will be updated for all records matching the `filter`
+    """
+    set: tenantsUpdateInput!
+  ): tenantsUpdateResponse!
+}
+
+interface Node {
+  """Retrieves a record by `ID`"""
+  nodeId: ID!
+}
+
+"""Any type not handled by the type system"""
+scalar Opaque
+
+"""
+Boolean expression comparing fields on type "Opaque"
+"""
+input OpaqueFilter {
+  eq: Opaque
+  is: FilterIs
+}
+
+"""Defines a per-field sorting order"""
+enum OrderByDirection {
+  """Ascending order, nulls first"""
+  AscNullsFirst
+  """Ascending order, nulls last"""
+  AscNullsLast
+  """Descending order, nulls first"""
+  DescNullsFirst
+  """Descending order, nulls last"""
+  DescNullsLast
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+}
+
+"""The root type for querying data"""
+type Query {
+  email_exists(email_to_check: String!): Boolean
+  health_current_timestamp: Datetime
+  """Retrieve a record by its `ID`"""
+  node(
+    """The record's `ID`"""
+    nodeId: ID!
+  ): Node
+  """A pagable collection of type `organization_members`"""
+  organization_membersCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: organization_membersFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [organization_membersOrderBy!]
+  ): organization_membersConnection
+  """A pagable collection of type `organizations`"""
+  organizationsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: organizationsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [organizationsOrderBy!]
+  ): organizationsConnection
+  """A pagable collection of type `profiles`"""
+  profilesCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: profilesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [profilesOrderBy!]
+  ): profilesConnection
+  """A pagable collection of type `tenants`"""
+  tenantsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: tenantsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [tenantsOrderBy!]
+  ): tenantsConnection
+  viewer_is_concierge: Boolean
+  viewer_profile(strict: Boolean = false): profiles
+  viewer_profile_id(strict: Boolean = false): UUID
+  viewer_tenant_validate(target_tenant_id: Int!): Boolean
+}
+
+"""
+Boolean expression comparing fields on type "String"
+"""
+input StringFilter {
+  eq: String
+  gt: String
+  gte: String
+  ilike: String
+  in: [String!]
+  iregex: String
+  is: FilterIs
+  like: String
+  lt: String
+  lte: String
+  neq: String
+  regex: String
+  startsWith: String
+}
+
+"""
+Boolean expression comparing fields on type "StringList"
+"""
+input StringListFilter {
+  containedBy: [String!]
+  contains: [String!]
+  eq: [String!]
+  is: FilterIs
+  overlaps: [String!]
+}
+
+"""A time without date information"""
+scalar Time
+
+"""
+Boolean expression comparing fields on type "Time"
+"""
+input TimeFilter {
+  eq: Time
+  gt: Time
+  gte: Time
+  in: [Time!]
+  is: FilterIs
+  lt: Time
+  lte: Time
+  neq: Time
+}
+
+"""
+Boolean expression comparing fields on type "TimeList"
+"""
+input TimeListFilter {
+  containedBy: [Time!]
+  contains: [Time!]
+  eq: [Time!]
+  is: FilterIs
+  overlaps: [Time!]
+}
+
+"""A universally unique identifier"""
+scalar UUID
+
+"""
+Boolean expression comparing fields on type "UUID"
+"""
+input UUIDFilter {
+  eq: UUID
+  in: [UUID!]
+  is: FilterIs
+  neq: UUID
+}
+
+"""
+Boolean expression comparing fields on type "UUIDList"
+"""
+input UUIDListFilter {
+  containedBy: [UUID!]
+  contains: [UUID!]
+  eq: [UUID!]
+  is: FilterIs
+  overlaps: [UUID!]
+}
+
+enum organization_member_role {
+  accountant
+  employee
+  manager
+  owner
+}
+
+"""
+Boolean expression comparing fields on type "organization_member_role"
+"""
+input organization_member_roleFilter {
+  eq: organization_member_role
+  in: [organization_member_role!]
+  is: FilterIs
+  neq: organization_member_role
+}
+
+type organization_members implements Node {
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  organization_id: Int!
+  organization_member_created_at: Datetime!
+  organization_member_disabled_at: Datetime
+  organization_member_role: organization_member_role!
+  organization_member_updated_at: Datetime!
+  organizations: organizations
+  profile_id: UUID!
+  profiles: profiles
+}
+
+type organization_membersConnection {
+  edges: [organization_membersEdge!]!
+  pageInfo: PageInfo!
+}
+
+type organization_membersDeleteResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [organization_members!]!
+}
+
+type organization_membersEdge {
+  cursor: String!
+  node: organization_members!
+}
+
+input organization_membersFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [organization_membersFilter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: organization_membersFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [organization_membersFilter!]
+  organization_id: IntFilter
+  organization_member_created_at: DatetimeFilter
+  organization_member_disabled_at: DatetimeFilter
+  organization_member_role: organization_member_roleFilter
+  organization_member_updated_at: DatetimeFilter
+  profile_id: UUIDFilter
+}
+
+input organization_membersInsertInput {
+  organization_id: Int
+  organization_member_created_at: Datetime
+  organization_member_disabled_at: Datetime
+  organization_member_role: organization_member_role
+  organization_member_updated_at: Datetime
+  profile_id: UUID
+}
+
+type organization_membersInsertResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [organization_members!]!
+}
+
+input organization_membersOrderBy {
+  organization_id: OrderByDirection
+  organization_member_created_at: OrderByDirection
+  organization_member_disabled_at: OrderByDirection
+  organization_member_role: OrderByDirection
+  organization_member_updated_at: OrderByDirection
+  profile_id: OrderByDirection
+}
+
+input organization_membersUpdateInput {
+  organization_id: Int
+  organization_member_created_at: Datetime
+  organization_member_disabled_at: Datetime
+  organization_member_role: organization_member_role
+  organization_member_updated_at: Datetime
+  profile_id: UUID
+}
+
+type organization_membersUpdateResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [organization_members!]!
+}
+
+type organizations implements Node {
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  organization_created_at: Datetime!
+  organization_disabled_at: Datetime
+  organization_id: Int!
+  organization_membersCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: organization_membersFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [organization_membersOrderBy!]
+  ): organization_membersConnection
+  organization_name: String!
+  organization_slug: String!
+  organization_updated_at: Datetime!
+  tenant_id: Int!
+  tenants: tenants
+}
+
+type organizationsConnection {
+  edges: [organizationsEdge!]!
+  pageInfo: PageInfo!
+}
+
+type organizationsDeleteResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [organizations!]!
+}
+
+type organizationsEdge {
+  cursor: String!
+  node: organizations!
+}
+
+input organizationsFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [organizationsFilter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: organizationsFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [organizationsFilter!]
+  organization_created_at: DatetimeFilter
+  organization_disabled_at: DatetimeFilter
+  organization_id: IntFilter
+  organization_name: StringFilter
+  organization_slug: StringFilter
+  organization_updated_at: DatetimeFilter
+  tenant_id: IntFilter
+}
+
+input organizationsInsertInput {
+  organization_created_at: Datetime
+  organization_disabled_at: Datetime
+  organization_name: String
+  organization_slug: String
+  organization_updated_at: Datetime
+  tenant_id: Int
+}
+
+type organizationsInsertResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [organizations!]!
+}
+
+input organizationsOrderBy {
+  organization_created_at: OrderByDirection
+  organization_disabled_at: OrderByDirection
+  organization_id: OrderByDirection
+  organization_name: OrderByDirection
+  organization_slug: OrderByDirection
+  organization_updated_at: OrderByDirection
+  tenant_id: OrderByDirection
+}
+
+input organizationsUpdateInput {
+  organization_created_at: Datetime
+  organization_disabled_at: Datetime
+  organization_name: String
+  organization_slug: String
+  organization_updated_at: Datetime
+  tenant_id: Int
+}
+
+type organizationsUpdateResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [organizations!]!
+}
+
+type profiles implements Node {
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  organization_membersCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: organization_membersFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [organization_membersOrderBy!]
+  ): organization_membersConnection
+  profile_created_at: Datetime!
+  profile_disabled_at: Datetime
+  profile_id: UUID!
+  profile_name_full: String
+  profile_onboarded_at: Datetime
+  profile_updated_at: Datetime!
+}
+
+type profilesConnection {
+  edges: [profilesEdge!]!
+  pageInfo: PageInfo!
+}
+
+type profilesDeleteResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [profiles!]!
+}
+
+type profilesEdge {
+  cursor: String!
+  node: profiles!
+}
+
+input profilesFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [profilesFilter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: profilesFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [profilesFilter!]
+  profile_created_at: DatetimeFilter
+  profile_disabled_at: DatetimeFilter
+  profile_id: UUIDFilter
+  profile_name_full: StringFilter
+  profile_onboarded_at: DatetimeFilter
+  profile_updated_at: DatetimeFilter
+}
+
+input profilesInsertInput {
+  profile_created_at: Datetime
+  profile_disabled_at: Datetime
+  profile_id: UUID
+  profile_name_full: String
+  profile_onboarded_at: Datetime
+  profile_updated_at: Datetime
+}
+
+type profilesInsertResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [profiles!]!
+}
+
+input profilesOrderBy {
+  profile_created_at: OrderByDirection
+  profile_disabled_at: OrderByDirection
+  profile_id: OrderByDirection
+  profile_name_full: OrderByDirection
+  profile_onboarded_at: OrderByDirection
+  profile_updated_at: OrderByDirection
+}
+
+input profilesUpdateInput {
+  profile_created_at: Datetime
+  profile_disabled_at: Datetime
+  profile_id: UUID
+  profile_name_full: String
+  profile_onboarded_at: Datetime
+  profile_updated_at: Datetime
+}
+
+type profilesUpdateResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [profiles!]!
+}
+
+type tenants implements Node {
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  organizationsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: organizationsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [organizationsOrderBy!]
+  ): organizationsConnection
+  tenant_created_at: Datetime!
+  tenant_disabled_at: Datetime
+  tenant_id: Int!
+  tenant_name: String!
+  tenant_slug: String!
+  tenant_updated_at: Datetime!
+}
+
+type tenantsConnection {
+  edges: [tenantsEdge!]!
+  pageInfo: PageInfo!
+}
+
+type tenantsDeleteResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [tenants!]!
+}
+
+type tenantsEdge {
+  cursor: String!
+  node: tenants!
+}
+
+input tenantsFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [tenantsFilter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: tenantsFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [tenantsFilter!]
+  tenant_created_at: DatetimeFilter
+  tenant_disabled_at: DatetimeFilter
+  tenant_id: IntFilter
+  tenant_name: StringFilter
+  tenant_slug: StringFilter
+  tenant_updated_at: DatetimeFilter
+}
+
+input tenantsInsertInput {
+  tenant_created_at: Datetime
+  tenant_disabled_at: Datetime
+  tenant_name: String
+  tenant_slug: String
+  tenant_updated_at: Datetime
+}
+
+type tenantsInsertResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [tenants!]!
+}
+
+input tenantsOrderBy {
+  tenant_created_at: OrderByDirection
+  tenant_disabled_at: OrderByDirection
+  tenant_id: OrderByDirection
+  tenant_name: OrderByDirection
+  tenant_slug: OrderByDirection
+  tenant_updated_at: OrderByDirection
+}
+
+input tenantsUpdateInput {
+  tenant_created_at: Datetime
+  tenant_disabled_at: Datetime
+  tenant_name: String
+  tenant_slug: String
+  tenant_updated_at: Datetime
+}
+
+type tenantsUpdateResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [tenants!]!
+}

@@ -1,0 +1,33 @@
+{
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "js/ts.preferences.autoImportSpecifierExcludeRegexes": [
+    "^lodash$" // Avoid importing lodash root.
+  ],
+  "extensions.ignoreRecommendations": true,
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+  "tailwindCSS.classAttributes": ["class", "className", "tw"],
+  "tailwindCSS.showPixelEquivalents": true,
+  "tailwindCSS.emmetCompletions": true,
+  "tailwindCSS.experimental.configFile": {
+    "apps/tenant/styles/globals.css": "apps/tenant/**",
+    "apps/landing/styles/globals.css": "apps/landing/**",
+    "apps/platform/styles/globals.css": "apps/platform/**"
+  },
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.exclude": {
+    ".claude/worktrees": true
+  },
+  "search.exclude": {
+    ".claude/worktrees": true
+  },
+  "cSpell.language": "en,es-ES",
+  "cSpell.words": ["codegen", "supabase", "whatsapp"]
+}

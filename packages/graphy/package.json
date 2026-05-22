@@ -1,0 +1,34 @@
+{
+  "name": "@packages/graphy",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "exports": {
+    "./react": "./src/react.tsx",
+    "./react-pagination": "./src/react-pagination.tsx",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "build:dry": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "format": "biome check --diagnostic-level=error ."
+  },
+  "dependencies": {
+    "@packages/debug": "workspace:*",
+    "@packages/utils": "workspace:*",
+    "swr": "^2.4.1"
+  },
+  "devDependencies": {
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@packages/typescript-config": "workspace:*",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.15",
+    "graphql": "^16.13.2",
+    "react": "^19.2.6",
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}
