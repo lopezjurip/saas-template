@@ -4,7 +4,7 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "dev": "PORT=${PORT:-8102} webpack serve --mode development --open",
+    "dev": "PORT=${PORT:-7102} webpack serve --mode development --open",
     "build:dry": "tsc --noEmit",
     "format": "biome check --diagnostic-level=error ."
   },

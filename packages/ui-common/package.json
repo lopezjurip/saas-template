@@ -1,5 +1,5 @@
 {
-  "name": "@packages/shadcn",
+  "name": "@packages/ui-common",
   "version": "0.0.0",
   "private": true,
   "sideEffects": false,
@@ -8,15 +8,17 @@
     "format": "biome check --diagnostic-level=error ."
   },
   "exports": {
-    "./globals.css": "./src/globals.css",
-    "./lib/*": "./src/lib/*.ts",
-    "./components/*": "./src/components/*.tsx",
-    "./hooks/*": "./src/hooks/*.ts"
+    "./shadcn/globals.css": "./src/shadcn/globals.css",
+    "./shadcn/lib/*": "./src/shadcn/lib/*.ts",
+    "./shadcn/components/*": "./src/shadcn/components/*.tsx",
+    "./shadcn/hooks/*": "./src/shadcn/hooks/*.ts",
+    "./*": "./src/*.tsx"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
+    "radix-ui": "^1.4.3",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {

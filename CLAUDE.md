@@ -20,7 +20,7 @@ Always use **pnpm**. Never npm or yarn.
 | Package manager | pnpm 10.x |
 | Monorepo | Turborepo + pnpm workspaces |
 | Frontend | Next.js 16 (App Router), React 19, TypeScript 6 |
-| Styling | Tailwind CSS 4.x + shadcn/ui (new-york, in `packages/shadcn`) |
+| Styling | Tailwind CSS 4.x + shadcn/ui (new-york, in `packages/ui-common/src/shadcn`) |
 | API | Server Actions + tRPC (type-safe end-to-end) |
 | Database + Auth | Supabase (Postgres + Auth + Storage + Realtime + RLS) |
 | ORM | Supabase (generated types via CLI, no Drizzle) |
@@ -41,12 +41,12 @@ Always use **pnpm**. Never npm or yarn.
 ```
 humane/
 ├── apps/
-│   ├── landing/              # @humane/landing — www.humane.cl — marketing site
+│   ├── landing/              # @apps/landing — www.humane.cl — marketing site
 │   │   ├── app/
 │   │   ├── styles/globals.css
 │   │   └── next.config.ts
 │   │
-│   ├── app/                  # @humane/platform — app.humane.cl — auth, account, internal ops
+│   ├── app/                  # @apps/platform — app.humane.cl — auth, account, internal ops
 │   │   ├── app/
 │   │   │   ├── (auth)/       # sign in, sign up, password reset
 │   │   │   ├── (account)/    # profile, billing, org switcher
@@ -55,7 +55,7 @@ humane/
 │   │   ├── styles/globals.css
 │   │   └── next.config.ts
 │   │
-│   └── tenant/               # @humane/tenant — {slug}.humane.cl — the product
+│   └── tenant/               # @apps/tenant — {slug}.humane.cl — the product
 │       ├── app/
 │       │   ├── (tenant)/
 │       │   │   ├── admin/    # Contadora / HR admin surface
@@ -68,7 +68,7 @@ humane/
 │
 ├── packages/
 │   ├── typescript-config/    # @packages/typescript-config — base, nextjs, react-library presets
-│   ├── shadcn/               # @packages/shadcn — shadcn/ui primitives + cn utility
+│   ├── ui-common/            # @packages/ui-common — shadcn primitives (src/shadcn/**) + shared components (src/**)
 │   ├── supabase/             # @packages/supabase — client factories + generated types
 │   ├── react-email/          # @packages/react-email — Resend email templates
 │   ├── react-pdf/            # @packages/react-pdf — PDF templates (liquidaciones, contratos, etc.)
@@ -81,18 +81,18 @@ humane/
 
 | App | Package | Domain | Contains |
 |---|---|---|---|
-| `landing` | `@humane/landing` | `www.humane.cl` | Marketing, pricing, blog, SEO. Zero auth, zero PII. Only uses `@packages/shadcn`. |
-| `app` | `@humane/platform` | `app.humane.cl` | Auth, account home, billing, profile, internal concierge ops. |
-| `tenant` | `@humane/tenant` | `{slug}.humane.cl` | The product: admin, manager, empleado surfaces + MCP endpoint. |
+| `landing` | `@apps/landing` | `www.humane.cl` | Marketing, pricing, blog, SEO. Zero auth, zero PII. Only uses `@packages/ui-common`. |
+| `app` | `@apps/platform` | `app.humane.cl` | Auth, account home, billing, profile, internal concierge ops. |
+| `tenant` | `@apps/tenant` | `{slug}.humane.cl` | The product: admin, manager, empleado surfaces + MCP endpoint. |
 
 ### Package Scopes
 
-- `@humane/*` — apps
+- `@apps/*` — apps
 - `@packages/*` — shared packages
 
 ### Isolation Rules
 
-- `apps/landing` must NEVER import from anything that touches PII or auth. It can only use `@packages/shadcn`.
+- `apps/landing` must NEVER import from anything that touches PII or auth. It can only use `@packages/ui-common`.
 - `apps/platform` and `apps/tenant` can import any `@packages/*`.
 - Never import directly across apps — extract to a package.
 
@@ -106,12 +106,12 @@ humane/
 
 | Service | Default port | URL |
 |---|---|---|
-| `apps/platform` | 8000 | http://localhost:8000 |
-| `apps/landing` | 8001 | http://localhost:8001 |
-| `apps/tenant` | 8002 | http://localhost:8002 |
-| Supabase Studio | 8100 | http://localhost:8100 |
-| `packages/react-email` | 8101 | http://localhost:8101 |
-| `packages/react-pdf` | 8102 | http://localhost:8102 |
+| `apps/platform` | 7000 | http://localhost:7000 |
+| `apps/landing` | 7001 | http://localhost:7001 |
+| `apps/tenant` | 7002 | http://localhost:7002 |
+| Supabase Studio | 7100 | http://localhost:7100 |
+| `packages/react-email` | 7101 | http://localhost:7101 |
+| `packages/react-pdf` | 7102 | http://localhost:7102 |
 
 ## Skills
 
@@ -131,17 +131,21 @@ pnpm dlx skills add https://github.com/vercel-labs/skills --skill find-skills
 
 Skills run with full agent permissions — review a skill's source before using it in production.
 
-## shadcn/ui in packages/shadcn
+## `@packages/ui-common`
 
-shadcn components live in `packages/shadcn`, not inside individual apps.
+Shared UI lives in `packages/ui-common`. It has two layers:
 
-- Run `pnpm dlx shadcn add <component>` from `packages/shadcn/` to add components
-- Components are exported via the `exports` map in `packages/shadcn/package.json`
-- Import as: `import { Button } from "@packages/shadcn/components/ui/button"`
-- Import `cn`: `import { cn } from "@packages/shadcn/lib/utils"`
-- Each app's `globals.css` imports `../../packages/shadcn/src/globals.css` for CSS variables
-- Each app's `globals.css` includes `@source "../../packages/shadcn/src"` for Tailwind scanning
-- Each app's `next.config.ts` includes `@packages/shadcn` in `transpilePackages`
+- **`src/shadcn/**`** — shadcn/ui primitives + `cn` utility. Managed by the shadcn CLI.
+- **`src/**`** — hand-written shared components (e.g. `logo.tsx`, brand-specific UI). One file per component, no barrels.
+
+Conventions:
+
+- Run `pnpm dlx shadcn add <component>` from `packages/ui-common/` to add primitives — they land in `src/shadcn/components/ui/`.
+- Import primitives: `import { Button } from "@packages/ui-common/shadcn/components/ui/button"`
+- Import `cn`: `import { cn } from "@packages/ui-common/shadcn/lib/utils"`
+- Import hand-written components: `import { Logo } from "@packages/ui-common/logo"`
+- Each app's `globals.css` imports `../../packages/ui-common/src/shadcn/globals.css` for CSS variables and `@source "../../packages/ui-common/src"` for Tailwind scanning.
+- Each app's `next.config.ts` includes `@packages/ui-common` in `transpilePackages`.
 
 ## Kapso Integration
 
@@ -165,13 +169,37 @@ No incremental migrations yet. All schema lives in a single file: `packages/supa
 - `pnpm db:start` / `pnpm db:stop` — start/stop local Supabase (Docker)
 - `pnpm db:reset` — drop everything, replay schema, run seed
 - `pnpm generate:types` — regenerate `packages/supabase/src/types.ts` from local DB
-- Supabase Studio: `http://127.0.0.1:8100`
+- Supabase Studio: `http://127.0.0.1:7100`
 
 ## Multi-tenancy & RLS
 
-Every table with tenant data has `tenant_id` column. Supabase RLS enforces isolation at the DB layer. Never rely on application-level filtering alone.
+Two-level model:
 
-When writing queries: always scope by `tenant_id`. When writing RLS policies: the JWT contains `tenant_id` claim set during auth.
+- `public.tenants` (int4 serial PK) — the billing / customer relationship. Subdomain `{tenant_slug}.humane.cl` routes to a tenant.
+- `public.organizations` (int4 serial PK, FK to tenants) — the actual operating unit. Most tenants have exactly one organization that mirrors the tenant; large companies have several (e.g. one per country / branch).
+- `public.organization_members(organization_id, profile_id, role)` — users belong to organizations, not directly to tenants. The set of tenants a user can access is derived from the tenants of their organizations.
+
+Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to filter, cheap in indexes) and, when data is org-scoped, also `organization_id int`. Supabase RLS enforces isolation at the DB layer — never rely on application-level filtering alone.
+
+**Active tenant comes from the subdomain.** `apps/tenant/middleware.ts` resolves `{tenant_slug}.humane.cl` → `tenant_id` via the service-role client and forwards `x-tenant-id` to downstream code. Server-side queries must explicitly `.eq("tenant_id", ...)` with that value. Org switching happens inside the app (per-tab or per-session selection).
+
+**JWT carries two arrays** (`public.user_auth_hook` on token issuance):
+- `app_metadata.tenants: [{id, slug}]` — distinct tenants the user has any org membership in
+- `app_metadata.organizations: [{id, role}]` — every organization the user is a member of, with role
+
+Plus `app_metadata.is_concierge: boolean` for the global internal role and `app_metadata.onboarded: boolean` for the onboarding gate.
+
+After any `organization_members` (or `tenants` / `organizations`) mutation, call `supabase.auth.refreshSession()` so the client picks up the new claims; for revocations also call `supabase.auth.admin.signOut(profile_id)` server-side.
+
+**Use the `viewer_*` SQL helpers in RLS policies, not raw JWT parsing:**
+- `public.viewer_profile_id()` / `public.viewer_profile()` — current user (with optional `strict => true`)
+- `public.viewer_tenant_ids()` — set of tenant_ids from JWT
+- `public.viewer_tenant_validate(tenant_id)` — true iff caller belongs to any org in this tenant
+- `public.viewer_organization_ids()` — set of organization_ids from JWT
+- `public.viewer_organization_validate(organization_id, roles[])` — true iff caller is a member of this org, optionally role-restricted
+- `public.viewer_is_concierge()` — global internal role
+
+Per-organization roles use the `public.organization_member_role` enum (`employee`, `manager`, `accountant`, `owner`). Enum values are in English; the UI localizes to Spanish. Concierge is global and lives in `protected.concierge_users` (service-role only).
 
 ## User Roles
 
@@ -234,7 +262,7 @@ Critical safety rule for SQL. Always explicit.
 
 ### Imports
 - Use `~/` alias for imports within each app's root (e.g., `~/components/...` in `apps/tenant/`)
-- Workspace packages: `@packages/shadcn`, `@packages/supabase`, `@packages/kapso`, `@packages/react-email`, `@packages/react-pdf`
+- Workspace packages: `@packages/ui-common`, `@packages/supabase`, `@packages/kapso`, `@packages/react-email`, `@packages/react-pdf`
 - Never import across apps directly — extract to a package instead
 
 ### Code Style
@@ -268,4 +296,4 @@ Stage normally in git. Ignore when writing commit messages:
 - Don't process payroll without checking `04-legal-regulatory-compendium.md` first
 - Don't let `apps/landing/` import anything that touches PII or auth
 - Don't import across apps — extract to a package instead
-- Don't put shadcn components in individual apps — they belong in `packages/shadcn`
+- Don't put shadcn components in individual apps — they belong in `packages/ui-common/src/shadcn`

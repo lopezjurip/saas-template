@@ -14,12 +14,12 @@ pnpm dev        # runs all apps and packages in parallel
 
 | Service | Default port | URL |
 |---|---|---|
-| `apps/platform` | 8000 | http://localhost:8000 |
-| `apps/landing` | 8001 | http://localhost:8001 |
-| `apps/tenant` | 8002 | http://localhost:8002 |
-| Supabase Studio | 8100 | http://localhost:8100 |
-| `packages/react-email` | 8101 | http://localhost:8101 |
-| `packages/react-pdf` | 8102 | http://localhost:8102 |
+| `apps/platform` | 7000 | http://localhost:7000 |
+| `apps/landing` | 7001 | http://localhost:7001 |
+| `apps/tenant` | 7002 | http://localhost:7002 |
+| Supabase Studio | 7100 | http://localhost:7100 |
+| `packages/react-email` | 7101 | http://localhost:7101 |
+| `packages/react-pdf` | 7102 | http://localhost:7102 |
 
 ## Useful commands
 

@@ -22,9 +22,9 @@
     "db:migrate:new": "pnpm --filter @packages/supabase db:migrate:new",
     "db:migrate:up": "pnpm --filter @packages/supabase db:migrate:up",
     "generate:types": "turbo run generate:types --filter=@packages/supabase",
-    "typecheck:landing": "turbo run build:dry --filter=@humane/landing",
-    "typecheck:platform": "turbo run build:dry --filter=@humane/platform",
-    "typecheck:tenant": "turbo run build:dry --filter=@humane/tenant"
+    "typecheck:landing": "turbo run build:dry --filter=@apps/landing",
+    "typecheck:platform": "turbo run build:dry --filter=@apps/platform",
+    "typecheck:tenant": "turbo run build:dry --filter=@apps/tenant"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
@@ -34,7 +34,7 @@
   },
   "pnpm": {
     "overrides": {
-      "zod": "4.4.3"
+      "zod": "^4.4.3"
     },
     "onlyBuiltDependencies": [
       "@parcel/watcher",

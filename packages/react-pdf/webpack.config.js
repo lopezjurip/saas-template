@@ -50,6 +50,6 @@ module.exports = {
   devServer: {
     static: path.join(__dirname, "dist"),
     compress: true,
-    port: Number(process.env.PORT) || 8102,
+    port: Number(process.env.PORT) || 7102,
   },
 };

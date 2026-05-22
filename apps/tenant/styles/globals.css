@@ -1,3 +1,3 @@
 @import "tailwindcss";
-@import "../../packages/shadcn/src/globals.css";
-@source "../../packages/shadcn/src";
+@import "@packages/ui-common/shadcn/globals.css";
+@source "../../packages/ui-common/src";

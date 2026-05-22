@@ -59,7 +59,7 @@ enabled = true
 [studio]
 enabled = true
 # Port to use for Supabase Studio.
-port = 8100
+port = 7100
 # External URL of the API server that frontend connects to.
 api_url = "http://127.0.0.1"
 # OpenAI API Key to use for Supabase AI in the Supabase Studio.
@@ -96,13 +96,13 @@ enabled = true
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://localhost:8000"
+site_url = "http://localhost:7000"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = [
-  "http://localhost:8000/**",
-  "http://localhost:8001/**",
-  "http://localhost:8002/**",
-  "http://*.localhost:8002/**",
+  "http://localhost:7000/**",
+  "http://localhost:7001/**",
+  "http://localhost:7002/**",
+  "http://*.localhost:7002/**",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
@@ -130,7 +130,7 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
@@ -176,15 +176,17 @@ max_frequency = "5s"
 # inactivity_timeout = "8h"
 
 # This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
-# [auth.hook.custom_access_token]
-# enabled = true
-# uri = "pg-functions://<database>/<schema>/<hook_name>"
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/user_auth_hook"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
+# Flip enabled = true once the SUPABASE_AUTH_SMS_TWILIO_* vars are in .env.local. Without them
+# `pnpm db:start` will refuse to start, so we keep it disabled by default for local dev.
 [auth.sms.twilio]
 enabled = false
-account_sid = ""
-message_service_sid = ""
+account_sid = "env(SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID)"
+message_service_sid = "env(SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID)"
 # DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
 auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 
@@ -205,10 +207,10 @@ otp_length = 6
 template = "Your code is {{ .Code }}"
 max_frequency = "5s"
 
-# Configure Multi-factor-authentication via WebAuthn
-# [auth.mfa.web_authn]
-# enroll_enabled = true
-# verify_enabled = true
+# Configure Multi-factor-authentication via WebAuthn (used by the passkey onboarding step).
+[auth.mfa.web_authn]
+enroll_enabled = true
+verify_enabled = true
 
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
@@ -225,6 +227,37 @@ redirect_uri = ""
 url = ""
 # If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
 skip_nonce_check = false
+
+# Flip enabled = true once you've added the credentials in .env.local.
+[auth.external.google]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+# Required for local sign in with Google (Google enforces nonce in prod, can't replay locally).
+skip_nonce_check = true
+
+[auth.external.azure]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_AZURE_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_AZURE_SECRET)"
+# For multi-tenant apps use "https://login.microsoftonline.com/common/v2.0".
+# For single-tenant, replace `common` with the Entra tenant id.
+url = "https://login.microsoftonline.com/common/v2.0"
+
+[auth.external.linkedin_oidc]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_SECRET)"
+
+[auth.external.github]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET)"
+
+[auth.external.facebook]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_FACEBOOK_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_FACEBOOK_SECRET)"
 
 # Use Firebase Auth as a third-party provider alongside Supabase Auth.
 [auth.third_party.firebase]
