@@ -9,6 +9,28 @@ export type HealthQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type HealthQueryQuery = { health_current_timestamp: string | null };
 
+export type ViewerProfileFragmentFragment = {
+  profile_id: string;
+  profile_name_full: string | null;
+  profile_onboarded_at: string | null;
+  profile_disabled_at: string | null;
+  profile_created_at: string;
+  profile_updated_at: string;
+};
+
+export type UseViewerProfileHookQueryQueryVariables = Exact<{ [key: string]: never }>;
+
+export type UseViewerProfileHookQueryQuery = {
+  profile: {
+    profile_id: string;
+    profile_name_full: string | null;
+    profile_onboarded_at: string | null;
+    profile_disabled_at: string | null;
+    profile_created_at: string;
+    profile_updated_at: string;
+  } | null;
+};
+
 export class TypedDocumentString<TResult, TVariables>
   extends String
   implements DocumentTypeDecoration<TResult, TVariables>
@@ -27,9 +49,35 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
-
+export const ViewerProfileFragmentFragmentDoc = new TypedDocumentString(
+  `
+    fragment ViewerProfileFragment on profiles {
+  profile_id
+  profile_name_full
+  profile_onboarded_at
+  profile_disabled_at
+  profile_created_at
+  profile_updated_at
+}
+    `,
+  { fragmentName: "ViewerProfileFragment" },
+) as unknown as TypedDocumentString<ViewerProfileFragmentFragment, unknown>;
 export const HealthQueryDocument = new TypedDocumentString(`
     query HealthQuery {
   health_current_timestamp
 }
     `) as unknown as TypedDocumentString<HealthQueryQuery, HealthQueryQueryVariables>;
+export const UseViewerProfileHookQueryDocument = new TypedDocumentString(`
+    query UseViewerProfileHookQuery {
+  profile: viewer_profile {
+    ...ViewerProfileFragment
+  }
+}
+    fragment ViewerProfileFragment on profiles {
+  profile_id
+  profile_name_full
+  profile_onboarded_at
+  profile_disabled_at
+  profile_created_at
+  profile_updated_at
+}`) as unknown as TypedDocumentString<UseViewerProfileHookQueryQuery, UseViewerProfileHookQueryQueryVariables>;

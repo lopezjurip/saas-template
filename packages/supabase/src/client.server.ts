@@ -1,6 +1,19 @@
 import { type CookieOptions, createServerClient as createServerClientSsr } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { type AppMetadata, AppMetadataSchema } from "./metadata";
 import type { Database } from "./types.ts";
+
+export { type AppMetadata, AppMetadataSchema } from "./metadata";
+
+export async function getSupabaseUserMetadata(): Promise<AppMetadata | null> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const result = AppMetadataSchema.safeParse(user.app_metadata);
+  return result.success ? result.data : null;
+}
 
 export async function createServerClient() {
   const cookieStore = await cookies();

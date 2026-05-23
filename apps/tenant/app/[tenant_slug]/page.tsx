@@ -1,5 +1,5 @@
 import type { ResultOf } from "@graphql-typed-document-node/core";
-import { createServerClient } from "@packages/supabase/client.server";
+import { createServerClient, getSupabaseUserMetadata } from "@packages/supabase/client.server";
 import { Logo } from "@packages/ui-common/logo";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
@@ -11,7 +11,8 @@ import {
 } from "@packages/ui-common/shadcn/components/ui/card";
 import { notFound } from "next/navigation";
 import { gql } from "~/generated/graphql";
-import { GRAPHY_SERVER_ANON_CREATE } from "~/lib/graphy/graphy.server";
+import { getViewerProfile } from "~/hooks/use-viewer-profile";
+import { createGraphy } from "~/lib/graphy/graphy.browser";
 
 const TenantOrganizationsQuery = gql(`
   query TenantOrganizationsQuery($tenantId: Int!) {
@@ -38,22 +39,6 @@ type TenantOrganization = NonNullable<
   NonNullable<TenantOrganizationsQueryType["organizationsCollection"]>["edges"][number]["node"]
 >;
 
-type TenantClaim = { id: number; slug: string };
-type OrganizationClaim = { id: number; role: string };
-
-type JwtPayload = { app_metadata?: { tenants?: TenantClaim[]; organizations?: OrganizationClaim[] } };
-
-function decodeJwtPayload(token: string): JwtPayload | null {
-  const segment = token.split(".")[1];
-  if (!segment) return null;
-  try {
-    const padded = segment.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(segment.length / 4) * 4, "=");
-    return JSON.parse(atob(padded));
-  } catch {
-    return null;
-  }
-}
-
 export default async function TenantHomePage({ params }: { params: Promise<{ tenant_slug: string }> }) {
   const { tenant_slug: tenantSlug } = await params;
 
@@ -62,10 +47,9 @@ export default async function TenantHomePage({ params }: { params: Promise<{ ten
     data: { session },
   } = await supabase.auth.getSession();
 
-  const user = session?.user;
-  const claims = session ? decodeJwtPayload(session.access_token) : null;
-  const allTenantClaims = (claims?.app_metadata?.tenants ?? []) as TenantClaim[];
-  const allOrgClaims = (claims?.app_metadata?.organizations ?? []) as OrganizationClaim[];
+  const metadata = await getSupabaseUserMetadata();
+  const allTenantClaims = metadata?.tenants ?? [];
+  const allOrgClaims = metadata?.organizations ?? [];
 
   // Proxy already validated membership; derive tenant_id from the JWT mapping.
   const tenantId = allTenantClaims.find((t) => t.slug === tenantSlug)?.id;
@@ -73,12 +57,15 @@ export default async function TenantHomePage({ params }: { params: Promise<{ ten
     notFound();
   }
 
-  const graphy = GRAPHY_SERVER_ANON_CREATE(session);
-  const { data } = await graphy.query({ query: TenantOrganizationsQuery, variables: { tenantId } });
+  const graphy = createGraphy(session);
+  const { data } = await graphy.query({ query: TenantOrganizationsQuery, variables: { tenantId: tenantId! } });
+
   const orgsInTenant: TenantOrganization[] =
     data?.organizationsCollection?.edges?.map((e) => e.node).filter((n): n is TenantOrganization => n != null) ?? [];
 
-  const fullName = (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "Tú";
+  const { data: { profile } = { ["profile"]: null } } = await getViewerProfile();
+  const profile_name_full = profile?.["profile_name_full"];
+
   const platformUrl = process.env.NEXT_PUBLIC_PLATFORM_URL ?? "http://platform.lvh.me:7003";
 
   return (
@@ -93,7 +80,7 @@ export default async function TenantHomePage({ params }: { params: Promise<{ ten
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5 text-sm">
             <p>
-              Hola <strong>{fullName}</strong>.
+              Hola <strong>{profile_name_full}</strong>.
             </p>
             <p className="text-muted-foreground">Tenant ID: {tenantId}</p>
           </div>

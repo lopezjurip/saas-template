@@ -2,8 +2,10 @@
 
 import type { ResultOf } from "@graphql-typed-document-node/core";
 import { useGraphyQuery } from "@packages/graphy/react";
+import { useSupabaseUser } from "@packages/supabase/react";
 import type { SWRConfiguration } from "swr";
 import { gql } from "~/generated/graphql";
+import { getGraphy } from "~/lib/graphy/graphy.browser";
 
 export const ViewerProfileFragment = /*#__PURE__*/ gql(`
   fragment ViewerProfileFragment on profiles {
@@ -29,10 +31,21 @@ const UseViewerProfileHookQuery = /*#__PURE__*/ gql(`
 type UseViewerProfileQueryData = ResultOf<typeof UseViewerProfileHookQuery>;
 
 /**
- * Returns the authenticated viewer's profile via GraphQL.
+ * Returns the authenticated viewer's profile via GraphQL, plus a resolved `fullName`.
  * @example
- * const { data: { profile } = { profile: null } } = useViewerProfile();
+ * const { data: { profile } = { ["profile"]: null } } = useViewerProfile();
  */
 export function useViewerProfile(config?: SWRConfiguration<UseViewerProfileQueryData>) {
-  return useGraphyQuery({ query: UseViewerProfileHookQuery }, config);
+  const { data: user } = useSupabaseUser();
+  return useGraphyQuery(user ? { query: UseViewerProfileHookQuery } : null, config);
+}
+
+/**
+ * Fetches the authenticated viewer's profile via GraphQL.
+ * @example
+ * const { data: { profile } = { ["profile"]: null } } = await getViewerProfile();
+ */
+export async function getViewerProfile() {
+  const graphy = await getGraphy();
+  return graphy.query({ query: UseViewerProfileHookQuery });
 }

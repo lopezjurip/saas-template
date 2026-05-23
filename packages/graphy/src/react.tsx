@@ -133,7 +133,7 @@ export function useGraphyMutation<TData, TVariables>(mutation: GraphyFetchGraphQ
     async (variables: TVariables, opts: { thrownOnError?: boolean } = {}) => {
       setState({ data: null, variables, error: null, isValidating: true });
       const { data, error } = await client.mutate({ query: mutation, variables });
-      setState({ data: data, variables, error: error, isValidating: false });
+      setState({ data: data ?? null, variables, error: error ?? null, isValidating: false });
       if (opts.thrownOnError && error) {
         logger.error("[useGraphyMutation] mutation failed:", error);
         throw error;

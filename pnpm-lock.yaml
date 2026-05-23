@@ -32,6 +32,9 @@ importers:
       '@packages/graphy':
         specifier: workspace:*
         version: link:../../packages/graphy
+      '@packages/supabase':
+        specifier: workspace:*
+        version: link:../../packages/supabase
       '@packages/ui-common':
         specifier: workspace:*
         version: link:../../packages/ui-common
@@ -47,6 +50,9 @@ importers:
       react-dom:
         specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
+      swr:
+        specifier: ^2.4.1
+        version: 2.4.1(react@19.2.6)
     devDependencies:
       '@graphql-codegen/cli':
         specifier: ^7.0.0
@@ -518,6 +524,9 @@ importers:
       '@types/node':
         specifier: ^24.12.4
         version: 24.12.4
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.15
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -527,12 +536,21 @@ importers:
       next:
         specifier: ^16.0.0
         version: 16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.6
       supabase:
         specifier: ^2.101.0
         version: 2.101.0
+      swr:
+        specifier: ^2.4.1
+        version: 2.4.1(react@19.2.6)
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
 
   packages/typescript-config: {}
 

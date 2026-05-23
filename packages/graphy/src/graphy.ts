@@ -155,6 +155,8 @@ export class GraphyClient {
     { query, variables }: GraphyFetchGraphQLQuery<TData, TVariables>,
     init?: RequestInit,
   ): Promise<TData> {
+    // const { display, hash } = GRAPHQL_EXTRACT(query)
+    // const url = NEW_URL(this.url, undefined, { params: { hash, display } });
     const url = this.url;
     return graphyRequest<TData, TVariables>({ query, variables }, url, { ...this.init, ...init });
   }
@@ -167,13 +169,13 @@ export class GraphyClient {
   public async query<TData, TVariables>(
     params: GraphyFetchGraphQLQuery<TData, TVariables>,
     init?: RequestInit,
-  ): Promise<{ data: TData; error: null } | { data: null; error: GraphyError }> {
+  ): Promise<{ data: TData; error: null } | { data: undefined; error: GraphyError }> {
     try {
       const data = await this.fetch(params, init);
       return { data, error: null };
     } catch (error) {
       if (isGraphyNetworkError(error) || isGraphyResponseError(error) || isGraphyGraphQLError(error)) {
-        return { data: null, error };
+        return { data: undefined, error };
       } else {
         throw error;
       }
@@ -188,7 +190,7 @@ export class GraphyClient {
   public async mutate<TData, TVariables>(
     params: GraphyFetchGraphQLQuery<TData, TVariables>,
     init?: RequestInit,
-  ): Promise<{ data: TData; error: null } | { data: null; error: GraphyError }> {
+  ): Promise<{ data: TData; error: null } | { data: undefined; error: GraphyError }> {
     return this.query(params, init);
   }
 }
@@ -205,6 +207,8 @@ export class GraphyClientSupabase extends GraphyClient {
     }
 
     super(url, {
+      // cache: "default",
+      // credentials: "same-origin",
       ...init,
       headers: {
         ...headers,
@@ -259,6 +263,7 @@ export function isGraphyNetworkError(error: unknown): error is GraphyNetworkErro
 
 /** Guard functions for error identification. */
 export function isGraphyResponseError(error: unknown, code?: PGGraphQLErrorCodes): error is GraphyResponseError {
+  // return error instanceof GraphyResponseError;
   if (error instanceof GraphyResponseError) {
     if (code) {
       return error.code === code;
