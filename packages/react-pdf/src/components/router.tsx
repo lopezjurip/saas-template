@@ -1,13 +1,19 @@
 import { Text } from "@react-pdf/renderer";
 import { HelloWorldTemplate, helloWorldDefaultProps } from "../templates/helloworld";
+import { MarkdownDemoTemplate, markdownDemoDefaultProps } from "../templates/markdown-demo";
 
-export type PDFTemplateID = "helloworld";
+export type PDFTemplateID = "helloworld" | "markdown-demo";
 
 export const PDF_PAGES: { id: PDFTemplateID; component: any; props: any }[] = [
   {
     id: "helloworld",
     component: HelloWorldTemplate,
     props: helloWorldDefaultProps,
+  },
+  {
+    id: "markdown-demo",
+    component: MarkdownDemoTemplate,
+    props: markdownDemoDefaultProps,
   },
 ];
 

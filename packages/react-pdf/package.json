@@ -4,7 +4,8 @@
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "dev": "PORT=${PORT:-7102} webpack serve --mode development --open",
+    "dev": "PORT=${PORT:-7102} webpack serve --mode development",
+    "dev:open": "PORT=${PORT:-7102} webpack serve --mode development --open",
     "build:dry": "tsc --noEmit",
     "format": "biome check --diagnostic-level=error ."
   },
@@ -15,10 +16,14 @@
   "dependencies": {
     "@packages/rosetta": "workspace:*",
     "@react-pdf/renderer": "^4.3.0",
+    "@types/mdast": "^4.0.0",
     "clsx": "^2.1.1",
-    "react-pdf-tailwind": "^3.0.0"
+    "react-pdf-tailwind": "^3.0.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5"
   },
   "devDependencies": {
+    "@react-pdf/types": "^2.11.1",
     "@babel/core": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.26.0",
