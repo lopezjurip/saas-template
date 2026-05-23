@@ -24,8 +24,6 @@ export default async function DashboardPage() {
   const tenants = metadata?.tenants ?? [];
 
   const apexHost = process.env.NEXT_PUBLIC_APEX_HOST ?? "lvh.me:7003";
-  const isDevHost = /(^localhost(:|$)|\.localhost(:|$)|\.test(:|$)|127\.0\.0\.1|(^|\.)lvh\.me(:|$))/.test(apexHost);
-  const protocol = isDevHost ? "http" : "https";
 
   return (
     <main className="bg-muted flex min-h-svh items-center justify-center p-6">
@@ -42,7 +40,7 @@ export default async function DashboardPage() {
             <div className="flex flex-col gap-2">
               {tenants.map((t) => (
                 <Button key={t.id} asChild variant="outline" className="w-full justify-start">
-                  <a href={`${protocol}://${t.slug}.${apexHost}`}>{t.slug}</a>
+                  <a href={`https://${t.slug}.${apexHost}`}>{t.slug}</a>
                 </Button>
               ))}
             </div>

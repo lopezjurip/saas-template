@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
+import Link from "next/link";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,7 +14,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
           <CardTitle>
-            <Logo />
+            <Link href="/" aria-label="Inicio" className="inline-block transition-opacity hover:opacity-80">
+              <Logo />
+            </Link>
           </CardTitle>
           <CardDescription>HR y Nómina para empresas chilenas</CardDescription>
         </CardHeader>

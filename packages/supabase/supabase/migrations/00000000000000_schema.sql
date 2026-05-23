@@ -311,6 +311,167 @@ create trigger handle_concierges_updated_at
   for each row execute procedure extensions.moddatetime(concierge_updated_at);
 
 -- ============================================================
+-- webauthn (passkeys)
+-- ============================================================
+-- Custom SimpleWebAuthn-backed implementation. Two tables:
+--   webauthn_challenges  : transient challenges; one per profile during registration,
+--                          NULL profile_id for anonymous sign-in challenges.
+--   webauthn_credentials : persistent passkeys per profile.
+-- The sign-in flow runs anonymously and goes through service-role; the registration
+-- flow runs as the authenticated user. RLS is locked down so anon/authenticated
+-- cannot touch challenges directly — only the credentials they own.
+
+do $$ begin
+  create type public.webauthn_backup_state as enum ('not_backed_up', 'backed_up');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type public.webauthn_credential_type as enum ('public-key');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type public.webauthn_device_type as enum ('single_device', 'multi_device');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type public.webauthn_user_verification_status as enum ('unverified', 'verified');
+exception when duplicate_object then null; end $$;
+
+create table if not exists public.webauthn_challenges (
+  webauthn_challenge_id uuid not null primary key default internal.uuid_generate_v7(),
+  profile_id uuid references public.profiles (profile_id) on delete cascade,
+  webauthn_challenge_value text not null unique,
+  webauthn_challenge_created_at timestamptz not null default current_timestamp,
+  -- One registration challenge per profile. Postgres treats NULLs as distinct, so
+  -- many anonymous sign-in challenges can coexist while each user has at most one
+  -- pending registration challenge (upserts on profile_id).
+  unique (profile_id)
+);
+
+create index if not exists webauthn_challenges_created_at_idx
+  on public.webauthn_challenges (webauthn_challenge_created_at);
+
+create table if not exists public.webauthn_credentials (
+  webauthn_credential_id uuid not null primary key default internal.uuid_generate_v7(),
+  profile_id uuid not null references public.profiles (profile_id) on delete cascade,
+  webauthn_credential_external_id varchar not null unique,
+  webauthn_credential_friendly_name text,
+  webauthn_credential_type public.webauthn_credential_type not null,
+  webauthn_credential_aaguid varchar not null default '00000000-0000-0000-0000-000000000000',
+  webauthn_credential_sign_count integer not null,
+  webauthn_credential_transports text[] not null,
+  webauthn_credential_user_verification_status public.webauthn_user_verification_status not null,
+  webauthn_credential_device_type public.webauthn_device_type not null,
+  webauthn_credential_backup_state public.webauthn_backup_state not null,
+  webauthn_credential_public_key text not null,
+  webauthn_credential_last_used_at timestamptz,
+  webauthn_credential_created_at timestamptz not null default current_timestamp,
+  webauthn_credential_updated_at timestamptz not null default current_timestamp
+);
+
+create index if not exists webauthn_credentials_profile_idx
+  on public.webauthn_credentials (profile_id);
+
+drop trigger if exists handle_webauthn_credentials_updated_at on public.webauthn_credentials;
+create trigger handle_webauthn_credentials_updated_at
+  before update on public.webauthn_credentials
+  for each row execute procedure extensions.moddatetime(webauthn_credential_updated_at);
+
+alter table public.webauthn_challenges enable row level security;
+alter table public.webauthn_credentials enable row level security;
+
+-- Challenges: authenticated users can manage their own (registration flow).
+-- Anonymous sign-in challenges (profile_id IS NULL) go through service-role only
+-- (RLS does not apply to service-role).
+drop policy if exists "webauthn_challenges select own" on public.webauthn_challenges;
+create policy "webauthn_challenges select own"
+  on public.webauthn_challenges for select
+  to authenticated
+  using (profile_id = (select auth.uid()));
+
+drop policy if exists "webauthn_challenges insert own" on public.webauthn_challenges;
+create policy "webauthn_challenges insert own"
+  on public.webauthn_challenges for insert
+  to authenticated
+  with check (profile_id = (select auth.uid()));
+
+drop policy if exists "webauthn_challenges update own" on public.webauthn_challenges;
+create policy "webauthn_challenges update own"
+  on public.webauthn_challenges for update
+  to authenticated
+  using (profile_id = (select auth.uid()))
+  with check (profile_id = (select auth.uid()));
+
+drop policy if exists "webauthn_challenges delete own" on public.webauthn_challenges;
+create policy "webauthn_challenges delete own"
+  on public.webauthn_challenges for delete
+  to authenticated
+  using (profile_id = (select auth.uid()));
+
+-- Credentials: users see and manage only their own.
+drop policy if exists "webauthn_credentials select own" on public.webauthn_credentials;
+create policy "webauthn_credentials select own"
+  on public.webauthn_credentials for select
+  to authenticated
+  using (profile_id = (select auth.uid()));
+
+drop policy if exists "webauthn_credentials insert own" on public.webauthn_credentials;
+create policy "webauthn_credentials insert own"
+  on public.webauthn_credentials for insert
+  to authenticated
+  with check (profile_id = (select auth.uid()));
+
+drop policy if exists "webauthn_credentials update own" on public.webauthn_credentials;
+create policy "webauthn_credentials update own"
+  on public.webauthn_credentials for update
+  to authenticated
+  using (profile_id = (select auth.uid()))
+  with check (profile_id = (select auth.uid()));
+
+drop policy if exists "webauthn_credentials delete own" on public.webauthn_credentials;
+create policy "webauthn_credentials delete own"
+  on public.webauthn_credentials for delete
+  to authenticated
+  using (profile_id = (select auth.uid()));
+
+-- Anonymous lookup used by /auth root to surface the passkey button only when the
+-- entered email has a passkey registered. Same enumeration-leak posture as email_exists.
+create or replace function public.email_has_passkey(email_to_check text)
+  returns boolean
+  language sql
+  stable
+  security definer
+  set search_path to ''
+  as $$
+    select exists (
+      select 1
+      from auth.users u
+      join public.webauthn_credentials c on c.profile_id = u.id
+      where lower(u.email) = lower(email_to_check)
+    );
+  $$;
+
+grant execute on function public.email_has_passkey(text) to anon, authenticated;
+
+-- Resolve profile_id (= auth.uid) from email. Used by the anonymous sign-in challenge
+-- route to scope allowCredentials to the entered email's owner — avoids paging through
+-- admin.listUsers. Service-role only; the route already runs with service-role.
+create or replace function public.profile_id_by_email(email_to_check text)
+  returns uuid
+  language sql
+  stable
+  security definer
+  set search_path to ''
+  as $$
+    select u.id
+    from auth.users u
+    where lower(u.email) = lower(email_to_check)
+    limit 1;
+  $$;
+
+grant execute on function public.profile_id_by_email(text) to service_role;
+
+-- ============================================================
 -- viewer_* helpers
 -- ============================================================
 -- These are the app-layer API for "who is the caller". RLS policies should

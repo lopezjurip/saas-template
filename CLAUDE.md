@@ -94,12 +94,35 @@ Where `<apex>` is `NEXT_PUBLIC_APEX_HOST` — `lvh.me:7003` in dev, `resolvecom.
 
 | Service | Default port | URL |
 |---|---|---|
-| `apps/platform` | 7003 | http://lvh.me:7003 |
+| `apps/platform` | 7003 | https://lvh.me:7003 |
 | Supabase Studio | 7100 | http://localhost:7100 |
+| Supabase Inbucket (mailbox) | 54424 | http://localhost:54424 |
 | `packages/react-email` | 7101 | http://localhost:7101 |
 | `packages/react-pdf` | 7102 | http://localhost:7102 |
 
 `lvh.me` is a public wildcard DNS that resolves every name (apex + subdomain) to `127.0.0.1` — no `/etc/hosts` entries needed. Cookies are scoped to `.lvh.me` so the session crosses `lvh.me:7003` ↔ `{slug}.lvh.me:7003`.
+
+### Local HTTPS
+
+`apps/platform` runs over HTTPS in dev (`next dev --experimental-https`) because WebAuthn requires a secure context, and the browser's secure-context allowlist hardcodes the literal strings `localhost` / `127.0.0.1` / `[::1]` — DNS aliases like `lvh.me` that resolve to 127.0.0.1 are NOT on the allowlist, so plain HTTP makes `window.PublicKeyCredential` undefined.
+
+The TLS cert comes from [mkcert](https://github.com/FiloSottile/mkcert). One-time setup:
+
+```bash
+bash scripts/setup-https.sh
+```
+
+That runs `mkcert -install` and emits `apps/platform/certs/lvh.me-{cert,key}.pem` covering `lvh.me`, `*.lvh.me`, `localhost`, and `127.0.0.1`. The dev script in `apps/platform/package.json` references those file paths. `apps/platform/certs/` is gitignored (`**/certs/` in root `.gitignore`).
+
+Keep these aligned with the HTTPS dev origin — flipping any to `http://` will break OAuth callbacks and passkey verification:
+
+- `WEBAUTHN_RELYING_PARTY_ORIGIN` (in `.env.example` + `apps/platform/.env.local`): `https://lvh.me:7003`
+- `supabase/config.toml` `[auth].site_url`: `https://lvh.me:7003`
+- `supabase/config.toml` `[auth].additional_redirect_urls`: `https://lvh.me:7003/**` + `https://*.lvh.me:7003/**`
+
+`WEBAUTHN_RELYING_PARTY_ID` stays `lvh.me` (host only, no protocol/port). `NEXT_PUBLIC_APEX_HOST` stays `lvh.me:7003` (host+port, no protocol); `proxy.ts` derives the protocol from `request.nextUrl.protocol` / `x-forwarded-proto`.
+
+After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) so the changes take effect — `pnpm db:reset` also picks them up but wipes data.
 
 ## Skills
 

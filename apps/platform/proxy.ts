@@ -1,9 +1,12 @@
 import { updateSession } from "@packages/supabase/client.middleware";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { type NextRequest, NextResponse } from "next/server";
+import { debug } from "~/lib/debug";
+
+const log = debug("proxy");
 
 type TenantClaim = { id: number; slug: string };
-type JwtPayload = { app_metadata?: { tenants?: TenantClaim[]; onboarded?: boolean } };
+type JwtPayload = { app_metadata?: { tenants?: TenantClaim[] } };
 
 function decodeJwtPayload(token: string): JwtPayload | null {
   const segment = token.split(".")[1];
@@ -107,23 +110,26 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(authUrl);
   }
 
-  // Hook-injected claims (onboarded, tenants) only exist in the JWT, not on the DB user record.
+  // Hook-injected claims (tenants) only exist in the JWT, not on the DB user record.
+  // The `onboarded` claim is no longer used as a gate here — onboarding completion is
+  // surfaced to users via page-level UX (e.g. a banner / nudge) rather than a hard redirect,
+  // so users can land on /dashboard or any other route mid-onboarding without being bounced.
   const claims = decodeJwtPayload(session.access_token);
-  const onboarded = Boolean(claims?.app_metadata?.onboarded);
   const tenants = claims?.app_metadata?.tenants ?? [];
-
-  // Onboarding gate.
-  const isOnboardingRoute = pathname === "/onboarding" || pathname.startsWith("/onboarding/");
-  if (!onboarded && !isOnboardingRoute) {
-    const url = new URL("/onboarding", `${proto}://${apexHost}`);
-    return NextResponse.redirect(url);
-  }
 
   // Subdomain → membership check + rewrite to /[tenant_slug]{pathname}.
   if (slugFromHost) {
     const tenantId = await resolveTenantIdFromSlug(slugFromHost);
-    if (!tenantId) return new NextResponse("Tenant not found", { status: 404 });
+    if (!tenantId) {
+      log.warn("unknown or disabled tenant subdomain", { slug: slugFromHost, hostname });
+      return new NextResponse("Tenant not found", { status: 404 });
+    }
     if (!tenants.some((t) => t.id === tenantId)) {
+      log.warn("user lacks membership for tenant subdomain", {
+        slug: slugFromHost,
+        tenant_id: tenantId,
+        user_tenant_ids: tenants.map((t) => t.id),
+      });
       return new NextResponse("No tienes acceso a esta empresa.", { status: 403 });
     }
     const url = request.nextUrl.clone();

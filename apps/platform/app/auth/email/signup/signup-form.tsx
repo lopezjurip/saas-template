@@ -7,6 +7,7 @@ import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import { DevMailboxNotice } from "~/components/dev-mailbox-notice";
 import { signUp } from "./actions";
 import { type SignupValues, signupSchema } from "./schemas";
 
@@ -31,7 +32,6 @@ export function SignupForm({ defaultEmail }: { defaultEmail: string }) {
   });
 
   if (sentTo) {
-    const mailbox = process.env.NEXT_PUBLIC_DEV_MAILBOX_URL;
     return (
       <div className="flex flex-col gap-3">
         <Alert>
@@ -40,14 +40,7 @@ export function SignupForm({ defaultEmail }: { defaultEmail: string }) {
             continuar.
           </AlertDescription>
         </Alert>
-        {mailbox ? (
-          <div className="flex flex-col gap-1.5 rounded-md border border-yellow-400 bg-yellow-50 p-3 text-yellow-900">
-            <p className="text-xs font-semibold uppercase tracking-wide">Development only</p>
-            <a href={mailbox} target="_blank" rel="noreferrer" className="text-sm underline">
-              Abrir bandeja de entrada local
-            </a>
-          </div>
-        ) : null}
+        <DevMailboxNotice email={sentTo} />
       </div>
     );
   }

@@ -5,7 +5,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { isOAuthProvider, OAUTH_PROVIDER_IDS } from "~/app/auth/providers";
+import { debug } from "~/lib/debug";
 import { action, formAction } from "~/lib/safe-action";
+
+const log = debug("auth:oauth");
 
 const signInWithOAuthSchema = z.object({
   provider: z.enum(OAUTH_PROVIDER_IDS),
@@ -32,6 +35,7 @@ const signInWithOAuthRun = action
     });
 
     if (error || !data?.url) {
+      log.error("signInWithOAuth failed", { provider, error });
       redirect(`/auth/error?reason=${encodeURIComponent(error?.message ?? "oauth_init_failed")}`);
     }
     redirect(data.url);
@@ -43,8 +47,13 @@ const checkEmailRun = action.inputSchema(checkEmailSchema).action(async ({ parse
   const supabase = await createServerClient();
   const { data: exists } = await supabase.rpc("email_exists", { email_to_check: email });
 
-  const target = exists ? "/auth/email/login" : "/auth/email/signup";
-  redirect(`${target}?email=${encodeURIComponent(email)}`);
+  if (!exists) {
+    redirect(`/auth/email/signup?email=${encodeURIComponent(email)}`);
+  }
+
+  const { data: hasPasskey } = await supabase.rpc("email_has_passkey", { email_to_check: email });
+  const passkeySuffix = hasPasskey ? "&has_passkey=1" : "";
+  redirect(`/auth/email/login?email=${encodeURIComponent(email)}${passkeySuffix}`);
 });
 
 // HTML form adapters for <form action={...}> usage in app/auth/page.tsx.

@@ -1,8 +1,11 @@
 "use server";
 
 import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { debug } from "~/lib/debug";
 import { authedAction } from "~/lib/safe-action";
 import { createTenantSchema } from "./schemas";
+
+const log = debug("tenants:create");
 
 export const createTenant = authedAction
   .inputSchema(createTenantSchema)
@@ -18,6 +21,11 @@ export const createTenant = authedAction
 
     if (tenantRes.error || !tenantRes.data) {
       const msg = String(tenantRes.error?.message ?? "");
+      log.error("tenant insert failed", {
+        profile_id: user.id,
+        slug: parsedInput.tenant_slug,
+        error: tenantRes.error,
+      });
       if (msg.includes("duplicate") || msg.includes("unique")) {
         throw new Error("Ese identificador ya está en uso. Prueba otro.");
       }
@@ -38,7 +46,19 @@ export const createTenant = authedAction
       .single();
 
     if (orgRes.error || !orgRes.data) {
-      await admin.from("tenants").delete().eq("tenant_id", tenantId);
+      log.error("organization insert failed; rolling back tenant", {
+        profile_id: user.id,
+        tenant_id: tenantId,
+        slug: parsedInput.tenant_slug,
+        error: orgRes.error,
+      });
+      const rollback = await admin.from("tenants").delete().eq("tenant_id", tenantId);
+      if (rollback.error) {
+        log.error("tenant rollback failed — orphan tenant row", {
+          tenant_id: tenantId,
+          error: rollback.error,
+        });
+      }
       throw new Error("No pudimos crear la organización inicial. Intenta de nuevo.");
     }
 
@@ -52,12 +72,39 @@ export const createTenant = authedAction
     });
 
     if (memberRes.error) {
-      await admin.from("tenants").delete().eq("tenant_id", tenantId);
+      log.error("membership insert failed; rolling back tenant + org", {
+        profile_id: user.id,
+        tenant_id: tenantId,
+        organization_id: organizationId,
+        error: memberRes.error,
+      });
+      const rollback = await admin.from("tenants").delete().eq("tenant_id", tenantId);
+      if (rollback.error) {
+        log.error("tenant rollback failed — orphan tenant + org rows", {
+          tenant_id: tenantId,
+          organization_id: organizationId,
+          error: rollback.error,
+        });
+      }
       throw new Error("No pudimos asignarte como dueño. Intenta de nuevo.");
     }
 
     // Refresh the JWT so app_metadata.tenants/organizations pick up the new entries.
-    await supabase.auth.refreshSession();
+    const refresh = await supabase.auth.refreshSession();
+    if (refresh.error) {
+      log.warn("session refresh failed; new tenant claims may not be visible until next login", {
+        profile_id: user.id,
+        tenant_id: tenantId,
+        error: refresh.error,
+      });
+    }
+
+    log.info("tenant created", {
+      profile_id: user.id,
+      tenant_id: tenantId,
+      organization_id: organizationId,
+      slug: tenantSlug,
+    });
 
     return { slug: tenantSlug };
   });

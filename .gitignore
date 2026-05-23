@@ -14,6 +14,9 @@ build/
 .env.local
 .env.*.local
 
+# Local TLS certs (mkcert-generated, machine-specific, never commit private keys)
+**/certs/
+
 # Turbo
 .turbo/
 

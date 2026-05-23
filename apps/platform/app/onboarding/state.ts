@@ -26,10 +26,11 @@ export async function loadOnboardingState(): Promise<OnboardingState> {
     .eq("profile_id", user.id)
     .maybeSingle();
 
-  const factors = await supabase.auth.mfa.listFactors();
-  const hasPasskey = (factors.data?.all ?? []).some(
-    (f) => (f.factor_type as string) === "webauthn" && f.status === "verified",
-  );
+  const { count: passkeyCount } = await supabase
+    .from("webauthn_credentials")
+    .select("webauthn_credential_id", { head: true, count: "exact" })
+    .eq("profile_id", user.id);
+  const hasPasskey = (passkeyCount ?? 0) > 0;
 
   const hasPassword = (user.identities ?? []).some((i) => i.provider === "email");
   const fullName = profile?.profile_name_full ?? (user.user_metadata?.full_name as string | undefined) ?? "";
