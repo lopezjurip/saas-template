@@ -241,6 +241,11 @@ create trigger handle_tenants_updated_at
   before update on public.tenants
   for each row execute procedure extensions.moddatetime(tenant_updated_at);
 
+drop trigger if exists tenants_trigger_normalize_name on public.tenants;
+create trigger tenants_trigger_normalize_name
+  before insert or update of tenant_name on public.tenants
+  for each row execute procedure internal.column_normalize_text(tenant_name);
+
 create table if not exists public.organizations (
   organization_id serial primary key,
   tenant_id int not null references public.tenants (tenant_id) on delete cascade,
@@ -259,6 +264,11 @@ drop trigger if exists handle_organizations_updated_at on public.organizations;
 create trigger handle_organizations_updated_at
   before update on public.organizations
   for each row execute procedure extensions.moddatetime(organization_updated_at);
+
+drop trigger if exists organizations_trigger_normalize_name on public.organizations;
+create trigger organizations_trigger_normalize_name
+  before insert or update of organization_name on public.organizations
+  for each row execute procedure internal.column_normalize_text(organization_name);
 
 create table if not exists public.organization_members (
   organization_id int not null references public.organizations (organization_id) on delete cascade,
