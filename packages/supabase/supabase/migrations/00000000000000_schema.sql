@@ -23,8 +23,12 @@ revoke usage on schema private from public;
 revoke usage on schema internal from public;
 revoke usage on schema protected from public;
 
--- internal: callable from security definer functions (which run as postgres)
-grant usage on schema internal to postgres;
+-- internal: callable from security definer functions (which run as postgres).
+-- service_role also needs access because triggers and CHECK constraints on public tables
+-- (e.g. internal.slug_validate, internal.column_normalize_text) run under the session role,
+-- not under postgres, when PostgREST inserts using the service key.
+grant usage on schema internal to postgres, service_role;
+grant execute on all functions in schema internal to service_role;
 
 -- protected: accessible only with service_role key
 -- authenticator is PostgREST's connecting role — needs USAGE to introspect the schema,
