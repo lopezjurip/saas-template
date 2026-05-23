@@ -120,8 +120,6 @@ create or replace function public.email_exists(email_to_check text)
     );
   $$;
 
-grant execute on function public.email_exists(text) to anon, authenticated;
-
 -- Lightweight liveness probe — returns DB time so callers can verify connectivity and clock.
 create or replace function public.health_current_timestamp()
   returns timestamptz
@@ -134,8 +132,6 @@ create or replace function public.health_current_timestamp()
   as $$
     select current_timestamp;
   $$;
-
-grant execute on function public.health_current_timestamp() to anon, authenticated;
 
 -- ============================================================
 -- profiles
@@ -189,6 +185,10 @@ create trigger users_trigger_created
 -- RLS (final SELECT policy is defined below, after tenant_members exists)
 alter table public.profiles enable row level security;
 
+revoke all on table public.profiles from anon, authenticated;
+-- anon is required for graphql; RLS still gates row access.
+grant select, update on table public.profiles to anon, authenticated;
+
 drop policy if exists "Users can update own profiles." on public.profiles;
 create policy "Users can update own profiles."
   on public.profiles for update
@@ -219,7 +219,7 @@ update storage.buckets
 -- access is derived from the tenants of the organizations they're a member of.
 -- The subdomain `{tenant_slug}.humane.cl` routes to the tenant; org switching happens in-app.
 
--- Role at the organization level. Concierge (global internal role) lives in protected.concierge_users.
+-- Role at the organization level. Concierge (global internal role) lives in protected.concierges.
 do $$ begin
   create type public.organization_member_role as enum ('employee', 'manager', 'accountant', 'owner');
 exception when duplicate_object then null; end $$;
@@ -295,30 +295,34 @@ create trigger handle_organization_members_updated_at
 -- concierge (global internal role, separate from per-tenant roles)
 -- ============================================================
 
-create table if not exists protected.concierge_users (
-  concierge_user_id uuid not null primary key default internal.uuid_generate_v7(),
+create table if not exists protected.concierges (
+  concierge_id uuid not null primary key default internal.uuid_generate_v7(),
   profile_id uuid not null unique references public.profiles (profile_id) on delete cascade,
-  concierge_user_disabled_at timestamptz,
-  concierge_user_created_at timestamptz not null default current_timestamp,
-  concierge_user_updated_at timestamptz not null default current_timestamp
+  concierge_disabled_at timestamptz,
+  concierge_created_at timestamptz not null default current_timestamp,
+  concierge_updated_at timestamptz not null default current_timestamp
 );
 
-grant select, insert, update, delete on protected.concierge_users to service_role;
+grant select, insert, update, delete on protected.concierges to service_role;
 
-drop trigger if exists handle_concierge_users_updated_at on protected.concierge_users;
-create trigger handle_concierge_users_updated_at
-  before update on protected.concierge_users
-  for each row execute procedure extensions.moddatetime(concierge_user_updated_at);
+drop trigger if exists handle_concierges_updated_at on protected.concierges;
+create trigger handle_concierges_updated_at
+  before update on protected.concierges
+  for each row execute procedure extensions.moddatetime(concierge_updated_at);
 
 -- ============================================================
 -- viewer_* helpers
 -- ============================================================
--- These are the RLS / app-layer API for "who is the caller".
+-- These are the app-layer API for "who is the caller". RLS policies should
+-- prefer the `id in (select … from viewer_*_ids(…))` form over the `_validate`
+-- helpers — the subquery is evaluated once per query (InitPlan) instead of per
+-- row, which matters at scale.
+--
 -- viewer_profile / viewer_profile_id           : current user's profile
 -- viewer_tenant_ids                            : tenants the caller has access to (from JWT)
--- viewer_tenant_validate(tenant)               : true iff caller belongs to any org in this tenant
--- viewer_organization_ids                      : organizations the caller is a member of (from JWT)
--- viewer_organization_validate(org, roles)     : true iff caller is a member of `org`, optionally role-restricted
+-- viewer_tenant_validate(tenant)               : true iff caller belongs to any org in this tenant — app convenience, avoid in RLS
+-- viewer_organization_ids(roles)               : organizations the caller is a member of (from JWT), optionally role-restricted
+-- viewer_organization_validate(org, roles)     : true iff caller is a member of `org` — app convenience, avoid in RLS
 -- viewer_is_concierge                          : true iff caller has the global concierge claim
 -- tenants_organizations_profiles (view)        : active tenant-org memberships for the current viewer
 -- viewer_tenants()                             : setof public.tenants the viewer has access to
@@ -403,7 +407,9 @@ create or replace function public.viewer_tenant_validate(target_tenant_id int)
     );
   $$;
 
-create or replace function public.viewer_organization_ids()
+create or replace function public.viewer_organization_ids(
+  required_roles public.organization_member_role[] default null
+)
   returns setof int
   stable
   parallel safe
@@ -417,7 +423,9 @@ create or replace function public.viewer_organization_ids()
           -> 'app_metadata' -> 'organizations',
         '[]'::jsonb
       )
-    ) as o;
+    ) as o
+    where required_roles is null
+       or (o->>'role')::public.organization_member_role = any (required_roles);
   $$;
 
 create or replace function public.viewer_organization_validate(
@@ -461,14 +469,6 @@ create or replace function public.viewer_is_concierge()
     );
   $$;
 
-grant execute on function public.viewer_profile(boolean) to authenticated;
-grant execute on function public.viewer_profile_id(boolean) to authenticated;
-grant execute on function public.viewer_tenant_ids() to authenticated;
-grant execute on function public.viewer_tenant_validate(int) to authenticated;
-grant execute on function public.viewer_organization_ids() to authenticated;
-grant execute on function public.viewer_organization_validate(int, public.organization_member_role[]) to authenticated;
-grant execute on function public.viewer_is_concierge() to authenticated;
-
 -- Active tenant-org memberships for the current viewer.
 -- Runs as view owner (postgres), bypassing RLS; scoped to the caller
 -- via viewer_profile_id(). Null uid → no rows (safe for unauthenticated).
@@ -482,7 +482,7 @@ create or replace view public.tenants_organizations_profiles as
     t.tenant_created_at,
     t.tenant_updated_at,
     o.organization_id,
-    o.tenant_id             as organization_tenant_id,
+    o.tenant_id as organization_tenant_id,
     o.organization_slug,
     o.organization_name,
     o.organization_disabled_at,
@@ -491,8 +491,8 @@ create or replace view public.tenants_organizations_profiles as
     om.profile_id,
     om.organization_member_role
   from public.organization_members om
-  join public.organizations o on o.organization_id = om.organization_id
-  join public.tenants t on t.tenant_id = o.tenant_id
+  join public.organizations o using (organization_id)
+  join public.tenants t using (tenant_id)
   where om.profile_id = public.viewer_profile_id()
     and om.organization_member_disabled_at is null
     and o.organization_disabled_at is null
@@ -557,11 +557,6 @@ create or replace function public.viewer_organization_by_id(target_organization_
     limit 1;
   $$;
 
-grant execute on function public.viewer_tenants() to authenticated;
-grant execute on function public.viewer_organizations() to authenticated;
-grant execute on function public.viewer_tenant_by_id(int) to authenticated;
-grant execute on function public.viewer_organization_by_id(int) to authenticated;
-
 -- ============================================================
 -- profiles SELECT policy (now that organization_members exists)
 -- ============================================================
@@ -580,7 +575,7 @@ create policy "Profiles visible to self or org co-members or concierge"
       or exists (
         select 1
         from public.organization_members me
-        join public.organization_members them on them.organization_id = me.organization_id
+        join public.organization_members them using (organization_id)
         where me.profile_id = (select auth.uid())
           and them.profile_id = public.profiles.profile_id
           and me.organization_member_disabled_at is null
@@ -596,12 +591,16 @@ create policy "Profiles visible to self or org co-members or concierge"
 
 alter table public.tenants enable row level security;
 
+revoke all on table public.tenants from anon, authenticated;
+-- anon is required for graphql; RLS still gates row access.
+grant select, update on table public.tenants to anon, authenticated;
+
 drop policy if exists "tenants select by members or concierge" on public.tenants;
 create policy "tenants select by members or concierge"
   on public.tenants for select
   to authenticated
   using (
-    public.viewer_tenant_validate(tenant_id)
+    tenant_id in (select public.viewer_tenant_ids())
     or public.viewer_is_concierge()
   );
 
@@ -613,14 +612,9 @@ create policy "tenants update by owner"
     exists (
       select 1 from public.organizations o
       where o.tenant_id = public.tenants.tenant_id
-        and public.viewer_organization_validate(o.organization_id, array['owner']::public.organization_member_role[])
-    )
-  )
-  with check (
-    exists (
-      select 1 from public.organizations o
-      where o.tenant_id = public.tenants.tenant_id
-        and public.viewer_organization_validate(o.organization_id, array['owner']::public.organization_member_role[])
+        and o.organization_id in (
+          select public.viewer_organization_ids(array['owner']::public.organization_member_role[])
+        )
     )
   );
 
@@ -628,12 +622,16 @@ create policy "tenants update by owner"
 
 alter table public.organizations enable row level security;
 
+revoke all on table public.organizations from anon, authenticated;
+-- anon is required for graphql; RLS still gates row access.
+grant select, update on table public.organizations to anon, authenticated;
+
 drop policy if exists "organizations select by members or concierge" on public.organizations;
 create policy "organizations select by members or concierge"
   on public.organizations for select
   to authenticated
   using (
-    public.viewer_organization_validate(organization_id)
+    organization_id in (select public.viewer_organization_ids())
     or public.viewer_is_concierge()
   );
 
@@ -641,19 +639,26 @@ drop policy if exists "organizations update by owner" on public.organizations;
 create policy "organizations update by owner"
   on public.organizations for update
   to authenticated
-  using (public.viewer_organization_validate(organization_id, array['owner']::public.organization_member_role[]))
-  with check (public.viewer_organization_validate(organization_id, array['owner']::public.organization_member_role[]));
+  using (
+    organization_id in (
+      select public.viewer_organization_ids(array['owner']::public.organization_member_role[])
+    )
+  );
 
 -- INSERT/DELETE on organizations: service_role only. No authenticated policy -> default deny.
 
 alter table public.organization_members enable row level security;
+
+revoke all on table public.organization_members from anon, authenticated;
+-- anon is required for graphql; RLS still gates row access.
+grant select, insert, update, delete on table public.organization_members to anon, authenticated;
 
 drop policy if exists "organization_members select by co-members" on public.organization_members;
 create policy "organization_members select by co-members"
   on public.organization_members for select
   to authenticated
   using (
-    public.viewer_organization_validate(organization_id)
+    organization_id in (select public.viewer_organization_ids())
     or public.viewer_is_concierge()
   );
 
@@ -661,20 +666,31 @@ drop policy if exists "organization_members insert by accountant/owner" on publi
 create policy "organization_members insert by accountant/owner"
   on public.organization_members for insert
   to authenticated
-  with check (public.viewer_organization_validate(organization_id, array['accountant','owner']::public.organization_member_role[]));
+  with check (
+    organization_id in (
+      select public.viewer_organization_ids(array['accountant','owner']::public.organization_member_role[])
+    )
+  );
 
 drop policy if exists "organization_members update by accountant/owner" on public.organization_members;
 create policy "organization_members update by accountant/owner"
   on public.organization_members for update
   to authenticated
-  using (public.viewer_organization_validate(organization_id, array['accountant','owner']::public.organization_member_role[]))
-  with check (public.viewer_organization_validate(organization_id, array['accountant','owner']::public.organization_member_role[]));
+  using (
+    organization_id in (
+      select public.viewer_organization_ids(array['accountant','owner']::public.organization_member_role[])
+    )
+  );
 
 drop policy if exists "organization_members delete by owner" on public.organization_members;
 create policy "organization_members delete by owner"
   on public.organization_members for delete
   to authenticated
-  using (public.viewer_organization_validate(organization_id, array['owner']::public.organization_member_role[]));
+  using (
+    organization_id in (
+      select public.viewer_organization_ids(array['owner']::public.organization_member_role[])
+    )
+  );
 
 -- ============================================================
 -- Custom access token hook
@@ -715,8 +731,8 @@ create or replace function public.user_auth_hook(event jsonb)
         )), '[]'::jsonb)
         into _tenants
         from public.organization_members om
-        join public.organizations o on o.organization_id = om.organization_id
-        join public.tenants t on t.tenant_id = o.tenant_id
+        join public.organizations o using (organization_id)
+        join public.tenants t using (tenant_id)
         where om.profile_id = _user_id
           and om.organization_member_disabled_at is null
           and o.organization_disabled_at is null
@@ -728,17 +744,17 @@ create or replace function public.user_auth_hook(event jsonb)
         )), '[]'::jsonb)
         into _organizations
         from public.organization_members om
-        join public.organizations o on o.organization_id = om.organization_id
-        join public.tenants t on t.tenant_id = o.tenant_id
+        join public.organizations o using (organization_id)
+        join public.tenants t using (tenant_id)
         where om.profile_id = _user_id
           and om.organization_member_disabled_at is null
           and o.organization_disabled_at is null
           and t.tenant_disabled_at is null;
 
         select exists (
-          select 1 from protected.concierge_users cu
-          where cu.profile_id = _user_id
-            and cu.concierge_user_disabled_at is null
+          select 1 from protected.concierges c
+          where c.profile_id = _user_id
+            and c.concierge_disabled_at is null
         ) into _is_concierge;
 
         select coalesce(p.profile_onboarded_at is not null, false)
@@ -769,7 +785,7 @@ grant execute on function public.user_auth_hook(jsonb) to supabase_auth_admin;
 
 -- Hook is not security definer; grant supabase_auth_admin direct read on source tables.
 grant usage on schema public, protected to supabase_auth_admin;
-grant select on table public.tenants, public.organizations, public.organization_members, protected.concierge_users to supabase_auth_admin;
+grant select on table public.tenants, public.organizations, public.organization_members, protected.concierges to supabase_auth_admin;
 grant select (profile_id, profile_onboarded_at) on public.profiles to supabase_auth_admin;
 
 drop policy if exists "Allow auth admin to read tenants." on public.tenants;
@@ -785,9 +801,10 @@ drop policy if exists "Allow auth admin to read organization_members." on public
 create policy "Allow auth admin to read organization_members."
   on public.organization_members as permissive for select to supabase_auth_admin using (true);
 
-drop policy if exists "Allow auth admin to read concierge_users." on protected.concierge_users;
-create policy "Allow auth admin to read concierge_users."
-  on protected.concierge_users as permissive for select to supabase_auth_admin using (true);
+drop policy if exists "Allow auth admin to read concierge_users." on protected.concierges;
+drop policy if exists "Allow auth admin to read concierges." on protected.concierges;
+create policy "Allow auth admin to read concierges."
+  on protected.concierges as permissive for select to supabase_auth_admin using (true);
 
 drop policy if exists "Allow auth admin to read profile onboarding state." on public.profiles;
 create policy "Allow auth admin to read profile onboarding state."
@@ -979,8 +996,10 @@ create policy "Anyone can select addresses_level3."
   using (address_level3_disabled_at is null);
 
 -- ============================================================
--- tenant tier + custom domain (1:1 with tenants)
+-- tenant tier + custom domains
 -- ============================================================
+-- A tenant may have many domains (apex + subdomains, staging hosts, etc).
+-- Each domain is globally unique.
 
 do $$ begin
   create type public.tenant_tier as enum ('free', 'pro', 'enterprise');
@@ -990,16 +1009,14 @@ alter table public.tenants
   add column if not exists tenant_tier public.tenant_tier not null default 'free';
 
 create table if not exists public.tenant_domains (
-  tenant_domain_id serial primary key,
-  tenant_id int not null unique references public.tenants (tenant_id) on delete cascade,
-  domain extensions.citext not null unique check (char_length(domain) between 3 and 253),
+  tenant_id int not null references public.tenants (tenant_id) on delete cascade,
+  domain_value extensions.citext not null check (char_length(domain_value) between 3 and 253),
   domain_verified_at timestamptz,
   domain_created_at timestamptz not null default current_timestamp,
-  domain_updated_at timestamptz not null default current_timestamp
+  domain_updated_at timestamptz not null default current_timestamp,
+  primary key (tenant_id, domain_value),
+  unique (domain_value)
 );
-
-create index if not exists tenant_domains_tenant_idx
-  on public.tenant_domains (tenant_id);
 
 drop trigger if exists handle_tenant_domains_updated_at on public.tenant_domains;
 create trigger handle_tenant_domains_updated_at
@@ -1008,10 +1025,14 @@ create trigger handle_tenant_domains_updated_at
 
 alter table public.tenant_domains enable row level security;
 
+revoke all on table public.tenant_domains from anon, authenticated;
+-- anon is required for graphql; RLS still gates row access.
+grant select, insert, update, delete on table public.tenant_domains to anon, authenticated;
+
 drop policy if exists "tenant_domains select by members" on public.tenant_domains;
 create policy "tenant_domains select by members"
   on public.tenant_domains for select to authenticated
-  using (public.viewer_tenant_validate(tenant_id));
+  using (tenant_id in (select public.viewer_tenant_ids()));
 
 drop policy if exists "tenant_domains write by owner" on public.tenant_domains;
 create policy "tenant_domains write by owner"
@@ -1020,14 +1041,9 @@ create policy "tenant_domains write by owner"
     exists (
       select 1 from public.organizations o
       where o.tenant_id = public.tenant_domains.tenant_id
-        and public.viewer_organization_validate(o.organization_id, array['owner']::public.organization_member_role[])
-    )
-  )
-  with check (
-    exists (
-      select 1 from public.organizations o
-      where o.tenant_id = public.tenant_domains.tenant_id
-        and public.viewer_organization_validate(o.organization_id, array['owner']::public.organization_member_role[])
+        and o.organization_id in (
+          select public.viewer_organization_ids(array['owner']::public.organization_member_role[])
+        )
     )
   );
 

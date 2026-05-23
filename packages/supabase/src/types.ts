@@ -290,41 +290,38 @@ export type Database = {
       }
       tenant_domains: {
         Row: {
-          domain: string
           domain_created_at: string
           domain_updated_at: string
+          domain_value: string
           domain_verified_at: string | null
-          tenant_domain_id: number
           tenant_id: number
         }
         Insert: {
-          domain: string
           domain_created_at?: string
           domain_updated_at?: string
+          domain_value: string
           domain_verified_at?: string | null
-          tenant_domain_id?: number
           tenant_id: number
         }
         Update: {
-          domain?: string
           domain_created_at?: string
           domain_updated_at?: string
+          domain_value?: string
           domain_verified_at?: string | null
-          tenant_domain_id?: number
           tenant_id?: number
         }
         Relationships: [
           {
             foreignKeyName: "tenant_domains_tenant_id_fkey"
             columns: ["tenant_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "tenant_domains_tenant_id_fkey"
             columns: ["tenant_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "tenants_organizations_profiles"
             referencedColumns: ["tenant_id"]
           },
@@ -430,7 +427,12 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      viewer_organization_ids: { Args: never; Returns: number[] }
+      viewer_organization_ids: {
+        Args: {
+          required_roles?: Database["public"]["Enums"]["organization_member_role"][]
+        }
+        Returns: number[]
+      }
       viewer_organization_validate: {
         Args: {
           required_roles?: Database["public"]["Enums"]["organization_member_role"][]

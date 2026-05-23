@@ -1,6 +1,12 @@
 import type { Provider } from "@supabase/supabase-js";
 
-export const OAUTH_PROVIDER_IDS = ["google", "azure", "linkedin_oidc", "github", "facebook"] as const satisfies readonly Provider[];
+export const OAUTH_PROVIDER_IDS = [
+  "google",
+  "azure",
+  "linkedin_oidc",
+  "github",
+  "facebook",
+] as const satisfies readonly Provider[];
 
 export type OAuthProviderId = (typeof OAUTH_PROVIDER_IDS)[number];
 

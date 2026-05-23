@@ -13,7 +13,10 @@ const signInWithOAuthSchema = z.object({
 });
 
 const checkEmailSchema = z.object({
-  email: z.string().min(1).transform((v) => v.trim().toLowerCase()),
+  email: z
+    .string()
+    .min(1)
+    .transform((v) => v.trim().toLowerCase()),
 });
 
 const signInWithOAuthRun = action

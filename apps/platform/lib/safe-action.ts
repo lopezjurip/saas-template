@@ -23,10 +23,7 @@ export const authedAction = action.use(async ({ next }) => {
 
 // Thin adapter so `<form action={...}>` can call a next-safe-action action that takes a typed object.
 // `parse` pulls fields out of FormData; validation lives in the action's inputSchema.
-export function formAction<TInput>(
-  run: (input: TInput) => Promise<unknown>,
-  parse: (formData: FormData) => TInput,
-) {
+export function formAction<TInput>(run: (input: TInput) => Promise<unknown>, parse: (formData: FormData) => TInput) {
   return async (formData: FormData) => {
     await run(parse(formData));
   };
