@@ -54,6 +54,46 @@ create or replace function internal.uuid_generate_v7()
   end;
   $$;
 
+-- Generic text normalization: strip control chars + HTML tags, collapse whitespace.
+-- Returns NULL if the result is empty.
+create or replace function internal.text_normalize(value text)
+  returns text
+  language sql
+  immutable
+  parallel safe
+  set search_path to ''
+  as $$
+    select nullif(
+      trim(regexp_replace(
+        regexp_replace(
+          regexp_replace(value, '[\x00-\x1F\x7F]', ' ', 'g'),
+          '<[^>]*>', '', 'g'
+        ),
+        '\s+', ' ', 'g'
+      )),
+      ''
+    );
+  $$;
+
+-- Trigger function: normalizes named text columns via internal.text_normalize.
+-- Pass column names as trigger arguments, e.g.:
+--   execute procedure internal.column_normalize_text(col_a, col_b)
+create or replace function internal.column_normalize_text()
+  returns trigger
+  language plpgsql
+  as $$
+    declare
+      col text;
+      val text;
+    begin
+      foreach col in array TG_ARGV loop
+        val := internal.text_normalize(row_to_json(NEW) ->> col);
+        NEW := jsonb_populate_record(NEW, jsonb_build_object(col, val));
+      end loop;
+      return NEW;
+    end;
+  $$;
+
 -- Slug validation shared by any table with a slug column (tenants, future teams, etc.)
 create or replace function internal.slug_validate(value text)
   returns boolean
@@ -103,7 +143,7 @@ grant execute on function public.health_current_timestamp() to anon, authenticat
 
 create table if not exists public.profiles (
   profile_id uuid not null primary key references auth.users on delete cascade,
-  profile_name_full text check (char_length(profile_name_full) <= 256),
+  profile_name_full text,
   profile_onboarded_at timestamptz,
   profile_disabled_at timestamptz,
   profile_created_at timestamptz not null default current_timestamp,
@@ -120,6 +160,11 @@ drop trigger if exists handle_profiles_updated_at on public.profiles;
 create trigger handle_profiles_updated_at
   before update on public.profiles
   for each row execute procedure extensions.moddatetime(profile_updated_at);
+
+drop trigger if exists profiles_trigger_normalize_name on public.profiles;
+create trigger profiles_trigger_normalize_name
+  before insert or update of profile_name_full on public.profiles
+  for each row execute procedure internal.column_normalize_text(profile_name_full);
 
 -- Auto-create profile on new auth user
 create or replace function public.users_handle_created()
