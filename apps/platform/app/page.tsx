@@ -27,8 +27,9 @@ export default async function HomePage() {
   const tenants = (user.app_metadata?.tenants ?? []) as TenantClaim[];
   const organizations = (user.app_metadata?.organizations ?? []) as OrganizationClaim[];
 
-  const tenantHost = process.env.NEXT_PUBLIC_TENANT_HOST ?? "localhost:7002";
-  const protocol = tenantHost.startsWith("localhost") || tenantHost.includes("127.0.0.1") ? "http" : "https";
+  const tenantHost = process.env.NEXT_PUBLIC_TENANT_HOST ?? "lvh.me:7002";
+  const isDevHost = /(^localhost(:|$)|\.localhost(:|$)|\.test(:|$)|127\.0\.0\.1|(^|\.)lvh\.me(:|$))/.test(tenantHost);
+  const protocol = isDevHost ? "http" : "https";
 
   return (
     <main className="bg-muted flex min-h-svh items-center justify-center p-6">

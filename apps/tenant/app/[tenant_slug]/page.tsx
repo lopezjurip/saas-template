@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
-import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { gql } from "~/generated/graphql";
 import { GRAPHY_SERVER_ANON_CREATE } from "~/lib/graphy/graphy.server";
 
@@ -38,20 +38,40 @@ type TenantOrganization = NonNullable<
   NonNullable<TenantOrganizationsQueryType["organizationsCollection"]>["edges"][number]["node"]
 >;
 
+type TenantClaim = { id: number; slug: string };
 type OrganizationClaim = { id: number; role: string };
 
-export default async function TenantHomePage() {
+type JwtPayload = { app_metadata?: { tenants?: TenantClaim[]; organizations?: OrganizationClaim[] } };
+
+function decodeJwtPayload(token: string): JwtPayload | null {
+  const segment = token.split(".")[1];
+  if (!segment) return null;
+  try {
+    const padded = segment.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(segment.length / 4) * 4, "=");
+    return JSON.parse(atob(padded));
+  } catch {
+    return null;
+  }
+}
+
+export default async function TenantHomePage({ params }: { params: Promise<{ tenant_slug: string }> }) {
+  const { tenant_slug: tenantSlug } = await params;
+
   const supabase = await createServerClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  const headerList = await headers();
-
-  const tenantSlug = headerList.get("x-tenant-slug") ?? "";
-  const tenantId = Number(headerList.get("x-tenant-id") ?? "0");
 
   const user = session?.user;
-  const allOrgClaims = (user?.app_metadata?.organizations ?? []) as OrganizationClaim[];
+  const claims = session ? decodeJwtPayload(session.access_token) : null;
+  const allTenantClaims = (claims?.app_metadata?.tenants ?? []) as TenantClaim[];
+  const allOrgClaims = (claims?.app_metadata?.organizations ?? []) as OrganizationClaim[];
+
+  // Proxy already validated membership; derive tenant_id from the JWT mapping.
+  const tenantId = allTenantClaims.find((t) => t.slug === tenantSlug)?.id;
+  if (!tenantId) {
+    notFound();
+  }
 
   const graphy = GRAPHY_SERVER_ANON_CREATE(session);
   const { data } = await graphy.query({ query: TenantOrganizationsQuery, variables: { tenantId } });
@@ -59,7 +79,7 @@ export default async function TenantHomePage() {
     data?.organizationsCollection?.edges?.map((e) => e.node).filter((n): n is TenantOrganization => n != null) ?? [];
 
   const fullName = (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "Tú";
-  const platformUrl = process.env.NEXT_PUBLIC_PLATFORM_URL ?? "http://localhost:7000";
+  const platformUrl = process.env.NEXT_PUBLIC_PLATFORM_URL ?? "http://platform.lvh.me:7003";
 
   return (
     <main className="bg-muted flex min-h-svh items-center justify-center p-6">

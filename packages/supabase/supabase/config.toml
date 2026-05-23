@@ -96,13 +96,13 @@ enabled = true
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://localhost:7000"
+site_url = "http://platform.lvh.me:7003"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = [
-  "http://localhost:7000/**",
-  "http://localhost:7001/**",
-  "http://localhost:7002/**",
-  "http://*.localhost:7002/**",
+  "http://platform.lvh.me:7003/**",
+  "http://lvh.me:7001/**",
+  "http://www.lvh.me:7001/**",
+  "http://*.lvh.me:7002/**",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600

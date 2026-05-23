@@ -57,12 +57,12 @@ humane/
 │   │
 │   └── tenant/               # @apps/tenant — {slug}.humane.cl — the product
 │       ├── app/
-│       │   ├── (tenant)/
-│       │   │   ├── admin/    # Contadora / HR admin surface
-│       │   │   ├── manager/  # Manager surface
-│       │   │   └── empleado/ # Employee web surface
-│       │   └── mcp/[transport]/ # MCP endpoint
-│       ├── proxy.ts          # Extracts tenant slug from subdomain
+│       │   └── [tenant_slug]/        # proxy.ts rewrites {slug}.humane.cl/* → /{slug}/*
+│       │       ├── admin/            # Contadora / HR admin surface
+│       │       ├── manager/          # Manager surface
+│       │       ├── empleado/         # Employee web surface
+│       │       └── mcp/[transport]/  # MCP endpoint
+│       ├── proxy.ts          # Extracts tenant slug from subdomain, rewrites to /[tenant_slug]/...
 │       ├── styles/globals.css
 │       └── next.config.ts
 │
@@ -159,7 +159,7 @@ When building Kapso tools:
 
 ## MCP Server
 
-Lives at `apps/tenant/app/mcp/[transport]/route.ts`. Exposed at `{slug}.humane.cl/mcp/`.
+Lives at `apps/tenant/app/[tenant_slug]/mcp/[transport]/route.ts`. Exposed at `{slug}.humane.cl/mcp/` (the proxy rewrites the subdomain into the route segment).
 Tools to expose: headcount, payroll cost, vacation balances, team status, compliance alerts, employee lookup. Read-only for v1.
 
 ## Database Workflow (Prototype Phase)
@@ -181,7 +181,7 @@ Two-level model:
 
 Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to filter, cheap in indexes) and, when data is org-scoped, also `organization_id int`. Supabase RLS enforces isolation at the DB layer — never rely on application-level filtering alone.
 
-**Active tenant comes from the subdomain.** `apps/tenant/proxy.ts` resolves `{tenant_slug}.humane.cl` → `tenant_id` via the service-role client and forwards `x-tenant-id` to downstream code. Server-side queries must explicitly `.eq("tenant_id", ...)` with that value. Org switching happens inside the app (per-tab or per-session selection).
+**Active tenant comes from the subdomain.** `apps/tenant/proxy.ts` resolves `{tenant_slug}.humane.cl` via the service-role client, validates membership against the JWT, and **rewrites** the URL to `/{tenant_slug}/...` — every tenant route lives under `app/[tenant_slug]/...` and reads the slug from route `params`. Pages derive `tenant_id` from the JWT `app_metadata.tenants` claim (slug→id mapping); no `x-tenant-*` headers. Server-side queries must explicitly `.eq("tenant_id", ...)` with that value. Org switching happens inside the app (per-tab or per-session selection).
 
 **JWT carries two arrays** (`public.user_auth_hook` on token issuance):
 - `app_metadata.tenants: [{id, slug}]` — distinct tenants the user has any org membership in

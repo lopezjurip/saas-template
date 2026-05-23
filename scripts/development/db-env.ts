@@ -35,16 +35,19 @@ const serviceRoleKey = env.SERVICE_ROLE_KEY ?? "";
 const publicVars = [
   `NEXT_PUBLIC_SUPABASE_URL=${url}`,
   `NEXT_PUBLIC_SUPABASE_ANON_KEY=${anonKey}`,
-  `NEXT_PUBLIC_COOKIE_DOMAIN=localhost`,
+  `NEXT_PUBLIC_COOKIE_DOMAIN=lvh.me`,
 ].join("\n");
 
 const serverVars = `${publicVars}\nSUPABASE_SERVICE_ROLE_KEY=${serviceRoleKey}`;
 
+const tenantHost = "lvh.me:7002";
+const platformUrl = "http://platform.lvh.me:7003";
+
 const files: [string, string][] = [
   // landing: public vars only — no service role, no auth imports per isolation rules
   ["apps/landing/.env.local", `${publicVars}\n`],
-  ["apps/platform/.env.local", `${serverVars}\nNEXT_PUBLIC_TENANT_HOST=localhost:7002\n`],
-  ["apps/tenant/.env.local", `${serverVars}\nNEXT_PUBLIC_PLATFORM_URL=http://localhost:7003\n`],
+  ["apps/platform/.env.local", `${serverVars}\nNEXT_PUBLIC_TENANT_HOST=${tenantHost}\n`],
+  ["apps/tenant/.env.local", `${serverVars}\nNEXT_PUBLIC_TENANT_HOST=${tenantHost}\nNEXT_PUBLIC_PLATFORM_URL=${platformUrl}\n`],
 ];
 
 for (const [rel, content] of files) {
