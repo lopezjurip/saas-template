@@ -24,22 +24,31 @@ export function SignupForm({ defaultEmail }: { defaultEmail: string }) {
     setServerError(null);
     startTransition(async () => {
       const res = await signUp(values);
-      if ("error" in res) {
-        setServerError(res.error);
-      } else {
-        setSentTo(res.email);
-      }
+      if (res?.serverError) setServerError(res.serverError);
+      else if (res?.validationErrors) setServerError("Formulario inválido");
+      else if (res?.data?.email) setSentTo(res.data.email);
     });
   });
 
   if (sentTo) {
+    const mailbox = process.env.NEXT_PUBLIC_DEV_MAILBOX_URL;
     return (
-      <Alert>
-        <AlertDescription>
-          Te enviamos un correo a <strong>{sentTo}</strong> para confirmar tu cuenta. Haz clic en el enlace para
-          continuar.
-        </AlertDescription>
-      </Alert>
+      <div className="flex flex-col gap-3">
+        <Alert>
+          <AlertDescription>
+            Te enviamos un correo a <strong>{sentTo}</strong> para confirmar tu cuenta. Haz clic en el enlace para
+            continuar.
+          </AlertDescription>
+        </Alert>
+        {mailbox ? (
+          <div className="flex flex-col gap-1.5 rounded-md border border-yellow-400 bg-yellow-50 p-3 text-yellow-900">
+            <p className="text-xs font-semibold uppercase tracking-wide">Development only</p>
+            <a href={mailbox} target="_blank" rel="noreferrer" className="text-sm underline">
+              Abrir bandeja de entrada local
+            </a>
+          </div>
+        ) : null}
+      </div>
     );
   }
 

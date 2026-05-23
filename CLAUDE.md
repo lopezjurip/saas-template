@@ -29,40 +29,32 @@ Always use **pnpm**. Never npm or yarn.
 | Email | Resend + React Email (in `packages/react-email`) |
 | Mass payouts | Shinkansen |
 | AI | Vercel AI Gateway + Anthropic Claude |
-| MCP server | `@modelcontextprotocol/sdk` (TS), exposed in `apps/tenant` |
+| MCP server | `@modelcontextprotocol/sdk` (TS), exposed at `[tenant_slug]/mcp/` |
 | Linting/Formatting | Biome.js 2.x |
 | Analytics | PostHog (EU cloud — Ley 21.719 compliance) |
 | Hosting | Vercel |
 
 ## Architecture
 
-3 separate Next.js apps + shared packages. Each app deploys independently on Vercel.
+One Next.js app — `apps/platform` — that hosts marketing, auth, dashboard, and tenant surfaces, routed by hostname and URL path. Shared logic lives in `@packages/*`.
 
 ```
 humane/
 ├── apps/
-│   ├── landing/              # @apps/landing — www.humane.cl — marketing site
-│   │   ├── app/
-│   │   ├── styles/globals.css
-│   │   └── next.config.ts
-│   │
-│   ├── app/                  # @apps/platform — app.humane.cl — auth, account, internal ops
-│   │   ├── app/
-│   │   │   ├── (auth)/       # sign in, sign up, password reset
-│   │   │   ├── (account)/    # profile, billing, org switcher
-│   │   │   └── (internal)/   # concierge ops (migrations, escalations, regulatory)
-│   │   ├── proxy.ts
-│   │   ├── styles/globals.css
-│   │   └── next.config.ts
-│   │
-│   └── tenant/               # @apps/tenant — {slug}.humane.cl — the product
+│   └── platform/             # @apps/platform — single Next.js app
 │       ├── app/
-│       │   └── [tenant_slug]/        # proxy.ts rewrites {slug}.humane.cl/* → /{slug}/*
-│       │       ├── admin/            # Contadora / HR admin surface
-│       │       ├── manager/          # Manager surface
-│       │       ├── empleado/         # Employee web surface
-│       │       └── mcp/[transport]/  # MCP endpoint
-│       ├── proxy.ts          # Extracts tenant slug from subdomain, rewrites to /[tenant_slug]/...
+│       │   ├── page.tsx              # / — marketing landing (public)
+│       │   ├── health/route.ts       # /health — canonical health check (public)
+│       │   ├── auth/                 # /auth/* — sign in, sign up, callback, logout (public)
+│       │   ├── onboarding/           # /onboarding — first-run setup (auth required, onboarded check off)
+│       │   ├── dashboard/page.tsx    # /dashboard — post-auth tenant picker
+│       │   ├── tenants/create/       # /tenants/create — new tenant flow
+│       │   └── [tenant_slug]/        # /[slug]/* — tenant product (proxy rewrites {slug}.<apex>/* here)
+│       │       ├── admin/            # Contadora / HR admin surface (future)
+│       │       ├── manager/          # Manager surface (future)
+│       │       ├── empleado/         # Employee web surface (future)
+│       │       └── mcp/[transport]/  # MCP endpoint (future)
+│       ├── proxy.ts          # Routes by host: apex vs {slug}.apex, auth + onboarded + membership gates
 │       ├── styles/globals.css
 │       └── next.config.ts
 │
@@ -77,41 +69,37 @@ humane/
 └── docs/                     # Strategy, product spec, legal compendium, user journeys
 ```
 
-### App Responsibilities
-
-| App | Package | Domain | Contains |
-|---|---|---|---|
-| `landing` | `@apps/landing` | `www.humane.cl` | Marketing, pricing, blog, SEO. Zero auth, zero PII. Only uses `@packages/ui-common`. |
-| `app` | `@apps/platform` | `app.humane.cl` | Auth, account home, billing, profile, internal concierge ops. |
-| `tenant` | `@apps/tenant` | `{slug}.humane.cl` | The product: admin, manager, empleado surfaces + MCP endpoint. |
-
 ### Package Scopes
 
-- `@apps/*` — apps
+- `@apps/*` — apps (currently just `@apps/platform`)
 - `@packages/*` — shared packages
 
-### Isolation Rules
+### Routing
 
-- `apps/landing` must NEVER import from anything that touches PII or auth. It can only use `@packages/ui-common`.
-- `apps/platform` and `apps/tenant` can import any `@packages/*`.
-- Never import directly across apps — extract to a package.
+Hostname determines whether a request enters tenant context:
 
-### Subdomain Routing
+- `<apex>/...` and `www.<apex>/...` → main site. URL path picks the page (`/`, `/auth`, `/onboarding`, `/dashboard`, `/tenants/create`, `/[tenant_slug]/...`).
+- `{slug}.<apex>/...` → `apps/platform/proxy.ts` rewrites to `/{slug}{path}` so the same `[tenant_slug]` route renders. `/auth/*`, `/onboarding/*`, and `/health` on a subdomain redirect back to the apex so auth lives at one origin.
+- Custom apex domains (e.g. `center.burgercool.com`) — phase 2; the proxy currently returns 404. Cookies can't span apexes without an SSO redirect/exchange flow.
 
-- `www.humane.cl` → `apps/landing` (separate Vercel deployment)
-- `app.humane.cl` → `apps/platform` (separate Vercel deployment)
-- `{slug}.humane.cl` → `apps/tenant` — proxy extracts slug, sets `x-tenant-slug` header
+Where `<apex>` is `NEXT_PUBLIC_APEX_HOST` — `lvh.me:7003` in dev, `resolvecom.com` in prod.
+
+### Auth + onboarding
+
+- `proxy.ts` calls `updateSession` (`@packages/supabase/client.middleware`) to refresh the JWT cookie, then **decodes the JWT directly** to read hook-injected claims. `auth.getUser()` returns the persisted user record without hook claims — always decode `session.access_token` (or use `getSupabaseUserMetadata()` from `@packages/supabase/client.server` which does this internally).
+- Gates, in order: public path bypass → auth (redirect to `/auth?next=…`, `next` derived from the `Host` header since `request.url` drops the subdomain in Next dev) → onboarded (redirect to `/onboarding`) → for tenant subdomains, membership check against JWT `app_metadata.tenants`.
+- Reserved slugs (`auth`, `onboarding`, `dashboard`, `tenants`, `health`, `api`, `_next`, `www`, …) are rejected at tenant creation (`apps/platform/app/tenants/create/schemas.ts`) so they never collide with first-party routes.
 
 ### Local Dev Ports
 
 | Service | Default port | URL |
 |---|---|---|
-| `apps/platform` | 7000 | http://localhost:7000 |
-| `apps/landing` | 7001 | http://localhost:7001 |
-| `apps/tenant` | 7002 | http://localhost:7002 |
+| `apps/platform` | 7003 | http://lvh.me:7003 |
 | Supabase Studio | 7100 | http://localhost:7100 |
 | `packages/react-email` | 7101 | http://localhost:7101 |
 | `packages/react-pdf` | 7102 | http://localhost:7102 |
+
+`lvh.me` is a public wildcard DNS that resolves every name (apex + subdomain) to `127.0.0.1` — no `/etc/hosts` entries needed. Cookies are scoped to `.lvh.me` so the session crosses `lvh.me:7003` ↔ `{slug}.lvh.me:7003`.
 
 ## Skills
 
@@ -150,7 +138,7 @@ Conventions:
 ## Kapso Integration
 
 `packages/kapso` is a lite client — types and a minimal HTTP client only.
-Actual webhook handlers, tool definitions, and agent logic live in `apps/platform/` or `apps/tenant/` depending on the surface.
+Actual webhook handlers, tool definitions, and agent logic live under `apps/platform/app/` — either as platform-level routes (`apps/platform/app/api/...`) or tenant-scoped routes under `apps/platform/app/[tenant_slug]/...` depending on the surface.
 
 When building Kapso tools:
 - Each tool = one user intent (e.g., `get_liquidacion`, `request_vacation`, `team_status`)
@@ -159,7 +147,7 @@ When building Kapso tools:
 
 ## MCP Server
 
-Lives at `apps/tenant/app/[tenant_slug]/mcp/[transport]/route.ts`. Exposed at `{slug}.humane.cl/mcp/` (the proxy rewrites the subdomain into the route segment).
+Lives at `apps/platform/app/[tenant_slug]/mcp/[transport]/route.ts`. Exposed at `{slug}.<apex>/mcp/` (the proxy rewrites the subdomain into the route segment) or `<apex>/{slug}/mcp/` directly.
 Tools to expose: headcount, payroll cost, vacation balances, team status, compliance alerts, employee lookup. Read-only for v1.
 
 ## Database Workflow (Prototype Phase)
@@ -181,7 +169,9 @@ Two-level model:
 
 Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to filter, cheap in indexes) and, when data is org-scoped, also `organization_id int`. Supabase RLS enforces isolation at the DB layer — never rely on application-level filtering alone.
 
-**Active tenant comes from the subdomain.** `apps/tenant/proxy.ts` resolves `{tenant_slug}.humane.cl` via the service-role client, validates membership against the JWT, and **rewrites** the URL to `/{tenant_slug}/...` — every tenant route lives under `app/[tenant_slug]/...` and reads the slug from route `params`. Pages derive `tenant_id` from the JWT `app_metadata.tenants` claim (slug→id mapping); no `x-tenant-*` headers. Server-side queries must explicitly `.eq("tenant_id", ...)` with that value. Org switching happens inside the app (per-tab or per-session selection).
+**Active tenant comes from the subdomain or first path segment.** `apps/platform/proxy.ts` resolves `{tenant_slug}.<apex>` via the service-role client, validates membership against the JWT, and **rewrites** the URL to `/{tenant_slug}/...` — every tenant route lives under `app/[tenant_slug]/...` and reads the slug from route `params`. Path-segment access (`<apex>/{tenant_slug}/...`) works too without any rewrite. Pages derive `tenant_id` from the JWT `app_metadata.tenants` claim (slug→id mapping); no `x-tenant-*` headers. Server-side queries must explicitly `.eq("tenant_id", ...)` with that value. Org switching happens inside the app (per-tab or per-session selection).
+
+**Custom domain mapping (`public.tenant_domains`, 1:1 with tenants)** is staged in the schema but not yet wired into the proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates these advanced features once billing exists.
 
 **JWT carries two arrays** (`public.user_auth_hook` on token issuance):
 - `app_metadata.tenants: [{id, slug}]` — distinct tenants the user has any org membership in
@@ -261,9 +251,9 @@ Critical safety rule for SQL. Always explicit.
 - Never use `as any`
 
 ### Imports
-- Use `~/` alias for imports within each app's root (e.g., `~/components/...` in `apps/tenant/`)
-- Workspace packages: `@packages/ui-common`, `@packages/supabase`, `@packages/kapso`, `@packages/react-email`, `@packages/react-pdf`
-- Never import across apps directly — extract to a package instead
+- Use `~/` alias for imports within `apps/platform/` (e.g., `~/lib/...`, `~/hooks/...`).
+- Workspace packages: `@packages/ui-common`, `@packages/supabase`, `@packages/kapso`, `@packages/react-email`, `@packages/react-pdf`.
+- App code lives in `apps/platform/`; reusable logic belongs in `@packages/*`.
 
 ### Code Style
 - Biome.js handles formatting/linting — don't fight it
@@ -302,6 +292,6 @@ Stage normally in git. Ignore when writing commit messages:
 - Don't skip legal context in approval flows — inline Art. references are a core differentiator
 - Don't hardcode regulatory values — they change monthly/yearly
 - Don't process payroll without checking `04-legal-regulatory-compendium.md` first
-- Don't let `apps/landing/` import anything that touches PII or auth
-- Don't import across apps — extract to a package instead
-- Don't put shadcn components in individual apps — they belong in `packages/ui-common/src/shadcn`
+- Don't use a tenant slug from a reserved-route list (auth, onboarding, dashboard, tenants, health, …) — the schema check in `apps/platform/app/tenants/create/schemas.ts` is the single source of truth
+- Don't read `app_metadata.tenants` / `onboarded` from `auth.getUser()` — those claims live in the JWT only. Use `getSupabaseUserMetadata()` from `@packages/supabase/client.server` (or decode `session.access_token` directly in middleware)
+- Don't put shadcn components in `apps/platform/` — they belong in `packages/ui-common/src/shadcn`

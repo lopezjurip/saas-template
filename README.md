@@ -14,9 +14,7 @@ pnpm dev        # runs all apps and packages in parallel
 
 | Service | Default port | URL |
 |---|---|---|
-| `apps/platform` | 7000 | http://localhost:7000 |
-| `apps/landing` | 7001 | http://localhost:7001 |
-| `apps/tenant` | 7002 | http://localhost:7002 |
+| `apps/platform` | 7003 | http://lvh.me:7003 |
 | Supabase Studio | 7100 | http://localhost:7100 |
 | `packages/react-email` | 7101 | http://localhost:7101 |
 | `packages/react-pdf` | 7102 | http://localhost:7102 |

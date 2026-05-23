@@ -37,7 +37,8 @@ export function PasswordStep() {
     setServerError(null);
     startTransition(async () => {
       const res = await setPassword({ password: values.password });
-      if ("error" in res && res.error) setServerError(res.error);
+      if (res?.serverError) setServerError(res.serverError);
+      else if (res?.validationErrors) setServerError("Contraseña inválida");
       else router.push("/onboarding");
     });
   });

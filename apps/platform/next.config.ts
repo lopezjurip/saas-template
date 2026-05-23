@@ -5,7 +5,7 @@ const requiredEnvVars = [
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "NEXT_PUBLIC_COOKIE_DOMAIN",
   "SUPABASE_SERVICE_ROLE_KEY",
-  "NEXT_PUBLIC_TENANT_HOST",
+  "NEXT_PUBLIC_APEX_HOST",
 ];
 
 const missing = requiredEnvVars.filter((v) => !process.env[v]);
@@ -14,12 +14,13 @@ if (missing.length > 0) {
 }
 
 const config: NextConfig = {
-  allowedDevOrigins: ["*.lvh.me"],
+  allowedDevOrigins: ["lvh.me", "*.lvh.me"],
   transpilePackages: [
     "@packages/debug",
     "@packages/graphy",
     "@packages/kapso",
     "@packages/react-email",
+    "@packages/react-pdf",
     "@packages/supabase",
     "@packages/ui-common",
   ],

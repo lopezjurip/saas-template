@@ -967,3 +967,63 @@ drop policy if exists "Anyone can select addresses_level3." on public.addresses_
 create policy "Anyone can select addresses_level3."
   on public.addresses_level3 for select
   using (address_level3_disabled_at is null);
+
+-- ============================================================
+-- tenant tier + custom domain (1:1 with tenants)
+-- ============================================================
+
+do $$ begin
+  create type public.tenant_tier as enum ('free', 'pro', 'enterprise');
+exception when duplicate_object then null; end $$;
+
+alter table public.tenants
+  add column if not exists tenant_tier public.tenant_tier not null default 'free';
+
+create table if not exists public.tenant_domains (
+  tenant_domain_id serial primary key,
+  tenant_id int not null unique references public.tenants (tenant_id) on delete cascade,
+  domain extensions.citext not null unique check (char_length(domain) between 3 and 253),
+  domain_verified_at timestamptz,
+  domain_created_at timestamptz not null default current_timestamp,
+  domain_updated_at timestamptz not null default current_timestamp
+);
+
+create index if not exists tenant_domains_tenant_idx
+  on public.tenant_domains (tenant_id);
+
+drop trigger if exists handle_tenant_domains_updated_at on public.tenant_domains;
+create trigger handle_tenant_domains_updated_at
+  before update on public.tenant_domains
+  for each row execute procedure extensions.moddatetime(domain_updated_at);
+
+alter table public.tenant_domains enable row level security;
+
+drop policy if exists "tenant_domains select by members" on public.tenant_domains;
+create policy "tenant_domains select by members"
+  on public.tenant_domains for select to authenticated
+  using (public.viewer_tenant_validate(tenant_id));
+
+drop policy if exists "tenant_domains write by owner" on public.tenant_domains;
+create policy "tenant_domains write by owner"
+  on public.tenant_domains for all to authenticated
+  using (
+    exists (
+      select 1 from public.organizations o
+      where o.tenant_id = public.tenant_domains.tenant_id
+        and public.viewer_organization_validate(o.organization_id, array['owner']::public.organization_member_role[])
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.organizations o
+      where o.tenant_id = public.tenant_domains.tenant_id
+        and public.viewer_organization_validate(o.organization_id, array['owner']::public.organization_member_role[])
+    )
+  );
+
+-- supabase_auth_admin needs read access if we later inject custom_domain into JWT claims.
+grant select on table public.tenant_domains to supabase_auth_admin;
+
+drop policy if exists "Allow auth admin to read tenant_domains." on public.tenant_domains;
+create policy "Allow auth admin to read tenant_domains."
+  on public.tenant_domains as permissive for select to supabase_auth_admin using (true);

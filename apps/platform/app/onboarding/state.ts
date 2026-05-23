@@ -20,12 +20,11 @@ export async function loadOnboardingState(): Promise<OnboardingState> {
   const user = userResult.user;
   if (!user) redirect("/auth");
 
-  // biome-ignore lint/suspicious/noExplicitAny: TS6 + supabase-js inference loses Row type on chained select
-  const { data: profileRaw } = await (supabase.from("profiles") as any)
+  const { data: profile } = await supabase
+    .from("profiles")
     .select("profile_name_full, profile_onboarded_at")
     .eq("profile_id", user.id)
     .maybeSingle();
-  const profile = profileRaw as { profile_name_full: string | null; profile_onboarded_at: string | null } | null;
 
   const factors = await supabase.auth.mfa.listFactors();
   const hasPasskey = (factors.data?.all ?? []).some(

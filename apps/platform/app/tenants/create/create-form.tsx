@@ -5,7 +5,8 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { useState, useTransition } from "react";
+import { SLUGIFY } from "@packages/utils/slug";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { createTenant } from "./actions";
 import { type CreateTenantValues, createTenantSchema } from "./schemas";
@@ -20,17 +21,32 @@ export function CreateTenantForm({ tenantBaseUrl }: { tenantBaseUrl: string }) {
   });
 
   const slug = form.watch("tenant_slug");
+  const tenantName = form.watch("tenant_name");
+  const slugTouched = Boolean(form.formState.dirtyFields.tenant_slug);
+  const { setValue } = form;
+
+  // Suggest a slug derived from the tenant name until the user edits the slug field manually.
+  useEffect(() => {
+    if (slugTouched) return;
+    const suggested = SLUGIFY(tenantName).slice(0, 40);
+    setValue("tenant_slug", suggested, { shouldValidate: false, shouldDirty: false });
+  }, [tenantName, slugTouched, setValue]);
 
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
       const res = await createTenant(values);
-      if ("error" in res) {
-        setServerError(res.error);
+      if (res?.serverError) {
+        setServerError(res.serverError);
         return;
       }
+      if (res?.validationErrors) {
+        setServerError("Formulario inválido");
+        return;
+      }
+      if (!res?.data?.slug) return;
       // Hard navigate to the tenant subdomain so the browser sees the shared cookie.
-      const target = tenantBaseUrl.replace("{slug}", res.slug);
+      const target = tenantBaseUrl.replace("{slug}", res.data.slug);
       window.location.assign(target);
     });
   });

@@ -32,26 +32,20 @@ const url = env.API_URL ?? "http://127.0.0.1:54421";
 const anonKey = env.ANON_KEY ?? "";
 const serviceRoleKey = env.SERVICE_ROLE_KEY ?? "";
 
+const apexHost = "lvh.me:7003";
+
 const publicVars = [
   `NEXT_PUBLIC_SUPABASE_URL=${url}`,
   `NEXT_PUBLIC_SUPABASE_ANON_KEY=${anonKey}`,
   "NEXT_PUBLIC_COOKIE_DOMAIN=lvh.me",
+  `NEXT_PUBLIC_APEX_HOST=${apexHost}`,
+  // Mailpit catch-all inbox — surfaced in dev UIs so signup confirmation emails are easy to open.
+  "NEXT_PUBLIC_DEV_MAILBOX_URL=http://localhost:54424",
 ].join("\n");
 
 const serverVars = `${publicVars}\nSUPABASE_SERVICE_ROLE_KEY=${serviceRoleKey}`;
 
-const tenantHost = "lvh.me:7002";
-const platformUrl = "http://platform.lvh.me:7003";
-
-const files: [string, string][] = [
-  // landing: public vars only — no service role, no auth imports per isolation rules
-  ["apps/landing/.env.local", `${publicVars}\n`],
-  ["apps/platform/.env.local", `${serverVars}\nNEXT_PUBLIC_TENANT_HOST=${tenantHost}\n`],
-  [
-    "apps/tenant/.env.local",
-    `${serverVars}\nNEXT_PUBLIC_TENANT_HOST=${tenantHost}\nNEXT_PUBLIC_PLATFORM_URL=${platformUrl}\n`,
-  ],
-];
+const files: [string, string][] = [["apps/platform/.env.local", `${serverVars}\n`]];
 
 for (const [rel, content] of files) {
   writeFileSync(join(ROOT, rel), content);

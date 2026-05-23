@@ -1,76 +1,63 @@
 "use server";
 
-import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
-import { redirect } from "next/navigation";
-import { type CreateTenantValues, createTenantSchema } from "./schemas";
+import { authedAction } from "~/lib/safe-action";
+import { createTenantSchema } from "./schemas";
 
-type ActionResult = { error: string } | { ok: true; slug: string };
+export const createTenant = authedAction
+  .inputSchema(createTenantSchema)
+  .action(async ({ parsedInput, ctx: { supabase, user } }) => {
+    const admin = createServiceRoleClient();
 
-export async function createTenant(values: CreateTenantValues): Promise<ActionResult> {
-  const parsed = createTenantSchema.safeParse(values);
-  if (!parsed.success) return { error: "Formulario inválido" };
+    // 1. Tenant
+    const tenantRes = await admin
+      .from("tenants")
+      .insert({ tenant_name: parsedInput.tenant_name, tenant_slug: parsedInput.tenant_slug })
+      .select("tenant_id, tenant_slug")
+      .single();
 
-  const supabase = await createServerClient();
-  const { data: userResult } = await supabase.auth.getUser();
-  const user = userResult.user;
-  if (!user) redirect("/auth");
-
-  const admin = createServiceRoleClient();
-
-  // 1. Tenant
-  // biome-ignore lint/suspicious/noExplicitAny: TS6 + supabase-js inference loses Insert type
-  const tenantRes = await (admin.from("tenants") as any)
-    .insert({ tenant_name: parsed.data.tenant_name, tenant_slug: parsed.data.tenant_slug })
-    .select("tenant_id, tenant_slug")
-    .single();
-
-  if (tenantRes.error || !tenantRes.data) {
-    const msg = String(tenantRes.error?.message ?? "");
-    if (msg.includes("duplicate") || msg.includes("unique")) {
-      return { error: "Ese identificador ya está en uso. Prueba otro." };
+    if (tenantRes.error || !tenantRes.data) {
+      const msg = String(tenantRes.error?.message ?? "");
+      if (msg.includes("duplicate") || msg.includes("unique")) {
+        throw new Error("Ese identificador ya está en uso. Prueba otro.");
+      }
+      throw new Error("No pudimos crear la empresa. Intenta de nuevo.");
     }
-    return { error: "No pudimos crear la empresa. Intenta de nuevo." };
-  }
 
-  const tenantId = tenantRes.data.tenant_id as number;
-  const tenantSlug = tenantRes.data.tenant_slug as string;
+    const { tenant_id: tenantId, tenant_slug: tenantSlug } = tenantRes.data;
 
-  // 2. Default organization (mirrors the tenant).
-  // biome-ignore lint/suspicious/noExplicitAny: same
-  const orgRes = await (admin.from("organizations") as any)
-    .insert({
-      tenant_id: tenantId,
-      organization_slug: parsed.data.tenant_slug,
-      organization_name: parsed.data.tenant_name,
-    })
-    .select("organization_id")
-    .single();
+    // 2. Default organization (mirrors the tenant).
+    const orgRes = await admin
+      .from("organizations")
+      .insert({
+        tenant_id: tenantId,
+        organization_slug: parsedInput.tenant_slug,
+        organization_name: parsedInput.tenant_name,
+      })
+      .select("organization_id")
+      .single();
 
-  if (orgRes.error || !orgRes.data) {
-    // biome-ignore lint/suspicious/noExplicitAny: same
-    await (admin.from("tenants") as any).delete().eq("tenant_id", tenantId);
-    return { error: "No pudimos crear la organización inicial. Intenta de nuevo." };
-  }
+    if (orgRes.error || !orgRes.data) {
+      await admin.from("tenants").delete().eq("tenant_id", tenantId);
+      throw new Error("No pudimos crear la organización inicial. Intenta de nuevo.");
+    }
 
-  const organizationId = orgRes.data.organization_id as number;
+    const { organization_id: organizationId } = orgRes.data;
 
-  // 3. Membership: creator becomes owner of the default org.
-  // biome-ignore lint/suspicious/noExplicitAny: same
-  const memberRes = await (admin.from("organization_members") as any).insert({
-    organization_id: organizationId,
-    profile_id: user.id,
-    organization_member_role: "owner",
+    // 3. Membership: creator becomes owner of the default org.
+    const memberRes = await admin.from("organization_members").insert({
+      organization_id: organizationId,
+      profile_id: user.id,
+      organization_member_role: "owner",
+    });
+
+    if (memberRes.error) {
+      await admin.from("tenants").delete().eq("tenant_id", tenantId);
+      throw new Error("No pudimos asignarte como dueño. Intenta de nuevo.");
+    }
+
+    // Refresh the JWT so app_metadata.tenants/organizations pick up the new entries.
+    await supabase.auth.refreshSession();
+
+    return { slug: tenantSlug };
   });
-
-  if (memberRes.error) {
-    // biome-ignore lint/suspicious/noExplicitAny: same
-    await (admin.from("tenants") as any).delete().eq("tenant_id", tenantId);
-    return { error: "No pudimos asignarte como dueño. Intenta de nuevo." };
-  }
-
-  // Refresh the JWT so app_metadata.tenants/organizations pick up the new entries.
-  await supabase.auth.refreshSession();
-
-  return { ok: true, slug: tenantSlug };
-}

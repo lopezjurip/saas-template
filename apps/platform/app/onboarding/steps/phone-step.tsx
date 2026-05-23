@@ -12,8 +12,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { sendPhoneOtp, verifyPhoneOtp } from "./phone-action";
 
+// Strip whitespace, dashes, dots, parens before E.164 validation — users naturally type "+56 9 9051 1003".
 const phoneSchema = z.object({
-  phone: z.string().regex(/^\+[1-9]\d{7,14}$/, "Usa formato internacional, e.g. +56912345678"),
+  phone: z
+    .string()
+    .transform((v) => v.replace(/[\s\-().]/g, ""))
+    .pipe(z.string().regex(/^\+[1-9]\d{7,14}$/, "Usa formato internacional, e.g. +56 9 90511003")),
 });
 type PhoneValues = z.infer<typeof phoneSchema>;
 
@@ -41,7 +45,8 @@ export function PhoneStep() {
     setServerError(null);
     startTransition(async () => {
       const res = await sendPhoneOtp(values);
-      if ("error" in res && res.error) setServerError(res.error);
+      if (res?.serverError) setServerError(res.serverError);
+      else if (res?.validationErrors) setServerError("Formato de teléfono inválido");
       else setSentTo(values.phone);
     });
   });
@@ -51,7 +56,8 @@ export function PhoneStep() {
     setServerError(null);
     startTransition(async () => {
       const res = await verifyPhoneOtp({ phone: sentTo, token: values.token });
-      if ("error" in res && res.error) setServerError(res.error);
+      if (res?.serverError) setServerError(res.serverError);
+      else if (res?.validationErrors) setServerError("Datos inválidos");
       else router.push("/onboarding?step=passkey");
     });
   });
@@ -72,7 +78,7 @@ export function PhoneStep() {
             <Input
               id="phone"
               type="tel"
-              placeholder="+56912345678"
+              placeholder="+56 9 90511003"
               autoComplete="tel"
               aria-invalid={!!phoneForm.formState.errors.phone}
               {...phoneForm.register("phone")}

@@ -1,16 +1,17 @@
 "use server";
 
-import { createServerClient } from "@packages/supabase/client.server";
 import { z } from "zod";
+import { authedAction } from "~/lib/safe-action";
 
-const schema = z.object({ password: z.string().min(8) });
+const schema = z.object({ password: z.string().min(8, "Mínimo 8 caracteres") });
 
-export async function setPassword(values: z.infer<typeof schema>) {
-  const parsed = schema.safeParse(values);
-  if (!parsed.success) return { error: "Contraseña inválida" };
-
-  const supabase = await createServerClient();
-  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
-  if (error) return { error: "No pudimos guardar la contraseña" };
-  return { ok: true as const };
-}
+export const setPassword = authedAction
+  .inputSchema(schema)
+  .action(async ({ parsedInput, ctx: { supabase } }) => {
+    const { error } = await supabase.auth.updateUser({ password: parsedInput.password });
+    if (error) throw new Error("No pudimos guardar la contraseña");
+    // Supabase may rotate the session token after a password change. Force a synchronous
+    // refresh so the new cookies are written before the action response is sent — otherwise
+    // the next request lands on the proxy with a stale JWT and gets bounced to /auth.
+    await supabase.auth.refreshSession();
+  });

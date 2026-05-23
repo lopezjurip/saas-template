@@ -6,6 +6,9 @@ export function createServiceRoleClient() {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
+      experimental: {
+        passkey: true,
+      },
     },
   });
 }

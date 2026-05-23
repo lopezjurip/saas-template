@@ -22,8 +22,34 @@ export function PasskeyStep() {
         }
 
         const supabase = createBrowserClient();
-        // biome-ignore lint/suspicious/noExplicitAny: WebAuthn MFA types still evolving in supabase-js
-        const enroll = await (supabase.auth.mfa.enroll as any)({
+        // supabase-js's MFA types don't expose WebAuthn yet; we narrow to a structural shape we know works at runtime.
+        type WebAuthnEnroll = (args: {
+          factorType: "webauthn";
+          friendlyName: string;
+        }) => Promise<{ data: { id: string } | null; error: { message: string } | null }>;
+        type WebAuthnChallenge = (args: { factorId: string }) => Promise<{
+          data: {
+            id: string;
+            webauthn?:
+              | PublicKeyCredentialCreationOptions
+              | { credential_creation_options?: PublicKeyCredentialCreationOptions };
+          } | null;
+          error: { message: string } | null;
+        }>;
+        type WebAuthnVerify = (args: {
+          factorId: string;
+          challengeId: string;
+          code: string;
+          credential: Credential;
+        }) => Promise<{ error: { message: string } | null }>;
+
+        const mfa = supabase.auth.mfa as unknown as {
+          enroll: WebAuthnEnroll;
+          challenge: WebAuthnChallenge;
+          verify: WebAuthnVerify;
+        };
+
+        const enroll = await mfa.enroll({
           factorType: "webauthn",
           friendlyName: `Passkey ${new Date().toLocaleDateString("es-CL")}`,
         });
@@ -33,15 +59,19 @@ export function PasskeyStep() {
           return;
         }
 
-        // biome-ignore lint/suspicious/noExplicitAny: same
-        const challenge = await (supabase.auth.mfa.challenge as any)({ factorId: enroll.data.id });
+        const challenge = await mfa.challenge({ factorId: enroll.data.id });
         if (challenge.error || !challenge.data) {
           setError("No pudimos generar el desafío de WebAuthn.");
           return;
         }
 
-        // The challenge payload includes PublicKeyCredentialCreationOptions under `webauthn`.
-        const publicKey = challenge.data.webauthn?.credential_creation_options ?? challenge.data.webauthn;
+        // The challenge payload includes PublicKeyCredentialCreationOptions under `webauthn` —
+        // some SDK builds nest it under `credential_creation_options`.
+        const webauthn = challenge.data.webauthn;
+        const publicKey: PublicKeyCredentialCreationOptions | undefined =
+          webauthn && "credential_creation_options" in webauthn
+            ? webauthn.credential_creation_options
+            : (webauthn as PublicKeyCredentialCreationOptions | undefined);
         if (!publicKey) {
           setError("Tu servidor de auth no soporta passkeys todavía.");
           return;
@@ -53,8 +83,7 @@ export function PasskeyStep() {
           return;
         }
 
-        // biome-ignore lint/suspicious/noExplicitAny: same
-        const verify = await (supabase.auth.mfa.verify as any)({
+        const verify = await mfa.verify({
           factorId: enroll.data.id,
           challengeId: challenge.data.id,
           // Some SDK versions accept `code`, others `credential` — send both.

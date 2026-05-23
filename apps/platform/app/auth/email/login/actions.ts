@@ -3,47 +3,28 @@
 import { createServerClient } from "@packages/supabase/client.server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { type LoginValues, loginSchema, type MagicLinkValues, magicLinkSchema } from "./schemas";
+import { action } from "~/lib/safe-action";
+import { loginSchema, magicLinkSchema } from "./schemas";
 
-type ActionResult = { error: string } | { ok: true };
-
-export async function signInWithPassword(values: LoginValues): Promise<ActionResult> {
-  const parsed = loginSchema.safeParse(values);
-  if (!parsed.success) {
-    return { error: "Formulario inválido" };
-  }
-
+export const signInWithPassword = action.inputSchema(loginSchema).action(async ({ parsedInput }) => {
   const supabase = await createServerClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { error } = await supabase.auth.signInWithPassword(parsedInput);
+  if (error) throw new Error("Correo o contraseña incorrectos");
+  redirect("/dashboard");
+});
 
-  if (error) {
-    return { error: "Correo o contraseña incorrectos" };
-  }
-
-  redirect("/");
-}
-
-export async function sendMagicLink(values: MagicLinkValues): Promise<ActionResult> {
-  const parsed = magicLinkSchema.safeParse(values);
-  if (!parsed.success) {
-    return { error: "Correo inválido" };
-  }
-
+export const sendMagicLink = action.inputSchema(magicLinkSchema).action(async ({ parsedInput: { email } }) => {
   const headerList = await headers();
   const origin = headerList.get("origin") ?? `https://${headerList.get("host")}`;
 
   const supabase = await createServerClient();
   const { error } = await supabase.auth.signInWithOtp({
-    email: parsed.data.email,
+    email,
     options: {
       shouldCreateUser: false,
       emailRedirectTo: `${origin}/auth/callback`,
     },
   });
-
-  if (error) {
-    return { error: "No pudimos enviar el enlace. Intenta de nuevo." };
-  }
-
-  return { ok: true };
-}
+  if (error) throw new Error("No pudimos enviar el enlace. Intenta de nuevo.");
+  return { sentTo: email };
+});

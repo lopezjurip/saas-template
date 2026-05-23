@@ -26,7 +26,8 @@ export function LoginForm({ defaultEmail }: { defaultEmail: string }) {
     setMagicSent(false);
     startTransition(async () => {
       const res = await signInWithPassword(values);
-      if (res && "error" in res) setServerError(res.error);
+      if (res?.serverError) setServerError(res.serverError);
+      else if (res?.validationErrors) setServerError("Formulario inválido");
     });
   });
 
@@ -36,11 +37,9 @@ export function LoginForm({ defaultEmail }: { defaultEmail: string }) {
     startMagicTransition(async () => {
       const email = form.getValues("email");
       const res = await sendMagicLink({ email });
-      if (res && "error" in res) {
-        setServerError(res.error);
-      } else {
-        setMagicSent(true);
-      }
+      if (res?.serverError) setServerError(res.serverError);
+      else if (res?.validationErrors) setServerError("Correo inválido");
+      else if (res?.data) setMagicSent(true);
     });
   };
 

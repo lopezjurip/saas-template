@@ -1,26 +1,19 @@
 "use server";
 
-import { createServerClient } from "@packages/supabase/client.server";
 import { z } from "zod";
+import { authedAction } from "~/lib/safe-action";
 
 const schema = z.object({
-  full_name: z.string().min(2).max(256),
+  full_name: z.string().min(2, "Mínimo 2 caracteres").max(256),
 });
 
-export async function saveName(values: z.infer<typeof schema>) {
-  const parsed = schema.safeParse(values);
-  if (!parsed.success) return { error: "Nombre inválido" };
+export const saveName = authedAction
+  .inputSchema(schema)
+  .action(async ({ parsedInput, ctx: { supabase, user } }) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ profile_name_full: parsedInput.full_name })
+      .eq("profile_id", user.id);
 
-  const supabase = await createServerClient();
-  const { data: userResult } = await supabase.auth.getUser();
-  const user = userResult.user;
-  if (!user) return { error: "Sesión expirada" };
-
-  // biome-ignore lint/suspicious/noExplicitAny: TS6 + supabase-js inference loses Update type
-  const { error } = await (supabase.from("profiles") as any)
-    .update({ profile_name_full: parsed.data.full_name })
-    .eq("profile_id", user.id);
-
-  if (error) return { error: "No pudimos guardar tu nombre" };
-  return { ok: true as const };
-}
+    if (error) throw new Error("No pudimos guardar tu nombre");
+  });
