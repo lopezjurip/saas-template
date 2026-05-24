@@ -6,7 +6,7 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "PORT=${PORT:-7003} next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem",
+    "dev": "next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem --port ${PORT:-7003}",
     "build": "next build",
     "build:dry": "tsc --noEmit",
     "start": "next start",
