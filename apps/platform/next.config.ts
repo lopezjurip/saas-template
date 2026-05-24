@@ -85,6 +85,7 @@ const config: NextConfig = {
     "@packages/kapso",
     "@packages/react-email",
     "@packages/react-pdf",
+    "@packages/rosetta",
     "@packages/supabase",
     "@packages/ui-common",
   ],

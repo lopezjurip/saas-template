@@ -1,0 +1,99 @@
+import { RosettaImpl } from "@packages/rosetta/rosetta";
+import { createServerClient } from "@packages/supabase/client.server";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@packages/ui-common/shadcn/components/ui/card";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { APP_HOST } from "~/lib/constants";
+import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+
+const LOCALE_ES = {
+  title: "Humane",
+  description: "HR y Nómina para empresas chilenas",
+  "user.greeting": "Hola, {{email}}",
+  "cta.dashboard": "Ir al dashboard",
+  "cta.signin": "Ir a la plataforma",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    title: "Humane",
+    description: "HR & Payroll for Chilean companies",
+    "user.greeting": "Hello, {{email}}",
+    "cta.dashboard": "Go to dashboard",
+    "cta.signin": "Sign in",
+  } satisfies typeof LOCALE_ES,
+};
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const r = RosettaImpl.fromDictionary(LOCALES, locale);
+  const base = `https://${APP_HOST}`;
+  const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
+
+  return {
+    title: r.t("title"),
+    description: r.t("description"),
+    alternates: {
+      canonical: `${base}/${safeLocale}`,
+      languages: {
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [LOCALE_TO_BCP47[l], `${base}/${l}`])),
+        "x-default": `${base}/${DEFAULT_LOCALE}`,
+      },
+    },
+    openGraph: {
+      type: "website",
+      url: `${base}/${safeLocale}`,
+      locale: LOCALE_TO_BCP47[safeLocale],
+      title: r.t("title"),
+      description: r.t("description"),
+      siteName: "Humane",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: r.t("title"),
+      description: r.t("description"),
+    },
+  };
+}
+
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const r = RosettaImpl.fromDictionary(LOCALES, locale);
+
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return (
+    <main className="bg-muted flex min-h-svh items-center justify-center p-6">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>{r.t("title")}</CardTitle>
+          <CardDescription>{r.t("description")}</CardDescription>
+        </CardHeader>
+        {user ? (
+          <CardContent>
+            <p className="text-sm">{r.t("user.greeting", { email: user.email })}</p>
+          </CardContent>
+        ) : null}
+        <CardFooter>
+          <Button asChild className="w-full">
+            <Link href={user ? `/${locale}/dashboard` : `/${locale}/auth`}>
+              {user ? r.t("cta.dashboard") : r.t("cta.signin")}
+            </Link>
+          </Button>
+        </CardFooter>
+      </Card>
+    </main>
+  );
+}

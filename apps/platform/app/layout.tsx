@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "~/components/theme-provider";
-import { ThemeToggle } from "~/components/theme-toggle";
+import { LOCALE_TO_BCP47 } from "~/lib/i18n";
+import { getServerLocale } from "~/lib/i18n.server";
 import "~/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -8,12 +9,13 @@ export const metadata: Metadata = {
   description: "HR y Nómina para empresas chilenas",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getServerLocale();
+
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang={LOCALE_TO_BCP47[locale]} suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <ThemeToggle />
           {children}
         </ThemeProvider>
       </body>

@@ -62,6 +62,9 @@ importers:
       '@packages/react-pdf':
         specifier: workspace:*
         version: link:../../packages/react-pdf
+      '@packages/rosetta':
+        specifier: workspace:*
+        version: link:../../packages/rosetta
       '@packages/supabase':
         specifier: workspace:*
         version: link:../../packages/supabase

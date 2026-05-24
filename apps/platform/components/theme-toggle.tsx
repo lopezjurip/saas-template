@@ -4,25 +4,44 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useRosetta } from "~/hooks/use-rosetta";
 
-const OPTIONS = [
-  { value: "light", label: "Tema claro", Icon: Sun },
-  { value: "system", label: "Tema del sistema", Icon: Monitor },
-  { value: "dark", label: "Tema oscuro", Icon: Moon },
-] as const;
+const LOCALE_ES = {
+  group: "Tema",
+  light: "Tema claro",
+  system: "Tema del sistema",
+  dark: "Tema oscuro",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    group: "Theme",
+    light: "Light theme",
+    system: "System theme",
+    dark: "Dark theme",
+  } satisfies typeof LOCALE_ES,
+};
 
 export function ThemeToggle() {
+  const r = useRosetta(LOCALES);
   const { theme, setTheme } = useTheme();
   // Avoid hydration mismatch — server renders without knowing the theme; we only
   // light up the active segment after mounting on the client.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  const OPTIONS = [
+    { value: "light", label: r.t("light"), Icon: Sun },
+    { value: "system", label: r.t("system"), Icon: Monitor },
+    { value: "dark", label: r.t("dark"), Icon: Moon },
+  ] as const;
+
   return (
     <div
       role="radiogroup"
-      aria-label="Tema"
-      className="bg-card text-card-foreground border-border fixed top-4 right-4 z-50 inline-flex items-center gap-0.5 rounded-full border p-0.5 shadow-sm"
+      aria-label={r.t("group")}
+      className="bg-card text-card-foreground border-border inline-flex items-center gap-0.5 rounded-full border p-0.5 shadow-sm"
     >
       {OPTIONS.map(({ value, label, Icon }) => {
         const active = mounted && theme === value;
