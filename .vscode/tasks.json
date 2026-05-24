@@ -1,0 +1,116 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    // ── Dev ────────────────────────────────────────────────────────────────
+    {
+      "label": "dev: platform",
+      "type": "shell",
+      "command": "pnpm dev",
+      "isBackground": true,
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "dev" },
+      "problemMatcher": {
+        "owner": "next",
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*(Starting|Compiling).*",
+          "endsPattern": "^.*Ready in.*|^.*started server.*"
+        }
+      }
+    },
+
+    // ── Build / typecheck ──────────────────────────────────────────────────
+    {
+      "label": "typecheck: platform",
+      "type": "shell",
+      "command": "pnpm typecheck:platform",
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "build: platform",
+      "type": "shell",
+      "command": "pnpm build --filter=@apps/platform",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": ["$tsc"]
+    },
+
+    // ── Format ────────────────────────────────────────────────────────────
+    {
+      "label": "format: apply-unsafe",
+      "type": "shell",
+      "command": "pnpm format:apply-unsafe",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "format: check",
+      "type": "shell",
+      "command": "pnpm format",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+
+    // ── Database ──────────────────────────────────────────────────────────
+    {
+      "label": "db: start",
+      "type": "shell",
+      "command": "pnpm db:start",
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "db" },
+      "problemMatcher": []
+    },
+    {
+      "label": "db: stop",
+      "type": "shell",
+      "command": "pnpm db:stop",
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "db" },
+      "problemMatcher": []
+    },
+    {
+      "label": "db: reset",
+      "type": "shell",
+      "command": "pnpm db:reset",
+      "presentation": { "reveal": "always", "panel": "dedicated", "group": "db" },
+      "problemMatcher": []
+    },
+    {
+      "label": "db: status",
+      "type": "shell",
+      "command": "pnpm db:status",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "db: reset + generate types",
+      "dependsOrder": "sequence",
+      "dependsOn": ["db: reset", "generate: types"],
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+
+    // ── Generate ──────────────────────────────────────────────────────────
+    {
+      "label": "generate: types",
+      "type": "shell",
+      "command": "pnpm generate:types",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "generate: graphql (platform)",
+      "type": "shell",
+      "command": "pnpm generate:graphql:platform",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "generate: graphql schema",
+      "type": "shell",
+      "command": "pnpm generate:graphql:schema:local",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    // ── Server-side: lanza el dev server con el inspector activo ───────────
+    {
+      "name": "Next.js: debug server-side",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "NODE_OPTIONS='--inspect' pnpm dev",
+      "cwd": "${workspaceFolder}/apps/platform",
+      "serverReadyAction": {
+        "pattern": "- Local:.+(https?://.+)",
+        "uriFormat": "%s",
+        "action": "openExternally"
+      }
+    },
+
+    // ── Attach: conecta a un proceso Node.js ya corriendo (puerto 9229) ────
+    {
+      "name": "Next.js: attach to server",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "skipFiles": ["<node_internals>/**"],
+      "restart": true
+    },
+
+    // ── Client-side: abre Chrome con el debugger conectado ─────────────────
+    {
+      "name": "Next.js: debug client-side",
+      "type": "chrome",
+      "request": "launch",
+      "url": "https://lvh.me:7003",
+      "webRoot": "${workspaceFolder}/apps/platform",
+      "sourceMaps": true
+    },
+
+    // ── Full-stack: dev server + Chrome debugger juntos ────────────────────
+    {
+      "name": "Next.js: debug full stack",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "NODE_OPTIONS='--inspect' pnpm dev",
+      "cwd": "${workspaceFolder}/apps/platform",
+      "serverReadyAction": {
+        "pattern": "- Local:.+(https?://.+)",
+        "uriFormat": "%s",
+        "action": "debugWithChrome",
+        "webRoot": "${workspaceFolder}/apps/platform"
+      }
+    }
+  ],
+
+  "compounds": [
+    {
+      "name": "Next.js: server + client (compound)",
+      "configurations": ["Next.js: debug server-side", "Next.js: debug client-side"],
+      "stopAll": true
+    }
+  ]
+}
