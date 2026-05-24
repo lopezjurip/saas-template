@@ -2,42 +2,92 @@
 /** Internal type. DO NOT USE DIRECTLY. */
 type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
+export type Incremental<T> = T | { [P in keyof T]?: P extends " $fragmentName" | "__typename" ? T[P] : never };
+
+import type { DocumentTypeDecoration } from "@graphql-typed-document-node/core";
 export type TenantHomeQueryQueryVariables = Exact<{
   tenant_id: number;
 }>;
 
+export type TenantHomeQueryQuery = {
+  profile: { profile_name_full: string | null } | null;
+  tenant: {
+    tenant_id: number;
+    tenant_name: string;
+    tenant_slug: string;
+    organizationsCollection: {
+      edges: Array<{ node: { organization_id: number; organization_name: string; organization_slug: string } }>;
+    } | null;
+  } | null;
+};
 
-export type TenantHomeQueryQuery = { profile: { profile_name_full: string | null } | null, tenant: { tenant_id: number, tenant_name: string, tenant_slug: string, organizationsCollection: { edges: Array<{ node: { organization_id: number, organization_name: string, organization_slug: string } }> } | null } | null };
+export type AccountPageQueryQueryVariables = Exact<{ [key: string]: never }>;
 
-export type AccountPageQueryQueryVariables = Exact<{ [key: string]: never; }>;
+export type AccountPageQueryQuery = {
+  profile: {
+    profile_id: string;
+    profile_name_full: string | null;
+    webauthn_credentialsCollection: {
+      edges: Array<{
+        node: {
+          webauthn_credential_id: string;
+          webauthn_credential_friendly_name: string | null;
+          webauthn_credential_device_type: string;
+          webauthn_credential_backup_state: string;
+          webauthn_credential_created_at: string;
+          webauthn_credential_last_used_at: string | null;
+        };
+      }>;
+    } | null;
+  } | null;
+};
 
+export type DashboardPageQueryQueryVariables = Exact<{ [key: string]: never }>;
 
-export type AccountPageQueryQuery = { profile: { profile_id: string, profile_name_full: string | null, webauthn_credentialsCollection: { edges: Array<{ node: { webauthn_credential_id: string, webauthn_credential_friendly_name: string | null, webauthn_credential_device_type: string, webauthn_credential_backup_state: string, webauthn_credential_created_at: string, webauthn_credential_last_used_at: string | null } }> } | null } | null };
+export type DashboardPageQueryQuery = {
+  viewer_organizations: {
+    edges: Array<{
+      node: {
+        organization_id: number;
+        organization_name: string;
+        organization_slug: string;
+        tenants: { tenant_id: number; tenant_slug: string; tenant_name: string } | null;
+      };
+    }>;
+  } | null;
+};
 
-export type DashboardPageQueryQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type DashboardPageQueryQuery = { viewer_organizations: { edges: Array<{ node: { organization_id: number, organization_name: string, organization_slug: string, tenants: { tenant_id: number, tenant_slug: string, tenant_name: string } | null } }> } | null };
-
-export type HealthQueryQueryVariables = Exact<{ [key: string]: never; }>;
-
+export type HealthQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type HealthQueryQuery = { health_current_timestamp: string | null };
 
-export type ViewerProfileFragmentFragment = { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string };
+export type ViewerProfileFragmentFragment = {
+  profile_id: string;
+  profile_name_full: string | null;
+  profile_onboarded_at: string | null;
+  profile_disabled_at: string | null;
+  profile_created_at: string;
+  profile_updated_at: string;
+};
 
-export type UseViewerProfileHookQueryQueryVariables = Exact<{ [key: string]: never; }>;
+export type UseViewerProfileHookQueryQueryVariables = Exact<{ [key: string]: never }>;
 
-
-export type UseViewerProfileHookQueryQuery = { profile: { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string } | null };
+export type UseViewerProfileHookQueryQuery = {
+  profile: {
+    profile_id: string;
+    profile_name_full: string | null;
+    profile_onboarded_at: string | null;
+    profile_disabled_at: string | null;
+    profile_created_at: string;
+    profile_updated_at: string;
+  } | null;
+};
 
 export class TypedDocumentString<TResult, TVariables>
   extends String
   implements DocumentTypeDecoration<TResult, TVariables>
 {
-  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>['__apiType']>;
+  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>["__apiType"]>;
   private value: string;
   public __meta__?: Record<string, any> | undefined;
 
@@ -51,7 +101,8 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
-export const ViewerProfileFragmentFragmentDoc = new TypedDocumentString(`
+export const ViewerProfileFragmentFragmentDoc = new TypedDocumentString(
+  `
     fragment ViewerProfileFragment on profiles {
   profile_id
   profile_name_full
@@ -60,7 +111,9 @@ export const ViewerProfileFragmentFragmentDoc = new TypedDocumentString(`
   profile_created_at
   profile_updated_at
 }
-    `, {"fragmentName":"ViewerProfileFragment"}) as unknown as TypedDocumentString<ViewerProfileFragmentFragment, unknown>;
+    `,
+  { fragmentName: "ViewerProfileFragment" },
+) as unknown as TypedDocumentString<ViewerProfileFragmentFragment, unknown>;
 export const TenantHomeQueryDocument = new TypedDocumentString(`
     query TenantHomeQuery($tenant_id: Int!) {
   profile: viewer_profile {

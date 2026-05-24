@@ -82,7 +82,7 @@ Hostname determines whether a request enters tenant context:
 - `{slug}.<apex>/...` → `apps/platform/proxy.ts` rewrites to `/{slug}{path}` so the same `[tenant_slug]` route renders. `/auth/*`, `/onboarding/*`, and `/health` on a subdomain redirect back to the apex so auth lives at one origin.
 - Custom apex domains (e.g. `center.burgercool.com`) — phase 2; the proxy currently returns 404. Cookies can't span apexes without an SSO redirect/exchange flow.
 
-Where `<apex>` is `NEXT_PUBLIC_APEX_HOST` — `lvh.me:7003` in dev, `resolvecom.com` in prod.
+Where `<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.PORT` (assigned per instance). `lvh.me` + `7003` in dev (Conductor reassigns `PORT` for parallel instances), `resolvecom.com` + implicit `443` in prod.
 
 ### Auth + onboarding
 
@@ -120,7 +120,7 @@ Keep these aligned with the HTTPS dev origin — flipping any to `http://` will 
 - `supabase/config.toml` `[auth].site_url`: `https://lvh.me:7003`
 - `supabase/config.toml` `[auth].additional_redirect_urls`: `https://lvh.me:7003/**` + `https://*.lvh.me:7003/**`
 
-`WEBAUTHN_RELYING_PARTY_ID` stays `lvh.me` (host only, no protocol/port). `NEXT_PUBLIC_APEX_HOST` stays `lvh.me:7003` (host+port, no protocol); `proxy.ts` derives the protocol from `request.nextUrl.protocol` / `x-forwarded-proto`.
+`WEBAUTHN_RELYING_PARTY_ID` stays `lvh.me` (host only, no protocol/port). `NEXT_PUBLIC_APEX_HOSTNAME` is `lvh.me` (hostname only); port comes from `process.env.PORT` (Conductor assigns per parallel instance, dev script falls back to 7003); `proxy.ts` derives the protocol from `request.nextUrl.protocol` / `x-forwarded-proto` and builds the full host via `APP_HOST` in `apps/platform/lib/constants.ts`.
 
 After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) so the changes take effect — `pnpm db:reset` also picks them up but wipes data.
 
@@ -271,6 +271,9 @@ Critical safety rule for SQL. Always explicit.
 
 ### No hyphens in SQL identifiers or enum values
 Never use `-` in Postgres identifiers (tables, views, functions, columns, schemas, types) **or in enum values**. Use `snake_case` only — pg_graphql rejects names that don't match `[_a-zA-Z0-9]`, which silently breaks the entire GraphQL schema introspection (not just the offending object). If an external spec defines values that won't pass that constraint (e.g. WebAuthn's `"public-key"`), store the column as `text` with a `check` constraint instead of an enum — that keeps the spec literal in the DB without breaking pg_graphql.
+
+### plpgsql local variables prefixed with `_`
+Inside `declare` blocks in plpgsql functions/triggers, prefix local variables with a leading underscore (`_user_id`, `_claims`, `_canonical`). It visually disambiguates them from column names, parameters, and reserved words, and avoids ambiguous-reference errors when a variable shares a name with a column in a query inside the function body. Follow the existing `viewer_*` / `user_auth_hook` style.
 
 ### Type Generation
 - After Supabase schema changes: `pnpm generate:types` (runs against `@packages/supabase`)

@@ -23,12 +23,13 @@ revoke usage on schema private from public;
 revoke usage on schema internal from public;
 revoke usage on schema protected from public;
 
--- internal: callable from security definer functions (which run as postgres).
--- service_role also needs access because triggers and CHECK constraints on public tables
--- (e.g. internal.slug_validate, internal.column_normalize_text) run under the session role,
--- not under postgres, when PostgREST inserts using the service key.
-grant usage on schema internal to postgres, service_role;
-grant execute on all functions in schema internal to service_role;
+-- internal: helpers used by triggers / CHECK constraints / DEFAULTs on public tables.
+-- Those run under the *calling session role*, so every role that can mutate a public table
+-- needs USAGE + EXECUTE here — not just service_role. The internal schema is not exposed
+-- to PostgREST (it isn't in `[api].schemas` in config.toml), so granting these to
+-- authenticated/anon does NOT make the functions API-callable; it only enables in-DB use.
+grant usage on schema internal to postgres, service_role, authenticated, anon;
+grant execute on all functions in schema internal to service_role, authenticated, anon;
 
 -- protected: accessible only with service_role key
 -- authenticator is PostgREST's connecting role — needs USAGE to introspect the schema,
@@ -47,14 +48,14 @@ create or replace function internal.uuid_generate_v7()
   volatile
   as $$
   declare
-    unix_ts_ms bytea;
-    uuid_bytes bytea;
+    _unix_ts_ms bytea;
+    _uuid_bytes bytea;
   begin
-    unix_ts_ms = substring(int8send(floor(extract(epoch from clock_timestamp()) * 1000)::bigint) from 3);
-    uuid_bytes = uuid_send(gen_random_uuid());
-    uuid_bytes = overlay(uuid_bytes placing unix_ts_ms from 1 for 6);
-    uuid_bytes = set_byte(uuid_bytes, 6, (b'0111' || get_byte(uuid_bytes, 6)::bit(4))::bit(8)::int);
-    return encode(uuid_bytes, 'hex')::uuid;
+    _unix_ts_ms = substring(int8send(floor(extract(epoch from clock_timestamp()) * 1000)::bigint) from 3);
+    _uuid_bytes = uuid_send(gen_random_uuid());
+    _uuid_bytes = overlay(_uuid_bytes placing _unix_ts_ms from 1 for 6);
+    _uuid_bytes = set_byte(_uuid_bytes, 6, (b'0111' || get_byte(_uuid_bytes, 6)::bit(4))::bit(8)::int);
+    return encode(_uuid_bytes, 'hex')::uuid;
   end;
   $$;
 
@@ -87,12 +88,12 @@ create or replace function internal.column_normalize_text()
   language plpgsql
   as $$
     declare
-      col text;
-      val text;
+      _col text;
+      _val text;
     begin
-      foreach col in array TG_ARGV loop
-        val := internal.text_normalize(row_to_json(NEW) ->> col);
-        NEW := jsonb_populate_record(NEW, jsonb_build_object(col, val));
+      foreach _col in array TG_ARGV loop
+        _val := internal.text_normalize(row_to_json(NEW) ->> _col);
+        NEW := jsonb_populate_record(NEW, jsonb_build_object(_col, _val));
       end loop;
       return NEW;
     end;
@@ -122,6 +123,61 @@ create or replace function public.email_exists(email_to_check text)
       select 1 from auth.users
       where lower(email) = lower(email_to_check)
     );
+  $$;
+
+-- Normalize a phone string to E.164 with leading '+'. Strips whitespace/dashes/dots/parens.
+-- If the cleaned input doesn't start with '+', prepends `default_code`. Returns NULL when the
+-- result fails the E.164 shape (`^\+[1-9]\d{7,14}$`) — callers should treat NULL as invalid.
+create or replace function public.phone_normalize(value text, default_code text default '+56')
+  returns text
+  language plpgsql
+  immutable
+  parallel safe
+  set search_path to ''
+  as $$
+    declare
+      _stripped text;
+      _candidate text;
+    begin
+      _stripped := regexp_replace(coalesce(value, ''), '[\s\-().]', '', 'g');
+      if _stripped = '' then
+        return null;
+      end if;
+      if _stripped like '+%' then
+        _candidate := _stripped;
+      else
+        _candidate := default_code || _stripped;
+      end if;
+      if _candidate ~ '^\+[1-9]\d{7,14}$' then
+        return _candidate;
+      end if;
+      return null;
+    end;
+  $$;
+
+-- Anonymous lookup used by /auth root to branch between phone login/signup. Mirrors
+-- email_exists. gotrue stores phones without the leading '+', so we strip it before comparing.
+create or replace function public.phone_exists(phone_to_check text, default_code text default '+56')
+  returns boolean
+  language plpgsql
+  stable
+  security definer
+  set search_path to ''
+  as $$
+    declare
+      _canonical text;
+      _result boolean;
+    begin
+      _canonical := public.phone_normalize(phone_to_check, default_code);
+      if _canonical is null then
+        return false;
+      end if;
+      select exists (
+        select 1 from auth.users
+        where phone = ltrim(_canonical, '+')
+      ) into _result;
+      return _result;
+    end;
   $$;
 
 -- Lightweight liveness probe — returns DB time so callers can verify connectivity and clock.

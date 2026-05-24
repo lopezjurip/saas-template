@@ -6,7 +6,7 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem --port ${PORT:-7003}",
+    "dev": "next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003}",
     "build": "next build",
     "build:dry": "tsc --noEmit",
     "start": "next start",
@@ -16,6 +16,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@next/env": "^16.2.6",
     "@packages/debug": "workspace:*",
     "@packages/graphy": "workspace:*",
     "@packages/kapso": "workspace:*",

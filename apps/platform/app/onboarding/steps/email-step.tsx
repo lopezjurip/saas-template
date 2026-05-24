@@ -11,46 +11,45 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { NEXT_STEP_HREF } from "../state";
-import { sendPhoneOtp, verifyPhoneOtp } from "./phone-action";
+import { sendEmailOtp, verifyEmailOtp } from "./email-action";
 
-// Strip whitespace, dashes, dots, parens before E.164 validation — users naturally type "+56 9 9051 1003".
-const phoneSchema = z.object({
-  phone: z
+const emailSchema = z.object({
+  email: z
     .string()
-    .transform((v) => v.replace(/[\s\-().]/g, ""))
-    .pipe(z.string().regex(/^\+[1-9]\d{7,14}$/, "Usa formato internacional, e.g. +56 9 90511003")),
+    .transform((v) => v.trim().toLowerCase())
+    .pipe(z.email("Correo inválido")),
 });
-type PhoneValues = z.infer<typeof phoneSchema>;
+type EmailValues = z.infer<typeof emailSchema>;
 
 const codeSchema = z.object({
   token: z.string().regex(/^\d{6}$/, "Código de 6 dígitos"),
 });
 type CodeValues = z.infer<typeof codeSchema>;
 
-const NEXT_HREF = NEXT_STEP_HREF("phone");
+const NEXT_HREF = NEXT_STEP_HREF("email");
 
-export function PhoneStep() {
+export function EmailStep() {
   const router = useRouter();
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const phoneForm = useForm<PhoneValues>({
-    resolver: zodResolver(phoneSchema),
-    defaultValues: { phone: "" },
+  const emailForm = useForm<EmailValues>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: { email: "" },
   });
   const codeForm = useForm<CodeValues>({
     resolver: zodResolver(codeSchema),
     defaultValues: { token: "" },
   });
 
-  const onSendPhone = phoneForm.handleSubmit((values) => {
+  const onSendEmail = emailForm.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const res = await sendPhoneOtp(values);
+      const res = await sendEmailOtp(values);
       if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Formato de teléfono inválido");
-      else setSentTo(values.phone);
+      else if (res?.validationErrors) setServerError("Correo inválido");
+      else setSentTo(values.email);
     });
   });
 
@@ -58,7 +57,7 @@ export function PhoneStep() {
     if (!sentTo) return;
     setServerError(null);
     startTransition(async () => {
-      const res = await verifyPhoneOtp({ phone: sentTo, token: values.token });
+      const res = await verifyEmailOtp({ email: sentTo, token: values.token });
       if (res?.serverError) setServerError(res.serverError);
       else if (res?.validationErrors) setServerError("Datos inválidos");
       else router.push(NEXT_HREF);
@@ -68,26 +67,26 @@ export function PhoneStep() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-sm font-medium">Confirma tu teléfono</h2>
+        <h2 className="text-sm font-medium">Agrega tu correo</h2>
         <p className="text-muted-foreground mt-1 text-xs">
-          Te lo pediremos para autenticarte y enviarte notificaciones importantes.
+          Lo usaremos para enviarte notificaciones importantes y como respaldo de inicio de sesión.
         </p>
       </div>
 
       {!sentTo ? (
-        <form onSubmit={onSendPhone} className="flex flex-col gap-4">
+        <form onSubmit={onSendEmail} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="phone">Número de teléfono</Label>
+            <Label htmlFor="email">Correo electrónico</Label>
             <Input
-              id="phone"
-              type="tel"
-              placeholder="+56 9 90511003"
-              autoComplete="tel"
-              aria-invalid={!!phoneForm.formState.errors.phone}
-              {...phoneForm.register("phone")}
+              id="email"
+              type="email"
+              placeholder="tu@empresa.cl"
+              autoComplete="email"
+              aria-invalid={!!emailForm.formState.errors.email}
+              {...emailForm.register("email")}
             />
-            {phoneForm.formState.errors.phone && (
-              <p className="text-destructive text-xs">{phoneForm.formState.errors.phone.message}</p>
+            {emailForm.formState.errors.email && (
+              <p className="text-destructive text-xs">{emailForm.formState.errors.email.message}</p>
             )}
           </div>
           {serverError && (
@@ -128,7 +127,7 @@ export function PhoneStep() {
             className="text-muted-foreground text-center text-xs underline"
             onClick={() => setSentTo(null)}
           >
-            Cambiar número
+            Cambiar correo
           </button>
         </form>
       )}

@@ -2,13 +2,15 @@ import { createServerClient } from "@packages/supabase/client.server";
 import type { Maybe } from "@packages/utils/maybe";
 import { redirect } from "next/navigation";
 
-export type StepId = "name" | "phone" | "passkey" | "password";
+export type StepId = "name" | "email" | "phone" | "passkey" | "password";
 
 export type OnboardingState = {
   profile_id: string;
   email: Maybe<string>;
+  phone: Maybe<string>;
   profile_name_full: string;
   hasName: boolean;
+  hasEmail: boolean;
   hasPhone: boolean;
   hasPasskey: boolean;
   hasPassword: boolean;
@@ -36,13 +38,16 @@ export async function loadOnboardingState(): Promise<OnboardingState> {
   const hasPassword = (user["identities"] ?? []).some((i) => i["provider"] === "email");
   const profile_name_full = profile?.["profile_name_full"] || "";
   const hasName = profile_name_full.trim().length >= 2;
+  const hasEmail = Boolean(user["email_confirmed_at"]);
   const hasPhone = Boolean(user["phone_confirmed_at"]);
 
   return {
     profile_id: user.id,
     email: user["email"],
+    phone: user["phone"],
     profile_name_full,
     hasName,
+    hasEmail,
     hasPhone,
     hasPasskey,
     hasPassword,
@@ -55,29 +60,35 @@ export async function loadOnboardingState(): Promise<OnboardingState> {
  *
  * Rules:
  * - `name` is required; missing name always wins.
- * - `phone`, `passkey`, `password` are skippable. The user may navigate freely
- *   between them via `?step=` query, but if no step is requested we pick the
- *   first one they haven't completed.
+ * - `email`, `phone`, `passkey`, `password` are skippable. The user may navigate freely
+ *   between them via `?step=` query. We fall back to the first uncompleted suggestion
+ *   when no step is requested (or when the requested step is already done).
+ * - `email` and `phone` are cross-channel suggestions: signups happen via one or the other,
+ *   so one is always missing at first. We suggest the missing one first.
  * - `password` is hidden when the user already has a password OR has a passkey.
  */
 export function RESOLVE_STEP(state: OnboardingState, requested: string | undefined): StepId | "finish" {
   if (!state.hasName) return "name";
 
+  const validSteps: StepId[] = ["name", "email", "phone", "passkey", "password"];
   const requestedStep = requested as StepId | undefined;
-  if (requestedStep && (["name", "phone", "passkey", "password"] as StepId[]).includes(requestedStep)) {
-    if (requestedStep === "password" && (state.hasPassword || state.hasPasskey)) {
-      return "finish";
-    }
-    return requestedStep;
+  if (requestedStep && validSteps.includes(requestedStep)) {
+    const alreadyDone =
+      (requestedStep === "email" && state.hasEmail) ||
+      (requestedStep === "phone" && state.hasPhone) ||
+      (requestedStep === "password" && (state.hasPassword || state.hasPasskey)) ||
+      (requestedStep === "passkey" && state.hasPasskey);
+    if (!alreadyDone) return requestedStep;
   }
 
+  if (!state.hasEmail) return "email";
   if (!state.hasPhone) return "phone";
   if (!state.hasPasskey && !state.hasPassword) return "passkey";
   return "finish";
 }
 
 export function NEXT_STEP_HREF(current: StepId): string {
-  const order: StepId[] = ["name", "phone", "passkey", "password"];
+  const order: StepId[] = ["name", "email", "phone", "passkey", "password"];
   const idx = order.indexOf(current);
   if (idx === -1 || idx === order.length - 1) return "/onboarding";
   return `/onboarding?step=${order[idx + 1]}`;

@@ -1,4 +1,5 @@
 import { loadOnboardingState, RESOLVE_STEP } from "./state";
+import { EmailStep } from "./steps/email-step";
 import { FinishStep } from "./steps/finish-step";
 import { NameStep } from "./steps/name-step";
 import { PasskeyStep } from "./steps/passkey-step";
@@ -15,6 +16,8 @@ export default async function OnboardingPage({ searchParams }: { searchParams: S
   switch (resolved) {
     case "name":
       return <NameStep defaultValue={state.profile_name_full} />;
+    case "email":
+      return <EmailStep />;
     case "phone":
       return <PhoneStep />;
     case "passkey":

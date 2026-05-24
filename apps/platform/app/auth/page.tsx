@@ -3,7 +3,7 @@ import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { Separator } from "@packages/ui-common/shadcn/components/ui/separator";
 import { OAUTH_PROVIDERS } from "~/app/auth/providers";
-import { checkEmail, signInWithOAuth } from "./actions";
+import { checkIdentifier, signInWithOAuth } from "./actions";
 
 type SearchParams = Promise<{ next?: string; error?: string }>;
 
@@ -33,22 +33,24 @@ export default async function AuthEntryPage({ searchParams }: { searchParams: Se
         </span>
       </div>
 
-      <form action={checkEmail} className="flex flex-col gap-3">
+      <form action={checkIdentifier} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email">Correo electrónico</Label>
+          <Label htmlFor="identifier">Correo o teléfono</Label>
           <Input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="tu@empresa.cl"
-            autoComplete="email"
+            id="identifier"
+            name="identifier"
+            type="text"
+            placeholder="tu@empresa.cl o +56 9 ..."
+            autoComplete="username"
             required
-            aria-invalid={error === "invalid_email" ? "true" : undefined}
+            aria-invalid={error === "invalid_identifier" ? "true" : undefined}
           />
-          {error === "invalid_email" && <p className="text-destructive text-xs">Ingresa un correo válido.</p>}
+          {error === "invalid_identifier" && (
+            <p className="text-destructive text-xs">Ingresa un correo o teléfono válido.</p>
+          )}
         </div>
         <Button type="submit" className="w-full">
-          Continuar con correo
+          Continuar
         </Button>
       </form>
 

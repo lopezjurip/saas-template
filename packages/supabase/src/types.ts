@@ -483,6 +483,14 @@ export type Database = {
       email_exists: { Args: { email_to_check: string }; Returns: boolean };
       email_has_passkey: { Args: { email_to_check: string }; Returns: boolean };
       health_current_timestamp: { Args: never; Returns: string };
+      phone_exists: {
+        Args: { default_code?: string; phone_to_check: string };
+        Returns: boolean;
+      };
+      phone_normalize: {
+        Args: { default_code?: string; value: string };
+        Returns: string;
+      };
       profile_id_by_email: { Args: { email_to_check: string }; Returns: string };
       user_auth_hook: { Args: { event: Json }; Returns: Json };
       viewer_is_concierge: { Args: never; Returns: boolean };

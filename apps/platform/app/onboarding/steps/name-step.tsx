@@ -32,7 +32,7 @@ export function NameStep({ defaultValue }: { defaultValue: string }) {
       const res = await saveName(values);
       if (res?.serverError) setServerError(res.serverError);
       else if (res?.validationErrors) setServerError("Nombre inválido");
-      else router.push("/onboarding?step=phone");
+      else router.push("/onboarding");
     });
   });
 

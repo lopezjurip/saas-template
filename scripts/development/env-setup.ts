@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const SUPABASE_DIR = join(ROOT, "packages/supabase");
 const TARGET_FILENAME = ".env.development.local";
-const TARGET_PATH = join(ROOT, "apps/platform", TARGET_FILENAME);
+const TARGET_PATH = join(ROOT, TARGET_FILENAME);
 
 let raw: string;
 try {
@@ -35,13 +35,13 @@ const SUPABASE_URL = env["API_URL"] ?? "http://127.0.0.1:54421";
 const SUPABASE_ANON_KEY = env["ANON_KEY"] ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = env["SERVICE_ROLE_KEY"] ?? "";
 
-const APEX_HOST = "lvh.me:7003";
+const APEX_HOSTNAME = "lvh.me";
 
 const variables: Array<{ key: string; value: string; secret: boolean }> = [
   { key: "NEXT_PUBLIC_SUPABASE_URL", value: SUPABASE_URL, secret: false },
   { key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", value: SUPABASE_ANON_KEY, secret: false },
   { key: "NEXT_PUBLIC_COOKIE_DOMAIN", value: "lvh.me", secret: false },
-  { key: "NEXT_PUBLIC_APEX_HOST", value: APEX_HOST, secret: false },
+  { key: "NEXT_PUBLIC_APEX_HOSTNAME", value: APEX_HOSTNAME, secret: false },
   // Mailpit catch-all inbox — surfaced in dev UIs so signup confirmation emails are easy to open.
   { key: "NEXT_PUBLIC_DEV_MAILBOX_URL", value: "http://localhost:54424", secret: false },
   { key: "SUPABASE_SERVICE_ROLE_KEY", value: SUPABASE_SERVICE_ROLE_KEY, secret: true },

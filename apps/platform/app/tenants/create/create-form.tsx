@@ -8,13 +8,19 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { SLUGIFY } from "@packages/utils/slug";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { APP_HOST } from "~/lib/constants";
 import { createTenant } from "./actions";
 import { type CreateTenantValues, createTenantSchema } from "./schemas";
 
 export function CreateTenantForm() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // Read the live host (hostname + port) so the previewed URL stays accurate in Conductor
+  // dev where parallel instances are bound to different ports. Empty on SSR → matches the
+  // initial client render to avoid hydration mismatches; populated after mount.
+  const [appHost, setAppHost] = useState("");
+  useEffect(() => {
+    setAppHost(window.location.host);
+  }, []);
 
   const form = useForm<CreateTenantValues>({
     resolver: zodResolver(createTenantSchema),
@@ -78,7 +84,7 @@ export function CreateTenantForm() {
           {...form.register("tenant_slug")}
         />
         <p className="text-muted-foreground text-xs">
-          Tu URL será {slug ? <strong>{`${APP_HOST}/${slug}`}</strong> : `${APP_HOST}/{slug}`}
+          Tu URL será {slug ? <strong>{`${appHost}/${slug}`}</strong> : `${appHost}/{slug}`}
         </p>
         {form.formState.errors.tenant_slug && (
           <p className="text-destructive text-xs">{form.formState.errors.tenant_slug.message}</p>

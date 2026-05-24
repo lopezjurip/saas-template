@@ -1,6 +1,19 @@
-export const APP_HOST = process.env["NEXT_PUBLIC_APEX_HOST"] ?? "lvh.me:7003";
-// Domain-only portion of APP_HOST (no port) — used for hostname matching in the proxy
-// so the port doesn't have to match the configured default port (e.g. when running on a different port in dev).
-export const APEX_HOSTNAME = APP_HOST.split(":")[0] as string;
+// Stable apex hostname (no port). Used for subdomain/apex matching in the proxy and
+// for any place that just needs to know "is this our domain".
+export const APEX_HOSTNAME = process.env["NEXT_PUBLIC_APEX_HOSTNAME"] ?? "lvh.me";
+
+export const NODE_ENV = process.env["NODE_ENV"] ?? "development";
+
+// Port this Next.js instance is bound to. In Conductor, parallel platform instances
+// each get a distinct PORT from the shell, and `pnpm dev` reads it via `--port ${PORT:-7003}`.
+// Next.js mirrors the bound port back into process.env.PORT at runtime; the dev fallback
+// keeps a bare `pnpm dev` (no shell PORT) working. In production PORT is typically empty
+// because the load balancer handles 80/443.
+export const APP_PORT = process.env["PORT"] ?? (NODE_ENV === "development" ? "7003" : "");
+
+// Convenience: hostname (+ ":port" when applicable). Use for building absolute redirect
+// URLs server-side. On the client, prefer window.location.host — process.env.PORT is not
+// inlined into client bundles, so APP_HOST in browser-only paths will be missing the port.
+export const APP_HOST = APP_PORT ? `${APEX_HOSTNAME}:${APP_PORT}` : APEX_HOSTNAME;
 
 export const DEBUG = process.env["DEBUG"];
