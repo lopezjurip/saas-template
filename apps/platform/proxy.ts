@@ -2,7 +2,7 @@ import { updateSession } from "@packages/supabase/client.middleware";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { JWT_DECODE_PAYLOAD } from "@packages/utils/jwt";
 import { type NextRequest, NextResponse } from "next/server";
-import { APP_HOST } from "~/lib/constants";
+import { APEX_HOSTNAME, APP_HOST } from "~/lib/constants";
 import { debug } from "~/lib/debug";
 
 const log = debug("proxy");
@@ -22,10 +22,12 @@ async function resolveTenantIdFromSlug(slug: string): Promise<number | null> {
 }
 
 function extractSubdomain(hostname: string): string | null {
-  if (!hostname) return null;
-  if (hostname === APP_HOST || hostname === `www.${APP_HOST}`) return null;
-  if (!hostname.endsWith(`.${APP_HOST}`)) return null;
-  const slug = hostname.slice(0, hostname.length - APP_HOST.length - 1);
+  // Strip port before matching — port varies per dev session but the domain is stable.
+  const host = hostname.split(":")[0] ?? "";
+  if (!host) return null;
+  if (host === APEX_HOSTNAME || host === `www.${APEX_HOSTNAME}`) return null;
+  if (!host.endsWith(`.${APEX_HOSTNAME}`)) return null;
+  const slug = host.slice(0, host.length - APEX_HOSTNAME.length - 1);
   if (!slug || slug === "www") return null;
   return slug;
 }
@@ -45,10 +47,12 @@ export async function proxy(request: NextRequest) {
   const proto = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
 
   // Classify the host: apex/www, tenant subdomain, or unknown (custom apex, phase 2).
-  const isApex = hostname === APP_HOST || hostname === `www.${APP_HOST}`;
+  // Strip port for matching so the proxy works on any dev port, not just the configured default.
+  const hostnameBase = hostname.split(":")[0] ?? "";
+  const isApex = hostnameBase === APEX_HOSTNAME || hostnameBase === `www.${APEX_HOSTNAME}`;
   let slugFromHost: string | null = null;
   if (!isApex) {
-    if (hostname.endsWith(`.${APP_HOST}`)) {
+    if (hostnameBase.endsWith(`.${APEX_HOSTNAME}`)) {
       slugFromHost = extractSubdomain(hostname);
     } else {
       // Unknown host (localhost/127.0.0.1/preview URL/custom apex). Custom apexes are phase 2 —
