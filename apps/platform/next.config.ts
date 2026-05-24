@@ -13,6 +13,16 @@ if (missing.length > 0) {
   throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
 }
 
+// Feature-scoped env vars: missing here doesn't block boot, but the feature module
+// will throw on first import. Warn loudly so misconfig is obvious in `pnpm dev` logs.
+const featureEnvVars = ["WEBAUTHN_RELYING_PARTY_ID", "WEBAUTHN_RELYING_PARTY_NAME", "WEBAUTHN_RELYING_PARTY_ORIGIN"];
+const missingFeatures = featureEnvVars.filter((v) => !process.env[v]);
+if (missingFeatures.length > 0) {
+  console.warn(
+    `[next.config] Missing WebAuthn env vars: ${missingFeatures.join(", ")}. Passkey flows will fail until set — see .env.example.`,
+  );
+}
+
 const config: NextConfig = {
   allowedDevOrigins: ["lvh.me", "*.lvh.me"],
   typedRoutes: true,

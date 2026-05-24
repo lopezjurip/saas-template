@@ -8,6 +8,8 @@ import {
   getWebAuthnChallengeById,
   getWebAuthnCredentialByExternalId,
   updateWebAuthnCredentialByExternalId,
+  WEBAUTHN_RELYING_PARTY_ID,
+  WEBAUTHN_RELYING_PARTY_ORIGIN,
 } from "~/lib/passkeys.server";
 
 const log = debug("passkeys:signin");
@@ -42,8 +44,8 @@ export async function POST(request: NextRequest) {
     verification = await verifyAuthenticationResponse({
       response: data,
       expectedChallenge: challenge.webauthn_challenge_value,
-      expectedOrigin: process.env["WEBAUTHN_RELYING_PARTY_ORIGIN"]!,
-      expectedRPID: process.env["WEBAUTHN_RELYING_PARTY_ID"]!,
+      expectedOrigin: WEBAUTHN_RELYING_PARTY_ORIGIN,
+      expectedRPID: WEBAUTHN_RELYING_PARTY_ID,
       credential: {
         id: credential.webauthn_credential_external_id,
         publicKey: new Uint8Array(Buffer.from(credential.webauthn_credential_public_key, "base64")),

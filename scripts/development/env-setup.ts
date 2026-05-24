@@ -45,6 +45,10 @@ const variables: Array<{ key: string; value: string; secret: boolean }> = [
   // Mailpit catch-all inbox — surfaced in dev UIs so signup confirmation emails are easy to open.
   { key: "NEXT_PUBLIC_DEV_MAILBOX_URL", value: "http://localhost:54424", secret: false },
   { key: "SUPABASE_SERVICE_ROLE_KEY", value: SUPABASE_SERVICE_ROLE_KEY, secret: true },
+  // WebAuthn / passkeys — RP ID is the bare apex (no protocol/port), origin is the full HTTPS URL.
+  { key: "WEBAUTHN_RELYING_PARTY_ID", value: "lvh.me", secret: false },
+  { key: "WEBAUTHN_RELYING_PARTY_NAME", value: "Humane", secret: false },
+  { key: "WEBAUTHN_RELYING_PARTY_ORIGIN", value: "https://lvh.me:7003", secret: false },
 ];
 
 const content = variables

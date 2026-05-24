@@ -3,7 +3,13 @@ import type { Database } from "@packages/supabase/types";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 import { type NextRequest, NextResponse } from "next/server";
 import { debug } from "~/lib/debug";
-import { deleteWebAuthnChallenge, getWebAuthnChallengeByProfile, saveWebAuthnCredential } from "~/lib/passkeys.server";
+import {
+  deleteWebAuthnChallenge,
+  getWebAuthnChallengeByProfile,
+  saveWebAuthnCredential,
+  WEBAUTHN_RELYING_PARTY_ID,
+  WEBAUTHN_RELYING_PARTY_ORIGIN,
+} from "~/lib/passkeys.server";
 
 const log = debug("passkeys:register");
 
@@ -32,8 +38,8 @@ export async function POST(request: NextRequest) {
     verification = await verifyRegistrationResponse({
       response: data,
       expectedChallenge: challenge.webauthn_challenge_value,
-      expectedOrigin: process.env["WEBAUTHN_RELYING_PARTY_ORIGIN"]!,
-      expectedRPID: process.env["WEBAUTHN_RELYING_PARTY_ID"]!,
+      expectedOrigin: WEBAUTHN_RELYING_PARTY_ORIGIN,
+      expectedRPID: WEBAUTHN_RELYING_PARTY_ID,
     });
   } catch (error) {
     log.error("verifyRegistrationResponse threw", { profile_id: user.id, error });

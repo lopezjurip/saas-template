@@ -13,8 +13,16 @@ type Client = SupabaseClient<Database>;
 type CredentialRow = Database["public"]["Tables"]["webauthn_credentials"]["Row"];
 type CredentialInsert = Database["public"]["Tables"]["webauthn_credentials"]["Insert"];
 
-const rpName = process.env["WEBAUTHN_RELYING_PARTY_NAME"]!;
-const rpID = process.env["WEBAUTHN_RELYING_PARTY_ID"]!;
+function REQUIRE_ENV(key: string): string {
+  const value = process.env[key];
+  if (!value) throw new Error(`Missing required env var: ${key}`);
+  return value;
+}
+
+const rpName = REQUIRE_ENV("WEBAUTHN_RELYING_PARTY_NAME");
+const rpID = REQUIRE_ENV("WEBAUTHN_RELYING_PARTY_ID");
+export const WEBAUTHN_RELYING_PARTY_ID = rpID;
+export const WEBAUTHN_RELYING_PARTY_ORIGIN = REQUIRE_ENV("WEBAUTHN_RELYING_PARTY_ORIGIN");
 
 export async function listWebAuthnCredentialsForProfile(client: Client, profile_id: string) {
   const { data, error } = await client.from("webauthn_credentials").select("*").eq("profile_id", profile_id);
