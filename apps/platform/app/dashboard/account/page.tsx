@@ -1,4 +1,4 @@
-import { createServerClient } from "@packages/supabase/client.server";
+import { getSupabaseServerSession, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
   Card,
@@ -60,15 +60,10 @@ function LABEL_FOR_PROVIDER(provider: string): string {
 }
 
 export default async function AccountPage() {
-  const supabase = await createServerClient();
-  const [{ data: userResult }, { data: sessionResult }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.auth.getSession(),
-  ]);
-  const user = userResult.user;
+  const [user, session] = await Promise.all([getSupabaseServerUser(), getSupabaseServerSession()]);
   if (!user) redirect("/auth");
 
-  const graphy = createGraphy(sessionResult.session);
+  const graphy = createGraphy(session);
   const { data } = await graphy.query({ query: AccountPageQuery });
   const profile = data?.["profile"];
   const passkeys = profile?.["webauthn_credentialsCollection"]?.["edges"]?.map((edge) => edge["node"]) ?? [];

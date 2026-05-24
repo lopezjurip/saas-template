@@ -14,13 +14,13 @@ export function createBrowserClient() {
   );
 }
 
-export function getSupabase() {
+export function getSupabaseClient() {
   const supabase = createBrowserClient();
   return supabase;
 }
 
-export async function getSupabaseUser() {
-  const supabase = getSupabase();
+export async function getSupabaseClientUser() {
+  const supabase = getSupabaseClient();
   const { data, error } = await supabase.auth.getUser();
   if (error) {
     throw error;
@@ -28,8 +28,8 @@ export async function getSupabaseUser() {
   return data["user"];
 }
 
-export async function getSupabaseSession() {
-  const supabase = getSupabase();
+export async function getSupabaseClientSession() {
+  const supabase = getSupabaseClient();
   const { data, error } = await supabase.auth.getSession();
   if (error) {
     throw error;
@@ -38,8 +38,8 @@ export async function getSupabaseSession() {
 }
 
 // Hook-injected claims live only in the JWT — decode the access_token directly.
-export async function getSupabaseUserMetadata(): Promise<AppMetadata | null> {
-  const session = await getSupabaseSession();
+export async function getSupabaseClientUserMetadata(): Promise<AppMetadata | null> {
+  const session = await getSupabaseClientSession();
   if (!session) return null;
   const payload = JWT_DECODE_PAYLOAD(session["access_token"]) as { app_metadata?: unknown } | null;
   const result = AppMetadataSchema.safeParse(payload?.["app_metadata"]);

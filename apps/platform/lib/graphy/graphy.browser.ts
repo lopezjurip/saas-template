@@ -1,5 +1,5 @@
 import { GraphyClientSupabase } from "@packages/graphy/graphy";
-import { getSupabaseSession } from "@packages/supabase/client.browser";
+import { getSupabaseClientSession } from "@packages/supabase/client.browser";
 import { URL_NEW } from "@packages/utils/url";
 
 const NEXT_PUBLIC_SUPABASE_URL = process.env["NEXT_PUBLIC_SUPABASE_URL"];
@@ -13,6 +13,6 @@ export function createGraphy(session?: { access_token?: string | null } | null) 
 }
 
 export async function getGraphy() {
-  const session = await getSupabaseSession();
+  const session = await getSupabaseClientSession();
   return createGraphy(session);
 }

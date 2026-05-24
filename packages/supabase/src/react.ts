@@ -2,12 +2,12 @@
 
 import { useMemo } from "react";
 import useSWR from "swr";
-import { getSupabase, getSupabaseUser } from "./client.browser";
+import { getSupabaseClient, getSupabaseClientUser } from "./client.browser";
 
 export function useSupabase() {
-  return useMemo(getSupabase, []);
+  return useMemo(getSupabaseClient, []);
 }
 
 export function useSupabaseUser() {
-  return useSWR("supabase-user", getSupabaseUser);
+  return useSWR("supabase-user", getSupabaseClientUser);
 }

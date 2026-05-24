@@ -1,4 +1,4 @@
-import { createServerClient } from "@packages/supabase/client.server";
+import { getSupabaseServerSession, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
   Card,
@@ -36,11 +36,7 @@ const DashboardPageQuery = gql(`
 `);
 
 export default async function DashboardPage() {
-  const supabase = await createServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user;
+  const [user, session] = await Promise.all([getSupabaseServerUser(), getSupabaseServerSession()]);
   if (!user) {
     redirect("/auth");
   }

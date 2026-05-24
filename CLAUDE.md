@@ -86,7 +86,7 @@ Where `<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.POR
 
 ### Auth + onboarding
 
-- `proxy.ts` calls `updateSession` (`@packages/supabase/client.middleware`) to refresh the JWT cookie, then **decodes the JWT directly** to read hook-injected claims. `auth.getUser()` returns the persisted user record without hook claims — always decode `session.access_token` (or use `getSupabaseUserMetadata()` from `@packages/supabase/client.server` which does this internally).
+- `proxy.ts` calls `updateSession` (`@packages/supabase/client.middleware`) to refresh the JWT cookie, then **decodes the JWT directly** to read hook-injected claims. `auth.getUser()` returns the persisted user record without hook claims — always decode `session.access_token` (or use `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server` which does this internally).
 - Gates, in order: public path bypass → auth (redirect to `/auth?next=…`, `next` derived from the `Host` header since `request.url` drops the subdomain in Next dev) → onboarded (redirect to `/onboarding`) → for tenant subdomains, membership check against JWT `app_metadata.tenants`.
 - Reserved slugs (`auth`, `onboarding`, `dashboard`, `tenants`, `health`, `api`, `_next`, `www`, …) are rejected at tenant creation (`apps/platform/app/tenants/create/schemas.ts`) so they never collide with first-party routes.
 
@@ -342,5 +342,5 @@ Stage normally in git. Ignore when writing commit messages:
 - Don't hardcode regulatory values — they change monthly/yearly
 - Don't process payroll without checking `04-legal-regulatory-compendium.md` first
 - Don't use a tenant slug from a reserved-route list (auth, onboarding, dashboard, tenants, health, …) — the schema check in `apps/platform/app/tenants/create/schemas.ts` is the single source of truth
-- Don't read `app_metadata.tenants` / `onboarded` from `auth.getUser()` — those claims live in the JWT only. Use `getSupabaseUserMetadata()` from `@packages/supabase/client.server` (or decode `session.access_token` directly in middleware)
+- Don't read `app_metadata.tenants` / `onboarded` from `auth.getUser()` — those claims live in the JWT only. Use `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server` (or decode `session.access_token` directly in middleware)
 - Don't put shadcn components in `apps/platform/` — they belong in `packages/ui-common/src/shadcn`

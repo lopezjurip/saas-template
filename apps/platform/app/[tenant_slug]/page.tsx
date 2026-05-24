@@ -1,4 +1,4 @@
-import { createServerClient, getSupabaseUserMetadata } from "@packages/supabase/client.server";
+import { getSupabaseServerSession, getSupabaseServerUserMetadata } from "@packages/supabase/client.server";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
   Card,
@@ -42,12 +42,7 @@ export default async function TenantHomePage({ params }: { params: Promise<{ ten
   const routeParams = await params;
   const tenant_slug = routeParams["tenant_slug"];
 
-  const supabase = await createServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const metadata = await getSupabaseUserMetadata();
+  const [session, metadata] = await Promise.all([getSupabaseServerSession(), getSupabaseServerUserMetadata()]);
   const allTenantClaims = metadata?.["tenants"] ?? [];
   const allOrgClaims = metadata?.["organizations"] ?? [];
 
