@@ -92,6 +92,9 @@ export default async function DashboardPage() {
           <Button asChild className="w-full">
             <Link href="/tenants/create">Crear empresa</Link>
           </Button>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/dashboard/account">Administrar cuenta</Link>
+          </Button>
           <Button asChild variant="ghost" className="w-full">
             <Link href="/auth/logout">Cerrar sesión</Link>
           </Button>
