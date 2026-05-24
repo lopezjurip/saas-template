@@ -6,13 +6,33 @@ export type Incremental<T> = T | { [P in keyof T]?: P extends " $fragmentName" |
 
 import type { DocumentTypeDecoration } from "@graphql-typed-document-node/core";
 export type TenantHomeQueryQueryVariables = Exact<{
-  tenantId: number;
+  tenant_id: number;
 }>;
 
 export type TenantHomeQueryQuery = {
   profile: { profile_name_full: string | null } | null;
-  organizationsCollection: {
-    edges: Array<{ node: { organization_id: number; organization_name: string; organization_slug: string } }>;
+  tenant: {
+    tenant_id: number;
+    tenant_name: string;
+    tenant_slug: string;
+    organizationsCollection: {
+      edges: Array<{ node: { organization_id: number; organization_name: string; organization_slug: string } }>;
+    } | null;
+  } | null;
+};
+
+export type DashboardPageQueryQueryVariables = Exact<{ [key: string]: never }>;
+
+export type DashboardPageQueryQuery = {
+  viewer_organizations: {
+    edges: Array<{
+      node: {
+        organization_id: number;
+        organization_name: string;
+        organization_slug: string;
+        tenants: { tenant_id: number; tenant_slug: string; tenant_name: string } | null;
+      };
+    }>;
   } | null;
 };
 
@@ -74,12 +94,33 @@ export const ViewerProfileFragmentFragmentDoc = new TypedDocumentString(
   { fragmentName: "ViewerProfileFragment" },
 ) as unknown as TypedDocumentString<ViewerProfileFragmentFragment, unknown>;
 export const TenantHomeQueryDocument = new TypedDocumentString(`
-    query TenantHomeQuery($tenantId: Int!) {
+    query TenantHomeQuery($tenant_id: Int!) {
   profile: viewer_profile {
     profile_name_full
   }
-  organizationsCollection(
-    filter: {organization_disabled_at: {is: NULL}, tenant_id: {eq: $tenantId}}
+  tenant: viewer_tenant_by_id(target_tenant_id: $tenant_id) {
+    tenant_id
+    tenant_name
+    tenant_slug
+    organizationsCollection(
+      filter: {organization_disabled_at: {is: NULL}}
+      orderBy: [{organization_name: AscNullsLast}]
+    ) {
+      edges {
+        node {
+          organization_id
+          organization_name
+          organization_slug
+        }
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<TenantHomeQueryQuery, TenantHomeQueryQueryVariables>;
+export const DashboardPageQueryDocument = new TypedDocumentString(`
+    query DashboardPageQuery {
+  viewer_organizations(
+    filter: {organization_disabled_at: {is: NULL}}
     orderBy: [{organization_name: AscNullsLast}]
   ) {
     edges {
@@ -87,11 +128,16 @@ export const TenantHomeQueryDocument = new TypedDocumentString(`
         organization_id
         organization_name
         organization_slug
+        tenants {
+          tenant_id
+          tenant_slug
+          tenant_name
+        }
       }
     }
   }
 }
-    `) as unknown as TypedDocumentString<TenantHomeQueryQuery, TenantHomeQueryQueryVariables>;
+    `) as unknown as TypedDocumentString<DashboardPageQueryQuery, DashboardPageQueryQueryVariables>;
 export const HealthQueryDocument = new TypedDocumentString(`
     query HealthQuery {
   health_current_timestamp

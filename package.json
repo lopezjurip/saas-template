@@ -20,7 +20,7 @@
     "db:stop": "pnpm --filter @packages/supabase db:stop",
     "db:reset": "pnpm --filter @packages/supabase db:reset",
     "db:status": "pnpm --filter @packages/supabase db:status",
-    "db:env:development": "node --experimental-strip-types scripts/development/db-env.ts",
+    "db:env:development": "node --experimental-strip-types scripts/development/env-setup.ts",
     "db:migrate:new": "pnpm --filter @packages/supabase db:migrate:new",
     "db:migrate:up": "pnpm --filter @packages/supabase db:migrate:up",
     "generate:types": "turbo run generate:types --filter=@packages/supabase",
@@ -36,6 +36,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
     "@packages/typescript-config": "workspace:*",
+    "graphql": "^16.14.0",
+    "graphql-config": "^5.1.6",
     "turbo": "^2.9.14",
     "typescript": "^6.0.3"
   },

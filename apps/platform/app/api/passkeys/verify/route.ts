@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
     verification = await verifyRegistrationResponse({
       response: data,
       expectedChallenge: challenge.webauthn_challenge_value,
-      expectedOrigin: process.env.WEBAUTHN_RELYING_PARTY_ORIGIN!,
-      expectedRPID: process.env.WEBAUTHN_RELYING_PARTY_ID!,
+      expectedOrigin: process.env["WEBAUTHN_RELYING_PARTY_ORIGIN"]!,
+      expectedRPID: process.env["WEBAUTHN_RELYING_PARTY_ID"]!,
     });
   } catch (error) {
     log.error("verifyRegistrationResponse threw", { profile_id: user.id, error });
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     webauthn_credential_public_key: Buffer.from(registrationInfo.credential.publicKey).toString("base64"),
     webauthn_credential_aaguid: registrationInfo.aaguid,
     webauthn_credential_sign_count: registrationInfo.credential.counter,
-    webauthn_credential_transports: (data.response?.transports ?? []) as string[],
+    webauthn_credential_transports: (data["response"]?.["transports"] ?? []) as string[],
     webauthn_credential_user_verification_status: registrationInfo.userVerified ? "verified" : "unverified",
     webauthn_credential_device_type:
       registrationInfo.credentialDeviceType === "singleDevice" ? "single_device" : "multi_device",

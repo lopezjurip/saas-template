@@ -1,4 +1,4 @@
-import { createServerClient, getSupabaseUserMetadata } from "@packages/supabase/client.server";
+import { createServerClient } from "@packages/supabase/client.server";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
   Card,
@@ -10,20 +10,44 @@ import {
 } from "@packages/ui-common/shadcn/components/ui/card";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { gql } from "~/generated/graphql";
+import { createGraphy } from "~/lib/graphy/graphy.browser";
+
+const DashboardPageQuery = gql(`
+  query DashboardPageQuery {
+    viewer_organizations(
+      filter: { organization_disabled_at: { is: NULL } }
+      orderBy: [{ organization_name: AscNullsLast }]
+    ) {
+      edges {
+        node {
+          organization_id
+          organization_name
+          organization_slug
+          tenants {
+            tenant_id
+            tenant_slug
+            tenant_name
+          }
+        }
+      }
+    }
+  }
+`);
 
 export default async function DashboardPage() {
   const supabase = await createServerClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) {
     redirect("/auth");
   }
 
-  const metadata = await getSupabaseUserMetadata();
-  const tenants = metadata?.tenants ?? [];
-
-  const apexHost = process.env.NEXT_PUBLIC_APEX_HOST ?? "lvh.me:7003";
+  const graphy = createGraphy(session);
+  const { data } = await graphy.query({ query: DashboardPageQuery });
+  const edges = data?.["viewer_organizations"]?.["edges"] ?? [];
 
   return (
     <main className="bg-muted flex min-h-svh items-center justify-center p-6">
@@ -33,16 +57,34 @@ export default async function DashboardPage() {
           <CardDescription>{user.email}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <p className="text-sm font-medium">Tus empresas</p>
-          {tenants.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aún no perteneces a ninguna empresa.</p>
+          <p className="text-sm font-medium">Tus organizaciones</p>
+          {edges.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aún no perteneces a ninguna organización.</p>
           ) : (
             <div className="flex flex-col gap-2">
-              {tenants.map((t) => (
-                <Button key={t.id} asChild variant="outline" className="w-full justify-start">
-                  <a href={`https://${t.slug}.${apexHost}`}>{t.slug}</a>
-                </Button>
-              ))}
+              {edges.map((edge) => {
+                const organization = edge["node"];
+                const tenant = organization["tenants"];
+                const tenant_slug = tenant?.["tenant_slug"];
+                return (
+                  <Button
+                    key={organization["organization_id"]}
+                    asChild
+                    variant="outline"
+                    className="w-full justify-start"
+                    disabled={!tenant_slug}
+                  >
+                    <Link href={tenant_slug ? `/${tenant_slug}` : "#"}>
+                      <span className="flex flex-col items-start">
+                        <span>{organization["organization_name"]}</span>
+                        {tenant?.["tenant_name"] ? (
+                          <span className="text-xs text-muted-foreground">{tenant["tenant_name"]}</span>
+                        ) : null}
+                      </span>
+                    </Link>
+                  </Button>
+                );
+              })}
             </div>
           )}
         </CardContent>

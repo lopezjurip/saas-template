@@ -15,6 +15,7 @@ if (missing.length > 0) {
 
 const config: NextConfig = {
   allowedDevOrigins: ["lvh.me", "*.lvh.me"],
+  typedRoutes: true,
   transpilePackages: [
     "@packages/debug",
     "@packages/graphy",

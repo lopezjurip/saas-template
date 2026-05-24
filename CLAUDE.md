@@ -109,7 +109,7 @@ Where `<apex>` is `NEXT_PUBLIC_APEX_HOST` — `lvh.me:7003` in dev, `resolvecom.
 The TLS cert comes from [mkcert](https://github.com/FiloSottile/mkcert). One-time setup:
 
 ```bash
-bash scripts/setup-https.sh
+bash scripts/development/https-setup.sh
 ```
 
 That runs `mkcert -install` and emits `apps/platform/certs/lvh.me-{cert,key}.pem` covering `lvh.me`, `*.lvh.me`, `localhost`, and `127.0.0.1`. The dev script in `apps/platform/package.json` references those file paths. `apps/platform/certs/` is gitignored (`**/certs/` in root `.gitignore`).
@@ -269,6 +269,9 @@ Never create an `index.ts` (or `index.tsx`) whose sole purpose is re-exporting f
 ### Never Use `DROP ... CASCADE`
 Critical safety rule for SQL. Always explicit.
 
+### No hyphens in SQL identifiers or enum values
+Never use `-` in Postgres identifiers (tables, views, functions, columns, schemas, types) **or in enum values**. Use `snake_case` only — pg_graphql rejects names that don't match `[_a-zA-Z0-9]`, which silently breaks the entire GraphQL schema introspection (not just the offending object). If an external spec defines values that won't pass that constraint (e.g. WebAuthn's `"public-key"`), store the column as `text` with a `check` constraint instead of an enum — that keeps the spec literal in the DB without breaking pg_graphql.
+
 ### Type Generation
 - After Supabase schema changes: `pnpm generate:types` (runs against `@packages/supabase`)
 - Never use `as any`
@@ -278,10 +281,29 @@ Critical safety rule for SQL. Always explicit.
 - Workspace packages: `@packages/ui-common`, `@packages/supabase`, `@packages/kapso`, `@packages/react-email`, `@packages/react-pdf`.
 - App code lives in `apps/platform/`; reusable logic belongs in `@packages/*`.
 
+### Bracket notation for external data
+When reading properties off objects that originated outside the program (GraphQL/REST responses, parsed JSON, file contents, webhook payloads, MCP tool results), use bracket notation — not dot access.
+
+```ts
+// External data → brackets
+const organization = edge["node"];
+const tenantSlug = organization["tenants"]?.["tenant_slug"];
+const slug = params["tenant_slug"]; // route params come from the request
+const body = await request.json();
+const email = body["email"];
+
+// Class instances / library methods → dot
+const { data, error } = await supabase.auth.getUser();
+const session = await graphy.query({ query: DashboardPageQuery });
+```
+
+This is a deliberate visual cue: brackets mark "this shape is contractual with another system" so a reader can distinguish it from class properties/methods owned by the program. TypeScript narrowing still works through brackets, so there's no type-safety cost. Don't introduce intermediate `.map()`/`.filter()` arrays just to extract a key — iterate the original collection and bracket from there.
+
 ### Code Style
 - Biome.js handles formatting/linting — don't fight it
 - Follow existing patterns in the codebase
 - Chilean Spanish for user-facing strings, English for code/comments
+- **Pure functions → `UPPER_CASE`**. A pure function is deterministic on its inputs and has no observable side effects (no I/O, no DB/network/filesystem calls, no `redirect()`, no mutations of arguments, no `Date.now()`/`Math.random()`). Side-effectful or async-with-I/O functions stay `camelCase`. Constants stay `UPPER_CASE` as before. The visual cue is the same idea as bracket notation: at a glance, a caller can tell whether the function is safe to call repeatedly with no observable effect (`SLUGIFY(name)`, `RESOLVE_STEP(state, step)`) vs. one that touches the world (`loadOnboardingState()`, `createTenant(...)`). React components stay PascalCase regardless.
 
 ### Lint + Build (run in parallel)
 After making changes, run these two commands concurrently — they are independent and safe to parallelize:

@@ -16,7 +16,7 @@ if ! command -v mkcert >/dev/null 2>&1; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CERT_DIR="$SCRIPT_DIR/../apps/platform/certs"
+CERT_DIR="$SCRIPT_DIR/../../apps/platform/certs"
 
 mkdir -p "$CERT_DIR"
 

@@ -21,10 +21,11 @@ if [ -f "$ROOT_CERT" ] && [ -f "$ROOT_KEY" ]; then
   cp "$ROOT_CERT" ./apps/platform/certs/lvh.me-cert.pem
   cp "$ROOT_KEY" ./apps/platform/certs/lvh.me-key.pem
 else
-  bash scripts/setup-https.sh
+  bash scripts/development/https-setup.sh
 fi
 
 mkdir -p .claude
 copy_if_exists "$CONDUCTOR_ROOT_PATH/.claude/settings.local.json" ./.claude/settings.local.json
 
 pnpm install
+pnpm run -w db:env:development # generates .env.development.local

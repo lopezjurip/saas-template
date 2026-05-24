@@ -8,7 +8,9 @@ import { checkEmail, signInWithOAuth } from "./actions";
 type SearchParams = Promise<{ next?: string; error?: string }>;
 
 export default async function AuthEntryPage({ searchParams }: { searchParams: SearchParams }) {
-  const { next = "/", error } = await searchParams;
+  const params = await searchParams;
+  const next = params["next"] ?? "/";
+  const error = params["error"];
 
   return (
     <div className="flex flex-col gap-4">

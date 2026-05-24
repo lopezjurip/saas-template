@@ -8,10 +8,11 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { SLUGIFY } from "@packages/utils/slug";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import { APP_HOST } from "~/lib/constants";
 import { createTenant } from "./actions";
 import { type CreateTenantValues, createTenantSchema } from "./schemas";
 
-export function CreateTenantForm({ tenantBaseUrl }: { tenantBaseUrl: string }) {
+export function CreateTenantForm() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -45,9 +46,8 @@ export function CreateTenantForm({ tenantBaseUrl }: { tenantBaseUrl: string }) {
         return;
       }
       if (!res?.data?.slug) return;
-      // Hard navigate to the tenant subdomain so the browser sees the shared cookie.
-      const target = tenantBaseUrl.replace("{slug}", res.data.slug);
-      window.location.assign(target);
+      // Hard navigate so the browser picks up the refreshed JWT (new tenant claim) on the next request.
+      window.location.assign(`/${res.data.slug}`);
     });
   });
 
@@ -78,12 +78,7 @@ export function CreateTenantForm({ tenantBaseUrl }: { tenantBaseUrl: string }) {
           {...form.register("tenant_slug")}
         />
         <p className="text-muted-foreground text-xs">
-          Tu URL será{" "}
-          {slug ? (
-            <strong>{tenantBaseUrl.replace("{slug}", slug)}</strong>
-          ) : (
-            `{slug}.${tenantBaseUrl.replace("{slug}.", "")}`
-          )}
+          Tu URL será {slug ? <strong>{`${APP_HOST}/${slug}`}</strong> : `${APP_HOST}/{slug}`}
         </p>
         {form.formState.errors.tenant_slug && (
           <p className="text-destructive text-xs">{form.formState.errors.tenant_slug.message}</p>

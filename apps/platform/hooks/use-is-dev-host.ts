@@ -1,5 +1,6 @@
 "use client";
 
+import { APP_HOST } from "~/lib/constants";
 import { isDevHost } from "~/lib/dev-host";
 
 /**
@@ -12,5 +13,5 @@ import { isDevHost } from "~/lib/dev-host";
  * For server-component callers, import `isDevHost` from `~/lib/dev-host` directly.
  */
 export function useIsDevHost(): boolean {
-  return isDevHost(process.env.NEXT_PUBLIC_APEX_HOST);
+  return isDevHost(APP_HOST);
 }

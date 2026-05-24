@@ -1,0 +1,27 @@
+{
+  "folders": [
+    { "name": "@apps/platform", "path": "apps/platform" },
+    { "name": "@packages/debug", "path": "packages/debug" },
+    { "name": "@packages/graphy", "path": "packages/graphy" },
+    { "name": "@packages/kapso", "path": "packages/kapso" },
+    { "name": "@packages/react-email", "path": "packages/react-email" },
+    { "name": "@packages/react-hooks", "path": "packages/react-hooks" },
+    { "name": "@packages/react-pdf", "path": "packages/react-pdf" },
+    { "name": "@packages/rosetta", "path": "packages/rosetta" },
+    { "name": "@packages/supabase", "path": "packages/supabase" },
+    { "name": "@packages/typescript-config", "path": "packages/typescript-config" },
+    { "name": "@packages/ui-common", "path": "packages/ui-common" },
+    { "name": "@packages/utils", "path": "packages/utils" }
+  ],
+  "extensions": {
+    "recommendations": [
+      "biomejs.biome",
+      "bradlc.vscode-tailwindcss",
+      "graphql.vscode-graphql",
+      "graphql.vscode-graphql-syntax",
+      "streetsidesoftware.code-spell-checker",
+      "streetsidesoftware.code-spell-checker-spanish"
+    ],
+    "unwantedRecommendations": []
+  }
+}

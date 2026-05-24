@@ -4,7 +4,8 @@ import Link from "next/link";
 type SearchParams = Promise<{ reason?: string }>;
 
 export default async function AuthErrorPage({ searchParams }: { searchParams: SearchParams }) {
-  const { reason } = await searchParams;
+  const params = await searchParams;
+  const reason = params["reason"];
 
   return (
     <div className="flex flex-col gap-4">

@@ -10,9 +10,6 @@ import Link from "next/link";
 import { CreateTenantForm } from "./create-form";
 
 export default function CreateTenantPage() {
-  const tenantHost = process.env.NEXT_PUBLIC_TENANT_HOST ?? "lvh.me:7002";
-  const tenantBaseUrl = `https://{slug}.${tenantHost}`;
-
   return (
     <main className="bg-muted flex min-h-svh items-center justify-center p-6">
       <Card className="w-full max-w-md">
@@ -25,7 +22,7 @@ export default function CreateTenantPage() {
           <CardDescription>Crear empresa</CardDescription>
         </CardHeader>
         <CardContent>
-          <CreateTenantForm tenantBaseUrl={tenantBaseUrl} />
+          <CreateTenantForm />
         </CardContent>
       </Card>
     </main>

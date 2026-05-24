@@ -1,4 +1,4 @@
-import { loadOnboardingState, resolveStep } from "./state";
+import { loadOnboardingState, RESOLVE_STEP } from "./state";
 import { FinishStep } from "./steps/finish-step";
 import { NameStep } from "./steps/name-step";
 import { PasskeyStep } from "./steps/passkey-step";
@@ -8,13 +8,13 @@ import { PhoneStep } from "./steps/phone-step";
 type SearchParams = Promise<{ step?: string }>;
 
 export default async function OnboardingPage({ searchParams }: { searchParams: SearchParams }) {
-  const { step } = await searchParams;
+  const params = await searchParams;
   const state = await loadOnboardingState();
-  const resolved = resolveStep(state, step);
+  const resolved = RESOLVE_STEP(state, params["step"]);
 
   switch (resolved) {
     case "name":
-      return <NameStep defaultValue={state.fullName} />;
+      return <NameStep defaultValue={state.profile_name_full} />;
     case "phone":
       return <PhoneStep />;
     case "passkey":

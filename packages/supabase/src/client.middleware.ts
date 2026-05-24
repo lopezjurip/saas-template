@@ -11,11 +11,11 @@ import type { Database } from "./types.ts";
  */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
-  const cookieDomain = process.env.NEXT_PUBLIC_COOKIE_DOMAIN;
+  const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
 
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env["NEXT_PUBLIC_SUPABASE_URL"]!,
+    process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]!,
     {
       ...(cookieDomain ? { cookieOptions: { domain: cookieDomain } } : {}),
       cookies: {

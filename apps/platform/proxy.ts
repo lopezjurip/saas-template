@@ -1,26 +1,14 @@
 import { updateSession } from "@packages/supabase/client.middleware";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { JWT_DECODE_PAYLOAD } from "@packages/utils/jwt";
 import { type NextRequest, NextResponse } from "next/server";
+import { APP_HOST } from "~/lib/constants";
 import { debug } from "~/lib/debug";
 
 const log = debug("proxy");
 
 type TenantClaim = { id: number; slug: string };
 type JwtPayload = { app_metadata?: { tenants?: TenantClaim[] } };
-
-function decodeJwtPayload(token: string): JwtPayload | null {
-  const segment = token.split(".")[1];
-  if (!segment) return null;
-  try {
-    const padded = segment
-      .replace(/-/g, "+")
-      .replace(/_/g, "/")
-      .padEnd(Math.ceil(segment.length / 4) * 4, "=");
-    return JSON.parse(atob(padded));
-  } catch {
-    return null;
-  }
-}
 
 async function resolveTenantIdFromSlug(slug: string): Promise<number | null> {
   const supabase = createServiceRoleClient();
@@ -33,11 +21,11 @@ async function resolveTenantIdFromSlug(slug: string): Promise<number | null> {
   return data.tenant_id;
 }
 
-function extractSubdomain(hostname: string, apexHost: string): string | null {
-  if (!hostname || !apexHost) return null;
-  if (hostname === apexHost || hostname === `www.${apexHost}`) return null;
-  if (!hostname.endsWith(`.${apexHost}`)) return null;
-  const slug = hostname.slice(0, hostname.length - apexHost.length - 1);
+function extractSubdomain(hostname: string): string | null {
+  if (!hostname) return null;
+  if (hostname === APP_HOST || hostname === `www.${APP_HOST}`) return null;
+  if (!hostname.endsWith(`.${APP_HOST}`)) return null;
+  const slug = hostname.slice(0, hostname.length - APP_HOST.length - 1);
   if (!slug || slug === "www") return null;
   return slug;
 }
@@ -52,21 +40,20 @@ function copyCookies(from: NextResponse, to: NextResponse): NextResponse {
 }
 
 export async function proxy(request: NextRequest) {
-  const apexHost = process.env.NEXT_PUBLIC_APEX_HOST ?? "lvh.me:7003";
   const hostname = request.headers.get("host") ?? "";
   const pathname = request.nextUrl.pathname;
   const proto = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
 
   // Classify the host: apex/www, tenant subdomain, or unknown (custom apex, phase 2).
-  const isApex = hostname === apexHost || hostname === `www.${apexHost}`;
+  const isApex = hostname === APP_HOST || hostname === `www.${APP_HOST}`;
   let slugFromHost: string | null = null;
   if (!isApex) {
-    if (hostname.endsWith(`.${apexHost}`)) {
-      slugFromHost = extractSubdomain(hostname, apexHost);
+    if (hostname.endsWith(`.${APP_HOST}`)) {
+      slugFromHost = extractSubdomain(hostname);
     } else {
       // Unknown host (localhost/127.0.0.1/preview URL/custom apex). Custom apexes are phase 2 —
       // for now, bounce to the configured apex so cookies/session land on the right origin.
-      const apexUrl = new URL(`${pathname}${request.nextUrl.search}`, `${proto}://${apexHost}`);
+      const apexUrl = new URL(`${pathname}${request.nextUrl.search}`, `${proto}://${APP_HOST}`);
       return NextResponse.redirect(apexUrl);
     }
   }
@@ -77,7 +64,7 @@ export async function proxy(request: NextRequest) {
   // /health stays canonical at the apex too — fall through any subdomain /health to the apex page.
   if (slugFromHost) {
     if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding") || pathname === "/health") {
-      const url = new URL(pathname, `${proto}://${apexHost}`);
+      const url = new URL(pathname, `${proto}://${APP_HOST}`);
       url.search = request.nextUrl.search;
       return NextResponse.redirect(url);
     }
@@ -93,7 +80,7 @@ export async function proxy(request: NextRequest) {
         data: { session },
       } = await supabase.auth.getSession();
       if (session) {
-        return NextResponse.redirect(new URL("/dashboard", `${proto}://${apexHost}`));
+        return NextResponse.redirect(new URL("/dashboard", `${proto}://${APP_HOST}`));
       }
     }
     return sessionResponse;
@@ -105,7 +92,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getSession();
   if (!session) {
     const next = `${proto}://${hostname}${pathname}${request.nextUrl.search}`;
-    const authUrl = new URL("/auth", `${proto}://${apexHost}`);
+    const authUrl = new URL("/auth", `${proto}://${APP_HOST}`);
     authUrl.searchParams.set("next", next);
     return NextResponse.redirect(authUrl);
   }
@@ -114,21 +101,21 @@ export async function proxy(request: NextRequest) {
   // The `onboarded` claim is no longer used as a gate here — onboarding completion is
   // surfaced to users via page-level UX (e.g. a banner / nudge) rather than a hard redirect,
   // so users can land on /dashboard or any other route mid-onboarding without being bounced.
-  const claims = decodeJwtPayload(session.access_token);
-  const tenants = claims?.app_metadata?.tenants ?? [];
+  const claims = JWT_DECODE_PAYLOAD(session.access_token) as JwtPayload | null;
+  const tenants = claims?.["app_metadata"]?.["tenants"] ?? [];
 
   // Subdomain → membership check + rewrite to /[tenant_slug]{pathname}.
   if (slugFromHost) {
-    const tenantId = await resolveTenantIdFromSlug(slugFromHost);
-    if (!tenantId) {
+    const tenant_id = await resolveTenantIdFromSlug(slugFromHost);
+    if (!tenant_id) {
       log.warn("unknown or disabled tenant subdomain", { slug: slugFromHost, hostname });
       return new NextResponse("Tenant not found", { status: 404 });
     }
-    if (!tenants.some((t) => t.id === tenantId)) {
+    if (!tenants.some((t) => t["id"] === tenant_id)) {
       log.warn("user lacks membership for tenant subdomain", {
         slug: slugFromHost,
-        tenant_id: tenantId,
-        user_tenant_ids: tenants.map((t) => t.id),
+        tenant_id,
+        user_tenant_ids: tenants.map((t) => t["id"]),
       });
       return new NextResponse("No tienes acceso a esta empresa.", { status: 403 });
     }

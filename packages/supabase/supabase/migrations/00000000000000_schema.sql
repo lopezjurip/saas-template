@@ -325,21 +325,10 @@ create trigger handle_concierges_updated_at
 -- flow runs as the authenticated user. RLS is locked down so anon/authenticated
 -- cannot touch challenges directly — only the credentials they own.
 
-do $$ begin
-  create type public.webauthn_backup_state as enum ('not_backed_up', 'backed_up');
-exception when duplicate_object then null; end $$;
-
-do $$ begin
-  create type public.webauthn_credential_type as enum ('public-key');
-exception when duplicate_object then null; end $$;
-
-do $$ begin
-  create type public.webauthn_device_type as enum ('single_device', 'multi_device');
-exception when duplicate_object then null; end $$;
-
-do $$ begin
-  create type public.webauthn_user_verification_status as enum ('unverified', 'verified');
-exception when duplicate_object then null; end $$;
+-- WebAuthn columns are stored as `text` (not enum) because some spec literals
+-- contain hyphens (e.g. credential type `'public-key'`), which pg_graphql
+-- rejects as enum value names — see CLAUDE.md "No hyphens in SQL identifiers
+-- or enum values". `check` constraints preserve enum-like safety at the DB.
 
 create table if not exists public.webauthn_challenges (
   webauthn_challenge_id uuid not null primary key default internal.uuid_generate_v7(),
@@ -360,13 +349,17 @@ create table if not exists public.webauthn_credentials (
   profile_id uuid not null references public.profiles (profile_id) on delete cascade,
   webauthn_credential_external_id varchar not null unique,
   webauthn_credential_friendly_name text,
-  webauthn_credential_type public.webauthn_credential_type not null,
+  webauthn_credential_type text not null
+    check (webauthn_credential_type in ('public-key')),
   webauthn_credential_aaguid varchar not null default '00000000-0000-0000-0000-000000000000',
   webauthn_credential_sign_count integer not null,
   webauthn_credential_transports text[] not null,
-  webauthn_credential_user_verification_status public.webauthn_user_verification_status not null,
-  webauthn_credential_device_type public.webauthn_device_type not null,
-  webauthn_credential_backup_state public.webauthn_backup_state not null,
+  webauthn_credential_user_verification_status text not null
+    check (webauthn_credential_user_verification_status in ('unverified', 'verified')),
+  webauthn_credential_device_type text not null
+    check (webauthn_credential_device_type in ('single_device', 'multi_device')),
+  webauthn_credential_backup_state text not null
+    check (webauthn_credential_backup_state in ('not_backed_up', 'backed_up')),
   webauthn_credential_public_key text not null,
   webauthn_credential_last_used_at timestamptz,
   webauthn_credential_created_at timestamptz not null default current_timestamp,

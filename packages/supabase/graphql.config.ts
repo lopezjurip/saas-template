@@ -1,8 +1,8 @@
 import path from "node:path";
 import type { CodegenConfig } from "@graphql-codegen/cli";
-import dotenv from "dotenv";
+import { loadEnvConfig } from "@next/env";
 
-dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
+loadEnvConfig(path.resolve(__dirname, "../../apps/platform"), true);
 
 const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY } = process.env;
 

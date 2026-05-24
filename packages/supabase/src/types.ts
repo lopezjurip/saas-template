@@ -376,9 +376,9 @@ export type Database = {
         Row: {
           profile_id: string;
           webauthn_credential_aaguid: string;
-          webauthn_credential_backup_state: Database["public"]["Enums"]["webauthn_backup_state"];
+          webauthn_credential_backup_state: string;
           webauthn_credential_created_at: string;
-          webauthn_credential_device_type: Database["public"]["Enums"]["webauthn_device_type"];
+          webauthn_credential_device_type: string;
           webauthn_credential_external_id: string;
           webauthn_credential_friendly_name: string | null;
           webauthn_credential_id: string;
@@ -386,16 +386,16 @@ export type Database = {
           webauthn_credential_public_key: string;
           webauthn_credential_sign_count: number;
           webauthn_credential_transports: string[];
-          webauthn_credential_type: Database["public"]["Enums"]["webauthn_credential_type"];
+          webauthn_credential_type: string;
           webauthn_credential_updated_at: string;
-          webauthn_credential_user_verification_status: Database["public"]["Enums"]["webauthn_user_verification_status"];
+          webauthn_credential_user_verification_status: string;
         };
         Insert: {
           profile_id: string;
           webauthn_credential_aaguid?: string;
-          webauthn_credential_backup_state: Database["public"]["Enums"]["webauthn_backup_state"];
+          webauthn_credential_backup_state: string;
           webauthn_credential_created_at?: string;
-          webauthn_credential_device_type: Database["public"]["Enums"]["webauthn_device_type"];
+          webauthn_credential_device_type: string;
           webauthn_credential_external_id: string;
           webauthn_credential_friendly_name?: string | null;
           webauthn_credential_id?: string;
@@ -403,16 +403,16 @@ export type Database = {
           webauthn_credential_public_key: string;
           webauthn_credential_sign_count: number;
           webauthn_credential_transports: string[];
-          webauthn_credential_type: Database["public"]["Enums"]["webauthn_credential_type"];
+          webauthn_credential_type: string;
           webauthn_credential_updated_at?: string;
-          webauthn_credential_user_verification_status: Database["public"]["Enums"]["webauthn_user_verification_status"];
+          webauthn_credential_user_verification_status: string;
         };
         Update: {
           profile_id?: string;
           webauthn_credential_aaguid?: string;
-          webauthn_credential_backup_state?: Database["public"]["Enums"]["webauthn_backup_state"];
+          webauthn_credential_backup_state?: string;
           webauthn_credential_created_at?: string;
-          webauthn_credential_device_type?: Database["public"]["Enums"]["webauthn_device_type"];
+          webauthn_credential_device_type?: string;
           webauthn_credential_external_id?: string;
           webauthn_credential_friendly_name?: string | null;
           webauthn_credential_id?: string;
@@ -420,9 +420,9 @@ export type Database = {
           webauthn_credential_public_key?: string;
           webauthn_credential_sign_count?: number;
           webauthn_credential_transports?: string[];
-          webauthn_credential_type?: Database["public"]["Enums"]["webauthn_credential_type"];
+          webauthn_credential_type?: string;
           webauthn_credential_updated_at?: string;
-          webauthn_credential_user_verification_status?: Database["public"]["Enums"]["webauthn_user_verification_status"];
+          webauthn_credential_user_verification_status?: string;
         };
         Relationships: [
           {
@@ -598,10 +598,6 @@ export type Database = {
     Enums: {
       organization_member_role: "employee" | "manager" | "accountant" | "owner";
       tenant_tier: "free" | "pro" | "enterprise";
-      webauthn_backup_state: "not_backed_up" | "backed_up";
-      webauthn_credential_type: "public-key";
-      webauthn_device_type: "single_device" | "multi_device";
-      webauthn_user_verification_status: "unverified" | "verified";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -723,10 +719,6 @@ export const Constants = {
     Enums: {
       organization_member_role: ["employee", "manager", "accountant", "owner"],
       tenant_tier: ["free", "pro", "enterprise"],
-      webauthn_backup_state: ["not_backed_up", "backed_up"],
-      webauthn_credential_type: ["public-key"],
-      webauthn_device_type: ["single_device", "multi_device"],
-      webauthn_user_verification_status: ["unverified", "verified"],
     },
   },
 } as const;

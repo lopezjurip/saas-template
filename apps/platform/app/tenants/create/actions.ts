@@ -32,13 +32,13 @@ export const createTenant = authedAction
       throw new Error("No pudimos crear la empresa. Intenta de nuevo.");
     }
 
-    const { tenant_id: tenantId, tenant_slug: tenantSlug } = tenantRes.data;
+    const { tenant_id, tenant_slug } = tenantRes.data;
 
     // 2. Default organization (mirrors the tenant).
     const orgRes = await admin
       .from("organizations")
       .insert({
-        tenant_id: tenantId,
+        tenant_id,
         organization_slug: parsedInput.tenant_slug,
         organization_name: parsedInput.tenant_name,
       })
@@ -48,25 +48,25 @@ export const createTenant = authedAction
     if (orgRes.error || !orgRes.data) {
       log.error("organization insert failed; rolling back tenant", {
         profile_id: user.id,
-        tenant_id: tenantId,
+        tenant_id,
         slug: parsedInput.tenant_slug,
         error: orgRes.error,
       });
-      const rollback = await admin.from("tenants").delete().eq("tenant_id", tenantId);
+      const rollback = await admin.from("tenants").delete().eq("tenant_id", tenant_id);
       if (rollback.error) {
         log.error("tenant rollback failed — orphan tenant row", {
-          tenant_id: tenantId,
+          tenant_id,
           error: rollback.error,
         });
       }
       throw new Error("No pudimos crear la organización inicial. Intenta de nuevo.");
     }
 
-    const { organization_id: organizationId } = orgRes.data;
+    const { organization_id } = orgRes.data;
 
     // 3. Membership: creator becomes owner of the default org.
     const memberRes = await admin.from("organization_members").insert({
-      organization_id: organizationId,
+      organization_id,
       profile_id: user.id,
       organization_member_role: "owner",
     });
@@ -74,15 +74,15 @@ export const createTenant = authedAction
     if (memberRes.error) {
       log.error("membership insert failed; rolling back tenant + org", {
         profile_id: user.id,
-        tenant_id: tenantId,
-        organization_id: organizationId,
+        tenant_id,
+        organization_id,
         error: memberRes.error,
       });
-      const rollback = await admin.from("tenants").delete().eq("tenant_id", tenantId);
+      const rollback = await admin.from("tenants").delete().eq("tenant_id", tenant_id);
       if (rollback.error) {
         log.error("tenant rollback failed — orphan tenant + org rows", {
-          tenant_id: tenantId,
-          organization_id: organizationId,
+          tenant_id,
+          organization_id,
           error: rollback.error,
         });
       }
@@ -94,17 +94,17 @@ export const createTenant = authedAction
     if (refresh.error) {
       log.warn("session refresh failed; new tenant claims may not be visible until next login", {
         profile_id: user.id,
-        tenant_id: tenantId,
+        tenant_id,
         error: refresh.error,
       });
     }
 
     log.info("tenant created", {
       profile_id: user.id,
-      tenant_id: tenantId,
-      organization_id: organizationId,
-      slug: tenantSlug,
+      tenant_id,
+      organization_id,
+      slug: tenant_slug,
     });
 
-    return { slug: tenantSlug };
+    return { slug: tenant_slug };
   });

@@ -17,6 +17,12 @@ importers:
       '@packages/typescript-config':
         specifier: workspace:*
         version: link:packages/typescript-config
+      graphql:
+        specifier: ^16.14.0
+        version: 16.14.0
+      graphql-config:
+        specifier: ^5.1.6
+        version: 5.1.6(@types/node@24.12.4)(graphql@16.14.0)(typescript@6.0.3)
       turbo:
         specifier: ^2.9.14
         version: 2.9.14
@@ -30,7 +36,7 @@ importers:
         specifier: ^5.2.0
         version: 5.4.0(react-hook-form@7.76.1(react@19.2.6))
       '@modelcontextprotocol/sdk':
-        specifier: ^1.16.0
+        specifier: ^1.29.0
         version: 1.29.0(zod@4.4.3)
       '@packages/debug':
         specifier: workspace:*
@@ -278,7 +284,7 @@ importers:
         specifier: ^4.3.0
         version: 4.5.1(react@19.2.6)
       '@types/mdast':
-        specifier: ^4.0.0
+        specifier: ^4.0.4
         version: 4.0.4
       clsx:
         specifier: ^2.1.1
@@ -327,7 +333,7 @@ importers:
         specifier: ^5.6.3
         version: 5.6.7(webpack@5.107.1)
       react:
-        specifier: ^19.0.0
+        specifier: ^19.2.6
         version: 19.2.6
       react-dom:
         specifier: ^19.0.0
@@ -380,6 +386,10 @@ importers:
         version: 6.0.3
 
   packages/supabase:
+    dependencies:
+      '@packages/utils':
+        specifier: workspace:*
+        version: link:../utils
     devDependencies:
       '@graphql-codegen/cli':
         specifier: ^7.0.0
@@ -390,6 +400,9 @@ importers:
       '@graphql-codegen/schema-ast':
         specifier: ^6.0.0
         version: 6.0.0(graphql@16.14.0)
+      '@next/env':
+        specifier: ^16.0.0
+        version: 16.2.6
       '@packages/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -403,11 +416,8 @@ importers:
         specifier: ^24.12.4
         version: 24.12.4
       '@types/react':
-        specifier: ^19.0.0
+        specifier: ^19.2.15
         version: 19.2.15
-      dotenv:
-        specifier: ^17.4.2
-        version: 17.4.2
       graphql:
         specifier: ^16.13.2
         version: 16.14.0
@@ -415,7 +425,7 @@ importers:
         specifier: ^16.0.0
         version: 16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react:
-        specifier: ^19.0.0
+        specifier: ^19.2.6
         version: 19.2.6
       supabase:
         specifier: ^2.101.0
@@ -4431,10 +4441,6 @@ packages:
     resolution: {integrity: sha512-MVUtAugQMOff5RnBy2d9N31iG0lNwg1qAoAOn7pOK5wf94WIaE3My2p3uwTQuvS2AcqchkcR3bHByjaM0mmi7Q==}
     engines: {node: '>=20'}
 
-  dotenv@17.4.2:
-    resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
-    engines: {node: '>=12'}
-
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
@@ -4813,8 +4819,8 @@ packages:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
 
-  hono@4.12.21:
-    resolution: {integrity: sha512-uV63apnb0kyPtAUwoWgaGh9HyIFcv8lgmzPZSiTBQAFOFGIzka5EZ1dZocmGnn0XdX0+XTqJ6Tqv7selMuGLRQ==}
+  hono@4.12.22:
+    resolution: {integrity: sha512-7fvVPbB92zNRsQke+uiRGwtTuef0tB2Dg4hWxYfFNvkQhIltWoyi0ONReM5LWA+jJWS3nfT5lTq+qbsIpX0IQw==}
     engines: {node: '>=16.9.0'}
 
   hpack.js@2.1.6:
@@ -8264,9 +8270,9 @@ snapshots:
 
   '@hexagon/base64@1.1.28': {}
 
-  '@hono/node-server@1.19.14(hono@4.12.21)':
+  '@hono/node-server@1.19.14(hono@4.12.22)':
     dependencies:
-      hono: 4.12.21
+      hono: 4.12.22
 
   '@hookform/resolvers@5.4.0(react-hook-form@7.76.1(react@19.2.6))':
     dependencies:
@@ -8646,7 +8652,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.29.0(zod@4.4.3)':
     dependencies:
-      '@hono/node-server': 1.19.14(hono@4.12.21)
+      '@hono/node-server': 1.19.14(hono@4.12.22)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -8656,7 +8662,7 @@ snapshots:
       eventsource-parser: 3.0.8
       express: 5.2.1
       express-rate-limit: 8.5.2(express@5.2.1)
-      hono: 4.12.21
+      hono: 4.12.22
       jose: 6.2.3
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -10935,8 +10941,6 @@ snapshots:
     dependencies:
       type-fest: 5.6.0
 
-  dotenv@17.4.2: {}
-
   dunder-proto@1.0.1:
     dependencies:
       call-bind-apply-helpers: 1.0.2
@@ -11393,7 +11397,7 @@ snapshots:
 
   he@1.2.0: {}
 
-  hono@4.12.21: {}
+  hono@4.12.22: {}
 
   hpack.js@2.1.6:
     dependencies:

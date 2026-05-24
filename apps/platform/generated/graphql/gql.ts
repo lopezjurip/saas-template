@@ -13,14 +13,17 @@ import * as types from "./graphql";
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-  "\n  query TenantHomeQuery($tenantId: Int!) {\n    profile: viewer_profile {\n      profile_name_full\n    }\n    organizationsCollection(\n      filter: {\n        organization_disabled_at: { is: NULL }\n        tenant_id: { eq: $tenantId }\n      }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n        }\n      }\n    }\n  }\n": typeof types.TenantHomeQueryDocument;
+  "\n  query TenantHomeQuery($tenant_id: Int!) {\n    profile: viewer_profile {\n      profile_name_full\n    }\n    tenant: viewer_tenant_by_id(target_tenant_id: $tenant_id) {\n      tenant_id\n      tenant_name\n      tenant_slug\n      organizationsCollection(\n        filter: { organization_disabled_at: { is: NULL } }\n        orderBy: [{ organization_name: AscNullsLast }]\n      ) {\n        edges {\n          node {\n            organization_id\n            organization_name\n            organization_slug\n          }\n        }\n      }\n    }\n  }\n": typeof types.TenantHomeQueryDocument;
+  "\n  query DashboardPageQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n          tenants {\n            tenant_id\n            tenant_slug\n            tenant_name\n          }\n        }\n      }\n    }\n  }\n": typeof types.DashboardPageQueryDocument;
   "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": typeof types.HealthQueryDocument;
   "\n  fragment ViewerProfileFragment on profiles {\n    profile_id\n    profile_name_full\n    profile_onboarded_at\n    profile_disabled_at\n    profile_created_at\n    profile_updated_at\n  }\n": typeof types.ViewerProfileFragmentFragmentDoc;
   "\n  query UseViewerProfileHookQuery {\n    profile: viewer_profile {\n      ...ViewerProfileFragment\n    }\n  }\n": typeof types.UseViewerProfileHookQueryDocument;
 };
 const documents: Documents = {
-  "\n  query TenantHomeQuery($tenantId: Int!) {\n    profile: viewer_profile {\n      profile_name_full\n    }\n    organizationsCollection(\n      filter: {\n        organization_disabled_at: { is: NULL }\n        tenant_id: { eq: $tenantId }\n      }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n        }\n      }\n    }\n  }\n":
+  "\n  query TenantHomeQuery($tenant_id: Int!) {\n    profile: viewer_profile {\n      profile_name_full\n    }\n    tenant: viewer_tenant_by_id(target_tenant_id: $tenant_id) {\n      tenant_id\n      tenant_name\n      tenant_slug\n      organizationsCollection(\n        filter: { organization_disabled_at: { is: NULL } }\n        orderBy: [{ organization_name: AscNullsLast }]\n      ) {\n        edges {\n          node {\n            organization_id\n            organization_name\n            organization_slug\n          }\n        }\n      }\n    }\n  }\n":
     types.TenantHomeQueryDocument,
+  "\n  query DashboardPageQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n          tenants {\n            tenant_id\n            tenant_slug\n            tenant_name\n          }\n        }\n      }\n    }\n  }\n":
+    types.DashboardPageQueryDocument,
   "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": types.HealthQueryDocument,
   "\n  fragment ViewerProfileFragment on profiles {\n    profile_id\n    profile_name_full\n    profile_onboarded_at\n    profile_disabled_at\n    profile_created_at\n    profile_updated_at\n  }\n":
     types.ViewerProfileFragmentFragmentDoc,
@@ -32,8 +35,14 @@ const documents: Documents = {
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query TenantHomeQuery($tenantId: Int!) {\n    profile: viewer_profile {\n      profile_name_full\n    }\n    organizationsCollection(\n      filter: {\n        organization_disabled_at: { is: NULL }\n        tenant_id: { eq: $tenantId }\n      }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n        }\n      }\n    }\n  }\n",
+  source: "\n  query TenantHomeQuery($tenant_id: Int!) {\n    profile: viewer_profile {\n      profile_name_full\n    }\n    tenant: viewer_tenant_by_id(target_tenant_id: $tenant_id) {\n      tenant_id\n      tenant_name\n      tenant_slug\n      organizationsCollection(\n        filter: { organization_disabled_at: { is: NULL } }\n        orderBy: [{ organization_name: AscNullsLast }]\n      ) {\n        edges {\n          node {\n            organization_id\n            organization_name\n            organization_slug\n          }\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").TenantHomeQueryDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  query DashboardPageQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n          tenants {\n            tenant_id\n            tenant_slug\n            tenant_name\n          }\n        }\n      }\n    }\n  }\n",
+): typeof import("./graphql").DashboardPageQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

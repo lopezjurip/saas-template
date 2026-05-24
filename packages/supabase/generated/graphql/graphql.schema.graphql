@@ -217,41 +217,43 @@ type Mutation {
     """Restricts the mutation's impact to records matching the criteria"""
     filter: organization_membersFilter
   ): organization_membersDeleteResponse!
-  """Deletes zero or more records from the `organizations` collection"""
-  deleteFromorganizationsCollection(
+  """Deletes zero or more records from the `tenant_domains` collection"""
+  deleteFromtenant_domainsCollection(
     """
     The maximum number of records in the collection permitted to be affected
     """
     atMost: Int! = 1
     """Restricts the mutation's impact to records matching the criteria"""
-    filter: organizationsFilter
-  ): organizationsDeleteResponse!
-  """Deletes zero or more records from the `profiles` collection"""
-  deleteFromprofilesCollection(
+    filter: tenant_domainsFilter
+  ): tenant_domainsDeleteResponse!
+  """Deletes zero or more records from the `webauthn_challenges` collection"""
+  deleteFromwebauthn_challengesCollection(
     """
     The maximum number of records in the collection permitted to be affected
     """
     atMost: Int! = 1
     """Restricts the mutation's impact to records matching the criteria"""
-    filter: profilesFilter
-  ): profilesDeleteResponse!
-  """Deletes zero or more records from the `tenants` collection"""
-  deleteFromtenantsCollection(
+    filter: webauthn_challengesFilter
+  ): webauthn_challengesDeleteResponse!
+  """
+  Deletes zero or more records from the `webauthn_credentials` collection
+  """
+  deleteFromwebauthn_credentialsCollection(
     """
     The maximum number of records in the collection permitted to be affected
     """
     atMost: Int! = 1
     """Restricts the mutation's impact to records matching the criteria"""
-    filter: tenantsFilter
-  ): tenantsDeleteResponse!
+    filter: webauthn_credentialsFilter
+  ): webauthn_credentialsDeleteResponse!
   """Adds one or more `organization_members` records to the collection"""
   insertIntoorganization_membersCollection(objects: [organization_membersInsertInput!]!): organization_membersInsertResponse
-  """Adds one or more `organizations` records to the collection"""
-  insertIntoorganizationsCollection(objects: [organizationsInsertInput!]!): organizationsInsertResponse
-  """Adds one or more `profiles` records to the collection"""
-  insertIntoprofilesCollection(objects: [profilesInsertInput!]!): profilesInsertResponse
-  """Adds one or more `tenants` records to the collection"""
-  insertIntotenantsCollection(objects: [tenantsInsertInput!]!): tenantsInsertResponse
+  """Adds one or more `tenant_domains` records to the collection"""
+  insertIntotenant_domainsCollection(objects: [tenant_domainsInsertInput!]!): tenant_domainsInsertResponse
+  """Adds one or more `webauthn_challenges` records to the collection"""
+  insertIntowebauthn_challengesCollection(objects: [webauthn_challengesInsertInput!]!): webauthn_challengesInsertResponse
+  """Adds one or more `webauthn_credentials` records to the collection"""
+  insertIntowebauthn_credentialsCollection(objects: [webauthn_credentialsInsertInput!]!): webauthn_credentialsInsertResponse
   """Updates zero or more records in the `organization_members` collection"""
   updateorganization_membersCollection(
     """
@@ -291,6 +293,19 @@ type Mutation {
     """
     set: profilesUpdateInput!
   ): profilesUpdateResponse!
+  """Updates zero or more records in the `tenant_domains` collection"""
+  updatetenant_domainsCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: tenant_domainsFilter
+    """
+    Fields that are set will be updated for all records matching the `filter`
+    """
+    set: tenant_domainsUpdateInput!
+  ): tenant_domainsUpdateResponse!
   """Updates zero or more records in the `tenants` collection"""
   updatetenantsCollection(
     """
@@ -304,6 +319,32 @@ type Mutation {
     """
     set: tenantsUpdateInput!
   ): tenantsUpdateResponse!
+  """Updates zero or more records in the `webauthn_challenges` collection"""
+  updatewebauthn_challengesCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: webauthn_challengesFilter
+    """
+    Fields that are set will be updated for all records matching the `filter`
+    """
+    set: webauthn_challengesUpdateInput!
+  ): webauthn_challengesUpdateResponse!
+  """Updates zero or more records in the `webauthn_credentials` collection"""
+  updatewebauthn_credentialsCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: webauthn_credentialsFilter
+    """
+    Fields that are set will be updated for all records matching the `filter`
+    """
+    set: webauthn_credentialsUpdateInput!
+  ): webauthn_credentialsUpdateResponse!
 }
 
 interface Node {
@@ -343,7 +384,84 @@ type PageInfo {
 
 """The root type for querying data"""
 type Query {
+  """A pagable collection of type `addresses_level0`"""
+  addresses_level0Collection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: addresses_level0Filter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [addresses_level0OrderBy!]
+  ): addresses_level0Connection
+  """A pagable collection of type `addresses_level1`"""
+  addresses_level1Collection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: addresses_level1Filter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [addresses_level1OrderBy!]
+  ): addresses_level1Connection
+  """A pagable collection of type `addresses_level2`"""
+  addresses_level2Collection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: addresses_level2Filter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [addresses_level2OrderBy!]
+  ): addresses_level2Connection
+  """A pagable collection of type `addresses_level3`"""
+  addresses_level3Collection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: addresses_level3Filter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [addresses_level3OrderBy!]
+  ): addresses_level3Connection
   email_exists(email_to_check: String!): Boolean
+  email_has_passkey(email_to_check: String!): Boolean
   health_current_timestamp: Datetime
   """Retrieve a record by its `ID`"""
   node(
@@ -388,6 +506,7 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [organizationsOrderBy!]
   ): organizationsConnection
+  profile_id_by_email(email_to_check: String!): UUID
   """A pagable collection of type `profiles`"""
   profilesCollection(
     """Query values in the collection after the provided cursor"""
@@ -407,6 +526,25 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [profilesOrderBy!]
   ): profilesConnection
+  """A pagable collection of type `tenant_domains`"""
+  tenant_domainsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: tenant_domainsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [tenant_domainsOrderBy!]
+  ): tenant_domainsConnection
   """A pagable collection of type `tenants`"""
   tenantsCollection(
     """Query values in the collection after the provided cursor"""
@@ -427,9 +565,85 @@ type Query {
     orderBy: [tenantsOrderBy!]
   ): tenantsConnection
   viewer_is_concierge: Boolean
+  viewer_organization_by_id(target_organization_id: Int!): organizations
+  viewer_organizations(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: organizationsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [organizationsOrderBy!]
+  ): organizationsConnection
   viewer_profile(strict: Boolean = false): profiles
   viewer_profile_id(strict: Boolean = false): UUID
+  viewer_tenant_by_id(target_tenant_id: Int!): tenants
   viewer_tenant_validate(target_tenant_id: Int!): Boolean
+  viewer_tenants(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: tenantsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [tenantsOrderBy!]
+  ): tenantsConnection
+  """A pagable collection of type `webauthn_challenges`"""
+  webauthn_challengesCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: webauthn_challengesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [webauthn_challengesOrderBy!]
+  ): webauthn_challengesConnection
+  """A pagable collection of type `webauthn_credentials`"""
+  webauthn_credentialsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: webauthn_credentialsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [webauthn_credentialsOrderBy!]
+  ): webauthn_credentialsConnection
 }
 
 """
@@ -512,6 +726,281 @@ input UUIDListFilter {
   eq: [UUID!]
   is: FilterIs
   overlaps: [UUID!]
+}
+
+type addresses_level0 implements Node {
+  address_level0_created_at: Datetime!
+  address_level0_disabled_at: Datetime
+  address_level0_hidden_at: Datetime
+  address_level0_id: String!
+  address_level0_name: String!
+  address_level0_updated_at: Datetime!
+  addresses_level1Collection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: addresses_level1Filter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [addresses_level1OrderBy!]
+  ): addresses_level1Connection
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+}
+
+type addresses_level0Connection {
+  edges: [addresses_level0Edge!]!
+  pageInfo: PageInfo!
+}
+
+type addresses_level0Edge {
+  cursor: String!
+  node: addresses_level0!
+}
+
+input addresses_level0Filter {
+  address_level0_created_at: DatetimeFilter
+  address_level0_disabled_at: DatetimeFilter
+  address_level0_hidden_at: DatetimeFilter
+  address_level0_id: StringFilter
+  address_level0_name: StringFilter
+  address_level0_updated_at: DatetimeFilter
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [addresses_level0Filter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: addresses_level0Filter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [addresses_level0Filter!]
+}
+
+input addresses_level0OrderBy {
+  address_level0_created_at: OrderByDirection
+  address_level0_disabled_at: OrderByDirection
+  address_level0_hidden_at: OrderByDirection
+  address_level0_id: OrderByDirection
+  address_level0_name: OrderByDirection
+  address_level0_updated_at: OrderByDirection
+}
+
+type addresses_level1 implements Node {
+  address_level0_id: String!
+  address_level1_created_at: Datetime!
+  address_level1_disabled_at: Datetime
+  address_level1_hidden_at: Datetime
+  address_level1_id: String!
+  address_level1_name: String!
+  address_level1_updated_at: Datetime!
+  addresses_level0: addresses_level0
+  addresses_level2Collection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: addresses_level2Filter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [addresses_level2OrderBy!]
+  ): addresses_level2Connection
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+}
+
+type addresses_level1Connection {
+  edges: [addresses_level1Edge!]!
+  pageInfo: PageInfo!
+}
+
+type addresses_level1Edge {
+  cursor: String!
+  node: addresses_level1!
+}
+
+input addresses_level1Filter {
+  address_level0_id: StringFilter
+  address_level1_created_at: DatetimeFilter
+  address_level1_disabled_at: DatetimeFilter
+  address_level1_hidden_at: DatetimeFilter
+  address_level1_id: StringFilter
+  address_level1_name: StringFilter
+  address_level1_updated_at: DatetimeFilter
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [addresses_level1Filter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: addresses_level1Filter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [addresses_level1Filter!]
+}
+
+input addresses_level1OrderBy {
+  address_level0_id: OrderByDirection
+  address_level1_created_at: OrderByDirection
+  address_level1_disabled_at: OrderByDirection
+  address_level1_hidden_at: OrderByDirection
+  address_level1_id: OrderByDirection
+  address_level1_name: OrderByDirection
+  address_level1_updated_at: OrderByDirection
+}
+
+type addresses_level2 implements Node {
+  address_level0_id: String!
+  address_level1_id: String!
+  address_level2_created_at: Datetime!
+  address_level2_disabled_at: Datetime
+  address_level2_hidden_at: Datetime
+  address_level2_id: String!
+  address_level2_name: String!
+  address_level2_updated_at: Datetime!
+  addresses_level1: addresses_level1
+  addresses_level3Collection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: addresses_level3Filter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [addresses_level3OrderBy!]
+  ): addresses_level3Connection
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+}
+
+type addresses_level2Connection {
+  edges: [addresses_level2Edge!]!
+  pageInfo: PageInfo!
+}
+
+type addresses_level2Edge {
+  cursor: String!
+  node: addresses_level2!
+}
+
+input addresses_level2Filter {
+  address_level0_id: StringFilter
+  address_level1_id: StringFilter
+  address_level2_created_at: DatetimeFilter
+  address_level2_disabled_at: DatetimeFilter
+  address_level2_hidden_at: DatetimeFilter
+  address_level2_id: StringFilter
+  address_level2_name: StringFilter
+  address_level2_updated_at: DatetimeFilter
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [addresses_level2Filter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: addresses_level2Filter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [addresses_level2Filter!]
+}
+
+input addresses_level2OrderBy {
+  address_level0_id: OrderByDirection
+  address_level1_id: OrderByDirection
+  address_level2_created_at: OrderByDirection
+  address_level2_disabled_at: OrderByDirection
+  address_level2_hidden_at: OrderByDirection
+  address_level2_id: OrderByDirection
+  address_level2_name: OrderByDirection
+  address_level2_updated_at: OrderByDirection
+}
+
+type addresses_level3 implements Node {
+  address_level0_id: String!
+  address_level1_id: String!
+  address_level2_id: String!
+  address_level3_created_at: Datetime!
+  address_level3_disabled_at: Datetime
+  address_level3_hidden_at: Datetime
+  address_level3_id: String!
+  address_level3_name: String!
+  address_level3_updated_at: Datetime!
+  addresses_level2: addresses_level2
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+}
+
+type addresses_level3Connection {
+  edges: [addresses_level3Edge!]!
+  pageInfo: PageInfo!
+}
+
+type addresses_level3Edge {
+  cursor: String!
+  node: addresses_level3!
+}
+
+input addresses_level3Filter {
+  address_level0_id: StringFilter
+  address_level1_id: StringFilter
+  address_level2_id: StringFilter
+  address_level3_created_at: DatetimeFilter
+  address_level3_disabled_at: DatetimeFilter
+  address_level3_hidden_at: DatetimeFilter
+  address_level3_id: StringFilter
+  address_level3_name: StringFilter
+  address_level3_updated_at: DatetimeFilter
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [addresses_level3Filter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: addresses_level3Filter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [addresses_level3Filter!]
+}
+
+input addresses_level3OrderBy {
+  address_level0_id: OrderByDirection
+  address_level1_id: OrderByDirection
+  address_level2_id: OrderByDirection
+  address_level3_created_at: OrderByDirection
+  address_level3_disabled_at: OrderByDirection
+  address_level3_hidden_at: OrderByDirection
+  address_level3_id: OrderByDirection
+  address_level3_name: OrderByDirection
+  address_level3_updated_at: OrderByDirection
 }
 
 enum organization_member_role {
@@ -658,13 +1147,6 @@ type organizationsConnection {
   pageInfo: PageInfo!
 }
 
-type organizationsDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [organizations!]!
-}
-
 type organizationsEdge {
   cursor: String!
   node: organizations!
@@ -689,22 +1171,6 @@ input organizationsFilter {
   organization_slug: StringFilter
   organization_updated_at: DatetimeFilter
   tenant_id: IntFilter
-}
-
-input organizationsInsertInput {
-  organization_created_at: Datetime
-  organization_disabled_at: Datetime
-  organization_name: String
-  organization_slug: String
-  organization_updated_at: Datetime
-  tenant_id: Int
-}
-
-type organizationsInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [organizations!]!
 }
 
 input organizationsOrderBy {
@@ -760,18 +1226,30 @@ type profiles implements Node {
   profile_name_full: String
   profile_onboarded_at: Datetime
   profile_updated_at: Datetime!
+  webauthn_challenges: webauthn_challenges
+  webauthn_credentialsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: webauthn_credentialsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [webauthn_credentialsOrderBy!]
+  ): webauthn_credentialsConnection
 }
 
 type profilesConnection {
   edges: [profilesEdge!]!
   pageInfo: PageInfo!
-}
-
-type profilesDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [profiles!]!
 }
 
 type profilesEdge {
@@ -799,22 +1277,6 @@ input profilesFilter {
   profile_updated_at: DatetimeFilter
 }
 
-input profilesInsertInput {
-  profile_created_at: Datetime
-  profile_disabled_at: Datetime
-  profile_id: UUID
-  profile_name_full: String
-  profile_onboarded_at: Datetime
-  profile_updated_at: Datetime
-}
-
-type profilesInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [profiles!]!
-}
-
 input profilesOrderBy {
   profile_created_at: OrderByDirection
   profile_disabled_at: OrderByDirection
@@ -840,6 +1302,107 @@ type profilesUpdateResponse {
   records: [profiles!]!
 }
 
+type tenant_domains implements Node {
+  domain_created_at: Datetime!
+  domain_updated_at: Datetime!
+  domain_value: String!
+  domain_verified_at: Datetime
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  tenant_id: Int!
+  tenants: tenants
+}
+
+type tenant_domainsConnection {
+  edges: [tenant_domainsEdge!]!
+  pageInfo: PageInfo!
+}
+
+type tenant_domainsDeleteResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [tenant_domains!]!
+}
+
+type tenant_domainsEdge {
+  cursor: String!
+  node: tenant_domains!
+}
+
+input tenant_domainsFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [tenant_domainsFilter!]
+  domain_created_at: DatetimeFilter
+  domain_updated_at: DatetimeFilter
+  domain_value: StringFilter
+  domain_verified_at: DatetimeFilter
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: tenant_domainsFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [tenant_domainsFilter!]
+  tenant_id: IntFilter
+}
+
+input tenant_domainsInsertInput {
+  domain_created_at: Datetime
+  domain_updated_at: Datetime
+  domain_value: String
+  domain_verified_at: Datetime
+  tenant_id: Int
+}
+
+type tenant_domainsInsertResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [tenant_domains!]!
+}
+
+input tenant_domainsOrderBy {
+  domain_created_at: OrderByDirection
+  domain_updated_at: OrderByDirection
+  domain_value: OrderByDirection
+  domain_verified_at: OrderByDirection
+  tenant_id: OrderByDirection
+}
+
+input tenant_domainsUpdateInput {
+  domain_created_at: Datetime
+  domain_updated_at: Datetime
+  domain_value: String
+  domain_verified_at: Datetime
+  tenant_id: Int
+}
+
+type tenant_domainsUpdateResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [tenant_domains!]!
+}
+
+enum tenant_tier {
+  enterprise
+  free
+  pro
+}
+
+"""
+Boolean expression comparing fields on type "tenant_tier"
+"""
+input tenant_tierFilter {
+  eq: tenant_tier
+  in: [tenant_tier!]
+  is: FilterIs
+  neq: tenant_tier
+}
+
 type tenants implements Node {
   """Globally Unique Record Identifier"""
   nodeId: ID!
@@ -863,22 +1426,34 @@ type tenants implements Node {
   ): organizationsConnection
   tenant_created_at: Datetime!
   tenant_disabled_at: Datetime
+  tenant_domainsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: tenant_domainsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [tenant_domainsOrderBy!]
+  ): tenant_domainsConnection
   tenant_id: Int!
   tenant_name: String!
   tenant_slug: String!
+  tenant_tier: tenant_tier!
   tenant_updated_at: Datetime!
 }
 
 type tenantsConnection {
   edges: [tenantsEdge!]!
   pageInfo: PageInfo!
-}
-
-type tenantsDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [tenants!]!
 }
 
 type tenantsEdge {
@@ -903,22 +1478,8 @@ input tenantsFilter {
   tenant_id: IntFilter
   tenant_name: StringFilter
   tenant_slug: StringFilter
+  tenant_tier: tenant_tierFilter
   tenant_updated_at: DatetimeFilter
-}
-
-input tenantsInsertInput {
-  tenant_created_at: Datetime
-  tenant_disabled_at: Datetime
-  tenant_name: String
-  tenant_slug: String
-  tenant_updated_at: Datetime
-}
-
-type tenantsInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [tenants!]!
 }
 
 input tenantsOrderBy {
@@ -927,6 +1488,7 @@ input tenantsOrderBy {
   tenant_id: OrderByDirection
   tenant_name: OrderByDirection
   tenant_slug: OrderByDirection
+  tenant_tier: OrderByDirection
   tenant_updated_at: OrderByDirection
 }
 
@@ -935,6 +1497,7 @@ input tenantsUpdateInput {
   tenant_disabled_at: Datetime
   tenant_name: String
   tenant_slug: String
+  tenant_tier: tenant_tier
   tenant_updated_at: Datetime
 }
 
@@ -943,4 +1506,218 @@ type tenantsUpdateResponse {
   affectedCount: Int!
   """Array of records impacted by the mutation"""
   records: [tenants!]!
+}
+
+type webauthn_challenges implements Node {
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  profile_id: UUID
+  profiles: profiles
+  webauthn_challenge_created_at: Datetime!
+  webauthn_challenge_id: UUID!
+  webauthn_challenge_value: String!
+}
+
+type webauthn_challengesConnection {
+  edges: [webauthn_challengesEdge!]!
+  pageInfo: PageInfo!
+}
+
+type webauthn_challengesDeleteResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [webauthn_challenges!]!
+}
+
+type webauthn_challengesEdge {
+  cursor: String!
+  node: webauthn_challenges!
+}
+
+input webauthn_challengesFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [webauthn_challengesFilter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: webauthn_challengesFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [webauthn_challengesFilter!]
+  profile_id: UUIDFilter
+  webauthn_challenge_created_at: DatetimeFilter
+  webauthn_challenge_id: UUIDFilter
+  webauthn_challenge_value: StringFilter
+}
+
+input webauthn_challengesInsertInput {
+  profile_id: UUID
+  webauthn_challenge_created_at: Datetime
+  webauthn_challenge_id: UUID
+  webauthn_challenge_value: String
+}
+
+type webauthn_challengesInsertResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [webauthn_challenges!]!
+}
+
+input webauthn_challengesOrderBy {
+  profile_id: OrderByDirection
+  webauthn_challenge_created_at: OrderByDirection
+  webauthn_challenge_id: OrderByDirection
+  webauthn_challenge_value: OrderByDirection
+}
+
+input webauthn_challengesUpdateInput {
+  profile_id: UUID
+  webauthn_challenge_created_at: Datetime
+  webauthn_challenge_id: UUID
+  webauthn_challenge_value: String
+}
+
+type webauthn_challengesUpdateResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [webauthn_challenges!]!
+}
+
+type webauthn_credentials implements Node {
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  profile_id: UUID!
+  profiles: profiles
+  webauthn_credential_aaguid: String!
+  webauthn_credential_backup_state: String!
+  webauthn_credential_created_at: Datetime!
+  webauthn_credential_device_type: String!
+  webauthn_credential_external_id: String!
+  webauthn_credential_friendly_name: String
+  webauthn_credential_id: UUID!
+  webauthn_credential_last_used_at: Datetime
+  webauthn_credential_public_key: String!
+  webauthn_credential_sign_count: Int!
+  webauthn_credential_transports: [String]!
+  webauthn_credential_type: String!
+  webauthn_credential_updated_at: Datetime!
+  webauthn_credential_user_verification_status: String!
+}
+
+type webauthn_credentialsConnection {
+  edges: [webauthn_credentialsEdge!]!
+  pageInfo: PageInfo!
+}
+
+type webauthn_credentialsDeleteResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [webauthn_credentials!]!
+}
+
+type webauthn_credentialsEdge {
+  cursor: String!
+  node: webauthn_credentials!
+}
+
+input webauthn_credentialsFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [webauthn_credentialsFilter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: webauthn_credentialsFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [webauthn_credentialsFilter!]
+  profile_id: UUIDFilter
+  webauthn_credential_aaguid: StringFilter
+  webauthn_credential_backup_state: StringFilter
+  webauthn_credential_created_at: DatetimeFilter
+  webauthn_credential_device_type: StringFilter
+  webauthn_credential_external_id: StringFilter
+  webauthn_credential_friendly_name: StringFilter
+  webauthn_credential_id: UUIDFilter
+  webauthn_credential_last_used_at: DatetimeFilter
+  webauthn_credential_public_key: StringFilter
+  webauthn_credential_sign_count: IntFilter
+  webauthn_credential_transports: StringListFilter
+  webauthn_credential_type: StringFilter
+  webauthn_credential_updated_at: DatetimeFilter
+  webauthn_credential_user_verification_status: StringFilter
+}
+
+input webauthn_credentialsInsertInput {
+  profile_id: UUID
+  webauthn_credential_aaguid: String
+  webauthn_credential_backup_state: String
+  webauthn_credential_created_at: Datetime
+  webauthn_credential_device_type: String
+  webauthn_credential_external_id: String
+  webauthn_credential_friendly_name: String
+  webauthn_credential_id: UUID
+  webauthn_credential_last_used_at: Datetime
+  webauthn_credential_public_key: String
+  webauthn_credential_sign_count: Int
+  webauthn_credential_transports: [String]
+  webauthn_credential_type: String
+  webauthn_credential_updated_at: Datetime
+  webauthn_credential_user_verification_status: String
+}
+
+type webauthn_credentialsInsertResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [webauthn_credentials!]!
+}
+
+input webauthn_credentialsOrderBy {
+  profile_id: OrderByDirection
+  webauthn_credential_aaguid: OrderByDirection
+  webauthn_credential_backup_state: OrderByDirection
+  webauthn_credential_created_at: OrderByDirection
+  webauthn_credential_device_type: OrderByDirection
+  webauthn_credential_external_id: OrderByDirection
+  webauthn_credential_friendly_name: OrderByDirection
+  webauthn_credential_id: OrderByDirection
+  webauthn_credential_last_used_at: OrderByDirection
+  webauthn_credential_public_key: OrderByDirection
+  webauthn_credential_sign_count: OrderByDirection
+  webauthn_credential_type: OrderByDirection
+  webauthn_credential_updated_at: OrderByDirection
+  webauthn_credential_user_verification_status: OrderByDirection
+}
+
+input webauthn_credentialsUpdateInput {
+  profile_id: UUID
+  webauthn_credential_aaguid: String
+  webauthn_credential_backup_state: String
+  webauthn_credential_created_at: Datetime
+  webauthn_credential_device_type: String
+  webauthn_credential_external_id: String
+  webauthn_credential_friendly_name: String
+  webauthn_credential_id: UUID
+  webauthn_credential_last_used_at: Datetime
+  webauthn_credential_public_key: String
+  webauthn_credential_sign_count: Int
+  webauthn_credential_transports: [String]
+  webauthn_credential_type: String
+  webauthn_credential_updated_at: Datetime
+  webauthn_credential_user_verification_status: String
+}
+
+type webauthn_credentialsUpdateResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [webauthn_credentials!]!
 }

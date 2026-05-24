@@ -11,7 +11,7 @@ async function postJson<T>(url: string, body?: unknown): Promise<T> {
   });
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(payload?.message ?? `Request failed (${response.status})`);
+    throw new Error(payload?.["message"] ?? `Request failed (${response.status})`);
   }
   return response.json() as Promise<T>;
 }
@@ -31,7 +31,7 @@ export async function signInWithPasskey(email: string) {
     "/auth/webauthn/passkey/verify",
     authResponse,
   );
-  if (!verify.verified || !verify.token_hash || !verify.email) {
+  if (!verify["verified"] || !verify["token_hash"] || !verify["email"]) {
     throw new Error("La verificación del passkey falló.");
   }
 
@@ -41,7 +41,7 @@ export async function signInWithPasskey(email: string) {
   const supabase = createBrowserClient();
   const { error } = await supabase.auth.verifyOtp({
     type: "magiclink",
-    token_hash: verify.token_hash,
+    token_hash: verify["token_hash"],
   });
   if (error) throw new Error(error.message);
 }

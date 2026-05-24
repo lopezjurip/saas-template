@@ -8,7 +8,7 @@ Chat-first HR and payroll platform for Chilean companies (50–250 employees).
 pnpm install
 pnpm db:start                                       # starts local Supabase (Docker required)
 cp .env.example apps/platform/.env.local            # copy local-dev defaults
-bash scripts/setup-https.sh                         # generate mkcert TLS certs (one-time)
+bash scripts/development/https-setup.sh             # generate mkcert TLS certs (one-time)
 pnpm dev                                            # runs all apps and packages in parallel
 ```
 
@@ -31,12 +31,12 @@ Open `https://lvh.me:7003`. (See HTTPS section below — passkeys / WebAuthn req
 The fix: [mkcert](https://github.com/FiloSottile/mkcert) + Next's `--experimental-https` flag. Install mkcert (`brew install mkcert` on macOS), then:
 
 ```bash
-bash scripts/setup-https.sh
+bash scripts/development/https-setup.sh
 ```
 
 That script runs `mkcert -install` (adds the local CA to your system + Firefox trust stores) and generates `apps/platform/certs/lvh.me-{cert,key}.pem` covering `lvh.me`, `*.lvh.me`, `localhost`, and `127.0.0.1`. The `apps/platform` dev script picks those up automatically. Certs expire in ~2.5 years; re-run the script to refresh.
 
-Files under `apps/platform/certs/` are gitignored (private keys, machine-specific). Each contributor runs `setup-https.sh` once on their own machine.
+Files under `apps/platform/certs/` are gitignored (private keys, machine-specific). Each contributor runs `https-setup.sh` once on their own machine.
 
 If you skip HTTPS setup: OAuth and email/password still work over plain `http://lvh.me:7003` (you'd also need to flip `WEBAUTHN_RELYING_PARTY_ORIGIN`, `site_url`, and `additional_redirect_urls` back to `http://`), but passkey registration and sign-in will fail silently in the browser.
 

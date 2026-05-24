@@ -16,24 +16,24 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceRoleClient();
 
   const cookieStore = await cookies();
-  const challengeId = cookieStore.get("webauthn_state")?.value;
+  const webauthn_challenge_id = cookieStore.get("webauthn_state")?.value;
   cookieStore.delete("webauthn_state");
-  if (!challengeId) {
+  if (!webauthn_challenge_id) {
     log.warn("verify hit without webauthn_state cookie");
     return NextResponse.json({ message: "Desafío expirado" }, { status: 400 });
   }
 
-  const challenge = await getWebAuthnChallengeById(supabase, challengeId);
-  await deleteWebAuthnChallenge(supabase, challengeId);
+  const challenge = await getWebAuthnChallengeById(supabase, webauthn_challenge_id);
+  await deleteWebAuthnChallenge(supabase, webauthn_challenge_id);
   if (!challenge) {
-    log.warn("verify hit with cookie but no matching challenge row", { challengeId });
+    log.warn("verify hit with cookie but no matching challenge row", { webauthn_challenge_id });
     return NextResponse.json({ message: "Desafío no encontrado" }, { status: 400 });
   }
 
   const data = await request.json();
-  const credential = await getWebAuthnCredentialByExternalId(supabase, data.id);
+  const credential = await getWebAuthnCredentialByExternalId(supabase, data["id"]);
   if (!credential) {
-    log.warn("verify hit with unknown credential id", { external_id: data.id });
+    log.warn("verify hit with unknown credential id", { external_id: data["id"] });
     return NextResponse.json({ message: "Credencial no encontrada" }, { status: 404 });
   }
 
@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
     verification = await verifyAuthenticationResponse({
       response: data,
       expectedChallenge: challenge.webauthn_challenge_value,
-      expectedOrigin: process.env.WEBAUTHN_RELYING_PARTY_ORIGIN!,
-      expectedRPID: process.env.WEBAUTHN_RELYING_PARTY_ID!,
+      expectedOrigin: process.env["WEBAUTHN_RELYING_PARTY_ORIGIN"]!,
+      expectedRPID: process.env["WEBAUTHN_RELYING_PARTY_ID"]!,
       credential: {
         id: credential.webauthn_credential_external_id,
         publicKey: new Uint8Array(Buffer.from(credential.webauthn_credential_public_key, "base64")),
