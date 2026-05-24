@@ -153,48 +153,81 @@ export type Database = {
           },
         ];
       };
-      organization_members: {
+      membership_permissions: {
         Row: {
+          membership_permission_created_at: string;
           organization_id: number;
-          organization_member_created_at: string;
-          organization_member_disabled_at: string | null;
-          organization_member_role: Database["public"]["Enums"]["organization_member_role"];
-          organization_member_updated_at: string;
+          permission_id: string;
           profile_id: string;
         };
         Insert: {
+          membership_permission_created_at?: string;
           organization_id: number;
-          organization_member_created_at?: string;
-          organization_member_disabled_at?: string | null;
-          organization_member_role: Database["public"]["Enums"]["organization_member_role"];
-          organization_member_updated_at?: string;
+          permission_id: string;
           profile_id: string;
         };
         Update: {
+          membership_permission_created_at?: string;
           organization_id?: number;
-          organization_member_created_at?: string;
-          organization_member_disabled_at?: string | null;
-          organization_member_role?: Database["public"]["Enums"]["organization_member_role"];
-          organization_member_updated_at?: string;
+          permission_id?: string;
           profile_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "organization_members_organization_id_fkey";
+            foreignKeyName: "membership_permissions_organization_id_profile_id_fkey";
+            columns: ["organization_id", "profile_id"];
+            isOneToOne: false;
+            referencedRelation: "memberships";
+            referencedColumns: ["organization_id", "profile_id"];
+          },
+          {
+            foreignKeyName: "membership_permissions_permission_id_fkey";
+            columns: ["permission_id"];
+            isOneToOne: false;
+            referencedRelation: "permissions";
+            referencedColumns: ["permission_id"];
+          },
+        ];
+      };
+      memberships: {
+        Row: {
+          membership_created_at: string;
+          membership_disabled_at: string | null;
+          membership_updated_at: string;
+          organization_id: number;
+          profile_id: string;
+        };
+        Insert: {
+          membership_created_at?: string;
+          membership_disabled_at?: string | null;
+          membership_updated_at?: string;
+          organization_id: number;
+          profile_id: string;
+        };
+        Update: {
+          membership_created_at?: string;
+          membership_disabled_at?: string | null;
+          membership_updated_at?: string;
+          organization_id?: number;
+          profile_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "memberships_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
             referencedColumns: ["organization_id"];
           },
           {
-            foreignKeyName: "organization_members_organization_id_fkey";
+            foreignKeyName: "memberships_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "tenants_organizations_profiles";
             referencedColumns: ["organization_id"];
           },
           {
-            foreignKeyName: "organization_members_profile_id_fkey";
+            foreignKeyName: "memberships_profile_id_fkey";
             columns: ["profile_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -246,6 +279,69 @@ export type Database = {
             referencedColumns: ["tenant_id"];
           },
         ];
+      };
+      permission_presets: {
+        Row: {
+          organization_id: number | null;
+          permission_preset_created_at: string;
+          permission_preset_id: number;
+          permission_preset_name: string;
+          permission_preset_slugs: string[];
+          permission_preset_updated_at: string;
+        };
+        Insert: {
+          organization_id?: number | null;
+          permission_preset_created_at?: string;
+          permission_preset_id?: number;
+          permission_preset_name: string;
+          permission_preset_slugs: string[];
+          permission_preset_updated_at?: string;
+        };
+        Update: {
+          organization_id?: number | null;
+          permission_preset_created_at?: string;
+          permission_preset_id?: number;
+          permission_preset_name?: string;
+          permission_preset_slugs?: string[];
+          permission_preset_updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "permission_presets_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["organization_id"];
+          },
+          {
+            foreignKeyName: "permission_presets_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants_organizations_profiles";
+            referencedColumns: ["organization_id"];
+          },
+        ];
+      };
+      permissions: {
+        Row: {
+          permission_created_at: string;
+          permission_description: string | null;
+          permission_id: string;
+          permission_updated_at: string;
+        };
+        Insert: {
+          permission_created_at?: string;
+          permission_description?: string | null;
+          permission_id: string;
+          permission_updated_at?: string;
+        };
+        Update: {
+          permission_created_at?: string;
+          permission_description?: string | null;
+          permission_id?: string;
+          permission_updated_at?: string;
+        };
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -441,7 +537,6 @@ export type Database = {
           organization_created_at: string | null;
           organization_disabled_at: string | null;
           organization_id: number | null;
-          organization_member_role: Database["public"]["Enums"]["organization_member_role"] | null;
           organization_name: string | null;
           organization_slug: string | null;
           organization_tenant_id: number | null;
@@ -456,7 +551,7 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "organization_members_profile_id_fkey";
+            foreignKeyName: "memberships_profile_id_fkey";
             columns: ["profile_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
@@ -493,7 +588,18 @@ export type Database = {
       };
       profile_id_by_email: { Args: { email_to_check: string }; Returns: string };
       user_auth_hook: { Args: { event: Json }; Returns: Json };
+      viewer_has_permission: {
+        Args: { target_organization_id: number; target_permission_id: string };
+        Returns: boolean;
+      };
       viewer_is_concierge: { Args: never; Returns: boolean };
+      viewer_membership_permissions: {
+        Args: never;
+        Returns: {
+          organization_id: number;
+          permission_id: string;
+        }[];
+      };
       viewer_organization_by_id: {
         Args: { target_organization_id: number };
         Returns: {
@@ -512,17 +618,9 @@ export type Database = {
           isSetofReturn: true;
         };
       };
-      viewer_organization_ids: {
-        Args: {
-          required_roles?: Database["public"]["Enums"]["organization_member_role"][];
-        };
-        Returns: number[];
-      };
+      viewer_organization_ids: { Args: never; Returns: number[] };
       viewer_organization_validate: {
-        Args: {
-          required_roles?: Database["public"]["Enums"]["organization_member_role"][];
-          target_organization_id: number;
-        };
+        Args: { target_organization_id: number };
         Returns: boolean;
       };
       viewer_organizations: {
@@ -542,6 +640,10 @@ export type Database = {
           isOneToOne: false;
           isSetofReturn: true;
         };
+      };
+      viewer_permission_org_ids: {
+        Args: { target_permission_id: string };
+        Returns: number[];
       };
       viewer_profile: {
         Args: { strict?: boolean };
@@ -604,7 +706,6 @@ export type Database = {
       };
     };
     Enums: {
-      organization_member_role: "employee" | "manager" | "accountant" | "owner";
       tenant_tier: "free" | "pro" | "enterprise";
     };
     CompositeTypes: {
@@ -725,7 +826,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      organization_member_role: ["employee", "manager", "accountant", "owner"],
       tenant_tier: ["free", "pro", "enterprise"],
     },
   },

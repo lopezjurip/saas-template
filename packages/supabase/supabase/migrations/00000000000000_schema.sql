@@ -268,21 +268,25 @@ update storage.buckets
   where id = 'profiles';
 
 -- ============================================================
--- tenants + organizations + memberships
+-- tenants + organizations + memberships + permissions
 -- ============================================================
 --
 -- A `tenant` is the billing / customer relationship (e.g. "Walmart").
 -- A tenant has one or more `organizations` — the actual operating units (e.g. "Walmart Chile").
 -- Most tenants have exactly one organization that mirrors the tenant.
 --
--- Users belong to *organizations*, not directly to tenants. The set of tenants a user can
+-- Users belong to *organizations* via `public.memberships`. The set of tenants a user can
 -- access is derived from the tenants of the organizations they're a member of.
 -- The subdomain `{tenant_slug}.humane.cl` routes to the tenant; org switching happens in-app.
-
--- Role at the organization level. Concierge (global internal role) lives in protected.concierges.
-do $$ begin
-  create type public.organization_member_role as enum ('employee', 'manager', 'accountant', 'owner');
-exception when duplicate_object then null; end $$;
+--
+-- Access control is permission-based (not role-based). Capabilities are atomic slugs in
+-- `public.permissions` (e.g. `organization_manage`, `payroll_run`). A grant lives in
+-- `public.membership_permissions` for a (org, profile, permission) triple. The reserved
+-- slug `*` is the wildcard: anyone who has `(org, profile, '*')` passes every permission
+-- check inside that org — convenient for the tenant creator and for any other "full
+-- admin" relationship without forcing the catalog to be backfilled when a new permission
+-- is added later. `public.permission_presets` is a UX helper (catalog of named bundles
+-- to apply in the admin UI); it carries no enforcement.
 
 create table if not exists public.tenants (
   tenant_id serial primary key,
@@ -330,29 +334,137 @@ create trigger organizations_trigger_normalize_name
   before insert or update of organization_name on public.organizations
   for each row execute procedure internal.column_normalize_text(organization_name);
 
-create table if not exists public.organization_members (
+create table if not exists public.memberships (
   organization_id int not null references public.organizations (organization_id) on delete cascade,
   profile_id uuid not null references public.profiles (profile_id) on delete cascade,
-  organization_member_role public.organization_member_role not null,
-  organization_member_disabled_at timestamptz,
-  organization_member_created_at timestamptz not null default current_timestamp,
-  organization_member_updated_at timestamptz not null default current_timestamp,
+  membership_disabled_at timestamptz,
+  membership_created_at timestamptz not null default current_timestamp,
+  membership_updated_at timestamptz not null default current_timestamp,
   primary key (organization_id, profile_id)
 );
 
-create index if not exists organization_members_profile_idx
-  on public.organization_members (profile_id) where organization_member_disabled_at is null;
-create index if not exists organization_members_org_role_idx
-  on public.organization_members (organization_id, organization_member_role)
-  where organization_member_disabled_at is null;
+create index if not exists memberships_profile_idx
+  on public.memberships (profile_id) where membership_disabled_at is null;
 
-drop trigger if exists handle_organization_members_updated_at on public.organization_members;
-create trigger handle_organization_members_updated_at
-  before update on public.organization_members
-  for each row execute procedure extensions.moddatetime(organization_member_updated_at);
+drop trigger if exists handle_memberships_updated_at on public.memberships;
+create trigger handle_memberships_updated_at
+  before update on public.memberships
+  for each row execute procedure extensions.moddatetime(membership_updated_at);
+
+-- Catalog of permissions. Seeded below. permission_id is a snake_case identifier (we use
+-- it as a code-level constant, not a URL slug — so underscores, not hyphens). The reserved
+-- slug `*` is the wildcard; the check allows it explicitly alongside snake_case slugs.
+create table if not exists public.permissions (
+  permission_id extensions.citext primary key
+    check (
+      permission_id::text = '*'
+      or permission_id::text ~ '^[a-z0-9]([a-z0-9_]{1,38}[a-z0-9])?$'
+    ),
+  permission_description text,
+  permission_created_at timestamptz not null default current_timestamp,
+  permission_updated_at timestamptz not null default current_timestamp
+);
+
+drop trigger if exists handle_permissions_updated_at on public.permissions;
+create trigger handle_permissions_updated_at
+  before update on public.permissions
+  for each row execute procedure extensions.moddatetime(permission_updated_at);
+
+-- Grants: one row per (membership, permission). Composite FK back to memberships so a
+-- deleted membership cascades to all its grants. Cascade from permissions too — deleting
+-- a permission slug revokes it everywhere.
+create table if not exists public.membership_permissions (
+  organization_id int not null,
+  profile_id uuid not null,
+  permission_id extensions.citext not null
+    references public.permissions (permission_id) on delete cascade,
+  membership_permission_created_at timestamptz not null default current_timestamp,
+  primary key (organization_id, profile_id, permission_id),
+  foreign key (organization_id, profile_id)
+    references public.memberships (organization_id, profile_id) on delete cascade
+);
+
+-- Secondary index for "what orgs grant permission X to this profile?" lookups —
+-- the PK ordering (org, profile, permission) is great for "does X have perm Y in org Z"
+-- but not for the cross-org scan that RLS subqueries do.
+create index if not exists membership_permissions_profile_permission_idx
+  on public.membership_permissions (profile_id, permission_id);
+
+-- UX-only catalog of named permission bundles. `organization_id IS NULL` = global preset
+-- visible to everyone; non-null = preset specific to that organization. The trigger validates
+-- every slug in `permission_preset_slugs` exists in `public.permissions`.
+create table if not exists public.permission_presets (
+  permission_preset_id serial primary key,
+  organization_id int references public.organizations (organization_id) on delete cascade,
+  permission_preset_name text not null check (char_length(permission_preset_name) between 1 and 100),
+  permission_preset_slugs extensions.citext[] not null,
+  permission_preset_created_at timestamptz not null default current_timestamp,
+  permission_preset_updated_at timestamptz not null default current_timestamp,
+  check (cardinality(permission_preset_slugs) > 0)
+);
+
+create index if not exists permission_presets_org_idx
+  on public.permission_presets (organization_id) where organization_id is not null;
+
+drop trigger if exists handle_permission_presets_updated_at on public.permission_presets;
+create trigger handle_permission_presets_updated_at
+  before update on public.permission_presets
+  for each row execute procedure extensions.moddatetime(permission_preset_updated_at);
+
+-- Validate every slug in permission_preset_slugs exists in the permissions catalog.
+-- Fires on INSERT or UPDATE of the slugs column.
+create or replace function internal.permission_preset_validate_slugs()
+  returns trigger
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _missing extensions.citext[];
+    begin
+      select array_agg(s)
+        into _missing
+        from unnest(NEW.permission_preset_slugs) s
+        where s not in (select permission_id from public.permissions);
+      if _missing is not null and cardinality(_missing) > 0 then
+        raise exception 'Unknown permission slug(s) in preset: %', _missing;
+      end if;
+      return NEW;
+    end;
+  $$;
+
+drop trigger if exists permission_presets_trigger_validate_slugs on public.permission_presets;
+create trigger permission_presets_trigger_validate_slugs
+  before insert or update of permission_preset_slugs on public.permission_presets
+  for each row execute procedure internal.permission_preset_validate_slugs();
+
+-- Seed catalog (idempotent: ON CONFLICT skips). Add new slugs here, then re-run db:reset.
+insert into public.permissions (permission_id, permission_description) values
+  ('*',                    'Comodín: cubre cualquier permiso dentro de la organización (uso típico: fundador).'),
+  ('organization_manage',  'Editar nombre, configuración y dominios del tenant/organización.'),
+  ('members_manage',       'Invitar, remover y reasignar permisos a miembros.'),
+  ('presets_manage',       'Crear/editar permission_presets de la organización.'),
+  ('payroll_run',          'Ejecutar el ciclo mensual de nómina y emitir liquidaciones.'),
+  ('payroll_view',         'Ver liquidaciones y datos de nómina del equipo.'),
+  ('vacations_approve',    'Aprobar o rechazar solicitudes de vacaciones.'),
+  ('vacations_request',    'Solicitar vacaciones para uno mismo.'),
+  ('terminations_create',  'Crear finiquitos.'),
+  ('previred_export',      'Exportar archivo Previred.'),
+  ('lre_export',           'Exportar Libro de Remuneraciones Electrónico.'),
+  ('banco_export',         'Exportar nómina bancaria (Shinkansen u otra).')
+on conflict (permission_id) do nothing;
+
+-- Seed global presets (organization_id IS NULL → visibles para cualquier tenant).
+insert into public.permission_presets (organization_id, permission_preset_name, permission_preset_slugs) values
+  (null, 'Dueño',     array['*']::extensions.citext[]),
+  (null, 'Contadora', array[
+    'payroll_run','payroll_view','previred_export','lre_export','banco_export','terminations_create'
+  ]::extensions.citext[]),
+  (null, 'Manager',   array['payroll_view','vacations_approve']::extensions.citext[]),
+  (null, 'Empleado',  array['vacations_request']::extensions.citext[])
+on conflict do nothing;
 
 -- ============================================================
--- concierge (global internal role, separate from per-tenant roles)
+-- concierge (global internal role, separate from per-org permissions)
 -- ============================================================
 
 create table if not exists protected.concierges (
@@ -532,17 +644,22 @@ grant execute on function public.profile_id_by_email(text) to service_role;
 -- helpers — the subquery is evaluated once per query (InitPlan) instead of per
 -- row, which matters at scale.
 --
--- viewer_profile / viewer_profile_id           : current user's profile
--- viewer_tenant_ids                            : tenants the caller has access to (from JWT)
--- viewer_tenant_validate(tenant)               : true iff caller belongs to any org in this tenant — app convenience, avoid in RLS
--- viewer_organization_ids(roles)               : organizations the caller is a member of (from JWT), optionally role-restricted
--- viewer_organization_validate(org, roles)     : true iff caller is a member of `org` — app convenience, avoid in RLS
--- viewer_is_concierge                          : true iff caller has the global concierge claim
--- tenants_organizations_profiles (view)        : active tenant-org memberships for the current viewer
--- viewer_tenants()                             : setof public.tenants the viewer has access to
--- viewer_organizations()                       : setof public.organizations the viewer is a member of
--- viewer_tenant_by_id(id)                      : single tenant by id if the viewer has access
--- viewer_organization_by_id(id)                : single organization by id if the viewer has access
+-- Identity (from JWT — fast, no DB):
+--   viewer_profile / viewer_profile_id  : current user's profile
+--   viewer_tenant_ids                   : tenants the caller belongs to
+--   viewer_tenant_validate(tenant)      : true iff caller belongs to this tenant
+--   viewer_organization_ids             : organizations the caller is a member of
+--   viewer_organization_validate(org)   : true iff caller is a member of `org`
+--   viewer_is_concierge                 : true iff caller has the global concierge claim
+--
+-- Permissions (DB lookup — `security definer` to bypass recursive RLS):
+--   viewer_permission_org_ids(perm)     : setof org_id where the caller has `perm` OR `*`
+--   viewer_has_permission(org, perm)    : boolean shortcut for a single (org, perm) check
+--   viewer_membership_permissions()     : setof (org_id, permission_id) — for UI listing
+--
+-- Convenience over the join:
+--   tenants_organizations_profiles (view)  : active tenant-org memberships for the viewer
+--   viewer_tenants() / viewer_organizations() / viewer_tenant_by_id() / viewer_organization_by_id()
 
 create or replace function public.viewer_profile(strict boolean default false)
   returns setof public.profiles rows 1
@@ -621,9 +738,7 @@ create or replace function public.viewer_tenant_validate(target_tenant_id int)
     );
   $$;
 
-create or replace function public.viewer_organization_ids(
-  required_roles public.organization_member_role[] default null
-)
+create or replace function public.viewer_organization_ids()
   returns setof int
   stable
   parallel safe
@@ -637,15 +752,10 @@ create or replace function public.viewer_organization_ids(
           -> 'app_metadata' -> 'organizations',
         '[]'::jsonb
       )
-    ) as o
-    where required_roles is null
-       or (o->>'role')::public.organization_member_role = any (required_roles);
+    ) as o;
   $$;
 
-create or replace function public.viewer_organization_validate(
-  target_organization_id int,
-  required_roles public.organization_member_role[] default null
-)
+create or replace function public.viewer_organization_validate(target_organization_id int)
   returns boolean
   stable
   parallel safe
@@ -662,11 +772,58 @@ create or replace function public.viewer_organization_validate(
         )
       ) as o
       where (o->>'id')::int = target_organization_id
-        and (
-          required_roles is null
-          or (o->>'role')::public.organization_member_role = any (required_roles)
-        )
     );
+  $$;
+
+-- Permission-based RLS helpers. SECURITY DEFINER so they bypass RLS on
+-- membership_permissions itself (otherwise SELECT-RLS on the very table we're checking
+-- could deadlock the logic). Both return wildcard-aware results: an `(org, profile, '*')`
+-- grant satisfies every permission check inside that org.
+
+create or replace function public.viewer_permission_org_ids(target_permission_id extensions.citext)
+  returns setof int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select distinct organization_id
+    from public.membership_permissions
+    where profile_id = (select auth.uid())
+      and (permission_id = target_permission_id or permission_id = '*');
+  $$;
+
+create or replace function public.viewer_has_permission(
+  target_organization_id int,
+  target_permission_id extensions.citext
+)
+  returns boolean
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select exists (
+      select 1 from public.membership_permissions
+      where organization_id = target_organization_id
+        and profile_id = (select auth.uid())
+        and (permission_id = target_permission_id or permission_id = '*')
+    );
+  $$;
+
+create or replace function public.viewer_membership_permissions()
+  returns table (organization_id int, permission_id extensions.citext)
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select mp.organization_id, mp.permission_id
+    from public.membership_permissions mp
+    where mp.profile_id = (select auth.uid());
   $$;
 
 create or replace function public.viewer_is_concierge()
@@ -687,7 +844,8 @@ create or replace function public.viewer_is_concierge()
 -- Runs as view owner (postgres), bypassing RLS; scoped to the caller
 -- via viewer_profile_id(). Null uid → no rows (safe for unauthenticated).
 -- Used by viewer_tenants/viewer_organizations family below.
-create or replace view public.tenants_organizations_profiles as
+drop view if exists public.tenants_organizations_profiles;
+create view public.tenants_organizations_profiles as
   select
     t.tenant_id,
     t.tenant_slug,
@@ -702,13 +860,12 @@ create or replace view public.tenants_organizations_profiles as
     o.organization_disabled_at,
     o.organization_created_at,
     o.organization_updated_at,
-    om.profile_id,
-    om.organization_member_role
-  from public.organization_members om
+    m.profile_id
+  from public.memberships m
   join public.organizations o using (organization_id)
   join public.tenants t using (tenant_id)
-  where om.profile_id = public.viewer_profile_id()
-    and om.organization_member_disabled_at is null
+  where m.profile_id = public.viewer_profile_id()
+    and m.membership_disabled_at is null
     and o.organization_disabled_at is null
     and t.tenant_disabled_at is null;
 
@@ -772,7 +929,7 @@ create or replace function public.viewer_organization_by_id(target_organization_
   $$;
 
 -- ============================================================
--- profiles SELECT policy (now that organization_members exists)
+-- profiles SELECT policy (now that memberships exists)
 -- ============================================================
 -- Profiles are visible to: self, organization co-members, and concierge.
 
@@ -788,19 +945,19 @@ create policy "Profiles visible to self or org co-members or concierge"
       profile_id = (select auth.uid())
       or exists (
         select 1
-        from public.organization_members me
-        join public.organization_members them using (organization_id)
+        from public.memberships me
+        join public.memberships them using (organization_id)
         where me.profile_id = (select auth.uid())
           and them.profile_id = public.profiles.profile_id
-          and me.organization_member_disabled_at is null
-          and them.organization_member_disabled_at is null
+          and me.membership_disabled_at is null
+          and them.membership_disabled_at is null
       )
       or public.viewer_is_concierge()
     )
   );
 
 -- ============================================================
--- RLS policies for tenants + organizations + organization_members
+-- RLS policies for tenants + organizations + memberships + permissions
 -- ============================================================
 
 alter table public.tenants enable row level security;
@@ -819,16 +976,15 @@ create policy "tenants select by members or concierge"
   );
 
 drop policy if exists "tenants update by owner" on public.tenants;
-create policy "tenants update by owner"
+drop policy if exists "tenants update with organization_manage" on public.tenants;
+create policy "tenants update with organization_manage"
   on public.tenants for update
   to authenticated
   using (
     exists (
       select 1 from public.organizations o
       where o.tenant_id = public.tenants.tenant_id
-        and o.organization_id in (
-          select public.viewer_organization_ids(array['owner']::public.organization_member_role[])
-        )
+        and o.organization_id in (select public.viewer_permission_org_ids('organization_manage'))
     )
   );
 
@@ -850,60 +1006,114 @@ create policy "organizations select by members or concierge"
   );
 
 drop policy if exists "organizations update by owner" on public.organizations;
-create policy "organizations update by owner"
+drop policy if exists "organizations update with organization_manage" on public.organizations;
+create policy "organizations update with organization_manage"
   on public.organizations for update
   to authenticated
-  using (
-    organization_id in (
-      select public.viewer_organization_ids(array['owner']::public.organization_member_role[])
-    )
-  );
+  using (organization_id in (select public.viewer_permission_org_ids('organization_manage')));
 
 -- INSERT/DELETE on organizations: service_role only. No authenticated policy -> default deny.
 
-alter table public.organization_members enable row level security;
+alter table public.memberships enable row level security;
 
-revoke all on table public.organization_members from anon, authenticated;
+revoke all on table public.memberships from anon, authenticated;
 -- anon is required for graphql; RLS still gates row access.
-grant select, insert, update, delete on table public.organization_members to anon, authenticated;
+grant select, insert, update, delete on table public.memberships to anon, authenticated;
 
-drop policy if exists "organization_members select by co-members" on public.organization_members;
-create policy "organization_members select by co-members"
-  on public.organization_members for select
+drop policy if exists "memberships select by co-members" on public.memberships;
+create policy "memberships select by co-members"
+  on public.memberships for select
   to authenticated
   using (
     organization_id in (select public.viewer_organization_ids())
     or public.viewer_is_concierge()
   );
 
-drop policy if exists "organization_members insert by accountant/owner" on public.organization_members;
-create policy "organization_members insert by accountant/owner"
-  on public.organization_members for insert
+drop policy if exists "memberships write with members_manage" on public.memberships;
+create policy "memberships write with members_manage"
+  on public.memberships for all
   to authenticated
+  using (organization_id in (select public.viewer_permission_org_ids('members_manage')))
+  with check (organization_id in (select public.viewer_permission_org_ids('members_manage')));
+
+-- ============================================================
+-- RLS for permissions catalog
+-- ============================================================
+-- The catalog is read-only to authenticated users (UI needs to list available slugs).
+-- INSERT/UPDATE/DELETE: service_role only (catalog is seeded in schema, not user-managed).
+
+alter table public.permissions enable row level security;
+
+revoke all on table public.permissions from anon, authenticated;
+grant select on table public.permissions to anon, authenticated;
+
+drop policy if exists "permissions select to all authenticated" on public.permissions;
+create policy "permissions select to all authenticated"
+  on public.permissions for select
+  to authenticated
+  using (true);
+
+-- ============================================================
+-- RLS for membership_permissions
+-- ============================================================
+
+alter table public.membership_permissions enable row level security;
+
+revoke all on table public.membership_permissions from anon, authenticated;
+grant select, insert, update, delete on table public.membership_permissions to anon, authenticated;
+
+-- Co-members in the same organization can see the grants in that organization.
+drop policy if exists "membership_permissions select by co-members" on public.membership_permissions;
+create policy "membership_permissions select by co-members"
+  on public.membership_permissions for select
+  to authenticated
+  using (
+    organization_id in (select public.viewer_organization_ids())
+    or public.viewer_is_concierge()
+  );
+
+-- Only users with `members_manage` in the organization can grant/revoke.
+drop policy if exists "membership_permissions write with members_manage" on public.membership_permissions;
+create policy "membership_permissions write with members_manage"
+  on public.membership_permissions for all
+  to authenticated
+  using (organization_id in (select public.viewer_permission_org_ids('members_manage')))
+  with check (organization_id in (select public.viewer_permission_org_ids('members_manage')));
+
+-- ============================================================
+-- RLS for permission_presets
+-- ============================================================
+-- Global presets (organization_id IS NULL) are visible to everyone authenticated;
+-- org-specific presets only to co-members of that org. Writes:
+--  - global rows: service_role only
+--  - org rows: anyone with `presets_manage` in that org
+
+alter table public.permission_presets enable row level security;
+
+revoke all on table public.permission_presets from anon, authenticated;
+grant select, insert, update, delete on table public.permission_presets to anon, authenticated;
+
+drop policy if exists "permission_presets select globals or own org" on public.permission_presets;
+create policy "permission_presets select globals or own org"
+  on public.permission_presets for select
+  to authenticated
+  using (
+    organization_id is null
+    or organization_id in (select public.viewer_organization_ids())
+    or public.viewer_is_concierge()
+  );
+
+drop policy if exists "permission_presets write with presets_manage" on public.permission_presets;
+create policy "permission_presets write with presets_manage"
+  on public.permission_presets for all
+  to authenticated
+  using (
+    organization_id is not null
+    and organization_id in (select public.viewer_permission_org_ids('presets_manage'))
+  )
   with check (
-    organization_id in (
-      select public.viewer_organization_ids(array['accountant','owner']::public.organization_member_role[])
-    )
-  );
-
-drop policy if exists "organization_members update by accountant/owner" on public.organization_members;
-create policy "organization_members update by accountant/owner"
-  on public.organization_members for update
-  to authenticated
-  using (
-    organization_id in (
-      select public.viewer_organization_ids(array['accountant','owner']::public.organization_member_role[])
-    )
-  );
-
-drop policy if exists "organization_members delete by owner" on public.organization_members;
-create policy "organization_members delete by owner"
-  on public.organization_members for delete
-  to authenticated
-  using (
-    organization_id in (
-      select public.viewer_organization_ids(array['owner']::public.organization_member_role[])
-    )
+    organization_id is not null
+    and organization_id in (select public.viewer_permission_org_ids('presets_manage'))
   );
 
 -- ============================================================
@@ -911,8 +1121,12 @@ create policy "organization_members delete by owner"
 -- ============================================================
 -- Injects two JWT arrays into the token when issued:
 --   app_metadata.tenants       : [{id, slug}]       — distinct tenants the user has any org membership in
---   app_metadata.organizations : [{id, role}]       — every organization the user is a member of
+--   app_metadata.organizations : [{id}]             — every organization the user is a member of
 -- Plus app_metadata.is_concierge (global internal role) and app_metadata.onboarded (gate).
+-- Permissions are deliberately NOT included in the JWT — a single user may have many
+-- per-org permissions, and putting them here can balloon cookie size past the 4KB limit.
+-- Permission checks happen at query time via viewer_has_permission / viewer_permission_org_ids,
+-- which hit the indexed membership_permissions table.
 -- Lives in `public`, NOT security definer — supabase_auth_admin gets direct grants
 -- + permissive SELECT policies on the source tables (pattern from sibling project).
 
@@ -944,24 +1158,23 @@ create or replace function public.user_auth_hook(event jsonb)
           'slug', t.tenant_slug::text
         )), '[]'::jsonb)
         into _tenants
-        from public.organization_members om
+        from public.memberships m
         join public.organizations o using (organization_id)
         join public.tenants t using (tenant_id)
-        where om.profile_id = _user_id
-          and om.organization_member_disabled_at is null
+        where m.profile_id = _user_id
+          and m.membership_disabled_at is null
           and o.organization_disabled_at is null
           and t.tenant_disabled_at is null;
 
         select coalesce(jsonb_agg(jsonb_build_object(
-          'id', om.organization_id,
-          'role', om.organization_member_role
+          'id', m.organization_id
         )), '[]'::jsonb)
         into _organizations
-        from public.organization_members om
+        from public.memberships m
         join public.organizations o using (organization_id)
         join public.tenants t using (tenant_id)
-        where om.profile_id = _user_id
-          and om.organization_member_disabled_at is null
+        where m.profile_id = _user_id
+          and m.membership_disabled_at is null
           and o.organization_disabled_at is null
           and t.tenant_disabled_at is null;
 
@@ -999,7 +1212,7 @@ grant execute on function public.user_auth_hook(jsonb) to supabase_auth_admin;
 
 -- Hook is not security definer; grant supabase_auth_admin direct read on source tables.
 grant usage on schema public, protected to supabase_auth_admin;
-grant select on table public.tenants, public.organizations, public.organization_members, protected.concierges to supabase_auth_admin;
+grant select on table public.tenants, public.organizations, public.memberships, protected.concierges to supabase_auth_admin;
 grant select (profile_id, profile_onboarded_at) on public.profiles to supabase_auth_admin;
 
 drop policy if exists "Allow auth admin to read tenants." on public.tenants;
@@ -1010,10 +1223,9 @@ drop policy if exists "Allow auth admin to read organizations." on public.organi
 create policy "Allow auth admin to read organizations."
   on public.organizations as permissive for select to supabase_auth_admin using (true);
 
-drop policy if exists "Allow auth admin to read tenant_members." on public.organization_members;
-drop policy if exists "Allow auth admin to read organization_members." on public.organization_members;
-create policy "Allow auth admin to read organization_members."
-  on public.organization_members as permissive for select to supabase_auth_admin using (true);
+drop policy if exists "Allow auth admin to read memberships." on public.memberships;
+create policy "Allow auth admin to read memberships."
+  on public.memberships as permissive for select to supabase_auth_admin using (true);
 
 drop policy if exists "Allow auth admin to read concierge_users." on protected.concierges;
 drop policy if exists "Allow auth admin to read concierges." on protected.concierges;
@@ -1249,15 +1461,14 @@ create policy "tenant_domains select by members"
   using (tenant_id in (select public.viewer_tenant_ids()));
 
 drop policy if exists "tenant_domains write by owner" on public.tenant_domains;
-create policy "tenant_domains write by owner"
+drop policy if exists "tenant_domains write with organization_manage" on public.tenant_domains;
+create policy "tenant_domains write with organization_manage"
   on public.tenant_domains for all to authenticated
   using (
     exists (
       select 1 from public.organizations o
       where o.tenant_id = public.tenant_domains.tenant_id
-        and o.organization_id in (
-          select public.viewer_organization_ids(array['owner']::public.organization_member_role[])
-        )
+        and o.organization_id in (select public.viewer_permission_org_ids('organization_manage'))
     )
   );
 

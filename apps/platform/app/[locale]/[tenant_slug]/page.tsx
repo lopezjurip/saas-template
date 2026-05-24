@@ -45,7 +45,6 @@ export default async function TenantHomePage({ params }: { params: Promise<{ loc
 
   const [session, metadata] = await Promise.all([getSupabaseServerSession(), getSupabaseServerUserMetadata()]);
   const allTenantClaims = metadata?.["tenants"] ?? [];
-  const allOrgClaims = metadata?.["organizations"] ?? [];
 
   const tenant_id = allTenantClaims.find((t) => t["slug"] === tenant_slug)?.["id"];
   if (!tenant_id) {
@@ -80,14 +79,13 @@ export default async function TenantHomePage({ params }: { params: Promise<{ loc
               {edges.map((edge) => {
                 const organization = edge["node"];
                 const organization_id = organization["organization_id"];
-                const role = allOrgClaims.find((c) => c["id"] === organization_id)?.["role"] ?? "—";
                 return (
                   <div
                     key={organization_id}
                     className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
                   >
                     <span>{organization["organization_name"]}</span>
-                    <span className="text-xs text-muted-foreground">{role}</span>
+                    <span className="text-xs text-muted-foreground">{organization["organization_slug"]}</span>
                   </div>
                 );
               })}

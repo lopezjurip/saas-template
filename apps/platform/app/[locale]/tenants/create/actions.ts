@@ -64,11 +64,10 @@ export const createTenant = authedAction
 
     const { organization_id } = orgRes.data;
 
-    // 3. Membership: creator becomes owner of the default org.
-    const memberRes = await admin.from("organization_members").insert({
+    // 3. Membership: creator joins the default org.
+    const memberRes = await admin.from("memberships").insert({
       organization_id,
       profile_id: user.id,
-      organization_member_role: "owner",
     });
 
     if (memberRes.error) {
@@ -87,6 +86,32 @@ export const createTenant = authedAction
         });
       }
       throw new Error("No pudimos asignarte como dueño. Intenta de nuevo.");
+    }
+
+    // 4. Bootstrap: grant the wildcard `*` so the creator can do everything (and
+    // automatically receives any permission slug we add to the catalog later).
+    const grantRes = await admin.from("membership_permissions").insert({
+      organization_id,
+      profile_id: user.id,
+      permission_id: "*",
+    });
+
+    if (grantRes.error) {
+      log.error("permission grant failed; rolling back tenant + org + membership", {
+        profile_id: user.id,
+        tenant_id,
+        organization_id,
+        error: grantRes.error,
+      });
+      const rollback = await admin.from("tenants").delete().eq("tenant_id", tenant_id);
+      if (rollback.error) {
+        log.error("tenant rollback failed — orphan rows left", {
+          tenant_id,
+          organization_id,
+          error: rollback.error,
+        });
+      }
+      throw new Error("No pudimos asignarte permisos. Intenta de nuevo.");
     }
 
     // Refresh the JWT so app_metadata.tenants/organizations pick up the new entries.

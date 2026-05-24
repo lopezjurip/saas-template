@@ -188,7 +188,7 @@ Two-level model:
 
 - `public.tenants` (int4 serial PK) — the billing / customer relationship. Subdomain `{tenant_slug}.humane.cl` routes to a tenant.
 - `public.organizations` (int4 serial PK, FK to tenants) — the actual operating unit. Most tenants have exactly one organization that mirrors the tenant; large companies have several (e.g. one per country / branch).
-- `public.organization_members(organization_id, profile_id, role)` — users belong to organizations, not directly to tenants. The set of tenants a user can access is derived from the tenants of their organizations.
+- `public.memberships(organization_id, profile_id)` — users belong to organizations, not directly to tenants. No `role` column — access is permission-based (see below). The set of tenants a user can access is derived from the tenants of their organizations.
 
 Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to filter, cheap in indexes) and, when data is org-scoped, also `organization_id int`. Supabase RLS enforces isolation at the DB layer — never rely on application-level filtering alone.
 
@@ -196,27 +196,41 @@ Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to fi
 
 **Custom domain mapping (`public.tenant_domains`, 1:1 with tenants)** is staged in the schema but not yet wired into the proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates these advanced features once billing exists.
 
+**Permissions (capability-based, not role-based):**
+- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs (`organization_manage`, `members_manage`, `payroll_run`, `vacations_approve`, etc.). The reserved slug `*` is the wildcard — anyone holding `(org, profile, '*')` passes every permission check inside that org. Used for the tenant creator and other "full admin" grants without needing to enumerate every slug.
+- `public.membership_permissions(organization_id, profile_id, permission_id)` — explicit grants. Composite FK back to `memberships` so deleting a membership cascades. PK `(org, profile, permission)` + secondary index `(profile, permission)` cover both "does X have perm Y in org Z" and the cross-org "what orgs grant perm Y to X" lookups.
+- `public.permission_presets(id, organization_id?, name, slugs[])` — UX-only catalog of named bundles for the admin UI; carries no enforcement. `organization_id IS NULL` = global preset (seeded: Dueño / Contadora / Manager / Empleado); non-null = tenant-specific custom bundle. A trigger validates every slug in `permission_preset_slugs` exists in the catalog.
+
+Permissions are deliberately NOT in the JWT (size, and they change at runtime). All enforcement reads `public.membership_permissions` at query time via the security-definer helpers below.
+
 **JWT carries two arrays** (`public.user_auth_hook` on token issuance):
 - `app_metadata.tenants: [{id, slug}]` — distinct tenants the user has any org membership in
-- `app_metadata.organizations: [{id, role}]` — every organization the user is a member of, with role
+- `app_metadata.organizations: [{id}]` — every organization the user is a member of (no role)
 
 Plus `app_metadata.is_concierge: boolean` for the global internal role and `app_metadata.onboarded: boolean` for the onboarding gate.
 
-After any `organization_members` (or `tenants` / `organizations`) mutation, call `supabase.auth.refreshSession()` so the client picks up the new claims; for revocations also call `supabase.auth.admin.signOut(profile_id)` server-side.
+After any `memberships` / `membership_permissions` (or `tenants` / `organizations`) mutation, call `supabase.auth.refreshSession()` so the client picks up the new claims; for revocations also call `supabase.auth.admin.signOut(profile_id)` server-side.
 
 **Use the `viewer_*` SQL helpers in RLS policies, not raw JWT parsing:**
+
+JWT-backed (fast, no DB):
 - `public.viewer_profile_id()` / `public.viewer_profile()` — current user (with optional `strict => true`)
 - `public.viewer_tenant_ids()` — set of tenant_ids from JWT
 - `public.viewer_tenant_validate(tenant_id)` — true iff caller belongs to any org in this tenant
 - `public.viewer_organization_ids()` — set of organization_ids from JWT
-- `public.viewer_organization_validate(organization_id, roles[])` — true iff caller is a member of this org, optionally role-restricted
+- `public.viewer_organization_validate(organization_id)` — true iff caller is a member of this org
 - `public.viewer_is_concierge()` — global internal role
 
-Per-organization roles use the `public.organization_member_role` enum (`employee`, `manager`, `accountant`, `owner`). Enum values are in English; the UI localizes to Spanish. Concierge is global and lives in `protected.concierge_users` (service-role only).
+Permission-backed (DB lookup, security definer; wildcard `*` is honored):
+- `public.viewer_permission_org_ids(permission_id)` — orgs where the caller has the perm (or `*`). Use this in RLS `IN`-subqueries.
+- `public.viewer_has_permission(organization_id, permission_id)` — boolean shortcut for a single (org, perm) check.
+- `public.viewer_membership_permissions()` — setof `(organization_id, permission_id)` for UI listing.
+
+Concierge is global and lives in `protected.concierges` (service-role only).
 
 ## User Roles
 
-5 roles, each with a distinct product surface:
+5 product personas, each with a distinct surface. These are UX/product labels, **not** DB-enforced enum values — access is gated by individual permission slugs in `membership_permissions`. The seeded global `permission_presets` (Dueño / Contadora / Manager / Empleado) map these personas to bundles for the admin UI.
 
 | Role | Count/company | Primary UI | Key journeys |
 |---|---|---|---|
@@ -332,7 +346,7 @@ Stage normally in git. Ignore when writing commit messages:
 - Payroll calculations: unit tests with known inputs/outputs from `04-legal-regulatory-compendium.md`
 - Run parallel calculations against Buk output during migration (internal ops validates)
 - Every new regulatory rule gets a test case before the implementation
-- RLS policies: test with different role JWTs to verify isolation
+- RLS policies: test with different permission grants per profile to verify isolation
 
 ## What NOT to Do
 

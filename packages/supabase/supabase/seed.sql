@@ -1,7 +1,7 @@
 -- Local-dev seed. Not run in production.
 -- Two tenants (acme + globex), each with one organization, and two users with crossed memberships:
---   alice@humane.test  -> owner @ acme org, accountant @ globex org
---   bob@humane.test    -> employee @ acme org
+--   alice@humane.test  -> '*' (full admin) @ acme org, accountant-like grants @ globex org
+--   bob@humane.test    -> employee-like grants @ acme org
 -- Passwords: "password123" for both.
 
 -- ------------------------------------------------------------
@@ -87,15 +87,28 @@ on conflict (organization_id) do nothing;
 select setval(pg_get_serial_sequence('public.organizations', 'organization_id'), (select max(organization_id) from public.organizations));
 
 -- ------------------------------------------------------------
--- organization_members
+-- memberships + membership_permissions
 -- ------------------------------------------------------------
 
-insert into public.organization_members (organization_id, profile_id, organization_member_role)
+insert into public.memberships (organization_id, profile_id)
 values
-  (1, '00000000-0000-0000-0000-00000000a11c', 'owner'),
-  (2, '00000000-0000-0000-0000-00000000a11c', 'accountant'),
-  (1, '00000000-0000-0000-0000-00000000b00b', 'employee')
+  (1, '00000000-0000-0000-0000-00000000a11c'),
+  (2, '00000000-0000-0000-0000-00000000a11c'),
+  (1, '00000000-0000-0000-0000-00000000b00b')
 on conflict (organization_id, profile_id) do nothing;
+
+-- Alice: '*' (full admin) on acme org; "accountant"-like grants on globex org.
+-- Bob: "employee"-like grants on acme org.
+insert into public.membership_permissions (organization_id, profile_id, permission_id) values
+  (1, '00000000-0000-0000-0000-00000000a11c', '*'),
+  (2, '00000000-0000-0000-0000-00000000a11c', 'payroll_run'),
+  (2, '00000000-0000-0000-0000-00000000a11c', 'payroll_view'),
+  (2, '00000000-0000-0000-0000-00000000a11c', 'previred_export'),
+  (2, '00000000-0000-0000-0000-00000000a11c', 'lre_export'),
+  (2, '00000000-0000-0000-0000-00000000a11c', 'banco_export'),
+  (2, '00000000-0000-0000-0000-00000000a11c', 'terminations_create'),
+  (1, '00000000-0000-0000-0000-00000000b00b', 'vacations_request')
+on conflict (organization_id, profile_id, permission_id) do nothing;
 
 -- Mark seed users as onboarded so manual end-to-end testing skips /onboarding.
 update public.profiles
