@@ -50,7 +50,10 @@ function copyCookies(from: NextResponse, to: NextResponse): NextResponse {
   return to;
 }
 
-function syncLocaleCookie(response: NextResponse, locale: SupportedLocale): NextResponse {
+// Persist the locale on the response so the browser stores it for next request.
+// The matching mutation on `request.cookies` happens before `updateSession` runs (see proxy()
+// below) — without that, server components in the same request would still read the stale value.
+function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse {
   const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
   response.cookies.set(LOCALE_COOKIE, locale, {
     path: "/",
@@ -69,13 +72,19 @@ export async function proxy(request: NextRequest) {
   // Classify the host: apex/www, tenant subdomain, or unknown (custom apex, phase 2).
   // Strip port for matching so the proxy works on any dev port, not just the configured default.
   const hostnameBase = hostname.split(":")[0] ?? "";
-  const isApex = hostnameBase === APEX_HOSTNAME || hostnameBase === `www.${APEX_HOSTNAME}`;
+  let isApex = hostnameBase === APEX_HOSTNAME || hostnameBase === `www.${APEX_HOSTNAME}`;
   let slugFromHost: string | null = null;
+  // Vercel preview/dev deployments come in on `*.vercel.app` hosts that won't match APEX_HOSTNAME.
+  // Treat them as apex so previews stay reachable instead of bouncing to production.
+  const vercelEnv = process.env["VERCEL_ENV"];
+  const isVercelNonProd = vercelEnv === "preview" || vercelEnv === "development";
   if (!isApex) {
     if (hostnameBase.endsWith(`.${APEX_HOSTNAME}`)) {
       slugFromHost = extractSubdomain(hostname);
+    } else if (isVercelNonProd) {
+      isApex = true;
     } else {
-      // Unknown host (localhost/127.0.0.1/preview URL/custom apex). Custom apexes are phase 2 —
+      // Unknown host (localhost/127.0.0.1/custom apex). Custom apexes are phase 2 —
       // for now, bounce to the configured apex so cookies/session land on the right origin.
       const apexUrl = new URL(`${pathname}${request.nextUrl.search}`, `${proto}://${APP_HOST}`);
       return NextResponse.redirect(apexUrl);
@@ -98,9 +107,15 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     const trailingPath = pathname === "/" ? "" : pathname;
     url.pathname = `/${detected}${trailingPath}`;
-    return syncLocaleCookie(NextResponse.redirect(url), detected);
+    return setLocaleCookieOnResponse(NextResponse.redirect(url), detected);
   }
   const locale = localeFromPath;
+
+  // Mutate the incoming request's cookie BEFORE updateSession creates its NextResponse.next({request}).
+  // Downstream server components (root layout, server actions) read cookies via next/headers `cookies()`,
+  // which reflects the request snapshot — so if we only set on the response, server-rendered output
+  // (notably <html lang>) reads the previous request's cookie and falls out of sync with the URL.
+  request.cookies.set(LOCALE_COOKIE, locale);
 
   const { response: sessionResponse, supabase } = await updateSession(request);
 
@@ -109,7 +124,7 @@ export async function proxy(request: NextRequest) {
     if (pathAfterLocale.startsWith("/auth") || pathAfterLocale.startsWith("/onboarding")) {
       const url = new URL(`/${locale}${pathAfterLocale}`, `${proto}://${APP_HOST}`);
       url.search = request.nextUrl.search;
-      return syncLocaleCookie(NextResponse.redirect(url), locale);
+      return setLocaleCookieOnResponse(NextResponse.redirect(url), locale);
     }
   }
 
@@ -123,13 +138,13 @@ export async function proxy(request: NextRequest) {
         data: { session },
       } = await supabase.auth.getSession();
       if (session) {
-        return syncLocaleCookie(
+        return setLocaleCookieOnResponse(
           NextResponse.redirect(new URL(`/${locale}/dashboard`, `${proto}://${APP_HOST}`)),
           locale,
         );
       }
     }
-    return syncLocaleCookie(sessionResponse, locale);
+    return setLocaleCookieOnResponse(sessionResponse, locale);
   }
 
   // Auth gate.
@@ -140,7 +155,7 @@ export async function proxy(request: NextRequest) {
     const next = `${proto}://${hostname}${pathname}${request.nextUrl.search}`;
     const authUrl = new URL(`/${locale}/auth`, `${proto}://${APP_HOST}`);
     authUrl.searchParams.set("next", next);
-    return syncLocaleCookie(NextResponse.redirect(authUrl), locale);
+    return setLocaleCookieOnResponse(NextResponse.redirect(authUrl), locale);
   }
 
   // Hook-injected claims (tenants) only exist in the JWT, not on the DB user record.
@@ -168,13 +183,13 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}/${slugFromHost}${pathAfterLocale}`;
     const rewritten = NextResponse.rewrite(url, { request });
-    return syncLocaleCookie(copyCookies(sessionResponse, rewritten), locale);
+    return setLocaleCookieOnResponse(copyCookies(sessionResponse, rewritten), locale);
   }
 
   // Apex protected paths (/[locale]/dashboard, /[locale]/tenants/create, /[locale]/[tenant_slug]/...)
   // — page-level membership for tenant routes is handled by app/[locale]/[tenant_slug]/page.tsx
   // (notFound() if slug isn't in JWT).
-  return syncLocaleCookie(sessionResponse, locale);
+  return setLocaleCookieOnResponse(sessionResponse, locale);
 }
 
 export const config = {

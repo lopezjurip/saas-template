@@ -4,7 +4,14 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
-import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_COOKIE, LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
+import {
+  DEFAULT_LOCALE,
+  IS_SUPPORTED_LOCALE,
+  LOCALE_COOKIE,
+  LOCALE_LABEL,
+  LOCALE_TO_BCP47,
+  SUPPORTED_LOCALES,
+} from "~/lib/i18n";
 
 const LOCALE_ES = {
   group: "Idioma",
@@ -27,6 +34,9 @@ export function LocaleToggle() {
   function selectLocale(next: (typeof SUPPORTED_LOCALES)[number]) {
     if (next === current) return;
     document.cookie = `${LOCALE_COOKIE}=${next}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+    // <html lang> is rendered by the root layout; soft navigation doesn't re-render it, so update
+    // the live DOM here so screen readers / spellcheck pick up the new language immediately.
+    document.documentElement.lang = LOCALE_TO_BCP47[next];
     const nextPath = pathname.replace(/^\/[^/]+/, `/${next}`);
     startTransition(() => router.push(nextPath));
   }
