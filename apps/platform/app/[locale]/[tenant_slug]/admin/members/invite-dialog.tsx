@@ -22,8 +22,66 @@ import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { useRosetta } from "~/hooks/use-rosetta";
 import { actionInviteMember } from "./actions";
-import { MEMBERS_LOCALES } from "./locales";
 import { type InviteMemberValues, inviteMemberSchema, PERMISSION_SLUG_WILDCARD } from "./schemas";
+
+const LOCALE_ES = {
+  invite_button: "Invitar",
+  title: "Invitar a {{organization}}",
+  description: "Enviaremos un correo con un link mágico. La persona elegirá su contraseña o passkey al entrar.",
+  email_label: "Correo",
+  email_placeholder: "nombre@empresa.cl",
+  presets_label: "Plantillas",
+  preset_global_badge: "global",
+  presets_hint: "Aplica una plantilla y luego ajusta los permisos individualmente si lo necesitas.",
+  permissions_label: "Permisos ({{count}})",
+  clear_button: "Limpiar",
+  wildcard_label: "Acceso completo (dueño)",
+  wildcard_description: "Cubre todos los permisos actuales y futuros de la organización.",
+  submit: "Enviar invitación",
+  submitting: "Enviando…",
+  cancel: "Cancelar",
+  form_invalid: "Formulario inválido",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    invite_button: "Invite",
+    title: "Invite to {{organization}}",
+    description: "We'll send a magic-link email. They'll pick a password or passkey when they sign in.",
+    email_label: "Email",
+    email_placeholder: "name@company.com",
+    presets_label: "Templates",
+    preset_global_badge: "global",
+    presets_hint: "Apply a template and tweak individual permissions afterwards if you need to.",
+    permissions_label: "Permissions ({{count}})",
+    clear_button: "Clear",
+    wildcard_label: "Full access (owner)",
+    wildcard_description: "Covers every current and future permission in the organization.",
+    submit: "Send invitation",
+    submitting: "Sending…",
+    cancel: "Cancel",
+    form_invalid: "Invalid form",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    invite_button: "Convidar",
+    title: "Convidar para {{organization}}",
+    description: "Enviaremos um e-mail com link mágico. A pessoa escolherá sua senha ou passkey ao entrar.",
+    email_label: "E-mail",
+    email_placeholder: "nome@empresa.com",
+    presets_label: "Modelos",
+    preset_global_badge: "global",
+    presets_hint: "Aplique um modelo e ajuste as permissões individualmente se precisar.",
+    permissions_label: "Permissões ({{count}})",
+    clear_button: "Limpar",
+    wildcard_label: "Acesso completo (dono)",
+    wildcard_description: "Cobre todas as permissões atuais e futuras da organização.",
+    submit: "Enviar convite",
+    submitting: "Enviando…",
+    cancel: "Cancelar",
+    form_invalid: "Formulário inválido",
+  } satisfies typeof LOCALE_ES,
+};
 
 interface PermissionRow {
   permission_id: string;
@@ -45,7 +103,7 @@ interface Props {
 }
 
 export function InviteMemberDialog({ organization_id, organization_name, permissions, presets }: Props) {
-  const r = useRosetta(MEMBERS_LOCALES);
+  const r = useRosetta(LOCALES);
   const [open, setOpen] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -88,7 +146,7 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
         return;
       }
       if (res?.validationErrors) {
-        setServerError(r.t("invite_form_invalid"));
+        setServerError(r.t("form_invalid"));
         return;
       }
       reset();
@@ -112,18 +170,18 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{r.t("invite_dialog_title", { organization: organization_name })}</DialogTitle>
-          <DialogDescription>{r.t("invite_dialog_description")}</DialogDescription>
+          <DialogTitle>{r.t("title", { organization: organization_name })}</DialogTitle>
+          <DialogDescription>{r.t("description")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="invitation_email">{r.t("invite_email_label")}</Label>
+            <Label htmlFor="invitation_email">{r.t("email_label")}</Label>
             <Input
               id="invitation_email"
               type="email"
               autoComplete="email"
-              placeholder={r.t("invite_email_placeholder")}
+              placeholder={r.t("email_placeholder")}
               aria-invalid={!!form.formState.errors.invitation_email}
               {...form.register("invitation_email")}
             />
@@ -134,7 +192,7 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
 
           {presets.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <Label>{r.t("invite_presets_label")}</Label>
+              <Label>{r.t("presets_label")}</Label>
               <div className="flex flex-wrap gap-2">
                 {presets.map((preset) => (
                   <Button
@@ -147,19 +205,19 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
                     {preset["permission_preset_name"]}
                     {preset["organization_id"] === null ? (
                       <Badge variant="secondary" className="ml-1 text-xs">
-                        {r.t("invite_preset_global_badge")}
+                        {r.t("preset_global_badge")}
                       </Badge>
                     ) : null}
                   </Button>
                 ))}
               </div>
-              <p className="text-muted-foreground text-xs">{r.t("invite_presets_hint")}</p>
+              <p className="text-muted-foreground text-xs">{r.t("presets_hint")}</p>
             </div>
           )}
 
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <Label>{r.t("invite_permissions_label", { count: selectedCount })}</Label>
+              <Label>{r.t("permissions_label", { count: selectedCount })}</Label>
               {selectedCount > 0 && (
                 <Button
                   type="button"
@@ -169,7 +227,7 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
                     form.setValue("invitation_permission_slugs", [], { shouldValidate: true, shouldDirty: true })
                   }
                 >
-                  {r.t("invite_clear_button")}
+                  {r.t("clear_button")}
                 </Button>
               )}
             </div>
@@ -190,9 +248,9 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
               />
               <div className="flex flex-col">
                 <Label htmlFor="perm_wildcard" className="cursor-pointer font-medium">
-                  {r.t("invite_wildcard_label")}
+                  {r.t("wildcard_label")}
                 </Label>
-                <span className="text-muted-foreground text-xs">{r.t("invite_wildcard_description")}</span>
+                <span className="text-muted-foreground text-xs">{r.t("wildcard_description")}</span>
               </div>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -233,11 +291,11 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="ghost" disabled={pending}>
-                {r.t("invite_cancel")}
+                {r.t("cancel")}
               </Button>
             </DialogClose>
             <Button type="submit" disabled={pending}>
-              {pending ? r.t("invite_submitting") : r.t("invite_submit")}
+              {pending ? r.t("submitting") : r.t("submit")}
             </Button>
           </DialogFooter>
         </form>

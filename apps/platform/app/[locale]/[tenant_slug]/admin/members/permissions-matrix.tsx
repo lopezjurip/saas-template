@@ -15,7 +15,53 @@ import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
 import { actionDemoteWildcard, actionRemoveMember, actionTogglePermission } from "./actions";
-import { MEMBERS_LOCALES } from "./locales";
+
+const LOCALE_ES = {
+  empty: "Esta organización aún no tiene miembros. Invita al primero arriba a la derecha.",
+  member_column: "Miembro",
+  actions_column: "Acciones",
+  full_access_badge: "Acceso completo",
+  full_access_row: "Tiene acceso a todos los permisos actuales y futuros.",
+  demote_button: "Quitar acceso completo",
+  remove_button: "Remover",
+  remove_confirm: "¿Remover a {{name}}? Perderá acceso a la organización.",
+  unknown_member: "este miembro",
+  aria_cell: "{{slug}} para {{name}}",
+  wildcard_footer:
+    'Cuando alguien tiene "acceso completo" el comodín cubre cualquier permiso. Quítalo si quieres asignar permisos de forma individual.',
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    empty: "This organization has no members yet. Invite the first one in the top right.",
+    member_column: "Member",
+    actions_column: "Actions",
+    full_access_badge: "Full access",
+    full_access_row: "Has access to every current and future permission.",
+    demote_button: "Remove full access",
+    remove_button: "Remove",
+    remove_confirm: "Remove {{name}}? They'll lose access to the organization.",
+    unknown_member: "this member",
+    aria_cell: "{{slug}} for {{name}}",
+    wildcard_footer:
+      'When someone has "full access" the wildcard covers any permission. Remove it to assign permissions individually.',
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    empty: "Esta organização ainda não tem membros. Convide o primeiro no canto superior direito.",
+    member_column: "Membro",
+    actions_column: "Ações",
+    full_access_badge: "Acesso completo",
+    full_access_row: "Tem acesso a todas as permissões atuais e futuras.",
+    demote_button: "Remover acesso completo",
+    remove_button: "Remover",
+    remove_confirm: "Remover {{name}}? Vai perder o acesso à organização.",
+    unknown_member: "este membro",
+    aria_cell: "{{slug}} para {{name}}",
+    wildcard_footer:
+      'Quando alguém tem "acesso completo" o coringa cobre qualquer permissão. Remova-o se quiser atribuir permissões individualmente.',
+  } satisfies typeof LOCALE_ES,
+};
 
 interface PermissionRow {
   permission_id: string;
@@ -60,7 +106,7 @@ function APPLY_OPTIMISTIC(state: MemberRow[], action: OptimisticAction): MemberR
 }
 
 export function MembersMatrix({ organization_id, permissions, members }: Props) {
-  const r = useRosetta(MEMBERS_LOCALES);
+  const r = useRosetta(LOCALES);
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -96,8 +142,8 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
   };
 
   const removeMember = (member: MemberRow) => {
-    const name = member.profile_name_full ?? member.email ?? r.t("matrix_unknown_member");
-    if (!window.confirm(r.t("matrix_remove_confirm", { name }))) return;
+    const name = member.profile_name_full ?? member.email ?? r.t("unknown_member");
+    if (!window.confirm(r.t("remove_confirm", { name }))) return;
     setError(null);
     startTransition(async () => {
       applyOptimistic({ kind: "remove", profile_id: member.profile_id });
@@ -110,7 +156,7 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
   };
 
   if (optimisticMembers.length === 0) {
-    return <p className="text-muted-foreground text-sm">{r.t("matrix_empty")}</p>;
+    return <p className="text-muted-foreground text-sm">{r.t("empty")}</p>;
   }
 
   return (
@@ -120,9 +166,7 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="sticky left-0 z-10 bg-background min-w-[14rem]">
-                {r.t("matrix_member_column")}
-              </TableHead>
+              <TableHead className="sticky left-0 z-10 bg-background min-w-[14rem]">{r.t("member_column")}</TableHead>
               {permissions.map((perm) => (
                 <TableHead key={perm["permission_id"]} className="text-center align-bottom">
                   <div className="flex flex-col items-center gap-1">
@@ -130,7 +174,7 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
                   </div>
                 </TableHead>
               ))}
-              <TableHead className="text-right">{r.t("matrix_actions_column")}</TableHead>
+              <TableHead className="text-right">{r.t("actions_column")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -144,14 +188,14 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
                       {member.email && <span className="text-muted-foreground text-xs">{member.email}</span>}
                       {member.has_wildcard && (
                         <Badge variant="default" className="mt-1 w-fit">
-                          {r.t("matrix_full_access_badge")}
+                          {r.t("full_access_badge")}
                         </Badge>
                       )}
                     </div>
                   </TableCell>
                   {member.has_wildcard ? (
                     <TableCell colSpan={permissions.length} className="text-center text-muted-foreground text-sm">
-                      {r.t("matrix_full_access_row")}
+                      {r.t("full_access_row")}
                     </TableCell>
                   ) : (
                     permissions.map((perm) => {
@@ -162,7 +206,7 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
                           <Checkbox
                             checked={checked}
                             disabled={pending}
-                            aria-label={r.t("matrix_aria_cell", { slug, name: memberName })}
+                            aria-label={r.t("aria_cell", { slug, name: memberName })}
                             onCheckedChange={(value) => togglePermission(member, slug, Boolean(value))}
                           />
                         </TableCell>
@@ -173,7 +217,7 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
                     <div className="flex justify-end gap-1">
                       {member.has_wildcard && (
                         <Button size="sm" variant="outline" disabled={pending} onClick={() => demoteWildcard(member)}>
-                          {r.t("matrix_demote_button")}
+                          {r.t("demote_button")}
                         </Button>
                       )}
                       <Button
@@ -183,7 +227,7 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
                         disabled={pending}
                         onClick={() => removeMember(member)}
                       >
-                        {r.t("matrix_remove_button")}
+                        {r.t("remove_button")}
                       </Button>
                     </div>
                   </TableCell>
@@ -193,7 +237,7 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
           </TableBody>
         </Table>
       </div>
-      <p className="text-muted-foreground text-xs">{r.t("matrix_wildcard_footer")}</p>
+      <p className="text-muted-foreground text-xs">{r.t("wildcard_footer")}</p>
     </div>
   );
 }

@@ -15,9 +15,40 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47 } from "~/lib/i18n";
 import { InviteMemberDialog } from "./invite-dialog";
-import { MEMBERS_LOCALES } from "./locales";
 import { PendingInvitations } from "./pending-invitations";
 import { MembersMatrix } from "./permissions-matrix";
+
+const LOCALE_ES = {
+  back: "Volver",
+  page_title: "Miembros y permisos",
+  no_permission_alert: "No tienes permiso para administrar miembros en esta empresa.",
+  matrix_heading: "Matriz de permisos",
+  matrix_description: "Marca o desmarca cada capacidad por miembro. Los cambios se guardan al instante.",
+  pending_heading: "Invitaciones pendientes",
+  pending_description: "Cuando alguien acepta el correo, aparece como miembro arriba.",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    back: "Back",
+    page_title: "Members and permissions",
+    no_permission_alert: "You don't have permission to manage members in this company.",
+    matrix_heading: "Permissions matrix",
+    matrix_description: "Check or uncheck each capability per member. Changes save instantly.",
+    pending_heading: "Pending invitations",
+    pending_description: "Once they accept the email they'll show up as a member above.",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    back: "Voltar",
+    page_title: "Membros e permissões",
+    no_permission_alert: "Você não tem permissão para administrar membros nesta empresa.",
+    matrix_heading: "Matriz de permissões",
+    matrix_description: "Marque ou desmarque cada capacidade por membro. As alterações são salvas na hora.",
+    pending_heading: "Convites pendentes",
+    pending_description: "Quando aceitarem o e-mail, aparecerão como membro acima.",
+  } satisfies typeof LOCALE_ES,
+};
 
 export default async function MembersAdminPage({
   params,
@@ -30,7 +61,7 @@ export default async function MembersAdminPage({
   const { organization: organization_slug_param } = await searchParams;
 
   if (!IS_SUPPORTED_LOCALE(locale)) notFound();
-  const r = RosettaImpl.fromDictionary(MEMBERS_LOCALES, LOCALE_TO_BCP47[locale]);
+  const r = RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale]);
 
   const metadata = await getSupabaseServerUserMetadata();
   if (!metadata) {

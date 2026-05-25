@@ -15,7 +15,53 @@ import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { useLocale } from "~/components/locale-provider";
 import { useRosetta } from "~/hooks/use-rosetta";
 import { actionCancelInvitation } from "./actions";
-import { MEMBERS_LOCALES } from "./locales";
+
+const LOCALE_ES = {
+  empty: "No hay invitaciones pendientes.",
+  email_column: "Correo",
+  permissions_column: "Permisos",
+  sent_column: "Enviada",
+  expires_column: "Expira",
+  actions_column: "Acciones",
+  no_permissions: "sin permisos",
+  full_access: "acceso completo",
+  expired_badge: "expirada",
+  cancel: "Cancelar",
+  cancelling: "Cancelando…",
+  cancel_confirm: "¿Cancelar la invitación a {{email}}?",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    empty: "No pending invitations.",
+    email_column: "Email",
+    permissions_column: "Permissions",
+    sent_column: "Sent",
+    expires_column: "Expires",
+    actions_column: "Actions",
+    no_permissions: "no permissions",
+    full_access: "full access",
+    expired_badge: "expired",
+    cancel: "Cancel",
+    cancelling: "Cancelling…",
+    cancel_confirm: "Cancel the invitation to {{email}}?",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    empty: "Não há convites pendentes.",
+    email_column: "E-mail",
+    permissions_column: "Permissões",
+    sent_column: "Enviado",
+    expires_column: "Expira",
+    actions_column: "Ações",
+    no_permissions: "sem permissões",
+    full_access: "acesso completo",
+    expired_badge: "expirado",
+    cancel: "Cancelar",
+    cancelling: "Cancelando…",
+    cancel_confirm: "Cancelar o convite para {{email}}?",
+  } satisfies typeof LOCALE_ES,
+};
 
 interface InvitationRow {
   invitation_id: string;
@@ -30,7 +76,7 @@ interface Props {
 }
 
 export function PendingInvitations({ invitations }: Props) {
-  const r = useRosetta(MEMBERS_LOCALES);
+  const r = useRosetta(LOCALES);
   const locale = useLocale();
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -47,7 +93,7 @@ export function PendingInvitations({ invitations }: Props) {
   );
 
   const cancel = (invitation_id: string, email: string) => {
-    if (!window.confirm(r.t("pending_cancel_confirm", { email }))) return;
+    if (!window.confirm(r.t("cancel_confirm", { email }))) return;
     setError(null);
     setPendingId(invitation_id);
     startTransition(async () => {
@@ -62,7 +108,7 @@ export function PendingInvitations({ invitations }: Props) {
   };
 
   if (optimisticInvitations.length === 0) {
-    return <p className="text-muted-foreground text-sm">{r.t("pending_empty")}</p>;
+    return <p className="text-muted-foreground text-sm">{r.t("empty")}</p>;
   }
 
   return (
@@ -72,11 +118,11 @@ export function PendingInvitations({ invitations }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{r.t("pending_email_column")}</TableHead>
-              <TableHead>{r.t("pending_permissions_column")}</TableHead>
-              <TableHead>{r.t("pending_sent_column")}</TableHead>
-              <TableHead>{r.t("pending_expires_column")}</TableHead>
-              <TableHead className="text-right">{r.t("pending_actions_column")}</TableHead>
+              <TableHead>{r.t("email_column")}</TableHead>
+              <TableHead>{r.t("permissions_column")}</TableHead>
+              <TableHead>{r.t("sent_column")}</TableHead>
+              <TableHead>{r.t("expires_column")}</TableHead>
+              <TableHead className="text-right">{r.t("actions_column")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -91,11 +137,11 @@ export function PendingInvitations({ invitations }: Props) {
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {slugs.length === 0 ? (
-                        <span className="text-muted-foreground text-xs">{r.t("pending_no_permissions")}</span>
+                        <span className="text-muted-foreground text-xs">{r.t("no_permissions")}</span>
                       ) : (
                         slugs.map((slug) => (
                           <Badge key={slug} variant="secondary" className="font-mono text-xs">
-                            {slug === "*" ? r.t("pending_full_access") : slug}
+                            {slug === "*" ? r.t("full_access") : slug}
                           </Badge>
                         ))
                       )}
@@ -106,7 +152,7 @@ export function PendingInvitations({ invitations }: Props) {
                   </TableCell>
                   <TableCell className="text-xs">
                     {isExpired ? (
-                      <Badge variant="destructive">{r.t("pending_expired_badge")}</Badge>
+                      <Badge variant="destructive">{r.t("expired_badge")}</Badge>
                     ) : (
                       <span className="text-muted-foreground">
                         {dateFormatter.format(new Date(inv["invitation_expires_at"]))}
@@ -121,7 +167,7 @@ export function PendingInvitations({ invitations }: Props) {
                       disabled={pendingId === inv["invitation_id"]}
                       onClick={() => cancel(inv["invitation_id"], inv["invitation_email"])}
                     >
-                      {pendingId === inv["invitation_id"] ? r.t("pending_cancelling") : r.t("pending_cancel")}
+                      {pendingId === inv["invitation_id"] ? r.t("cancelling") : r.t("cancel")}
                     </Button>
                   </TableCell>
                 </TableRow>
