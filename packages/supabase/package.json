@@ -37,7 +37,7 @@
     "@next/env": "^16.0.0",
     "@packages/typescript-config": "workspace:*",
     "@supabase/ssr": "^0.10.3",
-    "@supabase/supabase-js": "^2.4.0",
+    "@supabase/supabase-js": "^2.106.2",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.15",
     "graphql": "^16.13.2",
