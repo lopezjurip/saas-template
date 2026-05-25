@@ -9,6 +9,7 @@ export const alt = "Humane";
 const LOCALES: Record<SupportedLocale, { title: string; tagline: string; tag: string }> = {
   es: { title: "Humane", tagline: "HR y Nómina para empresas chilenas", tag: "Chat-first" },
   en: { title: "Humane", tagline: "HR & Payroll for Chilean companies", tag: "Chat-first" },
+  pt: { title: "Humane", tagline: "RH e Folha de pagamento para empresas chilenas", tag: "Chat-first" },
 };
 
 export default async function Image({ params }: { params: Promise<{ locale: string }> }) {

@@ -1,3 +1,4 @@
+import { RosettaImpl } from "@packages/rosetta/rosetta";
 import { createServerClient, getSupabaseServerUserMetadata } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
@@ -12,7 +13,9 @@ import {
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47 } from "~/lib/i18n";
 import { InviteMemberDialog } from "./invite-dialog";
+import { MEMBERS_LOCALES } from "./locales";
 import { PendingInvitations } from "./pending-invitations";
 import { MembersMatrix } from "./permissions-matrix";
 
@@ -25,6 +28,9 @@ export default async function MembersAdminPage({
 }) {
   const { locale, tenant_slug } = await params;
   const { organization: organization_slug_param } = await searchParams;
+
+  if (!IS_SUPPORTED_LOCALE(locale)) notFound();
+  const r = RosettaImpl.fromDictionary(MEMBERS_LOCALES, LOCALE_TO_BCP47[locale]);
 
   const metadata = await getSupabaseServerUserMetadata();
   if (!metadata) {
@@ -60,14 +66,14 @@ export default async function MembersAdminPage({
             <Button asChild variant="ghost" size="sm" className="text-muted-foreground w-fit -ml-2">
               <Link href={`/${locale}/${tenant_slug}`}>
                 <ChevronLeft className="h-4 w-4" />
-                Volver
+                {r.t("back")}
               </Link>
             </Button>
-            <CardTitle>Miembros y permisos</CardTitle>
+            <CardTitle>{r.t("page_title")}</CardTitle>
           </CardHeader>
           <CardContent>
             <Alert variant="destructive">
-              <AlertDescription>No tienes permiso para administrar miembros en esta empresa.</AlertDescription>
+              <AlertDescription>{r.t("no_permission_alert")}</AlertDescription>
             </Alert>
           </CardContent>
         </Card>
@@ -168,12 +174,12 @@ export default async function MembersAdminPage({
           <Button asChild variant="ghost" size="sm" className="text-muted-foreground w-fit -ml-2">
             <Link href={`/${locale}/${tenant_slug}`}>
               <ChevronLeft className="h-4 w-4" />
-              Volver
+              {r.t("back")}
             </Link>
           </Button>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <CardTitle>Miembros y permisos</CardTitle>
+              <CardTitle>{r.t("page_title")}</CardTitle>
               <CardDescription>
                 {active_org["organization_name"]}
                 {orgs.length > 1 ? (
@@ -210,20 +216,16 @@ export default async function MembersAdminPage({
         <CardContent className="flex flex-col gap-8">
           <section className="flex flex-col gap-3">
             <div>
-              <h2 className="text-sm font-medium">Matriz de permisos</h2>
-              <p className="text-muted-foreground text-xs">
-                Marca o desmarca cada capacidad por miembro. Los cambios se guardan al instante.
-              </p>
+              <h2 className="text-sm font-medium">{r.t("matrix_heading")}</h2>
+              <p className="text-muted-foreground text-xs">{r.t("matrix_description")}</p>
             </div>
             <MembersMatrix organization_id={organization_id} permissions={permissionsCatalog} members={members} />
           </section>
 
           <section className="flex flex-col gap-3">
             <div>
-              <h2 className="text-sm font-medium">Invitaciones pendientes</h2>
-              <p className="text-muted-foreground text-xs">
-                Cuando alguien acepta el correo, aparece como miembro arriba.
-              </p>
+              <h2 className="text-sm font-medium">{r.t("pending_heading")}</h2>
+              <p className="text-muted-foreground text-xs">{r.t("pending_description")}</p>
             </div>
             <PendingInvitations
               invitations={invitations.map((i) => ({

@@ -14,6 +14,7 @@ export const RESERVED_TENANT_SLUGS = new Set<string>([
   "dashboard",
   "en",
   "es",
+  "pt",
   "health",
   "me",
   "notifications",

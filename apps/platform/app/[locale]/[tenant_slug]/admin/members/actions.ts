@@ -1,13 +1,16 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+import { RosettaImpl } from "@packages/rosetta/rosetta";
 import type { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { debug } from "~/lib/debug";
+import { LOCALE_TO_BCP47 } from "~/lib/i18n";
 import { getServerLocale } from "~/lib/i18n.server";
 import { authedAction } from "~/lib/safe-action";
+import { MEMBERS_LOCALES } from "./locales";
 import {
   cancelInvitationSchema,
   demoteWildcardSchema,
@@ -22,22 +25,28 @@ const log = debug("admin:members");
 const INVITATION_TTL_DAYS = 14;
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createServerClient>>;
+type MembersRosetta = RosettaImpl<(typeof MEMBERS_LOCALES)["es"]>;
 
 function GENERATE_INVITATION_TOKEN(): string {
   return randomBytes(32).toString("base64url");
 }
 
-async function ASSERT_MEMBERS_MANAGE(supabase: SupabaseServerClient, organization_id: number) {
+async function GET_ROSETTA(): Promise<MembersRosetta> {
+  const locale = await getServerLocale();
+  return RosettaImpl.fromDictionary(MEMBERS_LOCALES, LOCALE_TO_BCP47[locale]);
+}
+
+async function ASSERT_MEMBERS_MANAGE(supabase: SupabaseServerClient, r: MembersRosetta, organization_id: number) {
   const { data, error } = await supabase.rpc("viewer_has_permission", {
     target_organization_id: organization_id,
     target_permission_id: "members_manage",
   });
   if (error) {
     log.error("permission check failed", { organization_id, error });
-    throw new Error("No pudimos verificar tus permisos");
+    throw new Error(r.t("error_permission_check"));
   }
   if (!data) {
-    throw new Error("No tienes permiso para administrar miembros en esta organización");
+    throw new Error(r.t("error_no_permission"));
   }
 }
 
@@ -45,6 +54,7 @@ async function ASSERT_MEMBERS_MANAGE(supabase: SupabaseServerClient, organizatio
 // Used to prevent locking the org out of its own admin surface.
 async function HAS_OTHER_MANAGER(
   admin: ReturnType<typeof createServiceRoleClient>,
+  r: MembersRosetta,
   organization_id: number,
   excluded_profile_id: string,
 ): Promise<boolean> {
@@ -57,7 +67,7 @@ async function HAS_OTHER_MANAGER(
     .limit(1);
   if (error) {
     log.error("has-other-manager check failed", { organization_id, excluded_profile_id, error });
-    throw new Error("No pudimos verificar la estructura de permisos");
+    throw new Error(r.t("error_permission_structure"));
   }
   return (data?.length ?? 0) > 0;
 }
@@ -65,7 +75,8 @@ async function HAS_OTHER_MANAGER(
 export const actionInviteMember = authedAction
   .inputSchema(inviteMemberSchema)
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
-    await ASSERT_MEMBERS_MANAGE(supabase, parsedInput.organization_id);
+    const r = await GET_ROSETTA();
+    await ASSERT_MEMBERS_MANAGE(supabase, r, parsedInput.organization_id);
 
     const admin = createServiceRoleClient();
 
@@ -80,12 +91,12 @@ export const actionInviteMember = authedAction
         organization_id: parsedInput.organization_id,
         error: orgRes.error,
       });
-      throw new Error("Organización no encontrada");
+      throw new Error(r.t("error_org_not_found"));
     }
 
     const tenant_slug = orgRes.data["tenants"]?.["tenant_slug"];
     if (!tenant_slug) {
-      throw new Error("Tenant no encontrado");
+      throw new Error(r.t("error_tenant_not_found"));
     }
 
     const dup = await admin
@@ -98,7 +109,7 @@ export const actionInviteMember = authedAction
       .maybeSingle();
 
     if (dup.data) {
-      throw new Error("Ya hay una invitación pendiente para ese correo en esta organización");
+      throw new Error(r.t("error_invitation_duplicate"));
     }
 
     // If the email already belongs to a member of this org, skip the invite.
@@ -116,7 +127,7 @@ export const actionInviteMember = authedAction
           .is("membership_disabled_at", null)
           .maybeSingle();
         if (member.data) {
-          throw new Error("Ese correo ya pertenece a un miembro de la organización");
+          throw new Error(r.t("error_email_already_member"));
         }
       }
     }
@@ -143,7 +154,7 @@ export const actionInviteMember = authedAction
         organization_id: parsedInput.organization_id,
         error: insertRes.error,
       });
-      throw new Error("No pudimos crear la invitación");
+      throw new Error(r.t("error_invite_failed"));
     }
 
     // Try to send the magic-link email via Supabase Auth (creates the user if absent).
@@ -178,6 +189,7 @@ export const actionInviteMember = authedAction
 export const actionCancelInvitation = authedAction
   .inputSchema(cancelInvitationSchema)
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
+    const r = await GET_ROSETTA();
     const admin = createServiceRoleClient();
 
     const invRes = await admin
@@ -191,10 +203,10 @@ export const actionCancelInvitation = authedAction
         invitation_id: parsedInput.invitation_id,
         error: invRes.error,
       });
-      throw new Error("Invitación no encontrada");
+      throw new Error(r.t("error_invitation_not_found"));
     }
 
-    await ASSERT_MEMBERS_MANAGE(supabase, invRes.data.organization_id);
+    await ASSERT_MEMBERS_MANAGE(supabase, r, invRes.data.organization_id);
 
     const tenant_slug = invRes.data["organizations"]?.["tenants"]?.["tenant_slug"];
 
@@ -214,7 +226,7 @@ export const actionCancelInvitation = authedAction
         invitation_id: parsedInput.invitation_id,
         error,
       });
-      throw new Error("No pudimos cancelar la invitación");
+      throw new Error(r.t("error_cancel_failed"));
     }
 
     if (tenant_slug) {
@@ -225,10 +237,11 @@ export const actionCancelInvitation = authedAction
 export const actionTogglePermission = authedAction
   .inputSchema(togglePermissionSchema)
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
-    await ASSERT_MEMBERS_MANAGE(supabase, parsedInput.organization_id);
+    const r = await GET_ROSETTA();
+    await ASSERT_MEMBERS_MANAGE(supabase, r, parsedInput.organization_id);
 
     if (parsedInput.permission_id === PERMISSION_SLUG_WILDCARD) {
-      throw new Error("Usa la opción 'Acceso completo' en lugar de marcar el comodín");
+      throw new Error(r.t("error_wildcard_usage"));
     }
 
     const admin = createServiceRoleClient();
@@ -237,9 +250,9 @@ export const actionTogglePermission = authedAction
     if (
       !parsedInput.granted &&
       parsedInput.permission_id === "members_manage" &&
-      !(await HAS_OTHER_MANAGER(admin, parsedInput.organization_id, parsedInput.profile_id))
+      !(await HAS_OTHER_MANAGER(admin, r, parsedInput.organization_id, parsedInput.profile_id))
     ) {
-      throw new Error("No puedes quitar el último administrador de la organización");
+      throw new Error(r.t("error_last_manager_revoke"));
     }
 
     if (parsedInput.granted) {
@@ -259,7 +272,7 @@ export const actionTogglePermission = authedAction
           permission_id: parsedInput.permission_id,
           error,
         });
-        throw new Error("No pudimos otorgar el permiso");
+        throw new Error(r.t("error_grant_failed"));
       }
     } else {
       const { error } = await admin
@@ -276,7 +289,7 @@ export const actionTogglePermission = authedAction
           permission_id: parsedInput.permission_id,
           error,
         });
-        throw new Error("No pudimos quitar el permiso");
+        throw new Error(r.t("error_revoke_failed"));
       }
     }
 
@@ -286,16 +299,17 @@ export const actionTogglePermission = authedAction
 export const actionDemoteWildcard = authedAction
   .inputSchema(demoteWildcardSchema)
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
-    await ASSERT_MEMBERS_MANAGE(supabase, parsedInput.organization_id);
+    const r = await GET_ROSETTA();
+    await ASSERT_MEMBERS_MANAGE(supabase, r, parsedInput.organization_id);
 
     if (parsedInput.profile_id === user.id) {
-      throw new Error("No puedes quitarte tu acceso completo a ti mismo");
+      throw new Error(r.t("error_self_demote"));
     }
 
     const admin = createServiceRoleClient();
 
-    if (!(await HAS_OTHER_MANAGER(admin, parsedInput.organization_id, parsedInput.profile_id))) {
-      throw new Error("No puedes quitar el acceso completo al último administrador");
+    if (!(await HAS_OTHER_MANAGER(admin, r, parsedInput.organization_id, parsedInput.profile_id))) {
+      throw new Error(r.t("error_last_manager_demote"));
     }
 
     const { error } = await admin
@@ -312,7 +326,7 @@ export const actionDemoteWildcard = authedAction
         organization_id: parsedInput.organization_id,
         error,
       });
-      throw new Error("No pudimos remover el acceso completo");
+      throw new Error(r.t("error_demote_failed"));
     }
 
     revalidatePath(`/${await getServerLocale()}`, "layout");
@@ -321,16 +335,17 @@ export const actionDemoteWildcard = authedAction
 export const actionRemoveMember = authedAction
   .inputSchema(removeMemberSchema)
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
-    await ASSERT_MEMBERS_MANAGE(supabase, parsedInput.organization_id);
+    const r = await GET_ROSETTA();
+    await ASSERT_MEMBERS_MANAGE(supabase, r, parsedInput.organization_id);
 
     if (parsedInput.profile_id === user.id) {
-      throw new Error("No puedes removerte a ti mismo");
+      throw new Error(r.t("error_self_remove"));
     }
 
     const admin = createServiceRoleClient();
 
-    if (!(await HAS_OTHER_MANAGER(admin, parsedInput.organization_id, parsedInput.profile_id))) {
-      throw new Error("No puedes remover al último administrador de la organización");
+    if (!(await HAS_OTHER_MANAGER(admin, r, parsedInput.organization_id, parsedInput.profile_id))) {
+      throw new Error(r.t("error_last_manager_remove"));
     }
 
     const { error } = await admin
@@ -346,7 +361,7 @@ export const actionRemoveMember = authedAction
         organization_id: parsedInput.organization_id,
         error,
       });
-      throw new Error("No pudimos remover al miembro");
+      throw new Error(r.t("error_remove_failed"));
     }
 
     revalidatePath(`/${await getServerLocale()}`, "layout");

@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 
-export const SUPPORTED_LOCALES = ["es", "en"] as const;
+export const SUPPORTED_LOCALES = ["es", "en", "pt"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 export const DEFAULT_LOCALE: SupportedLocale = "es";
@@ -9,11 +9,13 @@ export const DEFAULT_LOCALE: SupportedLocale = "es";
 export const LOCALE_TO_BCP47: Record<SupportedLocale, string> = {
   es: "es-CL",
   en: "en-US",
+  pt: "pt-BR",
 };
 
 export const LOCALE_LABEL: Record<SupportedLocale, string> = {
   es: "Español",
   en: "English",
+  pt: "Português",
 };
 
 export const LOCALE_COOKIE = "NEXT_LOCALE";

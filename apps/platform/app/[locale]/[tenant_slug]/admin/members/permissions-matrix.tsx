@@ -13,7 +13,9 @@ import {
 } from "@packages/ui-common/shadcn/components/ui/table";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { actionDemoteWildcard, actionRemoveMember, actionTogglePermission } from "./actions";
+import { MEMBERS_LOCALES } from "./locales";
 
 interface PermissionRow {
   permission_id: string;
@@ -58,6 +60,7 @@ function APPLY_OPTIMISTIC(state: MemberRow[], action: OptimisticAction): MemberR
 }
 
 export function MembersMatrix({ organization_id, permissions, members }: Props) {
+  const r = useRosetta(MEMBERS_LOCALES);
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -93,8 +96,8 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
   };
 
   const removeMember = (member: MemberRow) => {
-    const label = member.profile_name_full ?? member.email ?? "este miembro";
-    if (!window.confirm(`¿Remover a ${label}? Perderá acceso a la organización.`)) return;
+    const name = member.profile_name_full ?? member.email ?? r.t("matrix_unknown_member");
+    if (!window.confirm(r.t("matrix_remove_confirm", { name }))) return;
     setError(null);
     startTransition(async () => {
       applyOptimistic({ kind: "remove", profile_id: member.profile_id });
@@ -107,11 +110,7 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
   };
 
   if (optimisticMembers.length === 0) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        Esta organización aún no tiene miembros. Invita al primero arriba a la derecha.
-      </p>
-    );
+    return <p className="text-muted-foreground text-sm">{r.t("matrix_empty")}</p>;
   }
 
   return (
@@ -121,7 +120,9 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="sticky left-0 z-10 bg-background min-w-[14rem]">Miembro</TableHead>
+              <TableHead className="sticky left-0 z-10 bg-background min-w-[14rem]">
+                {r.t("matrix_member_column")}
+              </TableHead>
               {permissions.map((perm) => (
                 <TableHead key={perm["permission_id"]} className="text-center align-bottom">
                   <div className="flex flex-col items-center gap-1">
@@ -129,72 +130,70 @@ export function MembersMatrix({ organization_id, permissions, members }: Props) 
                   </div>
                 </TableHead>
               ))}
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead className="text-right">{r.t("matrix_actions_column")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {optimisticMembers.map((member) => (
-              <TableRow key={member.profile_id}>
-                <TableCell className="sticky left-0 z-10 bg-background min-w-[14rem]">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">
-                      {member.profile_name_full ?? member.email ?? member.profile_id.slice(0, 8)}
-                    </span>
-                    {member.email && <span className="text-muted-foreground text-xs">{member.email}</span>}
-                    {member.has_wildcard && (
-                      <Badge variant="default" className="mt-1 w-fit">
-                        Acceso completo
-                      </Badge>
-                    )}
-                  </div>
-                </TableCell>
-                {member.has_wildcard ? (
-                  <TableCell colSpan={permissions.length} className="text-center text-muted-foreground text-sm">
-                    Tiene acceso a todos los permisos actuales y futuros.
+            {optimisticMembers.map((member) => {
+              const memberName = member.profile_name_full ?? member.email ?? member.profile_id.slice(0, 8);
+              return (
+                <TableRow key={member.profile_id}>
+                  <TableCell className="sticky left-0 z-10 bg-background min-w-[14rem]">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{memberName}</span>
+                      {member.email && <span className="text-muted-foreground text-xs">{member.email}</span>}
+                      {member.has_wildcard && (
+                        <Badge variant="default" className="mt-1 w-fit">
+                          {r.t("matrix_full_access_badge")}
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
-                ) : (
-                  permissions.map((perm) => {
-                    const slug = perm["permission_id"];
-                    const checked = member.permissions.includes(slug);
-                    return (
-                      <TableCell key={slug} className="text-center">
-                        <Checkbox
-                          checked={checked}
-                          disabled={pending}
-                          aria-label={`${slug} para ${member.profile_name_full ?? member.email ?? member.profile_id}`}
-                          onCheckedChange={(value) => togglePermission(member, slug, Boolean(value))}
-                        />
-                      </TableCell>
-                    );
-                  })
-                )}
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    {member.has_wildcard && (
-                      <Button size="sm" variant="outline" disabled={pending} onClick={() => demoteWildcard(member)}>
-                        Quitar acceso completo
+                  {member.has_wildcard ? (
+                    <TableCell colSpan={permissions.length} className="text-center text-muted-foreground text-sm">
+                      {r.t("matrix_full_access_row")}
+                    </TableCell>
+                  ) : (
+                    permissions.map((perm) => {
+                      const slug = perm["permission_id"];
+                      const checked = member.permissions.includes(slug);
+                      return (
+                        <TableCell key={slug} className="text-center">
+                          <Checkbox
+                            checked={checked}
+                            disabled={pending}
+                            aria-label={r.t("matrix_aria_cell", { slug, name: memberName })}
+                            onCheckedChange={(value) => togglePermission(member, slug, Boolean(value))}
+                          />
+                        </TableCell>
+                      );
+                    })
+                  )}
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      {member.has_wildcard && (
+                        <Button size="sm" variant="outline" disabled={pending} onClick={() => demoteWildcard(member)}>
+                          {r.t("matrix_demote_button")}
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        disabled={pending}
+                        onClick={() => removeMember(member)}
+                      >
+                        {r.t("matrix_remove_button")}
                       </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      disabled={pending}
-                      onClick={() => removeMember(member)}
-                    >
-                      Remover
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
-      <p className="text-muted-foreground text-xs">
-        Cuando alguien tiene "acceso completo" el comodín cubre cualquier permiso. Quítalo si quieres asignar permisos
-        de forma individual.
-      </p>
+      <p className="text-muted-foreground text-xs">{r.t("matrix_wildcard_footer")}</p>
     </div>
   );
 }

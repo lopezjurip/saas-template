@@ -20,7 +20,9 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { UserPlus } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { actionInviteMember } from "./actions";
+import { MEMBERS_LOCALES } from "./locales";
 import { type InviteMemberValues, inviteMemberSchema, PERMISSION_SLUG_WILDCARD } from "./schemas";
 
 interface PermissionRow {
@@ -43,6 +45,7 @@ interface Props {
 }
 
 export function InviteMemberDialog({ organization_id, organization_name, permissions, presets }: Props) {
+  const r = useRosetta(MEMBERS_LOCALES);
   const [open, setOpen] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -85,7 +88,7 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
         return;
       }
       if (res?.validationErrors) {
-        setServerError("Formulario inválido");
+        setServerError(r.t("invite_form_invalid"));
         return;
       }
       reset();
@@ -104,25 +107,23 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="h-4 w-4" />
-          Invitar
+          {r.t("invite_button")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Invitar a {organization_name}</DialogTitle>
-          <DialogDescription>
-            Enviaremos un correo con un link mágico. La persona elegirá su contraseña o passkey al entrar.
-          </DialogDescription>
+          <DialogTitle>{r.t("invite_dialog_title", { organization: organization_name })}</DialogTitle>
+          <DialogDescription>{r.t("invite_dialog_description")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="invitation_email">Correo</Label>
+            <Label htmlFor="invitation_email">{r.t("invite_email_label")}</Label>
             <Input
               id="invitation_email"
               type="email"
               autoComplete="email"
-              placeholder="nombre@empresa.cl"
+              placeholder={r.t("invite_email_placeholder")}
               aria-invalid={!!form.formState.errors.invitation_email}
               {...form.register("invitation_email")}
             />
@@ -133,7 +134,7 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
 
           {presets.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <Label>Plantillas</Label>
+              <Label>{r.t("invite_presets_label")}</Label>
               <div className="flex flex-wrap gap-2">
                 {presets.map((preset) => (
                   <Button
@@ -146,21 +147,19 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
                     {preset["permission_preset_name"]}
                     {preset["organization_id"] === null ? (
                       <Badge variant="secondary" className="ml-1 text-xs">
-                        global
+                        {r.t("invite_preset_global_badge")}
                       </Badge>
                     ) : null}
                   </Button>
                 ))}
               </div>
-              <p className="text-muted-foreground text-xs">
-                Aplica una plantilla y luego ajusta los permisos individualmente si lo necesitas.
-              </p>
+              <p className="text-muted-foreground text-xs">{r.t("invite_presets_hint")}</p>
             </div>
           )}
 
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
-              <Label>Permisos ({selectedCount})</Label>
+              <Label>{r.t("invite_permissions_label", { count: selectedCount })}</Label>
               {selectedCount > 0 && (
                 <Button
                   type="button"
@@ -170,7 +169,7 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
                     form.setValue("invitation_permission_slugs", [], { shouldValidate: true, shouldDirty: true })
                   }
                 >
-                  Limpiar
+                  {r.t("invite_clear_button")}
                 </Button>
               )}
             </div>
@@ -191,11 +190,9 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
               />
               <div className="flex flex-col">
                 <Label htmlFor="perm_wildcard" className="cursor-pointer font-medium">
-                  Acceso completo (dueño)
+                  {r.t("invite_wildcard_label")}
                 </Label>
-                <span className="text-muted-foreground text-xs">
-                  Cubre todos los permisos actuales y futuros de la organización.
-                </span>
+                <span className="text-muted-foreground text-xs">{r.t("invite_wildcard_description")}</span>
               </div>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -236,11 +233,11 @@ export function InviteMemberDialog({ organization_id, organization_name, permiss
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="ghost" disabled={pending}>
-                Cancelar
+                {r.t("invite_cancel")}
               </Button>
             </DialogClose>
             <Button type="submit" disabled={pending}>
-              {pending ? "Enviando…" : "Enviar invitación"}
+              {pending ? r.t("invite_submitting") : r.t("invite_submit")}
             </Button>
           </DialogFooter>
         </form>
