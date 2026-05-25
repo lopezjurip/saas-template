@@ -1,0 +1,5 @@
+<h2>Tu enlace para iniciar sesión</h2>
+
+<p>Sigue este enlace para entrar a Humane:</p>
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next={{ .RedirectTo }}">Iniciar sesión</a></p>
+<p>O ingresa el código: <strong>{{ .Token }}</strong></p>

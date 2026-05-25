@@ -20,7 +20,7 @@ export const signUp = action.inputSchema(signupSchema).action(async ({ parsedInp
     password: parsedInput.password,
     options: {
       data: { full_name: parsedInput.full_name },
-      emailRedirectTo: `${origin}/${locale}/auth/callback?next=/${locale}/onboarding`,
+      emailRedirectTo: `${origin}/${locale}/onboarding`,
     },
   });
 

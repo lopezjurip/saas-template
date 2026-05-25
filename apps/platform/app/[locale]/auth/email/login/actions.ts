@@ -32,7 +32,7 @@ export const sendMagicLink = action.inputSchema(magicLinkSchema).action(async ({
     email,
     options: {
       shouldCreateUser: false,
-      emailRedirectTo: `${origin}/${locale}/auth/callback`,
+      emailRedirectTo: `${origin}/${locale}/dashboard`,
     },
   });
   if (error) {
