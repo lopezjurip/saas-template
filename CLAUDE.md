@@ -343,10 +343,22 @@ Stage normally in git. Ignore when writing commit messages:
 
 ## Testing Strategy
 
-- Payroll calculations: unit tests with known inputs/outputs from `04-legal-regulatory-compendium.md`
-- Run parallel calculations against Buk output during migration (internal ops validates)
-- Every new regulatory rule gets a test case before the implementation
-- RLS policies: test with different permission grants per profile to verify isolation
+Three layers, each owned by a different runner:
+
+| Layer | Runner | Command | Lives in |
+|---|---|---|---|
+| TypeScript units | Vitest | `pnpm test` (turbo) | `packages/*/src/**/*.test.ts` |
+| SQL (RLS, viewer_*, triggers, hook) | pgTAP via `supabase test db` | `pnpm test:db` | `packages/supabase/supabase/tests/**/*.test.sql` |
+| End-to-end UI journeys | Playwright + Chromium | `pnpm test:e2e` | `apps/platform/tests/e2e/**/*.spec.ts` |
+
+`pnpm test:db` and `pnpm test:e2e` both run against the same local Supabase as `pnpm dev`. The pgTAP tests wrap themselves in `begin … rollback` so they leave no trace; Playwright provisions/cleans up its own users via `auth.admin`. Playwright assumes a dev server is already running (`pnpm dev`).
+
+Guidelines:
+- Payroll calculations: unit tests with known inputs/outputs from `04-legal-regulatory-compendium.md`.
+- Run parallel calculations against Buk output during migration (internal ops validates).
+- Every new regulatory rule gets a test case before the implementation.
+- RLS policies: add a pgTAP file under `packages/supabase/supabase/tests/`; mock the caller with `set local role authenticated; set local request.jwt.claims to '…';`. Without `set local role`, RLS is bypassed silently.
+- User journeys (`docs/08-user-journeys.md`): add a Playwright spec under `tests/e2e/journeys/{role}/...`. Pre-create users with `CREATE_CONFIRMED_USER` from the supabase fixture; clean up in `afterAll`. Don't fight onboarding — it's not a hard gate (see `proxy.ts:161-164`); skip it via `page.goto` unless you're testing onboarding itself.
 
 ## What NOT to Do
 

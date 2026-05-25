@@ -4,6 +4,9 @@
 -- Extensions
 create extension if not exists "moddatetime" schema extensions;
 create extension if not exists "citext" schema extensions;
+-- pgTAP powers `supabase test db` (see packages/supabase/supabase/tests/). The extension
+-- only ships SQL helpers (plan/ok/is/throws_ok/…); it doesn't alter runtime behavior.
+create extension if not exists "pgtap" schema extensions;
 
 -- ============================================================
 -- Schemas
