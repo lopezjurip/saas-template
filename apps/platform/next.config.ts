@@ -6,7 +6,10 @@ import pkg from "~/package.json" with { type: "json" };
 
 const envDir = path.resolve(import.meta.dirname, "../..");
 console.log(`[next.config.ts] Loading environment variables from ${envDir}`);
-loadEnvConfig(envDir);
+// forceReload=true: Next.js already ran loadEnvConfig(process.cwd()) before evaluating this
+// config, which cached an empty result for apps/platform/. Without forceReload the second call
+// short-circuits on that cache and silently skips the monorepo-root .env files.
+loadEnvConfig(envDir, (process.env.NODE_ENV ?? "development") !== "production", console, true);
 
 const NODE_ENV = process.env.NODE_ENV || "development";
 const NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;

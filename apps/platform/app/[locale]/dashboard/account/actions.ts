@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { z } from "zod";
+import { isOAuthProvider, OAUTH_PROVIDER_IDS } from "~/app/[locale]/auth/providers";
 import { debug } from "~/lib/debug";
 import { getServerLocale } from "~/lib/i18n.server";
-import { authedAction } from "~/lib/safe-action";
+import { authedAction, formAction } from "~/lib/safe-action";
 
 const log = debug("account");
 
@@ -142,3 +145,39 @@ export const actionSetPassword = authedAction
     }
     revalidatePath(`/${await getServerLocale()}/dashboard/account`);
   });
+
+const linkProviderSchema = z.object({
+  provider: z.enum(OAUTH_PROVIDER_IDS),
+});
+
+// Starts the OAuth flow to add a new identity to the *current* session. Requires Manual
+// Linking to be enabled in Supabase Auth (Authentication → Settings). After the user finishes
+// the consent flow the callback brings them back to /dashboard/account.
+const linkProviderRun = authedAction
+  .inputSchema(linkProviderSchema)
+  .action(async ({ parsedInput: { provider }, ctx: { supabase, user } }) => {
+    const headerList = await headers();
+    const origin = headerList.get("origin") ?? `https://${headerList.get("host")}`;
+    const locale = await getServerLocale();
+
+    const { data, error } = await supabase.auth.linkIdentity({
+      provider,
+      options: {
+        redirectTo: `${origin}/${locale}/auth/callback?next=${encodeURIComponent(`/${locale}/dashboard/account`)}`,
+      },
+    });
+
+    if (error || !data?.url) {
+      log.error("linkIdentity failed", { profile_id: user.id, provider, error });
+      redirect(`/${locale}/dashboard/account?error=${encodeURIComponent(error?.message ?? "link_failed")}`);
+    }
+    redirect(data.url);
+  });
+
+export const actionLinkProvider = formAction(linkProviderRun, (fd) => {
+  const provider = String(fd.get("provider") ?? "");
+  if (!isOAuthProvider(provider)) {
+    throw new Error("Provider desconocido");
+  }
+  return { provider };
+});

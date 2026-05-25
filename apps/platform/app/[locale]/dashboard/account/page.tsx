@@ -1,4 +1,5 @@
 import { getSupabaseServerSession, getSupabaseServerUser } from "@packages/supabase/client.server";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
   Card,
@@ -15,6 +16,7 @@ import { redirect } from "next/navigation";
 import { OAUTH_PROVIDERS, type OAuthProviderId } from "~/app/[locale]/auth/providers";
 import { gql } from "~/generated/graphql";
 import { createGraphy } from "~/lib/graphy/graphy.browser";
+import { actionLinkProvider } from "./actions";
 import { EmailForm } from "./email-form";
 import { PasskeysSection } from "./passkeys-section";
 import { PasswordForm } from "./password-form";
@@ -59,8 +61,16 @@ function LABEL_FOR_PROVIDER(provider: string): string {
   return OAUTH_PROVIDER_LABEL[provider as OAuthProviderId] ?? provider;
 }
 
-export default async function AccountPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function AccountPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { locale } = await params;
+  const { error: errorParam } = await searchParams;
+  const error = errorParam ? decodeURIComponent(errorParam) : null;
   const [user, session] = await Promise.all([getSupabaseServerUser(), getSupabaseServerSession()]);
   if (!user) redirect(`/${locale}/auth`);
 
@@ -71,6 +81,8 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
 
   const identities = user["identities"] ?? [];
   const hasPassword = identities.some((i) => i["provider"] === "email");
+  const linkedProviderIds = new Set(identities.map((i) => i["provider"]));
+  const unlinkedProviders = OAUTH_PROVIDERS.filter((p) => !linkedProviderIds.has(p.id));
 
   return (
     <main className="bg-muted flex min-h-svh items-start justify-center p-6">
@@ -87,6 +99,11 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
         </CardHeader>
 
         <CardContent className="flex flex-col gap-8">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <section className="flex flex-col gap-3">
             <div>
               <h2 className="text-sm font-medium">Perfil</h2>
@@ -154,6 +171,21 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
                   </li>
                 ))}
               </ul>
+            )}
+            {unlinkedProviders.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <p className="text-muted-foreground text-xs">Vincula otro proveedor para tener más formas de entrar.</p>
+                <div className="flex flex-wrap gap-2">
+                  {unlinkedProviders.map((provider) => (
+                    <form key={provider.id} action={actionLinkProvider}>
+                      <input type="hidden" name="provider" value={provider.id} />
+                      <Button type="submit" variant="outline" size="sm">
+                        Vincular {provider.label}
+                      </Button>
+                    </form>
+                  ))}
+                </div>
+              </div>
             )}
           </section>
 

@@ -1,4 +1,5 @@
-import { loadOnboardingState, RESOLVE_STEP } from "./state";
+import { RESOLVE_STEP } from "./state";
+import { loadOnboardingState } from "./state.server";
 import { EmailStep } from "./steps/email-step";
 import { FinishStep } from "./steps/finish-step";
 import { NameStep } from "./steps/name-step";
