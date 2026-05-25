@@ -153,6 +153,90 @@ export type Database = {
           },
         ];
       };
+      invitations: {
+        Row: {
+          invitation_accepted_at: string | null;
+          invitation_accepted_by_profile_id: string | null;
+          invitation_created_at: string;
+          invitation_email: string;
+          invitation_expires_at: string;
+          invitation_id: string;
+          invitation_permission_slugs: string[];
+          invitation_revoked_at: string | null;
+          invitation_revoked_by_profile_id: string | null;
+          invitation_token: string;
+          invitation_updated_at: string;
+          invited_by_profile_id: string | null;
+          organization_id: number;
+        };
+        Insert: {
+          invitation_accepted_at?: string | null;
+          invitation_accepted_by_profile_id?: string | null;
+          invitation_created_at?: string;
+          invitation_email: string;
+          invitation_expires_at: string;
+          invitation_id?: string;
+          invitation_permission_slugs: string[];
+          invitation_revoked_at?: string | null;
+          invitation_revoked_by_profile_id?: string | null;
+          invitation_token: string;
+          invitation_updated_at?: string;
+          invited_by_profile_id?: string | null;
+          organization_id: number;
+        };
+        Update: {
+          invitation_accepted_at?: string | null;
+          invitation_accepted_by_profile_id?: string | null;
+          invitation_created_at?: string;
+          invitation_email?: string;
+          invitation_expires_at?: string;
+          invitation_id?: string;
+          invitation_permission_slugs?: string[];
+          invitation_revoked_at?: string | null;
+          invitation_revoked_by_profile_id?: string | null;
+          invitation_token?: string;
+          invitation_updated_at?: string;
+          invited_by_profile_id?: string | null;
+          organization_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invitations_invitation_accepted_by_profile_id_fkey";
+            columns: ["invitation_accepted_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["profile_id"];
+          },
+          {
+            foreignKeyName: "invitations_invitation_revoked_by_profile_id_fkey";
+            columns: ["invitation_revoked_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["profile_id"];
+          },
+          {
+            foreignKeyName: "invitations_invited_by_profile_id_fkey";
+            columns: ["invited_by_profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["profile_id"];
+          },
+          {
+            foreignKeyName: "invitations_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["organization_id"];
+          },
+          {
+            foreignKeyName: "invitations_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "tenants_organizations_profiles";
+            referencedColumns: ["organization_id"];
+          },
+        ];
+      };
       membership_permissions: {
         Row: {
           membership_permission_created_at: string;

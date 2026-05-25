@@ -1478,3 +1478,96 @@ grant select on table public.tenant_domains to supabase_auth_admin;
 drop policy if exists "Allow auth admin to read tenant_domains." on public.tenant_domains;
 create policy "Allow auth admin to read tenant_domains."
   on public.tenant_domains as permissive for select to supabase_auth_admin using (true);
+
+-- ============================================================
+-- invitations
+-- ============================================================
+-- An invitation is a pending grant: "this email will join `organization_id` with the
+-- listed permission slugs once they accept". The accept flow (out of scope here) reads
+-- the row, creates a `memberships` + `membership_permissions` rows, then marks the
+-- invitation `accepted_at`. Soft-cancel via `invitation_revoked_at` keeps the audit
+-- trail and lets us prevent re-use of a token after revocation. The (organization_id,
+-- email) uniqueness is conditional on "still pending" so the same email can be
+-- re-invited after a revocation or acceptance.
+
+create table if not exists public.invitations (
+  invitation_id uuid not null primary key default internal.uuid_generate_v7(),
+  organization_id int not null references public.organizations (organization_id) on delete cascade,
+  invitation_email extensions.citext not null check (char_length(invitation_email) between 3 and 254),
+  invitation_permission_slugs extensions.citext[] not null check (cardinality(invitation_permission_slugs) > 0),
+  invitation_token text not null unique,
+  invited_by_profile_id uuid references public.profiles (profile_id) on delete set null,
+  invitation_expires_at timestamptz not null,
+  invitation_accepted_at timestamptz,
+  invitation_accepted_by_profile_id uuid references public.profiles (profile_id) on delete set null,
+  invitation_revoked_at timestamptz,
+  invitation_revoked_by_profile_id uuid references public.profiles (profile_id) on delete set null,
+  invitation_created_at timestamptz not null default current_timestamp,
+  invitation_updated_at timestamptz not null default current_timestamp
+);
+
+-- One pending invite per (org, email). Partial unique index — accepted/revoked rows are
+-- excluded, so the same email can be re-invited after acceptance or revocation.
+create unique index if not exists invitations_pending_org_email_idx
+  on public.invitations (organization_id, invitation_email)
+  where invitation_accepted_at is null and invitation_revoked_at is null;
+
+create index if not exists invitations_organization_idx
+  on public.invitations (organization_id) where invitation_revoked_at is null;
+
+create index if not exists invitations_email_idx
+  on public.invitations (invitation_email) where invitation_accepted_at is null and invitation_revoked_at is null;
+
+drop trigger if exists handle_invitations_updated_at on public.invitations;
+create trigger handle_invitations_updated_at
+  before update on public.invitations
+  for each row execute procedure extensions.moddatetime(invitation_updated_at);
+
+-- Validate every slug in invitation_permission_slugs exists in the permissions catalog.
+create or replace function internal.invitations_validate_slugs()
+  returns trigger
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _missing extensions.citext[];
+    begin
+      select array_agg(s)
+        into _missing
+        from unnest(NEW.invitation_permission_slugs) s
+        where s not in (select permission_id from public.permissions);
+      if _missing is not null and cardinality(_missing) > 0 then
+        raise exception 'Unknown permission slug(s) in invitation: %', _missing;
+      end if;
+      return NEW;
+    end;
+  $$;
+
+drop trigger if exists invitations_trigger_validate_slugs on public.invitations;
+create trigger invitations_trigger_validate_slugs
+  before insert or update of invitation_permission_slugs on public.invitations
+  for each row execute procedure internal.invitations_validate_slugs();
+
+alter table public.invitations enable row level security;
+
+revoke all on table public.invitations from anon, authenticated;
+-- anon is required for graphql; RLS still gates row access.
+grant select, insert, update, delete on table public.invitations to anon, authenticated;
+
+-- Co-members in the same organization can see its invitations.
+drop policy if exists "invitations select by co-members" on public.invitations;
+create policy "invitations select by co-members"
+  on public.invitations for select
+  to authenticated
+  using (
+    organization_id in (select public.viewer_organization_ids())
+    or public.viewer_is_concierge()
+  );
+
+-- Only users with `members_manage` in the organization can create/cancel invites.
+drop policy if exists "invitations write with members_manage" on public.invitations;
+create policy "invitations write with members_manage"
+  on public.invitations for all
+  to authenticated
+  using (organization_id in (select public.viewer_permission_org_ids('members_manage')))
+  with check (organization_id in (select public.viewer_permission_org_ids('members_manage')));
