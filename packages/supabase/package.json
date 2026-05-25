@@ -14,7 +14,8 @@
     "generate:types": "supabase gen types --lang=typescript --local --schema public > src/types.ts",
     "generate:graphql:schema": "graphql-codegen -c graphql.config.ts",
     "generate:graphql:schema:local": "graphql-codegen -c graphql.config.ts --local",
-    "format": "biome check --diagnostic-level=error ."
+    "format": "biome check --diagnostic-level=error .",
+    "test:db": "supabase test db --local"
   },
   "exports": {
     "./*": "./src/*.ts"

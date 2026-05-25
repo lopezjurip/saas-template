@@ -13,6 +13,8 @@
     "build:dry": "turbo run build:dry",
     "generate": "turbo run generate",
     "test": "turbo run test",
+    "test:db": "pnpm --filter @packages/supabase run test:db",
+    "test:e2e": "pnpm --filter @apps/platform run test:e2e",
     "format": "turbo run format && biome check --diagnostic-level=error .",
     "format:apply": "turbo run format -- --write && biome check --diagnostic-level=error --write .",
     "format:apply-unsafe": "turbo run format -- --write --unsafe && biome check --diagnostic-level=error --write --unsafe .",
