@@ -128,6 +128,9 @@ export const actionSetPassword = authedAction
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
     const { error } = await supabase.auth.updateUser({ password: parsedInput.password });
     if (error) {
+      if (error.code === "same_password") {
+        throw new Error("La nueva contraseña debe ser distinta a la actual");
+      }
       log.error("password update failed", { profile_id: user.id, error });
       throw new Error("No pudimos guardar la contraseña");
     }

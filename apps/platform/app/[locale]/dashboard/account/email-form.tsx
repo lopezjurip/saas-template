@@ -22,7 +22,7 @@ export function EmailForm({ currentEmail }: { currentEmail: string | null }) {
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { email: "" },
+    defaultValues: { email: currentEmail ?? "" },
   });
 
   const onSubmit = form.handleSubmit((values) => {
@@ -36,7 +36,7 @@ export function EmailForm({ currentEmail }: { currentEmail: string | null }) {
         setServerError("Correo inválido");
       } else {
         setPendingEmail(values.email);
-        form.reset({ email: "" });
+        form.reset({ email: values.email });
       }
     });
   });
