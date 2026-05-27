@@ -29,6 +29,8 @@ const LOCALE_ES = {
   org_not_found: "Organización no encontrada",
   tenant_not_found: "Tenant no encontrado",
   invitation_duplicate: "Ya hay una invitación pendiente para ese correo en esta organización",
+  phone_duplicate: "Ya hay una invitación pendiente para ese teléfono en esta organización",
+  phone_invalid: "El número de teléfono ingresado no es válido",
   email_already_member: "Ese correo ya pertenece a un miembro de la organización",
   invite_failed: "No pudimos crear la invitación",
   invitation_not_found: "Invitación no encontrada",
@@ -55,6 +57,8 @@ const LOCALES = {
     org_not_found: "Organization not found",
     tenant_not_found: "Tenant not found",
     invitation_duplicate: "There's already a pending invitation for that email in this organization",
+    phone_duplicate: "There's already a pending invitation for that phone number in this organization",
+    phone_invalid: "The phone number entered is not valid",
     email_already_member: "That email already belongs to a member of the organization",
     invite_failed: "We couldn't create the invitation",
     invitation_not_found: "Invitation not found",
@@ -78,6 +82,8 @@ const LOCALES = {
     org_not_found: "Organização não encontrada",
     tenant_not_found: "Tenant não encontrado",
     invitation_duplicate: "Já existe um convite pendente para esse e-mail nesta organização",
+    phone_duplicate: "Já existe um convite pendente para esse número de telefone nesta organização",
+    phone_invalid: "O número de telefone informado não é válido",
     email_already_member: "Esse e-mail já pertence a um membro da organização",
     invite_failed: "Não conseguimos criar o convite",
     invitation_not_found: "Convite não encontrado",
@@ -286,6 +292,48 @@ export const actionInviteMember = authedAction
         membership_id: insertRes.data["membership_id"],
         invitation_url: acceptUrl,
         channel: "email" as const,
+      };
+    }
+
+    if (parsedInput.channel === "phone") {
+      const phone = (parsedInput.invitation_phone ?? "").trim();
+      if (!phone) throw new Error(r.t("invite_failed"));
+
+      const token = GENERATE_INVITATION_TOKEN();
+
+      const insertRes = await admin
+        .from("memberships")
+        .insert({
+          organization_id: parsedInput.organization_id,
+          membership_invite_phone: phone,
+          membership_invite_token: token,
+          membership_invite_expires_at: expires_at,
+        })
+        .select("membership_id")
+        .single();
+
+      if (insertRes.error || !insertRes.data) {
+        log.error("membership phone insert failed", {
+          profile_id: user.id,
+          organization_id: parsedInput.organization_id,
+          error: insertRes.error,
+        });
+        if (insertRes.error?.code === "23505") {
+          throw new Error(r.t("phone_duplicate"));
+        }
+        if (insertRes.error?.message?.toLowerCase().includes("invalid invite phone")) {
+          throw new Error(r.t("phone_invalid"));
+        }
+        throw new Error(r.t("invite_failed"));
+      }
+
+      const acceptUrl = `${proto}://${host}/${locale}/auth/document/accept?token=${encodeURIComponent(token)}`;
+
+      revalidatePath(`/${locale}/${tenant_slug}/${parsedInput.organization_id}/settings/members`);
+      return {
+        membership_id: insertRes.data["membership_id"],
+        invitation_url: acceptUrl,
+        channel: "phone" as const,
       };
     }
 

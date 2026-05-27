@@ -14,9 +14,10 @@ export const permissionSlugSchema = z
 // before the admin commits to a permission shape.
 export const inviteMemberSchema = z
   .object({
-    channel: z.enum(["email", "document"]),
+    channel: z.enum(["email", "document", "phone"]),
     organization_id: z.number().int().positive(),
     invitation_email: z.string().optional().or(z.literal("")),
+    invitation_phone: z.string().optional().or(z.literal("")),
     address_level0_id: z.string().max(2).optional().or(z.literal("")),
     profile_identity_document_kind: z.enum(["nin", "passport"]).optional().or(z.literal("")),
     profile_identity_document_value: z.string().max(40).optional().or(z.literal("")),
@@ -26,6 +27,11 @@ export const inviteMemberSchema = z
       const raw = (vals.invitation_email || "").trim().toLowerCase();
       if (raw.length < 3 || raw.length > 254 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(raw)) {
         ctx.addIssue({ code: "custom", path: ["invitation_email"], message: "Correo inválido" });
+      }
+    } else if (vals.channel === "phone") {
+      const digits = (vals.invitation_phone || "").replace(/\D/g, "");
+      if (digits.length < 7 || digits.length > 15) {
+        ctx.addIssue({ code: "custom", path: ["invitation_phone"], message: "Teléfono inválido" });
       }
     } else {
       if (!vals.address_level0_id || vals.address_level0_id.length !== 2) {

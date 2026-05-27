@@ -22,8 +22,11 @@ const LOCALE_ES = {
   description: "Mandaremos la invitación. En el siguiente paso podrás definir los permisos.",
   channel_email: "Por email",
   channel_document: "Por documento",
+  channel_phone: "Por teléfono",
   email_label: "Correo",
   email_placeholder: "nombre@empresa.cl",
+  phone_label: "Teléfono",
+  phone_placeholder: "+56 9 1234 5678",
   submit: "Invitar",
   submitting: "Enviando…",
   cancel: "Cancelar",
@@ -41,8 +44,11 @@ const LOCALES = {
     description: "We'll send the invitation. In the next step you'll define their permissions.",
     channel_email: "By email",
     channel_document: "By document",
+    channel_phone: "By phone",
     email_label: "Email",
     email_placeholder: "name@company.com",
+    phone_label: "Phone",
+    phone_placeholder: "+56 9 1234 5678",
     submit: "Invite",
     submitting: "Sending…",
     cancel: "Cancel",
@@ -57,8 +63,11 @@ const LOCALES = {
     description: "Vamos enviar o convite. No próximo passo você define as permissões.",
     channel_email: "Por e-mail",
     channel_document: "Por documento",
+    channel_phone: "Por telefone",
     email_label: "E-mail",
     email_placeholder: "nome@empresa.com",
+    phone_label: "Telefone",
+    phone_placeholder: "+56 9 1234 5678",
     submit: "Convidar",
     submitting: "Enviando…",
     cancel: "Cancelar",
@@ -92,6 +101,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
       channel: "email",
       organization_id,
       invitation_email: "",
+      invitation_phone: "",
       address_level0_id: "CL",
       profile_identity_document_kind: "nin",
       profile_identity_document_value: "",
@@ -113,7 +123,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
         return;
       }
       if (!res?.data) return;
-      if (res.data.channel === "document") {
+      if (res.data.channel === "document" || res.data.channel === "phone") {
         setDocumentResult({ url: res.data.invitation_url, membership_id: res.data.membership_id });
         return;
       }
@@ -171,6 +181,14 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
         </Button>
         <Button
           type="button"
+          variant={channel === "phone" ? "default" : "outline"}
+          className="flex-1"
+          onClick={() => form.setValue("channel", "phone")}
+        >
+          {t("channel_phone")}
+        </Button>
+        <Button
+          type="button"
           variant={channel === "document" ? "default" : "outline"}
           className="flex-1"
           onClick={() => form.setValue("channel", "document")}
@@ -192,6 +210,21 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
           />
           {form.formState.errors.invitation_email && (
             <p className="text-destructive text-xs">{form.formState.errors.invitation_email.message}</p>
+          )}
+        </div>
+      ) : channel === "phone" ? (
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="invitation_phone">{t("phone_label")}</Label>
+          <Input
+            id="invitation_phone"
+            type="tel"
+            autoComplete="tel"
+            placeholder={t("phone_placeholder")}
+            aria-invalid={!!form.formState.errors.invitation_phone}
+            {...form.register("invitation_phone")}
+          />
+          {form.formState.errors.invitation_phone && (
+            <p className="text-destructive text-xs">{form.formState.errors.invitation_phone.message}</p>
           )}
         </div>
       ) : (
