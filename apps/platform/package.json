@@ -22,6 +22,7 @@
     "@packages/graphy": "workspace:*",
     "@packages/kapso": "workspace:*",
     "@packages/react-email": "workspace:*",
+    "@packages/react-hooks": "workspace:*",
     "@packages/react-pdf": "workspace:*",
     "@packages/rosetta": "workspace:*",
     "@packages/supabase": "workspace:*",

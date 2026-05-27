@@ -1,5 +1,6 @@
 "use client";
 
+import { useKeyboardShortcut } from "@packages/react-hooks/use-keyboard-shortcut";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Building2, Circle, Home, type LucideIcon, Search, Settings, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -150,14 +151,11 @@ export function CommandPalette({
     if (activeIdx >= flat.length) setActiveIdx(0);
   }, [flat.length, activeIdx]);
 
+  useKeyboardShortcut("Escape", onClose, { enabled: open });
+
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-        return;
-      }
       if (event.key === "ArrowDown") {
         event.preventDefault();
         setActiveIdx((value) => Math.min(flat.length - 1, value + 1));

@@ -59,6 +59,9 @@ importers:
       '@packages/react-email':
         specifier: workspace:*
         version: link:../../packages/react-email
+      '@packages/react-hooks':
+        specifier: workspace:*
+        version: link:../../packages/react-hooks
       '@packages/react-pdf':
         specifier: workspace:*
         version: link:../../packages/react-pdf

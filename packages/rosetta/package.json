@@ -4,6 +4,7 @@
   "private": true,
   "sideEffects": false,
   "exports": {
+    "./locale-config": "./src/locale-config.ts",
     "./rosetta": "./src/rosetta.ts",
     "./use-rosetta": "./src/use-rosetta.tsx"
   },

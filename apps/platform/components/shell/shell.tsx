@@ -1,8 +1,9 @@
 "use client";
 
+import { useKeyboardShortcut } from "@packages/react-hooks/use-keyboard-shortcut";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CommandPalette } from "~/components/shell/command-palette";
 import { MobileBottomTabs } from "~/components/shell/mobile-bottom-tabs";
 import { MobileNavDrawer } from "~/components/shell/mobile-nav-drawer";
@@ -42,17 +43,7 @@ export function Shell({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileSheet, setMobileSheet] = useState<MobileSheet>(null);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      const mod = event.metaKey || event.ctrlKey;
-      if (mod && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setPaletteOpen((value) => !value);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  useKeyboardShortcut("k", () => setPaletteOpen((value) => !value), { mod: true });
 
   const base = `/${locale}/${tenant.tenant_slug}/${current.organization_id}`;
 

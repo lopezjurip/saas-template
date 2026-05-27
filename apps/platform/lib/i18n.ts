@@ -1,58 +1,35 @@
+import { LocaleConfig } from "@packages/rosetta/locale-config";
 import type { NextRequest } from "next/server";
 
-export const SUPPORTED_LOCALES = ["es", "en", "pt"] as const;
+export const LOCALE_CONFIG = new LocaleConfig({
+  supported: ["es", "en", "pt"] as const,
+  defaultLocale: "es" as const,
+  bcp47: { es: "es-CL", en: "en-US", pt: "pt-BR" },
+  label: { es: "Español", en: "English", pt: "Português" },
+});
+
+export const SUPPORTED_LOCALES = LOCALE_CONFIG.supported;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-
-export const DEFAULT_LOCALE: SupportedLocale = "es";
-
-// URL segment → BCP 47 tag used for <html lang> and any Intl APIs.
-export const LOCALE_TO_BCP47: Record<SupportedLocale, string> = {
-  es: "es-CL",
-  en: "en-US",
-  pt: "pt-BR",
-};
-
-export const LOCALE_LABEL: Record<SupportedLocale, string> = {
-  es: "Español",
-  en: "English",
-  pt: "Português",
-};
-
-export const LOCALE_COOKIE = "NEXT_LOCALE";
+export const DEFAULT_LOCALE = LOCALE_CONFIG.defaultLocale;
+export const LOCALE_TO_BCP47 = LOCALE_CONFIG.bcp47;
+export const LOCALE_LABEL = LOCALE_CONFIG.label;
+export const LOCALE_COOKIE = LOCALE_CONFIG.cookie;
 
 export function IS_SUPPORTED_LOCALE(value: unknown): value is SupportedLocale {
-  return typeof value === "string" && (SUPPORTED_LOCALES as readonly string[]).includes(value);
+  return LOCALE_CONFIG.isSupported(value);
 }
 
 export function EXTRACT_LOCALE_FROM_PATH(pathname: string): {
   locale: SupportedLocale | null;
   pathAfterLocale: string;
 } {
-  const segments = pathname.split("/").filter(Boolean);
-  const first = segments[0];
-  if (first && IS_SUPPORTED_LOCALE(first)) {
-    const rest = segments.slice(1).join("/");
-    return { locale: first, pathAfterLocale: rest ? `/${rest}` : "/" };
-  }
-  return { locale: null, pathAfterLocale: pathname };
+  return LOCALE_CONFIG.extractFromPath(pathname);
 }
 
 export function PARSE_ACCEPT_LANGUAGE(header: string | null): SupportedLocale | null {
-  if (!header) return null;
-  const codes = header
-    .split(",")
-    .map((entry) => entry.trim().split(";")[0]?.split("-")[0]?.toLowerCase())
-    .filter((c): c is string => Boolean(c));
-  for (const code of codes) {
-    if (IS_SUPPORTED_LOCALE(code)) return code;
-  }
-  return null;
+  return LOCALE_CONFIG.parseAcceptLanguage(header);
 }
 
 export function RESOLVE_LOCALE_FROM_REQUEST(request: NextRequest): SupportedLocale {
-  const cookie = request.cookies.get(LOCALE_COOKIE)?.value;
-  if (IS_SUPPORTED_LOCALE(cookie)) return cookie;
-  const fromHeader = PARSE_ACCEPT_LANGUAGE(request.headers.get("accept-language"));
-  if (fromHeader) return fromHeader;
-  return DEFAULT_LOCALE;
+  return LOCALE_CONFIG.resolveFromRequest(request);
 }
