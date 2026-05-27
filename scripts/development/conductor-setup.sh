@@ -28,8 +28,8 @@ copy_if_exists() {
 #   +7  react-email preview
 #   +8  react-pdf preview
 #   +9  spare
-BASE=${CONDUCTOR_PORT:-7000}
-WS=$(echo "${CONDUCTOR_WORKSPACE_NAME:-local}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+export BASE=${CONDUCTOR_PORT:-7000}
+export WS=$(echo "${CONDUCTOR_WORKSPACE_NAME:-local}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
 
 python3 - <<PYEOF
 import re, os, sys
