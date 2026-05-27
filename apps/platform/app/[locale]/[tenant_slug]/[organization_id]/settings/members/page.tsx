@@ -82,7 +82,7 @@ export default async function MembersAdminPage({
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
 
   const { data: orgData } = await getViewerOrganization(organization_id);
-  const organization = orgData?.["organizationsCollection"]?.["edges"]?.[0]?.["node"];
+  const organization = orgData?.["viewer_organization_by_id"];
   if (!organization) notFound();
 
   const supabase = await createServerClient();

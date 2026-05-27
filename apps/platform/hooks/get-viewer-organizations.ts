@@ -18,11 +18,8 @@ export type ViewerOrganizationGetFragmentType = ResultOf<typeof ViewerOrganizati
 
 export const ViewerOrganizationsGetQuery = /*#__PURE__*/ gql(`
   query ViewerOrganizationsGetQuery($tenant_id: Int) {
-    organizationsCollection(
-      filter: {
-        tenant_id: { eq: $tenant_id }
-        organization_disabled_at: { is: NULL }
-      }
+    viewer_organizations(
+      filter: { tenant_id: { eq: $tenant_id } }
       orderBy: [{ organization_name: AscNullsLast }]
     ) {
       edges {
@@ -36,15 +33,8 @@ export const ViewerOrganizationsGetQuery = /*#__PURE__*/ gql(`
 
 export const ViewerOrganizationByIdGetQuery = /*#__PURE__*/ gql(`
   query ViewerOrganizationByIdGetQuery($organization_id: Int!) {
-    organizationsCollection(
-      filter: { organization_id: { eq: $organization_id }, organization_disabled_at: { is: NULL } }
-      first: 1
-    ) {
-      edges {
-        node {
-          ...ViewerOrganizationGetFragment
-        }
-      }
+    viewer_organization_by_id(target_organization_id: $organization_id) {
+      ...ViewerOrganizationGetFragment
     }
   }
 `);

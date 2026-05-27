@@ -58,7 +58,7 @@ export default async function NewMemberInvitePage({
     getViewerOrganization(organization_id),
     getCountries(),
   ]);
-  const organization = orgData?.["organizationsCollection"]?.["edges"]?.[0]?.["node"];
+  const organization = orgData?.["viewer_organization_by_id"];
   if (!organization) notFound();
   const countries = countriesData?.["addresses_level0Collection"]?.["edges"]?.map((e) => e["node"]) ?? [];
 

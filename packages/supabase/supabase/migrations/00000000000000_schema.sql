@@ -949,7 +949,7 @@ grant execute on function public.profile_id_by_email(text) to service_role;
 --
 -- Convenience over the join:
 --   tenants_organizations_profiles (view)  : active tenant-org memberships for the viewer
---   viewer_tenants() / viewer_organizations() / viewer_tenant_by_id() / viewer_organization_by_id()
+--   viewer_tenants() / viewer_organizations() / viewer_tenant_by_id() / viewer_tenant_by_slug() / viewer_organization_by_id()
 
 create or replace function public.viewer_profile(strict boolean default false)
   returns setof public.profiles rows 1
@@ -1215,6 +1215,21 @@ create or replace function public.viewer_tenant_by_id(target_tenant_id int)
     select t.*
     from public.tenants t
     where t.tenant_id = target_tenant_id
+      and t.tenant_id in (select tenant_id from public.tenants_organizations_profiles)
+    limit 1;
+  $$;
+
+create or replace function public.viewer_tenant_by_slug(target_tenant_slug text)
+  returns setof public.tenants rows 1
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select t.*
+    from public.tenants t
+    where t.tenant_slug = target_tenant_slug
       and t.tenant_id in (select tenant_id from public.tenants_organizations_profiles)
     limit 1;
   $$;

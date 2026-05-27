@@ -18,8 +18,7 @@ export type ViewerTenantGetFragmentType = ResultOf<typeof ViewerTenantGetFragmen
 
 export const ViewerTenantsGetQuery = /*#__PURE__*/ gql(`
   query ViewerTenantsGetQuery {
-    tenantsCollection(
-      filter: { tenant_disabled_at: { is: NULL } }
+    viewer_tenants(
       orderBy: [{ tenant_name: AscNullsLast }]
     ) {
       edges {
@@ -33,15 +32,8 @@ export const ViewerTenantsGetQuery = /*#__PURE__*/ gql(`
 
 export const ViewerTenantBySlugGetQuery = /*#__PURE__*/ gql(`
   query ViewerTenantBySlugGetQuery($tenant_slug: String!) {
-    tenantsCollection(
-      filter: { tenant_slug: { eq: $tenant_slug }, tenant_disabled_at: { is: NULL } }
-      first: 1
-    ) {
-      edges {
-        node {
-          ...ViewerTenantGetFragment
-        }
-      }
+    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
+      ...ViewerTenantGetFragment
     }
   }
 `);

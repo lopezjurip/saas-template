@@ -82,7 +82,7 @@ export default async function MembershipEditPage({
   if (!Number.isInteger(membership_id) || membership_id <= 0) notFound();
 
   const { data: orgData } = await getViewerOrganization(organization_id);
-  const organization = orgData?.["organizationsCollection"]?.["edges"]?.[0]?.["node"];
+  const organization = orgData?.["viewer_organization_by_id"];
   if (!organization) notFound();
 
   const membersHref = `/${locale}/${tenant_slug}/${organization_id}/settings/members`;

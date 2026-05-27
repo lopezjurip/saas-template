@@ -25,18 +25,18 @@ export default async function OrganizationLayout({
     getViewerProfile(),
   ]);
 
-  const tenant = tenantData?.["tenantsCollection"]?.["edges"]?.[0]?.["node"];
+  const tenant = tenantData?.["viewer_tenant_by_slug"];
   if (!tenant) notFound();
   const tenant_id = tenant["tenant_id"];
 
-  const current = orgData?.["organizationsCollection"]?.["edges"]?.[0]?.["node"];
+  const current = orgData?.["viewer_organization_by_id"];
   if (!current || current["tenant_id"] !== tenant_id) notFound();
 
   const profile = profileData?.["profile"];
   if (!profile) notFound();
 
   const { data: orgsData } = await getViewerOrganizations(tenant_id);
-  const organizations = orgsData?.["organizationsCollection"]?.["edges"]?.map((edge) => edge["node"]) ?? [];
+  const organizations = orgsData?.["viewer_organizations"]?.["edges"]?.map((edge) => edge["node"]) ?? [];
 
   const viewer = { ...profile, email: user?.email ?? "" };
 

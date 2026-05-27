@@ -26,23 +26,23 @@ type Documents = {
   "\n  fragment CountryGetFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n": typeof types.CountryGetFragmentFragmentDoc;
   "\n  query CountriesGetQuery {\n    addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryGetFragment\n        }\n      }\n    }\n  }\n": typeof types.CountriesGetQueryDocument;
   "\n  fragment ViewerOrganizationGetFragment on organizations {\n    organization_id\n    tenant_id\n    organization_slug\n    organization_name\n  }\n": typeof types.ViewerOrganizationGetFragmentFragmentDoc;
-  "\n  query ViewerOrganizationsGetQuery($tenant_id: Int) {\n    organizationsCollection(\n      filter: {\n        tenant_id: { eq: $tenant_id }\n        organization_disabled_at: { is: NULL }\n      }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationsGetQueryDocument;
-  "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    organizationsCollection(\n      filter: { organization_id: { eq: $organization_id }, organization_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationByIdGetQueryDocument;
+  "\n  query ViewerOrganizationsGetQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationsGetQueryDocument;
+  "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationGetFragment\n    }\n  }\n": typeof types.ViewerOrganizationByIdGetQueryDocument;
   "\n  fragment ViewerProfileGetFragment on profiles {\n    profile_id\n    profile_name_full\n    profile_onboarded_at\n    profile_disabled_at\n    profile_created_at\n    profile_updated_at\n  }\n": typeof types.ViewerProfileGetFragmentFragmentDoc;
   "\n  query ViewerProfileGetQuery {\n    profile: viewer_profile {\n      ...ViewerProfileGetFragment\n    }\n  }\n": typeof types.ViewerProfileGetQueryDocument;
   "\n  fragment ViewerTenantGetFragment on tenants {\n    tenant_id\n    tenant_slug\n    tenant_name\n    tenant_tier\n  }\n": typeof types.ViewerTenantGetFragmentFragmentDoc;
-  "\n  query ViewerTenantsGetQuery {\n    tenantsCollection(\n      filter: { tenant_disabled_at: { is: NULL } }\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantsGetQueryDocument;
-  "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    tenantsCollection(\n      filter: { tenant_slug: { eq: $tenant_slug }, tenant_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantBySlugGetQueryDocument;
+  "\n  query ViewerTenantsGetQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantsGetQueryDocument;
+  "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantGetFragment\n    }\n  }\n": typeof types.ViewerTenantBySlugGetQueryDocument;
   "\n  fragment CountryHookFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n": typeof types.CountryHookFragmentFragmentDoc;
   "\n  query CountriesHookQuery {\n    addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryHookFragment\n        }\n      }\n    }\n  }\n": typeof types.CountriesHookQueryDocument;
   "\n  fragment ViewerOrganizationHookFragment on organizations {\n    organization_id\n    tenant_id\n    organization_slug\n    organization_name\n  }\n": typeof types.ViewerOrganizationHookFragmentFragmentDoc;
-  "\n  query ViewerOrganizationsHookQuery($tenant_id: Int) {\n    organizationsCollection(\n      filter: {\n        tenant_id: { eq: $tenant_id }\n        organization_disabled_at: { is: NULL }\n      }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationsHookQueryDocument;
-  "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    organizationsCollection(\n      filter: { organization_id: { eq: $organization_id }, organization_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationByIdHookQueryDocument;
+  "\n  query ViewerOrganizationsHookQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationsHookQueryDocument;
+  "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationHookFragment\n    }\n  }\n": typeof types.ViewerOrganizationByIdHookQueryDocument;
   "\n  fragment ViewerProfileHookFragment on profiles {\n    profile_id\n    profile_name_full\n    profile_onboarded_at\n    profile_disabled_at\n    profile_created_at\n    profile_updated_at\n  }\n": typeof types.ViewerProfileHookFragmentFragmentDoc;
   "\n  query ViewerProfileHookQuery {\n    profile: viewer_profile {\n      ...ViewerProfileHookFragment\n    }\n  }\n": typeof types.ViewerProfileHookQueryDocument;
   "\n  fragment ViewerTenantHookFragment on tenants {\n    tenant_id\n    tenant_slug\n    tenant_name\n    tenant_tier\n  }\n": typeof types.ViewerTenantHookFragmentFragmentDoc;
-  "\n  query ViewerTenantsHookQuery {\n    tenantsCollection(\n      filter: { tenant_disabled_at: { is: NULL } }\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantsHookQueryDocument;
-  "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    tenantsCollection(\n      filter: { tenant_slug: { eq: $tenant_slug }, tenant_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantBySlugHookQueryDocument;
+  "\n  query ViewerTenantsHookQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantsHookQueryDocument;
+  "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantHookFragment\n    }\n  }\n": typeof types.ViewerTenantBySlugHookQueryDocument;
 };
 const documents: Documents = {
   "\n  mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {\n    insertIntomembership_permissionsCollection(\n      objects: [{ membership_id: $membership_id, permission_id: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n":
@@ -70,9 +70,9 @@ const documents: Documents = {
     types.CountriesGetQueryDocument,
   "\n  fragment ViewerOrganizationGetFragment on organizations {\n    organization_id\n    tenant_id\n    organization_slug\n    organization_name\n  }\n":
     types.ViewerOrganizationGetFragmentFragmentDoc,
-  "\n  query ViewerOrganizationsGetQuery($tenant_id: Int) {\n    organizationsCollection(\n      filter: {\n        tenant_id: { eq: $tenant_id }\n        organization_disabled_at: { is: NULL }\n      }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerOrganizationsGetQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n":
     types.ViewerOrganizationsGetQueryDocument,
-  "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    organizationsCollection(\n      filter: { organization_id: { eq: $organization_id }, organization_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationGetFragment\n    }\n  }\n":
     types.ViewerOrganizationByIdGetQueryDocument,
   "\n  fragment ViewerProfileGetFragment on profiles {\n    profile_id\n    profile_name_full\n    profile_onboarded_at\n    profile_disabled_at\n    profile_created_at\n    profile_updated_at\n  }\n":
     types.ViewerProfileGetFragmentFragmentDoc,
@@ -80,9 +80,9 @@ const documents: Documents = {
     types.ViewerProfileGetQueryDocument,
   "\n  fragment ViewerTenantGetFragment on tenants {\n    tenant_id\n    tenant_slug\n    tenant_name\n    tenant_tier\n  }\n":
     types.ViewerTenantGetFragmentFragmentDoc,
-  "\n  query ViewerTenantsGetQuery {\n    tenantsCollection(\n      filter: { tenant_disabled_at: { is: NULL } }\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerTenantsGetQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n":
     types.ViewerTenantsGetQueryDocument,
-  "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    tenantsCollection(\n      filter: { tenant_slug: { eq: $tenant_slug }, tenant_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantGetFragment\n    }\n  }\n":
     types.ViewerTenantBySlugGetQueryDocument,
   "\n  fragment CountryHookFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n":
     types.CountryHookFragmentFragmentDoc,
@@ -90,9 +90,9 @@ const documents: Documents = {
     types.CountriesHookQueryDocument,
   "\n  fragment ViewerOrganizationHookFragment on organizations {\n    organization_id\n    tenant_id\n    organization_slug\n    organization_name\n  }\n":
     types.ViewerOrganizationHookFragmentFragmentDoc,
-  "\n  query ViewerOrganizationsHookQuery($tenant_id: Int) {\n    organizationsCollection(\n      filter: {\n        tenant_id: { eq: $tenant_id }\n        organization_disabled_at: { is: NULL }\n      }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerOrganizationsHookQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n":
     types.ViewerOrganizationsHookQueryDocument,
-  "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    organizationsCollection(\n      filter: { organization_id: { eq: $organization_id }, organization_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationHookFragment\n    }\n  }\n":
     types.ViewerOrganizationByIdHookQueryDocument,
   "\n  fragment ViewerProfileHookFragment on profiles {\n    profile_id\n    profile_name_full\n    profile_onboarded_at\n    profile_disabled_at\n    profile_created_at\n    profile_updated_at\n  }\n":
     types.ViewerProfileHookFragmentFragmentDoc,
@@ -100,9 +100,9 @@ const documents: Documents = {
     types.ViewerProfileHookQueryDocument,
   "\n  fragment ViewerTenantHookFragment on tenants {\n    tenant_id\n    tenant_slug\n    tenant_name\n    tenant_tier\n  }\n":
     types.ViewerTenantHookFragmentFragmentDoc,
-  "\n  query ViewerTenantsHookQuery {\n    tenantsCollection(\n      filter: { tenant_disabled_at: { is: NULL } }\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerTenantsHookQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n":
     types.ViewerTenantsHookQueryDocument,
-  "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    tenantsCollection(\n      filter: { tenant_slug: { eq: $tenant_slug }, tenant_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantHookFragment\n    }\n  }\n":
     types.ViewerTenantBySlugHookQueryDocument,
 };
 
@@ -188,13 +188,13 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerOrganizationsGetQuery($tenant_id: Int) {\n    organizationsCollection(\n      filter: {\n        tenant_id: { eq: $tenant_id }\n        organization_disabled_at: { is: NULL }\n      }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerOrganizationsGetQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").ViewerOrganizationsGetQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    organizationsCollection(\n      filter: { organization_id: { eq: $organization_id }, organization_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationGetFragment\n    }\n  }\n",
 ): typeof import("./graphql").ViewerOrganizationByIdGetQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -218,13 +218,13 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerTenantsGetQuery {\n    tenantsCollection(\n      filter: { tenant_disabled_at: { is: NULL } }\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerTenantsGetQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").ViewerTenantsGetQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    tenantsCollection(\n      filter: { tenant_slug: { eq: $tenant_slug }, tenant_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantGetFragment\n    }\n  }\n",
 ): typeof import("./graphql").ViewerTenantBySlugGetQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -248,13 +248,13 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerOrganizationsHookQuery($tenant_id: Int) {\n    organizationsCollection(\n      filter: {\n        tenant_id: { eq: $tenant_id }\n        organization_disabled_at: { is: NULL }\n      }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerOrganizationsHookQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").ViewerOrganizationsHookQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    organizationsCollection(\n      filter: { organization_id: { eq: $organization_id }, organization_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationHookFragment\n    }\n  }\n",
 ): typeof import("./graphql").ViewerOrganizationByIdHookQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -278,13 +278,13 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerTenantsHookQuery {\n    tenantsCollection(\n      filter: { tenant_disabled_at: { is: NULL } }\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerTenantsHookQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").ViewerTenantsHookQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    tenantsCollection(\n      filter: { tenant_slug: { eq: $tenant_slug }, tenant_disabled_at: { is: NULL } }\n      first: 1\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantHookFragment\n    }\n  }\n",
 ): typeof import("./graphql").ViewerTenantBySlugHookQueryDocument;
 
 export function gql(source: string) {

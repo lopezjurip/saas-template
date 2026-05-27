@@ -35,8 +35,15 @@ const DashboardPageQuery = gql(`
   }
 `);
 
-export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function DashboardPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ redirect?: string }>;
+}) {
   const { locale } = await params;
+  const { redirect: redirectParam } = await searchParams;
   const user = await getSupabaseServerUser();
   if (!user) {
     redirect(`/${locale}/auth`);
@@ -45,6 +52,15 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: DashboardPageQuery });
   const edges = data?.["viewer_organizations"]?.["edges"] ?? [];
+
+  if (redirectParam !== "false" && edges.length === 1) {
+    const only = edges[0]!["node"];
+    const tenant_slug = only["tenants"]?.["tenant_slug"];
+    const organization_id = only["organization_id"];
+    if (tenant_slug && organization_id) {
+      redirect(`/${locale}/${tenant_slug}/${organization_id}`);
+    }
+  }
 
   return (
     <main className="bg-muted flex min-h-svh items-center justify-center p-6">

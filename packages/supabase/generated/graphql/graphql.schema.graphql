@@ -573,6 +573,7 @@ type Query {
     """The record's `ID`"""
     nodeId: ID!
   ): Node
+  org_has_other_active_admin(_excluded_membership_id: Int!, _organization_id: Int!): Boolean
   """A pagable collection of type `organizations`"""
   organizationsCollection(
     """Query values in the collection after the provided cursor"""
@@ -752,6 +753,7 @@ type Query {
   viewer_profile(strict: Boolean = false): profiles
   viewer_profile_id(strict: Boolean = false): UUID
   viewer_tenant_by_id(target_tenant_id: Int!): tenants
+  viewer_tenant_by_slug(target_tenant_slug: String!): tenants
   viewer_tenant_validate(target_tenant_id: Int!): Boolean
   viewer_tenants(
     """Query values in the collection after the provided cursor"""

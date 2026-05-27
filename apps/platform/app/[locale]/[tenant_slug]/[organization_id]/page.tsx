@@ -25,7 +25,7 @@ export default async function OrganizationHomePage({
     getViewerOrganization(organization_id),
     getViewerProfile(),
   ]);
-  const organization = orgData?.["organizationsCollection"]?.["edges"]?.[0]?.["node"];
+  const organization = orgData?.["viewer_organization_by_id"];
   if (!organization) notFound();
 
   const profile_name_full = profileData?.["profile"]?.["profile_name_full"] ?? null;

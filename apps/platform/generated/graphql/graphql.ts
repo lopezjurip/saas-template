@@ -135,7 +135,7 @@ export type ViewerOrganizationsGetQueryQueryVariables = Exact<{
 }>;
 
 export type ViewerOrganizationsGetQueryQuery = {
-  organizationsCollection: {
+  viewer_organizations: {
     edges: Array<{
       node: { organization_id: number; tenant_id: number; organization_slug: string; organization_name: string };
     }>;
@@ -147,10 +147,11 @@ export type ViewerOrganizationByIdGetQueryQueryVariables = Exact<{
 }>;
 
 export type ViewerOrganizationByIdGetQueryQuery = {
-  organizationsCollection: {
-    edges: Array<{
-      node: { organization_id: number; tenant_id: number; organization_slug: string; organization_name: string };
-    }>;
+  viewer_organization_by_id: {
+    organization_id: number;
+    tenant_id: number;
+    organization_slug: string;
+    organization_name: string;
   } | null;
 };
 
@@ -186,7 +187,7 @@ export type ViewerTenantGetFragmentFragment = {
 export type ViewerTenantsGetQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type ViewerTenantsGetQueryQuery = {
-  tenantsCollection: {
+  viewer_tenants: {
     edges: Array<{ node: { tenant_id: number; tenant_slug: string; tenant_name: string; tenant_tier: Tenant_Tier } }>;
   } | null;
 };
@@ -196,8 +197,11 @@ export type ViewerTenantBySlugGetQueryQueryVariables = Exact<{
 }>;
 
 export type ViewerTenantBySlugGetQueryQuery = {
-  tenantsCollection: {
-    edges: Array<{ node: { tenant_id: number; tenant_slug: string; tenant_name: string; tenant_tier: Tenant_Tier } }>;
+  viewer_tenant_by_slug: {
+    tenant_id: number;
+    tenant_slug: string;
+    tenant_name: string;
+    tenant_tier: Tenant_Tier;
   } | null;
 };
 
@@ -229,7 +233,7 @@ export type ViewerOrganizationsHookQueryQueryVariables = Exact<{
 }>;
 
 export type ViewerOrganizationsHookQueryQuery = {
-  organizationsCollection: {
+  viewer_organizations: {
     edges: Array<{
       node: { organization_id: number; tenant_id: number; organization_slug: string; organization_name: string };
     }>;
@@ -241,10 +245,11 @@ export type ViewerOrganizationByIdHookQueryQueryVariables = Exact<{
 }>;
 
 export type ViewerOrganizationByIdHookQueryQuery = {
-  organizationsCollection: {
-    edges: Array<{
-      node: { organization_id: number; tenant_id: number; organization_slug: string; organization_name: string };
-    }>;
+  viewer_organization_by_id: {
+    organization_id: number;
+    tenant_id: number;
+    organization_slug: string;
+    organization_name: string;
   } | null;
 };
 
@@ -280,7 +285,7 @@ export type ViewerTenantHookFragmentFragment = {
 export type ViewerTenantsHookQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type ViewerTenantsHookQueryQuery = {
-  tenantsCollection: {
+  viewer_tenants: {
     edges: Array<{ node: { tenant_id: number; tenant_slug: string; tenant_name: string; tenant_tier: Tenant_Tier } }>;
   } | null;
 };
@@ -290,8 +295,11 @@ export type ViewerTenantBySlugHookQueryQueryVariables = Exact<{
 }>;
 
 export type ViewerTenantBySlugHookQueryQuery = {
-  tenantsCollection: {
-    edges: Array<{ node: { tenant_id: number; tenant_slug: string; tenant_name: string; tenant_tier: Tenant_Tier } }>;
+  viewer_tenant_by_slug: {
+    tenant_id: number;
+    tenant_slug: string;
+    tenant_name: string;
+    tenant_tier: Tenant_Tier;
   } | null;
 };
 
@@ -560,8 +568,8 @@ export const CountriesGetQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<CountriesGetQueryQuery, CountriesGetQueryQueryVariables>;
 export const ViewerOrganizationsGetQueryDocument = new TypedDocumentString(`
     query ViewerOrganizationsGetQuery($tenant_id: Int) {
-  organizationsCollection(
-    filter: {tenant_id: {eq: $tenant_id}, organization_disabled_at: {is: NULL}}
+  viewer_organizations(
+    filter: {tenant_id: {eq: $tenant_id}}
     orderBy: [{organization_name: AscNullsLast}]
   ) {
     edges {
@@ -579,15 +587,8 @@ export const ViewerOrganizationsGetQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerOrganizationsGetQueryQuery, ViewerOrganizationsGetQueryQueryVariables>;
 export const ViewerOrganizationByIdGetQueryDocument = new TypedDocumentString(`
     query ViewerOrganizationByIdGetQuery($organization_id: Int!) {
-  organizationsCollection(
-    filter: {organization_id: {eq: $organization_id}, organization_disabled_at: {is: NULL}}
-    first: 1
-  ) {
-    edges {
-      node {
-        ...ViewerOrganizationGetFragment
-      }
-    }
+  viewer_organization_by_id(target_organization_id: $organization_id) {
+    ...ViewerOrganizationGetFragment
   }
 }
     fragment ViewerOrganizationGetFragment on organizations {
@@ -615,10 +616,7 @@ export const ViewerProfileGetQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerProfileGetQueryQuery, ViewerProfileGetQueryQueryVariables>;
 export const ViewerTenantsGetQueryDocument = new TypedDocumentString(`
     query ViewerTenantsGetQuery {
-  tenantsCollection(
-    filter: {tenant_disabled_at: {is: NULL}}
-    orderBy: [{tenant_name: AscNullsLast}]
-  ) {
+  viewer_tenants(orderBy: [{tenant_name: AscNullsLast}]) {
     edges {
       node {
         ...ViewerTenantGetFragment
@@ -634,15 +632,8 @@ export const ViewerTenantsGetQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerTenantsGetQueryQuery, ViewerTenantsGetQueryQueryVariables>;
 export const ViewerTenantBySlugGetQueryDocument = new TypedDocumentString(`
     query ViewerTenantBySlugGetQuery($tenant_slug: String!) {
-  tenantsCollection(
-    filter: {tenant_slug: {eq: $tenant_slug}, tenant_disabled_at: {is: NULL}}
-    first: 1
-  ) {
-    edges {
-      node {
-        ...ViewerTenantGetFragment
-      }
-    }
+  viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
+    ...ViewerTenantGetFragment
   }
 }
     fragment ViewerTenantGetFragment on tenants {
@@ -672,8 +663,8 @@ export const CountriesHookQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<CountriesHookQueryQuery, CountriesHookQueryQueryVariables>;
 export const ViewerOrganizationsHookQueryDocument = new TypedDocumentString(`
     query ViewerOrganizationsHookQuery($tenant_id: Int) {
-  organizationsCollection(
-    filter: {tenant_id: {eq: $tenant_id}, organization_disabled_at: {is: NULL}}
+  viewer_organizations(
+    filter: {tenant_id: {eq: $tenant_id}}
     orderBy: [{organization_name: AscNullsLast}]
   ) {
     edges {
@@ -691,15 +682,8 @@ export const ViewerOrganizationsHookQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerOrganizationsHookQueryQuery, ViewerOrganizationsHookQueryQueryVariables>;
 export const ViewerOrganizationByIdHookQueryDocument = new TypedDocumentString(`
     query ViewerOrganizationByIdHookQuery($organization_id: Int!) {
-  organizationsCollection(
-    filter: {organization_id: {eq: $organization_id}, organization_disabled_at: {is: NULL}}
-    first: 1
-  ) {
-    edges {
-      node {
-        ...ViewerOrganizationHookFragment
-      }
-    }
+  viewer_organization_by_id(target_organization_id: $organization_id) {
+    ...ViewerOrganizationHookFragment
   }
 }
     fragment ViewerOrganizationHookFragment on organizations {
@@ -727,10 +711,7 @@ export const ViewerProfileHookQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerProfileHookQueryQuery, ViewerProfileHookQueryQueryVariables>;
 export const ViewerTenantsHookQueryDocument = new TypedDocumentString(`
     query ViewerTenantsHookQuery {
-  tenantsCollection(
-    filter: {tenant_disabled_at: {is: NULL}}
-    orderBy: [{tenant_name: AscNullsLast}]
-  ) {
+  viewer_tenants(orderBy: [{tenant_name: AscNullsLast}]) {
     edges {
       node {
         ...ViewerTenantHookFragment
@@ -746,15 +727,8 @@ export const ViewerTenantsHookQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerTenantsHookQueryQuery, ViewerTenantsHookQueryQueryVariables>;
 export const ViewerTenantBySlugHookQueryDocument = new TypedDocumentString(`
     query ViewerTenantBySlugHookQuery($tenant_slug: String!) {
-  tenantsCollection(
-    filter: {tenant_slug: {eq: $tenant_slug}, tenant_disabled_at: {is: NULL}}
-    first: 1
-  ) {
-    edges {
-      node {
-        ...ViewerTenantHookFragment
-      }
-    }
+  viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
+    ...ViewerTenantHookFragment
   }
 }
     fragment ViewerTenantHookFragment on tenants {

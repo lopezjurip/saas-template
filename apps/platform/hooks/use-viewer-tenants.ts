@@ -19,8 +19,7 @@ export type ViewerTenantHookFragmentType = ResultOf<typeof ViewerTenantHookFragm
 
 export const ViewerTenantsHookQuery = /*#__PURE__*/ gql(`
   query ViewerTenantsHookQuery {
-    tenantsCollection(
-      filter: { tenant_disabled_at: { is: NULL } }
+    viewer_tenants(
       orderBy: [{ tenant_name: AscNullsLast }]
     ) {
       edges {
@@ -34,15 +33,8 @@ export const ViewerTenantsHookQuery = /*#__PURE__*/ gql(`
 
 export const ViewerTenantBySlugHookQuery = /*#__PURE__*/ gql(`
   query ViewerTenantBySlugHookQuery($tenant_slug: String!) {
-    tenantsCollection(
-      filter: { tenant_slug: { eq: $tenant_slug }, tenant_disabled_at: { is: NULL } }
-      first: 1
-    ) {
-      edges {
-        node {
-          ...ViewerTenantHookFragment
-        }
-      }
+    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
+      ...ViewerTenantHookFragment
     }
   }
 `);

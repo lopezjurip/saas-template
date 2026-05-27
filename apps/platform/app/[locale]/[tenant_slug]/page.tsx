@@ -12,16 +12,23 @@ import { notFound, redirect } from "next/navigation";
 import { getViewerOrganizations } from "~/hooks/get-viewer-organizations";
 import { getViewerTenantBySlug } from "~/hooks/get-viewer-tenants";
 
-export default async function TenantHomePage({ params }: { params: Promise<{ locale: string; tenant_slug: string }> }) {
+export default async function TenantHomePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string; tenant_slug: string }>;
+  searchParams: Promise<{ redirect?: string }>;
+}) {
   const { locale, tenant_slug } = await params;
+  const { redirect: redirectParam } = await searchParams;
 
   const { data: tenantData } = await getViewerTenantBySlug(tenant_slug);
-  const tenant = tenantData?.["tenantsCollection"]?.["edges"]?.[0]?.["node"];
+  const tenant = tenantData?.["viewer_tenant_by_slug"];
   if (!tenant) notFound();
   const tenant_id = tenant["tenant_id"];
 
   const { data: orgsData } = await getViewerOrganizations(tenant_id);
-  const orgs = orgsData?.["organizationsCollection"]?.["edges"]?.map((e) => e["node"]) ?? [];
+  const orgs = orgsData?.["viewer_organizations"]?.["edges"]?.map((e) => e["node"]) ?? [];
 
   if (orgs.length === 0) {
     return (
@@ -44,7 +51,7 @@ export default async function TenantHomePage({ params }: { params: Promise<{ loc
     );
   }
 
-  if (orgs.length === 1) {
+  if (redirectParam !== "false" && orgs.length === 1) {
     const only = orgs[0]!;
     redirect(`/${locale}/${tenant_slug}/${only["organization_id"]}`);
   }
