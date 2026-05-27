@@ -267,7 +267,7 @@ create policy "Users can update own profiles."
   to authenticated
   using (
     profile_disabled_at is null
-    and profile_id = (select auth.uid())
+    and profile_id = (select viewer_profile_id())
   );
 
 -- Storage
@@ -847,13 +847,13 @@ drop policy if exists "webauthn_credentials select own" on public.webauthn_crede
 create policy "webauthn_credentials select own"
   on public.webauthn_credentials for select
   to authenticated
-  using (profile_id = (select auth.uid()));
+  using (profile_id = (select viewer_profile_id()));
 
 drop policy if exists "webauthn_credentials delete own" on public.webauthn_credentials;
 create policy "webauthn_credentials delete own"
   on public.webauthn_credentials for delete
   to authenticated
-  using (profile_id = (select auth.uid()));
+  using (profile_id = (select viewer_profile_id()));
 
 -- Anonymous lookup used by /auth root to surface the passkey button only when the
 -- entered email has a passkey registered. Same enumeration-leak posture as email_exists.
@@ -928,7 +928,7 @@ create or replace function public.viewer_profile(strict boolean default false)
     declare
       _user_id uuid;
     begin
-      _user_id := auth.uid();
+      _user_id := viewer_profile_id();
       return query
         select * from public.profiles
         where profile_id = _user_id and profile_disabled_at is null
@@ -1048,7 +1048,7 @@ create or replace function public.viewer_permission_org_ids(target_permission_id
     select distinct m.organization_id
     from public.membership_permissions mp
     join public.memberships m on m.membership_id = mp.membership_id
-    where m.profile_id = (select auth.uid())
+    where m.profile_id = (select viewer_profile_id())
       and m.membership_accepted_at is not null
       and m.membership_revoked_at is null
       and m.membership_rejected_at is null
@@ -1071,7 +1071,7 @@ create or replace function public.viewer_has_permission(
       from public.membership_permissions mp
       join public.memberships m on m.membership_id = mp.membership_id
       where m.organization_id = target_organization_id
-        and m.profile_id = (select auth.uid())
+        and m.profile_id = (select viewer_profile_id())
         and m.membership_accepted_at is not null
         and m.membership_revoked_at is null
         and m.membership_rejected_at is null
@@ -1090,7 +1090,7 @@ create or replace function public.viewer_membership_permissions()
     select m.organization_id, mp.permission_id
     from public.membership_permissions mp
     join public.memberships m on m.membership_id = mp.membership_id
-    where m.profile_id = (select auth.uid())
+    where m.profile_id = (select viewer_profile_id())
       and m.membership_accepted_at is not null
       and m.membership_revoked_at is null
       and m.membership_rejected_at is null;
@@ -1229,12 +1229,12 @@ create policy "Profiles visible to self or org co-members or concierge"
   using (
     profile_disabled_at is null
     and (
-      profile_id = (select auth.uid())
+      profile_id = (select viewer_profile_id())
       or exists (
         select 1
         from public.memberships me
         join public.memberships them using (organization_id)
-        where me.profile_id = (select auth.uid())
+        where me.profile_id = (select viewer_profile_id())
           and them.profile_id = public.profiles.profile_id
           and me.membership_accepted_at is not null
           and me.membership_revoked_at is null
@@ -1440,7 +1440,7 @@ declare
   _profile_id uuid;
 begin
   -- service_role bypass: auth.uid() is NULL when called outside an authenticated session.
-  if auth.uid() is null then
+  if viewer_profile_id() is null then
     return old;
   end if;
 
@@ -1502,7 +1502,7 @@ begin
     return new;
   end if;
 
-  _viewer := auth.uid();
+  _viewer := viewer_profile_id();
 
   -- service_role bypass.
   if _viewer is null then
@@ -2019,7 +2019,7 @@ create policy "profile_identities select"
   on public.profile_identities for select
   to authenticated
   using (
-    profile_id = (select auth.uid())
+    profile_id = (select viewer_profile_id())
     or public.viewer_is_concierge()
     or exists (
       select 1 from public.memberships m
@@ -2035,11 +2035,11 @@ create policy "profile_identities write own"
   on public.profile_identities for all
   to authenticated
   using (
-    profile_id = (select auth.uid())
+    profile_id = (select viewer_profile_id())
     or public.viewer_is_concierge()
   )
   with check (
-    profile_id = (select auth.uid())
+    profile_id = (select viewer_profile_id())
     or public.viewer_is_concierge()
   );
 
@@ -2155,7 +2155,7 @@ create or replace function public.viewer_membership_pending()
   set search_path to ''
   as $$
     declare
-      _user_id uuid := auth.uid();
+      _user_id uuid := viewer_profile_id();
       _email extensions.citext;
       _phone text;
     begin
@@ -2205,7 +2205,7 @@ create or replace function public.viewer_membership_accept(target_membership_id 
   set search_path to ''
   as $$
     declare
-      _user_id uuid := auth.uid();
+      _user_id uuid := viewer_profile_id();
       _row public.memberships;
     begin
       if _user_id is null then
@@ -2241,7 +2241,7 @@ create or replace function public.viewer_membership_reject(target_membership_id 
     declare
       _row public.memberships;
     begin
-      if auth.uid() is null then
+      if viewer_profile_id() is null then
         raise exception 'not authenticated';
       end if;
       if not exists (
