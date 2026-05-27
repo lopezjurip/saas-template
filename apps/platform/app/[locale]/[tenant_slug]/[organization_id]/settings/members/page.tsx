@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
-import { ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
+import { ChevronRight, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
@@ -45,15 +45,9 @@ export default async function MembersAdminPage({
 
   if (!canManage) {
     return (
-      <main className="bg-muted flex min-h-svh items-start justify-center p-6">
+      <div className="p-6">
         <Card className="w-full max-w-2xl">
           <CardHeader>
-            <Button asChild variant="ghost" size="sm" className="text-muted-foreground w-fit -ml-2">
-              <Link href={`/${locale}/${tenant_slug}/${organization_id}`}>
-                <ChevronLeft className="h-4 w-4" />
-                {t("back")}
-              </Link>
-            </Button>
             <CardTitle>{t("page_title")}</CardTitle>
           </CardHeader>
           <CardContent>
@@ -62,7 +56,7 @@ export default async function MembersAdminPage({
             </Alert>
           </CardContent>
         </Card>
-      </main>
+      </div>
     );
   }
 
@@ -131,15 +125,9 @@ export default async function MembersAdminPage({
   });
 
   return (
-    <main className="bg-muted flex min-h-svh items-start justify-center p-6">
-      <Card className="w-full max-w-3xl">
+    <div className="p-6">
+      <Card className="w-full max-w-3xl mx-auto">
         <CardHeader>
-          <Button asChild variant="ghost" size="sm" className="text-muted-foreground w-fit -ml-2">
-            <Link href={`/${locale}/${tenant_slug}/${organization_id}`}>
-              <ChevronLeft className="h-4 w-4" />
-              {t("back")}
-            </Link>
-          </Button>
           <div className="flex items-start justify-between gap-3">
             <div>
               <CardTitle>{t("page_title")}</CardTitle>
@@ -221,12 +209,11 @@ export default async function MembersAdminPage({
           </section>
         </CardContent>
       </Card>
-    </main>
+    </div>
   );
 }
 
 const LOCALE_ES = {
-  back: "Volver",
   page_title: "Miembros",
   no_permission_alert: "No tienes permiso para administrar miembros en esta organización.",
   members_heading: "Miembros activos",
@@ -238,11 +225,9 @@ const LOCALE_ES = {
   full_access_badge: "Acceso completo",
   permissions_count: "{{count}} permisos",
   no_permissions: "sin permisos",
-  edit: "Editar",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
-  back: "Back",
   page_title: "Members",
   no_permission_alert: "You don't have permission to manage members in this organization.",
   members_heading: "Active members",
@@ -254,11 +239,9 @@ const LOCALE_EN: typeof LOCALE_ES = {
   full_access_badge: "Full access",
   permissions_count: "{{count}} permissions",
   no_permissions: "no permissions",
-  edit: "Edit",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
-  back: "Voltar",
   page_title: "Membros",
   no_permission_alert: "Você não tem permissão para administrar membros nesta organização.",
   members_heading: "Membros ativos",
@@ -270,7 +253,6 @@ const LOCALE_PT: typeof LOCALE_ES = {
   full_access_badge: "Acesso completo",
   permissions_count: "{{count}} permissões",
   no_permissions: "sem permissões",
-  edit: "Editar",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
