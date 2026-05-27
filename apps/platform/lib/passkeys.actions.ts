@@ -50,65 +50,39 @@ const signInChallengeSchema = z.object({
   email: z.email("Correo inválido"),
 });
 
+// Generic CRUD documents — one Collection / Insert / Update / Delete per table.
+// Action code shapes the behavior by passing different `filter` / `set` objects.
+
 const PasskeyCredentialFragment = /*#__PURE__*/ gql(`
   fragment PasskeyCredentialFragment on webauthn_credentials {
+    profile_id
     webauthn_credential_external_id
     webauthn_credential_type
     webauthn_credential_transports
     webauthn_credential_public_key
     webauthn_credential_sign_count
-    profile_id
   }
 `);
 
-const PasskeyListByProfileQuery = /*#__PURE__*/ gql(`
-  query PasskeyListByProfileQuery($profile_id: UUID!) {
-    webauthn_credentialsCollection(filter: { profile_id: { eq: $profile_id } }) {
-      edges {
-        node {
-          ...PasskeyCredentialFragment
-        }
-      }
-    }
-  }
-`);
-
-const PasskeyByExternalIdQuery = /*#__PURE__*/ gql(`
-  query PasskeyByExternalIdQuery($external_id: String!) {
-    webauthn_credentialsCollection(
-      filter: { webauthn_credential_external_id: { eq: $external_id } }
-      first: 1
-    ) {
-      edges {
-        node {
-          ...PasskeyCredentialFragment
-        }
-      }
-    }
-  }
-`);
-
-const PasskeyUpdateSignCountMutation = /*#__PURE__*/ gql(`
-  mutation PasskeyUpdateSignCountMutation(
-    $external_id: String!
-    $sign_count: Int!
-    $last_used_at: Datetime!
+const PasskeyCredentialsCollectionQuery = /*#__PURE__*/ gql(`
+  query PasskeyCredentialsCollectionQuery(
+    $first: Int
+    $filter: webauthn_credentialsFilter
+    $orderBy: [webauthn_credentialsOrderBy!]
   ) {
-    updatewebauthn_credentialsCollection(
-      filter: { webauthn_credential_external_id: { eq: $external_id } }
-      set: {
-        webauthn_credential_sign_count: $sign_count
-        webauthn_credential_last_used_at: $last_used_at
+    webauthn_credentialsCollection(first: $first, filter: $filter, orderBy: $orderBy) {
+      edges {
+        node {
+          ...PasskeyCredentialFragment
+        }
       }
-    ) {
-      affectedCount
     }
   }
 `);
 
-const PasskeyInsertCredentialMutation = /*#__PURE__*/ gql(`
-  mutation PasskeyInsertCredentialMutation($input: webauthn_credentialsInsertInput!) {
-    insertIntowebauthn_credentialsCollection(objects: [$input]) {
+const PasskeyCredentialsInsertMutation = /*#__PURE__*/ gql(`
+  mutation PasskeyCredentialsInsertMutation($objects: [webauthn_credentialsInsertInput!]!) {
+    insertIntowebauthn_credentialsCollection(objects: $objects) {
       records {
         webauthn_credential_id
         webauthn_credential_friendly_name
@@ -120,9 +94,38 @@ const PasskeyInsertCredentialMutation = /*#__PURE__*/ gql(`
   }
 `);
 
-const PasskeyAnonChallengeInsertMutation = /*#__PURE__*/ gql(`
-  mutation PasskeyAnonChallengeInsertMutation($challenge_value: String!) {
-    insertIntowebauthn_challengesCollection(objects: [{ webauthn_challenge_value: $challenge_value }]) {
+const PasskeyCredentialsUpdateMutation = /*#__PURE__*/ gql(`
+  mutation PasskeyCredentialsUpdateMutation(
+    $atMost: Int! = 1
+    $filter: webauthn_credentialsFilter
+    $set: webauthn_credentialsUpdateInput!
+  ) {
+    updatewebauthn_credentialsCollection(atMost: $atMost, filter: $filter, set: $set) {
+      affectedCount
+    }
+  }
+`);
+
+const PasskeyChallengesCollectionQuery = /*#__PURE__*/ gql(`
+  query PasskeyChallengesCollectionQuery(
+    $first: Int
+    $filter: webauthn_challengesFilter
+    $orderBy: [webauthn_challengesOrderBy!]
+  ) {
+    webauthn_challengesCollection(first: $first, filter: $filter, orderBy: $orderBy) {
+      edges {
+        node {
+          webauthn_challenge_id
+          webauthn_challenge_value
+        }
+      }
+    }
+  }
+`);
+
+const PasskeyChallengesInsertMutation = /*#__PURE__*/ gql(`
+  mutation PasskeyChallengesInsertMutation($objects: [webauthn_challengesInsertInput!]!) {
+    insertIntowebauthn_challengesCollection(objects: $objects) {
       records {
         webauthn_challenge_id
         webauthn_challenge_value
@@ -131,40 +134,12 @@ const PasskeyAnonChallengeInsertMutation = /*#__PURE__*/ gql(`
   }
 `);
 
-const PasskeyChallengeByProfileQuery = /*#__PURE__*/ gql(`
-  query PasskeyChallengeByProfileQuery($profile_id: UUID!) {
-    webauthn_challengesCollection(filter: { profile_id: { eq: $profile_id } }, first: 1) {
-      edges {
-        node {
-          webauthn_challenge_id
-          webauthn_challenge_value
-        }
-      }
-    }
-  }
-`);
-
-const PasskeyChallengeByIdQuery = /*#__PURE__*/ gql(`
-  query PasskeyChallengeByIdQuery($challenge_id: UUID!) {
-    webauthn_challengesCollection(
-      filter: { webauthn_challenge_id: { eq: $challenge_id } }
-      first: 1
-    ) {
-      edges {
-        node {
-          webauthn_challenge_id
-          webauthn_challenge_value
-        }
-      }
-    }
-  }
-`);
-
-const PasskeyChallengeDeleteMutation = /*#__PURE__*/ gql(`
-  mutation PasskeyChallengeDeleteMutation($challenge_id: UUID!) {
-    deleteFromwebauthn_challengesCollection(
-      filter: { webauthn_challenge_id: { eq: $challenge_id } }
-    ) {
+const PasskeyChallengesDeleteMutation = /*#__PURE__*/ gql(`
+  mutation PasskeyChallengesDeleteMutation(
+    $atMost: Int! = 1
+    $filter: webauthn_challengesFilter
+  ) {
+    deleteFromwebauthn_challengesCollection(atMost: $atMost, filter: $filter) {
       affectedCount
     }
   }
@@ -180,7 +155,10 @@ export const actionCreatePasskeyChallenge = authedAction.action(
   async ({ ctx: { user } }): Promise<PublicKeyCredentialCreationOptionsJSON> => {
     const graphy = getGraphyServiceRole();
 
-    const list = await graphy.query({ query: PasskeyListByProfileQuery, variables: { profile_id: user.id } });
+    const list = await graphy.query({
+      query: PasskeyCredentialsCollectionQuery,
+      variables: { filter: { profile_id: { eq: user.id } } },
+    });
     if (list.error) {
       log.error("list credentials failed", { profile_id: user.id, error: list.error });
       throw new Error("No pudimos iniciar el registro");
@@ -237,8 +215,8 @@ export const actionVerifyPasskeyRegistration = authedAction
     const graphy = getGraphyServiceRole();
 
     const challengeRes = await graphy.query({
-      query: PasskeyChallengeByProfileQuery,
-      variables: { profile_id: user.id },
+      query: PasskeyChallengesCollectionQuery,
+      variables: { first: 1, filter: { profile_id: { eq: user.id } } },
     });
     if (challengeRes.error) {
       log.error("challenge fetch failed", { profile_id: user.id, error: challengeRes.error });
@@ -251,8 +229,8 @@ export const actionVerifyPasskeyRegistration = authedAction
     }
 
     await graphy.mutate({
-      query: PasskeyChallengeDeleteMutation,
-      variables: { challenge_id: challenge["webauthn_challenge_id"] },
+      query: PasskeyChallengesDeleteMutation,
+      variables: { filter: { webauthn_challenge_id: { eq: challenge["webauthn_challenge_id"] } } },
     });
 
     let verification: Awaited<ReturnType<typeof verifyRegistrationResponse>>;
@@ -275,22 +253,24 @@ export const actionVerifyPasskeyRegistration = authedAction
     }
 
     const insertRes = await graphy.mutate({
-      query: PasskeyInsertCredentialMutation,
+      query: PasskeyCredentialsInsertMutation,
       variables: {
-        input: {
-          profile_id: user.id,
-          webauthn_credential_friendly_name: `Passkey creado ${new Date().toLocaleDateString("es-CL")}`,
-          webauthn_credential_type: registrationInfo.credentialType,
-          webauthn_credential_external_id: registrationInfo.credential.id,
-          webauthn_credential_public_key: Buffer.from(registrationInfo.credential.publicKey).toString("base64"),
-          webauthn_credential_aaguid: registrationInfo.aaguid,
-          webauthn_credential_sign_count: registrationInfo.credential.counter,
-          webauthn_credential_transports: (response["response"]?.["transports"] ?? []) as string[],
-          webauthn_credential_user_verification_status: registrationInfo.userVerified ? "verified" : "unverified",
-          webauthn_credential_device_type:
-            registrationInfo.credentialDeviceType === "singleDevice" ? "single_device" : "multi_device",
-          webauthn_credential_backup_state: registrationInfo.credentialBackedUp ? "backed_up" : "not_backed_up",
-        },
+        objects: [
+          {
+            profile_id: user.id,
+            webauthn_credential_friendly_name: `Passkey creado ${new Date().toLocaleDateString("es-CL")}`,
+            webauthn_credential_type: registrationInfo.credentialType,
+            webauthn_credential_external_id: registrationInfo.credential.id,
+            webauthn_credential_public_key: Buffer.from(registrationInfo.credential.publicKey).toString("base64"),
+            webauthn_credential_aaguid: registrationInfo.aaguid,
+            webauthn_credential_sign_count: registrationInfo.credential.counter,
+            webauthn_credential_transports: (response["response"]?.["transports"] ?? []) as string[],
+            webauthn_credential_user_verification_status: registrationInfo.userVerified ? "verified" : "unverified",
+            webauthn_credential_device_type:
+              registrationInfo.credentialDeviceType === "singleDevice" ? "single_device" : "multi_device",
+            webauthn_credential_backup_state: registrationInfo.credentialBackedUp ? "backed_up" : "not_backed_up",
+          },
+        ],
       },
     });
     if (insertRes.error) {
@@ -330,8 +310,8 @@ export const actionCreatePasskeySignInChallenge = action
     }
 
     const credsRes = await graphy.query({
-      query: PasskeyListByProfileQuery,
-      variables: { profile_id },
+      query: PasskeyCredentialsCollectionQuery,
+      variables: { filter: { profile_id: { eq: profile_id } } },
     });
     if (credsRes.error) {
       log.error("list credentials failed", { profile_id, error: credsRes.error });
@@ -359,8 +339,8 @@ export const actionCreatePasskeySignInChallenge = action
     });
 
     const insertRes = await graphy.mutate({
-      query: PasskeyAnonChallengeInsertMutation,
-      variables: { challenge_value: options.challenge },
+      query: PasskeyChallengesInsertMutation,
+      variables: { objects: [{ webauthn_challenge_value: options.challenge }] },
     });
     if (insertRes.error) {
       log.error("anonymous challenge insert failed", { email, profile_id, error: insertRes.error });
@@ -399,8 +379,8 @@ export const actionVerifyPasskeySignIn = action
     }
 
     const challengeRes = await graphy.query({
-      query: PasskeyChallengeByIdQuery,
-      variables: { challenge_id: webauthn_challenge_id },
+      query: PasskeyChallengesCollectionQuery,
+      variables: { first: 1, filter: { webauthn_challenge_id: { eq: webauthn_challenge_id } } },
     });
     if (challengeRes.error) {
       log.error("challenge fetch failed", { webauthn_challenge_id, error: challengeRes.error });
@@ -409,8 +389,8 @@ export const actionVerifyPasskeySignIn = action
     const challenge = challengeRes.data["webauthn_challengesCollection"]?.["edges"]?.[0]?.["node"];
 
     await graphy.mutate({
-      query: PasskeyChallengeDeleteMutation,
-      variables: { challenge_id: webauthn_challenge_id },
+      query: PasskeyChallengesDeleteMutation,
+      variables: { filter: { webauthn_challenge_id: { eq: webauthn_challenge_id } } },
     });
 
     if (!challenge) {
@@ -419,8 +399,8 @@ export const actionVerifyPasskeySignIn = action
     }
 
     const credRes = await graphy.query({
-      query: PasskeyByExternalIdQuery,
-      variables: { external_id: response["id"] },
+      query: PasskeyCredentialsCollectionQuery,
+      variables: { first: 1, filter: { webauthn_credential_external_id: { eq: response["id"] } } },
     });
     if (credRes.error) {
       log.error("credential fetch failed", { external_id: response["id"], error: credRes.error });
@@ -468,11 +448,13 @@ export const actionVerifyPasskeySignIn = action
 
     // Sign-count update is non-fatal — drift doesn't block sign-in.
     const updateRes = await graphy.mutate({
-      query: PasskeyUpdateSignCountMutation,
+      query: PasskeyCredentialsUpdateMutation,
       variables: {
-        external_id: credential["webauthn_credential_external_id"],
-        sign_count: verification.authenticationInfo.newCounter,
-        last_used_at: new Date().toISOString(),
+        filter: { webauthn_credential_external_id: { eq: credential["webauthn_credential_external_id"] } },
+        set: {
+          webauthn_credential_sign_count: verification.authenticationInfo.newCounter,
+          webauthn_credential_last_used_at: new Date().toISOString(),
+        },
       },
     });
     if (updateRes.error) {
