@@ -82,7 +82,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   } = await supabase.auth.getUser();
 
   return (
-    <main className="bg-muted flex min-h-svh items-center justify-center p-6">
+    <main className="flex flex-1 items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{t("title")}</CardTitle>

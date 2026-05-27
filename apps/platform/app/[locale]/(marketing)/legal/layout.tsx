@@ -1,5 +1,4 @@
 import { RosettaImpl } from "@packages/rosetta/rosetta";
-import { Logo } from "@packages/ui-common/logo";
 import {
   Card,
   CardContent,
@@ -8,7 +7,6 @@ import {
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
 import { Separator } from "@packages/ui-common/shadcn/components/ui/separator";
-import Link from "next/link";
 import { LOCALE_TO_BCP47 } from "~/lib/i18n";
 
 const LOCALE_ES = {
@@ -38,12 +36,9 @@ export default async function LegalLayout({
   const { locale } = await params;
   const { t } = RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale as keyof typeof LOCALE_TO_BCP47] ?? "es-CL");
   return (
-    <main className="bg-muted flex min-h-svh justify-center p-6">
+    <main className="flex flex-1 justify-center p-6">
       <Card className="w-full max-w-3xl">
         <CardHeader className="flex flex-col items-center text-center">
-          <Link href={`/${locale}`} aria-label="Inicio" className="inline-block transition-opacity hover:opacity-80">
-            <Logo />
-          </Link>
           <CardTitle>{t("title")}</CardTitle>
           <CardDescription>{t("subtitle")}</CardDescription>
         </CardHeader>
