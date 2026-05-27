@@ -6,9 +6,12 @@ import { useSupabase } from "@packages/supabase/react";
 import { URL_NEW } from "@packages/utils/url";
 import { useEffect, useMemo, useState } from "react";
 
-// Wraps the app with a GraphyProvider whose client tracks the current Supabase session.
-// On mount and on every auth event, we re-resolve the access_token and rebuild the
-// client — the SWR cache (keyed by access_token_hash) auto-invalidates with the new key.
+/**
+ * Wraps the app with a GraphyProvider whose client tracks the current Supabase session.
+ * The client is rebuilt on every auth event so the SWR cache (keyed by access_token_hash) invalidates.
+ * @example
+ * <GraphyClientProvider><App /></GraphyClientProvider>
+ */
 export function GraphyClientProvider({ children }: { children: React.ReactNode }) {
   const supabase = useSupabase();
   const [accessToken, setAccessToken] = useState<string | null>(null);

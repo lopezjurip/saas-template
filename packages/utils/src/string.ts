@@ -79,7 +79,12 @@ export function PAD(n: string | number, places = 2) {
   return String(n).padStart(places, "0");
 }
 
-// https://stackoverflow.com/a/9436948
+/**
+ * Type guard that accepts both `string` primitives and `String` objects.
+ * @example
+ * if (IS_STRING(value)) console.log(value.length);
+ * @see https://stackoverflow.com/a/9436948
+ */
 export function IS_STRING(something: unknown): something is string {
   return typeof something === "string" || something instanceof String;
 }

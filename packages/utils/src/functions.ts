@@ -1,4 +1,8 @@
-// do nothing (Simpsons meme reference)
+/**
+ * No-op function — does nothing (Simpsons meme reference).
+ * @example
+ * const handler = props.onClick ?? NOOP;
+ */
 export function NOOP() {}
 
 /**

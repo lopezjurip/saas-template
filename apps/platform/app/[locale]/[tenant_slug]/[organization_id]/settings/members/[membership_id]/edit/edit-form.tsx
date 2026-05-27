@@ -63,10 +63,12 @@ const LOCALES = {
   } satisfies typeof LOCALE_ES,
 };
 
-// Postgres triggers raise specific exception messages — surface them as targeted UI
-// strings rather than the generic save_failed. Match against err.message (GraphyGraphQLError
-// embeds the JSON-stringified GraphQL errors into it); avoids `instanceof` failures across
-// module boundaries in Next.js dev.
+/**
+ * Maps a Postgres trigger exception message to a locale key for the UI.
+ * Falls back to `save_failed` when no specific code is recognized.
+ * @example
+ * setError(t(MAP_PG_ERROR_KEY(err)));
+ */
 function MAP_PG_ERROR_KEY(err: GraphyError): "last_admin_protected" | "self_remove_blocked" | "save_failed" {
   const msg = err.message;
   if (msg.includes("last_admin_protected")) return "last_admin_protected";
@@ -166,7 +168,11 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
   const initialSlugs = new Set(grantedSlugs.filter((s) => s !== PERMISSION_SLUG_WILDCARD));
   const [state, applyOptimistic] = useOptimistic({ wildcard: initialWildcard, slugs: initialSlugs }, APPLY_OPTIMISTIC);
 
-  // Mutate one permission row (grant or revoke). RLS gates this to viewers with `members_manage`.
+  /**
+   * Grants or revokes one permission row, returning whether the write succeeded.
+   * @example
+   * const ok = await writePermission("payroll_run", true);
+   */
   const writePermission = async (permission_id: string, granted: boolean): Promise<boolean> => {
     if (granted) {
       const { error: err } = await grantPermission({ membership_id, permission_id });
@@ -202,7 +208,11 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
     });
   };
 
-  // Reconcile the target slug set against the current one — one mutation per diff.
+  /**
+   * Reconciles the granted permissions to match a preset's slug set, one mutation per diff.
+   * @example
+   * <Button onClick={() => applyPreset(preset)}>{preset.permission_preset_name}</Button>
+   */
   const applyPreset = (preset: PresetRow) => {
     const slugs = (preset["permission_preset_slugs"] ?? []).filter((s): s is string => typeof s === "string");
     setError(null);

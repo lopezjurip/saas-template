@@ -24,7 +24,12 @@ export function ARRAY_UNIQUE<T>(array: T[]): T[] {
   return Array.from(new Set(array));
 }
 
-// https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+/**
+ * Returns a new array with the same items in random order (Fisher–Yates).
+ * @example
+ * const shuffled = ARRAY_SHUFFLE([1, 2, 3]);
+ * @see https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+ */
 export function ARRAY_SHUFFLE<T>(array: T[]) {
   const next = array.slice();
   for (let i = next.length - 1; i > 0; i--) {

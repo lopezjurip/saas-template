@@ -37,7 +37,12 @@ export async function getSupabaseClientSession() {
   return data["session"];
 }
 
-// Hook-injected claims live only in the JWT — decode the access_token directly.
+/**
+ * Reads hook-injected claims (tenants, organizations, onboarded) by decoding the access token,
+ * since they live only in the JWT and not on the persisted user record.
+ * @example
+ * const metadata = await getSupabaseClientUserMetadata();
+ */
 export async function getSupabaseClientUserMetadata(): Promise<AppMetadata | null> {
   const session = await getSupabaseClientSession();
   if (!session) return null;

@@ -52,9 +52,13 @@ function copyCookies(from: NextResponse, to: NextResponse): NextResponse {
   return to;
 }
 
-// Persist the locale on the response so the browser stores it for next request.
-// The matching mutation on `request.cookies` happens before `updateSession` runs (see proxy()
-// below) — without that, server components in the same request would still read the stale value.
+/**
+ * Persists the locale on the response so the browser keeps it for the next request.
+ * The matching `request.cookies` mutation must happen before `updateSession` runs, otherwise
+ * server components in the same request still read the stale value.
+ * @example
+ * return setLocaleCookieOnResponse(NextResponse.next(), "es");
+ */
 function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse {
   const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
   response.cookies.set(LOCALE_COOKIE, locale, {

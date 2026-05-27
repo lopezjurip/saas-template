@@ -19,7 +19,11 @@ export const signOut = action.action(async () => {
   redirect(`/${locale}/auth`);
 });
 
-// `<form action={...}>` requires (FormData) => void; the safe-action signOut takes no args.
+/**
+ * `<form action={...}>` adapter for `signOut`, which takes no args.
+ * @example
+ * <form action={signOutForm}><button type="submit">Cerrar sesión</button></form>
+ */
 export async function signOutForm(_: FormData) {
   await signOut();
 }

@@ -11,8 +11,12 @@ export const action = createSafeActionClient({
   },
 });
 
-// Inject the authenticated user + a fresh supabase server client into action context.
-// Redirects to /auth if there is no session — the action's body never runs in that case.
+/**
+ * Injects the authenticated user and a Supabase server client into the action context.
+ * Redirects to `/auth` when there is no session, so the action body never runs unauthenticated.
+ * @example
+ * export const actionDoThing = authedAction.action(async ({ ctx }) => ctx.user);
+ */
 export const authedAction = action.use(async ({ next }) => {
   const supabase = await createServerClient();
   const {
@@ -25,8 +29,11 @@ export const authedAction = action.use(async ({ next }) => {
   return next({ ctx: { user, supabase } });
 });
 
-// Thin adapter so `<form action={...}>` can call a next-safe-action action that takes a typed object.
-// `parse` pulls fields out of FormData; validation lives in the action's inputSchema.
+/**
+ * Adapts a typed-input next-safe-action so it can be passed to `<form action={...}>`.
+ * @example
+ * <form action={formAction(actionSetEmail, (fd) => ({ email: fd.get("email") as string }))} />
+ */
 export function formAction<TInput>(run: (input: TInput) => Promise<unknown>, parse: (formData: FormData) => TInput) {
   return async (formData: FormData) => {
     await run(parse(formData));

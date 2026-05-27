@@ -29,7 +29,12 @@ export function OBJECT_MERGE_DEEP(target: any, ...sources: any) {
   return OBJECT_MERGE_DEEP_INNER(output, ...sources);
 }
 
-// https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge/37164538
+/**
+ * Internal recursive helper that deep-merges sources into target (mutates target).
+ * @example
+ * OBJECT_MERGE_DEEP_INNER({ a: 1 }, { b: 2 }); // { a: 1, b: 2 }
+ * @see https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge/37164538
+ */
 function OBJECT_MERGE_DEEP_INNER(target: any, ...sources: any[]) {
   if (sources.length === 0) {
     return target;

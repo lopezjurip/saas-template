@@ -1,6 +1,11 @@
 import { IS_STRING } from "./string";
 
-// https://github.com/sindresorhus/is-plain-obj
+/**
+ * Type guard for plain JSON-like objects (no prototype chain, no Symbol.iterator, no toStringTag).
+ * @example
+ * if (IS_JSON(payload)) doStuff(payload);
+ * @see https://github.com/sindresorhus/is-plain-obj
+ */
 export function IS_JSON(value: unknown): value is JSON {
   if (typeof value !== "object" || value === null) {
     return false;
