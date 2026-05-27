@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
 import { getServerLocale } from "~/lib/i18n.server";
 import { action } from "~/lib/safe-action";
-import { loginSchema, magicLinkSchema } from "./schemas";
+import { loginSchema, magicLinkSchema, verifyMagicOtpSchema } from "./schemas";
 
 const log = debug("auth:login");
 
@@ -41,4 +41,22 @@ export const sendMagicLink = action.inputSchema(magicLinkSchema).action(async ({
   }
   log.info("magic link sent", { email });
   return { sentTo: email };
+});
+
+export const verifyMagicOtp = action.inputSchema(verifyMagicOtpSchema).action(async ({ parsedInput }) => {
+  const supabase = await createServerClient();
+  const { error } = await supabase.auth.verifyOtp({
+    type: "email",
+    email: parsedInput.email,
+    token: parsedInput.token,
+  });
+
+  if (error) {
+    log.info("magic OTP rejected", { email: parsedInput.email, reason: error.message });
+    throw new Error("Código incorrecto o expirado");
+  }
+
+  log.info("magic OTP login succeeded", { email: parsedInput.email });
+  const locale = await getServerLocale();
+  redirect(`/${locale}/dashboard`);
 });

@@ -143,7 +143,11 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
             <Copy className="mr-2 h-4 w-4" />
             {copied ? t("link_copied") : t("copy_link")}
           </Button>
-          <Button type="button" className="flex-1" onClick={() => router.push(editHrefFor(documentResult.membership_id))}>
+          <Button
+            type="button"
+            className="flex-1"
+            onClick={() => router.push(editHrefFor(documentResult.membership_id))}
+          >
             {t("define_permissions")}
           </Button>
         </div>

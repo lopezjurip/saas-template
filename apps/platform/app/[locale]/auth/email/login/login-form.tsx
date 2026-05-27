@@ -11,8 +11,8 @@ import { useForm } from "react-hook-form";
 import { DevMailboxNotice } from "~/components/dev-mailbox-notice";
 import { useLocaleParam } from "~/hooks/use-locale-param";
 import { signInWithPasskey } from "~/lib/passkeys.client";
-import { sendMagicLink, signInWithPassword } from "./actions";
-import { type LoginValues, loginSchema } from "./schemas";
+import { sendMagicLink, signInWithPassword, verifyMagicOtp } from "./actions";
+import { type LoginValues, loginSchema, type VerifyMagicOtpValues, verifyMagicOtpSchema } from "./schemas";
 
 export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; hasPasskey: boolean }) {
   const locale = useLocaleParam();
@@ -20,6 +20,7 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
   const [magicSentTo, setMagicSentTo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [magicPending, startMagicTransition] = useTransition();
+  const [otpPending, startOtpTransition] = useTransition();
   const [passkeyPending, startPasskeyTransition] = useTransition();
 
   const form = useForm<LoginValues>({
@@ -27,7 +28,12 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
     defaultValues: { email: defaultEmail, password: "" },
   });
 
-  const anyPending = pending || magicPending || passkeyPending;
+  const otpForm = useForm<VerifyMagicOtpValues>({
+    resolver: zodResolver(verifyMagicOtpSchema),
+    defaultValues: { email: defaultEmail, token: "" },
+  });
+
+  const anyPending = pending || magicPending || passkeyPending || otpPending;
 
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
@@ -47,9 +53,21 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
       const res = await sendMagicLink({ email });
       if (res?.serverError) setServerError(res.serverError);
       else if (res?.validationErrors) setServerError("Correo inválido");
-      else if (res?.data?.sentTo) setMagicSentTo(res.data.sentTo);
+      else if (res?.data?.sentTo) {
+        setMagicSentTo(res.data.sentTo);
+        otpForm.reset({ email: res.data.sentTo, token: "" });
+      }
     });
   };
+
+  const onVerifyOtp = otpForm.handleSubmit((values) => {
+    setServerError(null);
+    startOtpTransition(async () => {
+      const res = await verifyMagicOtp(values);
+      if (res?.serverError) setServerError(res.serverError);
+      else if (res?.validationErrors) setServerError("Código inválido");
+    });
+  });
 
   const onPasskey = () => {
     setServerError(null);
@@ -127,9 +145,35 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
       {magicSentTo && (
         <>
           <Alert>
-            <AlertDescription>Te enviamos un enlace mágico. Revisa tu correo.</AlertDescription>
+            <AlertDescription>
+              Te enviamos un enlace mágico a <strong>{magicSentTo}</strong>. Haz clic en el enlace o ingresa el código
+              de 6 dígitos abajo.
+            </AlertDescription>
           </Alert>
           <DevMailboxNotice email={magicSentTo} />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="magic-token">Código del correo</Label>
+            <Input
+              id="magic-token"
+              inputMode="numeric"
+              maxLength={6}
+              autoComplete="one-time-code"
+              aria-invalid={!!otpForm.formState.errors.token}
+              {...otpForm.register("token")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void onVerifyOtp();
+                }
+              }}
+            />
+            {otpForm.formState.errors.token && (
+              <p className="text-destructive text-xs">{otpForm.formState.errors.token.message}</p>
+            )}
+          </div>
+          <Button type="button" onClick={() => onVerifyOtp()} disabled={anyPending} className="w-full">
+            {otpPending ? "Verificando…" : "Verificar código"}
+          </Button>
         </>
       )}
 
@@ -138,7 +182,7 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
           {pending ? "Iniciando…" : "Iniciar sesión"}
         </Button>
         <Button type="button" variant="outline" onClick={onMagicLink} disabled={anyPending} className="w-full">
-          {magicPending ? "Enviando…" : "Enviarme un enlace mágico"}
+          {magicPending ? "Enviando…" : magicSentTo ? "Reenviar enlace mágico" : "Enviarme un enlace mágico"}
         </Button>
       </div>
     </form>

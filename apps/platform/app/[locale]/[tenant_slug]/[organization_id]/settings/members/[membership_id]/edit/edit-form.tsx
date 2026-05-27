@@ -145,10 +145,7 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
 
   const initialWildcard = grantedSlugs.includes(PERMISSION_SLUG_WILDCARD);
   const initialSlugs = new Set(grantedSlugs.filter((s) => s !== PERMISSION_SLUG_WILDCARD));
-  const [state, applyOptimistic] = useOptimistic(
-    { wildcard: initialWildcard, slugs: initialSlugs },
-    APPLY_OPTIMISTIC,
-  );
+  const [state, applyOptimistic] = useOptimistic({ wildcard: initialWildcard, slugs: initialSlugs }, APPLY_OPTIMISTIC);
 
   // Mutate one permission row (grant or revoke). RLS gates this to viewers with `members_manage`.
   const writePermission = async (permission_id: string, granted: boolean): Promise<boolean> => {

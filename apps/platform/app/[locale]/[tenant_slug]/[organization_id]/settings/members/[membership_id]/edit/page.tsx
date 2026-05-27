@@ -138,11 +138,7 @@ export default async function MembershipEditPage({
   ]);
 
   const membership = membershipRes.data;
-  if (
-    !membership ||
-    membership["membership_revoked_at"] ||
-    membership["membership_rejected_at"]
-  ) {
+  if (!membership || membership["membership_revoked_at"] || membership["membership_rejected_at"]) {
     return (
       <main className="bg-muted flex min-h-svh items-start justify-center p-6">
         <Card className="w-full max-w-2xl">
