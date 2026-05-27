@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   const { locale } = await params;
   const user = await getSupabaseServerUser();
   if (!user) {
-    redirect(`/${locale}/auth`);
+    redirect(`/${locale}/auth/logout`);
   }
 
   return <>{children}</>;
