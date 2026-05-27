@@ -11,6 +11,24 @@ export enum Tenant_Tier {
   Pro = "pro",
 }
 
+export type Webauthn_CredentialsInsertInput = {
+  profile_id?: string | null | undefined;
+  webauthn_credential_aaguid?: string | null | undefined;
+  webauthn_credential_backup_state?: string | null | undefined;
+  webauthn_credential_created_at?: string | null | undefined;
+  webauthn_credential_device_type?: string | null | undefined;
+  webauthn_credential_external_id?: string | null | undefined;
+  webauthn_credential_friendly_name?: string | null | undefined;
+  webauthn_credential_id?: string | null | undefined;
+  webauthn_credential_last_used_at?: string | null | undefined;
+  webauthn_credential_public_key?: string | null | undefined;
+  webauthn_credential_sign_count?: number | null | undefined;
+  webauthn_credential_transports?: Array<string | null | undefined> | null | undefined;
+  webauthn_credential_type?: string | null | undefined;
+  webauthn_credential_updated_at?: string | null | undefined;
+  webauthn_credential_user_verification_status?: string | null | undefined;
+};
+
 export type EditMembershipGrantPermissionMutationMutationVariables = Exact<{
   membership_id: number;
   permission_id: string;
@@ -303,6 +321,123 @@ export type ViewerTenantBySlugHookQueryQuery = {
   } | null;
 };
 
+export type PasskeyCredentialFragmentFragment = {
+  webauthn_credential_external_id: string;
+  webauthn_credential_type: string;
+  webauthn_credential_transports: Array<string | null>;
+  webauthn_credential_public_key: string;
+  webauthn_credential_sign_count: number;
+  profile_id: string;
+};
+
+export type PasskeyListByProfileQueryQueryVariables = Exact<{
+  profile_id: string;
+}>;
+
+export type PasskeyListByProfileQueryQuery = {
+  webauthn_credentialsCollection: {
+    edges: Array<{
+      node: {
+        webauthn_credential_external_id: string;
+        webauthn_credential_type: string;
+        webauthn_credential_transports: Array<string | null>;
+        webauthn_credential_public_key: string;
+        webauthn_credential_sign_count: number;
+        profile_id: string;
+      };
+    }>;
+  } | null;
+};
+
+export type PasskeyByExternalIdQueryQueryVariables = Exact<{
+  external_id: string;
+}>;
+
+export type PasskeyByExternalIdQueryQuery = {
+  webauthn_credentialsCollection: {
+    edges: Array<{
+      node: {
+        webauthn_credential_external_id: string;
+        webauthn_credential_type: string;
+        webauthn_credential_transports: Array<string | null>;
+        webauthn_credential_public_key: string;
+        webauthn_credential_sign_count: number;
+        profile_id: string;
+      };
+    }>;
+  } | null;
+};
+
+export type PasskeyUpdateSignCountMutationMutationVariables = Exact<{
+  external_id: string;
+  sign_count: number;
+  last_used_at: string;
+}>;
+
+export type PasskeyUpdateSignCountMutationMutation = {
+  updatewebauthn_credentialsCollection: { affectedCount: number };
+};
+
+export type PasskeyInsertCredentialMutationMutationVariables = Exact<{
+  input: Webauthn_CredentialsInsertInput;
+}>;
+
+export type PasskeyInsertCredentialMutationMutation = {
+  insertIntowebauthn_credentialsCollection: {
+    records: Array<{
+      webauthn_credential_id: string;
+      webauthn_credential_friendly_name: string | null;
+      webauthn_credential_device_type: string;
+      webauthn_credential_backup_state: string;
+      webauthn_credential_created_at: string;
+    }>;
+  } | null;
+};
+
+export type PasskeyAnonChallengeInsertMutationMutationVariables = Exact<{
+  challenge_value: string;
+}>;
+
+export type PasskeyAnonChallengeInsertMutationMutation = {
+  insertIntowebauthn_challengesCollection: {
+    records: Array<{ webauthn_challenge_id: string; webauthn_challenge_value: string }>;
+  } | null;
+};
+
+export type PasskeyChallengeByProfileQueryQueryVariables = Exact<{
+  profile_id: string;
+}>;
+
+export type PasskeyChallengeByProfileQueryQuery = {
+  webauthn_challengesCollection: {
+    edges: Array<{ node: { webauthn_challenge_id: string; webauthn_challenge_value: string } }>;
+  } | null;
+};
+
+export type PasskeyChallengeByIdQueryQueryVariables = Exact<{
+  challenge_id: string;
+}>;
+
+export type PasskeyChallengeByIdQueryQuery = {
+  webauthn_challengesCollection: {
+    edges: Array<{ node: { webauthn_challenge_id: string; webauthn_challenge_value: string } }>;
+  } | null;
+};
+
+export type PasskeyChallengeDeleteMutationMutationVariables = Exact<{
+  challenge_id: string;
+}>;
+
+export type PasskeyChallengeDeleteMutationMutation = {
+  deleteFromwebauthn_challengesCollection: { affectedCount: number };
+};
+
+export type PasskeyProfileIdByEmailQueryQueryVariables = Exact<{
+  email_to_check: string;
+}>;
+
+export type PasskeyProfileIdByEmailQueryQuery = { profile_id_by_email: string | null };
+
 export class TypedDocumentString<TResult, TVariables>
   extends String
   implements DocumentTypeDecoration<TResult, TVariables>
@@ -411,6 +546,19 @@ export const ViewerTenantHookFragmentFragmentDoc = new TypedDocumentString(
     `,
   { fragmentName: "ViewerTenantHookFragment" },
 ) as unknown as TypedDocumentString<ViewerTenantHookFragmentFragment, unknown>;
+export const PasskeyCredentialFragmentFragmentDoc = new TypedDocumentString(
+  `
+    fragment PasskeyCredentialFragment on webauthn_credentials {
+  webauthn_credential_external_id
+  webauthn_credential_type
+  webauthn_credential_transports
+  webauthn_credential_public_key
+  webauthn_credential_sign_count
+  profile_id
+}
+    `,
+  { fragmentName: "PasskeyCredentialFragment" },
+) as unknown as TypedDocumentString<PasskeyCredentialFragmentFragment, unknown>;
 export const EditMembershipGrantPermissionMutationDocument = new TypedDocumentString(`
     mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {
   insertIntomembership_permissionsCollection(
@@ -737,3 +885,133 @@ export const ViewerTenantBySlugHookQueryDocument = new TypedDocumentString(`
   tenant_name
   tenant_tier
 }`) as unknown as TypedDocumentString<ViewerTenantBySlugHookQueryQuery, ViewerTenantBySlugHookQueryQueryVariables>;
+export const PasskeyListByProfileQueryDocument = new TypedDocumentString(`
+    query PasskeyListByProfileQuery($profile_id: UUID!) {
+  webauthn_credentialsCollection(filter: {profile_id: {eq: $profile_id}}) {
+    edges {
+      node {
+        ...PasskeyCredentialFragment
+      }
+    }
+  }
+}
+    fragment PasskeyCredentialFragment on webauthn_credentials {
+  webauthn_credential_external_id
+  webauthn_credential_type
+  webauthn_credential_transports
+  webauthn_credential_public_key
+  webauthn_credential_sign_count
+  profile_id
+}`) as unknown as TypedDocumentString<PasskeyListByProfileQueryQuery, PasskeyListByProfileQueryQueryVariables>;
+export const PasskeyByExternalIdQueryDocument = new TypedDocumentString(`
+    query PasskeyByExternalIdQuery($external_id: String!) {
+  webauthn_credentialsCollection(
+    filter: {webauthn_credential_external_id: {eq: $external_id}}
+    first: 1
+  ) {
+    edges {
+      node {
+        ...PasskeyCredentialFragment
+      }
+    }
+  }
+}
+    fragment PasskeyCredentialFragment on webauthn_credentials {
+  webauthn_credential_external_id
+  webauthn_credential_type
+  webauthn_credential_transports
+  webauthn_credential_public_key
+  webauthn_credential_sign_count
+  profile_id
+}`) as unknown as TypedDocumentString<PasskeyByExternalIdQueryQuery, PasskeyByExternalIdQueryQueryVariables>;
+export const PasskeyUpdateSignCountMutationDocument = new TypedDocumentString(`
+    mutation PasskeyUpdateSignCountMutation($external_id: String!, $sign_count: Int!, $last_used_at: Datetime!) {
+  updatewebauthn_credentialsCollection(
+    filter: {webauthn_credential_external_id: {eq: $external_id}}
+    set: {webauthn_credential_sign_count: $sign_count, webauthn_credential_last_used_at: $last_used_at}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<
+  PasskeyUpdateSignCountMutationMutation,
+  PasskeyUpdateSignCountMutationMutationVariables
+>;
+export const PasskeyInsertCredentialMutationDocument = new TypedDocumentString(`
+    mutation PasskeyInsertCredentialMutation($input: webauthn_credentialsInsertInput!) {
+  insertIntowebauthn_credentialsCollection(objects: [$input]) {
+    records {
+      webauthn_credential_id
+      webauthn_credential_friendly_name
+      webauthn_credential_device_type
+      webauthn_credential_backup_state
+      webauthn_credential_created_at
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<
+  PasskeyInsertCredentialMutationMutation,
+  PasskeyInsertCredentialMutationMutationVariables
+>;
+export const PasskeyAnonChallengeInsertMutationDocument = new TypedDocumentString(`
+    mutation PasskeyAnonChallengeInsertMutation($challenge_value: String!) {
+  insertIntowebauthn_challengesCollection(
+    objects: [{webauthn_challenge_value: $challenge_value}]
+  ) {
+    records {
+      webauthn_challenge_id
+      webauthn_challenge_value
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<
+  PasskeyAnonChallengeInsertMutationMutation,
+  PasskeyAnonChallengeInsertMutationMutationVariables
+>;
+export const PasskeyChallengeByProfileQueryDocument = new TypedDocumentString(`
+    query PasskeyChallengeByProfileQuery($profile_id: UUID!) {
+  webauthn_challengesCollection(filter: {profile_id: {eq: $profile_id}}, first: 1) {
+    edges {
+      node {
+        webauthn_challenge_id
+        webauthn_challenge_value
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<
+  PasskeyChallengeByProfileQueryQuery,
+  PasskeyChallengeByProfileQueryQueryVariables
+>;
+export const PasskeyChallengeByIdQueryDocument = new TypedDocumentString(`
+    query PasskeyChallengeByIdQuery($challenge_id: UUID!) {
+  webauthn_challengesCollection(
+    filter: {webauthn_challenge_id: {eq: $challenge_id}}
+    first: 1
+  ) {
+    edges {
+      node {
+        webauthn_challenge_id
+        webauthn_challenge_value
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<PasskeyChallengeByIdQueryQuery, PasskeyChallengeByIdQueryQueryVariables>;
+export const PasskeyChallengeDeleteMutationDocument = new TypedDocumentString(`
+    mutation PasskeyChallengeDeleteMutation($challenge_id: UUID!) {
+  deleteFromwebauthn_challengesCollection(
+    filter: {webauthn_challenge_id: {eq: $challenge_id}}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<
+  PasskeyChallengeDeleteMutationMutation,
+  PasskeyChallengeDeleteMutationMutationVariables
+>;
+export const PasskeyProfileIdByEmailQueryDocument = new TypedDocumentString(`
+    query PasskeyProfileIdByEmailQuery($email_to_check: String!) {
+  profile_id_by_email(email_to_check: $email_to_check)
+}
+    `) as unknown as TypedDocumentString<PasskeyProfileIdByEmailQueryQuery, PasskeyProfileIdByEmailQueryQueryVariables>;

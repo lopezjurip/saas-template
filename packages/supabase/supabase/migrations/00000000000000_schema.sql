@@ -835,53 +835,19 @@ create trigger handle_webauthn_credentials_updated_at
 alter table public.webauthn_challenges enable row level security;
 alter table public.webauthn_credentials enable row level security;
 
--- Challenges: authenticated users can manage their own (registration flow).
--- Anonymous sign-in challenges (profile_id IS NULL) go through service-role only
--- (RLS does not apply to service-role).
-drop policy if exists "webauthn_challenges select own" on public.webauthn_challenges;
-create policy "webauthn_challenges select own"
-  on public.webauthn_challenges for select
-  to authenticated
-  using (profile_id = (select auth.uid()));
+-- Challenges: 100% server-side via service-role (Server Actions in
+-- apps/platform/lib/passkeys.actions.ts). No authenticated policies — clients
+-- never touch this table directly. Default-deny keeps anon + authenticated out.
 
-drop policy if exists "webauthn_challenges insert own" on public.webauthn_challenges;
-create policy "webauthn_challenges insert own"
-  on public.webauthn_challenges for insert
-  to authenticated
-  with check (profile_id = (select auth.uid()));
-
-drop policy if exists "webauthn_challenges update own" on public.webauthn_challenges;
-create policy "webauthn_challenges update own"
-  on public.webauthn_challenges for update
-  to authenticated
-  using (profile_id = (select auth.uid()))
-  with check (profile_id = (select auth.uid()));
-
-drop policy if exists "webauthn_challenges delete own" on public.webauthn_challenges;
-create policy "webauthn_challenges delete own"
-  on public.webauthn_challenges for delete
-  to authenticated
-  using (profile_id = (select auth.uid()));
-
--- Credentials: users see and manage only their own.
+-- Credentials: clients only read their own list (dashboard) and delete their own
+-- (passkey revocation). Inserts + updates happen exclusively via service-role
+-- Server Actions, so authenticated INSERT/UPDATE policies are intentionally absent
+-- — that closes the "user fabricates rows bypassing the WebAuthn ceremony" vector.
 drop policy if exists "webauthn_credentials select own" on public.webauthn_credentials;
 create policy "webauthn_credentials select own"
   on public.webauthn_credentials for select
   to authenticated
   using (profile_id = (select auth.uid()));
-
-drop policy if exists "webauthn_credentials insert own" on public.webauthn_credentials;
-create policy "webauthn_credentials insert own"
-  on public.webauthn_credentials for insert
-  to authenticated
-  with check (profile_id = (select auth.uid()));
-
-drop policy if exists "webauthn_credentials update own" on public.webauthn_credentials;
-create policy "webauthn_credentials update own"
-  on public.webauthn_credentials for update
-  to authenticated
-  using (profile_id = (select auth.uid()))
-  with check (profile_id = (select auth.uid()));
 
 drop policy if exists "webauthn_credentials delete own" on public.webauthn_credentials;
 create policy "webauthn_credentials delete own"

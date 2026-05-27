@@ -9,13 +9,11 @@ import { Separator } from "@packages/ui-common/shadcn/components/ui/separator";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { DevMailboxNotice } from "~/components/dev-mailbox-notice";
-import { useLocaleParam } from "~/hooks/use-locale-param";
 import { signInWithPasskey } from "~/lib/passkeys.client";
 import { sendMagicLink, signInWithPassword, verifyMagicOtp } from "./actions";
 import { type LoginValues, loginSchema, type VerifyMagicOtpValues, verifyMagicOtpSchema } from "./schemas";
 
 export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; hasPasskey: boolean }) {
-  const locale = useLocaleParam();
   const [serverError, setServerError] = useState<string | null>(null);
   const [magicSentTo, setMagicSentTo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -79,9 +77,6 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
           return;
         }
         await signInWithPasskey(form.getValues("email"));
-        // Hard navigation guarantees the new session cookies are sent on the next request —
-        // a client-side router.push can race ahead of the cookie write.
-        window.location.href = `/${locale}/dashboard`;
       } catch (e) {
         if (e instanceof Error && e.name === "NotAllowedError") {
           setServerError("Cancelaste el inicio de sesión con passkey.");

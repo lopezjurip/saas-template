@@ -225,7 +225,7 @@ max_frequency = "5s"
 
 # Passkeys are not implemented via Supabase MFA — they're a custom SimpleWebAuthn-backed
 # flow with its own public.webauthn_credentials / webauthn_challenges tables. See
-# apps/platform/lib/passkeys.* and the /api/passkeys + /auth/webauthn routes.
+# apps/platform/lib/passkeys.* (server actions, no dedicated routes).
 
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
 # `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,

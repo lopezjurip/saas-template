@@ -873,6 +873,24 @@ export type Database = {
           isSetofReturn: true;
         };
       };
+      viewer_tenant_by_slug: {
+        Args: { target_tenant_slug: string };
+        Returns: {
+          tenant_created_at: string;
+          tenant_disabled_at: string | null;
+          tenant_id: number;
+          tenant_name: string;
+          tenant_slug: string;
+          tenant_tier: Database["public"]["Enums"]["tenant_tier"];
+          tenant_updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "tenants";
+          isOneToOne: true;
+          isSetofReturn: true;
+        };
+      };
       viewer_tenant_ids: { Args: never; Returns: number[] };
       viewer_tenant_validate: {
         Args: { target_tenant_id: number };
