@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ResultOf } from "@graphql-typed-document-node/core";
+import { cache } from "react";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 
@@ -28,7 +29,7 @@ export const ViewerProfileGetQuery = /*#__PURE__*/ gql(`
 /**
  * Fetches the authenticated viewer's profile via GraphQL (server-side).
  */
-export async function getViewerProfile() {
+export const getViewerProfile = cache(async () => {
   const graphy = await getGraphySession();
   return await graphy.query({ query: ViewerProfileGetQuery });
-}
+});

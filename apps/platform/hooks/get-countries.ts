@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ResultOf } from "@graphql-typed-document-node/core";
+import { cache } from "react";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 
@@ -33,7 +34,7 @@ export const CountriesGetQuery = /*#__PURE__*/ gql(`
 /**
  * Fetches the public list of countries (server-side).
  */
-export async function getCountries() {
+export const getCountries = cache(async () => {
   const graphy = await getGraphySession();
   return await graphy.query({ query: CountriesGetQuery });
-}
+});

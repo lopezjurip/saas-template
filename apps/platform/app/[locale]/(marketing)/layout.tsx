@@ -4,6 +4,8 @@ import { Logo } from "@packages/ui-common/logo";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Separator } from "@packages/ui-common/shadcn/components/ui/separator";
 import Link from "next/link";
+import { LocaleToggle } from "~/components/locale-toggle";
+import { ThemeToggle } from "~/components/theme-toggle";
 import { LOCALE_TO_BCP47 } from "~/lib/i18n";
 
 const LOCALE_ES = {
@@ -68,7 +70,9 @@ export default async function MarketingLayout({
               {t("nav.faq")}
             </Link>
           </nav>
-          <div className="ml-auto flex items-center pr-28">
+          <div className="ml-auto flex items-center gap-2">
+            <LocaleToggle />
+            <ThemeToggle />
             <Button asChild size="sm">
               <Link href={user ? `/${locale}/dashboard` : `/${locale}/auth`}>
                 {user ? t("cta.dashboard") : t("cta.signin")}

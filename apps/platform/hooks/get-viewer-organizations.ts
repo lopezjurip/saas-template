@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ResultOf } from "@graphql-typed-document-node/core";
+import { cache } from "react";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 
@@ -48,15 +49,15 @@ export const ViewerOrganizationByIdGetQuery = /*#__PURE__*/ gql(`
   }
 `);
 
-export async function getViewerOrganizations(tenant_id?: number) {
+export const getViewerOrganizations = cache(async (tenant_id?: number) => {
   const graphy = await getGraphySession();
   return await graphy.query({
     query: ViewerOrganizationsGetQuery,
     variables: { tenant_id: tenant_id ?? null },
   });
-}
+});
 
-export async function getViewerOrganization(organization_id: number) {
+export const getViewerOrganization = cache(async (organization_id: number) => {
   const graphy = await getGraphySession();
   return await graphy.query({ query: ViewerOrganizationByIdGetQuery, variables: { organization_id } });
-}
+});

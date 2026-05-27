@@ -3,7 +3,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
@@ -30,40 +29,37 @@ export default async function OrganizationHomePage({
   if (!organization) notFound();
 
   const profile_name_full = profileData?.["profile"]?.["profile_name_full"] ?? null;
+  const base = `/${locale}/${tenant_slug}/${organization_id}`;
 
   return (
-    <main className="bg-muted flex min-h-svh items-center justify-center p-6">
-      <Card className="w-full max-w-md">
+    <div className="mx-auto max-w-3xl px-6 py-8">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight">{organization["organization_name"]}</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          {profile_name_full ? `Hola, ${profile_name_full}.` : "Bienvenido."}
+        </p>
+      </div>
+
+      <Card>
         <CardHeader>
-          <CardTitle>{organization["organization_name"]}</CardTitle>
-          <CardDescription>{tenant_slug}</CardDescription>
+          <CardTitle>Accesos rápidos</CardTitle>
+          <CardDescription>Atajos a las áreas principales de la organización.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          {profile_name_full ? <p className="text-sm">Hola, {profile_name_full}.</p> : null}
-          <div className="flex flex-col gap-2">
-            <Button asChild variant="outline" className="w-full justify-start">
-              <Link href={`/${locale}/${tenant_slug}/${organization_id}/settings/members`}>
-                <Users className="h-4 w-4" />
-                Miembros y permisos
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="w-full justify-start" disabled>
-              <Link href={`/${locale}/${tenant_slug}/${organization_id}/settings`}>
-                <Settings className="h-4 w-4" />
-                Configuración
-              </Link>
-            </Button>
-          </div>
+        <CardContent className="flex flex-col gap-2">
+          <Button asChild variant="outline" className="w-full justify-start">
+            <Link href={`${base}/settings/members`}>
+              <Users className="h-4 w-4" />
+              Miembros y permisos
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full justify-start" disabled>
+            <Link href={`${base}/settings`}>
+              <Settings className="h-4 w-4" />
+              Configuración
+            </Link>
+          </Button>
         </CardContent>
-        <CardFooter className="flex flex-col gap-2">
-          <Button asChild variant="ghost" className="w-full">
-            <Link href={`/${locale}/${tenant_slug}`}>Cambiar de organización</Link>
-          </Button>
-          <Button asChild variant="ghost" className="w-full">
-            <Link href={`/${locale}/auth/logout`}>Cerrar sesión</Link>
-          </Button>
-        </CardFooter>
       </Card>
-    </main>
+    </div>
   );
 }
