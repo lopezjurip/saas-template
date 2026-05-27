@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+if [ -z "$CONDUCTOR_WORKSPACE_NAME" ]; then
+  echo "Este script es solo para Conductor. Para dev normal: pnpm install && pnpm db:start"
+  exit 1
+fi
+
 copy_if_exists() {
   local src="$1"
   local dst="$2"
