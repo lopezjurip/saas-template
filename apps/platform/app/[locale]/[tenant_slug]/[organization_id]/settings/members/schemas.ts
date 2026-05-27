@@ -1,13 +1,6 @@
 import { z } from "zod";
 
-const slugRegex = /^[a-z0-9]([a-z0-9_]{1,38}[a-z0-9])?$/;
-
 export const PERMISSION_SLUG_WILDCARD = "*";
-
-export const permissionSlugSchema = z
-  .string()
-  .min(1)
-  .refine((value) => value === PERMISSION_SLUG_WILDCARD || slugRegex.test(value), "Permiso inválido");
 
 // Step 1 of the invite flow: collect the identifier only. Permissions are set on the
 // follow-up edit page (`settings/members/[membership_id]/edit`) so the invitee row exists
@@ -55,25 +48,3 @@ export const inviteMemberSchema = z
     }
   });
 export type InviteMemberValues = z.infer<typeof inviteMemberSchema>;
-
-export const cancelInvitationSchema = z.object({
-  membership_id: z.number().int().positive(),
-});
-export type CancelInvitationValues = z.infer<typeof cancelInvitationSchema>;
-
-export const togglePermissionSchema = z.object({
-  membership_id: z.number().int().positive(),
-  permission_id: permissionSlugSchema,
-  granted: z.boolean(),
-});
-export type TogglePermissionValues = z.infer<typeof togglePermissionSchema>;
-
-export const demoteWildcardSchema = z.object({
-  membership_id: z.number().int().positive(),
-});
-export type DemoteWildcardValues = z.infer<typeof demoteWildcardSchema>;
-
-export const removeMemberSchema = z.object({
-  membership_id: z.number().int().positive(),
-});
-export type RemoveMemberValues = z.infer<typeof removeMemberSchema>;

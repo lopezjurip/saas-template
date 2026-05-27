@@ -1,5 +1,6 @@
 "use client";
 
+import { useGraphyMutation } from "@packages/graphy/react";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
@@ -14,8 +15,27 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { useLocale } from "~/components/locale-provider";
+import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/hooks/use-rosetta";
-import { actionCancelInvitation } from "./actions";
+
+const MembersPendingInvitationsCancelMutation = /*#__PURE__*/ gql(`
+  mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {
+    updatemembershipsCollection(
+      filter: {
+        membership_id: { eq: $membership_id }
+        profile_id: { is: NULL }
+        membership_revoked_at: { is: NULL }
+        membership_rejected_at: { is: NULL }
+      }
+      set: {
+        membership_revoked_at: $now
+        membership_invite_token: null
+      }
+    ) {
+      affectedCount
+    }
+  }
+`);
 
 const LOCALE_ES = {
   empty: "No hay invitaciones pendientes.",
@@ -101,6 +121,7 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
   const [pendingId, setPendingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const [, cancelInvitation] = useGraphyMutation(MembersPendingInvitationsCancelMutation);
   const [optimisticInvitations, removeOptimistic] = useOptimistic(
     invitations,
     (state: InvitationRow[], membership_id: number) => state.filter((i) => i["membership_id"] !== membership_id),
@@ -117,11 +138,12 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
     setPendingId(inv["membership_id"]);
     startTransition(async () => {
       removeOptimistic(inv["membership_id"]);
-      const res = await actionCancelInvitation({ membership_id: inv["membership_id"] });
+      const { error: err } = await cancelInvitation({
+        membership_id: inv["membership_id"],
+        now: new Date().toISOString(),
+      });
       setPendingId(null);
-      if (res?.serverError) {
-        setError(res.serverError);
-      }
+      if (err) setError("No pudimos cancelar la invitación");
       router.refresh();
     });
   };

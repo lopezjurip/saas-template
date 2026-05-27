@@ -1,5 +1,6 @@
 "use client";
 
+import type { GraphyError } from "@packages/graphy/graphy";
 import { useGraphyMutation } from "@packages/graphy/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
@@ -23,6 +24,8 @@ const LOCALE_ES = {
   wildcard_footer:
     'Cuando alguien tiene "acceso completo" el comodín cubre cualquier permiso. Quítalo si quieres asignar permisos de forma individual.',
   save_failed: "No pudimos guardar el cambio. Intenta de nuevo.",
+  last_admin_protected: "Esta organización quedaría sin administradores. Primero dale acceso completo a otra persona.",
+  self_remove_blocked: "Para salir de la organización pídele a otro administrador que te remueva.",
 };
 
 const LOCALES = {
@@ -39,6 +42,9 @@ const LOCALES = {
     wildcard_footer:
       'When someone has "full access" the wildcard covers any permission. Remove it to assign permissions individually.',
     save_failed: "We couldn't save the change. Try again.",
+    last_admin_protected:
+      "This would leave the organization without any administrators. Give full access to someone else first.",
+    self_remove_blocked: "To leave the organization, ask another administrator to remove you.",
   } satisfies typeof LOCALE_ES,
   pt: {
     presets_label: "Modelos",
@@ -52,8 +58,21 @@ const LOCALES = {
     wildcard_footer:
       'Quando alguém tem "acesso completo" o coringa cobre qualquer permissão. Remova-o se quiser atribuir permissões individualmente.',
     save_failed: "Não conseguimos salvar a alteração. Tente novamente.",
+    last_admin_protected: "A organização ficaria sem administradores. Dê acesso completo a outra pessoa primeiro.",
+    self_remove_blocked: "Para sair da organização, peça a outro administrador para te remover.",
   } satisfies typeof LOCALE_ES,
 };
+
+// Postgres triggers raise specific exception messages — surface them as targeted UI
+// strings rather than the generic save_failed. Match against err.message (GraphyGraphQLError
+// embeds the JSON-stringified GraphQL errors into it); avoids `instanceof` failures across
+// module boundaries in Next.js dev.
+function MAP_PG_ERROR_KEY(err: GraphyError): "last_admin_protected" | "self_remove_blocked" | "save_failed" {
+  const msg = err.message;
+  if (msg.includes("last_admin_protected")) return "last_admin_protected";
+  if (msg.includes("self_remove_blocked")) return "self_remove_blocked";
+  return "save_failed";
+}
 
 const GrantPermissionMutation = /*#__PURE__*/ gql(`
   mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {
@@ -152,13 +171,13 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
     if (granted) {
       const { error: err } = await grantPermission({ membership_id, permission_id });
       if (err) {
-        setError(t("save_failed"));
+        setError(t(MAP_PG_ERROR_KEY(err)));
         return false;
       }
     } else {
       const { error: err } = await revokePermission({ membership_id, permission_id });
       if (err) {
-        setError(t("save_failed"));
+        setError(t(MAP_PG_ERROR_KEY(err)));
         return false;
       }
     }
@@ -228,7 +247,7 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
     startTransition(async () => {
       const { error: err } = await revokeMembership({ membership_id, now: new Date().toISOString() });
       if (err) {
-        setError(t("save_failed"));
+        setError(t(MAP_PG_ERROR_KEY(err)));
         return;
       }
       router.push(membersHref);

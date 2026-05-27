@@ -109,7 +109,7 @@ export default async function AccountPage({
               <h2 className="text-sm font-medium">Perfil</h2>
               <p className="text-muted-foreground text-xs">El nombre que verán tus colegas en Humane.</p>
             </div>
-            <ProfileForm defaultValue={profile?.["profile_name_full"] ?? ""} />
+            <ProfileForm profile_id={user.id} defaultValue={profile?.["profile_name_full"] ?? ""} />
           </section>
 
           <Separator />

@@ -1410,6 +1410,147 @@ create policy "membership_permissions write with members_manage"
   );
 
 -- ============================================================
+-- Business invariants on memberships / membership_permissions
+-- ============================================================
+-- These triggers protect against actions that would leave an organization
+-- without a usable admin surface, or let a user remove themselves. They run
+-- AFTER RLS write-policies on the same tables: RLS already gates "who can
+-- mutate", these gate "what may not happen". service_role bypasses (auth.uid()
+-- is NULL) so migrations and admin tools can still rescue stuck orgs.
+
+-- True iff org has at least one OTHER claimed, accepted, active membership
+-- holding `members_manage` or the wildcard `*`. Pending invites don't count.
+create or replace function public.org_has_other_active_admin(
+  _organization_id int,
+  _excluded_membership_id int
+) returns boolean
+  language sql
+  stable
+  security definer
+  set search_path to ''
+as $$
+  select exists (
+    select 1
+    from public.memberships m
+    join public.membership_permissions mp on mp.membership_id = m.membership_id
+    where m.organization_id = _organization_id
+      and m.membership_id <> _excluded_membership_id
+      and m.profile_id is not null
+      and m.membership_accepted_at is not null
+      and m.membership_revoked_at is null
+      and m.membership_rejected_at is null
+      and mp.permission_id in ('members_manage', '*')
+  );
+$$;
+
+revoke execute on function public.org_has_other_active_admin(int, int) from public;
+grant execute on function public.org_has_other_active_admin(int, int) to authenticated;
+
+-- Block deleting members_manage or '*' from the last claimed admin in an org.
+-- An admin who holds BOTH may demote one — the other still grants admin status.
+create or replace function public.membership_permissions_protect_last_admin()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path to ''
+as $$
+declare
+  _organization_id int;
+  _profile_id uuid;
+begin
+  -- service_role bypass: auth.uid() is NULL when called outside an authenticated session.
+  if auth.uid() is null then
+    return old;
+  end if;
+
+  if old.permission_id not in ('members_manage', '*') then
+    return old;
+  end if;
+
+  select organization_id, profile_id into _organization_id, _profile_id
+  from public.memberships
+  where membership_id = old.membership_id;
+
+  -- Pending invites carry no live access — they cannot lock anyone out.
+  if _profile_id is null then
+    return old;
+  end if;
+
+  -- If this membership keeps the OTHER admin permission after the deletion,
+  -- it remains an active admin — no lockout risk regardless of other memberships.
+  if exists (
+    select 1 from public.membership_permissions
+    where membership_id = old.membership_id
+      and permission_id in ('members_manage', '*')
+      and permission_id <> old.permission_id
+  ) then
+    return old;
+  end if;
+
+  -- This deletion does strip admin status from the membership. Ensure another
+  -- claimed, accepted, active admin exists in the org.
+  if not public.org_has_other_active_admin(_organization_id, old.membership_id) then
+    raise exception 'last_admin_protected'
+      using hint = 'cannot revoke the last admin permission in the organization';
+  end if;
+
+  return old;
+end;
+$$;
+
+drop trigger if exists membership_permissions_trigger_protect_last_admin on public.membership_permissions;
+create trigger membership_permissions_trigger_protect_last_admin
+  before delete on public.membership_permissions
+  for each row execute procedure public.membership_permissions_protect_last_admin();
+
+-- Block self-revocation and revoking the last claimed admin in an org.
+create or replace function public.memberships_protect_revoke()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path to ''
+as $$
+declare
+  _viewer uuid;
+begin
+  -- Only fire when revoked_at transitions from NULL → not NULL.
+  if old.membership_revoked_at is not null then
+    return new;
+  end if;
+  if new.membership_revoked_at is null then
+    return new;
+  end if;
+
+  _viewer := auth.uid();
+
+  -- service_role bypass.
+  if _viewer is null then
+    return new;
+  end if;
+
+  -- Self-remove: caller cannot revoke their own membership row.
+  if new.profile_id is not null and new.profile_id = _viewer then
+    raise exception 'self_remove_blocked'
+      using hint = 'cannot revoke your own membership';
+  end if;
+
+  -- Last-admin: pending invites carry no live access, only claimed seats lock the org.
+  if new.profile_id is not null
+     and not public.org_has_other_active_admin(new.organization_id, new.membership_id) then
+    raise exception 'last_admin_protected'
+      using hint = 'cannot revoke the last admin of the organization';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists memberships_trigger_protect_revoke on public.memberships;
+create trigger memberships_trigger_protect_revoke
+  before update of membership_revoked_at on public.memberships
+  for each row execute procedure public.memberships_protect_revoke();
+
+-- ============================================================
 -- RLS for permission_presets
 -- ============================================================
 -- Global presets (organization_id IS NULL) are visible to everyone authenticated;

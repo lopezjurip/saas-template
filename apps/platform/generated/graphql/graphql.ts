@@ -36,6 +36,15 @@ export type EditMembershipRevokeMembershipMutationMutationVariables = Exact<{
 
 export type EditMembershipRevokeMembershipMutationMutation = { updatemembershipsCollection: { affectedCount: number } };
 
+export type MembersPendingInvitationsCancelMutationMutationVariables = Exact<{
+  membership_id: number;
+  now: string;
+}>;
+
+export type MembersPendingInvitationsCancelMutationMutation = {
+  updatemembershipsCollection: { affectedCount: number };
+};
+
 export type AccountPageQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type AccountPageQueryQuery = {
@@ -57,6 +66,21 @@ export type AccountPageQueryQuery = {
   } | null;
 };
 
+export type AccountPasskeysSectionDeleteMutationMutationVariables = Exact<{
+  webauthn_credential_id: string;
+}>;
+
+export type AccountPasskeysSectionDeleteMutationMutation = {
+  deleteFromwebauthn_credentialsCollection: { affectedCount: number };
+};
+
+export type AccountProfileFormUpdateNameMutationMutationVariables = Exact<{
+  profile_id: string;
+  profile_name_full: string;
+}>;
+
+export type AccountProfileFormUpdateNameMutationMutation = { updateprofilesCollection: { affectedCount: number } };
+
 export type DashboardPageQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type DashboardPageQueryQuery = {
@@ -71,6 +95,13 @@ export type DashboardPageQueryQuery = {
     }>;
   } | null;
 };
+
+export type OnboardingNameStepUpdateNameMutationMutationVariables = Exact<{
+  profile_id: string;
+  profile_name_full: string;
+}>;
+
+export type OnboardingNameStepUpdateNameMutationMutation = { updateprofilesCollection: { affectedCount: number } };
 
 export type HealthQueryQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -548,6 +579,19 @@ export const EditMembershipRevokeMembershipMutationDocument = new TypedDocumentS
   EditMembershipRevokeMembershipMutationMutation,
   EditMembershipRevokeMembershipMutationMutationVariables
 >;
+export const MembersPendingInvitationsCancelMutationDocument = new TypedDocumentString(`
+    mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {
+  updatemembershipsCollection(
+    filter: {membership_id: {eq: $membership_id}, profile_id: {is: NULL}, membership_revoked_at: {is: NULL}, membership_rejected_at: {is: NULL}}
+    set: {membership_revoked_at: $now, membership_invite_token: null}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<
+  MembersPendingInvitationsCancelMutationMutation,
+  MembersPendingInvitationsCancelMutationMutationVariables
+>;
 export const AccountPageQueryDocument = new TypedDocumentString(`
     query AccountPageQuery {
   profile: viewer_profile {
@@ -570,6 +614,31 @@ export const AccountPageQueryDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<AccountPageQueryQuery, AccountPageQueryQueryVariables>;
+export const AccountPasskeysSectionDeleteMutationDocument = new TypedDocumentString(`
+    mutation AccountPasskeysSectionDeleteMutation($webauthn_credential_id: UUID!) {
+  deleteFromwebauthn_credentialsCollection(
+    filter: {webauthn_credential_id: {eq: $webauthn_credential_id}}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<
+  AccountPasskeysSectionDeleteMutationMutation,
+  AccountPasskeysSectionDeleteMutationMutationVariables
+>;
+export const AccountProfileFormUpdateNameMutationDocument = new TypedDocumentString(`
+    mutation AccountProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
+  updateprofilesCollection(
+    filter: {profile_id: {eq: $profile_id}}
+    set: {profile_name_full: $profile_name_full}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<
+  AccountProfileFormUpdateNameMutationMutation,
+  AccountProfileFormUpdateNameMutationMutationVariables
+>;
 export const DashboardPageQueryDocument = new TypedDocumentString(`
     query DashboardPageQuery {
   viewer_organizations(
@@ -591,6 +660,19 @@ export const DashboardPageQueryDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DashboardPageQueryQuery, DashboardPageQueryQueryVariables>;
+export const OnboardingNameStepUpdateNameMutationDocument = new TypedDocumentString(`
+    mutation OnboardingNameStepUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
+  updateprofilesCollection(
+    filter: {profile_id: {eq: $profile_id}}
+    set: {profile_name_full: $profile_name_full}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<
+  OnboardingNameStepUpdateNameMutationMutation,
+  OnboardingNameStepUpdateNameMutationMutationVariables
+>;
 export const HealthQueryDocument = new TypedDocumentString(`
     query HealthQuery {
   health_current_timestamp

@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useGraphyMutation } from "@packages/graphy/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
@@ -9,18 +10,30 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { actionUpdateName } from "./actions";
+import { gql } from "~/generated/graphql";
 
 const schema = z.object({
   full_name: z.string().min(2, "Ingresa tu nombre completo").max(256),
 });
 type Values = z.infer<typeof schema>;
 
-export function ProfileForm({ defaultValue }: { defaultValue: string }) {
+const AccountProfileFormUpdateNameMutation = /*#__PURE__*/ gql(`
+  mutation AccountProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
+    updateprofilesCollection(
+      filter: { profile_id: { eq: $profile_id } }
+      set: { profile_name_full: $profile_name_full }
+    ) {
+      affectedCount
+    }
+  }
+`);
+
+export function ProfileForm({ profile_id, defaultValue }: { profile_id: string; defaultValue: string }) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [, updateName] = useGraphyMutation(AccountProfileFormUpdateNameMutation);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -31,15 +44,13 @@ export function ProfileForm({ defaultValue }: { defaultValue: string }) {
     setServerError(null);
     setSuccess(false);
     startTransition(async () => {
-      const res = await actionUpdateName(values);
-      if (res?.serverError) {
-        setServerError(res.serverError);
-      } else if (res?.validationErrors) {
-        setServerError("Nombre inválido");
-      } else {
-        setSuccess(true);
-        router.refresh();
+      const { error } = await updateName({ profile_id, profile_name_full: values.full_name });
+      if (error) {
+        setServerError("No pudimos guardar tu nombre");
+        return;
       }
+      setSuccess(true);
+      router.refresh();
     });
   });
 

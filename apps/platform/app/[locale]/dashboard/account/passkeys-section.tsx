@@ -1,12 +1,13 @@
 "use client";
 
+import { useGraphyMutation } from "@packages/graphy/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { gql } from "~/generated/graphql";
 import { createPasskey } from "~/lib/passkeys.client";
-import { actionDeletePasskey } from "./actions";
 
 type Passkey = {
   webauthn_credential_id: string;
@@ -24,12 +25,23 @@ function FORMAT_DATE(value: string | null): string {
   return DATE_FORMATTER.format(new Date(value));
 }
 
+const AccountPasskeysSectionDeleteMutation = /*#__PURE__*/ gql(`
+  mutation AccountPasskeysSectionDeleteMutation($webauthn_credential_id: UUID!) {
+    deleteFromwebauthn_credentialsCollection(
+      filter: { webauthn_credential_id: { eq: $webauthn_credential_id } }
+    ) {
+      affectedCount
+    }
+  }
+`);
+
 export function PasskeysSection({ passkeys }: { passkeys: Passkey[] }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [creating, startCreate] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleting, startDelete] = useTransition();
+  const [, deletePasskey] = useGraphyMutation(AccountPasskeysSectionDeleteMutation);
 
   const onCreate = () => {
     setError(null);
@@ -55,8 +67,8 @@ export function PasskeysSection({ passkeys }: { passkeys: Passkey[] }) {
     setError(null);
     setDeletingId(webauthn_credential_id);
     startDelete(async () => {
-      const res = await actionDeletePasskey({ webauthn_credential_id });
-      if (res?.serverError) setError(res.serverError);
+      const { error: err } = await deletePasskey({ webauthn_credential_id });
+      if (err) setError("No pudimos eliminar el passkey");
       else router.refresh();
       setDeletingId(null);
     });

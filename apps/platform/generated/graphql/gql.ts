@@ -16,8 +16,12 @@ type Documents = {
   "\n  mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {\n    insertIntomembership_permissionsCollection(\n      objects: [{ membership_id: $membership_id, permission_id: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditMembershipGrantPermissionMutationDocument;
   "\n  mutation EditMembershipRevokePermissionMutation($membership_id: Int!, $permission_id: String!) {\n    deleteFrommembership_permissionsCollection(\n      filter: { membership_id: { eq: $membership_id }, permission_id: { eq: $permission_id } }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditMembershipRevokePermissionMutationDocument;
   "\n  mutation EditMembershipRevokeMembershipMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: { membership_id: { eq: $membership_id } }\n      set: { membership_revoked_at: $now }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditMembershipRevokeMembershipMutationDocument;
+  "\n  mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: {\n        membership_id: { eq: $membership_id }\n        profile_id: { is: NULL }\n        membership_revoked_at: { is: NULL }\n        membership_rejected_at: { is: NULL }\n      }\n      set: {\n        membership_revoked_at: $now\n        membership_invite_token: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.MembersPendingInvitationsCancelMutationDocument;
   "\n  query AccountPageQuery {\n    profile: viewer_profile {\n      profile_id\n      profile_name_full\n      webauthn_credentialsCollection(\n        orderBy: [{ webauthn_credential_created_at: DescNullsLast }]\n      ) {\n        edges {\n          node {\n            webauthn_credential_id\n            webauthn_credential_friendly_name\n            webauthn_credential_device_type\n            webauthn_credential_backup_state\n            webauthn_credential_created_at\n            webauthn_credential_last_used_at\n          }\n        }\n      }\n    }\n  }\n": typeof types.AccountPageQueryDocument;
+  "\n  mutation AccountPasskeysSectionDeleteMutation($webauthn_credential_id: UUID!) {\n    deleteFromwebauthn_credentialsCollection(\n      filter: { webauthn_credential_id: { eq: $webauthn_credential_id } }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.AccountPasskeysSectionDeleteMutationDocument;
+  "\n  mutation AccountProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.AccountProfileFormUpdateNameMutationDocument;
   "\n  query DashboardPageQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n          tenants {\n            tenant_id\n            tenant_slug\n            tenant_name\n          }\n        }\n      }\n    }\n  }\n": typeof types.DashboardPageQueryDocument;
+  "\n  mutation OnboardingNameStepUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.OnboardingNameStepUpdateNameMutationDocument;
   "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": typeof types.HealthQueryDocument;
   "\n  fragment CountryFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n": typeof types.CountryFragmentFragmentDoc;
   "\n  query CountriesQuery {\n    addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryFragment\n        }\n      }\n    }\n  }\n": typeof types.CountriesQueryDocument;
@@ -57,10 +61,18 @@ const documents: Documents = {
     types.EditMembershipRevokePermissionMutationDocument,
   "\n  mutation EditMembershipRevokeMembershipMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: { membership_id: { eq: $membership_id } }\n      set: { membership_revoked_at: $now }\n    ) {\n      affectedCount\n    }\n  }\n":
     types.EditMembershipRevokeMembershipMutationDocument,
+  "\n  mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: {\n        membership_id: { eq: $membership_id }\n        profile_id: { is: NULL }\n        membership_revoked_at: { is: NULL }\n        membership_rejected_at: { is: NULL }\n      }\n      set: {\n        membership_revoked_at: $now\n        membership_invite_token: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n":
+    types.MembersPendingInvitationsCancelMutationDocument,
   "\n  query AccountPageQuery {\n    profile: viewer_profile {\n      profile_id\n      profile_name_full\n      webauthn_credentialsCollection(\n        orderBy: [{ webauthn_credential_created_at: DescNullsLast }]\n      ) {\n        edges {\n          node {\n            webauthn_credential_id\n            webauthn_credential_friendly_name\n            webauthn_credential_device_type\n            webauthn_credential_backup_state\n            webauthn_credential_created_at\n            webauthn_credential_last_used_at\n          }\n        }\n      }\n    }\n  }\n":
     types.AccountPageQueryDocument,
+  "\n  mutation AccountPasskeysSectionDeleteMutation($webauthn_credential_id: UUID!) {\n    deleteFromwebauthn_credentialsCollection(\n      filter: { webauthn_credential_id: { eq: $webauthn_credential_id } }\n    ) {\n      affectedCount\n    }\n  }\n":
+    types.AccountPasskeysSectionDeleteMutationDocument,
+  "\n  mutation AccountProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n":
+    types.AccountProfileFormUpdateNameMutationDocument,
   "\n  query DashboardPageQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n          tenants {\n            tenant_id\n            tenant_slug\n            tenant_name\n          }\n        }\n      }\n    }\n  }\n":
     types.DashboardPageQueryDocument,
+  "\n  mutation OnboardingNameStepUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n":
+    types.OnboardingNameStepUpdateNameMutationDocument,
   "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": types.HealthQueryDocument,
   "\n  fragment CountryFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n":
     types.CountryFragmentFragmentDoc,
@@ -146,14 +158,38 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
+  source: "\n  mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: {\n        membership_id: { eq: $membership_id }\n        profile_id: { is: NULL }\n        membership_revoked_at: { is: NULL }\n        membership_rejected_at: { is: NULL }\n      }\n      set: {\n        membership_revoked_at: $now\n        membership_invite_token: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n",
+): typeof import("./graphql").MembersPendingInvitationsCancelMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
   source: "\n  query AccountPageQuery {\n    profile: viewer_profile {\n      profile_id\n      profile_name_full\n      webauthn_credentialsCollection(\n        orderBy: [{ webauthn_credential_created_at: DescNullsLast }]\n      ) {\n        edges {\n          node {\n            webauthn_credential_id\n            webauthn_credential_friendly_name\n            webauthn_credential_device_type\n            webauthn_credential_backup_state\n            webauthn_credential_created_at\n            webauthn_credential_last_used_at\n          }\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").AccountPageQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
+  source: "\n  mutation AccountPasskeysSectionDeleteMutation($webauthn_credential_id: UUID!) {\n    deleteFromwebauthn_credentialsCollection(\n      filter: { webauthn_credential_id: { eq: $webauthn_credential_id } }\n    ) {\n      affectedCount\n    }\n  }\n",
+): typeof import("./graphql").AccountPasskeysSectionDeleteMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  mutation AccountProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n",
+): typeof import("./graphql").AccountProfileFormUpdateNameMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
   source: "\n  query DashboardPageQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n          tenants {\n            tenant_id\n            tenant_slug\n            tenant_name\n          }\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").DashboardPageQueryDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  mutation OnboardingNameStepUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n",
+): typeof import("./graphql").OnboardingNameStepUpdateNameMutationDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

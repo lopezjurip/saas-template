@@ -680,6 +680,10 @@ export type Database = {
           tenant_slug: string;
         }[];
       };
+      org_has_other_active_admin: {
+        Args: { _excluded_membership_id: number; _organization_id: number };
+        Returns: boolean;
+      };
       phone_exists: {
         Args: { default_code?: string; phone_to_check: string };
         Returns: boolean;

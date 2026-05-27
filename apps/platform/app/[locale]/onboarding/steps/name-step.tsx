@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useGraphyMutation } from "@packages/graphy/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
@@ -9,19 +10,31 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { gql } from "~/generated/graphql";
 import { useLocaleParam } from "~/hooks/use-locale-param";
-import { saveName } from "./name-action";
 
 const schema = z.object({
   full_name: z.string().min(2, "Ingresa tu nombre completo").max(256),
 });
 type Values = z.infer<typeof schema>;
 
-export function NameStep({ defaultValue }: { defaultValue: string }) {
+const OnboardingNameStepUpdateNameMutation = /*#__PURE__*/ gql(`
+  mutation OnboardingNameStepUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
+    updateprofilesCollection(
+      filter: { profile_id: { eq: $profile_id } }
+      set: { profile_name_full: $profile_name_full }
+    ) {
+      affectedCount
+    }
+  }
+`);
+
+export function NameStep({ profile_id, defaultValue }: { profile_id: string; defaultValue: string }) {
   const router = useRouter();
   const locale = useLocaleParam();
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [, updateName] = useGraphyMutation(OnboardingNameStepUpdateNameMutation);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -31,10 +44,12 @@ export function NameStep({ defaultValue }: { defaultValue: string }) {
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const res = await saveName(values);
-      if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Nombre inválido");
-      else router.push(`/${locale}/onboarding`);
+      const { error } = await updateName({ profile_id, profile_name_full: values.full_name });
+      if (error) {
+        setServerError("No pudimos guardar tu nombre");
+        return;
+      }
+      router.push(`/${locale}/onboarding`);
     });
   });
 

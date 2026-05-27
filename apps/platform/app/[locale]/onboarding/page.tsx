@@ -16,7 +16,7 @@ export default async function OnboardingPage({ searchParams }: { searchParams: S
 
   switch (resolved) {
     case "name":
-      return <NameStep defaultValue={state.profile_name_full} />;
+      return <NameStep profile_id={state.profile_id} defaultValue={state.profile_name_full} />;
     case "email":
       return <EmailStep />;
     case "phone":

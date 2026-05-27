@@ -11,45 +11,6 @@ import { authedAction, formAction } from "~/lib/safe-action";
 
 const log = debug("account");
 
-const updateNameSchema = z.object({
-  full_name: z.string().min(2, "Mínimo 2 caracteres").max(256),
-});
-
-export const actionUpdateName = authedAction
-  .inputSchema(updateNameSchema)
-  .action(async ({ parsedInput, ctx: { supabase, user } }) => {
-    const { error } = await supabase
-      .from("profiles")
-      .update({ profile_name_full: parsedInput.full_name })
-      .eq("profile_id", user.id);
-
-    if (error) {
-      log.error("profile_name_full update failed", { profile_id: user.id, error });
-      throw new Error("No pudimos guardar tu nombre");
-    }
-    revalidatePath(`/${await getServerLocale()}/dashboard/account`);
-  });
-
-const deletePasskeySchema = z.object({
-  webauthn_credential_id: z.string().uuid(),
-});
-
-export const actionDeletePasskey = authedAction
-  .inputSchema(deletePasskeySchema)
-  .action(async ({ parsedInput, ctx: { supabase, user } }) => {
-    const { error } = await supabase
-      .from("webauthn_credentials")
-      .delete()
-      .eq("webauthn_credential_id", parsedInput.webauthn_credential_id)
-      .eq("profile_id", user.id);
-
-    if (error) {
-      log.error("passkey delete failed", { profile_id: user.id, error });
-      throw new Error("No pudimos eliminar el passkey");
-    }
-    revalidatePath(`/${await getServerLocale()}/dashboard/account`);
-  });
-
 export const actionSignOutOtherDevices = authedAction.action(async ({ ctx: { supabase, user } }) => {
   const { error } = await supabase.auth.signOut({ scope: "others" });
   if (error) {
