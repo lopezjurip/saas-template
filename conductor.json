@@ -2,6 +2,7 @@
   "scripts": {
     "setup": "bash scripts/development/conductor-setup.sh",
     "run": "pnpm run -w dev --filter={apps/platform} -- --port $CONDUCTOR_PORT",
-    "archive": "rm -rf node_modules"
-  }
+    "archive": "bash scripts/development/conductor-archive.sh"
+  },
+  "runScriptMode": "concurrent"
 }
