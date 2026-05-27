@@ -89,10 +89,9 @@ pnpm install
 
 # --- Start workspace-specific Supabase instance ---
 # PORT is used by db:start to build SUPABASE_AUTH_SITE_URL=https://lvh.me:$PORT
+# Fresh project_id per workspace => fresh volume => `supabase start` applies
+# migrations + seed.sql on init. No need for an extra `db:reset` afterwards.
 PORT=$CONDUCTOR_PORT pnpm db:start
-
-# Reset DB to apply schema + seed (clean slate per workspace)
-PORT=$CONDUCTOR_PORT pnpm db:reset
 
 # Generate .env.development.local with the workspace-specific Supabase URLs
 PORT=$CONDUCTOR_PORT pnpm run -w db:env:development
