@@ -96,11 +96,16 @@ enabled = true
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails. Dev runs HTTPS (mkcert + Next --experimental-https) so WebAuthn has a secure context.
-site_url = "https://lvh.me:7003"
-# A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
+# site_url is embedded in confirmation/recovery emails as a concrete URL, so it must be a
+# fully-resolved host:port. Conductor reassigns PORT per parallel instance; the npm scripts
+# (db:start / db:reset) inject SUPABASE_AUTH_SITE_URL from $PORT, defaulting to 7003.
+site_url = "env(SUPABASE_AUTH_SITE_URL)"
+# The allow-list uses wildcards. `*` matches any sequence of non-separator chars (separators
+# are `.` and `/` only — see https://supabase.com/docs/guides/auth/redirect-urls), so `:55000`
+# is covered. Apex + tenant subdomain on any dev port.
 additional_redirect_urls = [
-  "https://lvh.me:7003/**",
-  "https://*.lvh.me:7003/**",
+  "https://lvh.me:*/**",
+  "https://*.lvh.me:*/**",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600

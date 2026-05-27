@@ -44,6 +44,7 @@ const LOCALE_ES = {
   last_manager_demote: "No puedes quitar el acceso completo al último administrador",
   last_manager_remove: "No puedes remover al último administrador de la organización",
   permission_structure: "No pudimos verificar la estructura de permisos",
+  membership_not_found: "No encontramos la membresía",
 };
 
 const LOCALES = {
@@ -69,6 +70,7 @@ const LOCALES = {
     last_manager_demote: "You can't remove full access from the last administrator",
     last_manager_remove: "You can't remove the last administrator of the organization",
     permission_structure: "We couldn't verify the permission structure",
+    membership_not_found: "Membership not found",
   } satisfies typeof LOCALE_ES,
   pt: {
     no_permission: "Você não tem permissão para administrar membros nesta organização",
@@ -91,11 +93,13 @@ const LOCALES = {
     last_manager_demote: "Você não pode remover o acesso completo do último administrador",
     last_manager_remove: "Você não pode remover o último administrador da organização",
     permission_structure: "Não conseguimos verificar a estrutura de permissões",
+    membership_not_found: "Membresia não encontrada",
   } satisfies typeof LOCALE_ES,
 };
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createServerClient>>;
 type ActionsRosetta = RosettaImpl<typeof LOCALE_ES>;
+type AdminClient = ReturnType<typeof createServiceRoleClient>;
 
 function GENERATE_INVITATION_TOKEN(): string {
   return randomBytes(32).toString("base64url");
@@ -120,23 +124,49 @@ async function ASSERT_MEMBERS_MANAGE(supabase: SupabaseServerClient, r: ActionsR
   }
 }
 
-// True iff the org has at least one OTHER profile that holds `members_manage` (or `*`).
-// Used to prevent locking the org out of its own admin surface.
+// Resolve (organization_id, profile_id) for an arbitrary membership_id. profile_id is null
+// when the membership is still PENDING. Returns null if no live row matches.
+async function LOAD_MEMBERSHIP(
+  admin: AdminClient,
+  membership_id: number,
+): Promise<{ organization_id: number; profile_id: string | null } | null> {
+  const { data, error } = await admin
+    .from("memberships")
+    .select("organization_id, profile_id, membership_revoked_at, membership_rejected_at")
+    .eq("membership_id", membership_id)
+    .maybeSingle();
+  if (error || !data) {
+    log.error("membership lookup failed", { membership_id, error });
+    return null;
+  }
+  if (data["membership_revoked_at"] || data["membership_rejected_at"]) return null;
+  return { organization_id: data["organization_id"], profile_id: data["profile_id"] };
+}
+
+// True iff the org has at least one OTHER active member that holds `members_manage` (or `*`).
+// Pending invites don't count — they aren't admins yet. Used to prevent locking the org
+// out of its own admin surface.
 async function HAS_OTHER_MANAGER(
-  admin: ReturnType<typeof createServiceRoleClient>,
+  admin: AdminClient,
   r: ActionsRosetta,
   organization_id: number,
-  excluded_profile_id: string,
+  excluded_membership_id: number,
 ): Promise<boolean> {
   const { data, error } = await admin
     .from("membership_permissions")
-    .select("profile_id")
-    .eq("organization_id", organization_id)
+    .select(
+      "membership_id, memberships!inner(organization_id, profile_id, membership_accepted_at, membership_revoked_at, membership_rejected_at)",
+    )
     .in("permission_id", ["members_manage", PERMISSION_SLUG_WILDCARD])
-    .neq("profile_id", excluded_profile_id)
+    .eq("memberships.organization_id", organization_id)
+    .neq("membership_id", excluded_membership_id)
+    .not("memberships.profile_id", "is", null)
+    .not("memberships.membership_accepted_at", "is", null)
+    .is("memberships.membership_revoked_at", null)
+    .is("memberships.membership_rejected_at", null)
     .limit(1);
   if (error) {
-    log.error("has-other-manager check failed", { organization_id, excluded_profile_id, error });
+    log.error("has-other-manager check failed", { organization_id, excluded_membership_id, error });
     throw new Error(r.t("permission_structure"));
   }
   return (data?.length ?? 0) > 0;
@@ -169,91 +199,152 @@ export const actionInviteMember = authedAction
       throw new Error(r.t("tenant_not_found"));
     }
 
-    const dup = await admin
-      .from("invitations")
-      .select("invitation_id")
-      .eq("organization_id", parsedInput.organization_id)
-      .eq("invitation_email", parsedInput.invitation_email)
-      .is("invitation_accepted_at", null)
-      .is("invitation_revoked_at", null)
-      .maybeSingle();
-
-    if (dup.data) {
-      throw new Error(r.t("invitation_duplicate"));
-    }
-
-    // If the email already belongs to a member of this org, skip the invite.
-    const existing = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (!existing.error) {
-      const existing_user = existing.data.users.find(
-        (u) => u["email"]?.toLowerCase() === parsedInput.invitation_email.toLowerCase(),
-      );
-      if (existing_user) {
-        const member = await admin
-          .from("memberships")
-          .select("profile_id")
-          .eq("organization_id", parsedInput.organization_id)
-          .eq("profile_id", existing_user["id"])
-          .is("membership_disabled_at", null)
-          .maybeSingle();
-        if (member.data) {
-          throw new Error(r.t("email_already_member"));
-        }
-      }
-    }
-
-    const token = GENERATE_INVITATION_TOKEN();
-    const expires_at = new Date(Date.now() + INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
-
-    const insertRes = await admin
-      .from("invitations")
-      .insert({
-        organization_id: parsedInput.organization_id,
-        invitation_email: parsedInput.invitation_email,
-        invitation_permission_slugs: parsedInput.invitation_permission_slugs,
-        invitation_token: token,
-        invited_by_profile_id: user.id,
-        invitation_expires_at: expires_at,
-      })
-      .select("invitation_id")
-      .single();
-
-    if (insertRes.error || !insertRes.data) {
-      log.error("invitation insert failed", {
-        profile_id: user.id,
-        organization_id: parsedInput.organization_id,
-        error: insertRes.error,
-      });
-      throw new Error(r.t("invite_failed"));
-    }
-
-    // Try to send the magic-link email via Supabase Auth (creates the user if absent).
-    // If it fails (e.g. provider misconfigured locally), we still keep the row so the
-    // admin can resend or share the link manually.
     const headerList = await headers();
     const proto = headerList.get("x-forwarded-proto") ?? "https";
     const host = headerList.get("host") ?? "";
     const locale = await getServerLocale();
-    const redirectTo = `${proto}://${host}/${locale}/invitations/accept?token=${encodeURIComponent(token)}`;
+    const expires_at = new Date(Date.now() + INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
-    const invite = await admin.auth.admin.inviteUserByEmail(parsedInput.invitation_email, {
-      redirectTo,
-      data: {
-        invitation_id: insertRes.data.invitation_id,
-        organization_id: parsedInput.organization_id,
-        tenant_slug,
-      },
-    });
-    if (invite.error) {
-      log.warn("supabase inviteUserByEmail failed; invitation row kept", {
-        organization_id: parsedInput.organization_id,
-        email: parsedInput.invitation_email,
-        error: invite.error.message,
+    if (parsedInput.channel === "email") {
+      const email = (parsedInput.invitation_email ?? "").trim().toLowerCase();
+      if (!email) throw new Error(r.t("invite_failed"));
+
+      const dup = await admin
+        .from("memberships")
+        .select("membership_id")
+        .eq("organization_id", parsedInput.organization_id)
+        .eq("membership_invite_email", email)
+        .is("profile_id", null)
+        .is("membership_revoked_at", null)
+        .is("membership_rejected_at", null)
+        .maybeSingle();
+      if (dup.data) {
+        throw new Error(r.t("invitation_duplicate"));
+      }
+
+      const existing = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (!existing.error) {
+        const existing_user = existing.data.users.find((u) => u["email"]?.toLowerCase() === email);
+        if (existing_user) {
+          const memberDup = await admin
+            .from("memberships")
+            .select("membership_id")
+            .eq("organization_id", parsedInput.organization_id)
+            .eq("profile_id", existing_user["id"])
+            .not("membership_accepted_at", "is", null)
+            .is("membership_revoked_at", null)
+            .is("membership_rejected_at", null)
+            .maybeSingle();
+          if (memberDup.data) {
+            throw new Error(r.t("email_already_member"));
+          }
+        }
+      }
+
+      const token = GENERATE_INVITATION_TOKEN();
+
+      const insertRes = await admin
+        .from("memberships")
+        .insert({
+          organization_id: parsedInput.organization_id,
+          membership_invite_email: email,
+          membership_invite_token: token,
+          membership_invite_expires_at: expires_at,
+        })
+        .select("membership_id")
+        .single();
+
+      if (insertRes.error || !insertRes.data) {
+        log.error("invitation insert failed", {
+          profile_id: user.id,
+          organization_id: parsedInput.organization_id,
+          error: insertRes.error,
+        });
+        throw new Error(r.t("invite_failed"));
+      }
+
+      const acceptUrl = `${proto}://${host}/${locale}/auth/document/accept?token=${encodeURIComponent(token)}`;
+
+      const invite = await admin.auth.admin.inviteUserByEmail(email, {
+        redirectTo: acceptUrl,
+        data: {
+          membership_id: insertRes.data["membership_id"],
+          organization_id: parsedInput.organization_id,
+          tenant_slug,
+        },
       });
+      if (invite.error) {
+        log.warn("supabase inviteUserByEmail failed; membership row kept", {
+          organization_id: parsedInput.organization_id,
+          email,
+          error: invite.error.message,
+        });
+      }
+
+      revalidatePath(`/${locale}/${tenant_slug}/${parsedInput.organization_id}/settings/members`);
+      return {
+        membership_id: insertRes.data["membership_id"],
+        invitation_url: acceptUrl,
+        channel: "email" as const,
+      };
     }
 
-    revalidatePath(`/${locale}/${tenant_slug}/admin/members`);
-    return { invitation_id: insertRes.data.invitation_id };
+    // channel === "document"
+    const country = parsedInput.address_level0_id || "";
+    const kind = parsedInput.profile_identity_document_kind || null;
+    const value = (parsedInput.profile_identity_document_value || "").trim();
+    if (!country || !kind || !value) throw new Error(r.t("invite_failed"));
+
+    const dup = await admin
+      .from("memberships")
+      .select("membership_id")
+      .eq("organization_id", parsedInput.organization_id)
+      .eq("membership_invite_address_level0_id", country)
+      .eq("membership_invite_document_kind", kind)
+      .eq("membership_invite_document_value", value)
+      .is("profile_id", null)
+      .is("membership_revoked_at", null)
+      .is("membership_rejected_at", null)
+      .maybeSingle();
+    if (dup.data) {
+      throw new Error(r.t("invitation_duplicate"));
+    }
+
+    const token = GENERATE_INVITATION_TOKEN();
+
+    const insertRes = await admin
+      .from("memberships")
+      .insert({
+        organization_id: parsedInput.organization_id,
+        membership_invite_address_level0_id: country,
+        membership_invite_document_kind: kind,
+        membership_invite_document_value: value,
+        membership_invite_token: token,
+        membership_invite_expires_at: expires_at,
+      })
+      .select("membership_id")
+      .single();
+
+    if (insertRes.error || !insertRes.data) {
+      log.error("membership document insert failed", {
+        profile_id: user.id,
+        organization_id: parsedInput.organization_id,
+        error: insertRes.error,
+      });
+      if (insertRes.error?.message?.toLowerCase().includes("invalid")) {
+        throw new Error("El documento ingresado no es válido (verifica el dígito verificador del RUT).");
+      }
+      throw new Error(r.t("invite_failed"));
+    }
+
+    const acceptUrl = `${proto}://${host}/${locale}/auth/document/accept?token=${encodeURIComponent(token)}`;
+
+    revalidatePath(`/${locale}/${tenant_slug}/${parsedInput.organization_id}/settings/members`);
+    return {
+      membership_id: insertRes.data["membership_id"],
+      invitation_url: acceptUrl,
+      channel: "document" as const,
+    };
   });
 
 export const actionCancelInvitation = authedAction
@@ -263,44 +354,45 @@ export const actionCancelInvitation = authedAction
     const admin = createServiceRoleClient();
 
     const invRes = await admin
-      .from("invitations")
+      .from("memberships")
       .select("organization_id, organizations(tenants(tenant_slug))")
-      .eq("invitation_id", parsedInput.invitation_id)
+      .eq("membership_id", parsedInput.membership_id)
       .maybeSingle();
 
     if (invRes.error || !invRes.data) {
       log.error("cancel: invitation lookup failed", {
-        invitation_id: parsedInput.invitation_id,
+        membership_id: parsedInput.membership_id,
         error: invRes.error,
       });
       throw new Error(r.t("invitation_not_found"));
     }
 
-    await ASSERT_MEMBERS_MANAGE(supabase, r, invRes.data.organization_id);
+    await ASSERT_MEMBERS_MANAGE(supabase, r, invRes.data["organization_id"]);
 
     const tenant_slug = invRes.data["organizations"]?.["tenants"]?.["tenant_slug"];
 
     const { error } = await admin
-      .from("invitations")
+      .from("memberships")
       .update({
-        invitation_revoked_at: new Date().toISOString(),
-        invitation_revoked_by_profile_id: user.id,
+        membership_revoked_at: new Date().toISOString(),
+        membership_invite_token: null,
       })
-      .eq("invitation_id", parsedInput.invitation_id)
-      .is("invitation_accepted_at", null)
-      .is("invitation_revoked_at", null);
+      .eq("membership_id", parsedInput.membership_id)
+      .is("profile_id", null)
+      .is("membership_revoked_at", null)
+      .is("membership_rejected_at", null);
 
     if (error) {
       log.error("invitation revoke failed", {
         profile_id: user.id,
-        invitation_id: parsedInput.invitation_id,
+        membership_id: parsedInput.membership_id,
         error,
       });
       throw new Error(r.t("cancel_failed"));
     }
 
     if (tenant_slug) {
-      revalidatePath(`/${await getServerLocale()}/${tenant_slug}/admin/members`);
+      revalidatePath(`/${await getServerLocale()}/${tenant_slug}/${invRes.data["organization_id"]}/settings/members`);
     }
   });
 
@@ -308,19 +400,23 @@ export const actionTogglePermission = authedAction
   .inputSchema(togglePermissionSchema)
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
     const r = await GET_ROSETTA();
-    await ASSERT_MEMBERS_MANAGE(supabase, r, parsedInput.organization_id);
+    const admin = createServiceRoleClient();
+    const m = await LOAD_MEMBERSHIP(admin, parsedInput.membership_id);
+    if (!m) throw new Error(r.t("membership_not_found"));
+
+    await ASSERT_MEMBERS_MANAGE(supabase, r, m.organization_id);
 
     if (parsedInput.permission_id === PERMISSION_SLUG_WILDCARD) {
       throw new Error(r.t("wildcard_usage"));
     }
 
-    const admin = createServiceRoleClient();
-
-    // If revoking members_manage from someone, make sure they're not the last admin.
+    // Revoking members_manage from a CLAIMED admin: ensure they aren't the last one.
+    // Pending invites can't lock anything since they have no profile yet.
     if (
       !parsedInput.granted &&
       parsedInput.permission_id === "members_manage" &&
-      !(await HAS_OTHER_MANAGER(admin, r, parsedInput.organization_id, parsedInput.profile_id))
+      m.profile_id &&
+      !(await HAS_OTHER_MANAGER(admin, r, m.organization_id, parsedInput.membership_id))
     ) {
       throw new Error(r.t("last_manager_revoke"));
     }
@@ -328,17 +424,15 @@ export const actionTogglePermission = authedAction
     if (parsedInput.granted) {
       const { error } = await admin.from("membership_permissions").upsert(
         {
-          organization_id: parsedInput.organization_id,
-          profile_id: parsedInput.profile_id,
+          membership_id: parsedInput.membership_id,
           permission_id: parsedInput.permission_id,
         },
-        { onConflict: "organization_id,profile_id,permission_id", ignoreDuplicates: true },
+        { onConflict: "membership_id,permission_id", ignoreDuplicates: true },
       );
       if (error) {
         log.error("grant permission failed", {
           profile_id: user.id,
-          target_profile_id: parsedInput.profile_id,
-          organization_id: parsedInput.organization_id,
+          membership_id: parsedInput.membership_id,
           permission_id: parsedInput.permission_id,
           error,
         });
@@ -348,14 +442,12 @@ export const actionTogglePermission = authedAction
       const { error } = await admin
         .from("membership_permissions")
         .delete()
-        .eq("organization_id", parsedInput.organization_id)
-        .eq("profile_id", parsedInput.profile_id)
+        .eq("membership_id", parsedInput.membership_id)
         .eq("permission_id", parsedInput.permission_id);
       if (error) {
         log.error("revoke permission failed", {
           profile_id: user.id,
-          target_profile_id: parsedInput.profile_id,
-          organization_id: parsedInput.organization_id,
+          membership_id: parsedInput.membership_id,
           permission_id: parsedInput.permission_id,
           error,
         });
@@ -366,69 +458,79 @@ export const actionTogglePermission = authedAction
     revalidatePath(`/${await getServerLocale()}`, "layout");
   });
 
-export const actionDemoteWildcard = authedAction
+// Toggles the wildcard '*' grant. Demote requires another active admin in the org;
+// promote is unconditional (the membership owner already has members_manage to call this).
+export const actionToggleWildcard = authedAction
   .inputSchema(demoteWildcardSchema)
-  .action(async ({ parsedInput, ctx: { supabase, user } }) => {
+  .action(async ({ parsedInput, ctx: { supabase } }) => {
     const r = await GET_ROSETTA();
-    await ASSERT_MEMBERS_MANAGE(supabase, r, parsedInput.organization_id);
-
-    if (parsedInput.profile_id === user.id) {
-      throw new Error(r.t("self_demote"));
-    }
-
     const admin = createServiceRoleClient();
+    const m = await LOAD_MEMBERSHIP(admin, parsedInput.membership_id);
+    if (!m) throw new Error(r.t("membership_not_found"));
 
-    if (!(await HAS_OTHER_MANAGER(admin, r, parsedInput.organization_id, parsedInput.profile_id))) {
-      throw new Error(r.t("last_manager_demote"));
-    }
+    await ASSERT_MEMBERS_MANAGE(supabase, r, m.organization_id);
 
-    const { error } = await admin
+    const existing = await admin
       .from("membership_permissions")
-      .delete()
-      .eq("organization_id", parsedInput.organization_id)
-      .eq("profile_id", parsedInput.profile_id)
-      .eq("permission_id", PERMISSION_SLUG_WILDCARD);
+      .select("permission_id")
+      .eq("membership_id", parsedInput.membership_id)
+      .eq("permission_id", PERMISSION_SLUG_WILDCARD)
+      .maybeSingle();
+    const has_wildcard = !!existing.data;
 
-    if (error) {
-      log.error("demote wildcard failed", {
-        profile_id: user.id,
-        target_profile_id: parsedInput.profile_id,
-        organization_id: parsedInput.organization_id,
-        error,
-      });
-      throw new Error(r.t("demote_failed"));
+    if (has_wildcard) {
+      if (m.profile_id && !(await HAS_OTHER_MANAGER(admin, r, m.organization_id, parsedInput.membership_id))) {
+        throw new Error(r.t("last_manager_demote"));
+      }
+      const { error } = await admin
+        .from("membership_permissions")
+        .delete()
+        .eq("membership_id", parsedInput.membership_id)
+        .eq("permission_id", PERMISSION_SLUG_WILDCARD);
+      if (error) throw new Error(r.t("demote_failed"));
+    } else {
+      const { error } = await admin
+        .from("membership_permissions")
+        .upsert(
+          { membership_id: parsedInput.membership_id, permission_id: PERMISSION_SLUG_WILDCARD },
+          { onConflict: "membership_id,permission_id", ignoreDuplicates: true },
+        );
+      if (error) throw new Error(r.t("grant_failed"));
     }
 
     revalidatePath(`/${await getServerLocale()}`, "layout");
   });
 
+// Legacy name kept for callers that only "demote." Toggle action now promotes-or-demotes.
+export const actionDemoteWildcard = actionToggleWildcard;
+
 export const actionRemoveMember = authedAction
   .inputSchema(removeMemberSchema)
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
     const r = await GET_ROSETTA();
-    await ASSERT_MEMBERS_MANAGE(supabase, r, parsedInput.organization_id);
+    const admin = createServiceRoleClient();
+    const m = await LOAD_MEMBERSHIP(admin, parsedInput.membership_id);
+    if (!m) throw new Error(r.t("membership_not_found"));
 
-    if (parsedInput.profile_id === user.id) {
+    await ASSERT_MEMBERS_MANAGE(supabase, r, m.organization_id);
+
+    if (m.profile_id === user.id) {
       throw new Error(r.t("self_remove"));
     }
 
-    const admin = createServiceRoleClient();
-
-    if (!(await HAS_OTHER_MANAGER(admin, r, parsedInput.organization_id, parsedInput.profile_id))) {
+    if (m.profile_id && !(await HAS_OTHER_MANAGER(admin, r, m.organization_id, parsedInput.membership_id))) {
       throw new Error(r.t("last_manager_remove"));
     }
 
     const { error } = await admin
       .from("memberships")
-      .delete()
-      .eq("organization_id", parsedInput.organization_id)
-      .eq("profile_id", parsedInput.profile_id);
+      .update({ membership_revoked_at: new Date().toISOString() })
+      .eq("membership_id", parsedInput.membership_id);
 
     if (error) {
       log.error("remove member failed", {
         profile_id: user.id,
-        target_profile_id: parsedInput.profile_id,
-        organization_id: parsedInput.organization_id,
+        membership_id: parsedInput.membership_id,
         error,
       });
       throw new Error(r.t("remove_failed"));

@@ -7,6 +7,7 @@ export type Database = {
         Row: {
           address_level0_created_at: string;
           address_level0_disabled_at: string | null;
+          address_level0_emoji: string | null;
           address_level0_hidden_at: string | null;
           address_level0_id: string;
           address_level0_name: string;
@@ -15,6 +16,7 @@ export type Database = {
         Insert: {
           address_level0_created_at?: string;
           address_level0_disabled_at?: string | null;
+          address_level0_emoji?: string | null;
           address_level0_hidden_at?: string | null;
           address_level0_id: string;
           address_level0_name: string;
@@ -23,6 +25,7 @@ export type Database = {
         Update: {
           address_level0_created_at?: string;
           address_level0_disabled_at?: string | null;
+          address_level0_emoji?: string | null;
           address_level0_hidden_at?: string | null;
           address_level0_id?: string;
           address_level0_name?: string;
@@ -153,116 +156,29 @@ export type Database = {
           },
         ];
       };
-      invitations: {
-        Row: {
-          invitation_accepted_at: string | null;
-          invitation_accepted_by_profile_id: string | null;
-          invitation_created_at: string;
-          invitation_email: string;
-          invitation_expires_at: string;
-          invitation_id: string;
-          invitation_permission_slugs: string[];
-          invitation_revoked_at: string | null;
-          invitation_revoked_by_profile_id: string | null;
-          invitation_token: string;
-          invitation_updated_at: string;
-          invited_by_profile_id: string | null;
-          organization_id: number;
-        };
-        Insert: {
-          invitation_accepted_at?: string | null;
-          invitation_accepted_by_profile_id?: string | null;
-          invitation_created_at?: string;
-          invitation_email: string;
-          invitation_expires_at: string;
-          invitation_id?: string;
-          invitation_permission_slugs: string[];
-          invitation_revoked_at?: string | null;
-          invitation_revoked_by_profile_id?: string | null;
-          invitation_token: string;
-          invitation_updated_at?: string;
-          invited_by_profile_id?: string | null;
-          organization_id: number;
-        };
-        Update: {
-          invitation_accepted_at?: string | null;
-          invitation_accepted_by_profile_id?: string | null;
-          invitation_created_at?: string;
-          invitation_email?: string;
-          invitation_expires_at?: string;
-          invitation_id?: string;
-          invitation_permission_slugs?: string[];
-          invitation_revoked_at?: string | null;
-          invitation_revoked_by_profile_id?: string | null;
-          invitation_token?: string;
-          invitation_updated_at?: string;
-          invited_by_profile_id?: string | null;
-          organization_id?: number;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "invitations_invitation_accepted_by_profile_id_fkey";
-            columns: ["invitation_accepted_by_profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["profile_id"];
-          },
-          {
-            foreignKeyName: "invitations_invitation_revoked_by_profile_id_fkey";
-            columns: ["invitation_revoked_by_profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["profile_id"];
-          },
-          {
-            foreignKeyName: "invitations_invited_by_profile_id_fkey";
-            columns: ["invited_by_profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["profile_id"];
-          },
-          {
-            foreignKeyName: "invitations_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["organization_id"];
-          },
-          {
-            foreignKeyName: "invitations_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "tenants_organizations_profiles";
-            referencedColumns: ["organization_id"];
-          },
-        ];
-      };
       membership_permissions: {
         Row: {
+          membership_id: number;
           membership_permission_created_at: string;
-          organization_id: number;
           permission_id: string;
-          profile_id: string;
         };
         Insert: {
+          membership_id: number;
           membership_permission_created_at?: string;
-          organization_id: number;
           permission_id: string;
-          profile_id: string;
         };
         Update: {
+          membership_id?: number;
           membership_permission_created_at?: string;
-          organization_id?: number;
           permission_id?: string;
-          profile_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "membership_permissions_organization_id_profile_id_fkey";
-            columns: ["organization_id", "profile_id"];
+            foreignKeyName: "membership_permissions_membership_id_fkey";
+            columns: ["membership_id"];
             isOneToOne: false;
             referencedRelation: "memberships";
-            referencedColumns: ["organization_id", "profile_id"];
+            referencedColumns: ["membership_id"];
           },
           {
             foreignKeyName: "membership_permissions_permission_id_fkey";
@@ -275,27 +191,64 @@ export type Database = {
       };
       memberships: {
         Row: {
+          membership_accepted_at: string | null;
           membership_created_at: string;
-          membership_disabled_at: string | null;
+          membership_id: number;
+          membership_invite_address_level0_id: string | null;
+          membership_invite_document_kind: Database["public"]["Enums"]["profile_identity_document_kind"] | null;
+          membership_invite_document_value: string | null;
+          membership_invite_email: string | null;
+          membership_invite_expires_at: string | null;
+          membership_invite_phone: string | null;
+          membership_invite_token: string | null;
+          membership_rejected_at: string | null;
+          membership_revoked_at: string | null;
           membership_updated_at: string;
           organization_id: number;
-          profile_id: string;
+          profile_id: string | null;
         };
         Insert: {
+          membership_accepted_at?: string | null;
           membership_created_at?: string;
-          membership_disabled_at?: string | null;
+          membership_id?: number;
+          membership_invite_address_level0_id?: string | null;
+          membership_invite_document_kind?: Database["public"]["Enums"]["profile_identity_document_kind"] | null;
+          membership_invite_document_value?: string | null;
+          membership_invite_email?: string | null;
+          membership_invite_expires_at?: string | null;
+          membership_invite_phone?: string | null;
+          membership_invite_token?: string | null;
+          membership_rejected_at?: string | null;
+          membership_revoked_at?: string | null;
           membership_updated_at?: string;
           organization_id: number;
-          profile_id: string;
+          profile_id?: string | null;
         };
         Update: {
+          membership_accepted_at?: string | null;
           membership_created_at?: string;
-          membership_disabled_at?: string | null;
+          membership_id?: number;
+          membership_invite_address_level0_id?: string | null;
+          membership_invite_document_kind?: Database["public"]["Enums"]["profile_identity_document_kind"] | null;
+          membership_invite_document_value?: string | null;
+          membership_invite_email?: string | null;
+          membership_invite_expires_at?: string | null;
+          membership_invite_phone?: string | null;
+          membership_invite_token?: string | null;
+          membership_rejected_at?: string | null;
+          membership_revoked_at?: string | null;
           membership_updated_at?: string;
           organization_id?: number;
-          profile_id?: string;
+          profile_id?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "memberships_membership_invite_address_level0_id_fkey";
+            columns: ["membership_invite_address_level0_id"];
+            isOneToOne: false;
+            referencedRelation: "addresses_level0";
+            referencedColumns: ["address_level0_id"];
+          },
           {
             foreignKeyName: "memberships_organization_id_fkey";
             columns: ["organization_id"];
@@ -426,6 +379,54 @@ export type Database = {
           permission_updated_at?: string;
         };
         Relationships: [];
+      };
+      profile_identities: {
+        Row: {
+          address_level0_id: string;
+          profile_id: string;
+          profile_identity_created_at: string;
+          profile_identity_disabled_at: string | null;
+          profile_identity_document_kind: Database["public"]["Enums"]["profile_identity_document_kind"];
+          profile_identity_document_value: string;
+          profile_identity_id: string;
+          profile_identity_updated_at: string;
+        };
+        Insert: {
+          address_level0_id: string;
+          profile_id: string;
+          profile_identity_created_at?: string;
+          profile_identity_disabled_at?: string | null;
+          profile_identity_document_kind: Database["public"]["Enums"]["profile_identity_document_kind"];
+          profile_identity_document_value: string;
+          profile_identity_id?: string;
+          profile_identity_updated_at?: string;
+        };
+        Update: {
+          address_level0_id?: string;
+          profile_id?: string;
+          profile_identity_created_at?: string;
+          profile_identity_disabled_at?: string | null;
+          profile_identity_document_kind?: Database["public"]["Enums"]["profile_identity_document_kind"];
+          profile_identity_document_value?: string;
+          profile_identity_id?: string;
+          profile_identity_updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profile_identities_address_level0_id_fkey";
+            columns: ["address_level0_id"];
+            isOneToOne: false;
+            referencedRelation: "addresses_level0";
+            referencedColumns: ["address_level0_id"];
+          },
+          {
+            foreignKeyName: "profile_identities_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["profile_id"];
+          },
+        ];
       };
       profiles: {
         Row: {
@@ -662,6 +663,23 @@ export type Database = {
       email_exists: { Args: { email_to_check: string }; Returns: boolean };
       email_has_passkey: { Args: { email_to_check: string }; Returns: boolean };
       health_current_timestamp: { Args: never; Returns: string };
+      memberships_pending_by_document: {
+        Args: {
+          country: string;
+          kind: Database["public"]["Enums"]["profile_identity_document_kind"];
+          value: string;
+        };
+        Returns: {
+          membership_id: number;
+          membership_invite_expires_at: string;
+          membership_invite_token: string;
+          organization_id: number;
+          organization_name: string;
+          tenant_id: number;
+          tenant_name: string;
+          tenant_slug: string;
+        }[];
+      };
       phone_exists: {
         Args: { default_code?: string; phone_to_check: string };
         Returns: boolean;
@@ -671,18 +689,104 @@ export type Database = {
         Returns: string;
       };
       profile_id_by_email: { Args: { email_to_check: string }; Returns: string };
+      profile_identity_resolve: {
+        Args: {
+          country: string;
+          kind: Database["public"]["Enums"]["profile_identity_document_kind"];
+          value: string;
+        };
+        Returns: string;
+      };
       user_auth_hook: { Args: { event: Json }; Returns: Json };
       viewer_has_permission: {
         Args: { target_organization_id: number; target_permission_id: string };
         Returns: boolean;
       };
       viewer_is_concierge: { Args: never; Returns: boolean };
+      viewer_membership_accept: {
+        Args: { target_membership_id: number };
+        Returns: {
+          membership_accepted_at: string | null;
+          membership_created_at: string;
+          membership_id: number;
+          membership_invite_address_level0_id: string | null;
+          membership_invite_document_kind: Database["public"]["Enums"]["profile_identity_document_kind"] | null;
+          membership_invite_document_value: string | null;
+          membership_invite_email: string | null;
+          membership_invite_expires_at: string | null;
+          membership_invite_phone: string | null;
+          membership_invite_token: string | null;
+          membership_rejected_at: string | null;
+          membership_revoked_at: string | null;
+          membership_updated_at: string;
+          organization_id: number;
+          profile_id: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "memberships";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      viewer_membership_pending: {
+        Args: never;
+        Returns: {
+          membership_accepted_at: string | null;
+          membership_created_at: string;
+          membership_id: number;
+          membership_invite_address_level0_id: string | null;
+          membership_invite_document_kind: Database["public"]["Enums"]["profile_identity_document_kind"] | null;
+          membership_invite_document_value: string | null;
+          membership_invite_email: string | null;
+          membership_invite_expires_at: string | null;
+          membership_invite_phone: string | null;
+          membership_invite_token: string | null;
+          membership_rejected_at: string | null;
+          membership_revoked_at: string | null;
+          membership_updated_at: string;
+          organization_id: number;
+          profile_id: string | null;
+        }[];
+        SetofOptions: {
+          from: "*";
+          to: "memberships";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
       viewer_membership_permissions: {
         Args: never;
         Returns: {
           organization_id: number;
           permission_id: string;
         }[];
+      };
+      viewer_membership_reject: {
+        Args: { target_membership_id: number };
+        Returns: {
+          membership_accepted_at: string | null;
+          membership_created_at: string;
+          membership_id: number;
+          membership_invite_address_level0_id: string | null;
+          membership_invite_document_kind: Database["public"]["Enums"]["profile_identity_document_kind"] | null;
+          membership_invite_document_value: string | null;
+          membership_invite_email: string | null;
+          membership_invite_expires_at: string | null;
+          membership_invite_phone: string | null;
+          membership_invite_token: string | null;
+          membership_rejected_at: string | null;
+          membership_revoked_at: string | null;
+          membership_updated_at: string;
+          organization_id: number;
+          profile_id: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "memberships";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
       };
       viewer_organization_by_id: {
         Args: { target_organization_id: number };
@@ -790,6 +894,7 @@ export type Database = {
       };
     };
     Enums: {
+      profile_identity_document_kind: "nin" | "passport";
       tenant_tier: "free" | "pro" | "enterprise";
     };
     CompositeTypes: {
@@ -910,6 +1015,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      profile_identity_document_kind: ["nin", "passport"],
       tenant_tier: ["free", "pro", "enterprise"],
     },
   },

@@ -1,4 +1,3 @@
-import { getSupabaseServerSession, getSupabaseServerUserMetadata } from "@packages/supabase/client.server";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
   Card,
@@ -9,88 +8,63 @@ import {
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { gql } from "~/generated/graphql";
-import { createGraphy } from "~/lib/graphy/graphy.browser";
-
-const TenantHomeQuery = gql(`
-  query TenantHomeQuery($tenant_id: Int!) {
-    profile: viewer_profile {
-      profile_name_full
-    }
-    tenant: viewer_tenant_by_id(target_tenant_id: $tenant_id) {
-      tenant_id
-      tenant_name
-      tenant_slug
-      organizationsCollection(
-        filter: { organization_disabled_at: { is: NULL } }
-        orderBy: [{ organization_name: AscNullsLast }]
-      ) {
-        edges {
-          node {
-            organization_id
-            organization_name
-            organization_slug
-          }
-        }
-      }
-    }
-  }
-`);
+import { notFound, redirect } from "next/navigation";
+import { getViewerOrganizations } from "~/hooks/get-viewer-organizations";
+import { getViewerTenantBySlug } from "~/hooks/get-viewer-tenants";
 
 export default async function TenantHomePage({ params }: { params: Promise<{ locale: string; tenant_slug: string }> }) {
-  const routeParams = await params;
-  const locale = routeParams["locale"];
-  const tenant_slug = routeParams["tenant_slug"];
+  const { locale, tenant_slug } = await params;
 
-  const [session, metadata] = await Promise.all([getSupabaseServerSession(), getSupabaseServerUserMetadata()]);
-  const allTenantClaims = metadata?.["tenants"] ?? [];
+  const { data: tenantData } = await getViewerTenantBySlug(tenant_slug);
+  const tenant = tenantData?.["tenantsCollection"]?.["edges"]?.[0]?.["node"];
+  if (!tenant) notFound();
+  const tenant_id = tenant["tenant_id"];
 
-  const tenant_id = allTenantClaims.find((t) => t["slug"] === tenant_slug)?.["id"];
-  if (!tenant_id) {
-    notFound();
+  const { data: orgsData } = await getViewerOrganizations(tenant_id);
+  const orgs = orgsData?.["organizationsCollection"]?.["edges"]?.map((e) => e["node"]) ?? [];
+
+  if (orgs.length === 0) {
+    return (
+      <main className="bg-muted flex min-h-svh items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>{tenant["tenant_name"]}</CardTitle>
+            <CardDescription>{tenant_slug}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">No tienes organizaciones activas en esta empresa.</p>
+          </CardContent>
+          <CardFooter>
+            <Button asChild variant="ghost" className="w-full">
+              <Link href={`/${locale}/auth/logout`}>Cerrar sesión</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+      </main>
+    );
   }
 
-  const graphy = createGraphy(session);
-  const { data } = await graphy.query({ query: TenantHomeQuery, variables: { tenant_id } });
-
-  const tenant = data?.["tenant"];
-  if (!tenant) {
-    notFound();
+  if (orgs.length === 1) {
+    const only = orgs[0]!;
+    redirect(`/${locale}/${tenant_slug}/${only["organization_id"]}`);
   }
-  const edges = tenant["organizationsCollection"]?.["edges"] ?? [];
-  const profile_name_full = data?.["profile"]?.["profile_name_full"] ?? null;
-  const tenant_name = tenant["tenant_name"];
 
   return (
     <main className="bg-muted flex min-h-svh items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>{tenant_name}</CardTitle>
-          <CardDescription>{tenant_slug}</CardDescription>
+          <CardTitle>{tenant["tenant_name"]}</CardTitle>
+          <CardDescription>Elige una organización para continuar</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          {profile_name_full ? <p className="text-sm">Hola, {profile_name_full}.</p> : null}
-          <p className="text-sm font-medium">Tus organizaciones aquí</p>
-          {edges.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tienes organizaciones en esta empresa.</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {edges.map((edge) => {
-                const organization = edge["node"];
-                const organization_id = organization["organization_id"];
-                return (
-                  <div
-                    key={organization_id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-                  >
-                    <span>{organization["organization_name"]}</span>
-                    <span className="text-xs text-muted-foreground">{organization["organization_slug"]}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+        <CardContent className="flex flex-col gap-2">
+          {orgs.map((organization) => (
+            <Button asChild key={organization["organization_id"]} variant="outline" className="w-full justify-between">
+              <Link href={`/${locale}/${tenant_slug}/${organization["organization_id"]}`}>
+                <span>{organization["organization_name"]}</span>
+                <span className="text-xs text-muted-foreground">{organization["organization_slug"]}</span>
+              </Link>
+            </Button>
+          ))}
         </CardContent>
         <CardFooter>
           <Button asChild variant="ghost" className="w-full">

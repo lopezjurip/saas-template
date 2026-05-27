@@ -7,18 +7,41 @@ import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import {
+  type DocumentTripletCountry,
+  DocumentTripletFields,
+} from "~/app/[locale]/auth/_components/document-triplet-fields";
 import { DevMailboxNotice } from "~/components/dev-mailbox-notice";
 import { signUp } from "./actions";
 import { type SignupValues, signupSchema } from "./schemas";
 
-export function SignupForm({ defaultEmail }: { defaultEmail: string }) {
+export function SignupForm({
+  defaultEmail,
+  defaultCountry,
+  defaultDocKind,
+  defaultDocValue,
+  countries,
+}: {
+  defaultEmail: string;
+  defaultCountry?: string;
+  defaultDocKind?: "" | "nin" | "passport";
+  defaultDocValue?: string;
+  countries: DocumentTripletCountry[];
+}) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const form = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { full_name: "", email: defaultEmail, password: "" },
+    defaultValues: {
+      full_name: "",
+      email: defaultEmail,
+      password: "",
+      address_level0_id: defaultCountry || "CL",
+      profile_identity_document_kind: defaultDocKind || "nin",
+      profile_identity_document_value: defaultDocValue || "",
+    },
   });
 
   const onSubmit = form.handleSubmit((values) => {
@@ -87,6 +110,8 @@ export function SignupForm({ defaultEmail }: { defaultEmail: string }) {
           <p className="text-destructive text-xs">{form.formState.errors.password.message}</p>
         )}
       </div>
+
+      <DocumentTripletFields form={form} countries={countries} />
 
       {serverError && (
         <Alert variant="destructive">

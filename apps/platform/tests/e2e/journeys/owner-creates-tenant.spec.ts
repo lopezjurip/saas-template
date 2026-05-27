@@ -23,11 +23,12 @@ test.describe("owner creates first tenant", () => {
   });
 
   test("login → /tenants/create → land on tenant subdomain", async ({ page }) => {
-    // ----- sign in (two-step: identifier then password) -----
+    // ----- sign in: pick email method, enter email, then password -----
     await page.goto("/es/auth");
-    await page.getByLabel("Correo o teléfono").fill(email);
+    await page.getByRole("link", { name: "Continuar con email" }).click();
+    await page.waitForURL(/\/auth\/email(\?|$)/);
+    await page.getByLabel("Correo electrónico").fill(email);
     await page.getByRole("button", { name: "Continuar", exact: true }).click();
-    // /auth branches to /auth/email/login because the identifier exists in auth.users.
     await page.waitForURL(/\/auth\/email\/login/);
     await page.getByLabel("Contraseña").fill(password);
     await page.getByRole("button", { name: "Iniciar sesión" }).click();
@@ -43,23 +44,21 @@ test.describe("owner creates first tenant", () => {
     await page.getByLabel("Identificador").fill(tenantSlug);
     await page.getByRole("button", { name: /crear empresa/i }).click();
 
-    // ----- assertion 1: hard-redirect to /[locale]/[slug] -----
-    // createTenant action does window.location.assign(`/${locale}/${slug}`) so the new JWT
-    // (with the tenant claim) is fetched on the next request.
-    await page.waitForURL(`**/es/${tenantSlug}`);
-    expect(page.url()).toContain(`/es/${tenantSlug}`);
+    // ----- assertion 1: hard-redirect to /[locale]/[slug]/[organization_id] -----
+    // createTenant action does window.location.assign(`/${locale}/${slug}`). The tenant home
+    // is now an org picker; with exactly one org it server-redirects to /[slug]/[organization_id].
+    await page.waitForURL(new RegExp(`/es/${tenantSlug}/\\d+`));
+    expect(page.url()).toMatch(new RegExp(`/es/${tenantSlug}/\\d+`));
 
     // ----- assertion 2: subdomain access works (RLS membership gate, proxy rewrite) -----
-    // This is the more important RLS-touching assertion: the proxy resolves the slug
-    // via service-role, verifies the user's tenant claim (proxy.ts:175), then rewrites
-    // /[locale]/{tenant_slug}... and the tenant page renders.
+    // The proxy resolves the slug via service-role, verifies tenant membership (proxy.ts),
+    // rewrites /[locale]/{tenant_slug}, then the page redirects to /{organization_id}.
     await page.goto(`https://${tenantSlug}.${APEX}:${PORT}/es`, { waitUntil: "networkidle" });
-    // URL still on the subdomain — catches the "proxy 403'd and bounced to apex" failure mode.
-    await expect(page).toHaveURL(new RegExp(`^https://${tenantSlug}\\.${APEX}:${PORT}/`));
-    // Positive content from app/[locale]/[tenant_slug]/page.tsx: tenant name + the
-    // "Tus organizaciones aquí" copy. CardTitle isn't a semantic heading in this version
-    // of shadcn, so we assert on text rather than role.
+    // URL still on the subdomain (proxy didn't bounce to apex). The server-side redirect
+    // from the org picker lands the browser at /es/{slug}/{org_id} on the subdomain host.
+    await expect(page).toHaveURL(new RegExp(`^https://${tenantSlug}\\.${APEX}:${PORT}/es/`));
+    // Org-home shows the organization (= tenant name when there's only one default org).
     await expect(page.getByText(tenantName).first()).toBeVisible();
-    await expect(page.getByText("Tus organizaciones aquí")).toBeVisible();
+    await expect(page.getByText("Miembros y permisos").first()).toBeVisible();
   });
 });

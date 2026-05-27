@@ -29,6 +29,9 @@ export const createTenant = authedAction
       if (msg.includes("duplicate") || msg.includes("unique")) {
         throw new Error("Ese identificador ya está en uso. Prueba otro.");
       }
+      if (msg.includes("check") && msg.includes("tenant_slug")) {
+        throw new Error("Ese identificador está reservado.");
+      }
       throw new Error("No pudimos crear la empresa. Intenta de nuevo.");
     }
 
@@ -64,11 +67,17 @@ export const createTenant = authedAction
 
     const { organization_id } = orgRes.data;
 
-    // 3. Membership: creator joins the default org.
-    const memberRes = await admin.from("memberships").insert({
-      organization_id,
-      profile_id: user.id,
-    });
+    // 3. Membership: creator joins the default org as an immediately-active member.
+    //    profile_id + accepted_at must move together (memberships_claim_consistency check).
+    const memberRes = await admin
+      .from("memberships")
+      .insert({
+        organization_id,
+        profile_id: user.id,
+        membership_accepted_at: new Date().toISOString(),
+      })
+      .select("membership_id")
+      .single();
 
     if (memberRes.error) {
       log.error("membership insert failed; rolling back tenant + org", {
@@ -91,8 +100,7 @@ export const createTenant = authedAction
     // 4. Bootstrap: grant the wildcard `*` so the creator can do everything (and
     // automatically receives any permission slug we add to the catalog later).
     const grantRes = await admin.from("membership_permissions").insert({
-      organization_id,
-      profile_id: user.id,
+      membership_id: memberRes.data["membership_id"],
       permission_id: "*",
     });
 

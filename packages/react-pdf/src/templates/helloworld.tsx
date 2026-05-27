@@ -96,7 +96,7 @@ export function HelloWorldTemplate({ locale = "en" }: HelloWorldTemplateProps) {
 }
 
 function HelloWorldContent() {
-  const r = useRosetta(LOCALES);
+  const { t } = useRosetta(LOCALES);
 
   return (
     <Document title="Hello World — react-pdf showcase" author="Humane">
@@ -104,9 +104,9 @@ function HelloWorldContent() {
       <Page size="A4" style={tw("bg-white font-helvetica text-gray-900 text-xs")}>
         {/* Hero */}
         <View style={tw("bg-blue-800 py-8 px-12")}>
-          <Text style={tw("text-blue-200 text-xs uppercase tracking-widest mb-2")}>{r.t("hero.tagline")}</Text>
-          <Text style={tw("text-white font-bold text-4xl leading-tight mb-3")}>{r.t("hero.title")}</Text>
-          <Text style={tw("text-blue-200 text-sm leading-relaxed")}>{r.t("hero.subtitle")}</Text>
+          <Text style={tw("text-blue-200 text-xs uppercase tracking-widest mb-2")}>{t("hero.tagline")}</Text>
+          <Text style={tw("text-white font-bold text-4xl leading-tight mb-3")}>{t("hero.title")}</Text>
+          <Text style={tw("text-blue-200 text-sm leading-relaxed")}>{t("hero.subtitle")}</Text>
           <View style={tw("flex-row gap-2 mt-4")}>
             {["Typography", "Layout", "Colors", "Links"].map((tag, i) => {
               const bgs = ["bg-indigo-600", "bg-emerald-600", "bg-violet-700", "bg-amber-600"];
@@ -136,7 +136,7 @@ function HelloWorldContent() {
 
           {/* Typography */}
           <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            {r.t("section.typography")}
+            {t("section.typography")}
           </Text>
           <View style={tw("border-t border-gray-200 mb-5")} />
           <View style={tw("flex-row gap-5 mb-6")}>
@@ -158,7 +158,7 @@ function HelloWorldContent() {
 
           {/* Color palette */}
           <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            {r.t("section.palette")}
+            {t("section.palette")}
           </Text>
           <View style={tw("border-t border-gray-200 mb-5")} />
           <View style={tw("flex-row gap-2 mb-6")}>
@@ -172,9 +172,7 @@ function HelloWorldContent() {
           </View>
 
           {/* Stats grid — two rows of 3 */}
-          <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            {r.t("section.grid")}
-          </Text>
+          <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>{t("section.grid")}</Text>
           <View style={tw("border-t border-gray-200 mb-4")} />
           {[GRID_STATS.slice(0, 3), GRID_STATS.slice(3)].map((row, ri) => (
             <View key={`row-${ri}`} style={tw("flex-row gap-2 mb-2")}>
@@ -195,7 +193,7 @@ function HelloWorldContent() {
           )}
           fixed
         >
-          <Text style={tw("text-xs text-gray-400")}>{r.t("footer.title")}</Text>
+          <Text style={tw("text-xs text-gray-400")}>{t("footer.title")}</Text>
           <Link src="https://react-pdf.org" style={tw("text-xs text-blue-500 no-underline")}>
             react-pdf.org
           </Link>
@@ -210,14 +208,14 @@ function HelloWorldContent() {
       <Page size="A4" style={tw("bg-white font-helvetica text-gray-900 text-xs")}>
         {/* Mini hero */}
         <View style={tw("bg-blue-800 py-5 px-12")}>
-          <Text style={tw("text-blue-200 text-xs uppercase tracking-widest mb-1")}>{r.t("page2.label")}</Text>
-          <Text style={tw("text-white font-bold text-2xl leading-tight")}>{r.t("page2.title")}</Text>
+          <Text style={tw("text-blue-200 text-xs uppercase tracking-widest mb-1")}>{t("page2.label")}</Text>
+          <Text style={tw("text-white font-bold text-2xl leading-tight")}>{t("page2.title")}</Text>
         </View>
 
         <View style={tw("px-10 py-6")}>
           {/* Progress bars */}
           <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            {r.t("section.progress")}
+            {t("section.progress")}
           </Text>
           <View style={tw("border-t border-gray-200 mb-5")} />
           <View style={tw("mb-6")}>
@@ -234,7 +232,7 @@ function HelloWorldContent() {
 
           {/* Nested layout */}
           <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            {r.t("section.nested")}
+            {t("section.nested")}
           </Text>
           <View style={tw("border-t border-gray-200 mb-5")} />
           <View style={tw("flex-row gap-3 mb-6")}>
@@ -271,9 +269,7 @@ function HelloWorldContent() {
           </View>
 
           {/* Links */}
-          <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>
-            {r.t("section.links")}
-          </Text>
+          <Text style={tw("font-bold text-xs text-gray-400 uppercase tracking-widest mb-2")}>{t("section.links")}</Text>
           <View style={tw("border-t border-gray-200 mb-5")} />
           <View style={tw("bg-gray-50 border border-gray-200 rounded p-4 flex-row gap-6 items-center")}>
             <Text style={tw("flex-1 text-xs text-gray-600 leading-relaxed")}>
@@ -302,7 +298,7 @@ function HelloWorldContent() {
           )}
           fixed
         >
-          <Text style={tw("text-xs text-gray-400")}>{r.t("footer.title")}</Text>
+          <Text style={tw("text-xs text-gray-400")}>{t("footer.title")}</Text>
           <Link src="https://react-pdf.org" style={tw("text-xs text-blue-500 no-underline")}>
             react-pdf.org
           </Link>

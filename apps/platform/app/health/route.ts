@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { gql } from "~/generated/graphql";
-import { createGraphy } from "~/lib/graphy/graphy.browser";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
 
 const HealthQuery = /*#__PURE__*/ gql(`
   query HealthQuery {
@@ -10,7 +10,7 @@ const HealthQuery = /*#__PURE__*/ gql(`
 
 export async function GET() {
   try {
-    const graphy = createGraphy();
+    const graphy = await getGraphySession();
     const { data, error } = await graphy.query({ query: HealthQuery });
 
     if (error) {

@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@packages/ui-common/shadcn/components/ui/table";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { useLocale } from "~/components/locale-provider";
@@ -26,6 +27,7 @@ const LOCALE_ES = {
   no_permissions: "sin permisos",
   full_access: "acceso completo",
   expired_badge: "expirada",
+  edit: "Editar",
   cancel: "Cancelar",
   cancelling: "Cancelando…",
   cancel_confirm: "¿Cancelar la invitación a {{email}}?",
@@ -44,6 +46,7 @@ const LOCALES = {
     full_access: "full access",
     expired_badge: "expired",
     cancel: "Cancel",
+    edit: "Edit",
     cancelling: "Cancelling…",
     cancel_confirm: "Cancel the invitation to {{email}}?",
   } satisfies typeof LOCALE_ES,
@@ -58,33 +61,49 @@ const LOCALES = {
     full_access: "acesso completo",
     expired_badge: "expirado",
     cancel: "Cancelar",
+    edit: "Editar",
     cancelling: "Cancelando…",
     cancel_confirm: "Cancelar o convite para {{email}}?",
   } satisfies typeof LOCALE_ES,
 };
 
 interface InvitationRow {
-  invitation_id: string;
-  invitation_email: string;
+  membership_id: number;
+  invitation_email: string | null;
+  invitation_phone: string | null;
+  invitation_address_level0_id: string | null;
+  invitation_document_kind: string | null;
+  invitation_document_value: string | null;
   invitation_permission_slugs: (string | null)[];
   invitation_created_at: string;
-  invitation_expires_at: string;
+  invitation_expires_at: string | null;
 }
 
 interface Props {
   invitations: InvitationRow[];
+  editHrefBase: string;
 }
 
-export function PendingInvitations({ invitations }: Props) {
-  const r = useRosetta(LOCALES);
+function INVITATION_LABEL(inv: InvitationRow): string {
+  if (inv["invitation_email"]) return inv["invitation_email"];
+  if (inv["invitation_phone"]) return inv["invitation_phone"];
+  if (inv["invitation_document_value"]) {
+    const country = inv["invitation_address_level0_id"] ?? "";
+    return `${country} · ${inv["invitation_document_value"]}`;
+  }
+  return "—";
+}
+
+export function PendingInvitations({ invitations, editHrefBase }: Props) {
+  const { t } = useRosetta(LOCALES);
   const locale = useLocale();
   const router = useRouter();
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const [optimisticInvitations, removeOptimistic] = useOptimistic(
     invitations,
-    (state: InvitationRow[], invitation_id: string) => state.filter((i) => i["invitation_id"] !== invitation_id),
+    (state: InvitationRow[], membership_id: number) => state.filter((i) => i["membership_id"] !== membership_id),
   );
 
   const dateFormatter = useMemo(
@@ -92,13 +111,13 @@ export function PendingInvitations({ invitations }: Props) {
     [locale],
   );
 
-  const cancel = (invitation_id: string, email: string) => {
-    if (!window.confirm(r.t("cancel_confirm", { email }))) return;
+  const cancel = (inv: InvitationRow) => {
+    if (!window.confirm(t("cancel_confirm", { email: INVITATION_LABEL(inv) }))) return;
     setError(null);
-    setPendingId(invitation_id);
+    setPendingId(inv["membership_id"]);
     startTransition(async () => {
-      removeOptimistic(invitation_id);
-      const res = await actionCancelInvitation({ invitation_id });
+      removeOptimistic(inv["membership_id"]);
+      const res = await actionCancelInvitation({ membership_id: inv["membership_id"] });
       setPendingId(null);
       if (res?.serverError) {
         setError(res.serverError);
@@ -108,7 +127,7 @@ export function PendingInvitations({ invitations }: Props) {
   };
 
   if (optimisticInvitations.length === 0) {
-    return <p className="text-muted-foreground text-sm">{r.t("empty")}</p>;
+    return <p className="text-muted-foreground text-sm">{t("empty")}</p>;
   }
 
   return (
@@ -118,11 +137,11 @@ export function PendingInvitations({ invitations }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{r.t("email_column")}</TableHead>
-              <TableHead>{r.t("permissions_column")}</TableHead>
-              <TableHead>{r.t("sent_column")}</TableHead>
-              <TableHead>{r.t("expires_column")}</TableHead>
-              <TableHead className="text-right">{r.t("actions_column")}</TableHead>
+              <TableHead>{t("email_column")}</TableHead>
+              <TableHead>{t("permissions_column")}</TableHead>
+              <TableHead>{t("sent_column")}</TableHead>
+              <TableHead>{t("expires_column")}</TableHead>
+              <TableHead className="text-right">{t("actions_column")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -130,18 +149,19 @@ export function PendingInvitations({ invitations }: Props) {
               const slugs = (inv["invitation_permission_slugs"] ?? []).filter(
                 (s): s is string => typeof s === "string",
               );
-              const isExpired = new Date(inv["invitation_expires_at"]).getTime() < Date.now();
+              const isExpired =
+                !!inv["invitation_expires_at"] && new Date(inv["invitation_expires_at"]).getTime() < Date.now();
               return (
-                <TableRow key={inv["invitation_id"]}>
-                  <TableCell className="text-sm">{inv["invitation_email"]}</TableCell>
+                <TableRow key={inv["membership_id"]}>
+                  <TableCell className="text-sm">{INVITATION_LABEL(inv)}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {slugs.length === 0 ? (
-                        <span className="text-muted-foreground text-xs">{r.t("no_permissions")}</span>
+                        <span className="text-muted-foreground text-xs">{t("no_permissions")}</span>
                       ) : (
                         slugs.map((slug) => (
                           <Badge key={slug} variant="secondary" className="font-mono text-xs">
-                            {slug === "*" ? r.t("full_access") : slug}
+                            {slug === "*" ? t("full_access") : slug}
                           </Badge>
                         ))
                       )}
@@ -152,23 +172,30 @@ export function PendingInvitations({ invitations }: Props) {
                   </TableCell>
                   <TableCell className="text-xs">
                     {isExpired ? (
-                      <Badge variant="destructive">{r.t("expired_badge")}</Badge>
-                    ) : (
+                      <Badge variant="destructive">{t("expired_badge")}</Badge>
+                    ) : inv["invitation_expires_at"] ? (
                       <span className="text-muted-foreground">
                         {dateFormatter.format(new Date(inv["invitation_expires_at"]))}
                       </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      disabled={pendingId === inv["invitation_id"]}
-                      onClick={() => cancel(inv["invitation_id"], inv["invitation_email"])}
-                    >
-                      {pendingId === inv["invitation_id"] ? r.t("cancelling") : r.t("cancel")}
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      <Button asChild size="sm" variant="outline">
+                        <Link href={`${editHrefBase}/${inv["membership_id"]}/edit`}>{t("edit")}</Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        disabled={pendingId === inv["membership_id"]}
+                        onClick={() => cancel(inv)}
+                      >
+                        {pendingId === inv["membership_id"] ? t("cancelling") : t("cancel")}
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );

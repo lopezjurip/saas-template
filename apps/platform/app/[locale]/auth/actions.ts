@@ -7,20 +7,13 @@ import { z } from "zod";
 import { isOAuthProvider, OAUTH_PROVIDER_IDS } from "~/app/[locale]/auth/providers";
 import { debug } from "~/lib/debug";
 import { getServerLocale } from "~/lib/i18n.server";
-import { action, formAction } from "~/lib/safe-action";
+import { action } from "~/lib/safe-action";
 
 const log = debug("auth:oauth");
 
 const signInWithOAuthSchema = z.object({
   provider: z.enum(OAUTH_PROVIDER_IDS),
   next: z.string().default("/"),
-});
-
-const checkIdentifierSchema = z.object({
-  identifier: z
-    .string()
-    .min(1)
-    .transform((v) => v.trim()),
 });
 
 const signInWithOAuthRun = action
@@ -43,40 +36,6 @@ const signInWithOAuthRun = action
     redirect(data.url);
   });
 
-const checkIdentifierRun = action.inputSchema(checkIdentifierSchema).action(async ({ parsedInput: { identifier } }) => {
-  const locale = await getServerLocale();
-  const supabase = await createServerClient();
-
-  if (identifier.includes("@")) {
-    const email = identifier.toLowerCase();
-    const { data: exists } = await supabase.rpc("email_exists", { email_to_check: email });
-
-    if (!exists) {
-      redirect(`/${locale}/auth/email/signup?email=${encodeURIComponent(email)}`);
-    }
-
-    const { data: hasPasskey } = await supabase.rpc("email_has_passkey", { email_to_check: email });
-    const passkeySuffix = hasPasskey ? "&has_passkey=1" : "";
-    redirect(`/${locale}/auth/email/login?email=${encodeURIComponent(email)}${passkeySuffix}`);
-  }
-
-  const { data: normalized } = await supabase.rpc("phone_normalize", {
-    value: identifier,
-    default_code: "+56",
-  });
-  if (!normalized) redirect(`/${locale}/auth?error=invalid_identifier`);
-
-  const { data: exists } = await supabase.rpc("phone_exists", {
-    phone_to_check: identifier,
-    default_code: "+56",
-  });
-  if (!exists) {
-    redirect(`/${locale}/auth/phone/signup?phone=${encodeURIComponent(normalized)}`);
-  }
-  redirect(`/${locale}/auth/phone/login?phone=${encodeURIComponent(normalized)}`);
-});
-
-// HTML form adapters for <form action={...}> usage in app/[locale]/auth/page.tsx.
 export async function signInWithOAuth(formData: FormData) {
   const provider = String(formData.get("provider") ?? "");
   if (!isOAuthProvider(provider)) {
@@ -88,7 +47,3 @@ export async function signInWithOAuth(formData: FormData) {
     next: String(formData.get("next") ?? "/"),
   });
 }
-
-export const checkIdentifier = formAction(checkIdentifierRun, (fd) => ({
-  identifier: String(fd.get("identifier") ?? ""),
-}));

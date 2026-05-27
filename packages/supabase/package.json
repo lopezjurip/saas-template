@@ -5,9 +5,9 @@
   "sideEffects": false,
   "scripts": {
     "build:dry": "tsc --noEmit",
-    "db:start": "supabase start",
+    "db:start": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" supabase start",
     "db:stop": "supabase stop",
-    "db:reset": "supabase db reset",
+    "db:reset": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" supabase db reset",
     "db:status": "supabase status",
     "db:migrate:new": "supabase migration new",
     "db:migrate:up": "supabase migration up",

@@ -7,17 +7,27 @@ import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import {
+  type DocumentTripletCountry,
+  DocumentTripletFields,
+} from "~/app/[locale]/auth/_components/document-triplet-fields";
 import { sendSignupOtp, verifySignupOtp } from "./actions";
 import { type SendOtpValues, sendOtpSchema, type VerifyOtpValues, verifyOtpSchema } from "./schemas";
 
-export function SignupForm({ defaultPhone }: { defaultPhone: string }) {
+export function SignupForm({ defaultPhone, countries }: { defaultPhone: string; countries: DocumentTripletCountry[] }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const phoneForm = useForm<SendOtpValues>({
     resolver: zodResolver(sendOtpSchema),
-    defaultValues: { phone: defaultPhone },
+    defaultValues: {
+      phone: defaultPhone,
+      full_name: "",
+      address_level0_id: "CL",
+      profile_identity_document_kind: "nin",
+      profile_identity_document_value: "",
+    },
   });
   const codeForm = useForm<VerifyOtpValues>({
     resolver: zodResolver(verifyOtpSchema),
@@ -29,7 +39,7 @@ export function SignupForm({ defaultPhone }: { defaultPhone: string }) {
     startTransition(async () => {
       const res = await sendSignupOtp(values);
       if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Formato de teléfono inválido");
+      else if (res?.validationErrors) setServerError("Formulario inválido");
       else if (res?.data?.phone) {
         setSentTo(res.data.phone);
         codeForm.setValue("phone", res.data.phone);
@@ -88,6 +98,19 @@ export function SignupForm({ defaultPhone }: { defaultPhone: string }) {
   return (
     <form onSubmit={onSendOtp} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
+        <Label htmlFor="full_name">Nombre completo</Label>
+        <Input
+          id="full_name"
+          autoComplete="name"
+          aria-invalid={!!phoneForm.formState.errors.full_name}
+          {...phoneForm.register("full_name")}
+        />
+        {phoneForm.formState.errors.full_name && (
+          <p className="text-destructive text-xs">{phoneForm.formState.errors.full_name.message}</p>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="phone">Número de teléfono</Label>
         <Input
           id="phone"
@@ -101,6 +124,9 @@ export function SignupForm({ defaultPhone }: { defaultPhone: string }) {
           <p className="text-destructive text-xs">{phoneForm.formState.errors.phone.message}</p>
         )}
       </div>
+
+      <DocumentTripletFields form={phoneForm} countries={countries} />
+
       {serverError && (
         <Alert variant="destructive">
           <AlertDescription>{serverError}</AlertDescription>

@@ -20,10 +20,11 @@ const LOCALE_ES = {
 const LOCALES = {
   es: LOCALE_ES,
   en: { group: "Language" } satisfies typeof LOCALE_ES,
+  pt: { group: "Idioma" } satisfies typeof LOCALE_ES,
 };
 
 export function LocaleToggle() {
-  const r = useRosetta(LOCALES);
+  const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams<{ locale?: string }>();
@@ -38,13 +39,13 @@ export function LocaleToggle() {
     // the live DOM here so screen readers / spellcheck pick up the new language immediately.
     document.documentElement.lang = LOCALE_TO_BCP47[next];
     const nextPath = pathname.replace(/^\/[^/]+/, `/${next}`);
-    startTransition(() => router.push(nextPath));
+    startTransition(() => router.replace(nextPath));
   }
 
   return (
     <div
       role="radiogroup"
-      aria-label={r.t("group")}
+      aria-label={t("group")}
       aria-busy={pending}
       className="bg-card text-card-foreground border-border inline-flex items-center gap-0.5 rounded-full border p-0.5 shadow-sm"
     >

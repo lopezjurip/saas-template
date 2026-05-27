@@ -72,30 +72,28 @@ export default WelcomeEmail;
 
 function WelcomeEmailContent({ empleadoNombre, empresaNombre, loginUrl }: Omit<WelcomeEmailProps, "locale">) {
   const locale = useLocale();
-  const r = useRosetta(LOCALES);
+  const { t } = useRosetta(LOCALES);
 
   return (
     <Tailwind>
       <Html lang={locale}>
         <Head />
-        <Preview>{r.t("preview", { empresaNombre })}</Preview>
+        <Preview>{t("preview", { empresaNombre })}</Preview>
         <Body className="bg-gray-100 font-sans">
           <Container className="bg-white mx-auto my-10 px-10 py-10 rounded-lg max-w-lg">
-            <Heading className="text-gray-900 text-2xl font-bold mt-0 mb-6">
-              {r.t("heading", { empleadoNombre })}
-            </Heading>
-            <Text className="text-gray-700 text-base leading-relaxed mt-0 mb-5">{r.t("body", { empresaNombre })}</Text>
+            <Heading className="text-gray-900 text-2xl font-bold mt-0 mb-6">{t("heading", { empleadoNombre })}</Heading>
+            <Text className="text-gray-700 text-base leading-relaxed mt-0 mb-5">{t("body", { empresaNombre })}</Text>
             <Section className="my-8">
               <Button
                 className="bg-gray-900 text-white rounded-md text-sm font-semibold px-6 py-3 no-underline"
                 href={loginUrl}
               >
-                {r.t("cta")}
+                {t("cta")}
               </Button>
             </Section>
-            <Text className="text-gray-700 text-base leading-relaxed mt-0 mb-5">{r.t("support")}</Text>
+            <Text className="text-gray-700 text-base leading-relaxed mt-0 mb-5">{t("support")}</Text>
             <Hr className="border-gray-200 my-8" />
-            <Text className="text-gray-400 text-xs leading-relaxed mt-0">{r.t("footer", { empresaNombre })}</Text>
+            <Text className="text-gray-400 text-xs leading-relaxed mt-0">{t("footer", { empresaNombre })}</Text>
           </Container>
         </Body>
       </Html>

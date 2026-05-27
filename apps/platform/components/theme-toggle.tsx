@@ -21,10 +21,16 @@ const LOCALES = {
     system: "System theme",
     dark: "Dark theme",
   } satisfies typeof LOCALE_ES,
+  pt: {
+    group: "Tema",
+    light: "Tema claro",
+    system: "Tema do sistema",
+    dark: "Tema escuro",
+  } satisfies typeof LOCALE_ES,
 };
 
 export function ThemeToggle() {
-  const r = useRosetta(LOCALES);
+  const { t } = useRosetta(LOCALES);
   const { theme, setTheme } = useTheme();
   // Avoid hydration mismatch — server renders without knowing the theme; we only
   // light up the active segment after mounting on the client.
@@ -32,15 +38,15 @@ export function ThemeToggle() {
   useEffect(() => setMounted(true), []);
 
   const OPTIONS = [
-    { value: "light", label: r.t("light"), Icon: Sun },
-    { value: "system", label: r.t("system"), Icon: Monitor },
-    { value: "dark", label: r.t("dark"), Icon: Moon },
+    { value: "light", label: t("light"), Icon: Sun },
+    { value: "system", label: t("system"), Icon: Monitor },
+    { value: "dark", label: t("dark"), Icon: Moon },
   ] as const;
 
   return (
     <div
       role="radiogroup"
-      aria-label={r.t("group")}
+      aria-label={t("group")}
       className="bg-card text-card-foreground border-border inline-flex items-center gap-0.5 rounded-full border p-0.5 shadow-sm"
     >
       {OPTIONS.map(({ value, label, Icon }) => {

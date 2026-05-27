@@ -31,17 +31,24 @@ const LOCALES = {
     "cta.dashboard": "Go to dashboard",
     "cta.signin": "Sign in",
   } satisfies typeof LOCALE_ES,
+  pt: {
+    title: "Humane",
+    description: "RH e Folha de Pagamento para empresas chilenas",
+    "user.greeting": "Olá, {{email}}",
+    "cta.dashboard": "Ir para o painel",
+    "cta.signin": "Entrar",
+  } satisfies typeof LOCALE_ES,
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
-  const r = RosettaImpl.fromDictionary(LOCALES, locale);
+  const { t } = RosettaImpl.fromDictionary(LOCALES, locale);
   const base = `https://${APP_HOST}`;
   const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
 
   return {
-    title: r.t("title"),
-    description: r.t("description"),
+    title: t("title"),
+    description: t("description"),
     alternates: {
       canonical: `${base}/${safeLocale}`,
       languages: {
@@ -53,21 +60,21 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       type: "website",
       url: `${base}/${safeLocale}`,
       locale: LOCALE_TO_BCP47[safeLocale],
-      title: r.t("title"),
-      description: r.t("description"),
+      title: t("title"),
+      description: t("description"),
       siteName: "Humane",
     },
     twitter: {
       card: "summary_large_image",
-      title: r.t("title"),
-      description: r.t("description"),
+      title: t("title"),
+      description: t("description"),
     },
   };
 }
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const r = RosettaImpl.fromDictionary(LOCALES, locale);
+  const { t } = RosettaImpl.fromDictionary(LOCALES, locale);
 
   const supabase = await createServerClient();
   const {
@@ -78,18 +85,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     <main className="bg-muted flex min-h-svh items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>{r.t("title")}</CardTitle>
-          <CardDescription>{r.t("description")}</CardDescription>
+          <CardTitle>{t("title")}</CardTitle>
+          <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         {user ? (
           <CardContent>
-            <p className="text-sm">{r.t("user.greeting", { email: user.email })}</p>
+            <p className="text-sm">{t("user.greeting", { email: user.email })}</p>
           </CardContent>
         ) : null}
         <CardFooter>
           <Button asChild className="w-full">
             <Link href={user ? `/${locale}/dashboard` : `/${locale}/auth`}>
-              {user ? r.t("cta.dashboard") : r.t("cta.signin")}
+              {user ? t("cta.dashboard") : t("cta.signin")}
             </Link>
           </Button>
         </CardFooter>

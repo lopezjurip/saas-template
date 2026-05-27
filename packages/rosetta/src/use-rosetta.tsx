@@ -44,13 +44,13 @@ export function RosettaProvider<T>({
  * Reads locale from LocaleContext — set it with LocaleProvider or RosettaProvider.
  *
  * @example // simple usage (no provider required)
- * const r = useRosetta(LOCALES);
- * <h1>{r.t("hello", { name: "Juan" })}</h1>
+ * const { t } = useRosetta(LOCALES);
+ * <h1>{t("hello", { name: "Juan" })}</h1>
  *
  * @example // usage with provider (preferred when using with .map())
  * function LocalizedRow(item) {
- *   const r = useRosetta<ValueOf<typeof LOCALES>>();
- *   return <h1>{r.t("hello", { name: item.name })}</h1>;
+ *   const { t } = useRosetta<ValueOf<typeof LOCALES>>();
+ *   return <h1>{t("hello", { name: item.name })}</h1>;
  * }
  * <RosettaProvider dict={LOCALES}>
  *   {items.map((item) => <LocalizedRow key={item.id} item={item} />)}

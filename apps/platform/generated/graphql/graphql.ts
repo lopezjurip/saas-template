@@ -2,92 +2,190 @@
 /** Internal type. DO NOT USE DIRECTLY. */
 type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
-export type Incremental<T> = T | { [P in keyof T]?: P extends " $fragmentName" | "__typename" ? T[P] : never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
+export enum Tenant_Tier {
+  Enterprise = 'enterprise',
+  Free = 'free',
+  Pro = 'pro'
+}
 
-import type { DocumentTypeDecoration } from "@graphql-typed-document-node/core";
-export type TenantHomeQueryQueryVariables = Exact<{
-  tenant_id: number;
+export type EditMembershipGrantPermissionMutationMutationVariables = Exact<{
+  membership_id: number;
+  permission_id: string;
 }>;
 
-export type TenantHomeQueryQuery = {
-  profile: { profile_name_full: string | null } | null;
-  tenant: {
-    tenant_id: number;
-    tenant_name: string;
-    tenant_slug: string;
-    organizationsCollection: {
-      edges: Array<{ node: { organization_id: number; organization_name: string; organization_slug: string } }>;
-    } | null;
-  } | null;
-};
 
-export type AccountPageQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type EditMembershipGrantPermissionMutationMutation = { insertIntomembership_permissionsCollection: { affectedCount: number } | null };
 
-export type AccountPageQueryQuery = {
-  profile: {
-    profile_id: string;
-    profile_name_full: string | null;
-    webauthn_credentialsCollection: {
-      edges: Array<{
-        node: {
-          webauthn_credential_id: string;
-          webauthn_credential_friendly_name: string | null;
-          webauthn_credential_device_type: string;
-          webauthn_credential_backup_state: string;
-          webauthn_credential_created_at: string;
-          webauthn_credential_last_used_at: string | null;
-        };
-      }>;
-    } | null;
-  } | null;
-};
+export type EditMembershipRevokePermissionMutationMutationVariables = Exact<{
+  membership_id: number;
+  permission_id: string;
+}>;
 
-export type DashboardPageQueryQueryVariables = Exact<{ [key: string]: never }>;
 
-export type DashboardPageQueryQuery = {
-  viewer_organizations: {
-    edges: Array<{
-      node: {
-        organization_id: number;
-        organization_name: string;
-        organization_slug: string;
-        tenants: { tenant_id: number; tenant_slug: string; tenant_name: string } | null;
-      };
-    }>;
-  } | null;
-};
+export type EditMembershipRevokePermissionMutationMutation = { deleteFrommembership_permissionsCollection: { affectedCount: number } };
 
-export type HealthQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type EditMembershipRevokeMembershipMutationMutationVariables = Exact<{
+  membership_id: number;
+  now: string;
+}>;
+
+
+export type EditMembershipRevokeMembershipMutationMutation = { updatemembershipsCollection: { affectedCount: number } };
+
+export type AccountPageQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AccountPageQueryQuery = { profile: { profile_id: string, profile_name_full: string | null, webauthn_credentialsCollection: { edges: Array<{ node: { webauthn_credential_id: string, webauthn_credential_friendly_name: string | null, webauthn_credential_device_type: string, webauthn_credential_backup_state: string, webauthn_credential_created_at: string, webauthn_credential_last_used_at: string | null } }> } | null } | null };
+
+export type DashboardPageQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DashboardPageQueryQuery = { viewer_organizations: { edges: Array<{ node: { organization_id: number, organization_name: string, organization_slug: string, tenants: { tenant_id: number, tenant_slug: string, tenant_name: string } | null } }> } | null };
+
+export type HealthQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
 
 export type HealthQueryQuery = { health_current_timestamp: string | null };
 
-export type ViewerProfileFragmentFragment = {
-  profile_id: string;
-  profile_name_full: string | null;
-  profile_onboarded_at: string | null;
-  profile_disabled_at: string | null;
-  profile_created_at: string;
-  profile_updated_at: string;
-};
+export type CountryFragmentFragment = { address_level0_id: string, address_level0_name: string, address_level0_emoji: string | null };
 
-export type UseViewerProfileHookQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type CountriesQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
-export type UseViewerProfileHookQueryQuery = {
-  profile: {
-    profile_id: string;
-    profile_name_full: string | null;
-    profile_onboarded_at: string | null;
-    profile_disabled_at: string | null;
-    profile_created_at: string;
-    profile_updated_at: string;
-  } | null;
-};
+
+export type CountriesQueryQuery = { addresses_level0Collection: { edges: Array<{ node: { address_level0_id: string, address_level0_name: string, address_level0_emoji: string | null } }> } | null };
+
+export type CountryGetFragmentFragment = { address_level0_id: string, address_level0_name: string, address_level0_emoji: string | null };
+
+export type CountriesGetQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CountriesGetQueryQuery = { addresses_level0Collection: { edges: Array<{ node: { address_level0_id: string, address_level0_name: string, address_level0_emoji: string | null } }> } | null };
+
+export type ViewerOrganizationGetFragmentFragment = { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string };
+
+export type ViewerOrganizationsGetQueryQueryVariables = Exact<{
+  tenant_id?: number | null | undefined;
+}>;
+
+
+export type ViewerOrganizationsGetQueryQuery = { organizationsCollection: { edges: Array<{ node: { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string } }> } | null };
+
+export type ViewerOrganizationByIdGetQueryQueryVariables = Exact<{
+  organization_id: number;
+}>;
+
+
+export type ViewerOrganizationByIdGetQueryQuery = { organizationsCollection: { edges: Array<{ node: { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string } }> } | null };
+
+export type ViewerProfileGetFragmentFragment = { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string };
+
+export type ViewerProfileGetQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ViewerProfileGetQueryQuery = { profile: { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string } | null };
+
+export type ViewerTenantGetFragmentFragment = { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier };
+
+export type ViewerTenantsGetQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ViewerTenantsGetQueryQuery = { tenantsCollection: { edges: Array<{ node: { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier } }> } | null };
+
+export type ViewerTenantBySlugGetQueryQueryVariables = Exact<{
+  tenant_slug: string;
+}>;
+
+
+export type ViewerTenantBySlugGetQueryQuery = { tenantsCollection: { edges: Array<{ node: { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier } }> } | null };
+
+export type CountryHookFragmentFragment = { address_level0_id: string, address_level0_name: string, address_level0_emoji: string | null };
+
+export type CountriesHookQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CountriesHookQueryQuery = { addresses_level0Collection: { edges: Array<{ node: { address_level0_id: string, address_level0_name: string, address_level0_emoji: string | null } }> } | null };
+
+export type ViewerOrganizationHookFragmentFragment = { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string };
+
+export type ViewerOrganizationsHookQueryQueryVariables = Exact<{
+  tenant_id?: number | null | undefined;
+}>;
+
+
+export type ViewerOrganizationsHookQueryQuery = { organizationsCollection: { edges: Array<{ node: { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string } }> } | null };
+
+export type ViewerOrganizationByIdHookQueryQueryVariables = Exact<{
+  organization_id: number;
+}>;
+
+
+export type ViewerOrganizationByIdHookQueryQuery = { organizationsCollection: { edges: Array<{ node: { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string } }> } | null };
+
+export type ViewerProfileHookFragmentFragment = { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string };
+
+export type ViewerProfileHookQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ViewerProfileHookQueryQuery = { profile: { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string } | null };
+
+export type ViewerTenantHookFragmentFragment = { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier };
+
+export type ViewerTenantsHookQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ViewerTenantsHookQueryQuery = { tenantsCollection: { edges: Array<{ node: { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier } }> } | null };
+
+export type ViewerTenantBySlugHookQueryQueryVariables = Exact<{
+  tenant_slug: string;
+}>;
+
+
+export type ViewerTenantBySlugHookQueryQuery = { tenantsCollection: { edges: Array<{ node: { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier } }> } | null };
+
+export type ViewerProfileFragmentFragment = { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string };
+
+export type ViewerProfileQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ViewerProfileQueryQuery = { profile: { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string } | null };
+
+export type ViewerTenantFragmentFragment = { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier };
+
+export type ViewerTenantsQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ViewerTenantsQueryQuery = { tenantsCollection: { edges: Array<{ node: { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier } }> } | null };
+
+export type ViewerTenantBySlugQueryQueryVariables = Exact<{
+  tenant_slug: string;
+}>;
+
+
+export type ViewerTenantBySlugQueryQuery = { tenantsCollection: { edges: Array<{ node: { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier } }> } | null };
+
+export type ViewerOrganizationFragmentFragment = { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string };
+
+export type ViewerOrganizationsQueryQueryVariables = Exact<{
+  tenant_id?: number | null | undefined;
+}>;
+
+
+export type ViewerOrganizationsQueryQuery = { organizationsCollection: { edges: Array<{ node: { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string } }> } | null };
+
+export type ViewerOrganizationByIdQueryQueryVariables = Exact<{
+  organization_id: number;
+}>;
+
+
+export type ViewerOrganizationByIdQueryQuery = { organizationsCollection: { edges: Array<{ node: { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string } }> } | null };
 
 export class TypedDocumentString<TResult, TVariables>
   extends String
   implements DocumentTypeDecoration<TResult, TVariables>
 {
-  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>["__apiType"]>;
+  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>['__apiType']>;
   private value: string;
   public __meta__?: Record<string, any> | undefined;
 
@@ -101,8 +199,80 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
-export const ViewerProfileFragmentFragmentDoc = new TypedDocumentString(
-  `
+export const CountryFragmentFragmentDoc = new TypedDocumentString(`
+    fragment CountryFragment on addresses_level0 {
+  address_level0_id
+  address_level0_name
+  address_level0_emoji
+}
+    `, {"fragmentName":"CountryFragment"}) as unknown as TypedDocumentString<CountryFragmentFragment, unknown>;
+export const CountryGetFragmentFragmentDoc = new TypedDocumentString(`
+    fragment CountryGetFragment on addresses_level0 {
+  address_level0_id
+  address_level0_name
+  address_level0_emoji
+}
+    `, {"fragmentName":"CountryGetFragment"}) as unknown as TypedDocumentString<CountryGetFragmentFragment, unknown>;
+export const ViewerOrganizationGetFragmentFragmentDoc = new TypedDocumentString(`
+    fragment ViewerOrganizationGetFragment on organizations {
+  organization_id
+  tenant_id
+  organization_slug
+  organization_name
+}
+    `, {"fragmentName":"ViewerOrganizationGetFragment"}) as unknown as TypedDocumentString<ViewerOrganizationGetFragmentFragment, unknown>;
+export const ViewerProfileGetFragmentFragmentDoc = new TypedDocumentString(`
+    fragment ViewerProfileGetFragment on profiles {
+  profile_id
+  profile_name_full
+  profile_onboarded_at
+  profile_disabled_at
+  profile_created_at
+  profile_updated_at
+}
+    `, {"fragmentName":"ViewerProfileGetFragment"}) as unknown as TypedDocumentString<ViewerProfileGetFragmentFragment, unknown>;
+export const ViewerTenantGetFragmentFragmentDoc = new TypedDocumentString(`
+    fragment ViewerTenantGetFragment on tenants {
+  tenant_id
+  tenant_slug
+  tenant_name
+  tenant_tier
+}
+    `, {"fragmentName":"ViewerTenantGetFragment"}) as unknown as TypedDocumentString<ViewerTenantGetFragmentFragment, unknown>;
+export const CountryHookFragmentFragmentDoc = new TypedDocumentString(`
+    fragment CountryHookFragment on addresses_level0 {
+  address_level0_id
+  address_level0_name
+  address_level0_emoji
+}
+    `, {"fragmentName":"CountryHookFragment"}) as unknown as TypedDocumentString<CountryHookFragmentFragment, unknown>;
+export const ViewerOrganizationHookFragmentFragmentDoc = new TypedDocumentString(`
+    fragment ViewerOrganizationHookFragment on organizations {
+  organization_id
+  tenant_id
+  organization_slug
+  organization_name
+}
+    `, {"fragmentName":"ViewerOrganizationHookFragment"}) as unknown as TypedDocumentString<ViewerOrganizationHookFragmentFragment, unknown>;
+export const ViewerProfileHookFragmentFragmentDoc = new TypedDocumentString(`
+    fragment ViewerProfileHookFragment on profiles {
+  profile_id
+  profile_name_full
+  profile_onboarded_at
+  profile_disabled_at
+  profile_created_at
+  profile_updated_at
+}
+    `, {"fragmentName":"ViewerProfileHookFragment"}) as unknown as TypedDocumentString<ViewerProfileHookFragmentFragment, unknown>;
+export const ViewerTenantHookFragmentFragmentDoc = new TypedDocumentString(`
+    fragment ViewerTenantHookFragment on tenants {
+  tenant_id
+  tenant_slug
+  tenant_name
+  tenant_tier
+}
+    `, {"fragmentName":"ViewerTenantHookFragment"}) as unknown as TypedDocumentString<ViewerTenantHookFragmentFragment, unknown>;
+export const ViewerProfileFragmentFragmentDoc = new TypedDocumentString(`
     fragment ViewerProfileFragment on profiles {
   profile_id
   profile_name_full
@@ -111,33 +281,51 @@ export const ViewerProfileFragmentFragmentDoc = new TypedDocumentString(
   profile_created_at
   profile_updated_at
 }
-    `,
-  { fragmentName: "ViewerProfileFragment" },
-) as unknown as TypedDocumentString<ViewerProfileFragmentFragment, unknown>;
-export const TenantHomeQueryDocument = new TypedDocumentString(`
-    query TenantHomeQuery($tenant_id: Int!) {
-  profile: viewer_profile {
-    profile_name_full
-  }
-  tenant: viewer_tenant_by_id(target_tenant_id: $tenant_id) {
-    tenant_id
-    tenant_name
-    tenant_slug
-    organizationsCollection(
-      filter: {organization_disabled_at: {is: NULL}}
-      orderBy: [{organization_name: AscNullsLast}]
-    ) {
-      edges {
-        node {
-          organization_id
-          organization_name
-          organization_slug
-        }
-      }
-    }
+    `, {"fragmentName":"ViewerProfileFragment"}) as unknown as TypedDocumentString<ViewerProfileFragmentFragment, unknown>;
+export const ViewerTenantFragmentFragmentDoc = new TypedDocumentString(`
+    fragment ViewerTenantFragment on tenants {
+  tenant_id
+  tenant_slug
+  tenant_name
+  tenant_tier
+}
+    `, {"fragmentName":"ViewerTenantFragment"}) as unknown as TypedDocumentString<ViewerTenantFragmentFragment, unknown>;
+export const ViewerOrganizationFragmentFragmentDoc = new TypedDocumentString(`
+    fragment ViewerOrganizationFragment on organizations {
+  organization_id
+  tenant_id
+  organization_slug
+  organization_name
+}
+    `, {"fragmentName":"ViewerOrganizationFragment"}) as unknown as TypedDocumentString<ViewerOrganizationFragmentFragment, unknown>;
+export const EditMembershipGrantPermissionMutationDocument = new TypedDocumentString(`
+    mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {
+  insertIntomembership_permissionsCollection(
+    objects: [{membership_id: $membership_id, permission_id: $permission_id}]
+  ) {
+    affectedCount
   }
 }
-    `) as unknown as TypedDocumentString<TenantHomeQueryQuery, TenantHomeQueryQueryVariables>;
+    `) as unknown as TypedDocumentString<EditMembershipGrantPermissionMutationMutation, EditMembershipGrantPermissionMutationMutationVariables>;
+export const EditMembershipRevokePermissionMutationDocument = new TypedDocumentString(`
+    mutation EditMembershipRevokePermissionMutation($membership_id: Int!, $permission_id: String!) {
+  deleteFrommembership_permissionsCollection(
+    filter: {membership_id: {eq: $membership_id}, permission_id: {eq: $permission_id}}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<EditMembershipRevokePermissionMutationMutation, EditMembershipRevokePermissionMutationMutationVariables>;
+export const EditMembershipRevokeMembershipMutationDocument = new TypedDocumentString(`
+    mutation EditMembershipRevokeMembershipMutation($membership_id: Int!, $now: Datetime!) {
+  updatemembershipsCollection(
+    filter: {membership_id: {eq: $membership_id}}
+    set: {membership_revoked_at: $now}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<EditMembershipRevokeMembershipMutationMutation, EditMembershipRevokeMembershipMutationMutationVariables>;
 export const AccountPageQueryDocument = new TypedDocumentString(`
     query AccountPageQuery {
   profile: viewer_profile {
@@ -186,8 +374,245 @@ export const HealthQueryDocument = new TypedDocumentString(`
   health_current_timestamp
 }
     `) as unknown as TypedDocumentString<HealthQueryQuery, HealthQueryQueryVariables>;
-export const UseViewerProfileHookQueryDocument = new TypedDocumentString(`
-    query UseViewerProfileHookQuery {
+export const CountriesQueryDocument = new TypedDocumentString(`
+    query CountriesQuery {
+  addresses_level0Collection(
+    filter: {address_level0_disabled_at: {is: NULL}}
+    orderBy: [{address_level0_name: AscNullsLast}]
+    first: 250
+  ) {
+    edges {
+      node {
+        ...CountryFragment
+      }
+    }
+  }
+}
+    fragment CountryFragment on addresses_level0 {
+  address_level0_id
+  address_level0_name
+  address_level0_emoji
+}`) as unknown as TypedDocumentString<CountriesQueryQuery, CountriesQueryQueryVariables>;
+export const CountriesGetQueryDocument = new TypedDocumentString(`
+    query CountriesGetQuery {
+  addresses_level0Collection(
+    filter: {address_level0_disabled_at: {is: NULL}}
+    orderBy: [{address_level0_name: AscNullsLast}]
+    first: 250
+  ) {
+    edges {
+      node {
+        ...CountryGetFragment
+      }
+    }
+  }
+}
+    fragment CountryGetFragment on addresses_level0 {
+  address_level0_id
+  address_level0_name
+  address_level0_emoji
+}`) as unknown as TypedDocumentString<CountriesGetQueryQuery, CountriesGetQueryQueryVariables>;
+export const ViewerOrganizationsGetQueryDocument = new TypedDocumentString(`
+    query ViewerOrganizationsGetQuery($tenant_id: Int) {
+  organizationsCollection(
+    filter: {tenant_id: {eq: $tenant_id}, organization_disabled_at: {is: NULL}}
+    orderBy: [{organization_name: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        ...ViewerOrganizationGetFragment
+      }
+    }
+  }
+}
+    fragment ViewerOrganizationGetFragment on organizations {
+  organization_id
+  tenant_id
+  organization_slug
+  organization_name
+}`) as unknown as TypedDocumentString<ViewerOrganizationsGetQueryQuery, ViewerOrganizationsGetQueryQueryVariables>;
+export const ViewerOrganizationByIdGetQueryDocument = new TypedDocumentString(`
+    query ViewerOrganizationByIdGetQuery($organization_id: Int!) {
+  organizationsCollection(
+    filter: {organization_id: {eq: $organization_id}, organization_disabled_at: {is: NULL}}
+    first: 1
+  ) {
+    edges {
+      node {
+        ...ViewerOrganizationGetFragment
+      }
+    }
+  }
+}
+    fragment ViewerOrganizationGetFragment on organizations {
+  organization_id
+  tenant_id
+  organization_slug
+  organization_name
+}`) as unknown as TypedDocumentString<ViewerOrganizationByIdGetQueryQuery, ViewerOrganizationByIdGetQueryQueryVariables>;
+export const ViewerProfileGetQueryDocument = new TypedDocumentString(`
+    query ViewerProfileGetQuery {
+  profile: viewer_profile {
+    ...ViewerProfileGetFragment
+  }
+}
+    fragment ViewerProfileGetFragment on profiles {
+  profile_id
+  profile_name_full
+  profile_onboarded_at
+  profile_disabled_at
+  profile_created_at
+  profile_updated_at
+}`) as unknown as TypedDocumentString<ViewerProfileGetQueryQuery, ViewerProfileGetQueryQueryVariables>;
+export const ViewerTenantsGetQueryDocument = new TypedDocumentString(`
+    query ViewerTenantsGetQuery {
+  tenantsCollection(
+    filter: {tenant_disabled_at: {is: NULL}}
+    orderBy: [{tenant_name: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        ...ViewerTenantGetFragment
+      }
+    }
+  }
+}
+    fragment ViewerTenantGetFragment on tenants {
+  tenant_id
+  tenant_slug
+  tenant_name
+  tenant_tier
+}`) as unknown as TypedDocumentString<ViewerTenantsGetQueryQuery, ViewerTenantsGetQueryQueryVariables>;
+export const ViewerTenantBySlugGetQueryDocument = new TypedDocumentString(`
+    query ViewerTenantBySlugGetQuery($tenant_slug: String!) {
+  tenantsCollection(
+    filter: {tenant_slug: {eq: $tenant_slug}, tenant_disabled_at: {is: NULL}}
+    first: 1
+  ) {
+    edges {
+      node {
+        ...ViewerTenantGetFragment
+      }
+    }
+  }
+}
+    fragment ViewerTenantGetFragment on tenants {
+  tenant_id
+  tenant_slug
+  tenant_name
+  tenant_tier
+}`) as unknown as TypedDocumentString<ViewerTenantBySlugGetQueryQuery, ViewerTenantBySlugGetQueryQueryVariables>;
+export const CountriesHookQueryDocument = new TypedDocumentString(`
+    query CountriesHookQuery {
+  addresses_level0Collection(
+    filter: {address_level0_disabled_at: {is: NULL}}
+    orderBy: [{address_level0_name: AscNullsLast}]
+    first: 250
+  ) {
+    edges {
+      node {
+        ...CountryHookFragment
+      }
+    }
+  }
+}
+    fragment CountryHookFragment on addresses_level0 {
+  address_level0_id
+  address_level0_name
+  address_level0_emoji
+}`) as unknown as TypedDocumentString<CountriesHookQueryQuery, CountriesHookQueryQueryVariables>;
+export const ViewerOrganizationsHookQueryDocument = new TypedDocumentString(`
+    query ViewerOrganizationsHookQuery($tenant_id: Int) {
+  organizationsCollection(
+    filter: {tenant_id: {eq: $tenant_id}, organization_disabled_at: {is: NULL}}
+    orderBy: [{organization_name: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        ...ViewerOrganizationHookFragment
+      }
+    }
+  }
+}
+    fragment ViewerOrganizationHookFragment on organizations {
+  organization_id
+  tenant_id
+  organization_slug
+  organization_name
+}`) as unknown as TypedDocumentString<ViewerOrganizationsHookQueryQuery, ViewerOrganizationsHookQueryQueryVariables>;
+export const ViewerOrganizationByIdHookQueryDocument = new TypedDocumentString(`
+    query ViewerOrganizationByIdHookQuery($organization_id: Int!) {
+  organizationsCollection(
+    filter: {organization_id: {eq: $organization_id}, organization_disabled_at: {is: NULL}}
+    first: 1
+  ) {
+    edges {
+      node {
+        ...ViewerOrganizationHookFragment
+      }
+    }
+  }
+}
+    fragment ViewerOrganizationHookFragment on organizations {
+  organization_id
+  tenant_id
+  organization_slug
+  organization_name
+}`) as unknown as TypedDocumentString<ViewerOrganizationByIdHookQueryQuery, ViewerOrganizationByIdHookQueryQueryVariables>;
+export const ViewerProfileHookQueryDocument = new TypedDocumentString(`
+    query ViewerProfileHookQuery {
+  profile: viewer_profile {
+    ...ViewerProfileHookFragment
+  }
+}
+    fragment ViewerProfileHookFragment on profiles {
+  profile_id
+  profile_name_full
+  profile_onboarded_at
+  profile_disabled_at
+  profile_created_at
+  profile_updated_at
+}`) as unknown as TypedDocumentString<ViewerProfileHookQueryQuery, ViewerProfileHookQueryQueryVariables>;
+export const ViewerTenantsHookQueryDocument = new TypedDocumentString(`
+    query ViewerTenantsHookQuery {
+  tenantsCollection(
+    filter: {tenant_disabled_at: {is: NULL}}
+    orderBy: [{tenant_name: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        ...ViewerTenantHookFragment
+      }
+    }
+  }
+}
+    fragment ViewerTenantHookFragment on tenants {
+  tenant_id
+  tenant_slug
+  tenant_name
+  tenant_tier
+}`) as unknown as TypedDocumentString<ViewerTenantsHookQueryQuery, ViewerTenantsHookQueryQueryVariables>;
+export const ViewerTenantBySlugHookQueryDocument = new TypedDocumentString(`
+    query ViewerTenantBySlugHookQuery($tenant_slug: String!) {
+  tenantsCollection(
+    filter: {tenant_slug: {eq: $tenant_slug}, tenant_disabled_at: {is: NULL}}
+    first: 1
+  ) {
+    edges {
+      node {
+        ...ViewerTenantHookFragment
+      }
+    }
+  }
+}
+    fragment ViewerTenantHookFragment on tenants {
+  tenant_id
+  tenant_slug
+  tenant_name
+  tenant_tier
+}`) as unknown as TypedDocumentString<ViewerTenantBySlugHookQueryQuery, ViewerTenantBySlugHookQueryQueryVariables>;
+export const ViewerProfileQueryDocument = new TypedDocumentString(`
+    query ViewerProfileQuery {
   profile: viewer_profile {
     ...ViewerProfileFragment
   }
@@ -199,4 +624,80 @@ export const UseViewerProfileHookQueryDocument = new TypedDocumentString(`
   profile_disabled_at
   profile_created_at
   profile_updated_at
-}`) as unknown as TypedDocumentString<UseViewerProfileHookQueryQuery, UseViewerProfileHookQueryQueryVariables>;
+}`) as unknown as TypedDocumentString<ViewerProfileQueryQuery, ViewerProfileQueryQueryVariables>;
+export const ViewerTenantsQueryDocument = new TypedDocumentString(`
+    query ViewerTenantsQuery {
+  tenantsCollection(
+    filter: {tenant_disabled_at: {is: NULL}}
+    orderBy: [{tenant_name: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        ...ViewerTenantFragment
+      }
+    }
+  }
+}
+    fragment ViewerTenantFragment on tenants {
+  tenant_id
+  tenant_slug
+  tenant_name
+  tenant_tier
+}`) as unknown as TypedDocumentString<ViewerTenantsQueryQuery, ViewerTenantsQueryQueryVariables>;
+export const ViewerTenantBySlugQueryDocument = new TypedDocumentString(`
+    query ViewerTenantBySlugQuery($tenant_slug: String!) {
+  tenantsCollection(
+    filter: {tenant_slug: {eq: $tenant_slug}, tenant_disabled_at: {is: NULL}}
+    first: 1
+  ) {
+    edges {
+      node {
+        ...ViewerTenantFragment
+      }
+    }
+  }
+}
+    fragment ViewerTenantFragment on tenants {
+  tenant_id
+  tenant_slug
+  tenant_name
+  tenant_tier
+}`) as unknown as TypedDocumentString<ViewerTenantBySlugQueryQuery, ViewerTenantBySlugQueryQueryVariables>;
+export const ViewerOrganizationsQueryDocument = new TypedDocumentString(`
+    query ViewerOrganizationsQuery($tenant_id: Int) {
+  organizationsCollection(
+    filter: {tenant_id: {eq: $tenant_id}, organization_disabled_at: {is: NULL}}
+    orderBy: [{organization_name: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        ...ViewerOrganizationFragment
+      }
+    }
+  }
+}
+    fragment ViewerOrganizationFragment on organizations {
+  organization_id
+  tenant_id
+  organization_slug
+  organization_name
+}`) as unknown as TypedDocumentString<ViewerOrganizationsQueryQuery, ViewerOrganizationsQueryQueryVariables>;
+export const ViewerOrganizationByIdQueryDocument = new TypedDocumentString(`
+    query ViewerOrganizationByIdQuery($organization_id: Int!) {
+  organizationsCollection(
+    filter: {organization_id: {eq: $organization_id}, organization_disabled_at: {is: NULL}}
+    first: 1
+  ) {
+    edges {
+      node {
+        ...ViewerOrganizationFragment
+      }
+    }
+  }
+}
+    fragment ViewerOrganizationFragment on organizations {
+  organization_id
+  tenant_id
+  organization_slug
+  organization_name
+}`) as unknown as TypedDocumentString<ViewerOrganizationByIdQueryQuery, ViewerOrganizationByIdQueryQueryVariables>;

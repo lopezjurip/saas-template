@@ -1,4 +1,4 @@
-import { getSupabaseServerSession, getSupabaseServerUser } from "@packages/supabase/client.server";
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
   Card,
@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { gql } from "~/generated/graphql";
-import { createGraphy } from "~/lib/graphy/graphy.browser";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
 
 const DashboardPageQuery = gql(`
   query DashboardPageQuery {
@@ -37,12 +37,12 @@ const DashboardPageQuery = gql(`
 
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const [user, session] = await Promise.all([getSupabaseServerUser(), getSupabaseServerSession()]);
+  const user = await getSupabaseServerUser();
   if (!user) {
     redirect(`/${locale}/auth`);
   }
 
-  const graphy = createGraphy(session);
+  const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: DashboardPageQuery });
   const edges = data?.["viewer_organizations"]?.["edges"] ?? [];
 

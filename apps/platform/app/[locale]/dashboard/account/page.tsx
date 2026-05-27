@@ -1,4 +1,4 @@
-import { getSupabaseServerSession, getSupabaseServerUser } from "@packages/supabase/client.server";
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
@@ -15,7 +15,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OAUTH_PROVIDERS, type OAuthProviderId } from "~/app/[locale]/auth/providers";
 import { gql } from "~/generated/graphql";
-import { createGraphy } from "~/lib/graphy/graphy.browser";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { actionLinkProvider } from "./actions";
 import { EmailForm } from "./email-form";
 import { PasskeysSection } from "./passkeys-section";
@@ -71,10 +71,10 @@ export default async function AccountPage({
   const { locale } = await params;
   const { error: errorParam } = await searchParams;
   const error = errorParam ? decodeURIComponent(errorParam) : null;
-  const [user, session] = await Promise.all([getSupabaseServerUser(), getSupabaseServerSession()]);
+  const user = await getSupabaseServerUser();
   if (!user) redirect(`/${locale}/auth`);
 
-  const graphy = createGraphy(session);
+  const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: AccountPageQuery });
   const profile = data?.["profile"];
   const passkeys = profile?.["webauthn_credentialsCollection"]?.["edges"]?.map((edge) => edge["node"]) ?? [];

@@ -206,15 +206,6 @@ scalar JSON
 
 """The root type for creating and mutating data"""
 type Mutation {
-  """Deletes zero or more records from the `invitations` collection"""
-  deleteFrominvitationsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: invitationsFilter
-  ): invitationsDeleteResponse!
   """
   Deletes zero or more records from the `membership_permissions` collection
   """
@@ -273,33 +264,20 @@ type Mutation {
     """Restricts the mutation's impact to records matching the criteria"""
     filter: webauthn_credentialsFilter
   ): webauthn_credentialsDeleteResponse!
-  """Adds one or more `invitations` records to the collection"""
-  insertIntoinvitationsCollection(objects: [invitationsInsertInput!]!): invitationsInsertResponse
   """Adds one or more `membership_permissions` records to the collection"""
   insertIntomembership_permissionsCollection(objects: [membership_permissionsInsertInput!]!): membership_permissionsInsertResponse
   """Adds one or more `memberships` records to the collection"""
   insertIntomembershipsCollection(objects: [membershipsInsertInput!]!): membershipsInsertResponse
   """Adds one or more `permission_presets` records to the collection"""
   insertIntopermission_presetsCollection(objects: [permission_presetsInsertInput!]!): permission_presetsInsertResponse
+  """Adds one or more `profile_identities` records to the collection"""
+  insertIntoprofile_identitiesCollection(objects: [profile_identitiesInsertInput!]!): profile_identitiesInsertResponse
   """Adds one or more `tenant_domains` records to the collection"""
   insertIntotenant_domainsCollection(objects: [tenant_domainsInsertInput!]!): tenant_domainsInsertResponse
   """Adds one or more `webauthn_challenges` records to the collection"""
   insertIntowebauthn_challengesCollection(objects: [webauthn_challengesInsertInput!]!): webauthn_challengesInsertResponse
   """Adds one or more `webauthn_credentials` records to the collection"""
   insertIntowebauthn_credentialsCollection(objects: [webauthn_credentialsInsertInput!]!): webauthn_credentialsInsertResponse
-  """Updates zero or more records in the `invitations` collection"""
-  updateinvitationsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: invitationsFilter
-    """
-    Fields that are set will be updated for all records matching the `filter`
-    """
-    set: invitationsUpdateInput!
-  ): invitationsUpdateResponse!
   """
   Updates zero or more records in the `membership_permissions` collection
   """
@@ -354,6 +332,19 @@ type Mutation {
     """
     set: permission_presetsUpdateInput!
   ): permission_presetsUpdateResponse!
+  """Updates zero or more records in the `profile_identities` collection"""
+  updateprofile_identitiesCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: profile_identitiesFilter
+    """
+    Fields that are set will be updated for all records matching the `filter`
+    """
+    set: profile_identitiesUpdateInput!
+  ): profile_identitiesUpdateResponse!
   """Updates zero or more records in the `profiles` collection"""
   updateprofilesCollection(
     """
@@ -419,6 +410,8 @@ type Mutation {
     """
     set: webauthn_credentialsUpdateInput!
   ): webauthn_credentialsUpdateResponse!
+  viewer_membership_accept(target_membership_id: Int!): memberships
+  viewer_membership_reject(target_membership_id: Int!): memberships
 }
 
 interface Node {
@@ -537,25 +530,6 @@ type Query {
   email_exists(email_to_check: String!): Boolean
   email_has_passkey(email_to_check: String!): Boolean
   health_current_timestamp: Datetime
-  """A pagable collection of type `invitations`"""
-  invitationsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: invitationsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [invitationsOrderBy!]
-  ): invitationsConnection
   """A pagable collection of type `membership_permissions`"""
   membership_permissionsCollection(
     """Query values in the collection after the provided cursor"""
@@ -659,6 +633,25 @@ type Query {
   phone_exists(default_code: String = "+56", phone_to_check: String!): Boolean
   phone_normalize(default_code: String = "+56", value: String!): String
   profile_id_by_email(email_to_check: String!): UUID
+  """A pagable collection of type `profile_identities`"""
+  profile_identitiesCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: profile_identitiesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [profile_identitiesOrderBy!]
+  ): profile_identitiesConnection
   """A pagable collection of type `profiles`"""
   profilesCollection(
     """Query values in the collection after the provided cursor"""
@@ -718,6 +711,24 @@ type Query {
   ): tenantsConnection
   viewer_has_permission(target_organization_id: Int!, target_permission_id: String!): Boolean
   viewer_is_concierge: Boolean
+  viewer_membership_pending(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: membershipsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [membershipsOrderBy!]
+  ): membershipsConnection
   viewer_organization_by_id(target_organization_id: Int!): organizations
   viewer_organization_validate(target_organization_id: Int!): Boolean
   viewer_organizations(
@@ -885,6 +896,7 @@ input UUIDListFilter {
 type addresses_level0 implements Node {
   address_level0_created_at: Datetime!
   address_level0_disabled_at: Datetime
+  address_level0_emoji: String
   address_level0_hidden_at: Datetime
   address_level0_id: String!
   address_level0_name: String!
@@ -907,8 +919,44 @@ type addresses_level0 implements Node {
     """Sort order to apply to the collection"""
     orderBy: [addresses_level1OrderBy!]
   ): addresses_level1Connection
+  membershipsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: membershipsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [membershipsOrderBy!]
+  ): membershipsConnection
   """Globally Unique Record Identifier"""
   nodeId: ID!
+  profile_identitiesCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: profile_identitiesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [profile_identitiesOrderBy!]
+  ): profile_identitiesConnection
 }
 
 type addresses_level0Connection {
@@ -924,6 +972,7 @@ type addresses_level0Edge {
 input addresses_level0Filter {
   address_level0_created_at: DatetimeFilter
   address_level0_disabled_at: DatetimeFilter
+  address_level0_emoji: StringFilter
   address_level0_hidden_at: DatetimeFilter
   address_level0_id: StringFilter
   address_level0_name: StringFilter
@@ -944,6 +993,7 @@ input addresses_level0Filter {
 input addresses_level0OrderBy {
   address_level0_created_at: OrderByDirection
   address_level0_disabled_at: OrderByDirection
+  address_level0_emoji: OrderByDirection
   address_level0_hidden_at: OrderByDirection
   address_level0_id: OrderByDirection
   address_level0_name: OrderByDirection
@@ -1157,140 +1207,14 @@ input addresses_level3OrderBy {
   address_level3_updated_at: OrderByDirection
 }
 
-type invitations implements Node {
-  invitation_accepted_at: Datetime
-  invitation_accepted_by_profile_id: UUID
-  invitation_created_at: Datetime!
-  invitation_email: String!
-  invitation_expires_at: Datetime!
-  invitation_id: UUID!
-  invitation_permission_slugs: [String]!
-  invitation_revoked_at: Datetime
-  invitation_revoked_by_profile_id: UUID
-  invitation_token: String!
-  invitation_updated_at: Datetime!
-  invited_by_profile_id: UUID
-  """Globally Unique Record Identifier"""
-  nodeId: ID!
-  organization_id: Int!
-  organizations: organizations
-  profiles: profiles
-}
-
-type invitationsConnection {
-  edges: [invitationsEdge!]!
-  pageInfo: PageInfo!
-}
-
-type invitationsDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [invitations!]!
-}
-
-type invitationsEdge {
-  cursor: String!
-  node: invitations!
-}
-
-input invitationsFilter {
-  """
-  Returns true only if all its inner filters are true, otherwise returns false
-  """
-  and: [invitationsFilter!]
-  invitation_accepted_at: DatetimeFilter
-  invitation_accepted_by_profile_id: UUIDFilter
-  invitation_created_at: DatetimeFilter
-  invitation_email: StringFilter
-  invitation_expires_at: DatetimeFilter
-  invitation_id: UUIDFilter
-  invitation_permission_slugs: StringListFilter
-  invitation_revoked_at: DatetimeFilter
-  invitation_revoked_by_profile_id: UUIDFilter
-  invitation_token: StringFilter
-  invitation_updated_at: DatetimeFilter
-  invited_by_profile_id: UUIDFilter
-  nodeId: IDFilter
-  """Negates a filter"""
-  not: invitationsFilter
-  """
-  Returns true if at least one of its inner filters is true, otherwise returns false
-  """
-  or: [invitationsFilter!]
-  organization_id: IntFilter
-}
-
-input invitationsInsertInput {
-  invitation_accepted_at: Datetime
-  invitation_accepted_by_profile_id: UUID
-  invitation_created_at: Datetime
-  invitation_email: String
-  invitation_expires_at: Datetime
-  invitation_id: UUID
-  invitation_permission_slugs: [String]
-  invitation_revoked_at: Datetime
-  invitation_revoked_by_profile_id: UUID
-  invitation_token: String
-  invitation_updated_at: Datetime
-  invited_by_profile_id: UUID
-  organization_id: Int
-}
-
-type invitationsInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [invitations!]!
-}
-
-input invitationsOrderBy {
-  invitation_accepted_at: OrderByDirection
-  invitation_accepted_by_profile_id: OrderByDirection
-  invitation_created_at: OrderByDirection
-  invitation_email: OrderByDirection
-  invitation_expires_at: OrderByDirection
-  invitation_id: OrderByDirection
-  invitation_revoked_at: OrderByDirection
-  invitation_revoked_by_profile_id: OrderByDirection
-  invitation_token: OrderByDirection
-  invitation_updated_at: OrderByDirection
-  invited_by_profile_id: OrderByDirection
-  organization_id: OrderByDirection
-}
-
-input invitationsUpdateInput {
-  invitation_accepted_at: Datetime
-  invitation_accepted_by_profile_id: UUID
-  invitation_created_at: Datetime
-  invitation_email: String
-  invitation_expires_at: Datetime
-  invitation_id: UUID
-  invitation_permission_slugs: [String]
-  invitation_revoked_at: Datetime
-  invitation_revoked_by_profile_id: UUID
-  invitation_token: String
-  invitation_updated_at: Datetime
-  invited_by_profile_id: UUID
-  organization_id: Int
-}
-
-type invitationsUpdateResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [invitations!]!
-}
-
 type membership_permissions implements Node {
+  membership_id: Int!
   membership_permission_created_at: Datetime!
   memberships: memberships
   """Globally Unique Record Identifier"""
   nodeId: ID!
-  organization_id: Int!
   permission_id: String!
   permissions: permissions
-  profile_id: UUID!
 }
 
 type membership_permissionsConnection {
@@ -1315,6 +1239,7 @@ input membership_permissionsFilter {
   Returns true only if all its inner filters are true, otherwise returns false
   """
   and: [membership_permissionsFilter!]
+  membership_id: IntFilter
   membership_permission_created_at: DatetimeFilter
   nodeId: IDFilter
   """Negates a filter"""
@@ -1323,16 +1248,13 @@ input membership_permissionsFilter {
   Returns true if at least one of its inner filters is true, otherwise returns false
   """
   or: [membership_permissionsFilter!]
-  organization_id: IntFilter
   permission_id: StringFilter
-  profile_id: UUIDFilter
 }
 
 input membership_permissionsInsertInput {
+  membership_id: Int
   membership_permission_created_at: Datetime
-  organization_id: Int
   permission_id: String
-  profile_id: UUID
 }
 
 type membership_permissionsInsertResponse {
@@ -1343,17 +1265,15 @@ type membership_permissionsInsertResponse {
 }
 
 input membership_permissionsOrderBy {
+  membership_id: OrderByDirection
   membership_permission_created_at: OrderByDirection
-  organization_id: OrderByDirection
   permission_id: OrderByDirection
-  profile_id: OrderByDirection
 }
 
 input membership_permissionsUpdateInput {
+  membership_id: Int
   membership_permission_created_at: Datetime
-  organization_id: Int
   permission_id: String
-  profile_id: UUID
 }
 
 type membership_permissionsUpdateResponse {
@@ -1364,8 +1284,17 @@ type membership_permissionsUpdateResponse {
 }
 
 type memberships implements Node {
+  addresses_level0: addresses_level0
+  membership_accepted_at: Datetime
   membership_created_at: Datetime!
-  membership_disabled_at: Datetime
+  membership_id: Int!
+  membership_invite_address_level0_id: String
+  membership_invite_document_kind: profile_identity_document_kind
+  membership_invite_document_value: String
+  membership_invite_email: String
+  membership_invite_expires_at: Datetime
+  membership_invite_phone: String
+  membership_invite_token: String
   membership_permissionsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
@@ -1384,12 +1313,14 @@ type memberships implements Node {
     """Sort order to apply to the collection"""
     orderBy: [membership_permissionsOrderBy!]
   ): membership_permissionsConnection
+  membership_rejected_at: Datetime
+  membership_revoked_at: Datetime
   membership_updated_at: Datetime!
   """Globally Unique Record Identifier"""
   nodeId: ID!
   organization_id: Int!
   organizations: organizations
-  profile_id: UUID!
+  profile_id: UUID
   profiles: profiles
 }
 
@@ -1415,8 +1346,18 @@ input membershipsFilter {
   Returns true only if all its inner filters are true, otherwise returns false
   """
   and: [membershipsFilter!]
+  membership_accepted_at: DatetimeFilter
   membership_created_at: DatetimeFilter
-  membership_disabled_at: DatetimeFilter
+  membership_id: IntFilter
+  membership_invite_address_level0_id: StringFilter
+  membership_invite_document_kind: profile_identity_document_kindFilter
+  membership_invite_document_value: StringFilter
+  membership_invite_email: StringFilter
+  membership_invite_expires_at: DatetimeFilter
+  membership_invite_phone: StringFilter
+  membership_invite_token: StringFilter
+  membership_rejected_at: DatetimeFilter
+  membership_revoked_at: DatetimeFilter
   membership_updated_at: DatetimeFilter
   nodeId: IDFilter
   """Negates a filter"""
@@ -1430,8 +1371,17 @@ input membershipsFilter {
 }
 
 input membershipsInsertInput {
+  membership_accepted_at: Datetime
   membership_created_at: Datetime
-  membership_disabled_at: Datetime
+  membership_invite_address_level0_id: String
+  membership_invite_document_kind: profile_identity_document_kind
+  membership_invite_document_value: String
+  membership_invite_email: String
+  membership_invite_expires_at: Datetime
+  membership_invite_phone: String
+  membership_invite_token: String
+  membership_rejected_at: Datetime
+  membership_revoked_at: Datetime
   membership_updated_at: Datetime
   organization_id: Int
   profile_id: UUID
@@ -1445,16 +1395,35 @@ type membershipsInsertResponse {
 }
 
 input membershipsOrderBy {
+  membership_accepted_at: OrderByDirection
   membership_created_at: OrderByDirection
-  membership_disabled_at: OrderByDirection
+  membership_id: OrderByDirection
+  membership_invite_address_level0_id: OrderByDirection
+  membership_invite_document_kind: OrderByDirection
+  membership_invite_document_value: OrderByDirection
+  membership_invite_email: OrderByDirection
+  membership_invite_expires_at: OrderByDirection
+  membership_invite_phone: OrderByDirection
+  membership_invite_token: OrderByDirection
+  membership_rejected_at: OrderByDirection
+  membership_revoked_at: OrderByDirection
   membership_updated_at: OrderByDirection
   organization_id: OrderByDirection
   profile_id: OrderByDirection
 }
 
 input membershipsUpdateInput {
+  membership_accepted_at: Datetime
   membership_created_at: Datetime
-  membership_disabled_at: Datetime
+  membership_invite_address_level0_id: String
+  membership_invite_document_kind: profile_identity_document_kind
+  membership_invite_document_value: String
+  membership_invite_email: String
+  membership_invite_expires_at: Datetime
+  membership_invite_phone: String
+  membership_invite_token: String
+  membership_rejected_at: Datetime
+  membership_revoked_at: Datetime
   membership_updated_at: Datetime
   organization_id: Int
   profile_id: UUID
@@ -1468,24 +1437,6 @@ type membershipsUpdateResponse {
 }
 
 type organizations implements Node {
-  invitationsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: invitationsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [invitationsOrderBy!]
-  ): invitationsConnection
   membershipsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
@@ -1740,25 +1691,116 @@ input permissionsOrderBy {
   permission_updated_at: OrderByDirection
 }
 
+type profile_identities implements Node {
+  address_level0_id: String!
+  addresses_level0: addresses_level0
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  profile_id: UUID!
+  profile_identity_created_at: Datetime!
+  profile_identity_disabled_at: Datetime
+  profile_identity_document_kind: profile_identity_document_kind!
+  profile_identity_document_value: String!
+  profile_identity_id: UUID!
+  profile_identity_updated_at: Datetime!
+  profiles: profiles
+}
+
+type profile_identitiesConnection {
+  edges: [profile_identitiesEdge!]!
+  pageInfo: PageInfo!
+}
+
+type profile_identitiesEdge {
+  cursor: String!
+  node: profile_identities!
+}
+
+input profile_identitiesFilter {
+  address_level0_id: StringFilter
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [profile_identitiesFilter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: profile_identitiesFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [profile_identitiesFilter!]
+  profile_id: UUIDFilter
+  profile_identity_created_at: DatetimeFilter
+  profile_identity_disabled_at: DatetimeFilter
+  profile_identity_document_kind: profile_identity_document_kindFilter
+  profile_identity_document_value: StringFilter
+  profile_identity_id: UUIDFilter
+  profile_identity_updated_at: DatetimeFilter
+}
+
+input profile_identitiesInsertInput {
+  address_level0_id: String
+  profile_id: UUID
+  profile_identity_created_at: Datetime
+  profile_identity_disabled_at: Datetime
+  profile_identity_document_kind: profile_identity_document_kind
+  profile_identity_document_value: String
+  profile_identity_id: UUID
+  profile_identity_updated_at: Datetime
+}
+
+type profile_identitiesInsertResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [profile_identities!]!
+}
+
+input profile_identitiesOrderBy {
+  address_level0_id: OrderByDirection
+  profile_id: OrderByDirection
+  profile_identity_created_at: OrderByDirection
+  profile_identity_disabled_at: OrderByDirection
+  profile_identity_document_kind: OrderByDirection
+  profile_identity_document_value: OrderByDirection
+  profile_identity_id: OrderByDirection
+  profile_identity_updated_at: OrderByDirection
+}
+
+input profile_identitiesUpdateInput {
+  address_level0_id: String
+  profile_id: UUID
+  profile_identity_created_at: Datetime
+  profile_identity_disabled_at: Datetime
+  profile_identity_document_kind: profile_identity_document_kind
+  profile_identity_document_value: String
+  profile_identity_id: UUID
+  profile_identity_updated_at: Datetime
+}
+
+type profile_identitiesUpdateResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [profile_identities!]!
+}
+
+enum profile_identity_document_kind {
+  nin
+  passport
+}
+
+"""
+Boolean expression comparing fields on type "profile_identity_document_kind"
+"""
+input profile_identity_document_kindFilter {
+  eq: profile_identity_document_kind
+  in: [profile_identity_document_kind!]
+  is: FilterIs
+  neq: profile_identity_document_kind
+}
+
 type profiles implements Node {
-  invitationsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: invitationsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [invitationsOrderBy!]
-  ): invitationsConnection
   membershipsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
@@ -1782,6 +1824,24 @@ type profiles implements Node {
   profile_created_at: Datetime!
   profile_disabled_at: Datetime
   profile_id: UUID!
+  profile_identitiesCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: profile_identitiesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [profile_identitiesOrderBy!]
+  ): profile_identitiesConnection
   profile_name_full: String
   profile_onboarded_at: Datetime
   profile_updated_at: Datetime!

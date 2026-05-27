@@ -5,10 +5,9 @@ import { useGraphyQuery } from "@packages/graphy/react";
 import { useSupabaseUser } from "@packages/supabase/react";
 import type { SWRConfiguration } from "swr";
 import { gql } from "~/generated/graphql";
-import { getGraphy } from "~/lib/graphy/graphy.browser";
 
-export const ViewerProfileFragment = /*#__PURE__*/ gql(`
-  fragment ViewerProfileFragment on profiles {
+export const ViewerProfileHookFragment = /*#__PURE__*/ gql(`
+  fragment ViewerProfileHookFragment on profiles {
     profile_id
     profile_name_full
     profile_onboarded_at
@@ -18,34 +17,24 @@ export const ViewerProfileFragment = /*#__PURE__*/ gql(`
   }
 `);
 
-export type ViewerProfileFragmentType = ResultOf<typeof ViewerProfileFragment>;
+export type ViewerProfileHookFragmentType = ResultOf<typeof ViewerProfileHookFragment>;
 
-const UseViewerProfileHookQuery = /*#__PURE__*/ gql(`
-  query UseViewerProfileHookQuery {
+export const ViewerProfileHookQuery = /*#__PURE__*/ gql(`
+  query ViewerProfileHookQuery {
     profile: viewer_profile {
-      ...ViewerProfileFragment
+      ...ViewerProfileHookFragment
     }
   }
 `);
 
-type UseViewerProfileQueryData = ResultOf<typeof UseViewerProfileHookQuery>;
+type ViewerProfileHookQueryData = ResultOf<typeof ViewerProfileHookQuery>;
 
 /**
- * Returns the authenticated viewer's profile via GraphQL, plus a resolved `fullName`.
+ * Returns the authenticated viewer's profile via GraphQL (client-side hook).
  * @example
  * const { data: { profile } = { ["profile"]: null } } = useViewerProfile();
  */
-export function useViewerProfile(config?: SWRConfiguration<UseViewerProfileQueryData>) {
+export function useViewerProfile(config?: SWRConfiguration<ViewerProfileHookQueryData>) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(user ? { query: UseViewerProfileHookQuery } : null, config);
-}
-
-/**
- * Fetches the authenticated viewer's profile via GraphQL.
- * @example
- * const { data: { profile } = { ["profile"]: null } } = await getViewerProfile();
- */
-export async function getViewerProfile() {
-  const graphy = await getGraphy();
-  return graphy.query({ query: UseViewerProfileHookQuery });
+  return useGraphyQuery(user ? { query: ViewerProfileHookQuery } : null, config);
 }
