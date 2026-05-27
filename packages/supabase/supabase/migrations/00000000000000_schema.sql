@@ -254,6 +254,25 @@ create trigger users_trigger_created
   after insert on auth.users
   for each row execute procedure public.users_handle_created();
 
+-- Defined early so RLS policies below can reference it before the full viewer_* block.
+create or replace function public.viewer_profile_id(strict boolean default false)
+  returns uuid
+  stable
+  security definer
+  parallel safe
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _user_id uuid := auth.uid();
+    begin
+      if _user_id is null and $1 is true then
+        raise exception 'Not logged-in';
+      end if;
+      return _user_id;
+    end;
+  $$;
+
 -- RLS (final SELECT policy is defined below, after tenant_members exists)
 alter table public.profiles enable row level security;
 
@@ -936,24 +955,6 @@ create or replace function public.viewer_profile(strict boolean default false)
       if not found and $1 is true then
         raise exception 'Not logged-in or profile not found for user_id: %', _user_id;
       end if;
-    end;
-  $$;
-
-create or replace function public.viewer_profile_id(strict boolean default false)
-  returns uuid
-  stable
-  security definer
-  parallel safe
-  language plpgsql
-  set search_path to ''
-  as $$
-    declare
-      _user_id uuid := auth.uid();
-    begin
-      if _user_id is null and $1 is true then
-        raise exception 'Not logged-in';
-      end if;
-      return _user_id;
     end;
   $$;
 
