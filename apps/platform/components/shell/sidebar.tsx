@@ -1,5 +1,6 @@
 "use client";
 
+import { useDeviceInfo } from "@packages/react-hooks/use-device-info";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Home, type LucideIcon, Search, Settings, Users } from "lucide-react";
 import Link from "next/link";
@@ -83,6 +84,7 @@ export function Sidebar({
   initialWidth?: number;
 }) {
   const { t } = useRosetta(LOCALES);
+  const { modKey } = useDeviceInfo();
   const [width, setWidth] = useState<number>(initialWidth ?? SIDEBAR_DEFAULT_WIDTH);
   const [resizing, setResizing] = useState(false);
   const asideRef = useRef<HTMLDivElement>(null);
@@ -144,7 +146,7 @@ export function Sidebar({
 
       <div className={collapsed ? "flex justify-center pt-2" : "px-2 pt-2"}>
         {collapsed ? (
-          <Tip label={`${t("search")} ⌘K`}>
+          <Tip label={`${t("search")} ${modKey}K`}>
             <button
               type="button"
               onClick={onOpenPalette}
@@ -161,7 +163,7 @@ export function Sidebar({
           >
             <Search size={14} />
             <span className="flex-1">{t("search")}</span>
-            <Kbd>⌘K</Kbd>
+            <Kbd>{modKey}K</Kbd>
           </button>
         )}
       </div>
