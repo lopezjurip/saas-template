@@ -1,4 +1,5 @@
 import { LocaleConfig } from "@packages/rosetta/locale-config";
+import { type RosettaDict, RosettaImpl } from "@packages/rosetta/rosetta";
 import type { NextRequest } from "next/server";
 
 export const LOCALE_CONFIG = new LocaleConfig({
@@ -7,6 +8,10 @@ export const LOCALE_CONFIG = new LocaleConfig({
   bcp47: { es: "es-CL", en: "en-US", pt: "pt-BR" },
   label: { es: "Español", en: "English", pt: "Português" },
 });
+
+export function ROSETTA<T>(dict: RosettaDict<T>, locale: string) {
+  return RosettaImpl.fromDictionary(dict, locale);
+}
 
 export const SUPPORTED_LOCALES = LOCALE_CONFIG.supported;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];

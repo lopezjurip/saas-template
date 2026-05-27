@@ -1,4 +1,3 @@
-import { RosettaImpl } from "@packages/rosetta/rosetta";
 import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
@@ -14,34 +13,8 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
-import { IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47 } from "~/lib/i18n";
+import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
 import { EditPermissionsForm } from "./edit-form";
-
-const LOCALE_ES = {
-  back: "Volver a miembros",
-  page_title: "Permisos",
-  no_permission_alert: "No tienes permiso para administrar miembros en esta organización.",
-  not_found: "Membresía no encontrada.",
-  pending_label: "Invitación pendiente",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    back: "Back to members",
-    page_title: "Permissions",
-    no_permission_alert: "You don't have permission to manage members in this organization.",
-    not_found: "Membership not found.",
-    pending_label: "Pending invitation",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    back: "Voltar para membros",
-    page_title: "Permissões",
-    no_permission_alert: "Você não tem permissão para administrar membros nesta organização.",
-    not_found: "Membresia não encontrada.",
-    pending_label: "Convite pendente",
-  } satisfies typeof LOCALE_ES,
-};
 
 function MEMBER_LABEL(row: {
   profile_id: string | null;
@@ -74,7 +47,7 @@ export default async function MembershipEditPage({
   } = await params;
 
   if (!IS_SUPPORTED_LOCALE(locale)) notFound();
-  const { t } = RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale]);
+  const { t } = ROSETTA(LOCALES, locale);
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
@@ -212,3 +185,29 @@ export default async function MembershipEditPage({
     </main>
   );
 }
+
+const LOCALE_ES = {
+  back: "Volver a miembros",
+  page_title: "Permisos",
+  no_permission_alert: "No tienes permiso para administrar miembros en esta organización.",
+  not_found: "Membresía no encontrada.",
+  pending_label: "Invitación pendiente",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  back: "Back to members",
+  page_title: "Permissions",
+  no_permission_alert: "You don't have permission to manage members in this organization.",
+  not_found: "Membership not found.",
+  pending_label: "Pending invitation",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  back: "Voltar para membros",
+  page_title: "Permissões",
+  no_permission_alert: "Você não tem permissão para administrar membros nesta organização.",
+  not_found: "Membresia não encontrada.",
+  pending_label: "Convite pendente",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

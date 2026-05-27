@@ -1,43 +1,10 @@
-import { RosettaImpl } from "@packages/rosetta/rosetta";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Separator } from "@packages/ui-common/shadcn/components/ui/separator";
 import Link from "next/link";
 import { OAUTH_PROVIDERS } from "~/app/[locale]/auth/providers";
-import { LOCALE_TO_BCP47 } from "~/lib/i18n";
+import { ROSETTA } from "~/lib/i18n";
 import { MethodButton } from "./_components/method-button";
 import { signInWithOAuth } from "./actions";
-
-const LOCALE_ES = {
-  email: "Continuar con email",
-  phone: "Continuar con teléfono",
-  document: "Continuar con documento",
-  oauth_with: "Continuar con {{provider}}",
-  divider_or: "o",
-  terms: "Al continuar aceptas los términos y la política de privacidad.",
-  recent: "Reciente",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    email: "Continue with email",
-    phone: "Continue with phone",
-    document: "Continue with document",
-    oauth_with: "Continue with {{provider}}",
-    divider_or: "or",
-    terms: "By continuing you accept the terms and privacy policy.",
-    recent: "Recent",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    email: "Continuar com e-mail",
-    phone: "Continuar com telefone",
-    document: "Continuar com documento",
-    oauth_with: "Continuar com {{provider}}",
-    divider_or: "ou",
-    terms: "Ao continuar você aceita os termos e a política de privacidade.",
-    recent: "Recente",
-  } satisfies typeof LOCALE_ES,
-};
 
 type SearchParams = Promise<{ next?: string; error?: string }>;
 type Params = Promise<{ locale: string }>;
@@ -45,7 +12,7 @@ type Params = Promise<{ locale: string }>;
 export default async function AuthEntryPage({ searchParams, params }: { searchParams: SearchParams; params: Params }) {
   const sp = await searchParams;
   const { locale } = await params;
-  const { t } = RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale as keyof typeof LOCALE_TO_BCP47] ?? "es-CL");
+  const { t } = ROSETTA(LOCALES, locale);
   const next = sp["next"] ?? "/";
 
   return (
@@ -103,3 +70,35 @@ export default async function AuthEntryPage({ searchParams, params }: { searchPa
     </div>
   );
 }
+
+const LOCALE_ES = {
+  email: "Continuar con email",
+  phone: "Continuar con teléfono",
+  document: "Continuar con documento",
+  oauth_with: "Continuar con {{provider}}",
+  divider_or: "o",
+  terms: "Al continuar aceptas los términos y la política de privacidad.",
+  recent: "Reciente",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  email: "Continue with email",
+  phone: "Continue with phone",
+  document: "Continue with document",
+  oauth_with: "Continue with {{provider}}",
+  divider_or: "or",
+  terms: "By continuing you accept the terms and privacy policy.",
+  recent: "Recent",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  email: "Continuar com e-mail",
+  phone: "Continuar com telefone",
+  document: "Continuar com documento",
+  oauth_with: "Continuar com {{provider}}",
+  divider_or: "ou",
+  terms: "Ao continuar você aceita os termos e a política de privacidade.",
+  recent: "Recente",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

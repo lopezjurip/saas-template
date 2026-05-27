@@ -11,6 +11,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { NEXT_STEP_HREF } from "../state";
 import { sendPhoneOtp, verifyPhoneOtp } from "./phone-action";
 
@@ -31,6 +32,7 @@ type CodeValues = z.infer<typeof codeSchema>;
 const NEXT_HREF = NEXT_STEP_HREF("phone");
 
 export function PhoneStep() {
+  const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const locale = useLocaleParam();
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export function PhoneStep() {
     startTransition(async () => {
       const res = await sendPhoneOtp(values);
       if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Formato de teléfono inválido");
+      else if (res?.validationErrors) setServerError(t("invalid_phone"));
       else setSentTo(values.phone);
     });
   });
@@ -62,7 +64,7 @@ export function PhoneStep() {
     startTransition(async () => {
       const res = await verifyPhoneOtp({ phone: sentTo, token: values.token });
       if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Datos inválidos");
+      else if (res?.validationErrors) setServerError(t("invalid_data"));
       else router.push(`/${locale}${NEXT_HREF}`);
     });
   });
@@ -70,20 +72,18 @@ export function PhoneStep() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-sm font-medium">Confirma tu teléfono</h2>
-        <p className="text-muted-foreground mt-1 text-xs">
-          Te lo pediremos para autenticarte y enviarte notificaciones importantes.
-        </p>
+        <h2 className="text-sm font-medium">{t("heading")}</h2>
+        <p className="text-muted-foreground mt-1 text-xs">{t("description")}</p>
       </div>
 
       {!sentTo ? (
         <form onSubmit={onSendPhone} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="phone">Número de teléfono</Label>
+            <Label htmlFor="phone">{t("phone_label")}</Label>
             <Input
               id="phone"
               type="tel"
-              placeholder="+56 9 90511003"
+              placeholder={t("phone_placeholder")}
               autoComplete="tel"
               aria-invalid={!!phoneForm.formState.errors.phone}
               {...phoneForm.register("phone")}
@@ -98,13 +98,13 @@ export function PhoneStep() {
             </Alert>
           )}
           <Button type="submit" disabled={pending} className="w-full">
-            {pending ? "Enviando código…" : "Enviar código"}
+            {pending ? t("sending") : t("send_code")}
           </Button>
         </form>
       ) : (
         <form onSubmit={onVerifyCode} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="token">Código enviado a {sentTo}</Label>
+            <Label htmlFor="token">{t("code_sent_to", { to: sentTo })}</Label>
             <Input
               id="token"
               inputMode="numeric"
@@ -123,21 +123,71 @@ export function PhoneStep() {
             </Alert>
           )}
           <Button type="submit" disabled={pending} className="w-full">
-            {pending ? "Verificando…" : "Verificar"}
+            {pending ? t("verifying") : t("verify")}
           </Button>
           <button
             type="button"
             className="text-muted-foreground text-center text-xs underline"
             onClick={() => setSentTo(null)}
           >
-            Cambiar número
+            {t("change_phone")}
           </button>
         </form>
       )}
 
       <Button asChild variant="ghost" className="w-full">
-        <Link href={`/${locale}${NEXT_HREF}`}>Omitir por ahora</Link>
+        <Link href={`/${locale}${NEXT_HREF}`}>{t("skip")}</Link>
       </Button>
     </div>
   );
 }
+
+const LOCALE_ES = {
+  heading: "Confirma tu teléfono",
+  description: "Te lo pediremos para autenticarte y enviarte notificaciones importantes.",
+  phone_label: "Número de teléfono",
+  phone_placeholder: "+56 9 90511003",
+  sending: "Enviando código…",
+  send_code: "Enviar código",
+  code_sent_to: "Código enviado a {{to}}",
+  verifying: "Verificando…",
+  verify: "Verificar",
+  change_phone: "Cambiar número",
+  skip: "Omitir por ahora",
+  invalid_phone: "Formato de teléfono inválido",
+  invalid_data: "Datos inválidos",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  heading: "Confirm your phone",
+  description: "We'll ask for it to authenticate you and send important notifications.",
+  phone_label: "Phone number",
+  phone_placeholder: "+1 555 0000000",
+  sending: "Sending code…",
+  send_code: "Send code",
+  code_sent_to: "Code sent to {{to}}",
+  verifying: "Verifying…",
+  verify: "Verify",
+  change_phone: "Change number",
+  skip: "Skip for now",
+  invalid_phone: "Invalid phone format",
+  invalid_data: "Invalid data",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  heading: "Confirme seu telefone",
+  description: "Pediremos para autenticá-lo e enviar notificações importantes.",
+  phone_label: "Número de telefone",
+  phone_placeholder: "+55 11 900000000",
+  sending: "Enviando código…",
+  send_code: "Enviar código",
+  code_sent_to: "Código enviado para {{to}}",
+  verifying: "Verificando…",
+  verify: "Verificar",
+  change_phone: "Alterar número",
+  skip: "Pular por agora",
+  invalid_phone: "Formato de telefone inválido",
+  invalid_data: "Dados inválidos",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

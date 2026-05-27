@@ -24,47 +24,6 @@ type PaletteGroup = {
   items: PaletteItem[];
 };
 
-const LOCALE_ES = {
-  placeholder: "Escribe un comando o búsqueda…",
-  empty: "Sin resultados para",
-  navigate: "Navegar",
-  switchOrg: "Cambiar de organización",
-  current: "Actual",
-  footerNav: "navegar",
-  footerSelect: "seleccionar",
-  goHome: "Ir a Inicio",
-  goMembers: "Ir a Miembros",
-  goSettings: "Ir a Configuración",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    placeholder: "Type a command or search…",
-    empty: "No results for",
-    navigate: "Navigate",
-    switchOrg: "Switch organization",
-    current: "Current",
-    footerNav: "navigate",
-    footerSelect: "select",
-    goHome: "Go to Home",
-    goMembers: "Go to Members",
-    goSettings: "Go to Settings",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    placeholder: "Digite um comando ou busca…",
-    empty: "Sem resultados para",
-    navigate: "Navegar",
-    switchOrg: "Trocar organização",
-    current: "Atual",
-    footerNav: "navegar",
-    footerSelect: "selecionar",
-    goHome: "Ir para Início",
-    goMembers: "Ir para Membros",
-    goSettings: "Ir para Configurações",
-  } satisfies typeof LOCALE_ES,
-};
-
 export function CommandPalette({
   open,
   onClose,
@@ -274,3 +233,44 @@ export function CommandPalette({
     </div>
   );
 }
+
+const LOCALE_ES = {
+  placeholder: "Escribe un comando o búsqueda…",
+  empty: "Sin resultados para",
+  navigate: "Navegar",
+  switchOrg: "Cambiar de organización",
+  current: "Actual",
+  footerNav: "navegar",
+  footerSelect: "seleccionar",
+  goHome: "Ir a Inicio",
+  goMembers: "Ir a Miembros",
+  goSettings: "Ir a Configuración",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  placeholder: "Type a command or search…",
+  empty: "No results for",
+  navigate: "Navigate",
+  switchOrg: "Switch organization",
+  current: "Current",
+  footerNav: "navigate",
+  footerSelect: "select",
+  goHome: "Go to Home",
+  goMembers: "Go to Members",
+  goSettings: "Go to Settings",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  placeholder: "Digite um comando ou busca…",
+  empty: "Sem resultados para",
+  navigate: "Navegar",
+  switchOrg: "Trocar organização",
+  current: "Atual",
+  footerNav: "navegar",
+  footerSelect: "selecionar",
+  goHome: "Ir para Início",
+  goMembers: "Ir para Membros",
+  goSettings: "Ir para Configurações",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

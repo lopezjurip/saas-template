@@ -12,6 +12,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { ROSETTA } from "~/lib/i18n";
 
 const DashboardPageQuery = gql(`
   query DashboardPageQuery {
@@ -43,6 +44,7 @@ export default async function DashboardPage({
   searchParams: Promise<{ redirect?: string }>;
 }) {
   const { locale } = await params;
+  const { t } = ROSETTA(LOCALES, locale);
   const { redirect: redirectParam } = await searchParams;
   const user = await getSupabaseServerUser();
   if (!user) {
@@ -70,9 +72,9 @@ export default async function DashboardPage({
           <CardDescription>{user.email}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <p className="text-sm font-medium">Tus organizaciones</p>
+          <p className="text-sm font-medium">{t("your_orgs")}</p>
           {edges.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aún no perteneces a ninguna organización.</p>
+            <p className="text-sm text-muted-foreground">{t("no_orgs")}</p>
           ) : (
             <div className="flex flex-col gap-2">
               {edges.map((edge) => {
@@ -103,16 +105,42 @@ export default async function DashboardPage({
         </CardContent>
         <CardFooter className="flex flex-col gap-2">
           <Button asChild className="w-full">
-            <Link href={`/${locale}/tenants/create`}>Crear empresa</Link>
+            <Link href={`/${locale}/tenants/create`}>{t("create_company")}</Link>
           </Button>
           <Button asChild variant="outline" className="w-full">
-            <Link href={`/${locale}/dashboard/account`}>Administrar cuenta</Link>
+            <Link href={`/${locale}/dashboard/account`}>{t("manage_account")}</Link>
           </Button>
           <Button asChild variant="ghost" className="w-full">
-            <Link href={`/${locale}/auth/logout`}>Cerrar sesión</Link>
+            <Link href={`/${locale}/auth/logout`}>{t("sign_out")}</Link>
           </Button>
         </CardFooter>
       </Card>
     </main>
   );
 }
+
+const LOCALE_ES = {
+  your_orgs: "Tus organizaciones",
+  no_orgs: "Aún no perteneces a ninguna organización.",
+  create_company: "Crear empresa",
+  manage_account: "Administrar cuenta",
+  sign_out: "Cerrar sesión",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  your_orgs: "Your organizations",
+  no_orgs: "You don't belong to any organization yet.",
+  create_company: "Create company",
+  manage_account: "Manage account",
+  sign_out: "Sign out",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  your_orgs: "Suas organizações",
+  no_orgs: "Você ainda não pertence a nenhuma organização.",
+  create_company: "Criar empresa",
+  manage_account: "Gerenciar conta",
+  sign_out: "Sair",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

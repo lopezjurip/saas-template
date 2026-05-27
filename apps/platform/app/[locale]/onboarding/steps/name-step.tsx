@@ -12,6 +12,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { gql } from "~/generated/graphql";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useRosetta } from "~/hooks/use-rosetta";
 
 const schema = z.object({
   full_name: z.string().min(2, "Ingresa tu nombre completo").max(256),
@@ -30,6 +31,7 @@ const OnboardingNameStepUpdateNameMutation = /*#__PURE__*/ gql(`
 `);
 
 export function NameStep({ profile_id, defaultValue }: { profile_id: string; defaultValue: string }) {
+  const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const locale = useLocaleParam();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export function NameStep({ profile_id, defaultValue }: { profile_id: string; def
     startTransition(async () => {
       const { error } = await updateName({ profile_id, profile_name_full: values.full_name });
       if (error) {
-        setServerError("No pudimos guardar tu nombre");
+        setServerError(t("save_error"));
         return;
       }
       router.push(`/${locale}/onboarding`);
@@ -56,11 +58,11 @@ export function NameStep({ profile_id, defaultValue }: { profile_id: string; def
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div>
-        <h2 className="text-sm font-medium">¿Cómo te llamas?</h2>
-        <p className="text-muted-foreground mt-1 text-xs">Lo verán tus colegas en Humane.</p>
+        <h2 className="text-sm font-medium">{t("heading")}</h2>
+        <p className="text-muted-foreground mt-1 text-xs">{t("description")}</p>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="full_name">Nombre completo</Label>
+        <Label htmlFor="full_name">{t("label")}</Label>
         <Input
           id="full_name"
           autoComplete="name"
@@ -77,8 +79,37 @@ export function NameStep({ profile_id, defaultValue }: { profile_id: string; def
         </Alert>
       )}
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "Guardando…" : "Continuar"}
+        {pending ? t("saving") : t("submit")}
       </Button>
     </form>
   );
 }
+
+const LOCALE_ES = {
+  heading: "¿Cómo te llamas?",
+  description: "Lo verán tus colegas en Humane.",
+  label: "Nombre completo",
+  saving: "Guardando…",
+  submit: "Continuar",
+  save_error: "No pudimos guardar tu nombre",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  heading: "What's your name?",
+  description: "Your colleagues will see this in Humane.",
+  label: "Full name",
+  saving: "Saving…",
+  submit: "Continue",
+  save_error: "We couldn't save your name",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  heading: "Qual é o seu nome?",
+  description: "Seus colegas verão isso no Humane.",
+  label: "Nome completo",
+  saving: "Salvando…",
+  submit: "Continuar",
+  save_error: "Não conseguimos salvar seu nome",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

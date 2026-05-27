@@ -12,29 +12,6 @@ import type { ViewerTenantHookFragmentType } from "~/hooks/use-viewer-tenants";
 export type ShellOrganization = ViewerOrganizationHookFragmentType;
 export type ShellTenant = ViewerTenantHookFragmentType;
 
-const LOCALE_ES = {
-  heading: "Organizaciones",
-  create: "Crear organización",
-  switchTenant: "Cambiar de empresa",
-  orgSettings: "Configuración de la organización",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    heading: "Organizations",
-    create: "Create organization",
-    switchTenant: "Switch company",
-    orgSettings: "Organization settings",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    heading: "Organizações",
-    create: "Criar organização",
-    switchTenant: "Trocar de empresa",
-    orgSettings: "Configurações da organização",
-  } satisfies typeof LOCALE_ES,
-};
-
 export function OrgSwitcher({
   locale,
   tenant,
@@ -145,3 +122,26 @@ export function OrgSwitcher({
     </div>
   );
 }
+
+const LOCALE_ES = {
+  heading: "Organizaciones",
+  create: "Crear organización",
+  switchTenant: "Cambiar de empresa",
+  orgSettings: "Configuración de la organización",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  heading: "Organizations",
+  create: "Create organization",
+  switchTenant: "Switch company",
+  orgSettings: "Organization settings",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  heading: "Organizações",
+  create: "Criar organização",
+  switchTenant: "Trocar de empresa",
+  orgSettings: "Configurações da organização",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

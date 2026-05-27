@@ -1,13 +1,12 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { RosettaImpl } from "@packages/rosetta/rosetta";
 import type { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { debug } from "~/lib/debug";
-import { LOCALE_TO_BCP47 } from "~/lib/i18n";
+import { ROSETTA } from "~/lib/i18n";
 import { getServerLocale } from "~/lib/i18n.server";
 import { authedAction } from "~/lib/safe-action";
 import { inviteMemberSchema } from "./schemas";
@@ -16,46 +15,8 @@ const log = debug("admin:members");
 
 const INVITATION_TTL_DAYS = 14;
 
-const LOCALE_ES = {
-  no_permission: "No tienes permiso para administrar miembros en esta organización",
-  permission_check: "No pudimos verificar tus permisos",
-  org_not_found: "Organización no encontrada",
-  tenant_not_found: "Tenant no encontrado",
-  invitation_duplicate: "Ya hay una invitación pendiente para ese correo en esta organización",
-  phone_duplicate: "Ya hay una invitación pendiente para ese teléfono en esta organización",
-  phone_invalid: "El número de teléfono ingresado no es válido",
-  email_already_member: "Ese correo ya pertenece a un miembro de la organización",
-  invite_failed: "No pudimos crear la invitación",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    no_permission: "You don't have permission to manage members in this organization",
-    permission_check: "We couldn't verify your permissions",
-    org_not_found: "Organization not found",
-    tenant_not_found: "Tenant not found",
-    invitation_duplicate: "There's already a pending invitation for that email in this organization",
-    phone_duplicate: "There's already a pending invitation for that phone number in this organization",
-    phone_invalid: "The phone number entered is not valid",
-    email_already_member: "That email already belongs to a member of the organization",
-    invite_failed: "We couldn't create the invitation",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    no_permission: "Você não tem permissão para administrar membros nesta organização",
-    permission_check: "Não conseguimos verificar suas permissões",
-    org_not_found: "Organização não encontrada",
-    tenant_not_found: "Tenant não encontrado",
-    invitation_duplicate: "Já existe um convite pendente para esse e-mail nesta organização",
-    phone_duplicate: "Já existe um convite pendente para esse número de telefone nesta organização",
-    phone_invalid: "O número de telefone informado não é válido",
-    email_already_member: "Esse e-mail já pertence a um membro da organização",
-    invite_failed: "Não conseguimos criar o convite",
-  } satisfies typeof LOCALE_ES,
-};
-
 type SupabaseServerClient = Awaited<ReturnType<typeof createServerClient>>;
-type ActionsRosetta = RosettaImpl<typeof LOCALE_ES>;
+type ActionsRosetta = ReturnType<typeof ROSETTA<typeof LOCALE_ES>>;
 
 function GENERATE_INVITATION_TOKEN(): string {
   return randomBytes(32).toString("base64url");
@@ -63,7 +24,7 @@ function GENERATE_INVITATION_TOKEN(): string {
 
 async function GET_ROSETTA(): Promise<ActionsRosetta> {
   const locale = await getServerLocale();
-  return RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale]);
+  return ROSETTA(LOCALES, locale);
 }
 
 async function ASSERT_MEMBERS_MANAGE(supabase: SupabaseServerClient, r: ActionsRosetta, organization_id: number) {
@@ -296,3 +257,41 @@ export const actionInviteMember = authedAction
       channel: "document" as const,
     };
   });
+
+const LOCALE_ES = {
+  no_permission: "No tienes permiso para administrar miembros en esta organización",
+  permission_check: "No pudimos verificar tus permisos",
+  org_not_found: "Organización no encontrada",
+  tenant_not_found: "Tenant no encontrado",
+  invitation_duplicate: "Ya hay una invitación pendiente para ese correo en esta organización",
+  phone_duplicate: "Ya hay una invitación pendiente para ese teléfono en esta organización",
+  phone_invalid: "El número de teléfono ingresado no es válido",
+  email_already_member: "Ese correo ya pertenece a un miembro de la organización",
+  invite_failed: "No pudimos crear la invitación",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  no_permission: "You don't have permission to manage members in this organization",
+  permission_check: "We couldn't verify your permissions",
+  org_not_found: "Organization not found",
+  tenant_not_found: "Tenant not found",
+  invitation_duplicate: "There's already a pending invitation for that email in this organization",
+  phone_duplicate: "There's already a pending invitation for that phone number in this organization",
+  phone_invalid: "The phone number entered is not valid",
+  email_already_member: "That email already belongs to a member of the organization",
+  invite_failed: "We couldn't create the invitation",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  no_permission: "Você não tem permissão para administrar membros nesta organização",
+  permission_check: "Não conseguimos verificar suas permissões",
+  org_not_found: "Organização não encontrada",
+  tenant_not_found: "Tenant não encontrado",
+  invitation_duplicate: "Já existe um convite pendente para esse e-mail nesta organização",
+  phone_duplicate: "Já existe um convite pendente para esse número de telefone nesta organização",
+  phone_invalid: "O número de telefone informado não é válido",
+  email_already_member: "Esse e-mail já pertence a um membro da organização",
+  invite_failed: "Não conseguimos criar o convite",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

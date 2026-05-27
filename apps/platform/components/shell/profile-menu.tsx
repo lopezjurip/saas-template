@@ -10,32 +10,6 @@ import type { ViewerProfileHookFragmentType } from "~/hooks/use-viewer-profile";
 
 export type ShellViewer = ViewerProfileHookFragmentType & { email: string };
 
-const LOCALE_ES = {
-  account: "Cuenta",
-  billing: "Facturación",
-  tokens: "Tokens de API",
-  notifications: "Notificaciones",
-  signOut: "Cerrar sesión",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    account: "Account",
-    billing: "Billing",
-    tokens: "API tokens",
-    notifications: "Notifications",
-    signOut: "Sign out",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    account: "Conta",
-    billing: "Faturamento",
-    tokens: "Tokens de API",
-    notifications: "Notificações",
-    signOut: "Sair",
-  } satisfies typeof LOCALE_ES,
-};
-
 export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewer: ShellViewer; compact?: boolean }) {
   const { t } = useRosetta(LOCALES);
   const [open, setOpen] = useState(false);
@@ -125,3 +99,29 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
     </div>
   );
 }
+
+const LOCALE_ES = {
+  account: "Cuenta",
+  billing: "Facturación",
+  tokens: "Tokens de API",
+  notifications: "Notificaciones",
+  signOut: "Cerrar sesión",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  account: "Account",
+  billing: "Billing",
+  tokens: "API tokens",
+  notifications: "Notifications",
+  signOut: "Sign out",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  account: "Conta",
+  billing: "Faturamento",
+  tokens: "Tokens de API",
+  notifications: "Notificações",
+  signOut: "Sair",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

@@ -1,4 +1,3 @@
-import { RosettaImpl } from "@packages/rosetta/rosetta";
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Logo } from "@packages/ui-common/logo";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
@@ -6,42 +5,7 @@ import { Separator } from "@packages/ui-common/shadcn/components/ui/separator";
 import Link from "next/link";
 import { LocaleToggle } from "~/components/locale-toggle";
 import { ThemeToggle } from "~/components/theme-toggle";
-import { LOCALE_TO_BCP47 } from "~/lib/i18n";
-
-const LOCALE_ES = {
-  "nav.pricing": "Precios",
-  "nav.faq": "Preguntas frecuentes",
-  "cta.signin": "Ingresar",
-  "cta.dashboard": "Ir al panel",
-  "footer.copyright": "© {{year}} Humane. Todos los derechos reservados.",
-  "footer.terms": "Términos",
-  "footer.privacy": "Privacidad",
-  "footer.cookies": "Cookies",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    "nav.pricing": "Pricing",
-    "nav.faq": "FAQ",
-    "cta.signin": "Sign in",
-    "cta.dashboard": "Go to dashboard",
-    "footer.copyright": "© {{year}} Humane. All rights reserved.",
-    "footer.terms": "Terms",
-    "footer.privacy": "Privacy",
-    "footer.cookies": "Cookies",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    "nav.pricing": "Preços",
-    "nav.faq": "Perguntas frequentes",
-    "cta.signin": "Entrar",
-    "cta.dashboard": "Ir para o painel",
-    "footer.copyright": "© {{year}} Humane. Todos os direitos reservados.",
-    "footer.terms": "Termos",
-    "footer.privacy": "Privacidade",
-    "footer.cookies": "Cookies",
-  } satisfies typeof LOCALE_ES,
-};
+import { ROSETTA } from "~/lib/i18n";
 
 export default async function MarketingLayout({
   children,
@@ -51,7 +15,7 @@ export default async function MarketingLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const { t } = RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale as keyof typeof LOCALE_TO_BCP47] ?? "es-CL");
+  const { t } = ROSETTA(LOCALES, locale);
   const user = await getSupabaseServerUser();
   const year = new Date().getFullYear().toString();
 
@@ -102,3 +66,38 @@ export default async function MarketingLayout({
     </div>
   );
 }
+
+const LOCALE_ES = {
+  "nav.pricing": "Precios",
+  "nav.faq": "Preguntas frecuentes",
+  "cta.signin": "Ingresar",
+  "cta.dashboard": "Ir al panel",
+  "footer.copyright": "© {{year}} Humane. Todos los derechos reservados.",
+  "footer.terms": "Términos",
+  "footer.privacy": "Privacidad",
+  "footer.cookies": "Cookies",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  "nav.pricing": "Pricing",
+  "nav.faq": "FAQ",
+  "cta.signin": "Sign in",
+  "cta.dashboard": "Go to dashboard",
+  "footer.copyright": "© {{year}} Humane. All rights reserved.",
+  "footer.terms": "Terms",
+  "footer.privacy": "Privacy",
+  "footer.cookies": "Cookies",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  "nav.pricing": "Preços",
+  "nav.faq": "Perguntas frequentes",
+  "cta.signin": "Entrar",
+  "cta.dashboard": "Ir para o painel",
+  "footer.copyright": "© {{year}} Humane. Todos os direitos reservados.",
+  "footer.terms": "Termos",
+  "footer.privacy": "Privacidade",
+  "footer.cookies": "Cookies",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

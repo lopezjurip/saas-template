@@ -1,4 +1,3 @@
-import { RosettaImpl } from "@packages/rosetta/rosetta";
 import { createServerClient } from "@packages/supabase/client.server";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
@@ -14,33 +13,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCountries } from "~/hooks/get-countries";
 import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
-import { IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47 } from "~/lib/i18n";
+import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
 import { InviteMemberForm } from "./invite-form";
-
-const LOCALE_ES = {
-  back: "Volver a miembros",
-  page_title: "Invitar miembro",
-  description:
-    "Por email: enviaremos un magic-link. Por documento: te daremos un link que compartes manualmente (WhatsApp, etc.).",
-  no_permission_alert: "No tienes permiso para invitar miembros en esta organización.",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    back: "Back to members",
-    page_title: "Invite member",
-    description: "By email: we'll send a magic-link. By document: we'll give you a link to share manually.",
-    no_permission_alert: "You don't have permission to invite members in this organization.",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    back: "Voltar para membros",
-    page_title: "Convidar membro",
-    description:
-      "Por e-mail: enviaremos um magic-link. Por documento: você receberá um link para compartilhar manualmente.",
-    no_permission_alert: "Você não tem permissão para convidar membros nesta organização.",
-  } satisfies typeof LOCALE_ES,
-};
 
 export default async function NewMemberInvitePage({
   params,
@@ -49,7 +23,7 @@ export default async function NewMemberInvitePage({
 }) {
   const { locale, tenant_slug, organization_id: organization_id_param } = await params;
   if (!IS_SUPPORTED_LOCALE(locale)) notFound();
-  const { t } = RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale]);
+  const { t } = ROSETTA(LOCALES, locale);
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
@@ -123,3 +97,28 @@ export default async function NewMemberInvitePage({
     </main>
   );
 }
+
+const LOCALE_ES = {
+  back: "Volver a miembros",
+  page_title: "Invitar miembro",
+  description:
+    "Por email: enviaremos un magic-link. Por documento: te daremos un link que compartes manualmente (WhatsApp, etc.).",
+  no_permission_alert: "No tienes permiso para invitar miembros en esta organización.",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  back: "Back to members",
+  page_title: "Invite member",
+  description: "By email: we'll send a magic-link. By document: we'll give you a link to share manually.",
+  no_permission_alert: "You don't have permission to invite members in this organization.",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  back: "Voltar para membros",
+  page_title: "Convidar membro",
+  description:
+    "Por e-mail: enviaremos um magic-link. Por documento: você receberá um link para compartilhar manualmente.",
+  no_permission_alert: "Você não tem permissão para convidar membros nesta organização.",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

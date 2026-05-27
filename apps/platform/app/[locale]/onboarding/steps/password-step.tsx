@@ -11,6 +11,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { setPassword } from "./password-action";
 
 const schema = z
@@ -25,6 +26,7 @@ const schema = z
 type Values = z.infer<typeof schema>;
 
 export function PasswordStep() {
+  const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const locale = useLocaleParam();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export function PasswordStep() {
     startTransition(async () => {
       const res = await setPassword({ password: values.password });
       if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Contraseña inválida");
+      else if (res?.validationErrors) setServerError(t("invalid_password"));
       else router.push(`/${locale}/onboarding`);
     });
   });
@@ -48,14 +50,12 @@ export function PasswordStep() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div>
-        <h2 className="text-sm font-medium">Crea una contraseña</h2>
-        <p className="text-muted-foreground mt-1 text-xs">
-          Para iniciar sesión con tu correo cuando no tengas passkey.
-        </p>
+        <h2 className="text-sm font-medium">{t("heading")}</h2>
+        <p className="text-muted-foreground mt-1 text-xs">{t("description")}</p>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">Contraseña</Label>
+        <Label htmlFor="password">{t("password_label")}</Label>
         <Input
           id="password"
           type="password"
@@ -69,7 +69,7 @@ export function PasswordStep() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="confirm">Confirma tu contraseña</Label>
+        <Label htmlFor="confirm">{t("confirm_label")}</Label>
         <Input
           id="confirm"
           type="password"
@@ -89,12 +89,47 @@ export function PasswordStep() {
       )}
 
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "Guardando…" : "Guardar contraseña"}
+        {pending ? t("saving") : t("save_password")}
       </Button>
 
       <Button asChild variant="ghost" className="w-full">
-        <Link href={`/${locale}/onboarding`}>Omitir por ahora</Link>
+        <Link href={`/${locale}/onboarding`}>{t("skip")}</Link>
       </Button>
     </form>
   );
 }
+
+const LOCALE_ES = {
+  heading: "Crea una contraseña",
+  description: "Para iniciar sesión con tu correo cuando no tengas passkey.",
+  password_label: "Contraseña",
+  confirm_label: "Confirma tu contraseña",
+  saving: "Guardando…",
+  save_password: "Guardar contraseña",
+  skip: "Omitir por ahora",
+  invalid_password: "Contraseña inválida",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  heading: "Create a password",
+  description: "To sign in with your email when you don't have a passkey.",
+  password_label: "Password",
+  confirm_label: "Confirm your password",
+  saving: "Saving…",
+  save_password: "Save password",
+  skip: "Skip for now",
+  invalid_password: "Invalid password",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  heading: "Crie uma senha",
+  description: "Para entrar com seu e-mail quando não tiver um passkey.",
+  password_label: "Senha",
+  confirm_label: "Confirme sua senha",
+  saving: "Salvando…",
+  save_password: "Salvar senha",
+  skip: "Pular por agora",
+  invalid_password: "Senha inválida",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

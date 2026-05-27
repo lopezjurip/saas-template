@@ -26,32 +26,6 @@ export type ShellNavItem = {
   badge?: number;
 };
 
-const LOCALE_ES = {
-  workspace: "Espacio de trabajo",
-  navHome: "Inicio",
-  navMembers: "Miembros",
-  navSettings: "Configuración",
-  search: "Buscar…",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    workspace: "Workspace",
-    navHome: "Home",
-    navMembers: "Members",
-    navSettings: "Settings",
-    search: "Search…",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    workspace: "Espaço de trabalho",
-    navHome: "Início",
-    navMembers: "Membros",
-    navSettings: "Configurações",
-    search: "Buscar…",
-  } satisfies typeof LOCALE_ES,
-};
-
 export type ShellNavLabels = {
   navHome: string;
   navMembers: string;
@@ -272,3 +246,29 @@ export function Sidebar({
 }
 
 export { SIDEBAR_DEFAULT_WIDTH, SIDEBAR_WIDTH_COOKIE };
+
+const LOCALE_ES = {
+  workspace: "Espacio de trabajo",
+  navHome: "Inicio",
+  navMembers: "Miembros",
+  navSettings: "Configuración",
+  search: "Buscar…",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  workspace: "Workspace",
+  navHome: "Home",
+  navMembers: "Members",
+  navSettings: "Settings",
+  search: "Search…",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  workspace: "Espaço de trabalho",
+  navHome: "Início",
+  navMembers: "Membros",
+  navSettings: "Configurações",
+  search: "Buscar…",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

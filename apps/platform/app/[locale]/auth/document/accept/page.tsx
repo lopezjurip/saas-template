@@ -1,47 +1,8 @@
-import { RosettaImpl } from "@packages/rosetta/rosetta";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import Link from "next/link";
-import { LOCALE_TO_BCP47 } from "~/lib/i18n";
+import { ROSETTA } from "~/lib/i18n";
 import { AcceptForm } from "./accept-form";
-
-const LOCALE_ES = {
-  missing_token: "Falta el token de invitación.",
-  not_found: "Invitación no encontrada.",
-  revoked: "Esta invitación fue cancelada.",
-  already_accepted: "Esta invitación ya fue aceptada. Inicia sesión normalmente.",
-  expired: "Esta invitación expiró. Pide a tu empleador que te invite de nuevo.",
-  back: "← Volver",
-  go_home: "Ir al inicio",
-  join: "Únete a {{org}}",
-  default_org: "una organización",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    missing_token: "Missing invitation token.",
-    not_found: "Invitation not found.",
-    revoked: "This invitation was cancelled.",
-    already_accepted: "This invitation was already accepted. Sign in normally.",
-    expired: "This invitation expired. Ask your employer to invite you again.",
-    back: "← Back",
-    go_home: "Go to home",
-    join: "Join {{org}}",
-    default_org: "an organization",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    missing_token: "Token de convite ausente.",
-    not_found: "Convite não encontrado.",
-    revoked: "Este convite foi cancelado.",
-    already_accepted: "Este convite já foi aceito. Faça login normalmente.",
-    expired: "Este convite expirou. Peça ao seu empregador para te convidar novamente.",
-    back: "← Voltar",
-    go_home: "Ir para o início",
-    join: "Junte-se a {{org}}",
-    default_org: "uma organização",
-  } satisfies typeof LOCALE_ES,
-};
 
 type SearchParams = Promise<{ token?: string }>;
 type Params = Promise<{ locale: string }>;
@@ -55,7 +16,7 @@ export default async function AcceptInvitationPage({
 }) {
   const sp = await searchParams;
   const { locale } = await params;
-  const { t } = RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale as keyof typeof LOCALE_TO_BCP47] ?? "es-CL");
+  const { t } = ROSETTA(LOCALES, locale);
   const token = sp["token"];
 
   if (!token) {
@@ -134,3 +95,41 @@ export default async function AcceptInvitationPage({
     </div>
   );
 }
+
+const LOCALE_ES = {
+  missing_token: "Falta el token de invitación.",
+  not_found: "Invitación no encontrada.",
+  revoked: "Esta invitación fue cancelada.",
+  already_accepted: "Esta invitación ya fue aceptada. Inicia sesión normalmente.",
+  expired: "Esta invitación expiró. Pide a tu empleador que te invite de nuevo.",
+  back: "← Volver",
+  go_home: "Ir al inicio",
+  join: "Únete a {{org}}",
+  default_org: "una organización",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  missing_token: "Missing invitation token.",
+  not_found: "Invitation not found.",
+  revoked: "This invitation was cancelled.",
+  already_accepted: "This invitation was already accepted. Sign in normally.",
+  expired: "This invitation expired. Ask your employer to invite you again.",
+  back: "← Back",
+  go_home: "Go to home",
+  join: "Join {{org}}",
+  default_org: "an organization",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  missing_token: "Token de convite ausente.",
+  not_found: "Convite não encontrado.",
+  revoked: "Este convite foi cancelado.",
+  already_accepted: "Este convite já foi aceito. Faça login normalmente.",
+  expired: "Este convite expirou. Peça ao seu empregador para te convidar novamente.",
+  back: "← Voltar",
+  go_home: "Ir para o início",
+  join: "Junte-se a {{org}}",
+  default_org: "uma organização",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

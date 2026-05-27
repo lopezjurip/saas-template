@@ -1,4 +1,3 @@
-import { RosettaImpl } from "@packages/rosetta/rosetta";
 import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
@@ -15,58 +14,8 @@ import { ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
-import { IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47 } from "~/lib/i18n";
+import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
 import { PendingInvitations } from "./pending-invitations";
-
-const LOCALE_ES = {
-  back: "Volver",
-  page_title: "Miembros",
-  no_permission_alert: "No tienes permiso para administrar miembros en esta organización.",
-  members_heading: "Miembros activos",
-  members_description: "Haz click en un miembro para editar sus permisos.",
-  members_empty: "Esta organización aún no tiene miembros activos.",
-  pending_heading: "Invitaciones pendientes",
-  pending_description: "Cuando alguien acepta, aparece como miembro arriba.",
-  invite_button: "Invitar",
-  full_access_badge: "Acceso completo",
-  permissions_count: "{{count}} permisos",
-  no_permissions: "sin permisos",
-  edit: "Editar",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    back: "Back",
-    page_title: "Members",
-    no_permission_alert: "You don't have permission to manage members in this organization.",
-    members_heading: "Active members",
-    members_description: "Click a member to edit their permissions.",
-    members_empty: "This organization has no active members yet.",
-    pending_heading: "Pending invitations",
-    pending_description: "Once they accept, they show up as a member above.",
-    invite_button: "Invite",
-    full_access_badge: "Full access",
-    permissions_count: "{{count}} permissions",
-    no_permissions: "no permissions",
-    edit: "Edit",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    back: "Voltar",
-    page_title: "Membros",
-    no_permission_alert: "Você não tem permissão para administrar membros nesta organização.",
-    members_heading: "Membros ativos",
-    members_description: "Clique em um membro para editar suas permissões.",
-    members_empty: "Esta organização ainda não tem membros ativos.",
-    pending_heading: "Convites pendentes",
-    pending_description: "Quando aceitarem, aparecerão como membro acima.",
-    invite_button: "Convidar",
-    full_access_badge: "Acesso completo",
-    permissions_count: "{{count}} permissões",
-    no_permissions: "sem permissões",
-    edit: "Editar",
-  } satisfies typeof LOCALE_ES,
-};
 
 export default async function MembersAdminPage({
   params,
@@ -76,7 +25,7 @@ export default async function MembersAdminPage({
   const { locale, tenant_slug, organization_id: organization_id_param } = await params;
 
   if (!IS_SUPPORTED_LOCALE(locale)) notFound();
-  const { t } = RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale]);
+  const { t } = ROSETTA(LOCALES, locale);
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
@@ -275,3 +224,53 @@ export default async function MembersAdminPage({
     </main>
   );
 }
+
+const LOCALE_ES = {
+  back: "Volver",
+  page_title: "Miembros",
+  no_permission_alert: "No tienes permiso para administrar miembros en esta organización.",
+  members_heading: "Miembros activos",
+  members_description: "Haz click en un miembro para editar sus permisos.",
+  members_empty: "Esta organización aún no tiene miembros activos.",
+  pending_heading: "Invitaciones pendientes",
+  pending_description: "Cuando alguien acepta, aparece como miembro arriba.",
+  invite_button: "Invitar",
+  full_access_badge: "Acceso completo",
+  permissions_count: "{{count}} permisos",
+  no_permissions: "sin permisos",
+  edit: "Editar",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  back: "Back",
+  page_title: "Members",
+  no_permission_alert: "You don't have permission to manage members in this organization.",
+  members_heading: "Active members",
+  members_description: "Click a member to edit their permissions.",
+  members_empty: "This organization has no active members yet.",
+  pending_heading: "Pending invitations",
+  pending_description: "Once they accept, they show up as a member above.",
+  invite_button: "Invite",
+  full_access_badge: "Full access",
+  permissions_count: "{{count}} permissions",
+  no_permissions: "no permissions",
+  edit: "Edit",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  back: "Voltar",
+  page_title: "Membros",
+  no_permission_alert: "Você não tem permissão para administrar membros nesta organização.",
+  members_heading: "Membros ativos",
+  members_description: "Clique em um membro para editar suas permissões.",
+  members_empty: "Esta organização ainda não tem membros ativos.",
+  pending_heading: "Convites pendentes",
+  pending_description: "Quando aceitarem, aparecerão como membro acima.",
+  invite_button: "Convidar",
+  full_access_badge: "Acesso completo",
+  permissions_count: "{{count}} permissões",
+  no_permissions: "sem permissões",
+  edit: "Editar",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

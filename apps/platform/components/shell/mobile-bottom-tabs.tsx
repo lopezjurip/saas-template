@@ -5,29 +5,6 @@ import { Home, MoreHorizontal, Settings, Users } from "lucide-react";
 import { BUILD_NAV, PICK_ACTIVE_NAV } from "~/components/shell/sidebar";
 import { useRosetta } from "~/hooks/use-rosetta";
 
-const LOCALE_ES = {
-  home: "Inicio",
-  members: "Miembros",
-  settings: "Ajustes",
-  more: "Más",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    home: "Home",
-    members: "Members",
-    settings: "Settings",
-    more: "More",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    home: "Início",
-    members: "Membros",
-    settings: "Ajustes",
-    more: "Mais",
-  } satisfies typeof LOCALE_ES,
-};
-
 export function MobileBottomTabs({
   base,
   activePath,
@@ -90,3 +67,26 @@ export function MobileBottomTabs({
     </div>
   );
 }
+
+const LOCALE_ES = {
+  home: "Inicio",
+  members: "Miembros",
+  settings: "Ajustes",
+  more: "Más",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  home: "Home",
+  members: "Members",
+  settings: "Settings",
+  more: "More",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  home: "Início",
+  members: "Membros",
+  settings: "Ajustes",
+  more: "Mais",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

@@ -1,39 +1,9 @@
-import { RosettaImpl } from "@packages/rosetta/rosetta";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import Link from "next/link";
-import { LOCALE_TO_BCP47 } from "~/lib/i18n";
+import { ROSETTA } from "~/lib/i18n";
 import { checkEmail } from "./actions";
-
-const LOCALE_ES = {
-  title: "Ingresa tu email",
-  label: "Correo electrónico",
-  placeholder: "tu@empresa.cl",
-  submit: "Continuar",
-  invalid: "Correo inválido.",
-  back: "← Cambiar método de ingreso",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    title: "Enter your email",
-    label: "Email address",
-    placeholder: "you@company.com",
-    submit: "Continue",
-    invalid: "Invalid email.",
-    back: "← Change sign-in method",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    title: "Digite seu e-mail",
-    label: "Endereço de e-mail",
-    placeholder: "voce@empresa.com",
-    submit: "Continuar",
-    invalid: "E-mail inválido.",
-    back: "← Trocar método de entrada",
-  } satisfies typeof LOCALE_ES,
-};
 
 type SearchParams = Promise<{ next?: string; error?: string }>;
 type Params = Promise<{ locale: string }>;
@@ -41,7 +11,7 @@ type Params = Promise<{ locale: string }>;
 export default async function EmailEntryPage({ searchParams, params }: { searchParams: SearchParams; params: Params }) {
   const sp = await searchParams;
   const { locale } = await params;
-  const { t } = RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale as keyof typeof LOCALE_TO_BCP47] ?? "es-CL");
+  const { t } = ROSETTA(LOCALES, locale);
   const error = sp["error"];
   const next = sp["next"] ?? "/";
 
@@ -73,3 +43,32 @@ export default async function EmailEntryPage({ searchParams, params }: { searchP
     </div>
   );
 }
+
+const LOCALE_ES = {
+  title: "Ingresa tu email",
+  label: "Correo electrónico",
+  placeholder: "tu@empresa.cl",
+  submit: "Continuar",
+  invalid: "Correo inválido.",
+  back: "← Cambiar método de ingreso",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  title: "Enter your email",
+  label: "Email address",
+  placeholder: "you@company.com",
+  submit: "Continue",
+  invalid: "Invalid email.",
+  back: "← Change sign-in method",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  title: "Digite seu e-mail",
+  label: "Endereço de e-mail",
+  placeholder: "voce@empresa.com",
+  submit: "Continuar",
+  invalid: "E-mail inválido.",
+  back: "← Trocar método de entrada",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

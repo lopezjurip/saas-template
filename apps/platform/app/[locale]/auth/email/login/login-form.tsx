@@ -9,11 +9,13 @@ import { Separator } from "@packages/ui-common/shadcn/components/ui/separator";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { DevMailboxNotice } from "~/components/dev-mailbox-notice";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { signInWithPasskey } from "~/lib/passkeys.client";
 import { sendMagicLink, signInWithPassword, verifyMagicOtp } from "./actions";
 import { type LoginValues, loginSchema, type VerifyMagicOtpValues, verifyMagicOtpSchema } from "./schemas";
 
 export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; hasPasskey: boolean }) {
+  const { t } = useRosetta(LOCALES);
   const [serverError, setServerError] = useState<string | null>(null);
   const [magicSentTo, setMagicSentTo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -39,7 +41,7 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
     startTransition(async () => {
       const res = await signInWithPassword(values);
       if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Formulario inválido");
+      else if (res?.validationErrors) setServerError(t("invalid_form"));
     });
   });
 
@@ -50,7 +52,7 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
       const email = form.getValues("email");
       const res = await sendMagicLink({ email });
       if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Correo inválido");
+      else if (res?.validationErrors) setServerError(t("invalid_email"));
       else if (res?.data?.sentTo) {
         setMagicSentTo(res.data.sentTo);
         otpForm.reset({ email: res.data.sentTo, token: "" });
@@ -63,7 +65,7 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
     startOtpTransition(async () => {
       const res = await verifyMagicOtp(values);
       if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Código inválido");
+      else if (res?.validationErrors) setServerError(t("invalid_code"));
     });
   });
 
@@ -73,15 +75,15 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
     startPasskeyTransition(async () => {
       try {
         if (typeof window === "undefined" || !window.PublicKeyCredential) {
-          setServerError("Tu navegador no soporta passkeys.");
+          setServerError(t("no_passkey_support"));
           return;
         }
         await signInWithPasskey(form.getValues("email"));
       } catch (e) {
         if (e instanceof Error && e.name === "NotAllowedError") {
-          setServerError("Cancelaste el inicio de sesión con passkey.");
+          setServerError(t("passkey_cancelled"));
         } else {
-          setServerError(e instanceof Error ? e.message : "Error inesperado");
+          setServerError(e instanceof Error ? e.message : t("unexpected_error"));
         }
       }
     });
@@ -92,19 +94,19 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
       {hasPasskey && (
         <>
           <Button type="button" onClick={onPasskey} disabled={anyPending} className="w-full">
-            {passkeyPending ? "Verificando passkey…" : "Iniciar sesión con passkey"}
+            {passkeyPending ? t("passkey_verifying") : t("passkey_signin")}
           </Button>
           <div className="relative">
             <Separator />
             <span className="bg-card text-muted-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-2 text-xs uppercase">
-              o
+              {t("divider_or")}
             </span>
           </div>
         </>
       )}
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="email">Correo electrónico</Label>
+        <Label htmlFor="email">{t("email_label")}</Label>
         <Input
           id="email"
           type="email"
@@ -118,7 +120,7 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">Contraseña</Label>
+        <Label htmlFor="password">{t("password_label")}</Label>
         <Input
           id="password"
           type="password"
@@ -140,14 +142,11 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
       {magicSentTo && (
         <>
           <Alert>
-            <AlertDescription>
-              Te enviamos un enlace mágico a <strong>{magicSentTo}</strong>. Haz clic en el enlace o ingresa el código
-              de 6 dígitos abajo.
-            </AlertDescription>
+            <AlertDescription>{t("magic_link_sent", { email: magicSentTo })}</AlertDescription>
           </Alert>
           <DevMailboxNotice email={magicSentTo} />
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="magic-token">Código del correo</Label>
+            <Label htmlFor="magic-token">{t("magic_code_label")}</Label>
             <Input
               id="magic-token"
               inputMode="numeric"
@@ -167,19 +166,91 @@ export function LoginForm({ defaultEmail, hasPasskey }: { defaultEmail: string; 
             )}
           </div>
           <Button type="button" onClick={() => onVerifyOtp()} disabled={anyPending} className="w-full">
-            {otpPending ? "Verificando…" : "Verificar código"}
+            {otpPending ? t("verifying") : t("verify_code")}
           </Button>
         </>
       )}
 
       <div className="flex flex-col gap-2">
         <Button type="submit" disabled={anyPending} variant={hasPasskey ? "outline" : "default"} className="w-full">
-          {pending ? "Iniciando…" : "Iniciar sesión"}
+          {pending ? t("signing_in") : t("signin")}
         </Button>
         <Button type="button" variant="outline" onClick={onMagicLink} disabled={anyPending} className="w-full">
-          {magicPending ? "Enviando…" : magicSentTo ? "Reenviar enlace mágico" : "Enviarme un enlace mágico"}
+          {magicPending ? t("sending") : magicSentTo ? t("resend_magic_link") : t("send_magic_link")}
         </Button>
       </div>
     </form>
   );
 }
+
+const LOCALE_ES = {
+  passkey_verifying: "Verificando passkey…",
+  passkey_signin: "Iniciar sesión con passkey",
+  divider_or: "o",
+  email_label: "Correo electrónico",
+  password_label: "Contraseña",
+  magic_link_sent:
+    "Te enviamos un enlace mágico a {{email}}. Haz clic en el enlace o ingresa el código de 6 dígitos abajo.",
+  magic_code_label: "Código del correo",
+  verifying: "Verificando…",
+  verify_code: "Verificar código",
+  signing_in: "Iniciando…",
+  signin: "Iniciar sesión",
+  sending: "Enviando…",
+  resend_magic_link: "Reenviar enlace mágico",
+  send_magic_link: "Enviarme un enlace mágico",
+  invalid_form: "Formulario inválido",
+  invalid_email: "Correo inválido",
+  invalid_code: "Código inválido",
+  no_passkey_support: "Tu navegador no soporta passkeys.",
+  passkey_cancelled: "Cancelaste el inicio de sesión con passkey.",
+  unexpected_error: "Error inesperado",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  passkey_verifying: "Verifying passkey…",
+  passkey_signin: "Sign in with passkey",
+  divider_or: "or",
+  email_label: "Email address",
+  password_label: "Password",
+  magic_link_sent: "We sent a magic link to {{email}}. Click the link or enter the 6-digit code below.",
+  magic_code_label: "Code from email",
+  verifying: "Verifying…",
+  verify_code: "Verify code",
+  signing_in: "Signing in…",
+  signin: "Sign in",
+  sending: "Sending…",
+  resend_magic_link: "Resend magic link",
+  send_magic_link: "Send me a magic link",
+  invalid_form: "Invalid form",
+  invalid_email: "Invalid email",
+  invalid_code: "Invalid code",
+  no_passkey_support: "Your browser doesn't support passkeys.",
+  passkey_cancelled: "You cancelled the passkey sign-in.",
+  unexpected_error: "Unexpected error",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  passkey_verifying: "Verificando passkey…",
+  passkey_signin: "Entrar com passkey",
+  divider_or: "ou",
+  email_label: "Endereço de e-mail",
+  password_label: "Senha",
+  magic_link_sent: "Enviamos um link mágico para {{email}}. Clique no link ou insira o código de 6 dígitos abaixo.",
+  magic_code_label: "Código do e-mail",
+  verifying: "Verificando…",
+  verify_code: "Verificar código",
+  signing_in: "Entrando…",
+  signin: "Entrar",
+  sending: "Enviando…",
+  resend_magic_link: "Reenviar link mágico",
+  send_magic_link: "Enviar um link mágico",
+  invalid_form: "Formulário inválido",
+  invalid_email: "E-mail inválido",
+  invalid_code: "Código inválido",
+  no_passkey_support: "Seu navegador não suporta passkeys.",
+  passkey_cancelled: "Você cancelou o login com passkey.",
+  unexpected_error: "Erro inesperado",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

@@ -10,44 +10,6 @@ import { Tip, useClickOutside } from "~/components/shell/atoms";
 import { useRosetta } from "~/hooks/use-rosetta";
 import { LOCALE_COOKIE, LOCALE_LABEL, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
 
-const LOCALE_ES = {
-  trigger: "Configuración",
-  heading: "Preferencias",
-  theme: "Tema",
-  themeLight: "Claro",
-  themeDark: "Oscuro",
-  themeSystem: "Sistema",
-  language: "Idioma",
-  openSettings: "Abrir configuración",
-  help: "Ayuda y documentación",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    trigger: "Settings",
-    heading: "Preferences",
-    theme: "Theme",
-    themeLight: "Light",
-    themeDark: "Dark",
-    themeSystem: "System",
-    language: "Language",
-    openSettings: "Open settings",
-    help: "Help & docs",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    trigger: "Configurações",
-    heading: "Preferências",
-    theme: "Tema",
-    themeLight: "Claro",
-    themeDark: "Escuro",
-    themeSystem: "Sistema",
-    language: "Idioma",
-    openSettings: "Abrir configurações",
-    help: "Ajuda e documentação",
-  } satisfies typeof LOCALE_ES,
-};
-
 export function SettingsMenu({
   locale,
   settingsHref,
@@ -189,3 +151,41 @@ export function SettingsMenu({
     </div>
   );
 }
+
+const LOCALE_ES = {
+  trigger: "Configuración",
+  heading: "Preferencias",
+  theme: "Tema",
+  themeLight: "Claro",
+  themeDark: "Oscuro",
+  themeSystem: "Sistema",
+  language: "Idioma",
+  openSettings: "Abrir configuración",
+  help: "Ayuda y documentación",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  trigger: "Settings",
+  heading: "Preferences",
+  theme: "Theme",
+  themeLight: "Light",
+  themeDark: "Dark",
+  themeSystem: "System",
+  language: "Language",
+  openSettings: "Open settings",
+  help: "Help & docs",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  trigger: "Configurações",
+  heading: "Preferências",
+  theme: "Tema",
+  themeLight: "Claro",
+  themeDark: "Escuro",
+  themeSystem: "Sistema",
+  language: "Idioma",
+  openSettings: "Abrir configurações",
+  help: "Ajuda e documentação",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

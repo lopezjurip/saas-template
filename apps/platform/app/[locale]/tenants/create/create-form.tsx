@@ -9,10 +9,12 @@ import { SLUGIFY } from "@packages/utils/slug";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { createTenant } from "./actions";
 import { type CreateTenantValues, createTenantSchema } from "./schemas";
 
 export function CreateTenantForm() {
+  const { t } = useRosetta(LOCALES);
   const locale = useLocaleParam();
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -50,7 +52,7 @@ export function CreateTenantForm() {
         return;
       }
       if (res?.validationErrors) {
-        setServerError("Formulario inválido");
+        setServerError(t("invalid_form"));
         return;
       }
       if (!res?.data?.slug) return;
@@ -62,7 +64,7 @@ export function CreateTenantForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="tenant_name">Nombre de la empresa</Label>
+        <Label htmlFor="tenant_name">{t("company_name_label")}</Label>
         <Input
           id="tenant_name"
           autoComplete="organization"
@@ -75,7 +77,7 @@ export function CreateTenantForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="tenant_slug">Identificador</Label>
+        <Label htmlFor="tenant_slug">{t("slug_label")}</Label>
         <Input
           id="tenant_slug"
           placeholder="acme"
@@ -86,7 +88,7 @@ export function CreateTenantForm() {
           {...form.register("tenant_slug")}
         />
         <p className="text-muted-foreground text-xs">
-          Tu URL será {slug ? <strong>{`${appHost}/${slug}`}</strong> : `${appHost}/{slug}`}
+          {t("url_preview")} {slug ? <strong>{`${appHost}/${slug}`}</strong> : `${appHost}/{slug}`}
         </p>
         {form.formState.errors.tenant_slug && (
           <p className="text-destructive text-xs">{form.formState.errors.tenant_slug.message}</p>
@@ -100,8 +102,37 @@ export function CreateTenantForm() {
       )}
 
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "Creando empresa…" : "Crear empresa"}
+        {pending ? t("creating") : t("create_company")}
       </Button>
     </form>
   );
 }
+
+const LOCALE_ES = {
+  company_name_label: "Nombre de la empresa",
+  slug_label: "Identificador",
+  url_preview: "Tu URL será",
+  creating: "Creando empresa…",
+  create_company: "Crear empresa",
+  invalid_form: "Formulario inválido",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  company_name_label: "Company name",
+  slug_label: "Identifier",
+  url_preview: "Your URL will be",
+  creating: "Creating company…",
+  create_company: "Create company",
+  invalid_form: "Invalid form",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  company_name_label: "Nome da empresa",
+  slug_label: "Identificador",
+  url_preview: "Sua URL será",
+  creating: "Criando empresa…",
+  create_company: "Criar empresa",
+  invalid_form: "Formulário inválido",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

@@ -1,36 +1,9 @@
-import { RosettaImpl } from "@packages/rosetta/rosetta";
 import Link from "next/link";
-import { LOCALE_TO_BCP47 } from "~/lib/i18n";
-
-const LOCALE_ES = {
-  heading: "Documentos legales",
-  intro: "Selecciona el documento que quieras revisar:",
-  terms: "Términos de servicio",
-  privacy: "Política de privacidad",
-  cookies: "Política de cookies",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    heading: "Legal documents",
-    intro: "Select the document you'd like to review:",
-    terms: "Terms of service",
-    privacy: "Privacy policy",
-    cookies: "Cookie policy",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    heading: "Documentos legais",
-    intro: "Selecione o documento que deseja revisar:",
-    terms: "Termos de serviço",
-    privacy: "Política de privacidade",
-    cookies: "Política de cookies",
-  } satisfies typeof LOCALE_ES,
-};
+import { ROSETTA } from "~/lib/i18n";
 
 export default async function LegalIndexPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const { t } = RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale as keyof typeof LOCALE_TO_BCP47] ?? "es-CL");
+  const { t } = ROSETTA(LOCALES, locale);
   return (
     <>
       <h1>{t("heading")}</h1>
@@ -49,3 +22,29 @@ export default async function LegalIndexPage({ params }: { params: Promise<{ loc
     </>
   );
 }
+
+const LOCALE_ES = {
+  heading: "Documentos legales",
+  intro: "Selecciona el documento que quieras revisar:",
+  terms: "Términos de servicio",
+  privacy: "Política de privacidad",
+  cookies: "Política de cookies",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  heading: "Legal documents",
+  intro: "Select the document you'd like to review:",
+  terms: "Terms of service",
+  privacy: "Privacy policy",
+  cookies: "Cookie policy",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  heading: "Documentos legais",
+  intro: "Selecione o documento que deseja revisar:",
+  terms: "Termos de serviço",
+  privacy: "Política de privacidade",
+  cookies: "Política de cookies",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

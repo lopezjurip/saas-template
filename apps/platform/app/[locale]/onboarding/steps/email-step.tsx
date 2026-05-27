@@ -11,6 +11,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { NEXT_STEP_HREF } from "../state";
 import { sendEmailOtp, verifyEmailOtp } from "./email-action";
 
@@ -30,6 +31,7 @@ type CodeValues = z.infer<typeof codeSchema>;
 const NEXT_HREF = NEXT_STEP_HREF("email");
 
 export function EmailStep() {
+  const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const locale = useLocaleParam();
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -50,7 +52,7 @@ export function EmailStep() {
     startTransition(async () => {
       const res = await sendEmailOtp(values);
       if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Correo inválido");
+      else if (res?.validationErrors) setServerError(t("invalid_email"));
       else setSentTo(values.email);
     });
   });
@@ -61,7 +63,7 @@ export function EmailStep() {
     startTransition(async () => {
       const res = await verifyEmailOtp({ email: sentTo, token: values.token });
       if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Datos inválidos");
+      else if (res?.validationErrors) setServerError(t("invalid_data"));
       else router.push(`/${locale}${NEXT_HREF}`);
     });
   });
@@ -69,20 +71,18 @@ export function EmailStep() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-sm font-medium">Agrega tu correo</h2>
-        <p className="text-muted-foreground mt-1 text-xs">
-          Lo usaremos para enviarte notificaciones importantes y como respaldo de inicio de sesión.
-        </p>
+        <h2 className="text-sm font-medium">{t("heading")}</h2>
+        <p className="text-muted-foreground mt-1 text-xs">{t("description")}</p>
       </div>
 
       {!sentTo ? (
         <form onSubmit={onSendEmail} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">Correo electrónico</Label>
+            <Label htmlFor="email">{t("email_label")}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="tu@empresa.cl"
+              placeholder={t("email_placeholder")}
               autoComplete="email"
               aria-invalid={!!emailForm.formState.errors.email}
               {...emailForm.register("email")}
@@ -97,13 +97,13 @@ export function EmailStep() {
             </Alert>
           )}
           <Button type="submit" disabled={pending} className="w-full">
-            {pending ? "Enviando código…" : "Enviar código"}
+            {pending ? t("sending") : t("send_code")}
           </Button>
         </form>
       ) : (
         <form onSubmit={onVerifyCode} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="token">Código enviado a {sentTo}</Label>
+            <Label htmlFor="token">{t("code_sent_to", { to: sentTo })}</Label>
             <Input
               id="token"
               inputMode="numeric"
@@ -122,21 +122,71 @@ export function EmailStep() {
             </Alert>
           )}
           <Button type="submit" disabled={pending} className="w-full">
-            {pending ? "Verificando…" : "Verificar"}
+            {pending ? t("verifying") : t("verify")}
           </Button>
           <button
             type="button"
             className="text-muted-foreground text-center text-xs underline"
             onClick={() => setSentTo(null)}
           >
-            Cambiar correo
+            {t("change_email")}
           </button>
         </form>
       )}
 
       <Button asChild variant="ghost" className="w-full">
-        <Link href={`/${locale}${NEXT_HREF}`}>Omitir por ahora</Link>
+        <Link href={`/${locale}${NEXT_HREF}`}>{t("skip")}</Link>
       </Button>
     </div>
   );
 }
+
+const LOCALE_ES = {
+  heading: "Agrega tu correo",
+  description: "Lo usaremos para enviarte notificaciones importantes y como respaldo de inicio de sesión.",
+  email_label: "Correo electrónico",
+  email_placeholder: "tu@empresa.cl",
+  sending: "Enviando código…",
+  send_code: "Enviar código",
+  code_sent_to: "Código enviado a {{to}}",
+  verifying: "Verificando…",
+  verify: "Verificar",
+  change_email: "Cambiar correo",
+  skip: "Omitir por ahora",
+  invalid_email: "Correo inválido",
+  invalid_data: "Datos inválidos",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  heading: "Add your email",
+  description: "We'll use it to send you important notifications and as a sign-in backup.",
+  email_label: "Email address",
+  email_placeholder: "you@company.com",
+  sending: "Sending code…",
+  send_code: "Send code",
+  code_sent_to: "Code sent to {{to}}",
+  verifying: "Verifying…",
+  verify: "Verify",
+  change_email: "Change email",
+  skip: "Skip for now",
+  invalid_email: "Invalid email",
+  invalid_data: "Invalid data",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  heading: "Adicione seu e-mail",
+  description: "Usaremos para enviar notificações importantes e como backup de login.",
+  email_label: "Endereço de e-mail",
+  email_placeholder: "voce@empresa.com",
+  sending: "Enviando código…",
+  send_code: "Enviar código",
+  code_sent_to: "Código enviado para {{to}}",
+  verifying: "Verificando…",
+  verify: "Verificar",
+  change_email: "Alterar e-mail",
+  skip: "Pular por agora",
+  invalid_email: "E-mail inválido",
+  invalid_data: "Dados inválidos",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

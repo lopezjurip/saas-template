@@ -1,39 +1,9 @@
-import { RosettaImpl } from "@packages/rosetta/rosetta";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import Link from "next/link";
-import { LOCALE_TO_BCP47 } from "~/lib/i18n";
+import { ROSETTA } from "~/lib/i18n";
 import { checkPhone } from "./actions";
-
-const LOCALE_ES = {
-  title: "Ingresa tu teléfono",
-  label: "Teléfono",
-  placeholder: "+56 9 ...",
-  submit: "Continuar",
-  invalid: "Teléfono inválido.",
-  back: "← Cambiar método de ingreso",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    title: "Enter your phone",
-    label: "Phone number",
-    placeholder: "+1 555 ...",
-    submit: "Continue",
-    invalid: "Invalid phone.",
-    back: "← Change sign-in method",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    title: "Digite seu telefone",
-    label: "Telefone",
-    placeholder: "+55 11 ...",
-    submit: "Continuar",
-    invalid: "Telefone inválido.",
-    back: "← Trocar método de entrada",
-  } satisfies typeof LOCALE_ES,
-};
 
 type SearchParams = Promise<{ next?: string; error?: string }>;
 type Params = Promise<{ locale: string }>;
@@ -41,7 +11,7 @@ type Params = Promise<{ locale: string }>;
 export default async function PhoneEntryPage({ searchParams, params }: { searchParams: SearchParams; params: Params }) {
   const sp = await searchParams;
   const { locale } = await params;
-  const { t } = RosettaImpl.fromDictionary(LOCALES, LOCALE_TO_BCP47[locale as keyof typeof LOCALE_TO_BCP47] ?? "es-CL");
+  const { t } = ROSETTA(LOCALES, locale);
   const error = sp["error"];
   const next = sp["next"] ?? "/";
 
@@ -73,3 +43,32 @@ export default async function PhoneEntryPage({ searchParams, params }: { searchP
     </div>
   );
 }
+
+const LOCALE_ES = {
+  title: "Ingresa tu teléfono",
+  label: "Teléfono",
+  placeholder: "+56 9 ...",
+  submit: "Continuar",
+  invalid: "Teléfono inválido.",
+  back: "← Cambiar método de ingreso",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  title: "Enter your phone",
+  label: "Phone number",
+  placeholder: "+1 555 ...",
+  submit: "Continue",
+  invalid: "Invalid phone.",
+  back: "← Change sign-in method",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  title: "Digite seu telefone",
+  label: "Telefone",
+  placeholder: "+55 11 ...",
+  submit: "Continuar",
+  invalid: "Telefone inválido.",
+  back: "← Trocar método de entrada",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

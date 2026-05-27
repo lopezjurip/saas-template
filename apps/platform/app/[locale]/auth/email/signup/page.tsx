@@ -1,5 +1,6 @@
 import { BackToAuthLink } from "~/app/[locale]/auth/_components/back-to-auth-link";
 import { getCountries } from "~/hooks/get-countries";
+import { ROSETTA } from "~/lib/i18n";
 import { SignupForm } from "./signup-form";
 
 type SearchParams = Promise<{ email?: string; country?: string; kind?: string; value?: string }>;
@@ -14,6 +15,7 @@ export default async function EmailSignupPage({
 }) {
   const sp = await searchParams;
   const { locale } = await params;
+  const { t } = ROSETTA(LOCALES, locale);
   const { data: countriesData } = await getCountries();
   const countries = countriesData?.["addresses_level0Collection"]?.["edges"]?.map((e) => e["node"]) ?? [];
   const prefilDocCountry = sp["country"] ?? "";
@@ -21,7 +23,7 @@ export default async function EmailSignupPage({
   const prefilDocValue = sp["value"] ?? "";
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-center text-sm font-medium">Crear cuenta</h2>
+      <h2 className="text-center text-sm font-medium">{t("heading")}</h2>
       <SignupForm
         defaultEmail={sp["email"] ?? ""}
         defaultCountry={prefilDocCountry}
@@ -33,3 +35,17 @@ export default async function EmailSignupPage({
     </div>
   );
 }
+
+const LOCALE_ES = {
+  heading: "Crear cuenta",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  heading: "Create account",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  heading: "Criar conta",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
