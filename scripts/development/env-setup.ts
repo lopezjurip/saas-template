@@ -3,7 +3,7 @@
 // Run after `pnpm db:start`: pnpm db:env:development
 
 import { execSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -11,6 +11,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const SUPABASE_DIR = join(ROOT, "packages/supabase");
 const TARGET_FILENAME = ".env.development.local";
 const TARGET_PATH = join(ROOT, TARGET_FILENAME);
+const CLAUDE_SETTINGS_DIR = join(ROOT, ".claude");
+const CLAUDE_SETTINGS_PATH = join(CLAUDE_SETTINGS_DIR, "settings.local.json");
 
 let raw: string;
 try {
@@ -34,6 +36,7 @@ const env: Record<string, string> = Object.fromEntries(
 const SUPABASE_URL = env["API_URL"] ?? "http://127.0.0.1:54421";
 const SUPABASE_ANON_KEY = env["ANON_KEY"] ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = env["SERVICE_ROLE_KEY"] ?? "";
+const DATABASE_URL = env["DB_URL"] ?? "";
 
 const APEX_HOSTNAME = "lvh.me";
 
@@ -45,6 +48,8 @@ const variables: Array<{ key: string; value: string; secret: boolean }> = [
   // Mailpit catch-all inbox — surfaced in dev UIs so signup confirmation emails are easy to open.
   { key: "NEXT_PUBLIC_DEV_MAILBOX_URL", value: env["INBUCKET_URL"] ?? "http://localhost:54424", secret: false },
   { key: "SUPABASE_SERVICE_ROLE_KEY", value: SUPABASE_SERVICE_ROLE_KEY, secret: true },
+  // Direct Postgres URL — consumed by psql-based skills/scripts; conventional name so ORMs pick it up too.
+  { key: "DATABASE_URL", value: DATABASE_URL, secret: true },
   // WebAuthn / passkeys — RP ID is the bare apex (no protocol/port), origin is the full HTTPS URL.
   { key: "WEBAUTHN_RELYING_PARTY_ID", value: "lvh.me", secret: false },
   { key: "WEBAUTHN_RELYING_PARTY_NAME", value: "Humane", secret: false },
@@ -61,3 +66,27 @@ const content = variables
 
 writeFileSync(TARGET_PATH, `${content}\n`);
 console.log(`wrote ${TARGET_FILENAME}`);
+
+/**
+ * Inject DATABASE_URL into .claude/settings.local.json so Claude Code tool calls
+ * see it as a regular env var — no need to source .env files per shell. Merges
+ * into any existing settings (permissions, etc.) and preserves unrelated keys.
+ */
+if (DATABASE_URL.length > 0) {
+  mkdirSync(CLAUDE_SETTINGS_DIR, { recursive: true });
+  let settings: Record<string, unknown> = {};
+  if (existsSync(CLAUDE_SETTINGS_PATH)) {
+    try {
+      settings = JSON.parse(readFileSync(CLAUDE_SETTINGS_PATH, "utf-8"));
+    } catch {
+      console.warn(`could not parse ${CLAUDE_SETTINGS_PATH} — overwriting`);
+    }
+  }
+  const envBlock = (settings["env"] as Record<string, string> | undefined) ?? {};
+  // Supabase status emits values wrapped in literal double quotes — strip them so
+  // the JSON string holds the raw URL, not `"postgresql://…"` with embedded quotes.
+  envBlock["DATABASE_URL"] = DATABASE_URL.replace(/^"(.*)"$/, "$1");
+  settings["env"] = envBlock;
+  writeFileSync(CLAUDE_SETTINGS_PATH, `${JSON.stringify(settings, null, 2)}\n`);
+  console.log("wrote DATABASE_URL into .claude/settings.local.json (restart Claude to pick it up)");
+}
