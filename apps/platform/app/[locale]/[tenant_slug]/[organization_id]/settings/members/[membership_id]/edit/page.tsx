@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
 import { ChevronLeft } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
@@ -32,6 +33,16 @@ function MEMBER_LABEL(row: {
     return `${row.membership_invite_address_level0_id ?? ""} · ${row.membership_invite_document_value}`;
   }
   return "—";
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; tenant_slug: string; organization_id: string; membership_id: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const { t } = ROSETTA(LOCALES, locale);
+  return { title: t("page_title") };
 }
 
 export default async function MembershipEditPage({

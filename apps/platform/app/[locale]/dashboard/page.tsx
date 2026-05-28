@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { gql } from "~/generated/graphql";
@@ -35,6 +36,12 @@ const DashboardPageQuery = gql(`
     }
   }
 `);
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const { t } = ROSETTA(LOCALES, locale);
+  return { title: t("meta_title") };
+}
 
 export default async function DashboardPage({
   params,
@@ -120,6 +127,7 @@ export default async function DashboardPage({
 }
 
 const LOCALE_ES = {
+  meta_title: "Dashboard",
   your_orgs: "Tus organizaciones",
   no_orgs: "Aún no perteneces a ninguna organización.",
   create_company: "Crear empresa",
@@ -128,6 +136,7 @@ const LOCALE_ES = {
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
+  meta_title: "Dashboard",
   your_orgs: "Your organizations",
   no_orgs: "You don't belong to any organization yet.",
   create_company: "Create company",
@@ -136,6 +145,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
+  meta_title: "Dashboard",
   your_orgs: "Suas organizações",
   no_orgs: "Você ainda não pertence a nenhuma organização.",
   create_company: "Criar empresa",

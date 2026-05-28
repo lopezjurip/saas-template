@@ -1,5 +1,6 @@
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Separator } from "@packages/ui-common/shadcn/components/ui/separator";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { OAUTH_PROVIDERS } from "~/app/[locale]/auth/providers";
 import { ROSETTA } from "~/lib/i18n";
@@ -8,6 +9,12 @@ import { signInWithOAuth } from "./actions";
 
 type SearchParams = Promise<{ next?: string; error?: string }>;
 type Params = Promise<{ locale: string }>;
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { locale } = await params;
+  const { t } = ROSETTA(LOCALES, locale);
+  return { title: t("meta_title") };
+}
 
 export default async function AuthEntryPage({ searchParams, params }: { searchParams: SearchParams; params: Params }) {
   const sp = await searchParams;
@@ -72,6 +79,7 @@ export default async function AuthEntryPage({ searchParams, params }: { searchPa
 }
 
 const LOCALE_ES = {
+  meta_title: "Iniciar sesión",
   email: "Continuar con email",
   phone: "Continuar con teléfono",
   document: "Continuar con documento",
@@ -82,6 +90,7 @@ const LOCALE_ES = {
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
+  meta_title: "Sign in",
   email: "Continue with email",
   phone: "Continue with phone",
   document: "Continue with document",
@@ -92,6 +101,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
+  meta_title: "Entrar",
   email: "Continuar com e-mail",
   phone: "Continuar com telefone",
   document: "Continuar com documento",

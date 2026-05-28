@@ -1,6 +1,13 @@
 import { CardContent, CardDescription, CardHeader } from "@packages/ui-common/shadcn/components/ui/card";
+import type { Metadata } from "next";
 import { ROSETTA } from "~/lib/i18n";
 import { CreateTenantForm } from "./create-form";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const { t } = ROSETTA(LOCALES, locale);
+  return { title: t("heading") };
+}
 
 export default async function CreateTenantPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;

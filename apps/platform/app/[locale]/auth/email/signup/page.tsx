@@ -1,10 +1,17 @@
 import { BackToAuthLink } from "~/app/[locale]/auth/_components/back-to-auth-link";
 import { getCountries } from "~/hooks/get-countries";
+import type { Metadata } from "next";
 import { ROSETTA } from "~/lib/i18n";
 import { SignupForm } from "./signup-form";
 
 type SearchParams = Promise<{ email?: string; country?: string; kind?: string; value?: string }>;
 type Params = Promise<{ locale: string }>;
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { locale } = await params;
+  const { t } = ROSETTA(LOCALES, locale);
+  return { title: t("heading") };
+}
 
 export default async function EmailSignupPage({
   searchParams,

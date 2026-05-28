@@ -11,11 +11,20 @@ import {
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
 import { ChevronRight, UserPlus } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
 import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
 import { PendingInvitations } from "./pending-invitations";
+
+export async function generateMetadata({
+  params,
+}: { params: Promise<{ locale: string; tenant_slug: string; organization_id: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const { t } = ROSETTA(LOCALES, locale);
+  return { title: t("page_title") };
+}
 
 export default async function MembersAdminPage({
   params,

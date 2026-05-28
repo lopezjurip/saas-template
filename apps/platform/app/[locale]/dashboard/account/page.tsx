@@ -11,6 +11,7 @@ import {
 } from "@packages/ui-common/shadcn/components/ui/card";
 import { Separator } from "@packages/ui-common/shadcn/components/ui/separator";
 import { ChevronLeft } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OAUTH_PROVIDERS, type OAuthProviderId } from "~/app/[locale]/auth/providers";
@@ -60,6 +61,12 @@ function LABEL_FOR_PROVIDER(provider: string, t: (key: keyof typeof LOCALE_ES) =
   if (provider === "email") return t("provider_email");
   if (provider === "phone") return t("provider_phone");
   return OAUTH_PROVIDER_LABEL[provider as OAuthProviderId] ?? provider;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const { t } = ROSETTA(LOCALES, locale);
+  return { title: t("title") };
 }
 
 export default async function AccountPage({

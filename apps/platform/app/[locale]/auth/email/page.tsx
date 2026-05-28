@@ -1,12 +1,19 @@
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ROSETTA } from "~/lib/i18n";
 import { checkEmail } from "./actions";
 
 type SearchParams = Promise<{ next?: string; error?: string }>;
 type Params = Promise<{ locale: string }>;
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { locale } = await params;
+  const { t } = ROSETTA(LOCALES, locale);
+  return { title: t("title") };
+}
 
 export default async function EmailEntryPage({ searchParams, params }: { searchParams: SearchParams; params: Params }) {
   const sp = await searchParams;

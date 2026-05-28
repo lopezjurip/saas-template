@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getCountries } from "~/hooks/get-countries";
 import { ROSETTA } from "~/lib/i18n";
@@ -5,6 +6,12 @@ import { DocumentFlow } from "./document-flow";
 
 type SearchParams = Promise<{ next?: string; error?: string }>;
 type Params = Promise<{ locale: string }>;
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { locale } = await params;
+  const { t } = ROSETTA(LOCALES, locale);
+  return { title: t("title") };
+}
 
 export default async function DocumentEntryPage({
   searchParams,

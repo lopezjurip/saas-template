@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { GraphyClientProvider } from "~/components/graphy-provider";
 import { ThemeProvider } from "~/components/theme-provider";
+import { APP_HOST } from "~/lib/constants";
 import { LOCALE_TO_BCP47 } from "~/lib/i18n";
 import { getServerLocale } from "~/lib/i18n.server";
 import "~/styles/globals.css";
@@ -9,6 +10,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  colorScheme: "dark light",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#24232b" },
@@ -16,12 +18,19 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Humane",
+  metadataBase: new URL(`https://${APP_HOST}`),
+  title: { default: "Humane", template: "%s | Humane" },
   description: "HR y Nómina para empresas chilenas",
+  applicationName: "Humane",
+  formatDetection: { telephone: false, email: false, address: false },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Humane",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Humane",
   },
 };
 

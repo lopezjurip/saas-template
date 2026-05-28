@@ -1,7 +1,7 @@
 import { updateSession } from "@packages/supabase/client.middleware";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { JWT_DECODE_PAYLOAD } from "@packages/utils/jwt";
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse, userAgent } from "next/server";
 import { APEX_HOSTNAME, APP_HOST } from "~/lib/constants";
 import { debug } from "~/lib/debug";
 import { EXTRACT_LOCALE_FROM_PATH, LOCALE_COOKIE, RESOLVE_LOCALE_FROM_REQUEST, type SupportedLocale } from "~/lib/i18n";
@@ -75,6 +75,9 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const proto = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
 
+  const { isBot, device } = userAgent(request);
+  log.debug("request", { hostname, pathname, isBot, deviceType: device.type ?? "desktop" });
+
   // Classify the host: apex/www, tenant subdomain, or unknown (custom apex, phase 2).
   // Strip port for matching so the proxy works on any dev port, not just the configured default.
   const hostnameBase = hostname.split(":")[0] ?? "";
@@ -132,6 +135,11 @@ export async function proxy(request: NextRequest) {
       url.search = request.nextUrl.search;
       return setLocaleCookieOnResponse(NextResponse.redirect(url), locale);
     }
+  }
+
+  // Bots get public apex content without session overhead.
+  if (isBot && isApex && isLocalizedPublicPath(pathAfterLocale)) {
+    return setLocaleCookieOnResponse(NextResponse.next(), locale);
   }
 
   // Apex public routes — no auth required, but logged-in users shouldn't see the auth entry pages
