@@ -122,6 +122,47 @@ create or replace function internal.slug_validate(value text)
     select value ~ '^[a-z0-9]([a-z0-9-]{1,38}[a-z0-9])?$';
   $$;
 
+-- Predicate for canonical UUID text (8-4-4-4-12 hex). Cheaper and exception-free
+-- compared to `value::uuid` in a try/catch — useful for index predicates and
+-- view filters that must be IMMUTABLE.
+create or replace function internal.is_uuid(value text)
+  returns boolean
+  language sql
+  immutable
+  parallel safe
+  strict
+  set search_path to ''
+  as $$
+    select value ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+  $$;
+
+-- Byte unit conversion. SI ('KB', 'MB', 'GB', 'TB') use powers of 1000; binary
+-- ('KiB', 'MiB', 'GiB', 'TiB') use powers of 1024. Unknown units return NULL.
+-- Usage: `internal.convert_unit_byte(5, 'MiB')` → 5_242_880 (defaults to bytes).
+create or replace function internal.convert_unit_byte(
+  amount numeric,
+  from_unit text,
+  to_unit text default 'byte'
+)
+  returns numeric
+  language sql
+  immutable
+  parallel safe
+  strict
+  set search_path to ''
+  as $$
+    with factor(unit, value) as (values
+      ('byte', 1::numeric),
+      ('KB',   1e3::numeric),  ('KiB',  1024::numeric),
+      ('MB',   1e6::numeric),  ('MiB',  1048576::numeric),
+      ('GB',   1e9::numeric),  ('GiB',  1073741824::numeric),
+      ('TB',   1e12::numeric), ('TiB',  1099511627776::numeric)
+    )
+    select amount
+      * (select value from factor where unit = from_unit)
+      / (select value from factor where unit = to_unit);
+  $$;
+
 -- Anonymous lookup used by /auth root to branch between login/signup.
 -- Lower-cases for case-insensitive match. Enumeration leak is accepted per product decision.
 create or replace function public.email_exists(email_to_check text)
@@ -290,13 +331,25 @@ create policy "Users can update own profiles."
   );
 
 -- Storage
-insert into storage.buckets (id, name, public)
-  values ('profiles', 'profiles', true)
-  on conflict do nothing;
-
-update storage.buckets
-  set file_size_limit = 5242880  -- 5 MiB
-  where id = 'profiles';
+-- Bucket convention: bucket name === table name. First path segment === row PK.
+-- Subfolders below it are app-level (e.g. `<profile_id>/avatar/<filename>`). When reading
+-- a folder, callers should `list(..., { sortBy: { column: 'name', order: 'desc' }, limit: 1 })`
+-- so the newest filename (lexicographic) wins — uploads name files with a sortable prefix
+-- (timestamp / ULID) so newest > oldest under desc.
+-- Bucket is public so URLs render without signed redirects; RLS still gates writes (see
+-- the `storage.objects` policies at the bottom of this file).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  values (
+    'profiles',
+    'profiles',
+    true,
+    internal.convert_unit_byte(5, 'MiB'),
+    array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+  )
+  on conflict (id) do update set
+    public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
 
 -- ============================================================
 -- tenants + organizations + memberships + permissions
@@ -391,6 +444,21 @@ drop trigger if exists organizations_trigger_normalize_name on public.organizati
 create trigger organizations_trigger_normalize_name
   before insert or update of organization_name on public.organizations
   for each row execute procedure internal.column_normalize_text(organization_name);
+
+-- Storage (same convention as the `profiles` bucket above: bucket name === table name,
+-- first path segment === organization_id, app-level subfolder beneath it: `<id>/avatar/<filename>`).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  values (
+    'organizations',
+    'organizations',
+    true,
+    internal.convert_unit_byte(5, 'MiB'),
+    array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+  )
+  on conflict (id) do update set
+    public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
 
 -- Forward declarations needed before `public.memberships` so its invite columns + triggers
 -- can reference them. The full `public.addresses_level0` table (with seed + indexes) and
@@ -2367,3 +2435,115 @@ create or replace function public.users_handle_created()
       return new;
     end;
   $$;
+
+-- ============================================================
+-- storage.objects RLS — convention-based policies
+-- ============================================================
+-- Convention enforced here:
+--   path_tokens[1] === row PK of the matching table
+--   path_tokens[2] === 'avatar' (the only allowed subfolder today)
+-- Adding a new subfolder (e.g. `banner`) requires an explicit policy edit.
+-- `path_tokens` is a stored generated column, so indexing into it is a plain
+-- array read — no per-row function call.
+-- Buckets are public, so the `/object/public/...` CDN endpoint bypasses RLS;
+-- `list()` and writes still pass through these policies.
+
+drop policy if exists "public buckets: read avatars" on storage.objects;
+create policy "public buckets: read avatars"
+  on storage.objects for select
+  to authenticated, anon
+  using (
+    bucket_id in ('profiles', 'organizations')
+    and path_tokens[2] = 'avatar'
+  );
+
+drop policy if exists "profiles bucket: own avatar" on storage.objects;
+create policy "profiles bucket: own avatar"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id = 'profiles'
+    and path_tokens[1] = (select auth.uid())::text
+    and path_tokens[2] = 'avatar'
+  )
+  with check (
+    bucket_id = 'profiles'
+    and path_tokens[1] = (select auth.uid())::text
+    and path_tokens[2] = 'avatar'
+  );
+
+-- Regex-guards the cast so a malformed path can't raise SQLSTATE 22P02 inside the policy.
+drop policy if exists "organizations bucket: organization_manage avatar" on storage.objects;
+create policy "organizations bucket: organization_manage avatar"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id = 'organizations'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_permission_org_ids('organization_manage'))
+  )
+  with check (
+    bucket_id = 'organizations'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_permission_org_ids('organization_manage'))
+  );
+
+-- ============================================================
+-- GraphQL views over storage.objects
+-- ============================================================
+-- One view per bucket. pg_graphql picks up the `@graphql.foreign_keys` comment so
+-- a profile/organization exposes its files as a relation. Views run with
+-- `security_invoker = on` so storage.objects RLS is the single source of truth —
+-- whichever folders RLS allows (today only `avatar/`) flow through automatically.
+-- Regex guards in the WHERE keep malformed rows from blowing up the view at SELECT
+-- time (the cast would otherwise raise 22P02).
+
+create or replace view public.storage_profiles
+  with (security_invoker = on) as
+  select
+    obj.id                                       as storage_profile_id,
+    obj.bucket_id,
+    obj.name,
+    obj.path_tokens[1]::uuid                     as profile_id,
+    obj.path_tokens[2]                           as folder,
+    obj.metadata->>'mimetype'                    as mimetype,
+    (obj.metadata->>'contentLength')::bigint     as content_length,
+    obj.metadata,
+    obj.created_at,
+    obj.updated_at,
+    -- Relative URL — prefix with SUPABASE_URL client-side (or use the storage SDK).
+    '/storage/v1/object/public/' || obj.bucket_id || '/' || obj.name as src
+  from storage.objects as obj
+  where obj.bucket_id = 'profiles'
+    and internal.is_uuid(obj.path_tokens[1]);
+
+grant select on public.storage_profiles to authenticated, anon;
+
+-- pg_graphql foreign_keys naming is counterintuitive: `local_name` is the field name on
+-- the PARENT type (here `profiles`) returning a collection back; `foreign_name` is the
+-- field name on this view (`storage_profiles`) returning the single parent row.
+comment on view public.storage_profiles is e'@graphql({"primary_key_columns": ["storage_profile_id"], "foreign_keys": [{"local_name": "storage_profiles", "local_columns": ["profile_id"], "foreign_name": "profile", "foreign_schema": "public", "foreign_table": "profiles", "foreign_columns": ["profile_id"]}]})';
+
+create or replace view public.storage_organizations
+  with (security_invoker = on) as
+  select
+    obj.id                                       as storage_organization_id,
+    obj.bucket_id,
+    obj.name,
+    obj.path_tokens[1]::int                      as organization_id,
+    obj.path_tokens[2]                           as folder,
+    obj.metadata->>'mimetype'                    as mimetype,
+    (obj.metadata->>'contentLength')::bigint     as content_length,
+    obj.metadata,
+    obj.created_at,
+    obj.updated_at,
+    '/storage/v1/object/public/' || obj.bucket_id || '/' || obj.name as src
+  from storage.objects as obj
+  where obj.bucket_id = 'organizations'
+    and obj.path_tokens[1] ~ '^[0-9]+$';
+
+grant select on public.storage_organizations to authenticated, anon;
+
+comment on view public.storage_organizations is e'@graphql({"primary_key_columns": ["storage_organization_id"], "foreign_keys": [{"local_name": "storage_organizations", "local_columns": ["organization_id"], "foreign_name": "organization", "foreign_schema": "public", "foreign_table": "organizations", "foreign_columns": ["organization_id"]}]})';
