@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-if [ -z "$CONDUCTOR_WORKSPACE_NAME" ]; then
-  echo "Este script es solo para Conductor. Para dev normal: pnpm install && pnpm db:start"
+if [ -z "$WORKTREE_NAME" ] || [ -z "$WORKTREE_PORT" ] || [ -z "$WORKTREE_ROOT_PATH" ] || [ -z "$WORKTREE_PROJECT" ]; then
+  echo "Required: WORKTREE_NAME, WORKTREE_PORT, WORKTREE_ROOT_PATH, WORKTREE_PROJECT"
+  echo "Example (Conductor): WORKTREE_NAME=\$CONDUCTOR_WORKSPACE_NAME WORKTREE_PORT=\$CONDUCTOR_PORT WORKTREE_ROOT_PATH=\$CONDUCTOR_ROOT_PATH WORKTREE_PROJECT=myproject bash scripts/development/worktree-setup.sh"
   exit 1
 fi
 
@@ -17,7 +18,7 @@ copy_if_exists() {
 }
 
 # --- Patch supabase/config.toml with workspace-specific ports and project_id ---
-# Each Conductor workspace gets CONDUCTOR_PORT..CONDUCTOR_PORT+9 (10 ports):
+# Each worktree gets WORKTREE_PORT..WORKTREE_PORT+9 (10 ports):
 #   +0  Next.js app (used by run script)
 #   +1  Supabase API / Kong
 #   +2  Supabase DB (postgres)
@@ -28,14 +29,16 @@ copy_if_exists() {
 #   +7  react-email preview
 #   +8  react-pdf preview
 #   +9  spare
-export BASE=${CONDUCTOR_PORT:-7000}
-export WS=$(echo "${CONDUCTOR_WORKSPACE_NAME:-local}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+export BASE=${WORKTREE_PORT}
+export WS=$(echo "${WORKTREE_NAME}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+export PROJECT=${WORKTREE_PROJECT}
 
 python3 - <<PYEOF
 import re, os, sys
 
 base = int(os.environ['BASE'])
 ws = os.environ['WS']
+project = os.environ['PROJECT']
 path = 'packages/supabase/supabase/config.toml'
 
 with open(path) as f:
@@ -49,7 +52,7 @@ for line in lines:
         section = m.group(1)
 
     if re.match(r'^project_id\s*=', line):
-        line = f'project_id = "resolvecom-{ws}"\n'
+        line = f'project_id = "{project}-{ws}"\n'
     elif section == 'api'       and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+1}\n'
     elif section == 'db'        and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+2}\n'
     elif section == 'db'        and re.match(r'^shadow_port\s*=', line): line = f'shadow_port = {base+3}\n'
@@ -61,7 +64,7 @@ for line in lines:
 with open(path, 'w') as f:
     f.writelines(result)
 
-print(f"Supabase config patched: project=resolvecom-{ws}")
+print(f"Supabase config patched: project={project}-{ws}")
 print(f"  API:{base+1}  DB:{base+2}  shadow:{base+3}  Studio:{base+4}  Inbucket:{base+5}  Analytics:{base+6}")
 PYEOF
 
@@ -69,12 +72,12 @@ PYEOF
 git update-index --skip-worktree packages/supabase/supabase/config.toml
 
 # --- Copy gitignored files from root workspace ---
-copy_if_exists "$CONDUCTOR_ROOT_PATH/.env.local" ./.env.local
-copy_if_exists "$CONDUCTOR_ROOT_PATH/apps/platform/.env.local" ./apps/platform/.env.local
+copy_if_exists "$WORKTREE_ROOT_PATH/.env.local" ./.env.local
+copy_if_exists "$WORKTREE_ROOT_PATH/apps/platform/.env.local" ./apps/platform/.env.local
 
 mkdir -p apps/platform/certs
-ROOT_CERT="$CONDUCTOR_ROOT_PATH/apps/platform/certs/lvh.me-cert.pem"
-ROOT_KEY="$CONDUCTOR_ROOT_PATH/apps/platform/certs/lvh.me-key.pem"
+ROOT_CERT="$WORKTREE_ROOT_PATH/apps/platform/certs/lvh.me-cert.pem"
+ROOT_KEY="$WORKTREE_ROOT_PATH/apps/platform/certs/lvh.me-key.pem"
 if [ -f "$ROOT_CERT" ] && [ -f "$ROOT_KEY" ]; then
   cp "$ROOT_CERT" ./apps/platform/certs/lvh.me-cert.pem
   cp "$ROOT_KEY" ./apps/platform/certs/lvh.me-key.pem
@@ -83,15 +86,28 @@ else
 fi
 
 mkdir -p .claude
-copy_if_exists "$CONDUCTOR_ROOT_PATH/.claude/settings.local.json" ./.claude/settings.local.json
+copy_if_exists "$WORKTREE_ROOT_PATH/.claude/settings.local.json" ./.claude/settings.local.json
 
 pnpm install
 
-# --- Start workspace-specific Supabase instance ---
-# PORT is used by db:start to build SUPABASE_AUTH_SITE_URL=https://lvh.me:$PORT
-# Fresh project_id per workspace => fresh volume => `supabase start` applies
-# migrations + seed.sql on init. No need for an extra `db:reset` afterwards.
-PORT=$CONDUCTOR_PORT pnpm db:start
+# --- Register this worktree as a user of the shared Supabase instance ---
+# Multiple worktrees can share the same instance (same WORKTREE_NAME + WORKTREE_PROJECT).
+# Archive skips shutdown while any registered worktree remains.
+INSTANCE_KEY="${PROJECT}-${WS}"
+REF_DIR="$HOME/.worktree-refs/${INSTANCE_KEY}"
+REF_FILE="$REF_DIR/$(pwd | tr '/' '_')"
+mkdir -p "$REF_DIR"
+touch "$REF_FILE"
+
+# --- Start Supabase only if not already running ---
+RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$RUNNING" -gt 0 ]; then
+  echo "Supabase ${INSTANCE_KEY} already running, skipping db:start"
+else
+  # Fresh project_id per workspace => fresh volume => `supabase start` applies
+  # migrations + seed.sql on init. No need for an extra `db:reset` afterwards.
+  PORT=$WORKTREE_PORT pnpm db:start
+fi
 
 # Generate .env.development.local with the workspace-specific Supabase URLs
-PORT=$CONDUCTOR_PORT pnpm run -w db:env:development
+PORT=$WORKTREE_PORT pnpm run -w db:env:development
