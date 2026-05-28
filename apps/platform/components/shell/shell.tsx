@@ -60,7 +60,7 @@ export function Shell({
         initialWidth={initialSidebarWidth}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col pl-safe pr-safe">
         <div className="md:hidden">
           <MobileTopBar
             tenant={tenant}

@@ -19,7 +19,8 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
     "radix-ui": "^1.4.3",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss-safe-area": "^1.3.0"
   },
   "devDependencies": {
     "@packages/typescript-config": "workspace:*",

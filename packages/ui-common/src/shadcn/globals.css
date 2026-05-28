@@ -87,3 +87,13 @@
     cursor: pointer;
   }
 }
+
+@import "tailwindcss-safe-area";
+
+@utility h-safe-top {
+  height: env(safe-area-inset-top);
+}
+
+@utility h-safe-bottom {
+  height: env(safe-area-inset-bottom);
+}
