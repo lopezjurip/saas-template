@@ -33,10 +33,10 @@ test.describe("owner creates first tenant", () => {
     await page.getByLabel("Contraseña").fill(password);
     await page.getByRole("button", { name: "Iniciar sesión" }).click();
 
-    // Onboarding is not a hard gate (see apps/platform/proxy.ts:161-164), but a freshly-created
-    // user lands on /onboarding by default. Force-navigate to the tenant creator instead — the
+    // Onboarding is not a hard gate. A freshly-created user lands on /home (with a banner
+    // nudging back to /auth/onboarding). Force-navigate to the tenant creator instead — the
     // onboarding journey is exercised by its own spec.
-    await page.waitForURL(/\/(onboarding|dashboard)/);
+    await page.waitForURL(/\/(auth\/onboarding|home)/);
     await page.goto("/es/tenants/create");
 
     // ----- create tenant -----

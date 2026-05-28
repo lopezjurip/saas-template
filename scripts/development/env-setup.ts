@@ -90,3 +90,5 @@ if (DATABASE_URL.length > 0) {
   writeFileSync(CLAUDE_SETTINGS_PATH, `${JSON.stringify(settings, null, 2)}\n`);
   console.log("wrote DATABASE_URL into .claude/settings.local.json (restart Claude to pick it up)");
 }
+
+console.log("✅ done env.setup.ts");

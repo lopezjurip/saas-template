@@ -1,17 +1,27 @@
+import { SINGLE } from "@packages/utils/array";
+import { AuthCard } from "~/app/[locale]/auth/_components/auth-card";
+import { AuthHeader } from "~/app/[locale]/auth/_components/auth-header";
 import { BackToAuthLink } from "~/app/[locale]/auth/_components/back-to-auth-link";
+import { StepHeader } from "~/app/[locale]/auth/_components/step2-shell";
+import { IdentityChip } from "~/components/identity/chips";
 import { LoginForm } from "./login-form";
 
-type SearchParams = Promise<{ phone?: string }>;
-type Params = Promise<{ locale: string }>;
-
-export default async function PhoneLoginPage({ searchParams, params }: { searchParams: SearchParams; params: Params }) {
-  const sp = await searchParams;
-  const { locale } = await params;
+export default async function PhoneLoginPage(props: PageProps<"/[locale]/auth/phone/login">) {
+  const sp = await props.searchParams;
+  const { locale } = await props.params;
+  const phone = SINGLE(sp["phone"]) ?? "";
+  const next = SINGLE(sp["next"]) ?? "/";
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-center text-sm font-medium">Iniciar sesión</h2>
-      <LoginForm defaultPhone={sp["phone"] ?? ""} />
-      <BackToAuthLink locale={locale} />
-    </div>
+    <AuthCard>
+      <div className="flex flex-col gap-5">
+        <AuthHeader small />
+        <StepHeader backHref={`/${locale}/auth`} title="Iniciar sesión" subtitle="Elige cómo quieres continuar" />
+        {phone && (
+          <IdentityChip kind="phone" value={phone} href={`/${locale}/auth/phone?next=${encodeURIComponent(next)}`} />
+        )}
+        <LoginForm defaultPhone={phone} />
+        <BackToAuthLink locale={locale} />
+      </div>
+    </AuthCard>
   );
 }

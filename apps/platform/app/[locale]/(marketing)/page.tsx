@@ -68,7 +68,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         ) : null}
         <CardFooter>
           <Button asChild className="w-full">
-            <Link href={user ? `/${locale}/dashboard` : `/${locale}/auth`}>
+            <Link href={user ? `/${locale}/home` : `/${locale}/auth`}>
               {user ? t("cta.dashboard") : t("cta.signin")}
             </Link>
           </Button>

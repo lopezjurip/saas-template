@@ -15,7 +15,7 @@ select is(internal.reserved_slug_validate('my-company-2026'), true, 'kebab-case 
 -- Seeded reserved slugs are rejected.
 select is(internal.reserved_slug_validate('admin'), false, 'reserved "admin" is rejected');
 select is(internal.reserved_slug_validate('en'), false, 'reserved locale "en" is rejected');
-select is(internal.reserved_slug_validate('dashboard'), false, 'reserved "dashboard" is rejected');
+select is(internal.reserved_slug_validate('home'), false, 'reserved "home" is rejected');
 
 -- Malformed slugs (regex fail) are also rejected.
 select is(internal.reserved_slug_validate('UPPERCASE'), false, 'uppercase slug is rejected (slug_validate)');

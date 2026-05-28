@@ -48,10 +48,10 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
   );
 
   const items = [
-    { Icon: User, label: t("account"), href: `/${locale}/dashboard/account` },
-    { Icon: CreditCard, label: t("billing"), href: `/${locale}/dashboard/account` },
-    { Icon: KeyRound, label: t("tokens"), href: `/${locale}/dashboard/account` },
-    { Icon: Bell, label: t("notifications"), href: `/${locale}/dashboard/account` },
+    { Icon: User, label: t("account"), href: `/${locale}/home/account/profile` },
+    { Icon: CreditCard, label: t("billing"), href: `/${locale}/home/account/profile` },
+    { Icon: KeyRound, label: t("tokens"), href: `/${locale}/home/account/tokens` },
+    { Icon: Bell, label: t("notifications"), href: `/${locale}/home/account/notifications` },
   ];
 
   return (

@@ -128,9 +128,10 @@ export async function proxy(request: NextRequest) {
 
   const { response: sessionResponse, supabase } = await updateSession(request);
 
-  // Tenant subdomain: send /auth/* and /onboarding/* back to the apex so auth lives at one origin.
+  // Tenant subdomain: send /auth/* back to the apex so auth lives at one origin.
+  // `/auth/onboarding/*` lives under /auth now, so this single prefix check covers it.
   if (slugFromHost) {
-    if (pathAfterLocale.startsWith("/auth") || pathAfterLocale.startsWith("/onboarding")) {
+    if (pathAfterLocale.startsWith("/auth")) {
       const url = new URL(`/${locale}${pathAfterLocale}`, `${proto}://${APP_HOST}`);
       url.search = request.nextUrl.search;
       return setLocaleCookieOnResponse(NextResponse.redirect(url), locale);
@@ -143,7 +144,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Apex public routes — no auth required, but logged-in users shouldn't see the auth entry pages
-  // (the form's server action gets bound to the wrong route after a client transition from /dashboard
+  // (the form's server action gets bound to the wrong route after a client transition from /home
   // and posts to the previous URL, producing "unexpected response from server").
   if (isApex && isLocalizedPublicPath(pathAfterLocale)) {
     const isAuthEntryPath = pathAfterLocale === "/auth" || pathAfterLocale.startsWith("/auth/email");
@@ -153,7 +154,7 @@ export async function proxy(request: NextRequest) {
       } = await supabase.auth.getSession();
       if (session) {
         return setLocaleCookieOnResponse(
-          NextResponse.redirect(new URL(`/${locale}/dashboard`, `${proto}://${APP_HOST}`)),
+          NextResponse.redirect(new URL(`/${locale}/home`, `${proto}://${APP_HOST}`)),
           locale,
         );
       }
@@ -175,7 +176,7 @@ export async function proxy(request: NextRequest) {
   // Hook-injected claims (tenants) only exist in the JWT, not on the DB user record.
   // The `onboarded` claim is no longer used as a gate here — onboarding completion is
   // surfaced to users via page-level UX (e.g. a banner / nudge) rather than a hard redirect,
-  // so users can land on /dashboard or any other route mid-onboarding without being bounced.
+  // so users can land on /home or any other route mid-onboarding without being bounced.
   const claims = JWT_DECODE_PAYLOAD(session.access_token) as JwtPayload | null;
   const tenants = claims?.["app_metadata"]?.["tenants"] ?? [];
 

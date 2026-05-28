@@ -1,6 +1,7 @@
 import { createServerClient } from "@packages/supabase/client.server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { RESOLVE_AUTH_NEXT } from "~/lib/auth-next";
 import { debug } from "~/lib/debug";
 
 const log = debug("auth:confirm");
@@ -18,24 +19,12 @@ function IS_ALLOWED_TYPE(value: string | null): value is EmailOtpType {
   return !!value && ALLOWED_TYPES.has(value as EmailOtpType);
 }
 
-function RESOLVE_NEXT(rawNext: string | null, origin: string, locale: string): string {
-  const fallback = `${origin}/${locale}/dashboard`;
-  if (!rawNext) return fallback;
-  try {
-    const candidate = new URL(rawNext, origin);
-    if (candidate.origin !== origin) return fallback;
-    return candidate.toString();
-  } catch {
-    return fallback;
-  }
-}
-
-export async function GET(request: NextRequest, { params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
+export async function GET(request: NextRequest, ctx: RouteContext<"/[locale]/auth/confirm">) {
+  const { locale } = await ctx.params;
   const { searchParams, origin } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const rawType = searchParams.get("type");
-  const next = RESOLVE_NEXT(searchParams.get("next"), origin, locale);
+  const next = RESOLVE_AUTH_NEXT(searchParams.get("next"), origin, locale);
 
   if (!token_hash || !IS_ALLOWED_TYPE(rawType)) {
     log.warn("confirm hit with missing or invalid params", { has_token: !!token_hash, type: rawType });

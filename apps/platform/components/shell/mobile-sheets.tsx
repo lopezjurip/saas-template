@@ -169,7 +169,7 @@ export function MobileOrgSheet({
       </div>
       <div className="border-border border-t px-2 py-2">
         <Link
-          href={`/${locale}/dashboard`}
+          href={`/${locale}/home`}
           onClick={onClose}
           className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-[14px]"
         >
@@ -202,10 +202,10 @@ export function MobileProfileSheet({
 }) {
   const { t } = useRosetta(LOCALES);
   const items = [
-    { Icon: User, label: t("account"), href: `/${locale}/dashboard/account` },
-    { Icon: CreditCard, label: t("billing"), href: `/${locale}/dashboard/account` },
-    { Icon: KeyRound, label: t("tokens"), href: `/${locale}/dashboard/account` },
-    { Icon: Bell, label: t("notifications"), href: `/${locale}/dashboard/account` },
+    { Icon: User, label: t("account"), href: `/${locale}/home/account/profile` },
+    { Icon: CreditCard, label: t("billing"), href: `/${locale}/home/account/profile` },
+    { Icon: KeyRound, label: t("tokens"), href: `/${locale}/home/account/tokens` },
+    { Icon: Bell, label: t("notifications"), href: `/${locale}/home/account/notifications` },
   ];
 
   return (

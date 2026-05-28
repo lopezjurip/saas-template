@@ -1,40 +1,26 @@
-import { BackToAuthLink } from "~/app/[locale]/auth/_components/back-to-auth-link";
-import type { Metadata } from "next";
-import { ROSETTA } from "~/lib/i18n";
+import { SINGLE } from "@packages/utils/array";
+import { IdentityChip } from "~/components/identity/chips";
+import { AuthCard } from "../../_components/auth-card";
+import { AuthHeader } from "../../_components/auth-header";
+import { StepHeader } from "../../_components/step2-shell";
 import { LoginForm } from "./login-form";
 
-type SearchParams = Promise<{ email?: string; has_passkey?: string }>;
-type Params = Promise<{ locale: string }>;
+export default async function EmailLoginPage(props: PageProps<"/[locale]/auth/email/login">) {
+  const sp = await props.searchParams;
+  const { locale } = await props.params;
+  const email = SINGLE(sp["email"]) ?? "";
+  const hasPasskey = SINGLE(sp["has_passkey"]) === "1";
+  const next = SINGLE(sp["next"]) ?? "/";
+  const changeHref = `/${locale}/auth/email${next ? `?next=${encodeURIComponent(next)}` : ""}`;
 
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { locale } = await params;
-  const { t } = ROSETTA(LOCALES, locale);
-  return { title: t("heading") };
-}
-
-export default async function EmailLoginPage({ searchParams, params }: { searchParams: SearchParams; params: Params }) {
-  const sp = await searchParams;
-  const { locale } = await params;
-  const { t } = ROSETTA(LOCALES, locale);
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-center text-sm font-medium">{t("heading")}</h2>
-      <LoginForm defaultEmail={sp["email"] ?? ""} hasPasskey={sp["has_passkey"] === "1"} />
-      <BackToAuthLink locale={locale} />
-    </div>
+    <AuthCard>
+      <div className="flex flex-col gap-5">
+        <AuthHeader small />
+        <StepHeader backHref={`/${locale}/auth`} title="Iniciar sesión" subtitle="Elige cómo quieres continuar" />
+        <IdentityChip kind="email" value={email} href={changeHref} />
+        <LoginForm defaultEmail={email} hasPasskey={hasPasskey} />
+      </div>
+    </AuthCard>
   );
 }
-
-const LOCALE_ES = {
-  heading: "Iniciar sesión",
-};
-
-const LOCALE_EN: typeof LOCALE_ES = {
-  heading: "Sign in",
-};
-
-const LOCALE_PT: typeof LOCALE_ES = {
-  heading: "Entrar",
-};
-
-const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

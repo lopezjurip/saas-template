@@ -49,5 +49,5 @@ export const verifyLoginOtp = action.inputSchema(verifyOtpSchema).action(async (
 
   log.info("phone login succeeded", { phone: parsedInput.phone });
   const locale = await getServerLocale();
-  redirect(`/${locale}/dashboard`);
+  redirect(`/${locale}/home`);
 });

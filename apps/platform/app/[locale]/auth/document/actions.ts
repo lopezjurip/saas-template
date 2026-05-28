@@ -157,5 +157,5 @@ export const actionVerifyDocumentLoginOtp = action.inputSchema(verifyLoginOtpSch
 
   log.info("document login succeeded", { channel });
   const locale = await getServerLocale();
-  redirect(`/${locale}/dashboard`);
+  redirect(`/${locale}/home`);
 });

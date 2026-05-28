@@ -231,12 +231,29 @@ export type MembersPendingInvitationsCancelMutationMutation = {
   updatemembershipsCollection: { affectedCount: number };
 };
 
-export type AccountPageQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type OnboardingProfileFormUpdateNameMutationMutationVariables = Exact<{
+  profile_id: string;
+  profile_name_full: string;
+}>;
 
-export type AccountPageQueryQuery = {
+export type OnboardingProfileFormUpdateNameMutationMutation = { updateprofilesCollection: { affectedCount: number } };
+
+export type ProfileSectionPageQueryQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ProfileSectionPageQueryQuery = { profile: { profile_id: string; profile_name_full: string | null } | null };
+
+export type ProfileSectionUpdateNameMutationMutationVariables = Exact<{
+  profile_id: string;
+  profile_name_full: string;
+}>;
+
+export type ProfileSectionUpdateNameMutationMutation = { updateprofilesCollection: { affectedCount: number } };
+
+export type SecuritySectionPageQueryQueryVariables = Exact<{ [key: string]: never }>;
+
+export type SecuritySectionPageQueryQuery = {
   profile: {
     profile_id: string;
-    profile_name_full: string | null;
     webauthn_credentialsCollection: {
       edges: Array<{
         node: {
@@ -252,24 +269,17 @@ export type AccountPageQueryQuery = {
   } | null;
 };
 
-export type AccountPasskeysSectionDeleteMutationMutationVariables = Exact<{
+export type SecurityPasskeysListDeleteMutationMutationVariables = Exact<{
   webauthn_credential_id: string;
 }>;
 
-export type AccountPasskeysSectionDeleteMutationMutation = {
+export type SecurityPasskeysListDeleteMutationMutation = {
   deleteFromwebauthn_credentialsCollection: { affectedCount: number };
 };
 
-export type AccountProfileFormUpdateNameMutationMutationVariables = Exact<{
-  profile_id: string;
-  profile_name_full: string;
-}>;
+export type HomePickerPageQueryQueryVariables = Exact<{ [key: string]: never }>;
 
-export type AccountProfileFormUpdateNameMutationMutation = { updateprofilesCollection: { affectedCount: number } };
-
-export type DashboardPageQueryQueryVariables = Exact<{ [key: string]: never }>;
-
-export type DashboardPageQueryQuery = {
+export type HomePickerPageQueryQuery = {
   viewer_organizations: {
     edges: Array<{
       node: {
@@ -281,13 +291,6 @@ export type DashboardPageQueryQuery = {
     }>;
   } | null;
 };
-
-export type OnboardingNameStepUpdateNameMutationMutationVariables = Exact<{
-  profile_id: string;
-  profile_name_full: string;
-}>;
-
-export type OnboardingNameStepUpdateNameMutationMutation = { updateprofilesCollection: { affectedCount: number } };
 
 export type HealthQueryQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -753,11 +756,44 @@ export const MembersPendingInvitationsCancelMutationDocument = new TypedDocument
   MembersPendingInvitationsCancelMutationMutation,
   MembersPendingInvitationsCancelMutationMutationVariables
 >;
-export const AccountPageQueryDocument = new TypedDocumentString(`
-    query AccountPageQuery {
+export const OnboardingProfileFormUpdateNameMutationDocument = new TypedDocumentString(`
+    mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
+  updateprofilesCollection(
+    filter: {profile_id: {eq: $profile_id}}
+    set: {profile_name_full: $profile_name_full}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<
+  OnboardingProfileFormUpdateNameMutationMutation,
+  OnboardingProfileFormUpdateNameMutationMutationVariables
+>;
+export const ProfileSectionPageQueryDocument = new TypedDocumentString(`
+    query ProfileSectionPageQuery {
   profile: viewer_profile {
     profile_id
     profile_name_full
+  }
+}
+    `) as unknown as TypedDocumentString<ProfileSectionPageQueryQuery, ProfileSectionPageQueryQueryVariables>;
+export const ProfileSectionUpdateNameMutationDocument = new TypedDocumentString(`
+    mutation ProfileSectionUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
+  updateprofilesCollection(
+    filter: {profile_id: {eq: $profile_id}}
+    set: {profile_name_full: $profile_name_full}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<
+  ProfileSectionUpdateNameMutationMutation,
+  ProfileSectionUpdateNameMutationMutationVariables
+>;
+export const SecuritySectionPageQueryDocument = new TypedDocumentString(`
+    query SecuritySectionPageQuery {
+  profile: viewer_profile {
+    profile_id
     webauthn_credentialsCollection(
       orderBy: [{webauthn_credential_created_at: DescNullsLast}]
     ) {
@@ -774,9 +810,9 @@ export const AccountPageQueryDocument = new TypedDocumentString(`
     }
   }
 }
-    `) as unknown as TypedDocumentString<AccountPageQueryQuery, AccountPageQueryQueryVariables>;
-export const AccountPasskeysSectionDeleteMutationDocument = new TypedDocumentString(`
-    mutation AccountPasskeysSectionDeleteMutation($webauthn_credential_id: UUID!) {
+    `) as unknown as TypedDocumentString<SecuritySectionPageQueryQuery, SecuritySectionPageQueryQueryVariables>;
+export const SecurityPasskeysListDeleteMutationDocument = new TypedDocumentString(`
+    mutation SecurityPasskeysListDeleteMutation($webauthn_credential_id: UUID!) {
   deleteFromwebauthn_credentialsCollection(
     filter: {webauthn_credential_id: {eq: $webauthn_credential_id}}
   ) {
@@ -784,24 +820,11 @@ export const AccountPasskeysSectionDeleteMutationDocument = new TypedDocumentStr
   }
 }
     `) as unknown as TypedDocumentString<
-  AccountPasskeysSectionDeleteMutationMutation,
-  AccountPasskeysSectionDeleteMutationMutationVariables
+  SecurityPasskeysListDeleteMutationMutation,
+  SecurityPasskeysListDeleteMutationMutationVariables
 >;
-export const AccountProfileFormUpdateNameMutationDocument = new TypedDocumentString(`
-    mutation AccountProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
-  updateprofilesCollection(
-    filter: {profile_id: {eq: $profile_id}}
-    set: {profile_name_full: $profile_name_full}
-  ) {
-    affectedCount
-  }
-}
-    `) as unknown as TypedDocumentString<
-  AccountProfileFormUpdateNameMutationMutation,
-  AccountProfileFormUpdateNameMutationMutationVariables
->;
-export const DashboardPageQueryDocument = new TypedDocumentString(`
-    query DashboardPageQuery {
+export const HomePickerPageQueryDocument = new TypedDocumentString(`
+    query HomePickerPageQuery {
   viewer_organizations(
     filter: {organization_disabled_at: {is: NULL}}
     orderBy: [{organization_name: AscNullsLast}]
@@ -820,20 +843,7 @@ export const DashboardPageQueryDocument = new TypedDocumentString(`
     }
   }
 }
-    `) as unknown as TypedDocumentString<DashboardPageQueryQuery, DashboardPageQueryQueryVariables>;
-export const OnboardingNameStepUpdateNameMutationDocument = new TypedDocumentString(`
-    mutation OnboardingNameStepUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
-  updateprofilesCollection(
-    filter: {profile_id: {eq: $profile_id}}
-    set: {profile_name_full: $profile_name_full}
-  ) {
-    affectedCount
-  }
-}
-    `) as unknown as TypedDocumentString<
-  OnboardingNameStepUpdateNameMutationMutation,
-  OnboardingNameStepUpdateNameMutationMutationVariables
->;
+    `) as unknown as TypedDocumentString<HomePickerPageQueryQuery, HomePickerPageQueryQueryVariables>;
 export const HealthQueryDocument = new TypedDocumentString(`
     query HealthQuery {
   health_current_timestamp

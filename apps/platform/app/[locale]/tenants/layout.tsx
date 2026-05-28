@@ -2,13 +2,8 @@ import { Logo } from "@packages/ui-common/logo";
 import { Card, CardHeader, CardTitle } from "@packages/ui-common/shadcn/components/ui/card";
 import Link from "next/link";
 
-export default async function TenantsLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
-}) {
+export default async function TenantsLayout(props: LayoutProps<"/[locale]/tenants">) {
+  const { children, params } = props;
   const { locale } = await params;
   return (
     <main className="bg-muted flex min-h-svh items-center justify-center p-6">

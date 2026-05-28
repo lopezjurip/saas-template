@@ -1,31 +1,34 @@
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { SINGLE } from "@packages/utils/array";
 import Link from "next/link";
-import { ROSETTA } from "~/lib/i18n";
+import { AuthCard } from "~/app/[locale]/auth/_components/auth-card";
+import { AuthHeader } from "~/app/[locale]/auth/_components/auth-header";
 import { AcceptForm } from "./accept-form";
 
-type SearchParams = Promise<{ token?: string }>;
-type Params = Promise<{ locale: string }>;
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthCard>
+      <div className="flex flex-col gap-5">
+        <AuthHeader small />
+        {children}
+      </div>
+    </AuthCard>
+  );
+}
 
-export default async function AcceptInvitationPage({
-  searchParams,
-  params,
-}: {
-  searchParams: SearchParams;
-  params: Params;
-}) {
-  const sp = await searchParams;
-  const { locale } = await params;
-  const { t } = ROSETTA(LOCALES, locale);
-  const token = sp["token"];
+export default async function AcceptInvitationPage(props: PageProps<"/[locale]/auth/document/accept">) {
+  const sp = await props.searchParams;
+  const { locale } = await props.params;
+  const token = SINGLE(sp["token"]);
 
   if (!token) {
     return (
-      <div className="flex flex-col gap-4">
+      <Shell>
         <Alert variant="destructive">
-          <AlertDescription>{t("missing_token")}</AlertDescription>
+          <AlertDescription>Falta el token de invitación.</AlertDescription>
         </Alert>
-      </div>
+      </Shell>
     );
   }
 
@@ -40,96 +43,58 @@ export default async function AcceptInvitationPage({
 
   if (error || !data) {
     return (
-      <div className="flex flex-col gap-4">
+      <Shell>
         <Alert variant="destructive">
-          <AlertDescription>{t("not_found")}</AlertDescription>
+          <AlertDescription>Invitación no encontrada.</AlertDescription>
         </Alert>
         <Link href={`/${locale}/auth`} className="text-muted-foreground text-center text-xs hover:underline">
-          {t("back")}
+          ← Volver
         </Link>
-      </div>
+      </Shell>
     );
   }
 
   if (data["membership_revoked_at"] || data["membership_rejected_at"]) {
     return (
-      <div className="flex flex-col gap-4">
+      <Shell>
         <Alert variant="destructive">
-          <AlertDescription>{t("revoked")}</AlertDescription>
+          <AlertDescription>Esta invitación fue cancelada.</AlertDescription>
         </Alert>
-      </div>
+      </Shell>
     );
   }
 
   if (data["membership_accepted_at"] || data["profile_id"]) {
     return (
-      <div className="flex flex-col gap-4">
+      <Shell>
         <Alert>
-          <AlertDescription>{t("already_accepted")}</AlertDescription>
+          <AlertDescription>Esta invitación ya fue aceptada. Inicia sesión normalmente.</AlertDescription>
         </Alert>
         <Link href={`/${locale}/auth`} className="text-muted-foreground text-center text-xs hover:underline">
-          {t("go_home")}
+          Ir al inicio
         </Link>
-      </div>
+      </Shell>
     );
   }
 
   if (data["membership_invite_expires_at"] && new Date(data["membership_invite_expires_at"]) <= new Date()) {
     return (
-      <div className="flex flex-col gap-4">
+      <Shell>
         <Alert variant="destructive">
-          <AlertDescription>{t("expired")}</AlertDescription>
+          <AlertDescription>Esta invitación expiró. Pide a tu empleador que te invite de nuevo.</AlertDescription>
         </Alert>
-      </div>
+      </Shell>
     );
   }
 
-  const orgName = data["organizations"]?.["organization_name"] ?? t("default_org");
+  const orgName = data["organizations"]?.["organization_name"] ?? "una organización";
   const tenantName = data["organizations"]?.["tenants"]?.["tenant_name"];
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-center text-sm font-medium">{t("join", { org: orgName })}</h2>
+    <Shell>
+      <h2 className="text-center text-sm font-medium">Únete a {orgName}</h2>
       {tenantName && <p className="text-muted-foreground text-center text-xs">{tenantName}</p>}
       <AcceptForm token={token} defaultEmail={data["membership_invite_email"] ?? ""} />
-    </div>
+    </Shell>
   );
 }
-
-const LOCALE_ES = {
-  missing_token: "Falta el token de invitación.",
-  not_found: "Invitación no encontrada.",
-  revoked: "Esta invitación fue cancelada.",
-  already_accepted: "Esta invitación ya fue aceptada. Inicia sesión normalmente.",
-  expired: "Esta invitación expiró. Pide a tu empleador que te invite de nuevo.",
-  back: "← Volver",
-  go_home: "Ir al inicio",
-  join: "Únete a {{org}}",
-  default_org: "una organización",
-};
-
-const LOCALE_EN: typeof LOCALE_ES = {
-  missing_token: "Missing invitation token.",
-  not_found: "Invitation not found.",
-  revoked: "This invitation was cancelled.",
-  already_accepted: "This invitation was already accepted. Sign in normally.",
-  expired: "This invitation expired. Ask your employer to invite you again.",
-  back: "← Back",
-  go_home: "Go to home",
-  join: "Join {{org}}",
-  default_org: "an organization",
-};
-
-const LOCALE_PT: typeof LOCALE_ES = {
-  missing_token: "Token de convite ausente.",
-  not_found: "Convite não encontrado.",
-  revoked: "Este convite foi cancelado.",
-  already_accepted: "Este convite já foi aceito. Faça login normalmente.",
-  expired: "Este convite expirou. Peça ao seu empregador para te convidar novamente.",
-  back: "← Voltar",
-  go_home: "Ir para o início",
-  join: "Junte-se a {{org}}",
-  default_org: "uma organização",
-};
-
-const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

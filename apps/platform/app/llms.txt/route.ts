@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 > for HR/payroll administrators.
 
 The marketing site has two locales (Spanish / English). The product itself
-(/dashboard, tenant subdomains, /onboarding) is auth-gated and not exposed
+(/home, /auth/onboarding, tenant subdomains) is auth-gated and not exposed
 here.
 
 ## Pages

@@ -170,5 +170,5 @@ export const actionVerifyDocumentSignup = action.inputSchema(verifyOtpSchema).ac
   if (tenant_slug) {
     redirect(`/${locale}/${tenant_slug}`);
   }
-  redirect(`/${locale}/dashboard`);
+  redirect(`/${locale}/home`);
 });

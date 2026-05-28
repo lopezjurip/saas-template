@@ -37,10 +37,8 @@ export default async function MarketingLayout({
           <div className="ml-auto flex items-center gap-2">
             <LocaleToggle />
             <ThemeToggle />
-            <Button asChild size="sm">
-              <Link href={user ? `/${locale}/dashboard` : `/${locale}/auth`}>
-                {user ? t("cta.dashboard") : t("cta.signin")}
-              </Link>
+            <Button asChild size="sm" className="cursor-pointer">
+              <a href={user ? `/${locale}/home` : `/${locale}/auth`}>{user ? t("cta.dashboard") : t("cta.signin")}</a>
             </Button>
           </div>
         </div>

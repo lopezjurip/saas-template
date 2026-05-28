@@ -1,34 +1,12 @@
-import { Logo } from "@packages/ui-common/logo";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@packages/ui-common/shadcn/components/ui/card";
-import Link from "next/link";
+// Shared shell for every /auth/* page. The card width is up to each child page
+// (entry/email/phone use 420px; onboarding hub uses 460px) so we don't constrain
+// it here — just centre vertically + paint the background.
+
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
 
 export default async function AuthLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
-  return (
-    <main className="bg-muted flex min-h-svh items-center justify-center p-6">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="items-center text-center">
-          <CardTitle>
-            <Link href={`/${locale}`} aria-label="Inicio" className="inline-block transition-opacity hover:opacity-80">
-              <Logo />
-            </Link>
-          </CardTitle>
-          <CardDescription>HR y Nómina para empresas chilenas</CardDescription>
-        </CardHeader>
-        <CardContent>{children}</CardContent>
-      </Card>
-    </main>
-  );
+  className,
+  ...props
+}: LayoutProps<"/[locale]/auth"> & React.ComponentProps<"main">) {
+  return <main className={cn("bg-muted/60 flex min-h-svh items-center justify-center p-6", className)} {...props} />;
 }

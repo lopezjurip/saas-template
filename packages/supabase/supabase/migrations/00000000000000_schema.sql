@@ -373,7 +373,7 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 -- to apply in the admin UI); it carries no enforcement.
 
 -- internal.reserved_slugs — list of slugs that cannot be used as tenant identifiers
--- because they collide with first-party routes (`/auth`, `/dashboard`, etc.) or with
+-- because they collide with first-party routes (`/auth`, `/home`, etc.) or with
 -- BCP47 locale codes. Seeded in seed.sql. The CHECK on `public.tenants.tenant_slug`
 -- calls `internal.reserved_slug_validate()` which combines the slug-shape check with
 -- a lookup here.
@@ -997,7 +997,7 @@ alter table public.webauthn_credentials enable row level security;
 -- apps/platform/lib/passkeys.actions.ts). No authenticated policies — clients
 -- never touch this table directly. Default-deny keeps anon + authenticated out.
 
--- Credentials: clients only read their own list (dashboard) and delete their own
+-- Credentials: clients only read their own list (/home/account/security) and delete their own
 -- (passkey revocation). Inserts + updates happen exclusively via service-role
 -- Server Actions, so authenticated INSERT/UPDATE policies are intentionally absent
 -- — that closes the "user fabricates rows bypassing the WebAuthn ceremony" vector.

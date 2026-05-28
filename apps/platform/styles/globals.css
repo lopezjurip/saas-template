@@ -1,3 +1,4 @@
 @import "tailwindcss";
 @import "@packages/ui-common/shadcn/globals.css";
+@import "./auth.css";
 @source "../../../packages/ui-common/src";

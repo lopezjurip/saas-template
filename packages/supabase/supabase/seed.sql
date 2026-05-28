@@ -16,15 +16,14 @@ insert into internal.reserved_slugs (reserved_slug) values
   ('assets'),
   ('auth'),
   ('cdn'),
-  ('dashboard'),
   ('en'),
   ('es'),
   ('pt'),
   ('health'),
+  ('home'),
   ('legal'),
   ('me'),
   ('notifications'),
-  ('onboarding'),
   ('public'),
   ('static'),
   ('support'),
@@ -148,7 +147,7 @@ join (values
 ) as perm (organization_id, profile_id, permission_id)
   on perm.organization_id = sm.organization_id and perm.profile_id = sm.profile_id;
 
--- Mark seed users as onboarded so manual end-to-end testing skips /onboarding.
+-- Mark seed users as onboarded so manual end-to-end testing skips the /auth/onboarding nudge.
 update public.profiles
   set profile_onboarded_at = current_timestamp
   where profile_id in (

@@ -45,9 +45,9 @@ humane/
 │       ├── app/
 │       │   ├── page.tsx              # / — marketing landing (public)
 │       │   ├── health/route.ts       # /health — canonical health check (public)
-│       │   ├── auth/                 # /auth/* — sign in, sign up, callback, logout (public)
-│       │   ├── onboarding/           # /onboarding — first-run setup (auth required, onboarded check off)
-│       │   ├── dashboard/page.tsx    # /dashboard — post-auth tenant picker
+│       │   ├── auth/                 # /auth/* — sign in/up, callback, logout, onboarding hub + 6 substeps (public)
+│       │   ├── home/page.tsx         # /home — post-auth org picker (always shown, no auto-redirect)
+│       │   ├── home/account/         # /home/account/[section] — profile, security, sessions, etc.
 │       │   ├── tenants/create/       # /tenants/create — new tenant flow
 │       │   └── [tenant_slug]/        # /[slug]/* — tenant product (proxy rewrites {slug}.<apex>/* here)
 │       │       ├── admin/            # Contadora / HR admin surface (future)
@@ -78,8 +78,8 @@ humane/
 
 Hostname determines whether a request enters tenant context:
 
-- `<apex>/...` and `www.<apex>/...` → main site. URL path picks the page (`/`, `/auth`, `/onboarding`, `/dashboard`, `/tenants/create`, `/[tenant_slug]/...`).
-- `{slug}.<apex>/...` → `apps/platform/proxy.ts` rewrites to `/{slug}{path}` so the same `[tenant_slug]` route renders. `/auth/*`, `/onboarding/*`, and `/health` on a subdomain redirect back to the apex so auth lives at one origin.
+- `<apex>/...` and `www.<apex>/...` → main site. URL path picks the page (`/`, `/auth/*`, `/home`, `/tenants/create`, `/[tenant_slug]/...`).
+- `{slug}.<apex>/...` → `apps/platform/proxy.ts` rewrites to `/{slug}{path}` so the same `[tenant_slug]` route renders. `/auth/*` (which now includes `/auth/onboarding/*`) and `/health` on a subdomain redirect back to the apex so auth lives at one origin.
 - Custom apex domains (e.g. `center.burgercool.com`) — phase 2; the proxy currently returns 404. Cookies can't span apexes without an SSO redirect/exchange flow.
 
 Where `<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.PORT` (assigned per instance). `lvh.me` + `7003` in dev (Conductor reassigns `PORT` for parallel instances), `resolvecom.com` + implicit `443` in prod.
@@ -87,8 +87,8 @@ Where `<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.POR
 ### Auth + onboarding
 
 - `proxy.ts` calls `updateSession` (`@packages/supabase/client.middleware`) to refresh the JWT cookie, then **decodes the JWT directly** to read hook-injected claims. `auth.getUser()` returns the persisted user record without hook claims — always decode `session.access_token` (or use `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server` which does this internally).
-- Gates, in order: public path bypass → auth (redirect to `/auth?next=…`, `next` derived from the `Host` header since `request.url` drops the subdomain in Next dev) → onboarded (redirect to `/onboarding`) → for tenant subdomains, membership check against JWT `app_metadata.tenants`.
-- Reserved slugs (`auth`, `onboarding`, `dashboard`, `tenants`, `health`, `api`, `_next`, `www`, …) are rejected at tenant creation (`apps/platform/app/tenants/create/schemas.ts`) so they never collide with first-party routes.
+- Gates, in order: public path bypass → auth (redirect to `/auth?next=…`, `next` derived from the `Host` header since `request.url` drops the subdomain in Next dev) → for tenant subdomains, membership check against JWT `app_metadata.tenants`. Onboarding completion is **not** a hard gate — it's surfaced via the /home banner.
+- Reserved slugs (`auth`, `home`, `tenants`, `health`, `api`, `_next`, `www`, …) are rejected at tenant creation (`apps/platform/app/[locale]/tenants/create/schemas.ts`, enforced by `internal.reserved_slug_validate()` in the DB) so they never collide with first-party routes.
 
 ### Local Dev Ports
 
@@ -298,6 +298,36 @@ Inside `declare` blocks in plpgsql functions/triggers, prefix local variables wi
 - Workspace packages: `@packages/ui-common`, `@packages/supabase`, `@packages/kapso`, `@packages/react-email`, `@packages/react-pdf`.
 - App code lives in `apps/platform/`; reusable logic belongs in `@packages/*`.
 
+### Typed route helpers (Next.js 16) — REQUIRED
+
+**Always use `PageProps<"route">` for `page.tsx`, `LayoutProps<"route">` for `layout.tsx`, and `RouteContext<"route">` for `route.ts`.** With `typedRoutes: true` in `next.config.ts`, Next.js generates these as global types under `.next/dev/types/`. Use them instead of hand-rolling `{ params: Promise<...> }` — they stay in sync with the actual file path, so renaming a folder fails the type-check the next time we run `pnpm build:dry`.
+
+```ts
+// page.tsx
+export default async function Page(props: PageProps<"/[locale]/auth/email/login">) {
+  const { locale } = await props.params;
+  const sp = await props.searchParams;
+  const email = SINGLE(sp["email"]) ?? "";
+  // ...
+}
+
+// layout.tsx
+export default async function Layout(props: LayoutProps<"/[locale]/home">) {
+  const { locale } = await props.params;
+  return <main>{props.children}</main>;
+}
+
+// route.ts
+export async function GET(request: NextRequest, ctx: RouteContext<"/[locale]/auth/callback">) {
+  const { locale } = await ctx.params;
+  // ...
+}
+```
+
+`searchParams` is typed as `Record<string, string | string[] | undefined>` because URL params can repeat. Narrow with `SINGLE(sp["foo"])` from `@packages/utils/array` to get the first value as a plain `string | undefined`.
+
+**Exception:** If a `page.tsx` or `layout.tsx` is not `async` and doesn't access `params` or `searchParams`, you don't need typed props — but always make them `async` if you need any server-side capability.
+
 ### Bracket notation for external data
 When reading properties off objects that originated outside the program (GraphQL/REST responses, parsed JSON, file contents, webhook payloads, MCP tool results), use bracket notation — not dot access.
 
@@ -322,6 +352,54 @@ This is a deliberate visual cue: brackets mark "this shape is contractual with a
 - Chilean Spanish for user-facing strings, English for code/comments
 - **Pure functions → `UPPER_CASE`**. A pure function is deterministic on its inputs and has no observable side effects (no I/O, no DB/network/filesystem calls, no `redirect()`, no mutations of arguments, no `Date.now()`/`Math.random()`). Side-effectful or async-with-I/O functions stay `camelCase`. Constants stay `UPPER_CASE` as before. The visual cue is the same idea as bracket notation: at a glance, a caller can tell whether the function is safe to call repeatedly with no observable effect (`SLUGIFY(name)`, `RESOLVE_STEP(state, step)`) vs. one that touches the world (`loadOnboardingState()`, `createTenant(...)`). React components stay PascalCase regardless.
 - **Server Actions → `action*` prefix**. Every exported function from a `"use server"` file gets the `action` prefix (e.g. `actionSetPassword`, `actionUpdateEmail`, `actionDeletePasskey`). Same visual-cue motivation as bracket notation and `UPPER_CASE`: a caller seeing `actionSetPassword(...)` immediately knows it crosses the network into a server roundtrip, without having to chase imports or re-read `"use server"` directives. The prefix replaces verbs like `set`/`update`/`save`/`do` — write `actionSetPassword`, not `actionDoSetPassword`. Applies to both `next-safe-action` actions and `formAction()` adapters (e.g. `actionSignOutForm`).
+- **Named functions, never arrow functions**. Use `function myFn() {}` or `export function myFn() {}`, never `const myFn = () => {}`. Named functions are hoisted (can call before declaration), show up clearly in stack traces, and are clearer to read. The only exception: short inline callbacks in `.map()` / `.filter()` where clarity is obvious from context.
+
+### Hooks & Abstractions
+
+**Avoid thin wrappers.** A hook that just wraps a single SDK call or state setter adds noise without clarity. Prefer direct code:
+
+```ts
+// ❌ Thin wrapper — unnecessary indirection
+function useSetEmail() {
+  const [error, setError] = useState(null);
+  async function setEmail(email: string) {
+    try {
+      await supabase.auth.updateUser({ email });
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+  return { setEmail, error };
+}
+
+// ✅ Call SDK directly in the component, handle error in place
+async function onSubmit(email: string) {
+  try {
+    await supabase.auth.updateUser({ email });
+  } catch (e) {
+    setError(e.message);
+  }
+}
+```
+
+**Encapsulate only when genuinely reusable.** Create a hook when:
+- The same logic + state pattern repeats across 2+ components
+- It reduces boilerplate significantly (e.g., OTP send/verify pair with error/pending state)
+- It's a "headless" hook that owns behavior but returns primitives for the caller to render
+
+Examples:
+- `useOnboardingEmailOtp()` — reused across email form in login + onboarding. ✅
+- `useClipboardCopy()` — just wraps `navigator.clipboard`. Use `react-use` or similar instead. ❌
+
+If a package already does it (react-use, usehooks-ts, etc.), prefer the package. Don't invent.
+
+### Components used only once stay in the same file
+
+Don't extract a component to its own file unless it's reused in 2+ places. Single-use components belong inline in the page/layout that owns them.
+
+**Why:** File proliferation = cognitive overhead (which file is it in? is it truly unreused?), needless indirection, and permission bloat in imports.
+
+**Exception:** If a component is long enough to hurt readability of its parent (>80 lines), move it to a separate file as an implementation detail. Comment why: `// Local component — used only in /auth/page.tsx`.
 
 ### Lint + Build (run in parallel)
 After making changes, run these two commands concurrently — they are independent and safe to parallelize:
@@ -367,6 +445,6 @@ Guidelines:
 - Don't skip legal context in approval flows — inline Art. references are a core differentiator
 - Don't hardcode regulatory values — they change monthly/yearly
 - Don't process payroll without checking `04-legal-regulatory-compendium.md` first
-- Don't use a tenant slug from a reserved-route list (auth, onboarding, dashboard, tenants, health, …) — the schema check in `apps/platform/app/tenants/create/schemas.ts` is the single source of truth
+- Don't use a tenant slug from a reserved-route list (auth, home, tenants, health, …) — the schema check in `apps/platform/app/[locale]/tenants/create/schemas.ts` + `internal.reserved_slugs` is the source of truth
 - Don't read `app_metadata.tenants` / `onboarded` from `auth.getUser()` — those claims live in the JWT only. Use `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server` (or decode `session.access_token` directly in middleware)
 - Don't put shadcn components in `apps/platform/` — they belong in `packages/ui-common/src/shadcn`

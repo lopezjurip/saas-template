@@ -10,6 +10,10 @@ import { sendOtpSchema, verifyOtpSchema } from "./schemas";
 
 const log = debug("auth:phone:signup");
 
+// SERVER-ONLY: Account creation is the highest-value abuse target.
+// Opus analysis: while technically client-side compatible, we keep it server-side as a deliberate
+// seam for future rate-limiting, captcha challenges, and IP-based fraud detection.
+// This is not a technical requirement but a security boundary decision.
 export const sendSignupOtp = action.inputSchema(sendOtpSchema).action(async ({ parsedInput }) => {
   const supabase = await createServerClient();
   const triplet = EXTRACT_DOCUMENT_TRIPLET(parsedInput);
@@ -47,6 +51,8 @@ export const sendSignupOtp = action.inputSchema(sendOtpSchema).action(async ({ p
   return { phone: parsedInput.phone };
 });
 
+// SERVER-ONLY: Paired with sendSignupOtp for consistency.
+// Allows future logging of signup fraud signals and abuse detection patterns.
 export const verifySignupOtp = action.inputSchema(verifyOtpSchema).action(async ({ parsedInput }) => {
   const supabase = await createServerClient();
   const { error } = await supabase.auth.verifyOtp({
@@ -62,5 +68,5 @@ export const verifySignupOtp = action.inputSchema(verifyOtpSchema).action(async 
 
   log.info("phone signup verified", { phone: parsedInput.phone });
   const locale = await getServerLocale();
-  redirect(`/${locale}/onboarding`);
+  redirect(`/${locale}/auth/onboarding`);
 });

@@ -25,7 +25,7 @@ export const signUp = action.inputSchema(signupSchema).action(async ({ parsedInp
         full_name: parsedInput.full_name,
         ...(triplet ? { profile_identity: triplet } : {}),
       },
-      emailRedirectTo: `${origin}/${locale}/onboarding`,
+      emailRedirectTo: `${origin}/${locale}/auth/onboarding`,
     },
   });
 
