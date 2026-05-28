@@ -1,6 +1,5 @@
 -- Journey: privilege-escalation attempts that exercise the layered RLS / DB-backed
--- permission model. Three independent sub-journeys, each pinning an invariant that
--- has no direct coverage today:
+-- permission model. Three independent sub-journeys, each pinning an invariant:
 --
 --   A. Stale-JWT self un-revoke. After an admin revokes a member, the ex-member may
 --      still hold an old JWT claiming the org. They cannot UPDATE their own row to
@@ -11,10 +10,9 @@
 --      preset (even one referencing valid slugs) into their own org. Verifies the
 --      preset trigger does NOT shadow the RLS write policy.
 --
---   C. Concierge read/write split. A user in `protected.concierges` with NO real
---      memberships sees every tenant via the viewer_is_concierge() bypass in SELECT
---      policies, but every write policy is permission-backed and concierge is NOT a
---      permission — so writes are denied without an explicit grant.
+--   C. Agency affiliate read/write split. An agency affiliate with a global grant
+--      sees every tenant via the agency SELECT bypass, but every write policy is
+--      permission-backed (membership grants) — agencies are not a write shortcut.
 
 begin;
 
@@ -43,11 +41,11 @@ insert into auth.users (
   '00000000-0000-0000-0000-000000000000',
   '00000000-0000-0000-0000-00000000eee0',
   'authenticated', 'authenticated',
-  'eve-concierge@humane.test',
+  'eve-affiliate@humane.test',
   crypt('password123', gen_salt('bf')),
   current_timestamp,
   '{"provider":"email","providers":["email"]}'::jsonb,
-  '{"full_name":"Eve Concierge"}'::jsonb,
+  '{"full_name":"Eve Affiliate"}'::jsonb,
   current_timestamp, current_timestamp,
   '', '', '', ''
 );
@@ -184,44 +182,55 @@ select isnt(
 reset role;
 
 -- ============================================================
--- C. Concierge read/write split
+-- C. Agency affiliate read/write split
 --
--- Eve is in protected.concierges with no memberships. She must:
---   - SEE every tenant + every membership (read policies bypass via viewer_is_concierge)
---   - NOT be able to write to any of them (write policies all gate on DB-backed
---     permission slugs; concierge is a flag, not a permission)
+-- Eve is affiliated with the "Humane Platform" agency, which has a global grant ('*').
+-- She must:
+--   - SEE every tenant + every membership (SELECT policies bypass via viewer_agency_permission_org_ids)
+--   - NOT be able to write anywhere (write policies gate on DB-backed permission slugs;
+--     being an agency affiliate is not itself a write permission)
 -- ============================================================
 
 set local role service_role;
-insert into protected.concierges (profile_id) values ('00000000-0000-0000-0000-00000000eee0');
+
+-- Create agency, affiliate Eve, add global wildcard grant.
+insert into public.agencies (agency_id, agency_name, agency_slug)
+  values ('a0000000-0000-0000-0000-000000000001', 'Humane Platform', 'humane-platform');
+
+insert into public.affiliations (agency_id, profile_id, affiliation_accepted_at)
+  values ('a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000eee0', now());
+
+insert into public.agencies_organizations_grants (agency_id, organization_id, permission_id)
+  values ('a0000000-0000-0000-0000-000000000001', null, '*');
+
 reset role;
 
--- Concierge JWT: no orgs / tenants in claims, but is_concierge=true.
+-- Agency affiliate JWT: no orgs / tenants as member, but agencies claim with the agency.
 set local role authenticated;
 set local request.jwt.claims to '{
   "sub": "00000000-0000-0000-0000-00000000eee0",
   "app_metadata": {
     "tenants": [],
     "organizations": [],
-    "is_concierge": true
+    "agencies": [{"id": "a0000000-0000-0000-0000-000000000001"}]
   }
 }';
 
--- Read: concierge sees both tenants (acme + globex).
+-- Read: agency affiliate sees both tenants (acme + globex).
 select set_eq(
   $$ select tenant_slug::text from public.tenants order by 1 $$,
   $$ values ('acme'), ('globex') $$,
-  'concierge sees every tenant via viewer_is_concierge SELECT bypass'
+  'agency affiliate sees every tenant via viewer_agency_tenant_ids SELECT bypass'
 );
 
--- Read: concierge sees every membership (3 from seed; Bob was just revoked above so
--- count includes the revoked row — revocation is a flag, not a hard delete).
+-- Read: agency affiliate sees every membership (3 from seed; Bob was just revoked above
+-- so count includes the revoked row — revocation is a flag, not a hard delete).
 select ok(
   (select count(*) from public.memberships) >= 3,
-  'concierge sees all memberships across orgs (>=3 from seed)'
+  'agency affiliate sees all memberships across orgs (>=3 from seed)'
 );
 
--- Write: concierge cannot grant permissions anywhere (no DB-backed members_manage).
+-- Write: agency affiliate cannot grant permissions anywhere (no DB-backed members_manage).
 prepare eve_grant_alice as
   insert into public.membership_permissions (membership_id, permission_id)
   values ((select alice_org2 from _mids), 'members_manage');
@@ -229,12 +238,12 @@ select throws_ok(
   'execute eve_grant_alice',
   '42501',
   null,
-  'concierge cannot insert membership_permissions (write policy is permission-backed, not concierge-backed)'
+  'agency affiliate cannot insert membership_permissions (write policy is permission-backed, not agency-backed)'
 );
 deallocate eve_grant_alice;
 
--- Write: concierge cannot UPDATE tenant metadata.
-update public.tenants set tenant_name = 'Concierge Hijack' where tenant_id = 1;
+-- Write: agency affiliate cannot UPDATE tenant metadata.
+update public.tenants set tenant_name = 'Agency Hijack' where tenant_id = 1;
 
 reset role;
 set local role service_role;
@@ -242,10 +251,10 @@ set local role service_role;
 select is(
   (select tenant_name from public.tenants where tenant_id = 1),
   'Acme SpA',
-  'concierge UPDATE on tenants is filtered by USING (organization_manage), name unchanged'
+  'agency affiliate UPDATE on tenants is filtered by USING (organization_manage), name unchanged'
 );
 
--- Write: concierge cannot insert a new membership (e.g. invite themselves into acme).
+-- Write: agency affiliate cannot insert a new membership (e.g. invite themselves into acme).
 reset role;
 set local role authenticated;
 set local request.jwt.claims to '{
@@ -253,7 +262,7 @@ set local request.jwt.claims to '{
   "app_metadata": {
     "tenants": [],
     "organizations": [],
-    "is_concierge": true
+    "agencies": [{"id": "a0000000-0000-0000-0000-000000000001"}]
   }
 }';
 
@@ -261,13 +270,13 @@ prepare eve_invite_self as
   insert into public.memberships (
     organization_id, membership_invite_email, membership_invite_token, membership_invite_expires_at
   ) values (
-    1, 'eve-concierge@humane.test', 'tok-eve-self', current_timestamp + interval '7 days'
+    1, 'eve-affiliate@humane.test', 'tok-eve-self', current_timestamp + interval '7 days'
   );
 select throws_ok(
   'execute eve_invite_self',
   '42501',
   null,
-  'concierge cannot insert a new membership (write policy gates on members_manage)'
+  'agency affiliate cannot insert a new membership (write policy gates on members_manage)'
 );
 deallocate eve_invite_self;
 

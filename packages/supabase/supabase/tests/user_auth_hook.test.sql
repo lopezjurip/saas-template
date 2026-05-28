@@ -1,9 +1,9 @@
 -- Verifies the shape of the JWT injected by public.user_auth_hook.
--- The hook runs on token issuance and adds app_metadata.{tenants, organizations, is_concierge, onboarded}.
+-- The hook runs on token issuance and adds app_metadata.{tenants, organizations, agencies, onboarded}.
 
 begin;
 
-select plan(7);
+select plan(8);
 
 -- ============================================================
 -- Alice — member of acme + globex, marked onboarded by seed
@@ -49,12 +49,14 @@ select set_eq(
 );
 
 select is(
-  (public.user_auth_hook(jsonb_build_object(
-    'user_id', '00000000-0000-0000-0000-00000000a11c'::text,
-    'claims', jsonb_build_object('sub', '00000000-0000-0000-0000-00000000a11c')
-  )) -> 'claims' -> 'app_metadata' ->> 'is_concierge'),
-  'false',
-  'Alice is not a concierge'
+  jsonb_array_length(
+    public.user_auth_hook(jsonb_build_object(
+      'user_id', '00000000-0000-0000-0000-00000000a11c'::text,
+      'claims', jsonb_build_object('sub', '00000000-0000-0000-0000-00000000a11c')
+    )) -> 'claims' -> 'app_metadata' -> 'agencies'
+  ),
+  0,
+  'Alice JWT has agencies=[] (not affiliated with any agency)'
 );
 
 -- ============================================================
@@ -82,20 +84,43 @@ select results_eq(
        (public.user_auth_hook(jsonb_build_object(
          'claims', jsonb_build_object('sub', null)
        )) -> 'claims' -> 'app_metadata') $$,
-  $$ values ('{"tenants": [], "onboarded": false, "is_concierge": false, "organizations": []}'::jsonb) $$,
+  $$ values ('{"tenants": [], "agencies": [], "onboarded": false, "organizations": []}'::jsonb) $$,
   'Anonymous (no user_id) gets empty arrays and false flags'
 );
 
--- Concierge promotion: inserting Alice into protected.concierges flips the claim.
-insert into protected.concierges (profile_id) values ('00000000-0000-0000-0000-00000000a11c');
+-- Agency affiliation: affiliating Alice with a new agency flips agencies claim.
+insert into public.agencies (agency_id, agency_name, agency_slug)
+  values ('a0000000-0000-0000-0000-000000000001', 'Test Agency', 'test-agency');
+
+insert into public.affiliations (agency_id, profile_id, affiliation_accepted_at)
+  values ('a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000a11c', now());
 
 select is(
-  (public.user_auth_hook(jsonb_build_object(
-    'user_id', '00000000-0000-0000-0000-00000000a11c'::text,
-    'claims', jsonb_build_object('sub', '00000000-0000-0000-0000-00000000a11c')
-  )) -> 'claims' -> 'app_metadata' ->> 'is_concierge'),
-  'true',
-  'is_concierge=true after protected.concierges insert'
+  jsonb_array_length(
+    public.user_auth_hook(jsonb_build_object(
+      'user_id', '00000000-0000-0000-0000-00000000a11c'::text,
+      'claims', jsonb_build_object('sub', '00000000-0000-0000-0000-00000000a11c')
+    )) -> 'claims' -> 'app_metadata' -> 'agencies'
+  ),
+  1,
+  'Alice JWT has agencies=[{id}] after affiliation insert'
+);
+
+-- Revoking affiliation removes it from the JWT.
+update public.affiliations
+  set affiliation_revoked_at = now()
+  where agency_id = 'a0000000-0000-0000-0000-000000000001'
+    and profile_id = '00000000-0000-0000-0000-00000000a11c';
+
+select is(
+  jsonb_array_length(
+    public.user_auth_hook(jsonb_build_object(
+      'user_id', '00000000-0000-0000-0000-00000000a11c'::text,
+      'claims', jsonb_build_object('sub', '00000000-0000-0000-0000-00000000a11c')
+    )) -> 'claims' -> 'app_metadata' -> 'agencies'
+  ),
+  0,
+  'Alice JWT has agencies=[] after affiliation revoked'
 );
 
 select * from finish();

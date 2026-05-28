@@ -327,7 +327,7 @@ create policy "Users can update own profiles."
   to authenticated
   using (
     profile_disabled_at is null
-    and profile_id = (select viewer_profile_id())
+    and profile_id = (select public.viewer_profile_id())
   );
 
 -- Storage
@@ -841,23 +841,94 @@ insert into public.permission_presets (organization_id, permission_preset_name, 
 on conflict do nothing;
 
 -- ============================================================
--- concierge (global internal role, separate from per-org permissions)
+-- agencies (cross-tenant groups of profiles, e.g. "Equipo Humane", "BDO Auditores")
 -- ============================================================
+-- Agencies are platform-level entities — they don't belong to any tenant.
+-- Profiles can belong to both organizations (as org members) and agencies (as affiliates).
+-- Access is controlled by agency grants (explicit or implicit), not by a binary flag.
 
-create table if not exists protected.concierges (
-  concierge_id uuid not null primary key default internal.uuid_generate_v7(),
-  profile_id uuid not null unique references public.profiles (profile_id) on delete cascade,
-  concierge_disabled_at timestamptz,
-  concierge_created_at timestamptz not null default current_timestamp,
-  concierge_updated_at timestamptz not null default current_timestamp
+create table if not exists public.agencies (
+  agency_id uuid not null primary key default internal.uuid_generate_v7(),
+  agency_name text not null check (char_length(agency_name) between 1 and 100),
+  agency_slug extensions.citext not null unique,
+  agency_disabled_at timestamptz,
+  agency_created_at timestamptz not null default current_timestamp,
+  agency_updated_at timestamptz not null default current_timestamp
 );
 
-grant select, insert, update, delete on protected.concierges to service_role;
+drop trigger if exists handle_agencies_updated_at on public.agencies;
+create trigger handle_agencies_updated_at
+  before update on public.agencies
+  for each row execute procedure extensions.moddatetime(agency_updated_at);
 
-drop trigger if exists handle_concierges_updated_at on protected.concierges;
-create trigger handle_concierges_updated_at
-  before update on protected.concierges
-  for each row execute procedure extensions.moddatetime(concierge_updated_at);
+-- Affiliations: a profile belongs to an agency. Mirrors public.memberships.
+create table if not exists public.affiliations (
+  affiliation_id serial primary key,
+  agency_id uuid not null references public.agencies (agency_id) on delete cascade,
+  profile_id uuid not null references public.profiles (profile_id) on delete cascade,
+  affiliation_accepted_at timestamptz,
+  affiliation_revoked_at timestamptz,
+  affiliation_rejected_at timestamptz,
+  affiliation_created_at timestamptz not null default current_timestamp,
+  affiliation_updated_at timestamptz not null default current_timestamp,
+  unique (agency_id, profile_id)
+);
+
+create index if not exists affiliations_profile_idx on public.affiliations (profile_id);
+
+drop trigger if exists handle_affiliations_updated_at on public.affiliations;
+create trigger handle_affiliations_updated_at
+  before update on public.affiliations
+  for each row execute procedure extensions.moddatetime(affiliation_updated_at);
+
+-- Explicit grants: an agency has a permission in a specific org or globally.
+-- organization_id IS NULL = all orgs. permission_id = '*' = all permissions.
+create table if not exists public.agencies_organizations_grants (
+  agencies_organizations_grant_id uuid not null primary key default internal.uuid_generate_v7(),
+  agency_id uuid not null references public.agencies (agency_id) on delete cascade,
+  organization_id int references public.organizations (organization_id) on delete cascade,
+  permission_id extensions.citext not null references public.permissions (permission_id) on delete cascade,
+  agencies_organizations_grant_created_at timestamptz not null default current_timestamp
+);
+
+-- Separate unique indexes because NULL != NULL in standard UNIQUE constraints.
+create unique index if not exists agencies_organizations_grants_org_unique
+  on public.agencies_organizations_grants (agency_id, organization_id, permission_id)
+  where organization_id is not null;
+
+create unique index if not exists agencies_organizations_grants_global_unique
+  on public.agencies_organizations_grants (agency_id, permission_id)
+  where organization_id is null;
+
+-- Implicit grants: org opt-in. Any active affiliate inherits this permission in this org.
+create table if not exists public.agencies_organizations_implicit_grants (
+  agencies_organizations_implicit_grant_id uuid not null primary key default internal.uuid_generate_v7(),
+  organization_id int not null references public.organizations (organization_id) on delete cascade,
+  permission_id extensions.citext not null references public.permissions (permission_id) on delete cascade,
+  agencies_organizations_implicit_grant_created_at timestamptz not null default current_timestamp,
+  unique (organization_id, permission_id)
+);
+
+-- RLS for agency tables.
+alter table public.agencies enable row level security;
+alter table public.affiliations enable row level security;
+alter table public.agencies_organizations_grants enable row level security;
+alter table public.agencies_organizations_implicit_grants enable row level security;
+
+revoke all on table public.agencies from anon, authenticated;
+grant select on table public.agencies to anon, authenticated;
+
+revoke all on table public.affiliations from anon, authenticated;
+grant select on table public.affiliations to anon, authenticated;
+
+revoke all on table public.agencies_organizations_grants from anon, authenticated;
+grant select on table public.agencies_organizations_grants to anon, authenticated;
+
+revoke all on table public.agencies_organizations_implicit_grants from anon, authenticated;
+grant select on table public.agencies_organizations_implicit_grants to anon, authenticated;
+
+-- Writes on agency tables: service_role only (no authenticated write policies).
+-- RLS SELECT policies for agency tables are defined after viewer_agency_ids() is created.
 
 -- ============================================================
 -- webauthn (passkeys)
@@ -934,13 +1005,13 @@ drop policy if exists "webauthn_credentials select own" on public.webauthn_crede
 create policy "webauthn_credentials select own"
   on public.webauthn_credentials for select
   to authenticated
-  using (profile_id = (select viewer_profile_id()));
+  using (profile_id = (select public.viewer_profile_id()));
 
 drop policy if exists "webauthn_credentials delete own" on public.webauthn_credentials;
 create policy "webauthn_credentials delete own"
   on public.webauthn_credentials for delete
   to authenticated
-  using (profile_id = (select viewer_profile_id()));
+  using (profile_id = (select public.viewer_profile_id()));
 
 -- Anonymous lookup used by /auth root to surface the passkey button only when the
 -- entered email has a passkey registered. Same enumeration-leak posture as email_exists.
@@ -1015,7 +1086,7 @@ create or replace function public.viewer_profile(strict boolean default false)
     declare
       _user_id uuid;
     begin
-      _user_id := viewer_profile_id();
+      _user_id := public.viewer_profile_id();
       return query
         select * from public.profiles
         where profile_id = _user_id and profile_disabled_at is null
@@ -1117,7 +1188,7 @@ create or replace function public.viewer_permission_org_ids(target_permission_id
     select distinct m.organization_id
     from public.membership_permissions mp
     join public.memberships m on m.membership_id = mp.membership_id
-    where m.profile_id = (select viewer_profile_id())
+    where m.profile_id = (select public.viewer_profile_id())
       and m.membership_accepted_at is not null
       and m.membership_revoked_at is null
       and m.membership_rejected_at is null
@@ -1140,7 +1211,7 @@ create or replace function public.viewer_has_permission(
       from public.membership_permissions mp
       join public.memberships m on m.membership_id = mp.membership_id
       where m.organization_id = target_organization_id
-        and m.profile_id = (select viewer_profile_id())
+        and m.profile_id = (select public.viewer_profile_id())
         and m.membership_accepted_at is not null
         and m.membership_revoked_at is null
         and m.membership_rejected_at is null
@@ -1159,25 +1230,155 @@ create or replace function public.viewer_membership_permissions()
     select m.organization_id, mp.permission_id
     from public.membership_permissions mp
     join public.memberships m on m.membership_id = mp.membership_id
-    where m.profile_id = (select viewer_profile_id())
+    where m.profile_id = (select public.viewer_profile_id())
       and m.membership_accepted_at is not null
       and m.membership_revoked_at is null
       and m.membership_rejected_at is null;
   $$;
 
-create or replace function public.viewer_is_concierge()
+-- Agency viewer helpers. JWT-only checks are fast (no DB lookup).
+-- viewer_agency_permission_org_ids / viewer_has_agency_permission / viewer_agency_tenant_ids
+-- use SECURITY DEFINER to bypass RLS on the grant tables they query.
+
+create or replace function public.viewer_agency_ids()
+  returns setof uuid
+  stable
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select (elem ->> 'id')::uuid
+    from jsonb_array_elements(
+      coalesce(
+        nullif(current_setting('request.jwt.claims', true), '')::jsonb
+          -> 'app_metadata' -> 'agencies',
+        '[]'::jsonb
+      )
+    ) elem;
+  $$;
+
+create or replace function public.viewer_is_agency_member()
   returns boolean
   stable
   parallel safe
   language sql
   set search_path to ''
   as $$
-    select coalesce(
-      (nullif(current_setting('request.jwt.claims', true), '')::jsonb
-        -> 'app_metadata' ->> 'is_concierge')::boolean,
-      false
+    select exists (select 1 from public.viewer_agency_ids());
+  $$;
+
+-- Returns org IDs where the viewer has the given permission via any of their agencies.
+-- Covers: (1) explicit per-org grants, (2) global grants (org IS NULL) → all orgs,
+-- (3) implicit org opt-in grants (any active affiliate). Wildcard '*' honored throughout.
+create or replace function public.viewer_agency_permission_org_ids(
+  target_permission_id extensions.citext
+)
+  returns setof int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select aog.organization_id
+    from public.agencies_organizations_grants aog
+    where aog.agency_id in (select public.viewer_agency_ids())
+      and aog.organization_id is not null
+      and (aog.permission_id = target_permission_id or aog.permission_id = '*')
+
+    union
+
+    select org.organization_id
+    from public.organizations org
+    where exists (
+      select 1 from public.agencies_organizations_grants aog
+      where aog.agency_id in (select public.viewer_agency_ids())
+        and aog.organization_id is null
+        and (aog.permission_id = target_permission_id or aog.permission_id = '*')
+    )
+
+    union
+
+    select aoig.organization_id
+    from public.agencies_organizations_implicit_grants aoig
+    where (aoig.permission_id = target_permission_id or aoig.permission_id = '*')
+      and public.viewer_is_agency_member();
+  $$;
+
+create or replace function public.viewer_has_agency_permission(
+  target_organization_id int,
+  target_permission_id extensions.citext
+)
+  returns boolean
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select target_organization_id in (
+      select public.viewer_agency_permission_org_ids(target_permission_id)
     );
   $$;
+
+-- Derives tenant IDs accessible via agency grants (tenants table has no organization_id).
+create or replace function public.viewer_agency_tenant_ids()
+  returns setof int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select distinct org.tenant_id
+    from public.organizations org
+    where org.organization_id in (
+      select public.viewer_agency_permission_org_ids('*')
+    );
+  $$;
+
+-- Backward-compat alias. Remove once all callers migrated.
+create or replace function public.viewer_is_concierge()
+  returns boolean
+  stable
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$ select public.viewer_is_agency_member(); $$;
+
+-- ============================================================
+-- RLS SELECT policies for agency tables (defined here because they
+-- require viewer_agency_ids() and viewer_permission_org_ids() to exist first)
+-- ============================================================
+
+-- agencies: visible to affiliates of the agency.
+drop policy if exists "agencies select by affiliates" on public.agencies;
+create policy "agencies select by affiliates"
+  on public.agencies for select to authenticated
+  using (agency_id in (select public.viewer_agency_ids()));
+
+-- affiliations: each profile sees their own.
+drop policy if exists "affiliations select own" on public.affiliations;
+create policy "affiliations select own"
+  on public.affiliations for select to authenticated
+  using (profile_id = (select public.viewer_profile_id()));
+
+-- agencies_organizations_grants: visible to affiliates or to orgs with organization_manage.
+drop policy if exists "agencies_organizations_grants select" on public.agencies_organizations_grants;
+create policy "agencies_organizations_grants select"
+  on public.agencies_organizations_grants for select to authenticated
+  using (
+    agency_id in (select public.viewer_agency_ids())
+    or organization_id in (select public.viewer_permission_org_ids('organization_manage'))
+  );
+
+-- agencies_organizations_implicit_grants: visible to orgs with organization_manage.
+drop policy if exists "agencies_organizations_implicit_grants select" on public.agencies_organizations_implicit_grants;
+create policy "agencies_organizations_implicit_grants select"
+  on public.agencies_organizations_implicit_grants for select to authenticated
+  using (
+    organization_id in (select public.viewer_permission_org_ids('organization_manage'))
+  );
 
 -- Active tenant-org memberships for the current viewer.
 -- Runs as view owner (postgres), bypassing RLS; scoped to the caller
@@ -1287,23 +1488,23 @@ create or replace function public.viewer_organization_by_id(target_organization_
 -- ============================================================
 -- profiles SELECT policy (now that memberships exists)
 -- ============================================================
--- Profiles are visible to: self, organization co-members, and concierge.
+-- Profiles are visible to: self, organization co-members, and agency affiliates with access.
 
 drop policy if exists "Users can select their own profiles." on public.profiles;
 drop policy if exists "Profiles visible to self or tenant co-members or concierge" on public.profiles;
 drop policy if exists "Profiles visible to self or org co-members or concierge" on public.profiles;
-create policy "Profiles visible to self or org co-members or concierge"
+create policy "Profiles visible to self or org co-members or agency affiliates"
   on public.profiles for select
   to authenticated
   using (
     profile_disabled_at is null
     and (
-      profile_id = (select viewer_profile_id())
+      profile_id = (select public.viewer_profile_id())
       or exists (
         select 1
         from public.memberships me
         join public.memberships them using (organization_id)
-        where me.profile_id = (select viewer_profile_id())
+        where me.profile_id = (select public.viewer_profile_id())
           and them.profile_id = public.profiles.profile_id
           and me.membership_accepted_at is not null
           and me.membership_revoked_at is null
@@ -1312,7 +1513,11 @@ create policy "Profiles visible to self or org co-members or concierge"
           and them.membership_revoked_at is null
           and them.membership_rejected_at is null
       )
-      or public.viewer_is_concierge()
+      or exists (
+        select 1 from public.memberships m
+        where m.profile_id = public.profiles.profile_id
+          and m.organization_id in (select public.viewer_agency_permission_org_ids('*'))
+      )
     )
   );
 
@@ -1327,12 +1532,13 @@ revoke all on table public.tenants from anon, authenticated;
 grant select, update on table public.tenants to anon, authenticated;
 
 drop policy if exists "tenants select by members or concierge" on public.tenants;
-create policy "tenants select by members or concierge"
+drop policy if exists "tenants select by members or agency affiliates" on public.tenants;
+create policy "tenants select by members or agency affiliates"
   on public.tenants for select
   to authenticated
   using (
     tenant_id in (select public.viewer_tenant_ids())
-    or public.viewer_is_concierge()
+    or tenant_id in (select public.viewer_agency_tenant_ids())
   );
 
 drop policy if exists "tenants update by owner" on public.tenants;
@@ -1357,12 +1563,13 @@ revoke all on table public.organizations from anon, authenticated;
 grant select, update on table public.organizations to anon, authenticated;
 
 drop policy if exists "organizations select by members or concierge" on public.organizations;
-create policy "organizations select by members or concierge"
+drop policy if exists "organizations select by members or agency affiliates" on public.organizations;
+create policy "organizations select by members or agency affiliates"
   on public.organizations for select
   to authenticated
   using (
     organization_id in (select public.viewer_organization_ids())
-    or public.viewer_is_concierge()
+    or organization_id in (select public.viewer_agency_permission_org_ids('*'))
   );
 
 drop policy if exists "organizations update by owner" on public.organizations;
@@ -1381,12 +1588,13 @@ revoke all on table public.memberships from anon, authenticated;
 grant select, insert, update, delete on table public.memberships to anon, authenticated;
 
 drop policy if exists "memberships select by co-members" on public.memberships;
-create policy "memberships select by co-members"
+drop policy if exists "memberships select by co-members or agency affiliates" on public.memberships;
+create policy "memberships select by co-members or agency affiliates"
   on public.memberships for select
   to authenticated
   using (
     organization_id in (select public.viewer_organization_ids())
-    or public.viewer_is_concierge()
+    or organization_id in (select public.viewer_agency_permission_org_ids('*'))
   );
 
 drop policy if exists "memberships write with members_manage" on public.memberships;
@@ -1425,7 +1633,8 @@ grant select, insert, update, delete on table public.membership_permissions to a
 -- Co-members in the same organization can see the grants in that organization.
 -- Resolve organization via the referenced membership (no direct org column anymore).
 drop policy if exists "membership_permissions select by co-members" on public.membership_permissions;
-create policy "membership_permissions select by co-members"
+drop policy if exists "membership_permissions select by co-members or agency affiliates" on public.membership_permissions;
+create policy "membership_permissions select by co-members or agency affiliates"
   on public.membership_permissions for select
   to authenticated
   using (
@@ -1434,7 +1643,7 @@ create policy "membership_permissions select by co-members"
       where m.membership_id = public.membership_permissions.membership_id
         and (
           m.organization_id in (select public.viewer_organization_ids())
-          or public.viewer_is_concierge()
+          or m.organization_id in (select public.viewer_agency_permission_org_ids('*'))
         )
     )
   );
@@ -1509,7 +1718,7 @@ declare
   _profile_id uuid;
 begin
   -- service_role bypass: auth.uid() is NULL when called outside an authenticated session.
-  if viewer_profile_id() is null then
+  if public.viewer_profile_id() is null then
     return old;
   end if;
 
@@ -1571,7 +1780,7 @@ begin
     return new;
   end if;
 
-  _viewer := viewer_profile_id();
+  _viewer := public.viewer_profile_id();
 
   -- service_role bypass.
   if _viewer is null then
@@ -1614,13 +1823,14 @@ revoke all on table public.permission_presets from anon, authenticated;
 grant select, insert, update, delete on table public.permission_presets to anon, authenticated;
 
 drop policy if exists "permission_presets select globals or own org" on public.permission_presets;
-create policy "permission_presets select globals or own org"
+drop policy if exists "permission_presets select globals or own org or agency affiliates" on public.permission_presets;
+create policy "permission_presets select globals or own org or agency affiliates"
   on public.permission_presets for select
   to authenticated
   using (
     organization_id is null
     or organization_id in (select public.viewer_organization_ids())
-    or public.viewer_is_concierge()
+    or organization_id in (select public.viewer_agency_permission_org_ids('*'))
   );
 
 drop policy if exists "permission_presets write with presets_manage" on public.permission_presets;
@@ -1639,10 +1849,11 @@ create policy "permission_presets write with presets_manage"
 -- ============================================================
 -- Custom access token hook
 -- ============================================================
--- Injects two JWT arrays into the token when issued:
+-- Injects JWT arrays into the token when issued:
 --   app_metadata.tenants       : [{id, slug}]       — distinct tenants the user has any org membership in
 --   app_metadata.organizations : [{id, tenant_id}]  — every organization the user is a member of
--- Plus app_metadata.is_concierge (global internal role) and app_metadata.onboarded (gate).
+--   app_metadata.agencies      : [{id}]              — every agency the user is affiliated with
+-- Plus app_metadata.onboarded (gate).
 -- Permissions are deliberately NOT included in the JWT — a single user may have many
 -- per-org permissions, and putting them here can balloon cookie size past the 4KB limit.
 -- Permission checks happen at query time via viewer_has_permission / viewer_permission_org_ids,
@@ -1662,7 +1873,7 @@ create or replace function public.user_auth_hook(event jsonb)
       _user_id uuid;
       _tenants jsonb;
       _organizations jsonb;
-      _is_concierge boolean;
+      _agencies jsonb;
       _onboarded boolean;
     begin
       _claims := event->'claims';
@@ -1703,11 +1914,15 @@ create or replace function public.user_auth_hook(event jsonb)
           and o.organization_disabled_at is null
           and t.tenant_disabled_at is null;
 
-        select exists (
-          select 1 from protected.concierges c
-          where c.profile_id = _user_id
-            and c.concierge_disabled_at is null
-        ) into _is_concierge;
+        select coalesce(jsonb_agg(jsonb_build_object('id', a.agency_id::text)), '[]'::jsonb)
+        into _agencies
+        from public.affiliations af
+        join public.agencies a using (agency_id)
+        where af.profile_id = _user_id
+          and af.affiliation_accepted_at is not null
+          and af.affiliation_revoked_at is null
+          and af.affiliation_rejected_at is null
+          and a.agency_disabled_at is null;
 
         select coalesce(p.profile_onboarded_at is not null, false)
         into _onboarded
@@ -1718,13 +1933,13 @@ create or replace function public.user_auth_hook(event jsonb)
       else
         _tenants := '[]'::jsonb;
         _organizations := '[]'::jsonb;
-        _is_concierge := false;
+        _agencies := '[]'::jsonb;
         _onboarded := false;
       end if;
 
       _claims := jsonb_set(_claims, '{app_metadata,tenants}', _tenants);
       _claims := jsonb_set(_claims, '{app_metadata,organizations}', _organizations);
-      _claims := jsonb_set(_claims, '{app_metadata,is_concierge}', to_jsonb(_is_concierge));
+      _claims := jsonb_set(_claims, '{app_metadata,agencies}', _agencies);
       _claims := jsonb_set(_claims, '{app_metadata,onboarded}', to_jsonb(_onboarded));
 
       event := jsonb_set(event, '{claims}', _claims);
@@ -1736,8 +1951,8 @@ revoke execute on function public.user_auth_hook(jsonb) from authenticated, anon
 grant execute on function public.user_auth_hook(jsonb) to supabase_auth_admin;
 
 -- Hook is not security definer; grant supabase_auth_admin direct read on source tables.
-grant usage on schema public, protected to supabase_auth_admin;
-grant select on table public.tenants, public.organizations, public.memberships, protected.concierges to supabase_auth_admin;
+grant usage on schema public to supabase_auth_admin;
+grant select on table public.tenants, public.organizations, public.memberships, public.agencies, public.affiliations to supabase_auth_admin;
 grant select (profile_id, profile_onboarded_at) on public.profiles to supabase_auth_admin;
 
 drop policy if exists "Allow auth admin to read tenants." on public.tenants;
@@ -1752,10 +1967,13 @@ drop policy if exists "Allow auth admin to read memberships." on public.membersh
 create policy "Allow auth admin to read memberships."
   on public.memberships as permissive for select to supabase_auth_admin using (true);
 
-drop policy if exists "Allow auth admin to read concierge_users." on protected.concierges;
-drop policy if exists "Allow auth admin to read concierges." on protected.concierges;
-create policy "Allow auth admin to read concierges."
-  on protected.concierges as permissive for select to supabase_auth_admin using (true);
+drop policy if exists "Allow auth admin to read agencies." on public.agencies;
+create policy "Allow auth admin to read agencies."
+  on public.agencies as permissive for select to supabase_auth_admin using (true);
+
+drop policy if exists "Allow auth admin to read affiliations." on public.affiliations;
+create policy "Allow auth admin to read affiliations."
+  on public.affiliations as permissive for select to supabase_auth_admin using (true);
 
 drop policy if exists "Allow auth admin to read profile onboarding state." on public.profiles;
 create policy "Allow auth admin to read profile onboarding state."
@@ -2081,36 +2299,34 @@ revoke all on table public.profile_identities from anon, authenticated;
 -- anon is required for graphql; RLS still gates row access.
 grant select, insert, update on table public.profile_identities to anon, authenticated;
 
--- SELECT: owner + admins with members_manage in orgs where the owner is a member, + concierge.
+-- SELECT: owner + admins with members_manage in orgs where the owner is a member, + agency affiliates.
 -- HR sees the documents of the employees they administer (needed for payroll/contracts).
 drop policy if exists "profile_identities select" on public.profile_identities;
 create policy "profile_identities select"
   on public.profile_identities for select
   to authenticated
   using (
-    profile_id = (select viewer_profile_id())
-    or public.viewer_is_concierge()
+    profile_id = (select public.viewer_profile_id())
     or exists (
       select 1 from public.memberships m
       where m.profile_id = public.profile_identities.profile_id
         and m.organization_id in (select public.viewer_permission_org_ids('members_manage'))
     )
+    or exists (
+      select 1 from public.memberships m
+      where m.profile_id = public.profile_identities.profile_id
+        and m.organization_id in (select public.viewer_agency_permission_org_ids('*'))
+    )
   );
 
--- INSERT/UPDATE: self-write (accept flow runs with auth.uid() = profile_id) or concierge.
+-- INSERT/UPDATE: self-write (accept flow runs with auth.uid() = profile_id).
 -- Admins do NOT modify employee identities directly — they flow through the invite path.
 drop policy if exists "profile_identities write own" on public.profile_identities;
 create policy "profile_identities write own"
   on public.profile_identities for all
   to authenticated
-  using (
-    profile_id = (select viewer_profile_id())
-    or public.viewer_is_concierge()
-  )
-  with check (
-    profile_id = (select viewer_profile_id())
-    or public.viewer_is_concierge()
-  );
+  using (profile_id = (select public.viewer_profile_id()))
+  with check (profile_id = (select public.viewer_profile_id()));
 
 -- Anonymous resolver used by /auth/document. Returns the profile_id owning the given
 -- document, or NULL if no match (incl. malformed values per the normalizer). Same
@@ -2224,7 +2440,7 @@ create or replace function public.viewer_membership_pending()
   set search_path to ''
   as $$
     declare
-      _user_id uuid := viewer_profile_id();
+      _user_id uuid := public.viewer_profile_id();
       _email extensions.citext;
       _phone text;
     begin
@@ -2274,7 +2490,7 @@ create or replace function public.viewer_membership_accept(target_membership_id 
   set search_path to ''
   as $$
     declare
-      _user_id uuid := viewer_profile_id();
+      _user_id uuid := public.viewer_profile_id();
       _row public.memberships;
     begin
       if _user_id is null then
@@ -2310,7 +2526,7 @@ create or replace function public.viewer_membership_reject(target_membership_id 
     declare
       _row public.memberships;
     begin
-      if viewer_profile_id() is null then
+      if public.viewer_profile_id() is null then
         raise exception 'not authenticated';
       end if;
       if not exists (

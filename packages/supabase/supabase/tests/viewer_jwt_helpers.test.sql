@@ -3,7 +3,7 @@
 
 begin;
 
-select plan(15);
+select plan(17);
 
 -- ============================================================
 -- viewer_profile_id / viewer_tenant_ids with NO JWT (anonymous caller)
@@ -34,14 +34,20 @@ select ok(
 );
 
 select ok(
-  not public.viewer_is_concierge(),
-  'viewer_is_concierge() is false without a JWT'
+  not public.viewer_is_agency_member(),
+  'viewer_is_agency_member() is false without a JWT'
+);
+
+select is(
+  (select count(*) from public.viewer_agency_ids()),
+  0::bigint,
+  'viewer_agency_ids() yields nothing without a JWT'
 );
 
 reset role;
 
 -- ============================================================
--- viewer_* with Alice's JWT (member of acme + globex)
+-- viewer_* with Alice's JWT (member of acme + globex, no agencies)
 -- ============================================================
 
 set local role authenticated;
@@ -53,7 +59,7 @@ set local request.jwt.claims to '{
       {"id": 2, "slug": "globex"}
     ],
     "organizations": [{"id": 1}, {"id": 2}],
-    "is_concierge": false
+    "agencies": []
   }
 }';
 
@@ -90,25 +96,35 @@ select ok(
 );
 
 select ok(
-  not public.viewer_is_concierge(),
-  'viewer_is_concierge() is false when claim is false'
+  not public.viewer_is_agency_member(),
+  'viewer_is_agency_member() is false when agencies array is empty'
 );
 
 reset role;
 
 -- ============================================================
--- is_concierge flag
+-- viewer_agency_ids / viewer_is_agency_member with agency claim
 -- ============================================================
 
 set local role authenticated;
 set local request.jwt.claims to '{
   "sub": "00000000-0000-0000-0000-00000000a11c",
-  "app_metadata": {"tenants": [], "organizations": [], "is_concierge": true}
+  "app_metadata": {
+    "tenants": [],
+    "organizations": [],
+    "agencies": [{"id": "a0000000-0000-0000-0000-000000000001"}]
+  }
 }';
 
 select ok(
-  public.viewer_is_concierge(),
-  'viewer_is_concierge() is true when claim is true'
+  public.viewer_is_agency_member(),
+  'viewer_is_agency_member() is true when agencies array has entries'
+);
+
+select set_eq(
+  $$ select * from public.viewer_agency_ids() $$,
+  $$ values ('a0000000-0000-0000-0000-000000000001'::uuid) $$,
+  'viewer_agency_ids() returns the UUID from agencies claim'
 );
 
 reset role;
