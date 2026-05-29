@@ -7,7 +7,7 @@ export default async function LegalLayout(props: LayoutProps<"/[locale]/legal">)
 
   return (
     <main className="mx-auto w-full max-w-7xl px-6 py-12 lg:px-8">
-      <div className="grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_220px]">
+      <div className="grid gap-10 lg:grid-cols-[240px_minmax(0,1fr)]">
         <LegalSidebar locale={legalLocale} />
         {props.children}
       </div>
