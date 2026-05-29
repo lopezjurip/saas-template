@@ -1,20 +1,19 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("document login: no profile, no invite", () => {
-  test("redirects to email signup with document prefilled when no profile/invite", async ({ page }) => {
-    await page.goto("/es/auth");
-    await page.getByRole("link", { name: "Continuar con documento" }).click();
-    await page.waitForURL(/\/auth\/document/);
+  test("redirects to email auth when no profile/invite is found", async ({ page }) => {
+    // The /auth entry page is now a smart input (no per-method links); go straight to the
+    // consolidated document route, which renders its own entry form.
+    await page.goto("/es/auth/document");
 
     // Defaults: country=CL, kind=nin. Enter a valid RUT that does NOT exist in profiles or invites.
     await page.getByLabel("Documento").fill("11.111.111-1");
     await page.getByRole("button", { name: "Continuar" }).click();
 
-    // Dispatcher redirects to /auth/email/signup with the document prefilled via query string.
-    await page.waitForURL(/\/auth\/email\/signup\?country=CL&kind=nin&value=/);
-    expect(page.url()).toContain("/auth/email/signup");
-    expect(page.url()).toContain("country=CL");
-    expect(page.url()).toContain("kind=nin");
+    // Dispatcher now redirects to /auth/email (passwordless signup); the document is
+    // collected later during onboarding rather than carried in query params.
+    await page.waitForURL(/\/auth\/email/);
+    expect(page.url()).toContain("/auth/email");
   });
 
   test("rejects RUT with invalid check digit before submit", async ({ page }) => {

@@ -3,9 +3,14 @@
 import { createBrowserClient } from "@packages/supabase/client.browser";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { LoginValues, MagicLinkValues, VerifyMagicOtpValues } from "~/app/[locale]/auth/email/login/schemas";
+import type { LoginValues, MagicLinkValues, VerifyMagicOtpValues } from "~/app/[locale]/auth/email/schemas";
 
-export function useLoginPassword(locale: string) {
+function SAFE_NEXT(next: string | undefined, locale: string): string {
+  if (!next || !next.startsWith("/")) return `/${locale}/home`;
+  return next;
+}
+
+export function useLoginPassword(locale: string, next?: string) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -23,7 +28,7 @@ export function useLoginPassword(locale: string) {
         return { serverError: "Correo o contraseña incorrectos" };
       }
 
-      router.push(`/${locale}/home`);
+      router.push(SAFE_NEXT(next, locale));
       return { serverError: null };
     } catch (e) {
       const msg = "Error en login";
@@ -37,23 +42,27 @@ export function useLoginPassword(locale: string) {
   return { signInWithPassword, error, pending };
 }
 
-export function useLoginMagicLink(locale: string) {
+export function useLoginMagicLink(locale: string, next?: string) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [sentTo, setSentTo] = useState<string | null>(null);
 
-  async function sendMagicLink(input: MagicLinkValues) {
+  async function sendMagicLink(input: MagicLinkValues & { shouldCreateUser?: boolean }) {
     setPending(true);
     setError(null);
     setSentTo(null);
 
     try {
       const supabase = await createBrowserClient();
+      const target = SAFE_NEXT(next, locale);
+      // If the magic link auto-creates a new user, route them through onboarding first.
+      const shouldCreate = input.shouldCreateUser === true;
+      const redirectPath = shouldCreate ? `/${locale}/auth/onboarding` : target;
       const { error: err } = await supabase.auth.signInWithOtp({
         email: input.email,
         options: {
-          shouldCreateUser: false,
-          emailRedirectTo: `${window.location.origin}/${locale}/home`,
+          shouldCreateUser: shouldCreate,
+          emailRedirectTo: `${window.location.origin}${redirectPath}`,
         },
       });
 
@@ -76,12 +85,12 @@ export function useLoginMagicLink(locale: string) {
   return { sendMagicLink, error, pending, sentTo };
 }
 
-export function useVerifyMagicOtp(locale: string) {
+export function useVerifyMagicOtp(locale: string, next?: string) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  async function verifyMagicOtp(input: VerifyMagicOtpValues) {
+  async function verifyMagicOtp(input: VerifyMagicOtpValues & { isNewUser?: boolean }) {
     setPending(true);
     setError(null);
 
@@ -98,7 +107,8 @@ export function useVerifyMagicOtp(locale: string) {
         return { serverError: "Código incorrecto o expirado" };
       }
 
-      router.push(`/${locale}/home`);
+      const target = input.isNewUser ? `/${locale}/auth/onboarding` : SAFE_NEXT(next, locale);
+      router.push(target);
       return { serverError: null };
     } catch (e) {
       const msg = "Error verificando código";

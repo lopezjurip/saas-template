@@ -24,33 +24,39 @@ export default async function AccountLayout(props: LayoutProps<"/[locale]/home/a
   const email = user["email"] ?? "";
 
   return (
-    <div className="acc-shell">
-      <div className="acc-topbar">
-        <Link href={`/${locale}/home`} className="acc-back">
+    <div className="bg-background relative flex min-h-svh w-full flex-col">
+      <div className="bg-background flex shrink-0 items-center gap-2.5 border-b px-[18px] py-2.5">
+        <Link
+          href={`/${locale}/home`}
+          className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex items-center gap-1.5 rounded-md py-1 pr-2 pl-1.5 text-[12.5px] font-medium no-underline"
+        >
           <ArrowLeft size={14} /> <span>Inicio</span>
         </Link>
-        <span className="acc-crumb-sep">/</span>
-        <span className="acc-crumb-current">Mi cuenta</span>
-        <div style={{ flex: 1 }} />
-        <Link href={`/${locale}/home/account/profile`} className="acc-topbar-user">
-          <span className="user-menu-avatar" style={{ width: 26, height: 26, fontSize: 11 }}>
+        <span className="text-muted-foreground text-[13px] opacity-50">/</span>
+        <span className="text-foreground text-[13px] font-medium">Mi cuenta</span>
+        <div className="flex-1" />
+        <Link
+          href={`/${locale}/home/account/profile`}
+          className="text-foreground bg-background hover:bg-accent inline-flex cursor-pointer items-center gap-2 rounded-full border py-1 pr-2 pl-1 text-xs"
+        >
+          <span className="bg-primary text-primary-foreground inline-flex size-[26px] items-center justify-center rounded-full text-[11px] font-semibold">
             {INITIALS_OF(email)}
           </span>
           <span>{email}</span>
-          <span style={{ color: "var(--muted-foreground)" }}>
+          <span className="text-muted-foreground">
             <ChevronDown size={13} />
           </span>
         </Link>
       </div>
 
-      <div className="acc-body">
+      <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_1fr] md:grid-cols-[232px_1fr] md:grid-rows-1">
         <div className="hidden md:block">
           <AccountSidebar locale={locale} />
         </div>
         <div className="md:hidden">
           <AccountMobileNav locale={locale} />
         </div>
-        <main className="acc-main">{props.children}</main>
+        <main className="overflow-auto px-8 py-7">{props.children}</main>
       </div>
     </div>
   );

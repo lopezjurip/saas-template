@@ -1,6 +1,9 @@
 "use client";
 
-import { SINGLE } from "@packages/utils/array";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { RUT_FORMAT, RUT_NORMALIZE } from "@packages/utils/rut";
 import { ArrowRight, ChevronDown, IdCard, Mail, Phone, Search } from "lucide-react";
 import Link from "next/link";
@@ -70,24 +73,22 @@ function LocalMethodsSmart({ next }: { next: string }) {
       <input type="hidden" name="next" value={next} />
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label className="sc-label" style={{ margin: 0 }} htmlFor="smart-input">
-            Cuenta
-          </label>
+          <Label htmlFor="smart-input">Cuenta</Label>
           {detected && (
-            <span className="text-[11px] text-[var(--muted-foreground)] inline-flex items-center gap-1">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--recent)]" />
+            <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
               {LOCAL_CONFIG[detected].label.toLowerCase()} detectado
             </span>
           )}
         </div>
-        <div className="sc-input-icon-wrap">
-          <span className="sc-input-icon">
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
             <Icon size={16} />
           </span>
-          <input
+          <Input
             id="smart-input"
             name={fieldName}
-            className="sc-input"
+            className="h-10 pl-9"
             placeholder="Correo, teléfono o RUT"
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -95,14 +96,14 @@ function LocalMethodsSmart({ next }: { next: string }) {
             required
           />
         </div>
-        <p className="sc-hint" style={{ marginTop: 6 }}>
+        <p className="mt-1.5 text-muted-foreground text-xs leading-relaxed">
           Si no tienes cuenta, te enviaremos un enlace mágico para crearla.
         </p>
       </div>
-      <button type="submit" className="sc-btn sc-btn-primary sc-btn-block">
+      <Button type="submit" className="h-10 w-full">
         <span>Continuar</span>
         <ArrowRight size={16} />
-      </button>
+      </Button>
     </form>
   );
 }
@@ -114,7 +115,7 @@ function LocalMethodsSelector({ next }: { next: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="sc-tabs" role="tablist">
+      <div className="inline-grid grid-flow-col auto-cols-fr w-full gap-0 rounded-md bg-muted p-1" role="tablist">
         {(Object.keys(LOCAL_CONFIG) as LocalType[]).map((t) => {
           const TabIcon = LOCAL_CONFIG[t].Icon;
           return (
@@ -122,7 +123,7 @@ function LocalMethodsSelector({ next }: { next: string }) {
               key={t}
               type="button"
               role="tab"
-              className="sc-tab"
+              className="inline-flex h-[30px] items-center justify-center gap-1.5 rounded-sm text-[13px] font-medium text-muted-foreground transition-all data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm"
               data-active={tab === t}
               onClick={() => setTab(t)}
             >
@@ -135,19 +136,17 @@ function LocalMethodsSelector({ next }: { next: string }) {
 
       <form action={actionContinueAuth} className="flex flex-col gap-3" onSubmit={() => rememberAuthMethod(tab)}>
         <input type="hidden" name="next" value={next} />
-        <div>
-          <label className="sc-label" htmlFor={`local-${tab}`}>
-            {cfg.label}
-          </label>
-          <div className="sc-input-icon-wrap">
-            <span className="sc-input-icon">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={`local-${tab}`}>{cfg.label}</Label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
               <cfg.Icon size={16} />
             </span>
-            <input
+            <Input
               key={tab}
               id={`local-${tab}`}
               name={tab}
-              className="sc-input"
+              className="h-10 pl-9"
               placeholder={cfg.placeholder}
               autoComplete={cfg.autoComplete}
               type={cfg.inputType}
@@ -157,10 +156,10 @@ function LocalMethodsSelector({ next }: { next: string }) {
             />
           </div>
         </div>
-        <button type="submit" className="sc-btn sc-btn-primary sc-btn-block">
+        <Button type="submit" className="h-10 w-full">
           <span>Continuar</span>
           <ArrowRight size={16} />
-        </button>
+        </Button>
       </form>
     </div>
   );
@@ -184,7 +183,7 @@ function OAuthSection({ next }: { next: string }) {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="sc-oauth-row">
+      <div className="grid gap-2">
         {MAIN_OAUTH.map((p) => (
           <ProviderButton key={p.id} provider={p} recent={isRecent(p)} next={next} />
         ))}
@@ -192,30 +191,30 @@ function OAuthSection({ next }: { next: string }) {
 
       {MORE_OAUTH.length > 0 &&
         (showMore ? (
-          <div className="sc-oauth-row">
+          <div className="grid gap-2">
             {MORE_OAUTH.map((p) => (
               <ProviderButton key={p.id} provider={p} recent={isRecent(p)} next={next} />
             ))}
           </div>
         ) : (
-          <Link
-            href={expandedHref}
-            scroll={false}
-            className="sc-btn sc-btn-ghost sc-btn-block"
-            style={{ height: 32, fontSize: 12, color: "var(--muted-foreground)" }}
-          >
-            Más opciones
-            <ChevronDown size={12} />
-            {moreHasRecent && <span className="sc-recent-badge">reciente</span>}
-          </Link>
+          <Button asChild variant="ghost" className="relative h-8 w-full text-xs text-muted-foreground">
+            <Link href={expandedHref} scroll={false}>
+              Más opciones
+              <ChevronDown size={12} />
+              {moreHasRecent && (
+                <span className="absolute -top-2 right-2.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.04em] leading-none text-white">
+                  reciente
+                </span>
+              )}
+            </Link>
+          </Button>
         ))}
     </div>
   );
 }
 
-export default async function AuthEntryPage(props: PageProps<"/[locale]/auth">) {
-  const sp = await props.searchParams;
-  const next = SINGLE(sp["next"]) ?? "/";
+export default function AuthEntryPage() {
+  const next = useSearchParams().get("next") ?? "/";
 
   return (
     <AuthCard>
@@ -223,7 +222,9 @@ export default async function AuthEntryPage(props: PageProps<"/[locale]/auth">) 
         <AuthHeader />
         <div className="flex flex-col gap-4">
           <OAuthSection next={next} />
-          <div className="sc-divider">o usa tu cuenta</div>
+          <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.08em] font-medium text-muted-foreground before:h-px before:flex-1 before:bg-border before:content-[''] after:h-px after:flex-1 after:bg-border after:content-['']">
+            o usa tu cuenta
+          </div>
           {AUTH_TWEAKS.STEP1_VARIANT === "smart" ? (
             <LocalMethodsSmart next={next} />
           ) : (
@@ -232,7 +233,10 @@ export default async function AuthEntryPage(props: PageProps<"/[locale]/auth">) 
         </div>
         <div className="text-center text-[13px] text-muted-foreground">
           ¿Primera vez?{" "}
-          <a className="sc-link" style={{ color: "var(--foreground)" }} href="#">
+          <a
+            className="cursor-pointer text-foreground underline decoration-border underline-offset-[3px] hover:decoration-foreground"
+            href="#"
+          >
             Te enviaremos un enlace mágico
           </a>
         </div>
@@ -247,11 +251,19 @@ function ProviderButton({ provider, recent, next }: { provider: OAuthProvider; r
     <form action={signInWithOAuth} className="w-full">
       <input type="hidden" name="provider" value={provider.id} />
       <input type="hidden" name="next" value={next} />
-      <button type="submit" className={`sc-btn sc-btn-outline sc-btn-block ${recent ? "sc-recent" : ""}`}>
+      <Button
+        type="submit"
+        variant="outline"
+        className={cn("relative h-10 w-full", recent && "outline outline-2 outline-offset-2 outline-emerald-500")}
+      >
         <provider.Mark size={18} />
         <span>Continuar con {provider.label}</span>
-        {recent && <span className="sc-recent-badge">reciente</span>}
-      </button>
+        {recent && (
+          <span className="absolute -top-2 right-2.5 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.04em] leading-none text-white">
+            reciente
+          </span>
+        )}
+      </Button>
     </form>
   );
 }

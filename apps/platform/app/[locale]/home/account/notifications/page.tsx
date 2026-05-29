@@ -1,20 +1,19 @@
-// TODO: notification preferences require a `notification_preferences` table per user
-// (system/marketing/channel toggles). For now the page shows the catalog but the toggles
-// don't persist anywhere — render as a "próximamente" placeholder until the schema lands.
+import { NotificationsMatrix } from "./notifications-matrix";
 
 export default function NotificationsPage() {
   return (
-    <div className="acc-section">
-      <header className="acc-section-head">
-        <span className="acc-section-eyebrow">Preferencias · Notificaciones</span>
-        <h1 className="acc-section-title">Notificaciones</h1>
-        <p className="acc-section-sub">Las alertas de seguridad llegan siempre. Todo lo demás lo decides tú.</p>
+    <div className="flex max-w-[720px] flex-col gap-[18px]">
+      <header className="flex flex-col gap-1">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Preferencias · Notificaciones
+        </span>
+        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">Notificaciones</h1>
+        <p className="text-pretty text-[13px] leading-normal text-muted-foreground">
+          Las alertas de seguridad llegan siempre. Todo lo demás lo decides tú. Estas preferencias aplican a tu cuenta
+          personal — cada organización tiene las suyas.
+        </p>
       </header>
-      <div className="acc-todo">
-        <strong className="block text-foreground mb-1">Próximamente</strong>
-        Las preferencias de notificación se guardan en la organización. Estamos terminando el modelo para que cada
-        usuario tenga sus propios canales.
-      </div>
+      <NotificationsMatrix />
     </div>
   );
 }

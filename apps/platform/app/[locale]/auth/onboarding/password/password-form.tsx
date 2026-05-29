@@ -2,6 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { ArrowRight, Eye, EyeOff, Lock } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -47,17 +50,15 @@ export function PasswordForm() {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <div className="sc-password-group">
-        <label className="sc-label" htmlFor="ob-password">
-          Contraseña nueva
-        </label>
-        <div className="sc-input-icon-wrap sc-password-input-wrap">
-          <span className="sc-input-icon">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="ob-password">Contraseña nueva</Label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none flex">
             <Lock size={16} />
           </span>
-          <input
+          <Input
             id="ob-password"
-            className="sc-input"
+            className="h-10 pl-9 pr-10"
             type={show ? "text" : "password"}
             placeholder="••••••••••"
             autoComplete="new-password"
@@ -66,7 +67,7 @@ export function PasswordForm() {
           />
           <button
             type="button"
-            className="sc-eye"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
             onClick={() => setShow((s) => !s)}
             aria-label={show ? "Ocultar" : "Mostrar"}
           >
@@ -76,27 +77,31 @@ export function PasswordForm() {
         {form.formState.errors.password && (
           <p className="text-destructive text-xs">{form.formState.errors.password.message}</p>
         )}
-        <div className="ob-strength">
-          <div className="ob-strength-bars">
+        <div className="mt-0.5 flex items-center gap-2.5">
+          <div className="grid h-1 flex-1 grid-cols-4 gap-1">
             {[0, 1, 2, 3].map((i) => (
-              <span key={i} data-on={i < strength.bars ? "true" : "false"} />
+              <span
+                key={i}
+                data-on={i < strength.bars ? "true" : "false"}
+                className="h-full rounded-sm bg-muted data-[on=true]:bg-foreground"
+              />
             ))}
           </div>
-          <span className="ob-strength-label">{pw ? strength.label : "Mínimo 8 caracteres"}</span>
+          <span className="shrink-0 text-[11.5px] text-muted-foreground">
+            {pw ? strength.label : "Mínimo 8 caracteres"}
+          </span>
         </div>
       </div>
 
-      <div className="sc-password-group">
-        <label className="sc-label" htmlFor="ob-confirm">
-          Confirmar contraseña
-        </label>
-        <div className="sc-input-icon-wrap sc-password-input-wrap">
-          <span className="sc-input-icon">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="ob-confirm">Confirmar contraseña</Label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none flex">
             <Lock size={16} />
           </span>
-          <input
+          <Input
             id="ob-confirm"
-            className="sc-input"
+            className="h-10 pl-9 pr-10"
             type={show ? "text" : "password"}
             placeholder="••••••••••"
             autoComplete="new-password"
@@ -115,10 +120,10 @@ export function PasswordForm() {
         </Alert>
       )}
 
-      <button type="submit" disabled={pending} className="sc-btn sc-btn-primary sc-btn-block">
+      <Button type="submit" disabled={pending} className="h-10 w-full">
         <span>{pending ? "Guardando…" : "Guardar contraseña"}</span>
         <ArrowRight size={16} />
-      </button>
+      </Button>
     </form>
   );
 }

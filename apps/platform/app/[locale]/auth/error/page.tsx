@@ -1,3 +1,4 @@
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { SINGLE } from "@packages/utils/array";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -19,10 +20,12 @@ export default async function AuthErrorPage(props: PageProps<"/[locale]/auth/err
             {reason ? decodeURIComponent(reason) : "Ocurrió un error inesperado."}
           </p>
         </div>
-        <Link href={`/${locale}/auth`} className="sc-btn sc-btn-primary sc-btn-block">
-          <span>Volver a intentar</span>
-          <ArrowRight size={16} />
-        </Link>
+        <Button asChild className="h-10 w-full">
+          <Link href={`/${locale}/auth`}>
+            <span>Volver a intentar</span>
+            <ArrowRight size={16} />
+          </Link>
+        </Button>
       </div>
     </AuthCard>
   );

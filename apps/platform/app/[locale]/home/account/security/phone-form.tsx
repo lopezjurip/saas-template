@@ -2,6 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -55,13 +58,10 @@ export function PhoneForm({ currentPhone }: { currentPhone: string | null }) {
   if (sentTo) {
     return (
       <form onSubmit={onVerify} className="flex flex-col gap-3">
-        <div className="acc-form-row">
-          <label className="sc-label" htmlFor="ph_code">
-            Código enviado a {sentTo}
-          </label>
-          <input
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="ph_code">Código enviado a {sentTo}</Label>
+          <Input
             id="ph_code"
-            className="sc-input"
             inputMode="numeric"
             maxLength={6}
             autoComplete="one-time-code"
@@ -74,13 +74,13 @@ export function PhoneForm({ currentPhone }: { currentPhone: string | null }) {
             <AlertDescription>{serverError}</AlertDescription>
           </Alert>
         )}
-        <div className="acc-form-foot">
-          <button type="button" className="sc-btn sc-btn-ghost" style={{ height: 36 }} onClick={() => setSentTo(null)}>
+        <div className="mt-1 flex justify-end gap-2 border-t pt-2">
+          <Button type="button" variant="ghost" className="h-9" onClick={() => setSentTo(null)}>
             Cancelar
-          </button>
-          <button type="submit" disabled={pending} className="sc-btn sc-btn-primary" style={{ height: 36 }}>
+          </Button>
+          <Button type="submit" disabled={pending} className="h-9">
             {pending ? "Verificando…" : "Verificar"}
-          </button>
+          </Button>
         </div>
       </form>
     );
@@ -88,13 +88,10 @@ export function PhoneForm({ currentPhone }: { currentPhone: string | null }) {
 
   return (
     <form onSubmit={onSendPhone} className="flex flex-col gap-3">
-      <div className="acc-form-row">
-        <label className="sc-label" htmlFor="ph_new">
-          Nuevo número
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="ph_new">Nuevo número</Label>
+        <Input
           id="ph_new"
-          className="sc-input"
           type="tel"
           autoComplete="tel"
           placeholder="+56 9 1234 5678"
@@ -110,10 +107,10 @@ export function PhoneForm({ currentPhone }: { currentPhone: string | null }) {
           <AlertDescription>{serverError}</AlertDescription>
         </Alert>
       )}
-      <div className="acc-form-foot">
-        <button type="submit" disabled={pending} className="sc-btn sc-btn-primary" style={{ height: 36 }}>
+      <div className="mt-1 flex justify-end gap-2 border-t pt-2">
+        <Button type="submit" disabled={pending} className="h-9">
           {pending ? "Enviando…" : "Enviar código"}
-        </button>
+        </Button>
       </div>
     </form>
   );

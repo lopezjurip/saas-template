@@ -19,7 +19,9 @@ import { InviteMemberForm } from "./invite-form";
 
 export async function generateMetadata({
   params,
-}: { params: Promise<{ locale: string; tenant_slug: string; organization_id: string }> }): Promise<Metadata> {
+}: {
+  params: Promise<{ locale: string; tenant_slug: string; organization_id: string }>;
+}): Promise<Metadata> {
   const { locale } = await params;
   const { t } = ROSETTA(LOCALES, locale);
   return { title: t("page_title") };

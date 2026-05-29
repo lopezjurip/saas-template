@@ -3,6 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useGraphyMutation } from "@packages/graphy/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -73,38 +76,38 @@ export function ProfileForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <div className="ob-avatar-row">
-        <div className="ob-avatar-slot" data-empty={name.trim().length === 0 ? "true" : "false"}>
+      <div className="flex items-center gap-4">
+        <div className="inline-flex size-[88px] shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted text-[30px] font-semibold tracking-[-0.02em] text-muted-foreground">
           {INITIALS_OF(name)}
         </div>
-        <div className="ob-avatar-actions">
-          <button type="button" disabled>
+        <div className="flex flex-col items-start gap-1.5">
+          <Button type="button" variant="outline" size="sm" disabled>
             Subir foto
-          </button>
-          <button type="button" className="ghost" disabled>
+          </Button>
+          <Button type="button" variant="ghost" size="sm" disabled className="text-muted-foreground">
             Quitar
-          </button>
+          </Button>
         </div>
       </div>
-      <p className="ob-avatar-hint">Próximamente — por ahora usamos tus iniciales como avatar.</p>
+      <p className="text-[11.5px] leading-snug text-muted-foreground">
+        Próximamente — por ahora usamos tus iniciales como avatar.
+      </p>
 
-      <div>
-        <label className="sc-label" htmlFor="profile-name">
-          Nombre completo
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="profile-name">Nombre completo</Label>
+        <Input
           id="profile-name"
-          className="sc-input"
+          className="h-10"
           autoComplete="name"
           aria-invalid={!!form.formState.errors.profile_name_full}
           {...form.register("profile_name_full")}
         />
         {form.formState.errors.profile_name_full && (
-          <p className="text-destructive text-xs mt-1">{form.formState.errors.profile_name_full.message}</p>
+          <p className="text-destructive text-xs">{form.formState.errors.profile_name_full.message}</p>
         )}
         {identityValue && (
-          <p className="sc-hint mt-1.5">
-            Asociado a <strong style={{ color: "var(--foreground)", fontWeight: 500 }}>{identityValue}</strong>
+          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+            Asociado a <strong className="font-medium text-foreground">{identityValue}</strong>
           </p>
         )}
       </div>
@@ -115,10 +118,10 @@ export function ProfileForm({
         </Alert>
       )}
 
-      <button type="submit" disabled={pending} className="sc-btn sc-btn-primary sc-btn-block">
+      <Button type="submit" disabled={pending} className="h-10 w-full">
         <span>{pending ? "Guardando…" : "Guardar y continuar"}</span>
         <ArrowRight size={16} />
-      </button>
+      </Button>
     </form>
   );
 }

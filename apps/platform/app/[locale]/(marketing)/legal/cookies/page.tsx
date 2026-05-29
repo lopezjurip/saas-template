@@ -1,21 +1,14 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import type { Metadata } from "next";
-import { Markdown } from "~/components/markdown";
 import { APP_HOST } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { LegalArticle } from "../_legal/article";
+import { LEGAL_DOCS, LEGAL_LOCALE } from "../_legal/docs";
 
-const TITLES: Record<string, string> = {
-  es: "Política de cookies",
-  en: "Cookie policy",
-  pt: "Política de cookies",
-};
-
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  const { locale } = await params;
+export async function generateMetadata(props: PageProps<"/[locale]/legal/cookies">): Promise<Metadata> {
+  const { locale } = await props.params;
   const base = `https://${APP_HOST}`;
   const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
-  const title = TITLES[safeLocale] ?? TITLES[DEFAULT_LOCALE];
+  const title = LEGAL_DOCS[LEGAL_LOCALE(safeLocale)].cookies.title;
   return {
     title,
     alternates: {
@@ -35,14 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export default async function LegalCookiesPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
-  const base = join(process.cwd(), "content", "legal");
-  let content: string;
-  try {
-    content = await readFile(join(base, locale, "cookies.md"), "utf-8");
-  } catch {
-    content = await readFile(join(base, "es", "cookies.md"), "utf-8");
-  }
-  return <Markdown>{content}</Markdown>;
+export default async function LegalCookiesPage(props: PageProps<"/[locale]/legal/cookies">) {
+  const { locale } = await props.params;
+  return <LegalArticle locale={LEGAL_LOCALE(locale)} section="cookies" />;
 }

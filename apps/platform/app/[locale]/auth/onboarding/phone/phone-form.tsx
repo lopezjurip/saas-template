@@ -2,6 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { ArrowRight, Phone } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -44,13 +47,11 @@ export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
   if (sentTo) {
     return (
       <form onSubmit={onVerifyCode} className="flex flex-col gap-4">
-        <div>
-          <label className="sc-label" htmlFor="phone-code">
-            Código enviado a {sentTo}
-          </label>
-          <input
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="phone-code">Código enviado a {sentTo}</Label>
+          <Input
             id="phone-code"
-            className="sc-input"
+            className="h-10"
             inputMode="numeric"
             maxLength={6}
             autoComplete="one-time-code"
@@ -58,7 +59,7 @@ export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
             {...codeForm.register("token")}
           />
           {codeForm.formState.errors.token && (
-            <p className="text-destructive text-xs mt-1">{codeForm.formState.errors.token.message}</p>
+            <p className="text-destructive text-xs">{codeForm.formState.errors.token.message}</p>
           )}
         </div>
         {error && (
@@ -66,11 +67,15 @@ export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <button type="submit" disabled={pending} className="sc-btn sc-btn-primary sc-btn-block">
+        <Button type="submit" disabled={pending} className="h-10 w-full">
           <span>{pending ? "Verificando…" : "Verificar"}</span>
           <ArrowRight size={16} />
-        </button>
-        <button type="button" className="sc-back" onClick={() => setSentTo(null)}>
+        </Button>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 self-start -ml-1.5 rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+          onClick={() => setSentTo(null)}
+        >
           Cambiar número
         </button>
       </form>
@@ -79,17 +84,15 @@ export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
 
   return (
     <form onSubmit={onSendPhone} className="flex flex-col gap-4">
-      <div>
-        <label className="sc-label" htmlFor="phone-number">
-          Número de teléfono
-        </label>
-        <div className="sc-input-icon-wrap">
-          <span className="sc-input-icon">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="phone-number">Número de teléfono</Label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none flex">
             <Phone size={16} />
           </span>
-          <input
+          <Input
             id="phone-number"
-            className="sc-input"
+            className="h-10 pl-9"
             type="tel"
             placeholder="+56 9 1234 5678"
             autoComplete="tel"
@@ -98,7 +101,7 @@ export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
           />
         </div>
         {phoneForm.formState.errors.phone && (
-          <p className="text-destructive text-xs mt-1">{phoneForm.formState.errors.phone.message}</p>
+          <p className="text-destructive text-xs">{phoneForm.formState.errors.phone.message}</p>
         )}
       </div>
       {error && (
@@ -106,10 +109,10 @@ export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <button type="submit" disabled={pending} className="sc-btn sc-btn-primary sc-btn-block">
+      <Button type="submit" disabled={pending} className="h-10 w-full">
         <span>{pending ? "Enviando…" : "Enviar código"}</span>
         <ArrowRight size={16} />
-      </button>
+      </Button>
     </form>
   );
 }

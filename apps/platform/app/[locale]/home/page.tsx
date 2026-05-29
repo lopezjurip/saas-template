@@ -52,34 +52,39 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
     : "¿Con qué organización entramos hoy?";
 
   return (
-    <div className="home-shell" data-variant="picker">
-      <div className="home-main" data-variant="picker">
-        <div className="home-stack" data-variant="picker">
-          <div className="home-header">
-            <span className="eyebrow">Inicio</span>
-            <h1>{greeting}</h1>
-            <p>Elige una para empezar. También puedes crear una nueva organización.</p>
+    <div className="relative flex min-h-svh w-full flex-col overflow-hidden bg-background">
+      <div className="flex flex-1 items-center justify-center px-6 pt-6 pb-24">
+        <div className="flex w-full max-w-[1040px] flex-col items-center gap-7 text-center">
+          <div className="flex flex-col gap-1.5 text-center">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Inicio</span>
+            <h1 className="text-[32px] font-semibold tracking-[-0.02em] text-foreground">{greeting}</h1>
+            <p className="text-[13.5px] leading-normal text-muted-foreground text-pretty">
+              Elige una para empezar. También puedes crear una nueva organización.
+            </p>
           </div>
 
           {obIncomplete && (
-            <div className="home-banner" style={{ maxWidth: 520, width: "100%" }}>
-              <span className="home-banner-dot">
+            <div className="grid w-full max-w-[520px] grid-cols-[auto_1fr_auto] items-center gap-3 rounded-md border border-dashed bg-muted/35 px-3.5 py-3">
+              <span className="inline-flex size-7 items-center justify-center rounded-lg bg-foreground text-background">
                 <Sparkles size={13} />
               </span>
-              <span className="home-banner-body">
-                <span className="home-banner-title">Termina tu onboarding</span>
-                <span className="home-banner-sub">
+              <span className="flex min-w-0 flex-col gap-px text-left">
+                <span className="text-[13.5px] font-medium text-foreground">Termina tu onboarding</span>
+                <span className="text-xs text-muted-foreground">
                   {obDone} de {obTotal} métodos listos
                 </span>
               </span>
-              <Link href={`/${locale}/auth/onboarding`}>
+              <Link
+                href={`/${locale}/auth/onboarding`}
+                className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md border bg-background px-3 text-[12.5px] font-medium text-foreground hover:bg-accent"
+              >
                 Continuar
                 <ArrowRight size={13} />
               </Link>
             </div>
           )}
 
-          <div className="home-picker-grid">
+          <div className="flex flex-wrap justify-center gap-[22px]">
             {edges.map((edge) => {
               const organization = edge["node"];
               const tenant = organization["tenants"];
@@ -96,9 +101,13 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                   .join("")
                   .toUpperCase() || "·";
               return (
-                <Link key={organization["organization_id"]} href={`/${locale}/${tenant_slug}`} className="org-tile">
+                <Link
+                  key={organization["organization_id"]}
+                  href={`/${locale}/${tenant_slug}`}
+                  className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:-translate-y-[3px] hover:bg-muted/50"
+                >
                   <span
-                    className="org-tile-mark"
+                    className="inline-flex size-28 items-center justify-center rounded-[18px] border text-4xl font-semibold tracking-[-0.02em] transition-shadow duration-150 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)]"
                     style={{
                       background: `hsl(${hue} 60% 92%)`,
                       color: `hsl(${hue} 55% 28%)`,
@@ -107,17 +116,20 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                   >
                     {initials}
                   </span>
-                  <span className="org-tile-name">{name}</span>
-                  <span className="org-tile-meta">{tenant?.["tenant_name"] ?? "—"}</span>
+                  <span className="text-center text-[13.5px] font-medium text-balance">{name}</span>
+                  <span className="-mt-1 text-[11.5px] text-muted-foreground">{tenant?.["tenant_name"] ?? "—"}</span>
                 </Link>
               );
             })}
-            <Link href={`/${locale}/tenants/create`} className="org-tile add">
-              <span className="org-tile-mark">
+            <Link
+              href={`/${locale}/tenants/create`}
+              className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:-translate-y-[3px] hover:bg-muted/50"
+            >
+              <span className="inline-flex size-28 items-center justify-center rounded-[18px] border border-dashed bg-background text-muted-foreground transition-colors duration-150 group-hover:bg-muted/40 group-hover:text-foreground">
                 <Plus size={36} />
               </span>
-              <span className="org-tile-name">Nueva organización</span>
-              <span className="org-tile-meta">Empieza desde cero</span>
+              <span className="text-center text-[13.5px] font-medium text-balance">Nueva organización</span>
+              <span className="-mt-1 text-[11.5px] text-muted-foreground">Empieza desde cero</span>
             </Link>
           </div>
         </div>

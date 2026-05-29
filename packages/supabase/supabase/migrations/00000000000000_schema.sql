@@ -1032,6 +1032,86 @@ create or replace function public.email_has_passkey(email_to_check text)
 
 grant execute on function public.email_has_passkey(text) to anon, authenticated;
 
+-- Anonymous lookup used by /auth/email step-2 to surface the password field only when the
+-- entered email has a password set. Same enumeration-leak posture as email_has_passkey.
+create or replace function public.email_has_password(email_to_check text)
+  returns boolean
+  language sql
+  stable
+  security definer
+  set search_path to ''
+  as $$
+    select exists (
+      select 1
+      from auth.users u
+      where lower(u.email) = lower(email_to_check)
+        and u.encrypted_password is not null
+        and u.encrypted_password <> ''
+    );
+  $$;
+
+grant execute on function public.email_has_password(text) to anon, authenticated;
+
+-- Anonymous lookup used by /auth/phone step-2 to surface the passkey button only when the
+-- entered phone resolves to an account with a passkey. gotrue stores phones without the
+-- leading '+', so we strip it before comparing.
+create or replace function public.phone_has_passkey(phone_to_check text, default_code text default '+56')
+  returns boolean
+  language plpgsql
+  stable
+  security definer
+  set search_path to ''
+  as $$
+    declare
+      _canonical text;
+      _result boolean;
+    begin
+      _canonical := public.phone_normalize(phone_to_check, default_code);
+      if _canonical is null then
+        return false;
+      end if;
+      select exists (
+        select 1
+        from auth.users u
+        join public.webauthn_credentials c on c.profile_id = u.id
+        where u.phone = ltrim(_canonical, '+')
+      ) into _result;
+      return _result;
+    end;
+  $$;
+
+grant execute on function public.phone_has_passkey(text, text) to anon, authenticated;
+
+-- Anonymous lookup used by /auth/phone step-2 to surface the password field only when the
+-- entered phone resolves to an account with a password set.
+create or replace function public.phone_has_password(phone_to_check text, default_code text default '+56')
+  returns boolean
+  language plpgsql
+  stable
+  security definer
+  set search_path to ''
+  as $$
+    declare
+      _canonical text;
+      _result boolean;
+    begin
+      _canonical := public.phone_normalize(phone_to_check, default_code);
+      if _canonical is null then
+        return false;
+      end if;
+      select exists (
+        select 1
+        from auth.users u
+        where u.phone = ltrim(_canonical, '+')
+          and u.encrypted_password is not null
+          and u.encrypted_password <> ''
+      ) into _result;
+      return _result;
+    end;
+  $$;
+
+grant execute on function public.phone_has_password(text, text) to anon, authenticated;
+
 -- Resolve profile_id (= auth.uid) from email. Used by the anonymous sign-in challenge
 -- route to scope allowCredentials to the entered email's owner — avoids paging through
 -- admin.listUsers. Service-role only; the route already runs with service-role.

@@ -58,15 +58,16 @@ export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
       {passkeys.map((p) => (
         <div
           key={p["webauthn_credential_id"]}
-          className="acc-row"
-          style={{ background: "color-mix(in oklab, var(--muted) 30%, transparent)" }}
+          className="bg-muted/30 grid grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border px-3.5 py-3"
         >
-          <span className="acc-row-icon" />
-          <div className="acc-row-body">
-            <span className="acc-row-title">{p["webauthn_credential_friendly_name"] ?? "Passkey"}</span>
-            <span className="acc-row-sub">
+          <span className="bg-muted text-foreground inline-flex size-9 items-center justify-center rounded-[9px]" />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-foreground text-sm font-medium">
+              {p["webauthn_credential_friendly_name"] ?? "Passkey"}
+            </span>
+            <span className="text-muted-foreground inline-flex flex-wrap items-center gap-1.5 text-xs">
               <span>Creado {FORMAT_DATE(p["webauthn_credential_created_at"])}</span>
-              <span className="sep">·</span>
+              <span className="opacity-50">·</span>
               <span>
                 {p["webauthn_credential_last_used_at"]
                   ? `Usado ${FORMAT_DATE(p["webauthn_credential_last_used_at"])}`
@@ -74,11 +75,11 @@ export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
               </span>
             </span>
           </div>
-          <div className="acc-row-actions">
+          <div className="inline-flex gap-1.5">
             <button
               type="button"
               disabled={deleting}
-              className="acc-row-btn ghost danger"
+              className="text-destructive hover:bg-accent inline-flex h-8 items-center gap-1.5 rounded-md border border-transparent px-3 text-[12.5px] font-medium whitespace-nowrap no-underline disabled:opacity-50"
               onClick={() => onDelete(p["webauthn_credential_id"])}
             >
               Eliminar

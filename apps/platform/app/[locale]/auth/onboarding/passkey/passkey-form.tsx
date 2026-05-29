@@ -2,6 +2,7 @@
 
 import { createBrowserClient } from "@packages/supabase/client.browser";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Fingerprint } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -38,22 +39,22 @@ export function PasskeyForm({ email }: { email: string }) {
 
   return (
     <>
-      <div className="ob-passkey-card">
-        <div className="ob-passkey-icon">
+      <div className="grid grid-cols-[48px_1fr] items-center gap-3.5 rounded-md border bg-muted/35 p-3.5">
+        <div className="inline-flex size-12 items-center justify-center rounded-xl bg-foreground text-background">
           <Fingerprint size={28} />
         </div>
-        <div className="ob-passkey-body">
-          <div className="ob-passkey-line">
-            <span>Cuenta</span>
-            <strong>{email || "—"}</strong>
+        <div className="flex flex-col gap-1">
+          <div className="flex justify-between gap-3 text-xs">
+            <span className="text-muted-foreground">Cuenta</span>
+            <strong className="min-w-0 truncate text-right font-medium text-foreground">{email || "—"}</strong>
           </div>
-          <div className="ob-passkey-line">
-            <span>Dispositivo</span>
-            <strong>Este navegador</strong>
+          <div className="flex justify-between gap-3 text-xs">
+            <span className="text-muted-foreground">Dispositivo</span>
+            <strong className="min-w-0 truncate text-right font-medium text-foreground">Este navegador</strong>
           </div>
-          <div className="ob-passkey-line">
-            <span>Se sincroniza con</span>
-            <strong>tu llavero del sistema</strong>
+          <div className="flex justify-between gap-3 text-xs">
+            <span className="text-muted-foreground">Se sincroniza con</span>
+            <strong className="min-w-0 truncate text-right font-medium text-foreground">tu llavero del sistema</strong>
           </div>
         </div>
       </div>
@@ -64,12 +65,12 @@ export function PasskeyForm({ email }: { email: string }) {
         </Alert>
       )}
 
-      <button type="button" onClick={onEnroll} disabled={pending} className="sc-btn sc-btn-primary sc-btn-block">
+      <Button type="button" onClick={onEnroll} disabled={pending} className="h-10 w-full">
         <Fingerprint size={15} />
         <span>{pending ? "Registrando…" : "Crear passkey en este dispositivo"}</span>
-      </button>
+      </Button>
 
-      <p className="sc-hint text-center mt-1">
+      <p className="mt-1 text-center text-xs leading-relaxed text-muted-foreground">
         Podrás agregar más passkeys (otro celular, una llave física) desde tu cuenta.
       </p>
     </>

@@ -1,3 +1,4 @@
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import Link from "next/link";
 import { AuthCard } from "~/app/[locale]/auth/_components/auth-card";
 import { AuthHeader } from "~/app/[locale]/auth/_components/auth-header";
@@ -14,12 +15,12 @@ export default async function LogoutPage(props: PageProps<"/[locale]/auth/logout
           <p className="text-muted-foreground mt-1 text-sm">Vas a salir de tu cuenta en este dispositivo.</p>
         </div>
         <form action={signOutForm} className="flex flex-col gap-2">
-          <button type="submit" className="sc-btn sc-btn-primary sc-btn-block">
+          <Button type="submit" className="h-10 w-full">
             Cerrar sesión
-          </button>
-          <Link href={`/${locale}/home`} className="sc-btn sc-btn-outline sc-btn-block">
-            Cancelar
-          </Link>
+          </Button>
+          <Button asChild variant="outline" className="h-10 w-full">
+            <Link href={`/${locale}/home`}>Cancelar</Link>
+          </Button>
         </form>
       </div>
     </AuthCard>

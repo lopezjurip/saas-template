@@ -23,20 +23,20 @@ test.describe("owner creates first tenant", () => {
   });
 
   test("login → /tenants/create → land on tenant subdomain", async ({ page }) => {
-    // ----- sign in: pick email method, enter email, then password -----
-    await page.goto("/es/auth");
-    await page.getByRole("link", { name: "Continuar con email" }).click();
-    await page.waitForURL(/\/auth\/email(\?|$)/);
+    // ----- sign in via the consolidated two-step /auth/email flow -----
+    // Step 1: email input. Step 2 (same route, ?value=…&has_password=1): method picker
+    // renders the password form for an account that has a password.
+    await page.goto("/es/auth/email");
     await page.getByLabel("Correo electrónico").fill(email);
     await page.getByRole("button", { name: "Continuar", exact: true }).click();
-    await page.waitForURL(/\/auth\/email\/login/);
+    await page.waitForURL(/\/auth\/email\?/);
     await page.getByLabel("Contraseña").fill(password);
     await page.getByRole("button", { name: "Iniciar sesión" }).click();
 
-    // Onboarding is not a hard gate. A freshly-created user lands on /home (with a banner
-    // nudging back to /auth/onboarding). Force-navigate to the tenant creator instead — the
+    // Password login sets the session and routes to `next`. Onboarding is not a hard gate.
+    // Wait until we leave the auth flow, then force-navigate to the tenant creator — the
     // onboarding journey is exercised by its own spec.
-    await page.waitForURL(/\/(auth\/onboarding|home)/);
+    await page.waitForURL((url) => !url.pathname.includes("/auth/"));
     await page.goto("/es/tenants/create");
 
     // ----- create tenant -----

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Check, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useLocaleParam } from "~/hooks/use-locale-param";
@@ -11,22 +12,37 @@ export function ObChips({ methods, current }: { methods: OnboardingState["method
   const locale = useLocaleParam();
 
   return (
-    <div className="ob-chips">
+    <div className="flex flex-wrap gap-1.5">
       {METHOD_ORDER.map((id) => {
         const status = methods[id];
         const meta = METHOD_CATALOG[id];
         const isRecommended = id === AUTH_TWEAKS.OB_RECOMMENDED && status === "pending";
+        const isCurrent = id === current;
         return (
           <Link
             key={id}
             href={`/${locale}/auth/onboarding/${id}`}
-            className="ob-chip"
+            className={cn(
+              "inline-flex h-7 items-center gap-1.5 rounded-full border bg-background pl-1.5 pr-2.5 text-xs font-medium text-muted-foreground no-underline transition-colors hover:bg-accent hover:text-foreground",
+              status === "done" &&
+                "border-primary bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+              status === "skipped" && "border-dashed",
+              isRecommended && "border-foreground/55 text-foreground",
+              isCurrent && "border-ring text-foreground ring-[3px] ring-ring/20",
+            )}
             data-status={status}
-            data-current={id === current ? "true" : "false"}
+            data-current={isCurrent ? "true" : "false"}
             data-recommended={isRecommended ? "true" : "false"}
-            aria-current={id === current ? "step" : undefined}
+            aria-current={isCurrent ? "step" : undefined}
           >
-            <span className="ob-chip-marker">
+            <span
+              className={cn(
+                "inline-flex size-[18px] shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground",
+                status === "done" && "bg-primary-foreground/20 text-primary-foreground",
+                status === "skipped" && "bg-transparent",
+                isRecommended && "bg-foreground text-background",
+              )}
+            >
               {status === "done" ? (
                 <Check size={11} />
               ) : status === "skipped" ? (
@@ -59,23 +75,31 @@ export function ObSummary({
   const skipped = METHOD_ORDER.filter((id) => methods[id] === "skipped").length;
   const pending = total - done - skipped;
   return (
-    <div className="ob-summary" data-dense={dense ? "true" : "false"}>
+    <div className={cn("flex flex-col gap-1.5", dense && "gap-1")}>
       {showMeter && (
-        <div className="ob-summary-meter" aria-hidden="true">
+        <div className="grid h-1 w-full grid-flow-col auto-cols-fr gap-1" aria-hidden="true">
           {METHOD_ORDER.map((id) => (
-            <span key={id} className="ob-summary-seg" data-status={methods[id]} />
+            <span
+              key={id}
+              data-status={methods[id]}
+              className={cn(
+                "h-full rounded-sm bg-muted",
+                methods[id] === "done" && "bg-foreground",
+                methods[id] === "skipped" && "box-border border border-dashed border-border bg-muted",
+              )}
+            />
           ))}
         </div>
       )}
-      <div className="ob-summary-text">
-        <strong>
+      <div className="inline-flex flex-wrap items-center gap-1.5 whitespace-nowrap text-xs text-muted-foreground">
+        <strong className="font-semibold text-foreground">
           {done} de {total}
         </strong>
-        <span className="ob-summary-sep">·</span>
+        <span className="opacity-50">·</span>
         {pending > 0 ? <span>{pending === 1 ? "1 pendiente" : `${pending} pendientes`}</span> : <span>completo</span>}
         {skipped > 0 && (
           <>
-            <span className="ob-summary-sep">·</span>
+            <span className="opacity-50">·</span>
             <span>
               {skipped} saltado{skipped === 1 ? "" : "s"}
             </span>
@@ -90,16 +114,18 @@ export function ObProgress({
   methods,
   current,
   dense = false,
+  meter = false,
 }: {
   methods: OnboardingState["methods"];
   current?: OnboardingMethodId;
   dense?: boolean;
+  meter?: boolean;
 }) {
   if (AUTH_TWEAKS.OB_PROGRESS === "chips") {
     return (
       <>
         <ObChips methods={methods} current={current} />
-        <ObSummary methods={methods} dense={dense} showMeter={false} />
+        <ObSummary methods={methods} dense={dense} showMeter={meter} />
       </>
     );
   }

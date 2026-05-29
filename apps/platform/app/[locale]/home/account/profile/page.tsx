@@ -35,30 +35,42 @@ export default async function AccountProfilePage(props: PageProps<"/[locale]/hom
   const name = data?.["profile"]?.["profile_name_full"] ?? "";
 
   return (
-    <div className="acc-section">
-      <header className="acc-section-head">
-        <span className="acc-section-eyebrow">Cuenta · Perfil</span>
-        <h1 className="acc-section-title">Tu perfil</h1>
-        <p className="acc-section-sub">
+    <div className="flex max-w-[720px] flex-col gap-[18px]">
+      <header className="flex flex-col gap-1">
+        <span className="text-muted-foreground text-[11px] font-semibold tracking-[0.08em] uppercase">
+          Cuenta · Perfil
+        </span>
+        <h1 className="text-foreground text-[22px] font-semibold tracking-[-0.02em]">Tu perfil</h1>
+        <p className="text-muted-foreground text-[13px] leading-relaxed text-pretty">
           Esto es lo que verán tus compañeros dentro de las organizaciones. Puedes cambiarlo cuando quieras.
         </p>
       </header>
 
-      <div className="acc-form">
-        <div className="ob-avatar-row">
-          <div className="ob-avatar-slot" data-empty={name.trim().length === 0 ? "true" : "false"}>
+      <div className="flex flex-col gap-3.5">
+        <div className="flex items-center gap-4">
+          <div className="bg-muted text-muted-foreground inline-flex size-[88px] shrink-0 items-center justify-center overflow-hidden rounded-full border text-[30px] font-semibold tracking-[-0.02em]">
             {INITIALS_OF(name)}
           </div>
-          <div className="ob-avatar-actions">
-            <button type="button" disabled>
+          <div className="flex flex-col gap-1.5">
+            <button
+              type="button"
+              disabled
+              className="bg-background text-foreground hover:bg-accent inline-flex h-[34px] items-center rounded-md border px-3 text-[13px] disabled:opacity-50"
+            >
               Subir foto
             </button>
-            <button type="button" className="ghost" disabled>
+            <button
+              type="button"
+              disabled
+              className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex h-7 items-center self-start rounded-md px-2 text-[12.5px] disabled:opacity-50"
+            >
               Quitar
             </button>
           </div>
         </div>
-        <p className="ob-avatar-hint">Próximamente — por ahora usamos tus iniciales como avatar.</p>
+        <p className="text-muted-foreground text-[11.5px] leading-snug">
+          Próximamente — por ahora usamos tus iniciales como avatar.
+        </p>
 
         <ProfileForm profile_id={user.id} defaultValue={name} />
       </div>

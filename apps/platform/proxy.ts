@@ -147,7 +147,11 @@ export async function proxy(request: NextRequest) {
   // (the form's server action gets bound to the wrong route after a client transition from /home
   // and posts to the previous URL, producing "unexpected response from server").
   if (isApex && isLocalizedPublicPath(pathAfterLocale)) {
-    const isAuthEntryPath = pathAfterLocale === "/auth" || pathAfterLocale.startsWith("/auth/email");
+    const isAuthEntryPath =
+      pathAfterLocale === "/auth" ||
+      pathAfterLocale.startsWith("/auth/email") ||
+      pathAfterLocale.startsWith("/auth/phone") ||
+      pathAfterLocale.startsWith("/auth/document");
     if (isAuthEntryPath) {
       const {
         data: { session },

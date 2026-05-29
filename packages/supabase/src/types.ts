@@ -917,6 +917,7 @@ export type Database = {
     Functions: {
       email_exists: { Args: { email_to_check: string }; Returns: boolean };
       email_has_passkey: { Args: { email_to_check: string }; Returns: boolean };
+      email_has_password: { Args: { email_to_check: string }; Returns: boolean };
       health_current_timestamp: { Args: never; Returns: string };
       memberships_pending_by_document: {
         Args: {
@@ -940,6 +941,14 @@ export type Database = {
         Returns: boolean;
       };
       phone_exists: {
+        Args: { default_code?: string; phone_to_check: string };
+        Returns: boolean;
+      };
+      phone_has_passkey: {
+        Args: { default_code?: string; phone_to_check: string };
+        Returns: boolean;
+      };
+      phone_has_password: {
         Args: { default_code?: string; phone_to_check: string };
         Returns: boolean;
       };

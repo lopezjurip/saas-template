@@ -19,8 +19,8 @@ const signInWithOAuthSchema = z.object({
 // NOTE (Opus analysis): signInWithOAuthRun is technically client-side compatible (pure SDK call, anon key).
 // Can be refactored to client-side hook in future. Currently kept server for logging patterns.
 // The rest of this file (continueWith*) MUST stay server because they call enumeration RPCs
-// (email_exists, phone_exists, phone_normalize, email_has_passkey) which expose account enumeration
-// and should only be callable by authenticated/authorized sources, not anon clients.
+// (email_exists, phone_exists, phone_normalize, *_has_passkey, *_has_password) which expose
+// account enumeration and should only be callable by authenticated/authorized sources.
 const signInWithOAuthRun = action
   .inputSchema(signInWithOAuthSchema)
   .action(async ({ parsedInput: { provider, next } }) => {
@@ -54,8 +54,9 @@ export async function signInWithOAuth(formData: FormData) {
 }
 
 // Single entry-point dispatcher for the unified Paso 1 form (selector + smart variants).
-// Detects which field was filled and delegates to the same per-method check actions
-// that the deeper /auth/{method} pages would call on their own.
+// Detects which field was filled and delegates to a per-method check that resolves the
+// account's available methods, then redirects to the consolidated /auth/{kind} page
+// with everything pre-populated so step-2 renders without an extra round-trip.
 async function continueWithEmail(value: string, next: string): Promise<never> {
   const locale = await getServerLocale();
   const email = value.trim().toLowerCase();
@@ -65,37 +66,61 @@ async function continueWithEmail(value: string, next: string): Promise<never> {
   const supabase = await createServerClient();
   const { data: exists } = await supabase.rpc("email_exists", { email_to_check: email });
   if (!exists) {
-    redirect(`/${locale}/auth/email/signup?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`);
+    const qs = new URLSearchParams({ value: email, exists: "0", next });
+    redirect(`/${locale}/auth/email?${qs.toString()}`);
   }
-  const { data: hasPasskey } = await supabase.rpc("email_has_passkey", { email_to_check: email });
-  const passkeySuffix = hasPasskey ? "&has_passkey=1" : "";
-  redirect(
-    `/${locale}/auth/email/login?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}${passkeySuffix}`,
-  );
+  const [passkeyRes, passwordRes] = await Promise.all([
+    supabase.rpc("email_has_passkey", { email_to_check: email }),
+    supabase.rpc("email_has_password", { email_to_check: email }),
+  ]);
+  const qs = new URLSearchParams({
+    value: email,
+    exists: "1",
+    has_passkey: passkeyRes.data ? "1" : "0",
+    has_password: passwordRes.data ? "1" : "0",
+    next,
+  });
+  redirect(`/${locale}/auth/email?${qs.toString()}`);
 }
 
 async function continueWithPhone(value: string, next: string): Promise<never> {
   const locale = await getServerLocale();
   const phone = value.trim();
-  if (!phone) redirect(`/${locale}/auth/phone?error=invalid_phone`);
+  if (!phone) redirect(`/${locale}/auth/phone?error=invalid_phone&next=${encodeURIComponent(next)}`);
   const supabase = await createServerClient();
   const { data: normalized } = await supabase.rpc("phone_normalize", { value: phone, default_code: "+56" });
-  if (!normalized) redirect(`/${locale}/auth/phone?error=invalid_phone`);
+  if (!normalized) {
+    redirect(`/${locale}/auth/phone?error=invalid_phone&next=${encodeURIComponent(next)}`);
+  }
   const { data: exists } = await supabase.rpc("phone_exists", { phone_to_check: phone, default_code: "+56" });
   if (!exists) {
-    redirect(
-      `/${locale}/auth/phone/signup?phone=${encodeURIComponent(normalized as string)}&next=${encodeURIComponent(next)}`,
-    );
+    const qs = new URLSearchParams({
+      value: normalized as string,
+      exists: "0",
+      channels: "sms,whatsapp",
+      next,
+    });
+    redirect(`/${locale}/auth/phone?${qs.toString()}`);
   }
-  redirect(
-    `/${locale}/auth/phone/login?phone=${encodeURIComponent(normalized as string)}&next=${encodeURIComponent(next)}`,
-  );
+  const [passkeyRes, passwordRes] = await Promise.all([
+    supabase.rpc("phone_has_passkey", { phone_to_check: phone, default_code: "+56" }),
+    supabase.rpc("phone_has_password", { phone_to_check: phone, default_code: "+56" }),
+  ]);
+  const qs = new URLSearchParams({
+    value: normalized as string,
+    exists: "1",
+    has_passkey: passkeyRes.data ? "1" : "0",
+    has_password: passwordRes.data ? "1" : "0",
+    channels: "sms,whatsapp",
+    next,
+  });
+  redirect(`/${locale}/auth/phone?${qs.toString()}`);
 }
 
 async function continueWithDocument(value: string, next: string): Promise<never> {
   const locale = await getServerLocale();
   const doc = value.trim();
-  if (!doc) redirect(`/${locale}/auth/document?error=invalid_document`);
+  if (!doc) redirect(`/${locale}/auth/document?error=invalid_document&next=${encodeURIComponent(next)}`);
   redirect(`/${locale}/auth/document?value=${encodeURIComponent(doc)}&next=${encodeURIComponent(next)}`);
 }
 

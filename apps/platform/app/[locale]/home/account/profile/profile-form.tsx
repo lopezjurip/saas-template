@@ -3,6 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useGraphyMutation } from "@packages/graphy/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -50,13 +53,10 @@ export function ProfileForm({ profile_id, defaultValue }: { profile_id: string; 
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-3">
-      <div className="acc-form-row">
-        <label className="sc-label" htmlFor="full_name">
-          Nombre completo
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="full_name">Nombre completo</Label>
+        <Input
           id="full_name"
-          className="sc-input"
           autoComplete="name"
           aria-invalid={!!form.formState.errors.profile_name_full}
           {...form.register("profile_name_full")}
@@ -71,10 +71,10 @@ export function ProfileForm({ profile_id, defaultValue }: { profile_id: string; 
         </Alert>
       )}
       {success && !serverError && <p className="text-muted-foreground text-xs">Guardado.</p>}
-      <div className="acc-form-foot">
-        <button type="submit" disabled={pending} className="sc-btn sc-btn-primary" style={{ height: 36 }}>
+      <div className="mt-1 flex justify-end gap-2 border-t pt-2">
+        <Button type="submit" disabled={pending} className="h-9">
           {pending ? "Guardando…" : "Guardar cambios"}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -2,6 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { ArrowRight, Mail } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -44,13 +47,11 @@ export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
   if (sentTo) {
     return (
       <form onSubmit={onVerifyCode} className="flex flex-col gap-4">
-        <div>
-          <label className="sc-label" htmlFor="email-code">
-            Código enviado a {sentTo}
-          </label>
-          <input
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="email-code">Código enviado a {sentTo}</Label>
+          <Input
             id="email-code"
-            className="sc-input"
+            className="h-10"
             inputMode="numeric"
             maxLength={6}
             autoComplete="one-time-code"
@@ -63,11 +64,15 @@ export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <button type="submit" disabled={pending} className="sc-btn sc-btn-primary sc-btn-block">
+        <Button type="submit" disabled={pending} className="h-10 w-full">
           <span>{pending ? "Verificando…" : "Verificar"}</span>
           <ArrowRight size={16} />
-        </button>
-        <button type="button" className="sc-back" onClick={() => setSentTo(null)}>
+        </Button>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 self-start -ml-1.5 rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+          onClick={() => setSentTo(null)}
+        >
           Cambiar correo
         </button>
       </form>
@@ -76,17 +81,15 @@ export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
 
   return (
     <form onSubmit={onSendEmail} className="flex flex-col gap-4">
-      <div>
-        <label className="sc-label" htmlFor="email-input">
-          Correo
-        </label>
-        <div className="sc-input-icon-wrap">
-          <span className="sc-input-icon">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="email-input">Correo</Label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none flex">
             <Mail size={16} />
           </span>
-          <input
+          <Input
             id="email-input"
-            className="sc-input"
+            className="h-10 pl-9"
             type="email"
             placeholder="tu@empresa.cl"
             autoComplete="email"
@@ -95,7 +98,7 @@ export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
           />
         </div>
         {emailForm.formState.errors.email && (
-          <p className="text-destructive text-xs mt-1">{emailForm.formState.errors.email.message}</p>
+          <p className="text-destructive text-xs">{emailForm.formState.errors.email.message}</p>
         )}
       </div>
       {error && (
@@ -103,10 +106,10 @@ export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <button type="submit" disabled={pending} className="sc-btn sc-btn-primary sc-btn-block">
+      <Button type="submit" disabled={pending} className="h-10 w-full">
         <Mail size={15} />
         <span>{pending ? "Enviando…" : "Enviar código"}</span>
-      </button>
+      </Button>
     </form>
   );
 }

@@ -140,12 +140,9 @@ export function DocumentFlow({
         return;
       }
       if (data.kind === "redirect_signup") {
-        const qs = new URLSearchParams({
-          country: data.country,
-          kind: data.doc_kind,
-          value: data.value,
-        }).toString();
-        router.push(`/${locale}/auth/email/signup?${qs}`);
+        // No profile resolved + no pending invites → ask the user to continue with email.
+        // The document gets linked later during /auth/onboarding (profile identity step).
+        router.push(`/${locale}/auth/email`);
         return;
       }
       if (data.kind === "redirect_accept") {

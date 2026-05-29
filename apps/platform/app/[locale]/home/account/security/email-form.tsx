@@ -2,6 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -33,13 +36,10 @@ export function EmailForm({ currentEmail }: { currentEmail: string | null }) {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-3">
-      <div className="acc-form-row">
-        <label className="sc-label" htmlFor="new_email">
-          Nuevo correo
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="new_email">Nuevo correo</Label>
+        <Input
           id="new_email"
-          className="sc-input"
           type="email"
           autoComplete="email"
           placeholder="tu@empresa.cl"
@@ -63,10 +63,10 @@ export function EmailForm({ currentEmail }: { currentEmail: string | null }) {
           </AlertDescription>
         </Alert>
       )}
-      <div className="acc-form-foot">
-        <button type="submit" disabled={pending} className="sc-btn sc-btn-primary" style={{ height: 36 }}>
+      <div className="mt-1 flex justify-end gap-2 border-t pt-2">
+        <Button type="submit" disabled={pending} className="h-9">
           {pending ? "Enviando…" : "Cambiar correo"}
-        </button>
+        </Button>
       </div>
     </form>
   );

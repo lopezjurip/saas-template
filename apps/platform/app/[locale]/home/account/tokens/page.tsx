@@ -1,21 +1,22 @@
-// TODO: backend for API tokens isn't wired yet. Schema would need a `personal_tokens`
-// table with prefix + hashed secret + scopes, and an authedAction to mint/revoke.
+import { TokensManager } from "./tokens-manager";
 
 export default function TokensPage() {
   return (
-    <div className="acc-section">
-      <header className="acc-section-head">
-        <span className="acc-section-eyebrow">Desarrollo · API</span>
-        <h1 className="acc-section-title">Tokens personales</h1>
-        <p className="acc-section-sub">
+    <div className="flex max-w-[720px] flex-col gap-[18px]">
+      <header className="flex flex-col gap-1">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          Desarrollo · API
+        </span>
+        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">Tokens personales</h1>
+        <p className="text-pretty text-[13px] leading-normal text-muted-foreground">
           Genera tokens para automatizar tareas o conectar con la API. Heredan tus permisos en cada organización —
           trátalos como contraseñas.
         </p>
       </header>
-      <div className="acc-todo">
-        <strong className="block text-foreground mb-1">Próximamente</strong>
-        Estamos terminando el backend de tokens personales. Cuando esté listo podrás crearlos y revocarlos desde aquí.
-      </div>
+      <TokensManager />
+      <p className="text-[12.5px] leading-relaxed text-muted-foreground text-pretty">
+        ¿Olvidaste guardar el secreto? Los tokens solo se muestran una vez al crearlos. Revoca y crea uno nuevo.
+      </p>
     </div>
   );
 }

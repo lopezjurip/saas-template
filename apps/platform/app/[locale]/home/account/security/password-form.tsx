@@ -2,6 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -38,13 +41,10 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-3">
-      <div className="acc-form-row">
-        <label className="sc-label" htmlFor="pw_new">
-          {hasPassword ? "Nueva contraseña" : "Contraseña"}
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="pw_new">{hasPassword ? "Nueva contraseña" : "Contraseña"}</Label>
+        <Input
           id="pw_new"
-          className="sc-input"
           type="password"
           autoComplete="new-password"
           aria-invalid={!!form.formState.errors.password}
@@ -54,13 +54,10 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
           <p className="text-destructive text-xs">{form.formState.errors.password.message}</p>
         )}
       </div>
-      <div className="acc-form-row">
-        <label className="sc-label" htmlFor="pw_confirm">
-          Confirmar
-        </label>
-        <input
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="pw_confirm">Confirmar</Label>
+        <Input
           id="pw_confirm"
-          className="sc-input"
           type="password"
           autoComplete="new-password"
           aria-invalid={!!form.formState.errors.confirm}
@@ -76,10 +73,10 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
         </Alert>
       )}
       {success && !serverError && <p className="text-muted-foreground text-xs">Guardado.</p>}
-      <div className="acc-form-foot">
-        <button type="submit" disabled={pending} className="sc-btn sc-btn-primary" style={{ height: 36 }}>
+      <div className="mt-1 flex justify-end gap-2 border-t pt-2">
+        <Button type="submit" disabled={pending} className="h-9">
           {pending ? "Guardando…" : hasPassword ? "Cambiar contraseña" : "Crear contraseña"}
-        </button>
+        </Button>
       </div>
     </form>
   );

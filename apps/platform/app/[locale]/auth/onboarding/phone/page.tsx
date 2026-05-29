@@ -15,7 +15,7 @@ export default async function OnboardingPhonePage(_props: PageProps<"/[locale]/a
           methods={state.methods}
           current="phone"
           title="Agrega tu teléfono"
-          subtitle="Te enviaremos un código para verificarlo. Después podrás recibir códigos por SMS al iniciar sesión."
+          subtitle="Te enviaremos un código para verificarlo. Después podrás recibir códigos por SMS o WhatsApp al iniciar sesión."
         >
           <PhoneForm defaultPhone={state.phone ?? ""} />
         </StepShell>
