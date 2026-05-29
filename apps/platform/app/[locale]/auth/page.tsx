@@ -97,7 +97,7 @@ function LocalMethodsSmart({ next }: { next: string }) {
           />
         </div>
         <p className="mt-1.5 text-muted-foreground text-xs leading-relaxed">
-          Si no tienes cuenta, te enviaremos un enlace mágico para crearla.
+          Si no tienes cuenta, te enviaremos un enlace para crearla.
         </p>
       </div>
       <Button type="submit" className="h-10 w-full">

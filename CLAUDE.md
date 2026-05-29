@@ -89,6 +89,11 @@ Where `<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.POR
 - `proxy.ts` calls `updateSession` (`@packages/supabase/client.middleware`) to refresh the JWT cookie, then **decodes the JWT directly** to read hook-injected claims. `auth.getUser()` returns the persisted user record without hook claims — always decode `session.access_token` (or use `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server` which does this internally).
 - Gates, in order: public path bypass → auth (redirect to `/auth?next=…`, `next` derived from the `Host` header since `request.url` drops the subdomain in Next dev) → for tenant subdomains, membership check against JWT `app_metadata.tenants`. Onboarding completion is **not** a hard gate — it's surfaced via the /home banner.
 - Reserved slugs (`auth`, `home`, `tenants`, `health`, `api`, `_next`, `www`, …) are rejected at tenant creation (`apps/platform/app/[locale]/tenants/create/schemas.ts`, enforced by `internal.reserved_slug_validate()` in the DB) so they never collide with first-party routes.
+- **Public paths in proxy:** when adding new marketing pages (e.g., `/faq`, `/pricing`), update `PUBLIC_PATH_REGEX` in `apps/platform/proxy.ts` to avoid auth gate. Regex matches root + any route under `/auth`, `/legal`, plus exact matches.
+
+### Reserved Slugs
+
+Reserved slugs are seeded in `packages/supabase/supabase/seed.sql` and cached per-request in `apps/platform/lib/get-tenant-reserved-slugs.ts` using React's `cache()`. The cache deduplicates queries within a single request; new/changed slugs are picked up on the next request automatically.
 
 ### Local Dev Ports
 
