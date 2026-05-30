@@ -3,7 +3,7 @@ import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { JWT_DECODE_PAYLOAD } from "@packages/utils/jwt";
 import { type NextRequest, NextResponse, userAgent } from "next/server";
 import { getTenantReservedSlugs } from "~/lib/get-tenant-reserved-slugs";
-import { APEX_HOSTNAME, APP_HOST } from "~/lib/constants";
+import { APEX_HOSTNAME, APP_HOST, SUBDOMAIN_MODE } from "~/lib/constants";
 import { debug } from "~/lib/debug";
 import { EXTRACT_LOCALE_FROM_PATH, LOCALE_COOKIE, RESOLVE_LOCALE_FROM_REQUEST, type SupportedLocale } from "~/lib/i18n";
 
@@ -24,6 +24,7 @@ async function resolveTenantIdFromSlug(slug: string): Promise<number | null> {
 }
 
 function extractSubdomain(hostname: string): string | null {
+  if (!SUBDOMAIN_MODE) return null;
   // Strip port before matching — port varies per dev session but the domain is stable.
   const host = hostname.split(":")[0] ?? "";
   if (!host) return null;
@@ -81,9 +82,13 @@ export async function proxy(request: NextRequest) {
   const vercelEnv = process.env["VERCEL_ENV"];
   const isVercelNonProd = vercelEnv === "preview" || vercelEnv === "development";
   if (!isApex) {
-    if (hostnameBase.endsWith(`.${APEX_HOSTNAME}`)) {
+    if (SUBDOMAIN_MODE && hostnameBase.endsWith(`.${APEX_HOSTNAME}`)) {
       slugFromHost = extractSubdomain(hostname);
     } else if (isVercelNonProd) {
+      isApex = true;
+    } else if (!SUBDOMAIN_MODE) {
+      // Subdomain mode off — the apex is itself mounted on a subdomain (e.g. humane.experiments.com).
+      // Treat any incoming host as apex; tenant routing is path-only (/{locale}/{slug}/...).
       isApex = true;
     } else {
       // Unknown host (localhost/127.0.0.1/custom apex). Custom apexes are phase 2 —

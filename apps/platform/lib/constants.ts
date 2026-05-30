@@ -17,3 +17,10 @@ export const APP_PORT = process.env["PORT"] ?? (NODE_ENV === "development" ? "70
 export const APP_HOST = APP_PORT ? `${APEX_HOSTNAME}:${APP_PORT}` : APEX_HOSTNAME;
 
 export const DEBUG = process.env["DEBUG"];
+
+// When false, tenant routing is path-only (/{locale}/{slug}/...) — no {slug}.apex subdomain.
+// Set NEXT_PUBLIC_SUBDOMAIN_MODE=false when wildcard DNS for *.apex is unavailable
+// (e.g. mounting the apex itself on a subdomain of an experiments domain).
+// Also set NEXT_PUBLIC_COOKIE_DOMAIN to the apex host (not the parent domain) so session
+// cookies stay scoped to a single origin instead of crossing subdomains.
+export const SUBDOMAIN_MODE = process.env["NEXT_PUBLIC_SUBDOMAIN_MODE"] !== "false";
