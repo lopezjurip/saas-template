@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { isOAuthProvider, OAUTH_PROVIDER_IDS } from "~/app/[locale]/auth/providers";
+import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
 import { debug } from "~/lib/debug";
 import { getServerLocale } from "~/lib/i18n.server";
 import { action } from "~/lib/safe-action";
@@ -63,6 +64,10 @@ async function continueWithEmail(value: string, next: string): Promise<never> {
   if (!email || !email.includes("@")) {
     redirect(`/${locale}/auth/email?error=invalid_email&next=${encodeURIComponent(next)}`);
   }
+  if (!AUTH_EXPOSE_ACCOUNT_EXISTENCE) {
+    const qs = new URLSearchParams({ value: email, next });
+    redirect(`/${locale}/auth/email?${qs.toString()}`);
+  }
   const supabase = await createServerClient();
   const { data: exists } = await supabase.rpc("email_exists", { email_to_check: email });
   if (!exists) {
@@ -91,6 +96,10 @@ async function continueWithPhone(value: string, next: string): Promise<never> {
   const { data: normalized } = await supabase.rpc("phone_normalize", { value: phone, default_code: "+56" });
   if (!normalized) {
     redirect(`/${locale}/auth/phone?error=invalid_phone&next=${encodeURIComponent(next)}`);
+  }
+  if (!AUTH_EXPOSE_ACCOUNT_EXISTENCE) {
+    const qs = new URLSearchParams({ value: normalized as string, channels: "sms,whatsapp", next });
+    redirect(`/${locale}/auth/phone?${qs.toString()}`);
   }
   const { data: exists } = await supabase.rpc("phone_exists", { phone_to_check: phone, default_code: "+56" });
   if (!exists) {

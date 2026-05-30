@@ -18,7 +18,9 @@ export default async function PhonePage(props: PageProps<"/[locale]/auth/phone">
   const value = SINGLE(sp["value"]) ?? "";
   const next = SINGLE(sp["next"]) ?? "/";
   const error = SINGLE(sp["error"]);
-  const exists = SINGLE(sp["exists"]) === "1";
+  const existsRaw = SINGLE(sp["exists"]);
+  const existsKnown = existsRaw !== undefined;
+  const exists = existsRaw === "1";
   const hasPasskey = SINGLE(sp["has_passkey"]) === "1";
   const hasPassword = SINGLE(sp["has_password"]) === "1";
   const channelsRaw = SINGLE(sp["channels"]) ?? "sms,whatsapp";
@@ -69,19 +71,18 @@ export default async function PhonePage(props: PageProps<"/[locale]/auth/phone">
     );
   }
 
-  const isNewUser = !exists;
+  // isNewUser = true when existence is unknown (allows OTP to create account if needed).
+  const isNewUser = existsKnown ? !exists : true;
   const changeHref = `/${locale}/auth/phone?next=${encodeURIComponent(next)}`;
+
+  const title = existsKnown && isNewUser ? "Crear cuenta" : "Ingresar";
+  const subtitle =
+    existsKnown && isNewUser ? "Te enviaremos un código para crear tu cuenta." : "Elige cómo quieres recibir tu código";
 
   return (
     <AuthCard>
       <div className="flex flex-col gap-5">
-        <StepHeader
-          backHref={`/${locale}/auth?next=${encodeURIComponent(next)}`}
-          title={isNewUser ? "Crear cuenta" : "Ingresar"}
-          subtitle={
-            isNewUser ? "Te enviaremos un código para crear tu cuenta." : "Elige cómo quieres recibir tu código"
-          }
-        />
+        <StepHeader backHref={`/${locale}/auth?next=${encodeURIComponent(next)}`} title={title} subtitle={subtitle} />
         <IdentityChip kind="phone" value={value} href={changeHref} />
         <MethodPicker
           kind="phone"
@@ -89,6 +90,7 @@ export default async function PhonePage(props: PageProps<"/[locale]/auth/phone">
           hasPasskey={hasPasskey}
           hasPassword={hasPassword}
           isNewUser={isNewUser}
+          existsKnown={existsKnown}
           channels={channels.length > 0 ? channels : ["sms", "whatsapp"]}
           locale={locale}
           next={next}

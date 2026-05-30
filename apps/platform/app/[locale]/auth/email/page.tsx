@@ -17,7 +17,9 @@ export default async function EmailPage(props: PageProps<"/[locale]/auth/email">
   const value = SINGLE(sp["value"]) ?? "";
   const next = SINGLE(sp["next"]) ?? "/";
   const error = SINGLE(sp["error"]);
-  const exists = SINGLE(sp["exists"]) === "1";
+  const existsRaw = SINGLE(sp["exists"]);
+  const existsKnown = existsRaw !== undefined;
+  const exists = existsRaw === "1";
   const hasPasskey = SINGLE(sp["has_passkey"]) === "1";
   const hasPassword = SINGLE(sp["has_password"]) === "1";
 
@@ -65,17 +67,18 @@ export default async function EmailPage(props: PageProps<"/[locale]/auth/email">
   }
 
   // Step-2: value present → render the method picker (login or passwordless signup).
-  const isNewUser = !exists;
+  // isNewUser = true when existence is unknown (allows magic link to create account if needed).
+  const isNewUser = existsKnown ? !exists : true;
   const changeHref = `/${locale}/auth/email?next=${encodeURIComponent(next)}`;
+
+  const title = existsKnown && isNewUser ? "Crear cuenta" : "Ingresar";
+  const subtitle =
+    existsKnown && isNewUser ? "Te enviaremos un enlace mágico para crear tu cuenta." : "Elige cómo quieres continuar";
 
   return (
     <AuthCard>
       <div className="flex flex-col gap-5">
-        <StepHeader
-          backHref={`/${locale}/auth?next=${encodeURIComponent(next)}`}
-          title={isNewUser ? "Crear cuenta" : "Ingresar"}
-          subtitle={isNewUser ? "Te enviaremos un enlace mágico para crear tu cuenta." : "Elige cómo quieres continuar"}
-        />
+        <StepHeader backHref={`/${locale}/auth?next=${encodeURIComponent(next)}`} title={title} subtitle={subtitle} />
         <IdentityChip kind="email" value={value} href={changeHref} />
         <MethodPicker
           kind="email"
@@ -83,6 +86,7 @@ export default async function EmailPage(props: PageProps<"/[locale]/auth/email">
           hasPasskey={hasPasskey}
           hasPassword={hasPassword}
           isNewUser={isNewUser}
+          existsKnown={existsKnown}
           locale={locale}
           next={next}
         />

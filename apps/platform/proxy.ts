@@ -2,9 +2,9 @@ import { updateSession } from "@packages/supabase/client.middleware";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { JWT_DECODE_PAYLOAD } from "@packages/utils/jwt";
 import { type NextRequest, NextResponse, userAgent } from "next/server";
-import { getTenantReservedSlugs } from "~/lib/get-tenant-reserved-slugs";
 import { APEX_HOSTNAME, APP_HOST, SUBDOMAIN_MODE } from "~/lib/constants";
 import { debug } from "~/lib/debug";
+import { getTenantReservedSlugs } from "~/lib/get-tenant-reserved-slugs";
 import { EXTRACT_LOCALE_FROM_PATH, LOCALE_COOKIE, RESOLVE_LOCALE_FROM_REQUEST, type SupportedLocale } from "~/lib/i18n";
 
 const log = debug("proxy");

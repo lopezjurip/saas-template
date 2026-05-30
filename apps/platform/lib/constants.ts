@@ -24,3 +24,10 @@ export const DEBUG = process.env["DEBUG"];
 // Also set NEXT_PUBLIC_COOKIE_DOMAIN to the apex host (not the parent domain) so session
 // cookies stay scoped to a single origin instead of crossing subdomains.
 export const SUBDOMAIN_MODE = process.env["NEXT_PUBLIC_SUBDOMAIN_MODE"] !== "false";
+
+// When false (default), account existence and method availability (exists, has_passkey,
+// has_password) are NOT included in redirect URLs after step-1 auth. Pages show generic
+// "Ingresar" text and only offer magic link / OTP. Set AUTH_EXPOSE_ACCOUNT_EXISTENCE=true
+// to restore the explicit "Crear cuenta" / "Ingresar" split and passkey/password buttons.
+// Trade-off: false = privacy (no enumeration via URL), true = better UX for power users.
+export const AUTH_EXPOSE_ACCOUNT_EXISTENCE = process.env["AUTH_EXPOSE_ACCOUNT_EXISTENCE"] === "true";

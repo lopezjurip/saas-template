@@ -231,15 +231,6 @@ export default function AuthEntryPage() {
             <LocalMethodsSelector next={next} />
           )}
         </div>
-        <div className="text-center text-[13px] text-muted-foreground">
-          ¿Primera vez?{" "}
-          <a
-            className="cursor-pointer text-foreground underline decoration-border underline-offset-[3px] hover:decoration-foreground"
-            href="#"
-          >
-            Te enviaremos un enlace mágico
-          </a>
-        </div>
         <AuthFooter />
       </div>
     </AuthCard>

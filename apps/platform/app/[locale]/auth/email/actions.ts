@@ -3,6 +3,7 @@
 import { createServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
 import { getServerLocale } from "~/lib/i18n.server";
 import { action, formAction } from "~/lib/safe-action";
 
@@ -24,6 +25,11 @@ const checkEmailRun = action.inputSchema(checkEmailSchema).action(async ({ parse
 
   if (!email.includes("@")) {
     redirect(`/${locale}/auth/email?error=invalid_email&next=${encodeURIComponent(next)}`);
+  }
+
+  if (!AUTH_EXPOSE_ACCOUNT_EXISTENCE) {
+    const qs = new URLSearchParams({ value: email, next });
+    redirect(`/${locale}/auth/email?${qs.toString()}`);
   }
 
   const { data: exists } = await supabase.rpc("email_exists", { email_to_check: email });

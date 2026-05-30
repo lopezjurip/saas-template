@@ -19,6 +19,7 @@ type Props = {
   hasPasskey: boolean;
   hasPassword: boolean;
   isNewUser?: boolean;
+  existsKnown?: boolean;
   channels?: PhoneOtpChannel[];
   locale: string;
   next?: string;
@@ -33,6 +34,7 @@ export function MethodPicker({
   hasPasskey,
   hasPassword,
   isNewUser = false,
+  existsKnown = true,
   channels = ["sms", "whatsapp"],
   locale,
   next,
@@ -44,6 +46,7 @@ export function MethodPicker({
         hasPasskey={hasPasskey}
         hasPassword={hasPassword}
         isNewUser={isNewUser}
+        existsKnown={existsKnown}
         locale={locale}
         next={next}
       />
@@ -67,6 +70,7 @@ function EmailMethods({
   hasPasskey,
   hasPassword,
   isNewUser,
+  existsKnown,
   locale,
   next,
 }: {
@@ -74,6 +78,7 @@ function EmailMethods({
   hasPasskey: boolean;
   hasPassword: boolean;
   isNewUser: boolean;
+  existsKnown: boolean;
   locale: string;
   next?: string;
 }) {
@@ -216,7 +221,11 @@ function EmailMethods({
       >
         <Mail size={16} />
         <span>
-          {magicPending ? "Enviando…" : isNewUser ? "Crear cuenta con enlace mágico" : "Enviar enlace mágico"}
+          {magicPending
+            ? "Enviando…"
+            : existsKnown && isNewUser
+              ? "Crear cuenta con enlace mágico"
+              : "Enviar enlace mágico"}
         </span>
       </Button>
 
