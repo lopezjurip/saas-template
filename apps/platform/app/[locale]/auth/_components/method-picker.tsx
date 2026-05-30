@@ -5,9 +5,10 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { ArrowRight, Eye, EyeOff, Fingerprint, Lock, Mail, MessageCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useLoginMagicLink, useLoginPassword, useVerifyMagicOtp } from "~/hooks/use-login";
-import { type PhoneOtpChannel, useSendPhoneOtp, useVerifyPhoneOtp } from "~/hooks/use-phone-otp";
+import { useLoginMagicLink, useLoginPassword } from "~/hooks/use-login";
+import { type PhoneOtpChannel, useSendPhoneOtp } from "~/hooks/use-phone-otp";
 import { signInWithPasskey } from "~/lib/passkeys.client";
 import { rememberAuthMethod } from "./method-button";
 
@@ -26,8 +27,7 @@ type Props = {
 };
 
 // Renders the step-2 method picker for either email or phone identities.
-// Internal sub-state: "picker" → "sent / OTP entry" (no extra route).
-// Method priority (which renders as primary): passkey > password > magic/sms.
+// After sending OTP/magic-link, redirects to the dedicated magic-link page.
 export function MethodPicker({
   kind,
   value,
@@ -82,18 +82,17 @@ function EmailMethods({
   locale: string;
   next?: string;
 }) {
+  const router = useRouter();
   const { signInWithPassword, error: passwordError, pending: passwordPending } = useLoginPassword(locale, next);
-  const { sendMagicLink, error: magicError, pending: magicPending, sentTo } = useLoginMagicLink(locale, next);
-  const { verifyMagicOtp, error: otpError, pending: otpPending } = useVerifyMagicOtp(locale, next);
+  const { sendMagicLink, error: magicError, pending: magicPending } = useLoginMagicLink(locale, next);
 
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [token, setToken] = useState("");
   const [passkeyPending, setPasskeyPending] = useState(false);
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
 
-  const anyPending = passwordPending || magicPending || otpPending || passkeyPending;
-  const serverError = passwordError || magicError || otpError || passkeyError;
+  const anyPending = passwordPending || magicPending || passkeyPending;
+  const serverError = passwordError || magicError || passkeyError;
 
   async function onPasskey() {
     setPasskeyPending(true);
@@ -120,28 +119,12 @@ function EmailMethods({
 
   async function onMagicLink() {
     rememberAuthMethod("email");
-    await sendMagicLink({ email: value, shouldCreateUser: isNewUser });
-  }
-
-  async function onVerifyOtp(e: React.FormEvent) {
-    e.preventDefault();
-    await verifyMagicOtp({ email: value, token, isNewUser });
-  }
-
-  if (sentTo) {
-    return (
-      <OtpEntry
-        masked={MASK_EMAIL(sentTo)}
-        channel="email"
-        token={token}
-        onTokenChange={setToken}
-        onSubmit={onVerifyOtp}
-        onResend={onMagicLink}
-        resendPending={magicPending}
-        verifyPending={otpPending}
-        serverError={serverError}
-      />
-    );
+    const result = await sendMagicLink({ email: value, shouldCreateUser: isNewUser });
+    if (!result?.serverError) {
+      router.push(
+        `/${locale}/auth/email/magic-link?value=${encodeURIComponent(value)}&next=${encodeURIComponent(next ?? "")}`,
+      );
+    }
   }
 
   const primary: "passkey" | "password" | "magic" = hasPasskey ? "passkey" : hasPassword ? "password" : "magic";
@@ -255,38 +238,19 @@ function PhoneMethods({
   locale: string;
   next?: string;
 }) {
-  const { sendPhoneOtp, error: sendError, pending: sendPending, sentTo, sentChannel } = useSendPhoneOtp();
-  const { verifyPhoneOtp, error: verifyError, pending: verifyPending } = useVerifyPhoneOtp(locale, next);
+  const router = useRouter();
+  const { sendPhoneOtp, error: sendError, pending: sendPending } = useSendPhoneOtp();
 
-  const [token, setToken] = useState("");
-
-  const anyPending = sendPending || verifyPending;
-  const serverError = sendError || verifyError;
+  const serverError = sendError;
 
   async function onSend(channel: PhoneOtpChannel) {
     rememberAuthMethod("phone");
-    await sendPhoneOtp({ phone: value, shouldCreateUser: isNewUser, channel });
-  }
-
-  async function onVerify(e: React.FormEvent) {
-    e.preventDefault();
-    await verifyPhoneOtp({ phone: value, token, isNewUser });
-  }
-
-  if (sentTo) {
-    return (
-      <OtpEntry
-        masked={MASK_PHONE(sentTo)}
-        channel={sentChannel ?? "sms"}
-        token={token}
-        onTokenChange={setToken}
-        onSubmit={onVerify}
-        onResend={() => onSend(sentChannel ?? "sms")}
-        resendPending={sendPending}
-        verifyPending={verifyPending}
-        serverError={serverError}
-      />
-    );
+    const result = await sendPhoneOtp({ phone: value, shouldCreateUser: isNewUser, channel });
+    if (!result?.serverError) {
+      router.push(
+        `/${locale}/auth/phone/magic-link?value=${encodeURIComponent(value)}&next=${encodeURIComponent(next ?? "")}&channel=${channel}`,
+      );
+    }
   }
 
   // Passkey-via-phone is intentionally NOT a button here because passkeys are email-scoped
@@ -307,7 +271,7 @@ function PhoneMethods({
       )}
 
       {channels.includes("sms") && (
-        <Button type="button" onClick={() => onSend("sms")} disabled={anyPending} className="h-10 w-full">
+        <Button type="button" onClick={() => onSend("sms")} disabled={sendPending} className="h-10 w-full">
           <MessageCircle size={16} />
           <span>{sendPending ? "Enviando…" : "Enviar código por SMS"}</span>
         </Button>
@@ -318,7 +282,7 @@ function PhoneMethods({
           type="button"
           variant="outline"
           onClick={() => onSend("whatsapp")}
-          disabled={anyPending}
+          disabled={sendPending}
           className="h-10 w-full"
         >
           <MessageCircle size={16} />
@@ -339,87 +303,4 @@ function PhoneMethods({
       )}
     </div>
   );
-}
-
-function OtpEntry({
-  masked,
-  channel,
-  token,
-  onTokenChange,
-  onSubmit,
-  onResend,
-  resendPending,
-  verifyPending,
-  serverError,
-}: {
-  masked: string;
-  channel: "email" | PhoneOtpChannel;
-  token: string;
-  onTokenChange: (v: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
-  onResend: () => void;
-  resendPending: boolean;
-  verifyPending: boolean;
-  serverError: string | null;
-}) {
-  const verb =
-    channel === "email"
-      ? "Te enviamos un enlace y un código a"
-      : channel === "whatsapp"
-        ? "Te enviamos un código por WhatsApp a"
-        : "Te enviamos un código por SMS a";
-
-  return (
-    <div className="flex flex-col gap-3">
-      <Alert>
-        <AlertDescription>
-          {verb} <strong>{masked}</strong>. Ingresa el código a continuación.
-        </AlertDescription>
-      </Alert>
-      <form onSubmit={onSubmit} className="flex flex-col gap-2">
-        <Label htmlFor="otp-token">Código de 6 dígitos</Label>
-        <Input
-          id="otp-token"
-          className="h-10"
-          inputMode="numeric"
-          maxLength={6}
-          autoComplete="one-time-code"
-          value={token}
-          onChange={(e) => onTokenChange(e.target.value.replace(/\D/g, ""))}
-        />
-        <Button type="submit" disabled={verifyPending || token.length !== 6} className="h-10 w-full">
-          <span>{verifyPending ? "Verificando…" : "Verificar código"}</span>
-          <ArrowRight size={16} />
-        </Button>
-      </form>
-      <button
-        type="button"
-        onClick={onResend}
-        disabled={resendPending}
-        className="text-muted-foreground text-center text-xs underline"
-      >
-        {resendPending ? "Reenviando…" : "Reenviar código"}
-      </button>
-      {serverError && (
-        <Alert variant="destructive">
-          <AlertDescription>{serverError}</AlertDescription>
-        </Alert>
-      )}
-    </div>
-  );
-}
-
-function MASK_EMAIL(e: string): string {
-  const [local, domain] = e.split("@");
-  if (!domain || !local) return e;
-  if (local.length <= 2) return `${local[0]}•••@${domain}`;
-  return `${local.slice(0, 2)}${"•".repeat(Math.max(2, local.length - 3))}${local.slice(-1)}@${domain}`;
-}
-
-function MASK_PHONE(p: string): string {
-  const digits = p.replace(/\D/g, "");
-  if (digits.length < 4) return p;
-  const last = digits.slice(-2);
-  const first = p.startsWith("+") ? `+${digits.slice(0, Math.max(0, digits.length - 6))}` : digits.slice(0, 2);
-  return `${first} •••• ${last}`;
 }
