@@ -372,17 +372,23 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 -- is added later. `public.permission_presets` is a UX helper (catalog of named bundles
 -- to apply in the admin UI); it carries no enforcement.
 
--- internal.reserved_slugs — list of slugs that cannot be used as tenant identifiers
+-- public.reserved_slugs — list of slugs that cannot be used as tenant identifiers
 -- because they collide with first-party routes (`/auth`, `/home`, etc.) or with
 -- BCP47 locale codes. Seeded in seed.sql. The CHECK on `public.tenants.tenant_slug`
 -- calls `internal.reserved_slug_validate()` which combines the slug-shape check with
--- a lookup here.
+-- a lookup here. RLS: SELECT for anon + authenticated; no write policies (service_role
+-- bypasses RLS for seeding/mutations).
 
-create table if not exists internal.reserved_slugs (
+create table if not exists public.reserved_slugs (
   reserved_slug extensions.citext primary key check (char_length(reserved_slug) between 1 and 39)
 );
 
-grant select on table internal.reserved_slugs to authenticator;
+alter table public.reserved_slugs enable row level security;
+
+create policy "reserved_slugs_select"
+  on public.reserved_slugs
+  for select to anon, authenticated
+  using (true);
 
 create or replace function internal.reserved_slug_validate(value text)
   returns boolean
@@ -394,7 +400,7 @@ create or replace function internal.reserved_slug_validate(value text)
   as $$
     select internal.slug_validate(value)
       and not exists (
-        select 1 from internal.reserved_slugs
+        select 1 from public.reserved_slugs
         where reserved_slug = value
       );
   $$;

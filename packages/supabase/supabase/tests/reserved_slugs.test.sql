@@ -1,4 +1,4 @@
--- internal.reserved_slugs table + internal.reserved_slug_validate function
+-- public.reserved_slugs table + internal.reserved_slug_validate function
 -- Validates that reserved slugs are blocked at the CHECK on public.tenants.tenant_slug.
 
 begin;

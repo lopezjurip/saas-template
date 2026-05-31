@@ -5,11 +5,11 @@
 -- Passwords: "password123" for both.
 
 -- ------------------------------------------------------------
--- internal.reserved_slugs — first-party route + locale collisions blocked from tenant slugs.
+-- public.reserved_slugs — first-party route + locale collisions blocked from tenant slugs.
 -- This MUST be seeded before any tenant insert (the CHECK in public.tenants.tenant_slug fires).
 -- ------------------------------------------------------------
 
-insert into internal.reserved_slugs (reserved_slug) values
+insert into public.reserved_slugs (reserved_slug) values
   ('admin'),
   ('api'),
   ('app'),
