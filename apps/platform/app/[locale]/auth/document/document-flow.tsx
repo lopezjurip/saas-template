@@ -14,6 +14,7 @@ import {
   DocumentTripletFields,
 } from "~/app/[locale]/auth/_components/document-triplet-fields";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { actionCheckDocument, actionVerifyDocumentLoginOtp } from "./actions";
 import {
   type CheckDocumentValues,
@@ -124,17 +125,16 @@ export function DocumentFlow({
   const onSubmitTriplet = tripletForm.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const res = await actionCheckDocument(values);
-      if (res?.serverError) {
-        setServerError(res.serverError);
+      const [data, error] = await ErrorSafeAction.unwrap(actionCheckDocument(values));
+      if (error instanceof ErrorSafeActionServer) {
+        setServerError(error.serverError);
         return;
       }
-      if (res?.validationErrors) {
+      if (error instanceof ErrorSafeActionValidation) {
         setServerError(t("invalid_data"));
         return;
       }
-      const data = res?.data;
-      if (!data) return;
+      if (error) return;
       if (data.kind === "error") {
         setServerError(data.message ?? t("send_failed"));
         return;
@@ -169,9 +169,10 @@ export function DocumentFlow({
   const onSubmitOtp = otpForm.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const res = await actionVerifyDocumentLoginOtp(values);
-      if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError(t("invalid_code"));
+      // success path redirects server-side; only failures return here.
+      const [, error] = await ErrorSafeAction.unwrap(actionVerifyDocumentLoginOtp(values));
+      if (error instanceof ErrorSafeActionServer) setServerError(error.serverError);
+      else if (error instanceof ErrorSafeActionValidation) setServerError(t("invalid_code"));
     });
   });
 

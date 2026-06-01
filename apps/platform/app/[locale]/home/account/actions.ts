@@ -7,7 +7,7 @@ import { z } from "zod";
 import { isOAuthProvider, OAUTH_PROVIDER_IDS } from "~/app/[locale]/auth/providers";
 import { debug } from "~/lib/debug";
 import { getServerLocale } from "~/lib/i18n.server";
-import { authedAction, formAction } from "~/lib/safe-action";
+import { authedAction, formAction } from "~/lib/safe-action.server";
 
 const log = debug("account");
 

@@ -25,7 +25,7 @@ function INITIALS_OF(name: string): string {
   );
 }
 
-export default async function AccountProfilePage(props: PageProps<"/[locale]/home/account/profile">) {
+export default async function AccountProfilePage(_props: PageProps<"/[locale]/home/account/profile">) {
   const user = await getSupabaseServerUser();
   if (!user) redirect("/[locale]/auth");
 

@@ -8,6 +8,7 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { actionStartDocumentSignup, actionVerifyDocumentSignup } from "./actions";
 import { type SendOtpValues, sendOtpSchema, type VerifyOtpValues, verifyOtpSchema } from "./schemas";
 
@@ -91,11 +92,11 @@ export function AcceptForm({ token, defaultEmail }: { token: string; defaultEmai
   const onSubmitSend = sendForm.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const res = await actionStartDocumentSignup(values);
-      if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError(t("form_invalid"));
-      else if (res?.data) {
-        const { channel: ch, contact } = res.data;
+      const [data, error] = await ErrorSafeAction.unwrap(actionStartDocumentSignup(values));
+      if (error instanceof ErrorSafeActionServer) setServerError(error.serverError);
+      else if (error instanceof ErrorSafeActionValidation) setServerError(t("form_invalid"));
+      else if (data) {
+        const { channel: ch, contact } = data;
         setOtpInfo({ channel: ch, contact });
         verifyForm.reset({ invitation_token: token, channel: ch, contact, token: "" });
       }
@@ -105,9 +106,10 @@ export function AcceptForm({ token, defaultEmail }: { token: string; defaultEmai
   const onSubmitVerify = verifyForm.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const res = await actionVerifyDocumentSignup(values);
-      if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError(t("invalid_code"));
+      // success path redirects server-side; only failures return here.
+      const [, error] = await ErrorSafeAction.unwrap(actionVerifyDocumentSignup(values));
+      if (error instanceof ErrorSafeActionServer) setServerError(error.serverError);
+      else if (error instanceof ErrorSafeActionValidation) setServerError(t("invalid_code"));
     });
   });
 

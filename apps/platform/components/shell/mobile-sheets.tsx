@@ -30,8 +30,9 @@ import { Avatar, COLOR_FROM_ID, INITIALS_FROM_NAME } from "~/components/shell/at
 import { Sheet } from "~/components/shell/mobile-sheet";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
+import { useLocaleCookie } from "~/hooks/use-locale-cookie";
 import { useRosetta } from "~/hooks/use-rosetta";
-import { LOCALE_COOKIE, LOCALE_LABEL, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
 
 const LOCALE_ES = {
   // Org sheet
@@ -257,20 +258,13 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
   const [pending, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const [_, setLocale] = useLocaleCookie();
 
   const themes = [
     { value: "light", label: t("themeLight"), Icon: Sun },
     { value: "dark", label: t("themeDark"), Icon: Moon },
     { value: "system", label: t("themeSystem"), Icon: Monitor },
   ];
-
-  function onSetLocale(next: string) {
-    if (next === locale) return;
-    document.cookie = `${LOCALE_COOKIE}=${next}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-    document.documentElement.lang = LOCALE_TO_BCP47[next as keyof typeof LOCALE_TO_BCP47] ?? next;
-    const nextPath = pathname.replace(/^\/[^/]+/, `/${next}`);
-    startTransition(() => router.replace(nextPath));
-  }
 
   return (
     <Sheet open={open} onClose={onClose} title={t("settingsTitle")}>
@@ -307,7 +301,7 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
               <button
                 key={value}
                 type="button"
-                onClick={() => onSetLocale(value)}
+                onClick={() => setLocale(value)}
                 className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[14px] ${
                   i > 0 ? "border-border border-t" : ""
                 } ${isActive ? "bg-accent/50" : "active:bg-accent"}`}

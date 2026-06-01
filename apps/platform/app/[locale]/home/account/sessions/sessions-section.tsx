@@ -6,6 +6,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Monitor, Smartphone } from "lucide-react";
 import { useState, useTransition } from "react";
+import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionSignOutOtherDevices } from "../actions";
 
 type SessionRow = {
@@ -70,9 +71,10 @@ export function SessionsSection() {
   function onSignOutOthers() {
     setError(null);
     startTransition(async () => {
-      const res = await actionSignOutOtherDevices();
-      if (res?.serverError) {
-        setError(res.serverError);
+      // void action → no data on success → ErrorSafeActionEmpty is the success shape.
+      const [, error] = await ErrorSafeAction.unwrap(actionSignOutOtherDevices());
+      if (error instanceof ErrorSafeActionServer) {
+        setError(error.serverError);
         return;
       }
       setSessions((prev) => prev.filter((s) => s.current));

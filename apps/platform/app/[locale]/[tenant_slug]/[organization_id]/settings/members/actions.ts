@@ -8,7 +8,7 @@ import { headers } from "next/headers";
 import { debug } from "~/lib/debug";
 import { ROSETTA } from "~/lib/i18n";
 import { getServerLocale } from "~/lib/i18n.server";
-import { authedAction } from "~/lib/safe-action";
+import { authedAction } from "~/lib/safe-action.server";
 import { inviteMemberSchema } from "./schemas";
 
 const log = debug("admin:members");

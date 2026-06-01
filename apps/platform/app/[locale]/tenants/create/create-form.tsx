@@ -10,6 +10,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { useLocaleParam } from "~/hooks/use-locale-param";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { createTenant } from "./actions";
 import { type CreateTenantValues, createTenantSchema } from "./schemas";
 
@@ -46,18 +47,18 @@ export function CreateTenantForm() {
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const res = await createTenant(values);
-      if (res?.serverError) {
-        setServerError(res.serverError);
+      const [data, error] = await ErrorSafeAction.unwrap(createTenant(values));
+      if (error instanceof ErrorSafeActionServer) {
+        setServerError(error.serverError);
         return;
       }
-      if (res?.validationErrors) {
+      if (error instanceof ErrorSafeActionValidation) {
         setServerError(t("invalid_form"));
         return;
       }
-      if (!res?.data?.slug) return;
+      if (error) return;
       // Hard navigate so the browser picks up the refreshed JWT (new tenant claim) on the next request.
-      window.location.assign(`/${locale}/${res.data.slug}`);
+      window.location.assign(`/${locale}/${data.slug}`);
     });
   });
 

@@ -4,7 +4,7 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
-import { action } from "~/lib/safe-action";
+import { action } from "~/lib/safe-action.server";
 import { sendOtpSchema, verifyOtpSchema } from "./schemas";
 
 const log = debug("auth:document:accept");

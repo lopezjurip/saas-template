@@ -8,6 +8,7 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { actionUpdateEmail } from "../actions";
 
 const schema = z.object({ email: z.string().email("Correo inválido") });
@@ -24,9 +25,10 @@ export function EmailForm({ currentEmail }: { currentEmail: string | null }) {
     setServerError(null);
     setPendingEmail(null);
     startTransition(async () => {
-      const res = await actionUpdateEmail(values);
-      if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Correo inválido");
+      // void action → no data on success → ErrorSafeActionEmpty is the success shape.
+      const [, error] = await ErrorSafeAction.unwrap(actionUpdateEmail(values));
+      if (error instanceof ErrorSafeActionServer) setServerError(error.serverError);
+      else if (error instanceof ErrorSafeActionValidation) setServerError("Correo inválido");
       else {
         setPendingEmail(values.email);
         form.reset({ email: values.email });

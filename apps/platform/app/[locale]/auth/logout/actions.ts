@@ -3,7 +3,7 @@
 import { createServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
-import { action } from "~/lib/safe-action";
+import { action } from "~/lib/safe-action.server";
 
 const log = debug("auth:logout");
 

@@ -4,7 +4,7 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
-import { action, formAction } from "~/lib/safe-action";
+import { action, formAction } from "~/lib/safe-action.server";
 
 const checkPhoneSchema = z.object({
   phone: z

@@ -3,15 +3,9 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { useLocaleCookie } from "~/hooks/use-locale-cookie";
 import { useRosetta } from "~/hooks/use-rosetta";
-import {
-  DEFAULT_LOCALE,
-  IS_SUPPORTED_LOCALE,
-  LOCALE_COOKIE,
-  LOCALE_LABEL,
-  LOCALE_TO_BCP47,
-  SUPPORTED_LOCALES,
-} from "~/lib/i18n";
+import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_LABEL, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
 
 const LOCALE_ES = {
   group: "Idioma",
@@ -29,12 +23,14 @@ export function LocaleToggle() {
   const pathname = usePathname();
   const params = useParams<{ locale?: string }>();
   const [pending, startTransition] = useTransition();
+  const [_, setLocale] = useLocaleCookie();
 
   const current = IS_SUPPORTED_LOCALE(params?.locale) ? params.locale : DEFAULT_LOCALE;
 
   function selectLocale(next: (typeof SUPPORTED_LOCALES)[number]) {
     if (next === current) return;
-    document.cookie = `${LOCALE_COOKIE}=${next}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+    // Fire-and-forget: the proxy re-sets this cookie (1yr) on the next request, so the bare write is enough.
+    setLocale(next);
     // <html lang> is rendered by the root layout; soft navigation doesn't re-render it, so update
     // the live DOM here so screen readers / spellcheck pick up the new language immediately.
     document.documentElement.lang = LOCALE_TO_BCP47[next];

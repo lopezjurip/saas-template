@@ -20,7 +20,7 @@ import { z } from "zod";
 import { gql } from "~/generated/graphql";
 import { debug } from "~/lib/debug";
 import { getGraphyServiceRole } from "~/lib/graphy/graphy.service";
-import { action, authedAction } from "~/lib/safe-action";
+import { action, authedAction } from "~/lib/safe-action.server";
 
 const log = debug("passkeys");
 

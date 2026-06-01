@@ -7,7 +7,7 @@ import { z } from "zod";
 import { isOAuthProvider, OAUTH_PROVIDER_IDS } from "~/app/[locale]/auth/providers";
 import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
 import { debug } from "~/lib/debug";
-import { action } from "~/lib/safe-action";
+import { action } from "~/lib/safe-action.server";
 
 const log = debug("auth");
 

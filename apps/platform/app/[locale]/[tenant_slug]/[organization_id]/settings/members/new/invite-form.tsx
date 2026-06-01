@@ -14,6 +14,7 @@ import {
   DocumentTripletFields,
 } from "~/app/[locale]/auth/_components/document-triplet-fields";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { actionInviteMember } from "../actions";
 import { type InviteMemberValues, inviteMemberSchema } from "../schemas";
 
@@ -87,7 +88,9 @@ interface Props {
 }
 
 export function InviteMemberForm({ organization_id, countries, membersHref, editHrefBase }: Props) {
-  function editHrefFor(membership_id: number) { return `${editHrefBase}/${membership_id}/edit`; }
+  function editHrefFor(membership_id: number) {
+    return `${editHrefBase}/${membership_id}/edit`;
+  }
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -113,22 +116,22 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const res = await actionInviteMember(values);
-      if (res?.serverError) {
-        setServerError(res.serverError);
+      const [data, error] = await ErrorSafeAction.unwrap(actionInviteMember(values));
+      if (error instanceof ErrorSafeActionServer) {
+        setServerError(error.serverError);
         return;
       }
-      if (res?.validationErrors) {
+      if (error instanceof ErrorSafeActionValidation) {
         setServerError(t("form_invalid"));
         return;
       }
-      if (!res?.data) return;
-      if (res.data.channel === "document" || res.data.channel === "phone") {
-        setDocumentResult({ url: res.data.invitation_url, membership_id: res.data.membership_id });
+      if (error) return;
+      if (data.channel === "document" || data.channel === "phone") {
+        setDocumentResult({ url: data.invitation_url, membership_id: data.membership_id });
         return;
       }
       // email channel: invitation email went out; jump to permissions editor.
-      router.push(editHrefFor(res.data.membership_id));
+      router.push(editHrefFor(data.membership_id));
     });
   });
 

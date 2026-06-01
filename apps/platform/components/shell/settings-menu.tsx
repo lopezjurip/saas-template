@@ -7,8 +7,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Tip, useClickOutside } from "~/components/shell/atoms";
+import { useLocaleCookie } from "~/hooks/use-locale-cookie";
 import { useRosetta } from "~/hooks/use-rosetta";
-import { LOCALE_COOKIE, LOCALE_LABEL, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
 
 export function SettingsMenu({
   locale,
@@ -27,6 +28,7 @@ export function SettingsMenu({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false), open);
+  const [, setLocale] = useLocaleCookie();
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -40,14 +42,6 @@ export function SettingsMenu({
   ];
   const themeLabel = mounted ? (themeOptions.find((option) => option.value === theme)?.label ?? "") : "";
   const localeLabel = LOCALE_LABEL[locale as keyof typeof LOCALE_LABEL] ?? locale;
-
-  function onChangeLocale(next: string) {
-    if (next === locale) return;
-    document.cookie = `${LOCALE_COOKIE}=${next}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-    document.documentElement.lang = LOCALE_TO_BCP47[next as keyof typeof LOCALE_TO_BCP47] ?? next;
-    const nextPath = pathname.replace(/^\/[^/]+/, `/${next}`);
-    startTransition(() => router.replace(nextPath));
-  }
 
   const trigger = compact ? (
     <Tip label={t("trigger")} disabled={open}>
@@ -116,7 +110,7 @@ export function SettingsMenu({
               <select
                 aria-label={t("language")}
                 value={locale}
-                onChange={(event) => onChangeLocale(event.target.value)}
+                onChange={(event) => setLocale(event.target.value as (typeof SUPPORTED_LOCALES)[number])}
                 className="absolute inset-0 cursor-pointer appearance-none bg-transparent opacity-0"
               >
                 {SUPPORTED_LOCALES.map((value) => (

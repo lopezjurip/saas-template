@@ -11,6 +11,9 @@
   "exports": {
     "./*": "./src/*.ts"
   },
+  "dependencies": {
+    "@packages/utils": "workspace:*"
+  },
   "devDependencies": {
     "@packages/typescript-config": "workspace:*",
     "@testing-library/react": "^16.3.0",

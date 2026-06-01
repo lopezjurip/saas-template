@@ -2,7 +2,7 @@
 
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { debug } from "~/lib/debug";
-import { authedAction } from "~/lib/safe-action";
+import { authedAction } from "~/lib/safe-action.server";
 import { createTenantSchema } from "./schemas";
 
 const log = debug("tenants:create");

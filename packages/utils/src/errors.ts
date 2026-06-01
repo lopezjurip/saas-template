@@ -1,22 +1,4 @@
-import type { PostgrestError } from "@supabase/postgrest-js";
-
-export type Result<T, E extends Error> = [T | null, E | null];
-
-export function GOERR<T, E extends Error>(func: () => T): Result<T, E>;
-export function GOERR<T, E extends Error>(promise: PromiseLike<T>): Promise<Result<T, E>>;
-export function GOERR<T, E extends Error>(asyncFunc: () => Promise<T>): Promise<Result<T, E>>;
-export function GOERR(parameter: any): any {
-  if ("then" in parameter && "catch" in parameter) {
-    return parameter.then((r: any) => [r, null]).catch((err: Error) => [null, err]);
-  }
-
-  try {
-    const result = parameter();
-    return result instanceof Promise ? GOERR(result) : [result, null];
-  } catch (err) {
-    return [null, err];
-  }
-}
+import { MIME_JSON } from "./http";
 
 export class ErrorExtendable extends Error {
   public constructor(message?: string, options?: ErrorOptions) {
@@ -49,71 +31,69 @@ export function ERROR_IS<T extends Error>(error: unknown, errorClass: new (...ar
 }
 
 /**
- * In the version of supabase-js we're using, errors are objects instead of Errors,
- * so they have no stack trace.
+ * Error for a failed `fetch` response. Carries the HTTP status and URL so
+ * callers can branch on `error.status` without reaching back to the `Response`.
  *
- * For example this:
+ * When the response is JSON, `ErrorFetch.from` also parses the body into `json`.
+ * The generic `T` is a *soft* type — `json` is asserted, never validated — so
+ * callers get an ergonomic shape without runtime guarantees. Narrow it yourself
+ * if it matters.
+ * @example
  * ```ts
- * const { data } = await supabase
- *   .from("example")
- *   .select("example")
- *   .throwOnError();
- * ```
- * just logs:
- * ```
- *  ⨯ {
- *   code: '42P01',
- *   details: null,
- *   hint: null,
- *   message: 'relation "public.example" does not exist'
+ * const response = await fetch(url);
+ * if (!response.ok) {
+ *   throw await ErrorFetch.from<{ message: string }>(response);
  * }
- * ```
- *
- * However, this:
- * ```ts
- * const { data, error } = await supabase
- *   .from("example")
- *   .select("example");
- * if (error) {
- *   throw new SupabaseError(error);
- * }
- * ```
- * logs instead:
- * ```
- *  ⨯ Error [SupabaseError]: {
- *    "code": "42P01",
- *    "details": null,
- *    "hint": null,
- *    "message": "relation \"public.example\" does not exist"
- *  }
- *      at exampleFunction (.../example.ts:15:10)
- *      at ...
- *      at ...
- *      at ...
- *    13 |     .select("example");
- *    14 |   if (error) {
- *  > 15 |     throw new SupabaseError(error);
- *       |          ^
- *    16 |   }
- *    17 |
- *    page: '/api/v1/example',
- *    [cause]: [Object]
- *  }
  * ```
  */
-export class SupabaseError extends ErrorExtendable {
-  public constructor(postgrestError: PostgrestError) {
-    super(
-      JSON.stringify(postgrestError, null, 2), // stringify so the object is printed in logs
-      { cause: postgrestError }, // `cause` for programmatic usage
+export class ErrorFetch<T = unknown> extends ErrorExtendable {
+  public readonly status: number;
+  public readonly statusText: string;
+  public readonly url: string;
+  public readonly body: string | undefined;
+  /** Parsed JSON body — only present when the response Content-Type is JSON. Soft-typed, unvalidated. */
+  public readonly json: T | undefined;
+
+  public constructor(
+    init: { status: number; statusText: string; url: string; body?: string; json?: T },
+    options?: ErrorOptions,
+  ) {
+    super(`HTTP ${init.status} ${init.statusText} (${init.url})`, options);
+    this.status = init.status;
+    this.statusText = init.statusText;
+    this.url = init.url;
+    this.body = init.body;
+    this.json = init.json;
+  }
+
+  /**
+   * Build an `ErrorFetch` from a `Response`, reading the body as text. When the
+   * Content-Type is JSON, the body is also parsed into `json` (soft-typed `T`).
+   */
+  public static async from<T = unknown>(response: Response, options?: ErrorOptions): Promise<ErrorFetch<T>> {
+    const body = await response
+      .clone()
+      .text()
+      .catch(() => undefined);
+    let json: T | undefined;
+    const contentType = response.headers.get("content-type");
+    const isJson = contentType?.includes(MIME_JSON);
+    if (body !== undefined && isJson) {
+      try {
+        json = JSON.parse(body) as T;
+      } catch {
+        json = undefined;
+      }
+    }
+    return new ErrorFetch<T>(
+      {
+        status: response.status,
+        statusText: response.statusText,
+        url: response.url,
+        body,
+        json,
+      },
+      options,
     );
   }
-}
-
-/** Ensures that what you throw will have stacktrace. */
-export function ensureSupabaseErrorWithStack(source: Error | PostgrestError): Error {
-  if (source instanceof Error) {
-    return source;
-  }
-  return new SupabaseError(source);
 }

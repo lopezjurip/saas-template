@@ -76,7 +76,7 @@ export async function graphyRequest<TData, TVariables>(
   const hash = meta && meta["hash"];
   const body: GraphQLQueryBody = {
     query: QUERY_OBJECT_TO_STRING(query) || undefined,
-    variables: variables as {},
+    variables: variables as Record<string, unknown>,
     extensions: hash ? { ["persistedQuery"]: { ["version"]: version, ["sha256Hash"]: hash } } : undefined,
   };
   const response = await fetch(input, {

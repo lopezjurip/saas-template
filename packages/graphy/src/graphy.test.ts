@@ -17,9 +17,9 @@ import {
 global.fetch = vi.fn();
 
 // Mock data
-const mockQuery: DocumentTypeDecoration<{ test: string }, {}> = {
+const mockQuery: DocumentTypeDecoration<{ test: string }, Record<string, unknown>> = {
   toString: () => "query { test }",
-} as DocumentTypeDecoration<{ test: string }, {}>;
+} as DocumentTypeDecoration<{ test: string }, Record<string, unknown>>;
 
 type mockResult = ResultOf<typeof mockQuery>;
 type mockResponse = { data: mockResult };

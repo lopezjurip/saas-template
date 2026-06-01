@@ -1,5 +1,5 @@
-import { cache } from "react";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { cache } from "react";
 
 export const getTenantReservedSlugs = cache(async (): Promise<Set<string>> => {
   const supabase = createServiceRoleClient();

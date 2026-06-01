@@ -8,6 +8,7 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { actionSetPassword } from "../actions";
 
 const schema = z
@@ -29,9 +30,10 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
     setServerError(null);
     setSuccess(false);
     startTransition(async () => {
-      const res = await actionSetPassword({ password: values.password });
-      if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Contraseña inválida");
+      // void action → no data on success → ErrorSafeActionEmpty is the success shape.
+      const [, error] = await ErrorSafeAction.unwrap(actionSetPassword({ password: values.password }));
+      if (error instanceof ErrorSafeActionServer) setServerError(error.serverError);
+      else if (error instanceof ErrorSafeActionValidation) setServerError("Contraseña inválida");
       else {
         setSuccess(true);
         form.reset({ password: "", confirm: "" });

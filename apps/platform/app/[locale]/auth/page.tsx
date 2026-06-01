@@ -45,7 +45,7 @@ function DETECT_LOCAL_TYPE(value: string): LocalType | null {
   if (v.includes("@")) return "email";
   if (/[kK]/.test(v) || /\d-[\dkK]$/.test(v.replace(/\./g, ""))) return "document";
   const digits = v.replace(/\D/g, "");
-  if (v.startsWith("+") || (digits.length >= 8 && /^[\d\s\-()+]+$/.test(v) && digits.length <= 15)) {
+  if (v.startsWith("+") || (digits.length >= 8 && /^[\d\s\-()+.]+$/.test(v) && digits.length <= 15)) {
     if (v.startsWith("+") || /\s/.test(v) || /\(/.test(v)) return "phone";
     if (digits.length >= 10) return "phone";
     return "document";

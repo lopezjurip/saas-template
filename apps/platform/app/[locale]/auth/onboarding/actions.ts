@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
-import { authedAction, formAction } from "~/lib/safe-action";
+import { authedAction, formAction } from "~/lib/safe-action.server";
 
 const log = debug("onboarding:finish");
 

@@ -8,6 +8,6 @@ export function NOOP() {}
 /**
  * This is the recommended way to check if a variable is a function.
  */
-export function IS_FUNCTION(fn: unknown): fn is Function {
+export function IS_FUNCTION(fn: unknown): fn is (...args: never[]) => unknown {
   return typeof fn === "function";
 }

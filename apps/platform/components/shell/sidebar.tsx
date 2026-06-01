@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeviceInfo } from "@packages/react-hooks/use-device-info";
+import { useStateCookie } from "@packages/react-hooks/use-state-cookie";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Home, type LucideIcon, Search, Settings, Users } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +19,7 @@ const SIDEBAR_MIN_WIDTH = 50;
 const SIDEBAR_MAX_WIDTH = 480;
 const SIDEBAR_DEFAULT_WIDTH = 260;
 const SIDEBAR_WIDTH_COOKIE = "humane_sidebar_w";
+const SIDEBAR_WIDTH_COOKIE_MAX_AGE_MS = 60 * 60 * 24 * 365 * 1000;
 
 export type ShellNavItem = {
   id: string;
@@ -85,7 +87,10 @@ export function Sidebar({
 }) {
   const { t } = useRosetta(LOCALES);
   const { modKey } = useDeviceInfo();
-  const [width, setWidth] = useState<number>(initialWidth ?? SIDEBAR_DEFAULT_WIDTH);
+  // Width is read back server-side in layout.tsx with no re-set, so persist it for a year.
+  const [width, setWidth] = useStateCookie(SIDEBAR_WIDTH_COOKIE, initialWidth ?? SIDEBAR_DEFAULT_WIDTH, {
+    maxAgeMs: SIDEBAR_WIDTH_COOKIE_MAX_AGE_MS,
+  });
   const [resizing, setResizing] = useState(false);
   const asideRef = useRef<HTMLDivElement>(null);
 
@@ -100,20 +105,15 @@ export function Sidebar({
   });
   const activeId = PICK_ACTIVE_NAV(items, activePath, base);
 
-  function persistWidth(value: number) {
-    document.cookie = `${SIDEBAR_WIDTH_COOKIE}=${value}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-  }
-
   function startResize(event: MouseEvent<HTMLDivElement>) {
     event.preventDefault();
     const left = asideRef.current?.getBoundingClientRect().left ?? 0;
     setResizing(true);
     document.body.style.cursor = "ew-resize";
     document.body.style.userSelect = "none";
-    let latest = width;
+    // setWidth mirrors each update into the cookie, so no separate persist step on mouseup.
     function onMove(move: globalThis.MouseEvent) {
       const next = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, move.clientX - left));
-      latest = next;
       setWidth(next);
     }
     function onUp() {
@@ -122,7 +122,6 @@ export function Sidebar({
       document.body.style.userSelect = "";
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
-      persistWidth(latest);
     }
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);

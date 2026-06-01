@@ -8,6 +8,7 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { actionSendPhoneOtp, actionVerifyPhoneOtp } from "../actions";
 
 const phoneSchema = z.object({
@@ -34,9 +35,10 @@ export function PhoneForm({ currentPhone }: { currentPhone: string | null }) {
   const onSendPhone = phoneForm.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const res = await actionSendPhoneOtp(values);
-      if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Formato inválido");
+      // void action → no data on success → ErrorSafeActionEmpty is the success shape.
+      const [, error] = await ErrorSafeAction.unwrap(actionSendPhoneOtp(values));
+      if (error instanceof ErrorSafeActionServer) setServerError(error.serverError);
+      else if (error instanceof ErrorSafeActionValidation) setServerError("Formato inválido");
       else setSentTo(values.phone);
     });
   });
@@ -45,9 +47,9 @@ export function PhoneForm({ currentPhone }: { currentPhone: string | null }) {
     if (!sentTo) return;
     setServerError(null);
     startTransition(async () => {
-      const res = await actionVerifyPhoneOtp({ phone: sentTo, token: values.token });
-      if (res?.serverError) setServerError(res.serverError);
-      else if (res?.validationErrors) setServerError("Datos inválidos");
+      const [, error] = await ErrorSafeAction.unwrap(actionVerifyPhoneOtp({ phone: sentTo, token: values.token }));
+      if (error instanceof ErrorSafeActionServer) setServerError(error.serverError);
+      else if (error instanceof ErrorSafeActionValidation) setServerError("Datos inválidos");
       else {
         setSentTo(null);
         codeForm.reset({ token: "" });
