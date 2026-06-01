@@ -15,7 +15,7 @@ export function PasskeyForm({ email }: { email: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const onEnroll = () => {
+  function onEnroll() {
     setError(null);
     startTransition(async () => {
       try {
@@ -35,7 +35,7 @@ export function PasskeyForm({ email }: { email: string }) {
         }
       }
     });
-  };
+  }
 
   return (
     <>

@@ -11,12 +11,12 @@ export function useClickOutside<T extends HTMLElement>(
 ) {
   useEffect(() => {
     if (!enabled) return;
-    const onDown = (event: MouseEvent) => {
+    function onDown(event: MouseEvent) {
       if (ref.current && !ref.current.contains(event.target as Node)) handler();
-    };
-    const onKey = (event: KeyboardEvent) => {
+    }
+    function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") handler();
-    };
+    }
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => {

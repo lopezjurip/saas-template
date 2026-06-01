@@ -264,13 +264,13 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
     { value: "system", label: t("themeSystem"), Icon: Monitor },
   ];
 
-  const onSetLocale = (next: string) => {
+  function onSetLocale(next: string) {
     if (next === locale) return;
     document.cookie = `${LOCALE_COOKIE}=${next}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
     document.documentElement.lang = LOCALE_TO_BCP47[next as keyof typeof LOCALE_TO_BCP47] ?? next;
     const nextPath = pathname.replace(/^\/[^/]+/, `/${next}`);
     startTransition(() => router.replace(nextPath));
-  };
+  }
 
   return (
     <Sheet open={open} onClose={onClose} title={t("settingsTitle")}>
@@ -434,11 +434,11 @@ export function MobileSearchSheet({
     return out;
   }, [groups, q]);
 
-  const goTo = (item: SearchItem) => {
+  function goTo(item: SearchItem) {
     onClose();
     if (item.onTap) item.onTap();
     else if (item.href) router.push(item.href);
-  };
+  }
 
   return (
     <Sheet open={open} onClose={onClose} fullScreen>

@@ -114,7 +114,7 @@ export function CommandPalette({
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
+    function onKey(event: KeyboardEvent) {
       if (event.key === "ArrowDown") {
         event.preventDefault();
         setActiveIdx((value) => Math.min(flat.length - 1, value + 1));
@@ -129,7 +129,7 @@ export function CommandPalette({
           onClose();
         }
       }
-    };
+    }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, flat, activeIdx, onClose]);

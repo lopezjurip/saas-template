@@ -25,13 +25,13 @@ export function DeleteAccountDialog() {
 
   const canDelete = confirmation === CONFIRM_WORD && password.length > 0;
 
-  const onOpenChange = (next: boolean) => {
+  function onOpenChange(next: boolean) {
     setOpen(next);
     if (!next) {
       setConfirmation("");
       setPassword("");
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -173,7 +173,7 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
    * @example
    * const ok = await writePermission("payroll_run", true);
    */
-  const writePermission = async (permission_id: string, granted: boolean): Promise<boolean> => {
+  async function writePermission(permission_id: string, granted: boolean): Promise<boolean> {
     if (granted) {
       const { error: err } = await grantPermission({ membership_id, permission_id });
       if (err) {
@@ -188,32 +188,32 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
       }
     }
     return true;
-  };
+  }
 
-  const togglePermission = (permission_id: string, granted: boolean) => {
+  function togglePermission(permission_id: string, granted: boolean) {
     setError(null);
     startTransition(async () => {
       applyOptimistic({ kind: "set_permission", permission_id, granted });
       const ok = await writePermission(permission_id, granted);
       if (ok) router.refresh();
     });
-  };
+  }
 
-  const toggleWildcard = (next: boolean) => {
+  function toggleWildcard(next: boolean) {
     setError(null);
     startTransition(async () => {
       applyOptimistic({ kind: "set_wildcard", value: next });
       const ok = await writePermission(PERMISSION_SLUG_WILDCARD, next);
       if (ok) router.refresh();
     });
-  };
+  }
 
   /**
    * Reconciles the granted permissions to match a preset's slug set, one mutation per diff.
    * @example
    * <Button onClick={() => applyPreset(preset)}>{preset.permission_preset_name}</Button>
    */
-  const applyPreset = (preset: PresetRow) => {
+  function applyPreset(preset: PresetRow) {
     const slugs = (preset["permission_preset_slugs"] ?? []).filter((s): s is string => typeof s === "string");
     setError(null);
     startTransition(async () => {
@@ -249,9 +249,9 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
       }
       router.refresh();
     });
-  };
+  }
 
-  const removeMember = () => {
+  function removeMember() {
     if (!window.confirm(t("remove_confirm"))) return;
     setError(null);
     startTransition(async () => {
@@ -262,7 +262,7 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
       }
       router.push(membersHref);
     });
-  };
+  }
 
   return (
     <div className="flex flex-col gap-4">

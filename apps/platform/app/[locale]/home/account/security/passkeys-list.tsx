@@ -37,14 +37,14 @@ export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
   const [deleting, startDelete] = useTransition();
   const [, deletePasskey] = useGraphyMutation(SecurityPasskeysListDeleteMutation);
 
-  const onDelete = (id: string) => {
+  function onDelete(id: string) {
     setError(null);
     startDelete(async () => {
       const { error: err } = await deletePasskey({ webauthn_credential_id: id });
       if (err) setError("No pudimos eliminar el passkey");
       else router.refresh();
     });
-  };
+  }
 
   if (passkeys.length === 0) return null;
 

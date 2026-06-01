@@ -132,7 +132,7 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
     [locale],
   );
 
-  const cancel = (inv: InvitationRow) => {
+  function cancel(inv: InvitationRow) {
     if (!window.confirm(t("cancel_confirm", { email: INVITATION_LABEL(inv) }))) return;
     setError(null);
     setPendingId(inv["membership_id"]);
@@ -146,7 +146,7 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
       if (err) setError("No pudimos cancelar la invitación");
       router.refresh();
     });
-  };
+  }
 
   if (optimisticInvitations.length === 0) {
     return <p className="text-muted-foreground text-sm">{t("empty")}</p>;

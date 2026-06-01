@@ -80,11 +80,11 @@ export function TokensManager() {
   const [name, setName] = useState("");
   const [scopes, setScopes] = useState<string[]>(["read"]);
 
-  const onToggleScope = (scope: string, checked: boolean) => {
+  function onToggleScope(scope: string, checked: boolean) {
     setScopes((prev) => (checked ? [...prev, scope] : prev.filter((s) => s !== scope)));
-  };
+  }
 
-  const onCreate = () => {
+  function onCreate() {
     const trimmed = name.trim();
     if (!trimmed || scopes.length === 0) return;
     setTokens((prev) => [
@@ -102,11 +102,11 @@ export function TokensManager() {
     setName("");
     setScopes(["read"]);
     setOpen(false);
-  };
+  }
 
-  const onRevoke = (id: string) => {
+  function onRevoke(id: string) {
     setTokens((prev) => prev.filter((t) => t.id !== id));
-  };
+  }
 
   return (
     <div className="flex flex-col gap-2.5">

@@ -90,9 +90,9 @@ const INITIAL_VALUES = /*#__PURE__*/ {
 export function NotificationsMatrix() {
   const [values, setValues] = useState<Record<string, boolean>>(INITIAL_VALUES);
 
-  const onChange = (key: string, next: boolean) => {
+  function onChange(key: string, next: boolean) {
     setValues((prev) => ({ ...prev, [key]: next }));
-  };
+  }
 
   return (
     <div className="flex flex-col gap-[22px]">

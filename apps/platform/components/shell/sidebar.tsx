@@ -100,33 +100,33 @@ export function Sidebar({
   });
   const activeId = PICK_ACTIVE_NAV(items, activePath, base);
 
-  const persistWidth = (value: number) => {
+  function persistWidth(value: number) {
     document.cookie = `${SIDEBAR_WIDTH_COOKIE}=${value}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
-  };
+  }
 
-  const startResize = (event: MouseEvent<HTMLDivElement>) => {
+  function startResize(event: MouseEvent<HTMLDivElement>) {
     event.preventDefault();
     const left = asideRef.current?.getBoundingClientRect().left ?? 0;
     setResizing(true);
     document.body.style.cursor = "ew-resize";
     document.body.style.userSelect = "none";
     let latest = width;
-    const onMove = (move: globalThis.MouseEvent) => {
+    function onMove(move: globalThis.MouseEvent) {
       const next = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, move.clientX - left));
       latest = next;
       setWidth(next);
-    };
-    const onUp = () => {
+    }
+    function onUp() {
       setResizing(false);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
       persistWidth(latest);
-    };
+    }
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
-  };
+  }
 
   return (
     <aside

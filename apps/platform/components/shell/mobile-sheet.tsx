@@ -34,9 +34,9 @@ export function Sheet({
 }) {
   useEffect(() => {
     if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
+    function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
-    };
+    }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);

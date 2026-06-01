@@ -87,7 +87,7 @@ interface Props {
 }
 
 export function InviteMemberForm({ organization_id, countries, membersHref, editHrefBase }: Props) {
-  const editHrefFor = (membership_id: number) => `${editHrefBase}/${membership_id}/edit`;
+  function editHrefFor(membership_id: number) { return `${editHrefBase}/${membership_id}/edit`; }
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);

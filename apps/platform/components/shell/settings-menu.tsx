@@ -41,13 +41,13 @@ export function SettingsMenu({
   const themeLabel = mounted ? (themeOptions.find((option) => option.value === theme)?.label ?? "") : "";
   const localeLabel = LOCALE_LABEL[locale as keyof typeof LOCALE_LABEL] ?? locale;
 
-  const onChangeLocale = (next: string) => {
+  function onChangeLocale(next: string) {
     if (next === locale) return;
     document.cookie = `${LOCALE_COOKIE}=${next}; Path=/; Max-Age=${60 * 60 * 24 * 365}; SameSite=Lax`;
     document.documentElement.lang = LOCALE_TO_BCP47[next as keyof typeof LOCALE_TO_BCP47] ?? next;
     const nextPath = pathname.replace(/^\/[^/]+/, `/${next}`);
     startTransition(() => router.replace(nextPath));
-  };
+  }
 
   const trigger = compact ? (
     <Tip label={t("trigger")} disabled={open}>

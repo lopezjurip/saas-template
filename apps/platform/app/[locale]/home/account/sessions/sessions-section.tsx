@@ -63,11 +63,11 @@ export function SessionsSection() {
 
   const others = sessions.filter((s) => !s.current).length;
 
-  const onRevoke = (id: string) => {
+  function onRevoke(id: string) {
     setSessions((prev) => prev.filter((s) => s.id !== id));
-  };
+  }
 
-  const onSignOutOthers = () => {
+  function onSignOutOthers() {
     setError(null);
     startTransition(async () => {
       const res = await actionSignOutOtherDevices();
@@ -77,7 +77,7 @@ export function SessionsSection() {
       }
       setSessions((prev) => prev.filter((s) => s.current));
     });
-  };
+  }
 
   return (
     <div className="flex flex-col gap-3.5">

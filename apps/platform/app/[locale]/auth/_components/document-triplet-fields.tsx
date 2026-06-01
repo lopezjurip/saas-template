@@ -73,7 +73,7 @@ export function DocumentTripletFields<TFormValues extends FieldValues>({
         control={control}
         name={"profile_identity_document_value" as never}
         render={({ field, fieldState }) => {
-          const onChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+          function onChangeHandler(e: React.ChangeEvent<HTMLInputElement>) {
             const raw = e.target.value;
             if (isClNin) {
               const normalized = RUT_NORMALIZE(raw);
@@ -82,7 +82,7 @@ export function DocumentTripletFields<TFormValues extends FieldValues>({
             } else {
               field.onChange(raw);
             }
-          };
+          }
           return (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="profile_identity_document_value">Documento</Label>
