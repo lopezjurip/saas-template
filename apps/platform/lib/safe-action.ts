@@ -1,7 +1,6 @@
 import { createServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { createSafeActionClient } from "next-safe-action";
-import { getServerLocale } from "~/lib/i18n.server";
 
 export const action = createSafeActionClient({
   defaultValidationErrorsShape: "flattened",
@@ -23,8 +22,7 @@ export const authedAction = action.use(async ({ next }) => {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    const locale = await getServerLocale();
-    redirect(`/${locale}/auth`);
+    redirect("/[locale]/auth");
   }
   return next({ ctx: { user, supabase } });
 });

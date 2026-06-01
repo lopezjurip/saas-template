@@ -114,18 +114,17 @@ const linkProviderRun = authedAction
   .action(async ({ parsedInput: { provider }, ctx: { supabase, user } }) => {
     const headerList = await headers();
     const origin = headerList.get("origin") ?? `https://${headerList.get("host")}`;
-    const locale = await getServerLocale();
 
     const { data, error } = await supabase.auth.linkIdentity({
       provider,
       options: {
-        redirectTo: `${origin}/${locale}/auth/callback?next=${encodeURIComponent(`/${locale}/home/account/connections`)}`,
+        redirectTo: `${origin}/[locale]/auth/callback?next=${encodeURIComponent("/[locale]/home/account/connections")}`,
       },
     });
 
     if (error || !data?.url) {
       log.error("linkIdentity failed", { profile_id: user.id, provider, error });
-      redirect(`/${locale}/home/account/connections?error=${encodeURIComponent(error?.message ?? "link_failed")}`);
+      redirect(`/[locale]/home/account/connections?error=${encodeURIComponent(error?.message ?? "link_failed")}`);
     }
     redirect(data.url);
   });

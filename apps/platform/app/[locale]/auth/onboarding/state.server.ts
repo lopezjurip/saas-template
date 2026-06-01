@@ -2,7 +2,6 @@ import "server-only";
 
 import { createServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
-import { getServerLocale } from "~/lib/i18n.server";
 import { METHOD_ORDER, type OnboardingMethodStatus, type OnboardingState } from "./state";
 
 // Document doesn't have a backend yet — there's no `profile_identity_documents` row for the
@@ -15,8 +14,7 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
   const { data: userResult } = await supabase.auth.getUser();
   const user = userResult.user;
   if (!user) {
-    const locale = await getServerLocale();
-    redirect(`/${locale}/auth`);
+    redirect("/[locale]/auth");
   }
 
   const { data: profile } = await supabase

@@ -4,7 +4,6 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
-import { getServerLocale } from "~/lib/i18n.server";
 import { action } from "~/lib/safe-action";
 import { checkDocumentSchema, verifyLoginOtpSchema } from "./schemas";
 
@@ -156,6 +155,5 @@ export const actionVerifyDocumentLoginOtp = action.inputSchema(verifyLoginOtpSch
   }
 
   log.info("document login succeeded", { channel });
-  const locale = await getServerLocale();
-  redirect(`/${locale}/home`);
+  redirect("/[locale]/home");
 });

@@ -19,16 +19,15 @@ function IS_ALLOWED_TYPE(value: string | null): value is EmailOtpType {
   return !!value && ALLOWED_TYPES.has(value as EmailOtpType);
 }
 
-export async function GET(request: NextRequest, ctx: RouteContext<"/[locale]/auth/confirm">) {
-  const { locale } = await ctx.params;
+export async function GET(request: NextRequest, _ctx: RouteContext<"/[locale]/auth/confirm">) {
   const { searchParams, origin } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const rawType = searchParams.get("type");
-  const next = RESOLVE_AUTH_NEXT(searchParams.get("next"), origin, locale);
+  const next = RESOLVE_AUTH_NEXT(searchParams.get("next"), origin);
 
   if (!token_hash || !IS_ALLOWED_TYPE(rawType)) {
     log.warn("confirm hit with missing or invalid params", { has_token: !!token_hash, type: rawType });
-    return NextResponse.redirect(`${origin}/${locale}/auth/error?reason=invalid_confirmation_link`);
+    return NextResponse.redirect(`${origin}/[locale]/auth/error?reason=invalid_confirmation_link`);
   }
 
   const supabase = await createServerClient();
@@ -36,7 +35,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/[locale]/aut
 
   if (error) {
     log.error("verifyOtp failed", { type: rawType, error });
-    return NextResponse.redirect(`${origin}/${locale}/auth/error?reason=${encodeURIComponent(error.message)}`);
+    return NextResponse.redirect(`${origin}/[locale]/auth/error?reason=${encodeURIComponent(error.message)}`);
   }
 
   log.info("verifyOtp succeeded", { type: rawType });

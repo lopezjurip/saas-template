@@ -107,6 +107,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/health", `${proto}://${APP_HOST}`));
   }
 
+  // Locale sentinel: /[locale]/path → /${locale}/path
+  // Handles both raw brackets and percent-encoded form (%5Blocale%5D) browsers send after redirects.
+  const sentinelMatch = /^\/(?:\[locale\]|%5[Bb]locale%5[Dd])\//i.exec(pathname);
+  if (sentinelMatch) {
+    const detected = RESOLVE_LOCALE_FROM_REQUEST(request);
+    const url = request.nextUrl.clone();
+    url.pathname = `/${detected}/${pathname.slice(sentinelMatch[0].length)}`;
+    return setLocaleCookieOnResponse(NextResponse.redirect(url), detected);
+  }
+
   // Detect locale from URL first segment; if missing, resolve from cookie/header and redirect.
   const { locale: localeFromPath, pathAfterLocale } = EXTRACT_LOCALE_FROM_PATH(pathname);
   if (!localeFromPath) {

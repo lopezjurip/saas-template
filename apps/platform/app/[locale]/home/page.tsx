@@ -36,7 +36,7 @@ const HomePickerPageQuery = gql(`
 export default async function HomePage(props: PageProps<"/[locale]/home">) {
   const { locale } = await props.params;
   const user = await getSupabaseServerUser();
-  if (!user) redirect(`/${locale}/auth?next=${encodeURIComponent(`/${locale}/home`)}`);
+  if (!user) redirect(`/[locale]/auth?next=${encodeURIComponent("/[locale]/home")}`);
 
   const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: HomePickerPageQuery });

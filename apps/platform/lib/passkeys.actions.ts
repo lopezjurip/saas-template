@@ -20,7 +20,6 @@ import { z } from "zod";
 import { gql } from "~/generated/graphql";
 import { debug } from "~/lib/debug";
 import { getGraphyServiceRole } from "~/lib/graphy/graphy.service";
-import { getServerLocale } from "~/lib/i18n.server";
 import { action, authedAction } from "~/lib/safe-action";
 
 const log = debug("passkeys");
@@ -501,6 +500,5 @@ export const actionVerifyPasskeySignIn = action
       external_id: credential["webauthn_credential_external_id"],
     });
 
-    const locale = await getServerLocale();
-    redirect(`/${locale}/dashboard`);
+    redirect("/[locale]/dashboard");
   });

@@ -53,7 +53,7 @@ export default async function TenantHomePage({
 
   if (redirectParam !== "false" && orgs.length === 1) {
     const only = orgs[0]!;
-    redirect(`/${locale}/${tenant_slug}/${only["organization_id"]}`);
+    redirect(`/[locale]/${tenant_slug}/${only["organization_id"]}`);
   }
 
   return (

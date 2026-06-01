@@ -20,7 +20,7 @@ function INITIALS_OF(name: string | null | undefined): string {
 export default async function AccountLayout(props: LayoutProps<"/[locale]/home/account">) {
   const { locale } = await props.params;
   const user = await getSupabaseServerUser();
-  if (!user) redirect(`/${locale}/auth`);
+  if (!user) redirect("/[locale]/auth");
   const email = user["email"] ?? "";
 
   return (

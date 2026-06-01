@@ -3,7 +3,6 @@
 import { createServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
-import { getServerLocale } from "~/lib/i18n.server";
 import { action } from "~/lib/safe-action";
 
 const log = debug("auth:logout");
@@ -15,8 +14,7 @@ export const signOut = action.action(async () => {
     // Don't block the redirect — sign-out is best-effort. Cookies are cleared either way.
     log.warn("signOut returned an error; redirecting anyway", { error });
   }
-  const locale = await getServerLocale();
-  redirect(`/${locale}/auth`);
+  redirect("/[locale]/auth");
 });
 
 /**

@@ -7,7 +7,6 @@ import { z } from "zod";
 import { isOAuthProvider, OAUTH_PROVIDER_IDS } from "~/app/[locale]/auth/providers";
 import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
 import { debug } from "~/lib/debug";
-import { getServerLocale } from "~/lib/i18n.server";
 import { action } from "~/lib/safe-action";
 
 const log = debug("auth");
@@ -27,17 +26,16 @@ const signInWithOAuthRun = action
   .action(async ({ parsedInput: { provider, next } }) => {
     const headerList = await headers();
     const origin = headerList.get("origin") ?? `https://${headerList.get("host")}`;
-    const locale = await getServerLocale();
 
     const supabase = await createServerClient();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${origin}/${locale}/auth/callback?next=${encodeURIComponent(next)}` },
+      options: { redirectTo: `${origin}/[locale]/auth/callback?next=${encodeURIComponent(next)}` },
     });
 
     if (error || !data?.url) {
       log.error("signInWithOAuth failed", { provider, error });
-      redirect(`/${locale}/auth/error?reason=${encodeURIComponent(error?.message ?? "oauth_init_failed")}`);
+      redirect(`/[locale]/auth/error?reason=${encodeURIComponent(error?.message ?? "oauth_init_failed")}`);
     }
     redirect(data.url);
   });
@@ -45,8 +43,7 @@ const signInWithOAuthRun = action
 export async function signInWithOAuth(formData: FormData) {
   const provider = String(formData.get("provider") ?? "");
   if (!isOAuthProvider(provider)) {
-    const locale = await getServerLocale();
-    redirect(`/${locale}/auth/error?reason=unknown_provider`);
+    redirect("/[locale]/auth/error?reason=unknown_provider");
   }
   await signInWithOAuthRun({
     provider,
@@ -59,20 +56,19 @@ export async function signInWithOAuth(formData: FormData) {
 // account's available methods, then redirects to the consolidated /auth/{kind} page
 // with everything pre-populated so step-2 renders without an extra round-trip.
 async function continueWithEmail(value: string, next: string): Promise<never> {
-  const locale = await getServerLocale();
   const email = value.trim().toLowerCase();
   if (!email || !email.includes("@")) {
-    redirect(`/${locale}/auth/email?error=invalid_email&next=${encodeURIComponent(next)}`);
+    redirect(`/[locale]/auth/email?error=invalid_email&next=${encodeURIComponent(next)}`);
   }
   if (!AUTH_EXPOSE_ACCOUNT_EXISTENCE) {
     const qs = new URLSearchParams({ value: email, next });
-    redirect(`/${locale}/auth/email?${qs.toString()}`);
+    redirect(`/[locale]/auth/email?${qs.toString()}`);
   }
   const supabase = await createServerClient();
   const { data: exists } = await supabase.rpc("email_exists", { email_to_check: email });
   if (!exists) {
     const qs = new URLSearchParams({ value: email, exists: "0", next });
-    redirect(`/${locale}/auth/email?${qs.toString()}`);
+    redirect(`/[locale]/auth/email?${qs.toString()}`);
   }
   const [passkeyRes, passwordRes] = await Promise.all([
     supabase.rpc("email_has_passkey", { email_to_check: email }),
@@ -85,21 +81,20 @@ async function continueWithEmail(value: string, next: string): Promise<never> {
     has_password: passwordRes.data ? "1" : "0",
     next,
   });
-  redirect(`/${locale}/auth/email?${qs.toString()}`);
+  redirect(`/[locale]/auth/email?${qs.toString()}`);
 }
 
 async function continueWithPhone(value: string, next: string): Promise<never> {
-  const locale = await getServerLocale();
   const phone = value.trim();
-  if (!phone) redirect(`/${locale}/auth/phone?error=invalid_phone&next=${encodeURIComponent(next)}`);
+  if (!phone) redirect(`/[locale]/auth/phone?error=invalid_phone&next=${encodeURIComponent(next)}`);
   const supabase = await createServerClient();
   const { data: normalized } = await supabase.rpc("phone_normalize", { value: phone, default_code: "+56" });
   if (!normalized) {
-    redirect(`/${locale}/auth/phone?error=invalid_phone&next=${encodeURIComponent(next)}`);
+    redirect(`/[locale]/auth/phone?error=invalid_phone&next=${encodeURIComponent(next)}`);
   }
   if (!AUTH_EXPOSE_ACCOUNT_EXISTENCE) {
     const qs = new URLSearchParams({ value: normalized as string, channels: "sms,whatsapp", next });
-    redirect(`/${locale}/auth/phone?${qs.toString()}`);
+    redirect(`/[locale]/auth/phone?${qs.toString()}`);
   }
   const { data: exists } = await supabase.rpc("phone_exists", { phone_to_check: phone, default_code: "+56" });
   if (!exists) {
@@ -109,7 +104,7 @@ async function continueWithPhone(value: string, next: string): Promise<never> {
       channels: "sms,whatsapp",
       next,
     });
-    redirect(`/${locale}/auth/phone?${qs.toString()}`);
+    redirect(`/[locale]/auth/phone?${qs.toString()}`);
   }
   const [passkeyRes, passwordRes] = await Promise.all([
     supabase.rpc("phone_has_passkey", { phone_to_check: phone, default_code: "+56" }),
@@ -123,14 +118,13 @@ async function continueWithPhone(value: string, next: string): Promise<never> {
     channels: "sms,whatsapp",
     next,
   });
-  redirect(`/${locale}/auth/phone?${qs.toString()}`);
+  redirect(`/[locale]/auth/phone?${qs.toString()}`);
 }
 
 async function continueWithDocument(value: string, next: string): Promise<never> {
-  const locale = await getServerLocale();
   const doc = value.trim();
-  if (!doc) redirect(`/${locale}/auth/document?error=invalid_document&next=${encodeURIComponent(next)}`);
-  redirect(`/${locale}/auth/document?value=${encodeURIComponent(doc)}&next=${encodeURIComponent(next)}`);
+  if (!doc) redirect(`/[locale]/auth/document?error=invalid_document&next=${encodeURIComponent(next)}`);
+  redirect(`/[locale]/auth/document?value=${encodeURIComponent(doc)}&next=${encodeURIComponent(next)}`);
 }
 
 // Form action consumed by the unified /auth entry form. The form submits with one of
@@ -146,6 +140,5 @@ export async function actionContinueAuth(formData: FormData): Promise<never> {
   if (document) await continueWithDocument(document, next);
 
   log.warn("actionContinueAuth: empty payload");
-  const locale = await getServerLocale();
-  redirect(`/${locale}/auth?error=empty`);
+  redirect("/[locale]/auth?error=empty");
 }

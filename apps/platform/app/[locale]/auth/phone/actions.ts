@@ -4,7 +4,6 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
-import { getServerLocale } from "~/lib/i18n.server";
 import { action, formAction } from "~/lib/safe-action";
 
 const checkPhoneSchema = z.object({
@@ -18,7 +17,6 @@ const checkPhoneSchema = z.object({
 // Step-1 → step-2 dispatcher. Resolves availability flags then redirects to the same
 // /auth/phone route with `value=` + flags so the page renders the method picker.
 const checkPhoneRun = action.inputSchema(checkPhoneSchema).action(async ({ parsedInput }) => {
-  const locale = await getServerLocale();
   const supabase = await createServerClient();
   const phone = parsedInput["phone"];
   const next = parsedInput["next"];
@@ -28,12 +26,12 @@ const checkPhoneRun = action.inputSchema(checkPhoneSchema).action(async ({ parse
     default_code: "+56",
   });
   if (!normalized) {
-    redirect(`/${locale}/auth/phone?error=invalid_phone&next=${encodeURIComponent(next)}`);
+    redirect(`/[locale]/auth/phone?error=invalid_phone&next=${encodeURIComponent(next)}`);
   }
 
   if (!AUTH_EXPOSE_ACCOUNT_EXISTENCE) {
     const qs = new URLSearchParams({ value: normalized as string, channels: "sms,whatsapp", next });
-    redirect(`/${locale}/auth/phone?${qs.toString()}`);
+    redirect(`/[locale]/auth/phone?${qs.toString()}`);
   }
 
   const { data: exists } = await supabase.rpc("phone_exists", {
@@ -47,7 +45,7 @@ const checkPhoneRun = action.inputSchema(checkPhoneSchema).action(async ({ parse
       channels: "sms,whatsapp",
       next,
     });
-    redirect(`/${locale}/auth/phone?${qs.toString()}`);
+    redirect(`/[locale]/auth/phone?${qs.toString()}`);
   }
 
   const [passkeyRes, passwordRes] = await Promise.all([
@@ -63,7 +61,7 @@ const checkPhoneRun = action.inputSchema(checkPhoneSchema).action(async ({ parse
     channels: "sms,whatsapp",
     next,
   });
-  redirect(`/${locale}/auth/phone?${qs.toString()}`);
+  redirect(`/[locale]/auth/phone?${qs.toString()}`);
 });
 
 export const checkPhone = formAction(checkPhoneRun, (fd) => ({

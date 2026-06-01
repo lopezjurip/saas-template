@@ -2,7 +2,6 @@
 
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
-import { getServerLocale } from "~/lib/i18n.server";
 import { authedAction, formAction } from "~/lib/safe-action";
 
 const log = debug("onboarding:finish");
@@ -11,7 +10,6 @@ const log = debug("onboarding:finish");
 // anymore — they could leave the hub without this — but pressing "continuar" makes the
 // transition explicit and stops the /home banner from re-appearing.
 const finishOnboardingRun = authedAction.action(async ({ ctx: { supabase, user } }) => {
-  const locale = await getServerLocale();
   const { error } = await supabase
     .from("profiles")
     .update({ profile_onboarded_at: new Date().toISOString() })
@@ -19,7 +17,7 @@ const finishOnboardingRun = authedAction.action(async ({ ctx: { supabase, user }
 
   if (error) {
     log.error("profile_onboarded_at update failed", { profile_id: user.id, error });
-    redirect(`/${locale}/auth/error?reason=onboarding_save_failed`);
+    redirect("/[locale]/auth/error?reason=onboarding_save_failed");
   }
 
   const refresh = await supabase.auth.refreshSession();
@@ -28,7 +26,7 @@ const finishOnboardingRun = authedAction.action(async ({ ctx: { supabase, user }
   }
 
   log.info("onboarding finished", { profile_id: user.id });
-  redirect(`/${locale}/home`);
+  redirect("/[locale]/home");
 });
 
 // The hub passes this as a `<form action>`, so we adapt via formAction.

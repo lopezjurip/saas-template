@@ -11,9 +11,8 @@ import { actionLinkProvider } from "../actions";
 
 export default async function ConnectionsPage(props: PageProps<"/[locale]/home/account/connections">) {
   const sp = await props.searchParams;
-  const { locale } = await props.params;
   const user = await getSupabaseServerUser();
-  if (!user) redirect(`/${locale}/auth`);
+  if (!user) redirect("/[locale]/auth");
   const errorParam = SINGLE(sp["error"]);
   const error = errorParam ? decodeURIComponent(errorParam) : null;
 

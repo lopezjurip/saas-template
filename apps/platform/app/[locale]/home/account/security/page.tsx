@@ -35,7 +35,7 @@ const SecuritySectionPageQuery = gql(`
 export default async function SecurityPage(props: PageProps<"/[locale]/home/account/security">) {
   const { locale } = await props.params;
   const user = await getSupabaseServerUser();
-  if (!user) redirect(`/${locale}/auth`);
+  if (!user) redirect("/[locale]/auth");
 
   const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: SecuritySectionPageQuery });

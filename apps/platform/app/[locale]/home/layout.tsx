@@ -6,10 +6,9 @@ import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 
 export default async function HomeLayout(props: LayoutProps<"/[locale]/home">) {
-  const { locale } = await props.params;
   const user = await getSupabaseServerUser();
   if (!user) {
-    redirect(`/${locale}/auth?next=${encodeURIComponent(`/${locale}/home`)}`);
+    redirect(`/[locale]/auth?next=${encodeURIComponent("/[locale]/home")}`);
   }
   return <>{props.children}</>;
 }

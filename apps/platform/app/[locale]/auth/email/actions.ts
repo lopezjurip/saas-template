@@ -4,7 +4,6 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
-import { getServerLocale } from "~/lib/i18n.server";
 import { action, formAction } from "~/lib/safe-action";
 
 const checkEmailSchema = z.object({
@@ -18,24 +17,23 @@ const checkEmailSchema = z.object({
 // Step-1 → step-2 dispatcher. Resolves availability flags then redirects to the same
 // /auth/email route with `value=` + flags so the page renders the method picker.
 const checkEmailRun = action.inputSchema(checkEmailSchema).action(async ({ parsedInput }) => {
-  const locale = await getServerLocale();
   const supabase = await createServerClient();
   const email = parsedInput["email"];
   const next = parsedInput["next"];
 
   if (!email.includes("@")) {
-    redirect(`/${locale}/auth/email?error=invalid_email&next=${encodeURIComponent(next)}`);
+    redirect(`/[locale]/auth/email?error=invalid_email&next=${encodeURIComponent(next)}`);
   }
 
   if (!AUTH_EXPOSE_ACCOUNT_EXISTENCE) {
     const qs = new URLSearchParams({ value: email, next });
-    redirect(`/${locale}/auth/email?${qs.toString()}`);
+    redirect(`/[locale]/auth/email?${qs.toString()}`);
   }
 
   const { data: exists } = await supabase.rpc("email_exists", { email_to_check: email });
   if (!exists) {
     const qs = new URLSearchParams({ value: email, exists: "0", next });
-    redirect(`/${locale}/auth/email?${qs.toString()}`);
+    redirect(`/[locale]/auth/email?${qs.toString()}`);
   }
 
   const [passkeyRes, passwordRes] = await Promise.all([
@@ -50,7 +48,7 @@ const checkEmailRun = action.inputSchema(checkEmailSchema).action(async ({ parse
     has_password: passwordRes.data ? "1" : "0",
     next,
   });
-  redirect(`/${locale}/auth/email?${qs.toString()}`);
+  redirect(`/[locale]/auth/email?${qs.toString()}`);
 });
 
 export const checkEmail = formAction(checkEmailRun, (fd) => ({

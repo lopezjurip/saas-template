@@ -26,9 +26,8 @@ function INITIALS_OF(name: string): string {
 }
 
 export default async function AccountProfilePage(props: PageProps<"/[locale]/home/account/profile">) {
-  const { locale } = await props.params;
   const user = await getSupabaseServerUser();
-  if (!user) redirect(`/${locale}/auth`);
+  if (!user) redirect("/[locale]/auth");
 
   const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: ProfileSectionPageQuery });
