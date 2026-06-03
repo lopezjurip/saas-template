@@ -11,6 +11,7 @@
 
 insert into public.reserved_slugs (reserved_slug) values
   ('admin'),
+  ('affiliate'),
   ('api'),
   ('app'),
   ('assets'),
@@ -22,6 +23,7 @@ insert into public.reserved_slugs (reserved_slug) values
   ('health'),
   ('home'),
   ('legal'),
+  ('maintenance'),
   ('me'),
   ('notifications'),
   ('public'),

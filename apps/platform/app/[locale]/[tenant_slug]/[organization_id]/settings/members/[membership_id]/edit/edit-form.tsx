@@ -6,6 +6,8 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Checkbox } from "@packages/ui-common/shadcn/components/ui/checkbox";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ArrowRight, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { gql } from "~/generated/graphql";
@@ -15,6 +17,7 @@ import { PERMISSION_SLUG_WILDCARD } from "../../schemas";
 const LOCALE_ES = {
   presets_label: "Plantillas",
   presets_hint: "Aplica una plantilla y luego ajusta los permisos individualmente.",
+  saved_instant: "Se guarda al instante",
   permissions_label: "Permisos ({{count}})",
   wildcard_label: "Acceso completo (dueño)",
   wildcard_description: "Cubre todos los permisos actuales y futuros de la organización.",
@@ -33,6 +36,7 @@ const LOCALES = {
   en: {
     presets_label: "Templates",
     presets_hint: "Apply a template and tweak individual permissions afterwards.",
+    saved_instant: "Saved instantly",
     permissions_label: "Permissions ({{count}})",
     wildcard_label: "Full access (owner)",
     wildcard_description: "Covers every current and future permission in the organization.",
@@ -49,6 +53,7 @@ const LOCALES = {
   pt: {
     presets_label: "Modelos",
     presets_hint: "Aplique um modelo e ajuste as permissões individualmente.",
+    saved_instant: "Salvo na hora",
     permissions_label: "Permissões ({{count}})",
     wildcard_label: "Acesso completo (dono)",
     wildcard_description: "Cobre todas as permissões atuais e futuras da organização.",
@@ -264,11 +269,15 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
     });
   }
 
+  const count = state.wildcard ? permissions.length : state.slugs.size;
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       {presets.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <Label>{t("presets_label")}</Label>
+        <section className="flex flex-col gap-2.5">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+            {t("presets_label")}
+          </span>
           <div className="flex flex-wrap gap-2">
             {presets.map((preset) => (
               <Button
@@ -283,52 +292,84 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
               </Button>
             ))}
           </div>
-          <p className="text-muted-foreground text-xs">{t("presets_hint")}</p>
-        </div>
+          <p className="text-muted-foreground text-[11.5px] leading-[1.5]">{t("presets_hint")}</p>
+        </section>
       )}
 
-      <div className="flex flex-col gap-1.5">
-        <Label>{t("permissions_label", { count: state.wildcard ? permissions.length : state.slugs.size })}</Label>
-        <div className="flex items-start gap-2 rounded-md border p-3">
+      <section className="flex flex-col gap-3">
+        <div className="flex min-h-7 items-center justify-between gap-2.5">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+            {t("permissions_label", { count })}
+          </span>
+          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
+            <Check size={12} strokeWidth={2.5} className="text-emerald-600 dark:text-emerald-400" />
+            {t("saved_instant")}
+          </span>
+        </div>
+
+        <div
+          className={cn(
+            "flex items-start gap-2.5 rounded-lg border px-3.5 py-3 transition-[background,border-color]",
+            state.wildcard ? "border-emerald-600/40 bg-emerald-500/[0.06]" : "border-border bg-background",
+          )}
+        >
           <Checkbox
             id="perm_wildcard"
             checked={state.wildcard}
             disabled={pending}
             onCheckedChange={(checked) => toggleWildcard(Boolean(checked))}
+            className="mt-0.5"
           />
-          <div className="flex flex-col">
-            <Label htmlFor="perm_wildcard" className="cursor-pointer font-medium">
-              {t("wildcard_label")}
-            </Label>
-            <span className="text-muted-foreground text-xs">{t("wildcard_description")}</span>
+          <div className="flex min-w-0 flex-col gap-[2px]">
+            <span className="inline-flex items-center gap-2">
+              <Label htmlFor="perm_wildcard" className="cursor-pointer text-[13.5px] font-semibold">
+                {t("wildcard_label")}
+              </Label>
+              <code className="text-muted-foreground/80 font-mono text-[11px]">*</code>
+            </span>
+            <span className="text-muted-foreground text-[12px] leading-[1.45] [text-wrap:pretty]">
+              {t("wildcard_description")}
+            </span>
           </div>
         </div>
+
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {permissions.map((perm) => {
             const slug = perm["permission_id"];
-            const checked = state.slugs.has(slug);
+            const on = state.wildcard || state.slugs.has(slug);
             return (
-              <div key={slug} className="flex items-start gap-2 rounded-md border p-2" aria-disabled={state.wildcard}>
+              <div
+                key={slug}
+                className={cn(
+                  "flex items-start gap-2.5 rounded-md border px-3 py-2.5 transition-[background,border-color]",
+                  on ? "border-foreground/35 bg-muted/40" : "border-border bg-background",
+                  state.wildcard && "opacity-70",
+                )}
+              >
                 <Checkbox
                   id={`perm_${slug}`}
-                  checked={state.wildcard || checked}
+                  checked={on}
                   disabled={state.wildcard || pending}
                   onCheckedChange={(value) => togglePermission(slug, Boolean(value))}
+                  className="mt-0.5"
                 />
-                <div className="flex flex-col">
-                  <Label htmlFor={`perm_${slug}`} className="cursor-pointer text-sm">
-                    {slug}
+                <div className="flex min-w-0 flex-col gap-[2px]">
+                  <Label htmlFor={`perm_${slug}`} className="cursor-pointer">
+                    <code className="text-foreground font-mono text-[12px]">{slug}</code>
                   </Label>
                   {perm["permission_description"] && (
-                    <span className="text-muted-foreground text-xs">{perm["permission_description"]}</span>
+                    <span className="text-muted-foreground text-[11.5px] leading-[1.4] [text-wrap:pretty]">
+                      {perm["permission_description"]}
+                    </span>
                   )}
                 </div>
               </div>
             );
           })}
         </div>
-        <p className="text-muted-foreground text-xs">{t("wildcard_footer")}</p>
-      </div>
+
+        <p className="text-muted-foreground text-[11.5px] leading-[1.5] [text-wrap:pretty]">{t("wildcard_footer")}</p>
+      </section>
 
       {error && (
         <Alert variant="destructive">
@@ -336,7 +377,7 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
         </Alert>
       )}
 
-      <div className="flex justify-between gap-2">
+      <div className="border-border flex items-center justify-between gap-3 border-t pt-4">
         <Button
           type="button"
           variant="ghost"
@@ -347,7 +388,7 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
           {t("remove_button")}
         </Button>
         <Button type="button" disabled={pending} onClick={() => router.push(membersHref)}>
-          {t("done")}
+          {t("done")} <ArrowRight size={15} />
         </Button>
       </div>
     </div>

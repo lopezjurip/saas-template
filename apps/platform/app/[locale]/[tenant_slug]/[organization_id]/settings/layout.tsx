@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { CreditCard, ExternalLink, Settings, Users } from "lucide-react";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { SubSidebar, type SubSidebarItem } from "~/components/sub-sidebar";
@@ -25,9 +25,27 @@ export default async function SettingsLayout({
       children: [
         {
           kind: "leaf",
+          label: t("nav_general"),
+          href: `${base}/general`,
+          icon: Settings,
+        },
+        {
+          kind: "leaf",
           label: t("nav_members"),
           href: `${base}/members`,
           icon: Users,
+        },
+        {
+          kind: "leaf",
+          label: t("nav_billing"),
+          href: `${base}/billing`,
+          icon: CreditCard,
+        },
+        {
+          kind: "leaf",
+          label: t("nav_external_access"),
+          href: `${base}/external-access`,
+          icon: ExternalLink,
         },
       ],
     },
@@ -44,19 +62,28 @@ export default async function SettingsLayout({
 const LOCALE_ES = {
   title: "Configuración",
   section_organization: "Organización",
+  nav_general: "General",
   nav_members: "Miembros",
+  nav_billing: "Facturación",
+  nav_external_access: "Acceso externo",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
   title: "Settings",
   section_organization: "Organization",
+  nav_general: "General",
   nav_members: "Members",
+  nav_billing: "Billing",
+  nav_external_access: "External access",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
   title: "Configurações",
   section_organization: "Organização",
+  nav_general: "General",
   nav_members: "Membros",
+  nav_billing: "Cobrança",
+  nav_external_access: "Acesso externo",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

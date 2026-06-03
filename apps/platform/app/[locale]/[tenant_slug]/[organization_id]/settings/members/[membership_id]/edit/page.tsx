@@ -1,18 +1,12 @@
 import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@packages/ui-common/shadcn/components/ui/card";
-import { ChevronLeft } from "lucide-react";
+import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
+import { ArrowLeft, FileText, Mail, Phone, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
 import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
 import { EditPermissionsForm } from "./edit-form";
@@ -35,27 +29,35 @@ function MEMBER_LABEL(row: {
   return "—";
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string; tenant_slug: string; organization_id: string; membership_id: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
+function INITIALS_OF(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase() || "?"
+  );
+}
+
+export async function generateMetadata(
+  props: PageProps<"/[locale]/[tenant_slug]/[organization_id]/settings/members/[membership_id]/edit">,
+): Promise<Metadata> {
+  const { locale } = await props.params;
   const { t } = ROSETTA(LOCALES, locale);
   return { title: t("page_title") };
 }
 
-export default async function MembershipEditPage({
-  params,
-}: {
-  params: Promise<{ locale: string; tenant_slug: string; organization_id: string; membership_id: string }>;
-}) {
+export default async function MembershipEditPage(
+  props: PageProps<"/[locale]/[tenant_slug]/[organization_id]/settings/members/[membership_id]/edit">,
+) {
   const {
     locale,
     tenant_slug,
     organization_id: organization_id_param,
     membership_id: membership_id_param,
-  } = await params;
+  } = await props.params;
 
   if (!IS_SUPPORTED_LOCALE(locale)) notFound();
   const { t } = ROSETTA(LOCALES, locale);
@@ -78,24 +80,11 @@ export default async function MembershipEditPage({
 
   if (!canManage) {
     return (
-      <main className="bg-muted flex min-h-svh items-start justify-center p-6">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <Button asChild variant="ghost" size="sm" className="text-muted-foreground w-fit -ml-2">
-              <Link href={membersHref}>
-                <ChevronLeft className="h-4 w-4" />
-                {t("back")}
-              </Link>
-            </Button>
-            <CardTitle>{t("page_title")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertDescription>{t("no_permission_alert")}</AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      </main>
+      <EditShell membersHref={membersHref} backLabel={t("back")}>
+        <Alert variant="destructive">
+          <AlertDescription>{t("no_permission_alert")}</AlertDescription>
+        </Alert>
+      </EditShell>
     );
   }
 
@@ -124,24 +113,11 @@ export default async function MembershipEditPage({
   const membership = membershipRes.data;
   if (!membership || membership["membership_revoked_at"] || membership["membership_rejected_at"]) {
     return (
-      <main className="bg-muted flex min-h-svh items-start justify-center p-6">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <Button asChild variant="ghost" size="sm" className="text-muted-foreground w-fit -ml-2">
-              <Link href={membersHref}>
-                <ChevronLeft className="h-4 w-4" />
-                {t("back")}
-              </Link>
-            </Button>
-            <CardTitle>{t("page_title")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertDescription>{t("not_found")}</AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
-      </main>
+      <EditShell membersHref={membersHref} backLabel={t("back")}>
+        <Alert variant="destructive">
+          <AlertDescription>{t("not_found")}</AlertDescription>
+        </Alert>
+      </EditShell>
     );
   }
 
@@ -162,63 +138,127 @@ export default async function MembershipEditPage({
     membership_invite_address_level0_id: membership["membership_invite_address_level0_id"],
   });
   const isPending = !membership["profile_id"];
+  const channel = membership["membership_invite_phone"]
+    ? "phone"
+    : membership["membership_invite_document_value"]
+      ? "document"
+      : "email";
+  const ChannelIcon = channel === "phone" ? Phone : channel === "document" ? FileText : Mail;
+  const secondary = isPending ? t("pending_label") : email && email !== memberLabel ? email : null;
 
   const permissionsCatalog = (permissionsRes.data ?? []).filter((p) => p["permission_id"] !== "*");
   const grantedSlugs = (grantsRes.data ?? []).map((g) => g["permission_id"] as string);
   const presets = presetsRes.data ?? [];
 
   return (
-    <main className="bg-muted flex min-h-svh items-start justify-center p-6">
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <Button asChild variant="ghost" size="sm" className="text-muted-foreground w-fit -ml-2">
-            <Link href={membersHref}>
-              <ChevronLeft className="h-4 w-4" />
-              {t("back")}
-            </Link>
-          </Button>
-          <CardTitle>{memberLabel}</CardTitle>
-          <CardDescription>
-            {organization["organization_name"]}
-            {isPending ? ` · ${t("pending_label")}` : ""}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <EditPermissionsForm
-            membership_id={membership_id}
-            permissions={permissionsCatalog}
-            presets={presets}
-            grantedSlugs={grantedSlugs}
-            membersHref={membersHref}
-          />
-        </CardContent>
-      </Card>
-    </main>
+    <EditShell membersHref={membersHref} backLabel={t("back")}>
+      <header className="flex flex-col gap-3">
+        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+          {organization["organization_name"]} · {t("eyebrow")}
+        </span>
+        <div className="flex items-center gap-3">
+          <span
+            className={
+              isPending
+                ? "bg-muted text-muted-foreground border-border inline-flex size-11 shrink-0 items-center justify-center rounded-full border"
+                : "bg-muted text-foreground inline-flex size-11 shrink-0 items-center justify-center rounded-full text-[15px] font-semibold tracking-[-0.01em]"
+            }
+          >
+            {isPending ? <ChannelIcon size={18} /> : INITIALS_OF(memberLabel)}
+          </span>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="inline-flex min-w-0 items-center gap-2">
+              <h1 className="text-foreground m-0 truncate text-[18px] font-semibold tracking-[-0.01em]">
+                {memberLabel}
+              </h1>
+              {isPending ? (
+                <Badge variant="outline" className="text-muted-foreground shrink-0">
+                  {t("invitation_badge")}
+                </Badge>
+              ) : null}
+            </span>
+            {secondary ? <span className="text-muted-foreground truncate text-[12.5px]">{secondary}</span> : null}
+          </div>
+        </div>
+        {isPending ? (
+          <div className="border-border bg-muted/40 flex items-start gap-2 rounded-md border px-3 py-2.5">
+            <span className="text-muted-foreground mt-px shrink-0">
+              <ShieldCheck size={14} />
+            </span>
+            <span className="text-muted-foreground text-[12px] leading-[1.5] [text-wrap:pretty]">
+              {t("pending_note")}
+            </span>
+          </div>
+        ) : null}
+      </header>
+
+      <EditPermissionsForm
+        membership_id={membership_id}
+        permissions={permissionsCatalog}
+        presets={presets}
+        grantedSlugs={grantedSlugs}
+        membersHref={membersHref}
+      />
+    </EditShell>
+  );
+}
+
+function EditShell({
+  membersHref,
+  backLabel,
+  children,
+}: {
+  membersHref: string;
+  backLabel: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-8">
+      <Link
+        href={membersHref}
+        className="text-muted-foreground hover:text-foreground -ml-1.5 inline-flex w-fit items-center gap-1.5 text-[12.5px] font-medium"
+      >
+        <ArrowLeft size={14} /> {backLabel}
+      </Link>
+      {children}
+    </div>
   );
 }
 
 const LOCALE_ES = {
   back: "Volver a miembros",
   page_title: "Permisos",
+  eyebrow: "Permisos",
   no_permission_alert: "No tienes permiso para administrar miembros en esta organización.",
   not_found: "Membresía no encontrada.",
   pending_label: "Invitación pendiente",
+  invitation_badge: "Invitación",
+  pending_note:
+    "Aún no acepta la invitación. Los permisos que dejes aquí se aplican automáticamente en cuanto entre con su enlace.",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
   back: "Back to members",
   page_title: "Permissions",
+  eyebrow: "Permissions",
   no_permission_alert: "You don't have permission to manage members in this organization.",
   not_found: "Membership not found.",
   pending_label: "Pending invitation",
+  invitation_badge: "Invitation",
+  pending_note:
+    "They haven't accepted the invitation yet. The permissions you set here apply automatically the moment they enter with their link.",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
   back: "Voltar para membros",
   page_title: "Permissões",
+  eyebrow: "Permissões",
   no_permission_alert: "Você não tem permissão para administrar membros nesta organização.",
   not_found: "Membresia não encontrada.",
   pending_label: "Convite pendente",
+  invitation_badge: "Convite",
+  pending_note:
+    "Ainda não aceitou o convite. As permissões que você definir aqui se aplicam automaticamente assim que entrar com o link.",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

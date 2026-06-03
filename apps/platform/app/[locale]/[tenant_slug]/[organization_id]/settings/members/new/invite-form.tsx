@@ -5,7 +5,8 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { Copy } from "lucide-react";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ArrowRight, Check, Copy, FileText, Mail, MessageCircle, Phone, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -18,67 +19,17 @@ import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } fro
 import { actionInviteMember } from "../actions";
 import { type InviteMemberValues, inviteMemberSchema } from "../schemas";
 
-const LOCALE_ES = {
-  title: "¿A quién quieres invitar?",
-  description: "Mandaremos la invitación. En el siguiente paso podrás definir los permisos.",
-  channel_email: "Por email",
-  channel_document: "Por documento",
-  channel_phone: "Por teléfono",
-  email_label: "Correo",
-  email_placeholder: "nombre@empresa.cl",
-  phone_label: "Teléfono",
-  phone_placeholder: "+56 9 1234 5678",
-  submit: "Invitar",
-  submitting: "Enviando…",
-  cancel: "Cancelar",
-  form_invalid: "Formulario inválido",
-  link_ready: "Link de invitación creado. Compártelo manualmente con el invitado:",
-  copy_link: "Copiar link",
-  link_copied: "¡Copiado!",
-  define_permissions: "Definir permisos",
-};
+type InviteChannel = "email" | "phone" | "document";
 
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    title: "Who do you want to invite?",
-    description: "We'll send the invitation. In the next step you'll define their permissions.",
-    channel_email: "By email",
-    channel_document: "By document",
-    channel_phone: "By phone",
-    email_label: "Email",
-    email_placeholder: "name@company.com",
-    phone_label: "Phone",
-    phone_placeholder: "+56 9 1234 5678",
-    submit: "Invite",
-    submitting: "Sending…",
-    cancel: "Cancel",
-    form_invalid: "Invalid form",
-    link_ready: "Invitation link created. Share it manually with the invitee:",
-    copy_link: "Copy link",
-    link_copied: "Copied!",
-    define_permissions: "Set permissions",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    title: "Quem você quer convidar?",
-    description: "Vamos enviar o convite. No próximo passo você define as permissões.",
-    channel_email: "Por e-mail",
-    channel_document: "Por documento",
-    channel_phone: "Por telefone",
-    email_label: "E-mail",
-    email_placeholder: "nome@empresa.com",
-    phone_label: "Telefone",
-    phone_placeholder: "+56 9 1234 5678",
-    submit: "Convidar",
-    submitting: "Enviando…",
-    cancel: "Cancelar",
-    form_invalid: "Formulário inválido",
-    link_ready: "Link de convite criado. Compartilhe manualmente com o convidado:",
-    copy_link: "Copiar link",
-    link_copied: "Copiado!",
-    define_permissions: "Definir permissões",
-  } satisfies typeof LOCALE_ES,
-};
+const CHANNELS: {
+  value: InviteChannel;
+  labelKey: "channel_email" | "channel_phone" | "channel_document";
+  Icon: typeof Mail;
+}[] = /*#__PURE__*/ [
+  { value: "email", labelKey: "channel_email", Icon: Mail },
+  { value: "phone", labelKey: "channel_phone", Icon: Phone },
+  { value: "document", labelKey: "channel_document", Icon: FileText },
+];
 
 interface Props {
   organization_id: number;
@@ -137,31 +88,56 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
 
   if (documentResult) {
     return (
-      <div className="flex flex-col gap-3">
-        <Alert>
-          <AlertDescription>{t("link_ready")}</AlertDescription>
-        </Alert>
-        <div className="bg-muted rounded-md p-2 text-xs break-all">{documentResult.url}</div>
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1"
-            onClick={async () => {
-              await navigator.clipboard.writeText(documentResult.url);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
-            }}
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            {copied ? t("link_copied") : t("copy_link")}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start gap-3 rounded-xl border border-emerald-600/30 bg-emerald-500/[0.06] p-4">
+          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+            <Check size={18} strokeWidth={2.25} />
+          </span>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <strong className="text-foreground text-[13.5px] font-semibold">{t("created_title")}</strong>
+            <span className="text-muted-foreground text-[12.5px] leading-[1.5] [text-wrap:pretty]">
+              {t("created_desc")}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+            {t("share_title")}
+          </span>
+          <div className="border-border bg-muted/40 flex items-center gap-2 rounded-md border p-1.5 pl-3">
+            <span className="text-foreground min-w-0 flex-1 truncate font-mono text-[12px]">{documentResult.url}</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 shrink-0"
+              onClick={async () => {
+                await navigator.clipboard.writeText(documentResult.url);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+            >
+              <Copy size={13} /> {copied ? t("link_copied") : t("copy_link")}
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-2 rounded-md border border-amber-300/60 bg-amber-50 px-3 py-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
+          <span className="mt-px shrink-0 text-amber-600 dark:text-amber-400">
+            <MessageCircle size={14} />
+          </span>
+          <span className="text-[12px] leading-[1.5] text-amber-800 [text-wrap:pretty] dark:text-amber-200">
+            {t("share_warning")}
+          </span>
+        </div>
+
+        <div className="border-border flex items-center justify-between gap-3 border-t pt-3.5">
+          <Button type="button" variant="ghost" onClick={() => router.push(membersHref)}>
+            {t("back_members")}
           </Button>
-          <Button
-            type="button"
-            className="flex-1"
-            onClick={() => router.push(editHrefFor(documentResult.membership_id))}
-          >
-            {t("define_permissions")}
+          <Button type="button" onClick={() => router.push(editHrefFor(documentResult.membership_id))}>
+            <ShieldCheck size={15} /> {t("define_permissions")}
           </Button>
         </div>
       </div>
@@ -169,48 +145,51 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <h3 className="text-base font-medium">{t("title")}</h3>
-      <p className="text-muted-foreground text-sm">{t("description")}</p>
-
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          variant={channel === "email" ? "default" : "outline"}
-          className="flex-1"
-          onClick={() => form.setValue("channel", "email")}
-        >
-          {t("channel_email")}
-        </Button>
-        <Button
-          type="button"
-          variant={channel === "phone" ? "default" : "outline"}
-          className="flex-1"
-          onClick={() => form.setValue("channel", "phone")}
-        >
-          {t("channel_phone")}
-        </Button>
-        <Button
-          type="button"
-          variant={channel === "document" ? "default" : "outline"}
-          className="flex-1"
-          onClick={() => form.setValue("channel", "document")}
-        >
-          {t("channel_document")}
-        </Button>
+    <form onSubmit={onSubmit} className="border-border bg-background flex flex-col gap-5 rounded-xl border p-5">
+      <div className="flex flex-col gap-2">
+        <span className="text-foreground text-[12.5px] font-medium">{t("channel_title")}</span>
+        <div role="tablist" aria-label={t("channel_title")} className="bg-muted grid grid-cols-3 gap-1 rounded-md p-1">
+          {CHANNELS.map((tab) => {
+            const on = tab.value === channel;
+            const Icon = tab.Icon;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                onClick={() => form.setValue("channel", tab.value)}
+                className={cn(
+                  "inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-[5px] text-[12.5px] font-medium transition-[background,color]",
+                  on
+                    ? "bg-background text-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.1)]"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon size={14} /> {t(tab.labelKey)}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {channel === "email" ? (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="invitation_email">{t("email_label")}</Label>
-          <Input
-            id="invitation_email"
-            type="email"
-            autoComplete="email"
-            placeholder={t("email_placeholder")}
-            aria-invalid={!!form.formState.errors.invitation_email}
-            {...form.register("invitation_email")}
-          />
+          <div className="relative">
+            <span className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+              <Mail size={15} />
+            </span>
+            <Input
+              id="invitation_email"
+              type="email"
+              autoComplete="email"
+              className="pl-9"
+              placeholder={t("email_placeholder")}
+              aria-invalid={!!form.formState.errors.invitation_email}
+              {...form.register("invitation_email")}
+            />
+          </div>
           {form.formState.errors.invitation_email && (
             <p className="text-destructive text-xs">{form.formState.errors.invitation_email.message}</p>
           )}
@@ -218,14 +197,20 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
       ) : channel === "phone" ? (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="invitation_phone">{t("phone_label")}</Label>
-          <Input
-            id="invitation_phone"
-            type="tel"
-            autoComplete="tel"
-            placeholder={t("phone_placeholder")}
-            aria-invalid={!!form.formState.errors.invitation_phone}
-            {...form.register("invitation_phone")}
-          />
+          <div className="relative">
+            <span className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
+              <Phone size={15} />
+            </span>
+            <Input
+              id="invitation_phone"
+              type="tel"
+              autoComplete="tel"
+              className="pl-9"
+              placeholder={t("phone_placeholder")}
+              aria-invalid={!!form.formState.errors.invitation_phone}
+              {...form.register("invitation_phone")}
+            />
+          </div>
           {form.formState.errors.invitation_phone && (
             <p className="text-destructive text-xs">{form.formState.errors.invitation_phone.message}</p>
           )}
@@ -240,14 +225,87 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
         </Alert>
       )}
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" disabled={pending} onClick={() => router.push(membersHref)}>
-          {t("cancel")}
-        </Button>
+      <div className="border-border flex items-center justify-between gap-3 border-t pt-3.5">
+        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11.5px]">
+          <ShieldCheck size={13} /> {t("perms_next")}
+        </span>
         <Button type="submit" disabled={pending}>
-          {pending ? t("submitting") : t("submit")}
+          {pending ? t("submitting") : t("submit")} <ArrowRight size={15} />
         </Button>
       </div>
     </form>
   );
 }
+
+const LOCALE_ES = {
+  channel_title: "Canal de invitación",
+  channel_email: "Correo",
+  channel_document: "Documento",
+  channel_phone: "Teléfono",
+  email_label: "Correo de la persona",
+  email_placeholder: "nombre@empresa.cl",
+  phone_label: "Número de teléfono",
+  phone_placeholder: "+56 9 1234 5678",
+  perms_next: "Permisos en el paso siguiente",
+  submit: "Crear invitación",
+  submitting: "Enviando…",
+  form_invalid: "Formulario inválido",
+  created_title: "Invitación creada",
+  created_desc: "Generamos un enlace de aceptación. Compártelo manualmente con el invitado.",
+  share_title: "Enlace para compartir",
+  share_warning: "Por este canal no enviamos aviso automático. Comparte el enlace tú mismo (WhatsApp, mensaje, etc.).",
+  copy_link: "Copiar",
+  link_copied: "¡Copiado!",
+  back_members: "Volver a miembros",
+  define_permissions: "Configurar permisos",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    channel_title: "Invitation channel",
+    channel_email: "Email",
+    channel_document: "Document",
+    channel_phone: "Phone",
+    email_label: "Person's email",
+    email_placeholder: "name@company.com",
+    phone_label: "Phone number",
+    phone_placeholder: "+56 9 1234 5678",
+    perms_next: "Permissions in the next step",
+    submit: "Create invitation",
+    submitting: "Sending…",
+    form_invalid: "Invalid form",
+    created_title: "Invitation created",
+    created_desc: "We generated an acceptance link. Share it manually with the invitee.",
+    share_title: "Link to share",
+    share_warning:
+      "We don't send an automatic notice on this channel. Share the link yourself (WhatsApp, message, etc.).",
+    copy_link: "Copy",
+    link_copied: "Copied!",
+    back_members: "Back to members",
+    define_permissions: "Set permissions",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    channel_title: "Canal do convite",
+    channel_email: "E-mail",
+    channel_document: "Documento",
+    channel_phone: "Telefone",
+    email_label: "E-mail da pessoa",
+    email_placeholder: "nome@empresa.com",
+    phone_label: "Número de telefone",
+    phone_placeholder: "+56 9 1234 5678",
+    perms_next: "Permissões na próxima etapa",
+    submit: "Criar convite",
+    submitting: "Enviando…",
+    form_invalid: "Formulário inválido",
+    created_title: "Convite criado",
+    created_desc: "Geramos um link de aceitação. Compartilhe manualmente com o convidado.",
+    share_title: "Link para compartilhar",
+    share_warning:
+      "Por este canal não enviamos aviso automático. Compartilhe o link você mesmo (WhatsApp, mensagem, etc.).",
+    copy_link: "Copiar",
+    link_copied: "Copiado!",
+    back_members: "Voltar para membros",
+    define_permissions: "Configurar permissões",
+  } satisfies typeof LOCALE_ES,
+};

@@ -3,14 +3,7 @@ import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@packages/ui-common/shadcn/components/ui/card";
-import { ChevronRight, UserPlus } from "lucide-react";
+import { ChevronRight, ShieldCheck, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,22 +11,18 @@ import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
 import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
 import { PendingInvitations } from "./pending-invitations";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string; tenant_slug: string; organization_id: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
+export async function generateMetadata(
+  props: PageProps<"/[locale]/[tenant_slug]/[organization_id]/settings/members">,
+): Promise<Metadata> {
+  const { locale } = await props.params;
   const { t } = ROSETTA(LOCALES, locale);
   return { title: t("page_title") };
 }
 
-export default async function MembersAdminPage({
-  params,
-}: {
-  params: Promise<{ locale: string; tenant_slug: string; organization_id: string }>;
-}) {
-  const { locale, tenant_slug, organization_id: organization_id_param } = await params;
+export default async function MembersAdminPage(
+  props: PageProps<"/[locale]/[tenant_slug]/[organization_id]/settings/members">,
+) {
+  const { locale, tenant_slug, organization_id: organization_id_param } = await props.params;
 
   if (!IS_SUPPORTED_LOCALE(locale)) notFound();
   const { t } = ROSETTA(LOCALES, locale);
@@ -48,6 +37,11 @@ export default async function MembersAdminPage({
   const supabase = await createServerClient();
   const admin = createServiceRoleClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const viewer_profile_id = user?.id ?? null;
+
   // viewer_has_permission is SECURITY DEFINER and honors '*' as a match.
   const { data: canManage } = await supabase.rpc("viewer_has_permission", {
     target_organization_id: organization_id,
@@ -56,17 +50,10 @@ export default async function MembersAdminPage({
 
   if (!canManage) {
     return (
-      <div className="p-6">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle>{t("page_title")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Alert variant="destructive">
-              <AlertDescription>{t("no_permission_alert")}</AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
+      <div className="mx-auto w-full max-w-3xl px-6 py-8">
+        <Alert variant="destructive">
+          <AlertDescription>{t("no_permission_alert")}</AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -132,107 +119,146 @@ export default async function MembersAdminPage({
       email: profileEmailById.get(profile_id) ?? null,
       has_wildcard,
       permission_count: slugs.length,
+      is_self: profile_id === viewer_profile_id,
     };
   });
 
   return (
-    <div className="p-6">
-      <Card className="w-full max-w-3xl mx-auto">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <CardTitle>{t("page_title")}</CardTitle>
-              <CardDescription>{organization["organization_name"]}</CardDescription>
-            </div>
-            <Button asChild>
-              <Link href={`${editHrefBase}/new`}>
-                <UserPlus className="h-4 w-4" />
-                {t("invite_button")}
-              </Link>
-            </Button>
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-7 px-6 py-8">
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1.5">
+          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+            {organization["organization_name"]} · {t("eyebrow")}
+          </span>
+          <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("page_title")}</h1>
+          <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+            {t("subtitle")}
+          </p>
+        </div>
+        <Button asChild>
+          <Link href={`${editHrefBase}/new`}>
+            <UserPlus className="h-4 w-4" />
+            {t("invite_button")}
+          </Link>
+        </Button>
+      </header>
+
+      <section className="flex flex-col gap-2.5">
+        <div className="flex min-h-7 items-center justify-between gap-2.5">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+            {t("members_heading")}
+          </span>
+          <span className="text-muted-foreground text-[11.5px] tabular-nums">{activeRows.length}</span>
+        </div>
+        {activeRows.length === 0 ? (
+          <p className="text-muted-foreground px-1 text-[12.5px]">{t("members_empty")}</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {activeRows.map((m) => {
+              const name = m.profile_name_full ?? m.email ?? m.profile_id.slice(0, 8);
+              return (
+                <Link
+                  key={m.membership_id}
+                  href={`${editHrefBase}/${m.membership_id}/edit`}
+                  className="group border-border bg-background hover:bg-accent/60 hover:border-foreground/25 grid grid-cols-[36px_1fr_auto_auto] items-center gap-3 rounded-md border px-3.5 py-3 transition-[background,border-color]"
+                >
+                  <MemberAvatar name={name} />
+                  <span className="flex min-w-0 flex-col gap-[2px]">
+                    <span className="inline-flex min-w-0 items-center gap-2">
+                      <span className="text-foreground truncate text-sm font-medium">{name}</span>
+                      {m.is_self ? (
+                        <span className="bg-foreground text-background shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none tracking-[0.04em]">
+                          {t("self")}
+                        </span>
+                      ) : null}
+                    </span>
+                    {m.email && m.email !== name ? (
+                      <span className="text-muted-foreground truncate text-[12.5px]">{m.email}</span>
+                    ) : null}
+                  </span>
+                  {m.has_wildcard ? (
+                    <Badge>{t("full_access_badge")}</Badge>
+                  ) : m.permission_count === 0 ? (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      {t("no_permissions")}
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary">{t("permissions_count", { count: m.permission_count })}</Badge>
+                  )}
+                  <span className="text-muted-foreground/70 group-hover:text-foreground shrink-0 transition-colors">
+                    <ChevronRight className="h-4 w-4" />
+                  </span>
+                </Link>
+              );
+            })}
           </div>
-        </CardHeader>
+        )}
+      </section>
 
-        <CardContent className="flex flex-col gap-8">
-          <section className="flex flex-col gap-3">
-            <div>
-              <h2 className="text-sm font-medium">{t("members_heading")}</h2>
-              <p className="text-muted-foreground text-xs">{t("members_description")}</p>
-            </div>
-            {activeRows.length === 0 ? (
-              <p className="text-muted-foreground text-sm">{t("members_empty")}</p>
-            ) : (
-              <ul className="divide-y rounded-md border">
-                {activeRows.map((m) => {
-                  const name = m.profile_name_full ?? m.email ?? m.profile_id.slice(0, 8);
-                  return (
-                    <li key={m.membership_id}>
-                      <Link
-                        href={`${editHrefBase}/${m.membership_id}/edit`}
-                        className="hover:bg-muted/50 flex items-center justify-between gap-3 p-3"
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">{name}</span>
-                          {m.email && m.email !== name && (
-                            <span className="text-muted-foreground text-xs">{m.email}</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {m.has_wildcard ? (
-                            <Badge variant="default">{t("full_access_badge")}</Badge>
-                          ) : m.permission_count === 0 ? (
-                            <Badge variant="outline" className="text-muted-foreground">
-                              {t("no_permissions")}
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary">{t("permissions_count", { count: m.permission_count })}</Badge>
-                          )}
-                          <ChevronRight className="text-muted-foreground h-4 w-4" />
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-
-          <section className="flex flex-col gap-3">
-            <div>
-              <h2 className="text-sm font-medium">{t("pending_heading")}</h2>
-              <p className="text-muted-foreground text-xs">{t("pending_description")}</p>
-            </div>
-            <PendingInvitations
-              editHrefBase={editHrefBase}
-              invitations={pendingMemberships.map((i) => ({
-                membership_id: i["membership_id"] as number,
-                invitation_email: i["membership_invite_email"] as string | null,
-                invitation_phone: i["membership_invite_phone"] as string | null,
-                invitation_address_level0_id: i["membership_invite_address_level0_id"] as string | null,
-                invitation_document_kind: i["membership_invite_document_kind"] as string | null,
-                invitation_document_value: i["membership_invite_document_value"] as string | null,
-                invitation_permission_slugs:
-                  permissionsByMembershipId.get(i["membership_id"] as number)?.map((g) => g.permission_id) ?? [],
-                invitation_created_at: i["membership_created_at"] as string,
-                invitation_expires_at: i["membership_invite_expires_at"] as string | null,
-              }))}
-            />
-          </section>
-        </CardContent>
-      </Card>
+      <section className="flex flex-col gap-2.5">
+        <div className="flex min-h-7 items-center justify-between gap-2.5">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+            {t("pending_heading")}
+          </span>
+          <span className="text-muted-foreground text-[11.5px] tabular-nums">{pendingMemberships.length}</span>
+        </div>
+        <PendingInvitations
+          editHrefBase={editHrefBase}
+          invitations={pendingMemberships.map((i) => ({
+            membership_id: i["membership_id"] as number,
+            invitation_email: i["membership_invite_email"] as string | null,
+            invitation_phone: i["membership_invite_phone"] as string | null,
+            invitation_address_level0_id: i["membership_invite_address_level0_id"] as string | null,
+            invitation_document_kind: i["membership_invite_document_kind"] as string | null,
+            invitation_document_value: i["membership_invite_document_value"] as string | null,
+            invitation_permission_slugs:
+              permissionsByMembershipId.get(i["membership_id"] as number)?.map((g) => g.permission_id) ?? [],
+            invitation_created_at: i["membership_created_at"] as string,
+            invitation_expires_at: i["membership_invite_expires_at"] as string | null,
+          }))}
+        />
+        {pendingMemberships.length > 0 ? (
+          <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-[11.5px] leading-[1.5]">
+            <span className="text-muted-foreground/80 mt-px shrink-0">
+              <ShieldCheck size={13} />
+            </span>
+            <span className="[text-wrap:pretty]">{t("pre_accept_note")}</span>
+          </p>
+        ) : null}
+      </section>
     </div>
+  );
+}
+
+function MemberAvatar({ name }: { name: string }) {
+  const initials =
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase() || "?";
+  return (
+    <span className="bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-full text-[12.5px] font-semibold tracking-[-0.01em]">
+      {initials}
+    </span>
   );
 }
 
 const LOCALE_ES = {
   page_title: "Miembros",
+  eyebrow: "Equipo",
+  subtitle:
+    "Quién tiene acceso a esta organización y con qué permisos. Invita por correo, teléfono o documento — y ajusta lo que cada quien puede hacer.",
   no_permission_alert: "No tienes permiso para administrar miembros en esta organización.",
   members_heading: "Miembros activos",
-  members_description: "Haz click en un miembro para editar sus permisos.",
   members_empty: "Esta organización aún no tiene miembros activos.",
   pending_heading: "Invitaciones pendientes",
-  pending_description: "Cuando alguien acepta, aparece como miembro arriba.",
+  pre_accept_note:
+    "Los permisos que asignes a una invitación se aplican en el momento exacto en que la persona acepta. Puedes ajustarlos antes.",
   invite_button: "Invitar",
+  self: "Tú",
   full_access_badge: "Acceso completo",
   permissions_count: "{{count}} permisos",
   no_permissions: "sin permisos",
@@ -240,13 +266,17 @@ const LOCALE_ES = {
 
 const LOCALE_EN: typeof LOCALE_ES = {
   page_title: "Members",
+  eyebrow: "Team",
+  subtitle:
+    "Who has access to this organization and with which permissions. Invite by email, phone or document — and adjust what each person can do.",
   no_permission_alert: "You don't have permission to manage members in this organization.",
   members_heading: "Active members",
-  members_description: "Click a member to edit their permissions.",
   members_empty: "This organization has no active members yet.",
   pending_heading: "Pending invitations",
-  pending_description: "Once they accept, they show up as a member above.",
+  pre_accept_note:
+    "The permissions you assign to an invitation apply the exact moment the person accepts. You can adjust them beforehand.",
   invite_button: "Invite",
+  self: "You",
   full_access_badge: "Full access",
   permissions_count: "{{count}} permissions",
   no_permissions: "no permissions",
@@ -254,13 +284,17 @@ const LOCALE_EN: typeof LOCALE_ES = {
 
 const LOCALE_PT: typeof LOCALE_ES = {
   page_title: "Membros",
+  eyebrow: "Equipe",
+  subtitle:
+    "Quem tem acesso a esta organização e com quais permissões. Convide por e-mail, telefone ou documento — e ajuste o que cada um pode fazer.",
   no_permission_alert: "Você não tem permissão para administrar membros nesta organização.",
   members_heading: "Membros ativos",
-  members_description: "Clique em um membro para editar suas permissões.",
   members_empty: "Esta organização ainda não tem membros ativos.",
   pending_heading: "Convites pendentes",
-  pending_description: "Quando aceitarem, aparecerão como membro acima.",
+  pre_accept_note:
+    "As permissões que você atribui a um convite são aplicadas no momento exato em que a pessoa aceita. Você pode ajustá-las antes.",
   invite_button: "Convidar",
+  self: "Você",
   full_access_badge: "Acesso completo",
   permissions_count: "{{count}} permissões",
   no_permissions: "sem permissões",

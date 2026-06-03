@@ -3,14 +3,7 @@
 import { useGraphyMutation } from "@packages/graphy/react";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@packages/ui-common/shadcn/components/ui/table";
+import { FileText, Mail, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useOptimistic, useState, useTransition } from "react";
@@ -39,16 +32,12 @@ const MembersPendingInvitationsCancelMutation = /*#__PURE__*/ gql(`
 
 const LOCALE_ES = {
   empty: "No hay invitaciones pendientes.",
-  email_column: "Correo",
-  permissions_column: "Permisos",
-  sent_column: "Enviada",
-  expires_column: "Expira",
-  actions_column: "Acciones",
   no_permissions: "sin permisos",
-  full_access: "acceso completo",
+  full_access: "Acceso completo",
+  permissions_count: "{{count}} permisos",
   expired_badge: "expirada",
-  edit: "Editar",
-  cancel: "Cancelar",
+  expires_in_days: "expira en {{days}} d",
+  cancel: "Cancelar invitación",
   cancelling: "Cancelando…",
   cancel_confirm: "¿Cancelar la invitación a {{email}}?",
 };
@@ -57,31 +46,23 @@ const LOCALES = {
   es: LOCALE_ES,
   en: {
     empty: "No pending invitations.",
-    email_column: "Email",
-    permissions_column: "Permissions",
-    sent_column: "Sent",
-    expires_column: "Expires",
-    actions_column: "Actions",
     no_permissions: "no permissions",
-    full_access: "full access",
+    full_access: "Full access",
+    permissions_count: "{{count}} permissions",
     expired_badge: "expired",
-    cancel: "Cancel",
-    edit: "Edit",
+    expires_in_days: "expires in {{days}}d",
+    cancel: "Cancel invitation",
     cancelling: "Cancelling…",
     cancel_confirm: "Cancel the invitation to {{email}}?",
   } satisfies typeof LOCALE_ES,
   pt: {
     empty: "Não há convites pendentes.",
-    email_column: "E-mail",
-    permissions_column: "Permissões",
-    sent_column: "Enviado",
-    expires_column: "Expira",
-    actions_column: "Ações",
     no_permissions: "sem permissões",
-    full_access: "acesso completo",
+    full_access: "Acesso completo",
+    permissions_count: "{{count}} permissões",
     expired_badge: "expirado",
-    cancel: "Cancelar",
-    edit: "Editar",
+    expires_in_days: "expira em {{days}} d",
+    cancel: "Cancelar convite",
     cancelling: "Cancelando…",
     cancel_confirm: "Cancelar o convite para {{email}}?",
   } satisfies typeof LOCALE_ES,
@@ -114,6 +95,12 @@ function INVITATION_LABEL(inv: InvitationRow): string {
   return "—";
 }
 
+function CHANNEL_OF(inv: InvitationRow): "email" | "phone" | "document" {
+  if (inv["invitation_phone"]) return "phone";
+  if (inv["invitation_document_value"]) return "document";
+  return "email";
+}
+
 export function PendingInvitations({ invitations, editHrefBase }: Props) {
   const { t } = useRosetta(LOCALES);
   const locale = useLocale();
@@ -127,10 +114,7 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
     (state: InvitationRow[], membership_id: number) => state.filter((i) => i["membership_id"] !== membership_id),
   );
 
-  const dateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short", year: "numeric" }),
-    [locale],
-  );
+  const dateFormatter = useMemo(() => new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short" }), [locale]);
 
   function cancel(inv: InvitationRow) {
     if (!window.confirm(t("cancel_confirm", { email: INVITATION_LABEL(inv) }))) return;
@@ -155,76 +139,66 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
   return (
     <div className="flex flex-col gap-2">
       {error && <p className="text-destructive text-xs">{error}</p>}
-      <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("email_column")}</TableHead>
-              <TableHead>{t("permissions_column")}</TableHead>
-              <TableHead>{t("sent_column")}</TableHead>
-              <TableHead>{t("expires_column")}</TableHead>
-              <TableHead className="text-right">{t("actions_column")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {optimisticInvitations.map((inv) => {
-              const slugs = (inv["invitation_permission_slugs"] ?? []).filter(
-                (s): s is string => typeof s === "string",
-              );
-              const isExpired =
-                !!inv["invitation_expires_at"] && new Date(inv["invitation_expires_at"]).getTime() < Date.now();
-              return (
-                <TableRow key={inv["membership_id"]}>
-                  <TableCell className="text-sm">{INVITATION_LABEL(inv)}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {slugs.length === 0 ? (
-                        <span className="text-muted-foreground text-xs">{t("no_permissions")}</span>
-                      ) : (
-                        slugs.map((slug) => (
-                          <Badge key={slug} variant="secondary" className="font-mono text-xs">
-                            {slug === "*" ? t("full_access") : slug}
-                          </Badge>
-                        ))
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
-                    {dateFormatter.format(new Date(inv["invitation_created_at"]))}
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {isExpired ? (
-                      <Badge variant="destructive">{t("expired_badge")}</Badge>
-                    ) : inv["invitation_expires_at"] ? (
-                      <span className="text-muted-foreground">
-                        {dateFormatter.format(new Date(inv["invitation_expires_at"]))}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button asChild size="sm" variant="outline">
-                        <Link href={`${editHrefBase}/${inv["membership_id"]}/edit`}>{t("edit")}</Link>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive hover:text-destructive"
-                        disabled={pendingId === inv["membership_id"]}
-                        onClick={() => cancel(inv)}
-                      >
-                        {pendingId === inv["membership_id"] ? t("cancelling") : t("cancel")}
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      {optimisticInvitations.map((inv) => {
+        const slugs = (inv["invitation_permission_slugs"] ?? []).filter((s): s is string => typeof s === "string");
+        const hasWildcard = slugs.includes("*");
+        const permCount = slugs.filter((s) => s !== "*").length;
+        const channel = CHANNEL_OF(inv);
+        const ChannelIcon = channel === "phone" ? Phone : channel === "document" ? FileText : Mail;
+        const expiresAt = inv["invitation_expires_at"] ? new Date(inv["invitation_expires_at"]).getTime() : null;
+        const isExpired = expiresAt !== null && expiresAt < Date.now();
+        const daysLeft = expiresAt !== null ? Math.max(0, Math.ceil((expiresAt - Date.now()) / 86_400_000)) : null;
+
+        return (
+          <div
+            key={inv["membership_id"]}
+            className="group border-border bg-muted/30 hover:border-foreground/25 grid grid-cols-[36px_1fr_auto_auto] items-center gap-3 rounded-md border px-3.5 py-3 transition-[background,border-color]"
+          >
+            <span className="bg-muted text-muted-foreground border-border inline-flex size-9 shrink-0 items-center justify-center rounded-full border">
+              <ChannelIcon size={15} />
+            </span>
+            <Link
+              href={`${editHrefBase}/${inv["membership_id"]}/edit`}
+              className="flex min-w-0 flex-col gap-[2px] outline-none focus-visible:underline"
+            >
+              <span className="text-foreground truncate text-sm font-medium">{INVITATION_LABEL(inv)}</span>
+              <span className="text-muted-foreground inline-flex min-w-0 items-center gap-1.5 truncate text-[12px]">
+                <span className="truncate">{dateFormatter.format(new Date(inv["invitation_created_at"]))}</span>
+                {daysLeft !== null && !isExpired ? (
+                  <>
+                    <span className="shrink-0 opacity-50">·</span>
+                    <span className="shrink-0">{t("expires_in_days", { days: daysLeft })}</span>
+                  </>
+                ) : null}
+              </span>
+            </Link>
+            {isExpired ? (
+              <Badge variant="outline" className="border-destructive/35 bg-destructive/10 text-destructive">
+                {t("expired_badge")}
+              </Badge>
+            ) : hasWildcard ? (
+              <Badge>{t("full_access")}</Badge>
+            ) : permCount === 0 ? (
+              <Badge variant="outline" className="text-muted-foreground">
+                {t("no_permissions")}
+              </Badge>
+            ) : (
+              <Badge variant="secondary">{t("permissions_count", { count: permCount })}</Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-destructive size-[30px] shrink-0"
+              disabled={pendingId === inv["membership_id"]}
+              onClick={() => cancel(inv)}
+              aria-label={t("cancel")}
+              title={t("cancel")}
+            >
+              <Trash2 size={15} />
+            </Button>
+          </div>
+        );
+      })}
     </div>
   );
 }
