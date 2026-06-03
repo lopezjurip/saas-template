@@ -9,7 +9,7 @@ export default async function OnboardingPasswordPage(_props: PageProps<"/[locale
   const state = await getViewerOnboardingState();
 
   return (
-    <AuthCard className="max-w-[460px]">
+    <AuthCard className="max-w-115">
       <div className="flex flex-col gap-5">
         <AuthHeader small />
         <StepShell

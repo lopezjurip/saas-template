@@ -1,14 +1,22 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 
-export function AuthCard({ children, className }: { children: React.ReactNode; className?: string }) {
+/**
+ * Shared card chrome for every /auth surface (entry, step-2, onboarding substeps,
+ * logout, recover, success). Owns the full-viewport centering + background; on small
+ * screens the card dissolves into an edge-to-edge column.
+ */
+export function AuthCard({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div
-      className={cn(
-        "bg-card text-card-foreground border rounded-xl w-full max-w-105 p-7 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_28px_rgba(0,0,0,0.06)]",
-        className,
-      )}
-    >
-      {children}
+    <div className="flex min-h-dvh w-full items-center justify-center bg-muted/40 px-4 py-10 sm:px-6 sm:py-12">
+      <div
+        className={cn(
+          "w-full max-w-100 rounded-xl border bg-card p-6 text-card-foreground sm:p-8",
+          "shadow-[0_1px_3px_hsl(0_0%_0%/0.04),0_8px_28px_hsl(0_0%_0%/0.06)]",
+          className,
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 }

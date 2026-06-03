@@ -14,9 +14,7 @@ export async function GET(request: NextRequest, _ctx: RouteContext<"/[locale]/au
   if (errorDescription) {
     log.warn("provider returned an error", { errorDescription });
     return NextResponse.redirect(`${origin}/[locale]/auth/error?reason=${encodeURIComponent(errorDescription)}`);
-  }
-
-  if (!code) {
+  } else if (!code) {
     log.warn("callback hit without a code param");
     return NextResponse.redirect(`${origin}/[locale]/auth/error?reason=missing_code`);
   }

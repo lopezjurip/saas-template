@@ -22,11 +22,11 @@
     "@graphql-typed-document-node/core": "^3.2.0",
     "@packages/typescript-config": "workspace:*",
     "@types/node": "^24.12.4",
-    "@types/react": "^19.2.15",
-    "graphql": "^16.13.2",
-    "react": "^19.2.6",
+    "@types/react": "^19.2.16",
+    "graphql": "^16.14.1",
+    "react": "^19.2.7",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.8"
   },
   "peerDependencies": {
     "react": "^19.0.0"

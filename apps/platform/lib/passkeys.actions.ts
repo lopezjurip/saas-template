@@ -500,5 +500,5 @@ export const actionVerifyPasskeySignIn = action
       external_id: credential["webauthn_credential_external_id"],
     });
 
-    redirect("/[locale]/dashboard");
+    redirect("/[locale]/home");
   });

@@ -1,44 +1,26 @@
-export function AuthHeader({ small }: { small?: boolean }) {
-  return (
-    <div className={`text-center flex flex-col items-center ${small ? "gap-2" : "gap-3"}`}>
-      <div className="inline-flex size-10 items-center justify-center rounded-[10px] bg-primary text-[18px] font-bold tracking-tight text-primary-foreground">
-        H
-      </div>
-      <div>
-        <h1 className={`m-0 font-semibold tracking-tight ${small ? "text-[18px]" : "text-[22px]"}`}>
-          Bienvenido a Humane
-        </h1>
-        <p
-          className={`mt-1 text-muted-foreground ${small ? "text-[12px]" : "text-[13px]"}`}
-          style={{ margin: "4px 0 0" }}
-        >
-          HR y nómina para empresas chilenas
-        </p>
-      </div>
-    </div>
-  );
-}
+import { Logo } from "@packages/ui-common/logo";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
 
-export function AuthFooter() {
+/**
+ * Brand header for the auth card. `full` (default) shows brand + welcome title + tagline
+ * for the /auth entry; `small` shows just the brand mark, for pages with their own heading.
+ */
+export function AuthHeader({ small = false }: { small?: boolean }) {
+  if (small) {
+    return (
+      <div className="flex justify-center">
+        <Logo />
+      </div>
+    );
+  }
+
   return (
-    <div className="text-center mt-5">
-      <p className="m-0 text-[11px] text-muted-foreground leading-relaxed">
-        Al continuar aceptas nuestros{" "}
-        <a
-          className="cursor-pointer underline decoration-border underline-offset-[3px] hover:decoration-foreground"
-          href="/legal"
-        >
-          Términos
-        </a>{" "}
-        y{" "}
-        <a
-          className="cursor-pointer underline decoration-border underline-offset-[3px] hover:decoration-foreground"
-          href="/legal"
-        >
-          Política de privacidad
-        </a>
-        .
-      </p>
+    <div className="flex flex-col items-center gap-3 text-center">
+      <Logo className="text-lg" />
+      <div>
+        <h1 className={cn("m-0 text-[22px] font-semibold tracking-[-0.02em]")}>Bienvenido a Humane</h1>
+        <p className="mt-1 mb-0 text-[13px] text-muted-foreground">La forma simple de gestionar a tu equipo</p>
+      </div>
     </div>
   );
 }

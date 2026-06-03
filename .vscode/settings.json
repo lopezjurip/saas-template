@@ -29,5 +29,5 @@
     ".claude/worktrees": true
   },
   "cSpell.language": "en,es-ES",
-  "cSpell.words": ["codegen", "graphy", "mailpit", "rosetta", "simplewebauthn", "supabase", "whatsapp"]
+  "cSpell.words": ["codegen", "graphy", "magiclink", "mailpit", "rosetta", "simplewebauthn", "supabase", "whatsapp"]
 }

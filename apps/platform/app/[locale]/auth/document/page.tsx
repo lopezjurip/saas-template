@@ -1,26 +1,29 @@
 import { SINGLE } from "@packages/utils/array";
-import Link from "next/link";
-import { AuthCard } from "~/app/[locale]/auth/_components/auth-card";
-import { AuthHeader } from "~/app/[locale]/auth/_components/auth-header";
-import { getCountries } from "~/hooks/get-countries";
-import { DocumentFlow } from "./document-flow";
+import { AuthBackLink } from "../_components/auth-back-link";
+import { AuthCard } from "../_components/auth-card";
+import { AuthHeader } from "../_components/auth-header";
+import { DocumentStepForm } from "./document-step-form";
 
-export default async function DocumentEntryPage(props: PageProps<"/[locale]/auth/document">) {
+export default async function AuthDocumentPage(props: PageProps<"/[locale]/auth/document">) {
   const sp = await props.searchParams;
-  const { locale } = await props.params;
-  const { data: countriesData } = await getCountries();
-  const countries = countriesData?.["addresses_level0Collection"]?.["edges"]?.map((e) => e["node"]) ?? [];
-  const initialError = SINGLE(sp["error"]);
+  const value = SINGLE(sp["value"]) ?? "";
+  const next = SINGLE(sp["next"]) ?? "/";
 
   return (
     <AuthCard>
       <div className="flex flex-col gap-5">
         <AuthHeader small />
-        <h2 className="text-center text-sm font-medium">Ingresa con documento</h2>
-        <DocumentFlow countries={countries} locale={locale} initialError={initialError} />
-        <Link href={`/${locale}/auth`} className="text-muted-foreground text-center text-xs hover:underline">
-          ← Cambiar método de ingreso
-        </Link>
+        <div className="flex flex-col gap-4.5">
+          <AuthBackLink />
+          <div className="flex flex-col gap-1">
+            <h1 className="m-0 text-[20px] font-semibold tracking-[-0.02em] text-foreground">Identifícate</h1>
+            <p className="m-0 text-[13px] leading-normal text-muted-foreground text-pretty">
+              Usaremos tu documento para encontrar tu cuenta o invitación. Te enviaremos un código a tu canal de
+              contacto.
+            </p>
+          </div>
+          <DocumentStepForm value={value} next={next} />
+        </div>
       </div>
     </AuthCard>
   );

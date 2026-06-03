@@ -1,7 +1,7 @@
 import { Logo } from "@packages/ui-common/logo";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { SINGLE } from "@packages/utils/array";
-import { ArrowRight, Check, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, Check, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";

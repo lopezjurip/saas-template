@@ -1,95 +1,45 @@
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Input } from "@packages/ui-common/shadcn/components/ui/input";
-import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { SINGLE } from "@packages/utils/array";
-import { ArrowRight, Mail } from "lucide-react";
-import Link from "next/link";
-import { IdentityChip } from "~/components/identity/chips";
+import { redirect } from "next/navigation";
+import { AuthBackLink } from "../_components/auth-back-link";
 import { AuthCard } from "../_components/auth-card";
 import { AuthHeader } from "../_components/auth-header";
-import { MethodPicker } from "../_components/method-picker";
-import { StepHeader } from "../_components/step2-shell";
-import { checkEmail } from "./actions";
+import { EmailStepForm } from "./email-step-form";
 
-export default async function EmailPage(props: PageProps<"/[locale]/auth/email">) {
+export default async function AuthEmailPage(props: PageProps<"/[locale]/auth/email">) {
   const sp = await props.searchParams;
-  const { locale } = await props.params;
-  const value = SINGLE(sp["value"]) ?? "";
+  const email = SINGLE(sp["value"]) ?? "";
   const next = SINGLE(sp["next"]) ?? "/";
-  const error = SINGLE(sp["error"]);
-  const existsRaw = SINGLE(sp["exists"]);
-  const existsKnown = existsRaw !== undefined;
-  const exists = existsRaw === "1";
+  const errorCode = SINGLE(sp["error"]);
+
+  // Invalid/empty value or arriving without a value → bounce to the entry.
+  if (errorCode === "invalid_email" || !email) {
+    redirect(`/[locale]/auth?error=invalid_email&next=${encodeURIComponent(next)}`);
+  }
+
+  const existsParam = SINGLE(sp["exists"]);
+  const exists = existsParam === "1" ? true : existsParam === "0" ? false : null;
   const hasPasskey = SINGLE(sp["has_passkey"]) === "1";
   const hasPassword = SINGLE(sp["has_password"]) === "1";
 
-  // Step-1: no value yet → render the email input form.
-  if (!value) {
-    return (
-      <AuthCard>
-        <div className="flex flex-col gap-[22px]">
-          <AuthHeader />
-          <div className="flex flex-col gap-4">
-            <h2 className="text-center text-sm font-medium">Ingresa tu correo</h2>
-            <form action={checkEmail} className="flex flex-col gap-3">
-              <input type="hidden" name="next" value={next} />
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="email">Correo electrónico</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-                    <Mail size={16} />
-                  </span>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    className="h-10 pl-9"
-                    placeholder="tu@empresa.cl"
-                    autoComplete="email"
-                    required
-                    aria-invalid={error === "invalid_email" ? "true" : undefined}
-                  />
-                </div>
-                {error === "invalid_email" && <p className="text-destructive text-xs mt-1.5">Correo inválido.</p>}
-              </div>
-              <Button type="submit" className="h-10 w-full">
-                <span>Continuar</span>
-                <ArrowRight size={16} />
-              </Button>
-            </form>
-            <Link href={`/${locale}/auth`} className="text-muted-foreground text-center text-xs hover:underline">
-              ← Cambiar método de ingreso
-            </Link>
-          </div>
-        </div>
-      </AuthCard>
-    );
-  }
-
-  // Step-2: value present → render the method picker (login or passwordless signup).
-  // isNewUser = true when existence is unknown (allows magic link to create account if needed).
-  const isNewUser = existsKnown ? !exists : true;
-  const changeHref = `/${locale}/auth/email?next=${encodeURIComponent(next)}`;
-
-  const title = existsKnown && isNewUser ? "Crear cuenta" : "Ingresar";
-  const subtitle =
-    existsKnown && isNewUser ? "Te enviaremos un enlace mágico para crear tu cuenta." : "Elige cómo quieres continuar";
+  const { title, subtitle } =
+    exists === true
+      ? { title: "Inicia sesión", subtitle: <>Continúa con tu cuenta de {email}.</> }
+      : exists === false
+        ? { title: "Crea tu cuenta", subtitle: <>No encontramos una cuenta con {email}. Te la creamos en un paso.</> }
+        : { title: "Continúa con tu correo", subtitle: <>Usaremos {email} para identificarte.</> };
 
   return (
     <AuthCard>
       <div className="flex flex-col gap-5">
-        <StepHeader backHref={`/${locale}/auth?next=${encodeURIComponent(next)}`} title={title} subtitle={subtitle} />
-        <IdentityChip kind="email" value={value} href={changeHref} />
-        <MethodPicker
-          kind="email"
-          value={value}
-          hasPasskey={hasPasskey}
-          hasPassword={hasPassword}
-          isNewUser={isNewUser}
-          existsKnown={existsKnown}
-          locale={locale}
-          next={next}
-        />
+        <AuthHeader small />
+        <div className="flex flex-col gap-4.5">
+          <AuthBackLink />
+          <div className="flex flex-col gap-1">
+            <h1 className="m-0 text-[20px] font-semibold tracking-[-0.02em] text-foreground">{title}</h1>
+            <p className="m-0 text-[13px] leading-normal text-muted-foreground text-pretty">{subtitle}</p>
+          </div>
+          <EmailStepForm email={email} next={next} exists={exists} hasPasskey={hasPasskey} hasPassword={hasPassword} />
+        </div>
       </div>
     </AuthCard>
   );

@@ -1,3 +1,4 @@
+import { Toaster } from "@packages/ui-common/shadcn/components/ui/sonner";
 import type { Metadata, Viewport } from "next";
 import { GraphyClientProvider } from "~/components/graphy-provider";
 import { ThemeProvider } from "~/components/theme-provider";
@@ -43,6 +44,7 @@ export default async function RootLayout(props: LayoutProps<"/">) {
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <GraphyClientProvider>{children}</GraphyClientProvider>
+          <Toaster richColors closeButton />
         </ThemeProvider>
       </body>
     </html>

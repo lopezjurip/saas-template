@@ -20,7 +20,7 @@
     "@packages/typescript-config": "workspace:*",
     "@types/dlv": "^1.1.5",
     "@types/node": "^24.12.4",
-    "@types/react": "^19.2.15",
+    "@types/react": "^19.2.16",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {

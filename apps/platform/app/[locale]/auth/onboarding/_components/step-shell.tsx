@@ -26,7 +26,7 @@ export function StepShell({
   const hubHref = `/${locale}/auth/onboarding`;
 
   return (
-    <div className="flex flex-col gap-[18px]">
+    <div className="flex flex-col gap-4.5">
       <div className="flex items-center justify-between -mb-1">
         <Link
           href={hubHref}
@@ -40,7 +40,7 @@ export function StepShell({
 
       <div className="flex flex-col gap-1">
         <h1 className="m-0 text-[20px] font-semibold tracking-[-0.02em] text-foreground">{title}</h1>
-        {subtitle && <p className="m-0 text-[13px] leading-[1.5] text-muted-foreground text-pretty">{subtitle}</p>}
+        {subtitle && <p className="m-0 text-[13px] leading-normal text-muted-foreground text-pretty">{subtitle}</p>}
       </div>
 
       {children}

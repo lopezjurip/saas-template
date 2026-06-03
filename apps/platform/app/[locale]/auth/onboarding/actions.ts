@@ -6,9 +6,11 @@ import { authedAction, formAction } from "~/lib/safe-action.server";
 
 const log = debug("onboarding:finish");
 
-// Stamps `profile_onboarded_at` and sends the user to /home. Onboarding isn't a hard gate
-// anymore — they could leave the hub without this — but pressing "continuar" makes the
-// transition explicit and stops the /home banner from re-appearing.
+/**
+ * Stamps `profile_onboarded_at` and sends the user to the success screen. Onboarding isn't
+ * a hard gate anymore — they could leave the hub without this — but pressing "continuar"
+ * makes the transition explicit and stops the /home banner from re-appearing.
+ */
 const finishOnboardingRun = authedAction.action(async ({ ctx: { supabase, user } }) => {
   const { error } = await supabase
     .from("profiles")
@@ -26,8 +28,10 @@ const finishOnboardingRun = authedAction.action(async ({ ctx: { supabase, user }
   }
 
   log.info("onboarding finished", { profile_id: user.id });
-  redirect("/[locale]/home");
+  const fullName = (user.user_metadata?.["full_name"] as string | undefined)?.trim();
+  const firstName = fullName?.split(/\s+/)[0];
+  redirect(firstName ? `/[locale]/auth/success?name=${encodeURIComponent(firstName)}` : "/[locale]/auth/success");
 });
 
-// The hub passes this as a `<form action>`, so we adapt via formAction.
+/** The hub passes this as a `<form action>`, so we adapt via formAction. */
 export const actionFinishOnboarding = formAction(finishOnboardingRun, () => undefined);

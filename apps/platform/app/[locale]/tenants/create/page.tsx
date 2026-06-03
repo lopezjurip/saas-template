@@ -1,5 +1,7 @@
-import { CardContent, CardDescription, CardHeader } from "@packages/ui-common/shadcn/components/ui/card";
+import { Logo } from "@packages/ui-common/logo";
+import { Building2 } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ROSETTA } from "~/lib/i18n";
 import { CreateTenantForm } from "./create-form";
 
@@ -13,27 +15,47 @@ export default async function CreateTenantPage({ params }: { params: Promise<{ l
   const { locale } = await params;
   const { t } = ROSETTA(LOCALES, locale);
   return (
-    <>
-      <CardHeader className="items-center text-center">
-        <CardDescription>{t("heading")}</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div
+      className="relative flex min-h-dvh w-full items-center justify-center px-5 py-10"
+      style={{
+        background: "radial-gradient(ellipse at top, hsl(var(--muted) / 0.6), transparent 60%), hsl(var(--background))",
+      }}
+    >
+      <Link
+        href={`/${locale}/home`}
+        aria-label="Inicio"
+        className="absolute left-6 top-5 transition-opacity hover:opacity-80"
+      >
+        <Logo />
+      </Link>
+
+      <div className="flex w-full max-w-110 flex-col gap-5 rounded-2xl border bg-card p-6 text-card-foreground shadow-[0_1px_3px_hsl(0_0%_0%/0.04),0_18px_48px_hsl(0_0%_0%/0.1)]">
+        <div className="flex flex-col gap-1.5">
+          <span className="inline-flex size-11 items-center justify-center rounded-xl bg-muted text-foreground">
+            <Building2 size={20} strokeWidth={2.25} />
+          </span>
+          <h1 className="m-0 mt-1 text-[20px] font-semibold tracking-[-0.01em] text-foreground">{t("heading")}</h1>
+          <p className="m-0 text-[13px] leading-normal text-muted-foreground text-pretty">{t("subtitle")}</p>
+        </div>
         <CreateTenantForm />
-      </CardContent>
-    </>
+      </div>
+    </div>
   );
 }
 
 const LOCALE_ES = {
-  heading: "Crear empresa",
+  heading: "Crea tu empresa",
+  subtitle: "Un espacio para tu equipo. Podrás invitar personas y configurar permisos en cuanto entres.",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
-  heading: "Create company",
+  heading: "Create your company",
+  subtitle: "A space for your team. You can invite people and set permissions as soon as you're in.",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
-  heading: "Criar empresa",
+  heading: "Crie sua empresa",
+  subtitle: "Um espaço para sua equipe. Você poderá convidar pessoas e configurar permissões assim que entrar.",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
