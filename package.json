@@ -8,6 +8,7 @@
   },
   "scripts": {
     "preinstall": "npx --yes only-allow pnpm",
+    "postinstall": "node scripts/setup-skills.js",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "build:dry": "turbo run build:dry",
