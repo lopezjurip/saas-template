@@ -10,19 +10,7 @@ const agentsSkillsDir = join(rootDir, ".agents", "skills");
 const claudeSkillsDir = join(rootDir, ".claude", "skills");
 const skillsDir = join(rootDir, "skills");
 
-const SKILLS = [
-  "my-graphql",
-  "my-i18n",
-  "my-graphql-codegen",
-  "my-supabase",
-  "my-supabase-codegen",
-  "my-supabase-react",
-  "my-graphy",
-  "my-auth",
-  "my-pdf",
-  "my-email",
-  "my-permissions",
-];
+const SKILLS = ["my-auth"];
 
 async function symlink(target, source) {
   try {
