@@ -2,7 +2,7 @@
 # https://supabase.com/docs/guides/local-development/cli/config
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
-project_id = "resolvecom"
+project_id = "saas-template"
 
 [api]
 enabled = true
@@ -156,15 +156,15 @@ otp_expiry = 3600
 # in the email lands on lvh.me (the app origin) instead of the GoTrue verify endpoint at 127.0.0.1.
 # The confirm route calls supabase.auth.verifyOtp({ token_hash, type }) and redirects to `next`.
 [auth.email.template.confirmation]
-subject = "Confirma tu correo en Humane"
+subject = "Confirma tu correo en SaaS Template"
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.magic_link]
-subject = "Tu enlace para iniciar sesión en Humane"
+subject = "Tu enlace para iniciar sesión en SaaS Template"
 content_path = "./supabase/templates/magic_link.html"
 
 [auth.email.template.email_change]
-subject = "Confirma tu nuevo correo en Humane"
+subject = "Confirma tu nuevo correo en SaaS Template"
 content_path = "./supabase/templates/email_change.html"
 
 [auth.sms]
@@ -173,7 +173,7 @@ enable_signup = true
 # If enabled, users need to confirm their phone number before signing in.
 enable_confirmations = true
 # Template for sending OTP to users
-template = "Tu código de Humane es {{ .Code }}"
+template = "Tu código de SaaS Template es {{ .Code }}"
 # Controls the minimum amount of time that must pass before sending another sms otp.
 max_frequency = "5s"
 

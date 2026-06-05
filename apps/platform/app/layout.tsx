@@ -20,18 +20,18 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(`https://${APP_HOST}`),
-  title: { default: "Humane", template: "%s | Humane" },
+  title: { default: "SaaS Template", template: "%s | SaaS Template" },
   description: "HR y Nómina para empresas chilenas",
-  applicationName: "Humane",
+  applicationName: "SaaS Template",
   formatDetection: { telephone: false, email: false, address: false },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Humane",
+    title: "SaaS Template",
   },
   openGraph: {
     type: "website",
-    siteName: "Humane",
+    siteName: "SaaS Template",
   },
 };
 

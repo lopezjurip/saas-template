@@ -52,7 +52,7 @@ const variables: Array<{ key: string; value: string; secret: boolean }> = [
   { key: "DATABASE_URL", value: DATABASE_URL, secret: true },
   // WebAuthn / passkeys — RP ID is the bare apex (no protocol/port), origin is the full HTTPS URL.
   { key: "WEBAUTHN_RELYING_PARTY_ID", value: "lvh.me", secret: false },
-  { key: "WEBAUTHN_RELYING_PARTY_NAME", value: "Humane", secret: false },
+  { key: "WEBAUTHN_RELYING_PARTY_NAME", value: "SaaS Template", secret: false },
   { key: "WEBAUTHN_RELYING_PARTY_ORIGIN", value: `https://lvh.me:${process.env["PORT"] ?? "7003"}`, secret: false },
 ];
 

@@ -87,7 +87,7 @@ export async function proxy(request: NextRequest) {
     } else if (isVercelNonProd) {
       isApex = true;
     } else if (!SUBDOMAIN_MODE) {
-      // Subdomain mode off — the apex is itself mounted on a subdomain (e.g. humane.experiments.com).
+      // Subdomain mode off — the apex is itself mounted on a subdomain (e.g. app.experiments.com).
       // Treat any incoming host as apex; tenant routing is path-only (/{locale}/{slug}/...).
       isApex = true;
     } else {

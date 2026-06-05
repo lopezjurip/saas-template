@@ -4,12 +4,12 @@ import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, type SupportedLocale } from "~/lib
 export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Humane";
+export const alt = "SaaS Template";
 
 const LOCALES: Record<SupportedLocale, { title: string; tagline: string; tag: string }> = {
-  es: { title: "Humane", tagline: "HR y Nómina para empresas chilenas", tag: "Chat-first" },
-  en: { title: "Humane", tagline: "HR & Payroll for Chilean companies", tag: "Chat-first" },
-  pt: { title: "Humane", tagline: "RH e Folha de pagamento para empresas chilenas", tag: "Chat-first" },
+  es: { title: "SaaS Template", tagline: "HR y Nómina para empresas chilenas", tag: "Chat-first" },
+  en: { title: "SaaS Template", tagline: "HR & Payroll for Chilean companies", tag: "Chat-first" },
+  pt: { title: "SaaS Template", tagline: "RH e Folha de pagamento para empresas chilenas", tag: "Chat-first" },
 };
 
 export default async function Image({ params }: { params: Promise<{ locale: string }> }) {
@@ -59,7 +59,7 @@ export default async function Image({ params }: { params: Promise<{ locale: stri
       <div
         style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 22, opacity: 0.6 }}
       >
-        <span>resolvecom.com</span>
+        <span>example.com</span>
         <span style={{ textTransform: "uppercase", letterSpacing: 3 }}>{safeLocale}</span>
       </div>
     </div>,

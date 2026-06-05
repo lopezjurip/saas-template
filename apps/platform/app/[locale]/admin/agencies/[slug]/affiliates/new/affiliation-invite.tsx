@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
 
-const ACCEPT_LINK = "https://app.humane.cl/auth/accept?token=aff_9f2c8a3b41e7d602";
+const ACCEPT_LINK = "https://app.example.com/auth/accept?token=aff_9f2c8a3b41e7d602";
 
 type Stage = "form" | "sent";
 

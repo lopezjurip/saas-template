@@ -49,7 +49,7 @@ export function AgencyCreate() {
   // Shared slug rule from @packages/utils, capped at 40 like the tenant-create flow.
   const autoSlug = SLUGIFY(name).slice(0, 40);
   const effectiveSlug = (touchedSlug ? slug : autoSlug) || t("slug_fallback");
-  const consoleUrl = `app.humane.cl/a/${effectiveSlug}`;
+  const consoleUrl = `app.example.com/a/${effectiveSlug}`;
   // Locale stays a literal sentinel — proxy.ts rewrites /[locale]/… to the active locale.
   const backHref = "/[locale]/admin/agencies";
   const consoleHref = `/[locale]/a/${effectiveSlug}`;
@@ -95,7 +95,7 @@ export function AgencyCreate() {
               <Label htmlFor="ag-slug">{t("slug_label")}</Label>
               <div className="border-input focus-within:border-ring focus-within:ring-ring/40 flex items-stretch overflow-hidden rounded-md border bg-transparent focus-within:ring-[3px]">
                 <span className="text-muted-foreground bg-muted/50 border-border inline-flex items-center whitespace-nowrap border-r pl-3 pr-1.5 font-mono text-[13px]">
-                  app.humane.cl/a/
+                  app.example.com/a/
                 </span>
                 <input
                   id="ag-slug"

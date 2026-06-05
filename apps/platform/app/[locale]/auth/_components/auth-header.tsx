@@ -18,7 +18,7 @@ export function AuthHeader({ small = false }: { small?: boolean }) {
     <div className="flex flex-col items-center gap-3 text-center">
       <Logo className="text-lg" />
       <div>
-        <h1 className={cn("m-0 text-[22px] font-semibold tracking-[-0.02em]")}>Bienvenido a Humane</h1>
+        <h1 className={cn("m-0 text-[22px] font-semibold tracking-[-0.02em]")}>Bienvenido a SaaS Template</h1>
         <p className="mt-1 mb-0 text-[13px] text-muted-foreground">La forma simple de gestionar a tu equipo</p>
       </div>
     </div>

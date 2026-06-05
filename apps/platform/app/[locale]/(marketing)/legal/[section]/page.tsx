@@ -33,7 +33,7 @@ export async function generateMetadata(props: PageProps<"/[locale]/legal/[sectio
       url: `${base}/${safeLocale}/legal/${section}`,
       locale: LOCALE_TO_BCP47[safeLocale],
       title,
-      siteName: "Humane",
+      siteName: "SaaS Template",
     },
   };
 }
