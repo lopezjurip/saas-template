@@ -57,7 +57,7 @@ test.describe("agency screens", () => {
 
     // Created stage: confirmation + the console address built from the slug.
     await expect(page.getByText("Agencia creada")).toBeVisible();
-    await expect(page.getByText("app.humane.cl/a/estudio-andrade-test")).toBeVisible();
+    await expect(page.getByText("app.example.com/a/estudio-andrade-test")).toBeVisible();
     await expect(page.getByRole("link", { name: /Abrir consola/i })).toBeVisible();
   });
 });

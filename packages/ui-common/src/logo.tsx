@@ -12,7 +12,7 @@ export function Logo({ className, ...props }: React.ComponentProps<"span">) {
       >
         H
       </span>
-      Humane
+      SaaS Template
     </span>
   );
 }

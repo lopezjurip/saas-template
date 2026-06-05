@@ -459,7 +459,7 @@ function ConsoleProfileTab({ agency, t }: { agency: Agency; t: Translate }) {
           <Label htmlFor="cn-slug">{t("profile_slug")}</Label>
           <div className="border-input bg-muted/30 flex items-stretch overflow-hidden rounded-md border opacity-90">
             <span className="text-muted-foreground bg-muted/50 border-border inline-flex items-center whitespace-nowrap border-r pl-3 pr-1.5 font-mono text-[13px]">
-              app.humane.cl/a/
+              app.example.com/a/
             </span>
             <input
               id="cn-slug"

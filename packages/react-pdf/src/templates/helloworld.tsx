@@ -99,7 +99,7 @@ function HelloWorldContent() {
   const { t } = useRosetta(LOCALES);
 
   return (
-    <Document title="Hello World — react-pdf showcase" author="Humane">
+    <Document title="Hello World — react-pdf showcase" author="SaaS Template">
       {/* ── Page 1 ── */}
       <Page size="A4" style={tw("bg-white font-helvetica text-gray-900 text-xs")}>
         {/* Hero */}

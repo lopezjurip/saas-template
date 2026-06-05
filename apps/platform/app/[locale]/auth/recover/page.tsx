@@ -40,9 +40,9 @@ export default async function AuthRecoverPage(props: PageProps<"/[locale]/auth/r
             ¿No tienes acceso a tu correo ni teléfono? Escríbenos a{" "}
             <a
               className="underline decoration-border underline-offset-2 hover:decoration-foreground"
-              href="mailto:soporte@humane.cl"
+              href="mailto:soporte@example.com"
             >
-              soporte@humane.cl
+              soporte@example.com
             </a>{" "}
             y verificamos tu identidad.
           </p>

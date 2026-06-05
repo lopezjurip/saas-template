@@ -294,7 +294,7 @@ function SCOPE_LABEL(agency: Agency, t: ReturnType<typeof useRosetta<typeof LOCA
 }
 
 const LOCALE_ES = {
-  eyebrow: "Humane · Administración de plataforma",
+  eyebrow: "SaaS Template · Administración de plataforma",
   title: "Agencias",
   subtitle:
     "Grupos de personas externas con acceso de solo lectura entre organizaciones — auditores, fiscalizadores y el equipo interno de soporte. Cada agencia tiene sus afiliados y los accesos que se le otorgan por organización.",
@@ -314,7 +314,7 @@ const LOCALE_ES = {
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
-  eyebrow: "Humane · Platform administration",
+  eyebrow: "SaaS Template · Platform administration",
   title: "Agencies",
   subtitle:
     "Platform-level groups of external people with read-only access across organizations — auditors, regulators and the internal support team. Each agency has its affiliates and the access it is granted per organization.",
@@ -333,7 +333,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
-  eyebrow: "Humane · Administração da plataforma",
+  eyebrow: "SaaS Template · Administração da plataforma",
   title: "Agências",
   subtitle:
     "Grupos de pessoas externas com acesso somente leitura entre organizações — auditores, fiscais e a equipe interna de suporte. Cada agência tem seus afiliados e os acessos concedidos por organização.",

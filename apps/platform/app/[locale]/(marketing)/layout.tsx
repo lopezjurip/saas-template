@@ -74,7 +74,7 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
 
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto flex w-full max-w-6xl items-center gap-6 px-6 py-3">
-          <Link href={`/${locale}`} aria-label="Humane" className="inline-block transition-opacity hover:opacity-80">
+          <Link href={`/${locale}`} aria-label="SaaS Template" className="inline-block transition-opacity hover:opacity-80">
             <Logo />
           </Link>
           <nav aria-label="Primary" className="hidden items-center gap-1 text-sm md:flex">
@@ -120,7 +120,7 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
       <footer className="border-t border-border bg-muted/30">
         <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-8 px-6 py-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div className="col-span-2 flex max-w-xs flex-col gap-3 lg:col-span-1">
-            <Link href={`/${locale}`} aria-label="Humane" className="inline-block transition-opacity hover:opacity-80">
+            <Link href={`/${locale}`} aria-label="SaaS Template" className="inline-block transition-opacity hover:opacity-80">
               <Logo />
             </Link>
             <p className="text-[13px] leading-relaxed text-muted-foreground text-pretty">{t("footer.tagline")}</p>
@@ -161,7 +161,7 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
 }
 
 const LOCALE_ES = {
-  "announce.message": "Humane 2.0 ya está disponible para nuevos equipos",
+  "announce.message": "SaaS Template 2.0 ya está disponible para nuevos equipos",
   "announce.cta": "Conócelo",
   "nav.product": "Producto",
   "nav.pricing": "Precios",
@@ -190,12 +190,12 @@ const LOCALE_ES = {
   "footer.terms": "Términos",
   "footer.privacy": "Privacidad",
   "footer.cookies": "Cookies",
-  "footer.copyright": "© {{year}} Humane. Todos los derechos reservados.",
+  "footer.copyright": "© {{year}} SaaS Template. Todos los derechos reservados.",
   "footer.compliance": "SOC 2 · GDPR · ISO 27001",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
-  "announce.message": "Humane 2.0 is now available for new teams",
+  "announce.message": "SaaS Template 2.0 is now available for new teams",
   "announce.cta": "Discover it",
   "nav.product": "Product",
   "nav.pricing": "Pricing",
@@ -224,12 +224,12 @@ const LOCALE_EN: typeof LOCALE_ES = {
   "footer.terms": "Terms",
   "footer.privacy": "Privacy",
   "footer.cookies": "Cookies",
-  "footer.copyright": "© {{year}} Humane. All rights reserved.",
+  "footer.copyright": "© {{year}} SaaS Template. All rights reserved.",
   "footer.compliance": "SOC 2 · GDPR · ISO 27001",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
-  "announce.message": "O Humane 2.0 já está disponível para novos times",
+  "announce.message": "O SaaS Template 2.0 já está disponível para novos times",
   "announce.cta": "Conheça",
   "nav.product": "Produto",
   "nav.pricing": "Preços",
@@ -258,7 +258,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   "footer.terms": "Termos",
   "footer.privacy": "Privacidade",
   "footer.cookies": "Cookies",
-  "footer.copyright": "© {{year}} Humane. Todos os direitos reservados.",
+  "footer.copyright": "© {{year}} SaaS Template. Todos os direitos reservados.",
   "footer.compliance": "SOC 2 · GDPR · ISO 27001",
 };
 

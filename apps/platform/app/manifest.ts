@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Humane",
-    short_name: "Humane",
+    name: "SaaS Template",
+    short_name: "SaaS Template",
     description: "HR y Nómina para empresas chilenas",
     start_url: "/",
     display: "standalone",

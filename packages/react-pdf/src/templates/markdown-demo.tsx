@@ -35,7 +35,7 @@ Ordered list:
 
 > This is a blockquote paragraph used for special notices or callouts.
 
-A paragraph with a [link to Humane](https://resolvecom.com) inline.
+A paragraph with a [link to SaaS Template](https://example.com) inline.
 `.trim();
 
 export const markdownDemoDefaultProps = {};

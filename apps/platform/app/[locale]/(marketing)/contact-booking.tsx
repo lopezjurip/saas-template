@@ -74,7 +74,7 @@ export function ContactBooking({ locale, labels, days }: ContactBookingProps) {
           </Link>
         </Button>
         <Button asChild variant="outline" className="cursor-pointer">
-          <a href="mailto:hola@resolvecom.com">
+          <a href="mailto:hola@example.com">
             <Mail aria-hidden="true" className="h-4 w-4" />
             {labels.write}
           </a>

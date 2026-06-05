@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   }
 
   const base = `https://${APP_HOST}`;
-  const body = `# Humane
+  const body = `# SaaS Template
 
 > Chat-first HR and payroll platform for Chilean companies (50–250 employees).
 > Built around Chilean labor law (Código del Trabajo, Previred, LRE) with a

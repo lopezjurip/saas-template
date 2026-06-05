@@ -1,12 +1,17 @@
-# Humane — Chilean HR/Payroll Platform
+# SaaS Template — Multi-tenant SaaS Starter
 
 ## What This Is
 
-A chat-first HR and payroll platform for Chilean companies (50–250 employees). Competing with Buk.cl by shipping better UX, WhatsApp-native workflows, and embedded legal context — while matching Buk's regulatory compliance moat.
+A production-grade starter for building a multi-tenant SaaS. It ships with the hard parts
+already wired together: authentication (email/password, OAuth, phone OTP, WebAuthn passkeys),
+two-level multi-tenancy with Postgres RLS, capability-based permissions, an agency/affiliate
+surface for cross-tenant partner access, i18n, transactional email, PDF generation, and a
+shadcn-based design system — all in a Turborepo monorepo.
 
-**Read before implementing anything payroll-related:** `docs/04-legal-regulatory-compendium.md` — those rules are authoritative. When in doubt, the compendium wins over any other doc.
-
-**User journeys are the source of truth for product behavior:** `docs/08-user-journeys.md` — 5 roles, 38 journeys. Build journey-by-journey, not feature-by-feature.
+Reusable infrastructure (`packages/*`, auth, tenancy, routing, permissions, and the
+**agency/affiliate** surface — a generic B2B pattern for partners/resellers/firms that work
+across multiple customer tenants) is meant to be kept. The **HR/payroll-style tenant surface**
+is just an example product implementation of these patterns — replace it with your own.
 
 ## Package Manager
 
@@ -24,36 +29,37 @@ Always use **pnpm**. Never npm or yarn.
 | API | Server Actions + tRPC (type-safe end-to-end) |
 | Database + Auth | Supabase (Postgres + Auth + Storage + Realtime + RLS) |
 | ORM | Supabase (generated types via CLI, no Drizzle) |
-| WhatsApp agent | Kapso (BSP + conversation state + agent runtime) |
+| GraphQL | `pg_graphql` + a typed client (`@packages/graphy`) |
 | PDF generation | `@react-pdf/renderer` (in `packages/react-pdf`) |
 | Email | Resend + React Email (in `packages/react-email`) |
-| Mass payouts | Shinkansen |
+| i18n | `@packages/rosetta` + `[locale]` route segment |
 | AI | Vercel AI Gateway + Anthropic Claude |
 | MCP server | `@modelcontextprotocol/sdk` (TS), exposed at `[tenant_slug]/mcp/` |
 | Linting/Formatting | Biome.js 2.x |
-| Analytics | PostHog (EU cloud — Ley 21.719 compliance) |
+| Analytics | PostHog (EU cloud) |
 | Hosting | Vercel |
+
+> Optional integrations included as examples: `@packages/kapso` (WhatsApp BSP). Remove the
+> ones you don't need.
 
 ## Architecture
 
-One Next.js app — `apps/platform` — that hosts marketing, auth, dashboard, and tenant surfaces, routed by hostname and URL path. Shared logic lives in `@packages/*`.
+One Next.js app — `apps/platform` — that hosts marketing, auth, dashboard, and tenant surfaces,
+routed by hostname and URL path. Shared logic lives in `@packages/*`.
 
 ```
-humane/
+<repo>/
 ├── apps/
 │   └── platform/             # @apps/platform — single Next.js app
 │       ├── app/
 │       │   ├── page.tsx              # / — marketing landing (public)
 │       │   ├── health/route.ts       # /health — canonical health check (public)
-│       │   ├── auth/                 # /auth/* — sign in/up, callback, logout, onboarding hub + 6 substeps (public)
+│       │   ├── auth/                 # /auth/* — sign in/up, callback, logout, onboarding hub + substeps (public)
 │       │   ├── home/page.tsx         # /home — post-auth org picker (always shown, no auto-redirect)
 │       │   ├── home/account/         # /home/account/[section] — profile, security, sessions, etc.
 │       │   ├── tenants/create/       # /tenants/create — new tenant flow
 │       │   └── [tenant_slug]/        # /[slug]/* — tenant product (proxy rewrites {slug}.<apex>/* here)
-│       │       ├── admin/            # Contadora / HR admin surface (future)
-│       │       ├── manager/          # Manager surface (future)
-│       │       ├── empleado/         # Employee web surface (future)
-│       │       └── mcp/[transport]/  # MCP endpoint (future)
+│       │       └── mcp/[transport]/  # MCP endpoint
 │       ├── proxy.ts          # Routes by host: apex vs {slug}.apex, auth + onboarded + membership gates
 │       ├── styles/globals.css
 │       └── next.config.ts
@@ -61,12 +67,15 @@ humane/
 ├── packages/
 │   ├── typescript-config/    # @packages/typescript-config — base, nextjs, react-library presets
 │   ├── ui-common/            # @packages/ui-common — shadcn primitives (src/shadcn/**) + shared components (src/**)
-│   ├── supabase/             # @packages/supabase — client factories + generated types
+│   ├── supabase/             # @packages/supabase — client factories + generated types + schema/RLS/seed/tests
+│   ├── graphy/               # @packages/graphy — typed pg_graphql client
+│   ├── rosetta/              # @packages/rosetta — i18n runtime
 │   ├── react-email/          # @packages/react-email — Resend email templates
-│   ├── react-pdf/            # @packages/react-pdf — PDF templates (liquidaciones, contratos, etc.)
-│   └── kapso/                # @packages/kapso — lite Kapso client + types
+│   ├── react-pdf/            # @packages/react-pdf — PDF templates
+│   ├── debug/ utils/ react-hooks/   # small shared utilities
+│   └── kapso/                # @packages/kapso — lite WhatsApp BSP client (optional)
 │
-└── docs/                     # Strategy, product spec, legal compendium, user journeys
+└── (your docs)              # Strategy, product spec, etc.
 ```
 
 ### Package Scopes
@@ -80,9 +89,9 @@ Hostname determines whether a request enters tenant context:
 
 - `<apex>/...` and `www.<apex>/...` → main site. URL path picks the page (`/`, `/auth/*`, `/home`, `/tenants/create`, `/[tenant_slug]/...`).
 - `{slug}.<apex>/...` → `apps/platform/proxy.ts` rewrites to `/{slug}{path}` so the same `[tenant_slug]` route renders. `/auth/*` (which now includes `/auth/onboarding/*`) and `/health` on a subdomain redirect back to the apex so auth lives at one origin.
-- Custom apex domains (e.g. `center.burgercool.com`) — phase 2; the proxy currently returns 404. Cookies can't span apexes without an SSO redirect/exchange flow.
+- Custom apex domains — phase 2; the proxy currently returns 404. Cookies can't span apexes without an SSO redirect/exchange flow.
 
-Where `<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.PORT` (assigned per instance). `lvh.me` + `7003` in dev (Conductor reassigns `PORT` for parallel instances), `resolvecom.com` + implicit `443` in prod.
+Where `<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.PORT` (assigned per instance). `lvh.me` + `7003` in dev (Conductor reassigns `PORT` for parallel instances), `example.com` + implicit `443` in prod.
 
 ### Auth + onboarding
 
@@ -131,18 +140,12 @@ After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) 
 
 ## Skills
 
-Agent skills extend Claude Code with reusable capabilities. Installed skills live in `.agents/skills/` (gitignored) and are symlinked into Claude Code automatically.
+Agent skills extend Claude Code with reusable capabilities. Installed skills live in `.agents/skills/` (gitignored) and are symlinked into Claude Code automatically. The bundled `skills/my-*` skills document each subsystem (Supabase, auth, i18n, permissions, email, PDF, GraphQL) — read the relevant one before working in that area.
 
-To install a skill:
+To install a third-party skill:
 
 ```bash
 pnpm dlx skills add <registry-url> --skill <skill-name>
-```
-
-Example — install the `find-skills` skill from the Vercel Labs registry:
-
-```bash
-pnpm dlx skills add https://github.com/vercel-labs/skills --skill find-skills
 ```
 
 Skills run with full agent permissions — review a skill's source before using it in production.
@@ -163,20 +166,9 @@ Conventions:
 - Each app's `globals.css` imports `../../packages/ui-common/src/shadcn/globals.css` for CSS variables and `@source "../../packages/ui-common/src"` for Tailwind scanning.
 - Each app's `next.config.ts` includes `@packages/ui-common` in `transpilePackages`.
 
-## Kapso Integration
-
-`packages/kapso` is a lite client — types and a minimal HTTP client only.
-Actual webhook handlers, tool definitions, and agent logic live under `apps/platform/app/` — either as platform-level routes (`apps/platform/app/api/...`) or tenant-scoped routes under `apps/platform/app/[tenant_slug]/...` depending on the surface.
-
-When building Kapso tools:
-- Each tool = one user intent (e.g., `get_liquidacion`, `request_vacation`, `team_status`)
-- Tools receive structured args from Kapso, return `KapsoToolResponse`
-- Kapso formats the response into WhatsApp messages (text, buttons, PDFs)
-
 ## MCP Server
 
-Lives at `apps/platform/app/[tenant_slug]/mcp/[transport]/route.ts`. Exposed at `{slug}.<apex>/mcp/` (the proxy rewrites the subdomain into the route segment) or `<apex>/{slug}/mcp/` directly.
-Tools to expose: headcount, payroll cost, vacation balances, team status, compliance alerts, employee lookup. Read-only for v1.
+Lives at `apps/platform/app/[tenant_slug]/mcp/[transport]/route.ts`. Exposed at `{slug}.<apex>/mcp/` (the proxy rewrites the subdomain into the route segment) or `<apex>/{slug}/mcp/` directly. Expose read-only, tenant-scoped tools that map to single user intents; each tool receives structured args and returns a typed response.
 
 ## Database Workflow (Prototype Phase)
 
@@ -191,7 +183,7 @@ No incremental migrations yet. All schema lives in a single file: `packages/supa
 
 Two-level model:
 
-- `public.tenants` (int4 serial PK) — the billing / customer relationship. Subdomain `{tenant_slug}.humane.cl` routes to a tenant.
+- `public.tenants` (int4 serial PK) — the billing / customer relationship. Subdomain `{tenant_slug}.example.com` routes to a tenant.
 - `public.organizations` (int4 serial PK, FK to tenants) — the actual operating unit. Most tenants have exactly one organization that mirrors the tenant; large companies have several (e.g. one per country / branch).
 - `public.memberships(organization_id, profile_id)` — users belong to organizations, not directly to tenants. No `role` column — access is permission-based (see below). The set of tenants a user can access is derived from the tenants of their organizations.
 
@@ -202,9 +194,9 @@ Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to fi
 **Custom domain mapping (`public.tenant_domains`, 1:1 with tenants)** is staged in the schema but not yet wired into the proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates these advanced features once billing exists.
 
 **Permissions (capability-based, not role-based):**
-- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs (`organization_manage`, `members_manage`, `payroll_run`, `vacations_approve`, etc.). The reserved slug `*` is the wildcard — anyone holding `(org, profile, '*')` passes every permission check inside that org. Used for the tenant creator and other "full admin" grants without needing to enumerate every slug.
+- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs (`organization_manage`, `members_manage`, etc.). The reserved slug `*` is the wildcard — anyone holding `(org, profile, '*')` passes every permission check inside that org. Used for the tenant creator and other "full admin" grants without needing to enumerate every slug.
 - `public.membership_permissions(organization_id, profile_id, permission_id)` — explicit grants. Composite FK back to `memberships` so deleting a membership cascades. PK `(org, profile, permission)` + secondary index `(profile, permission)` cover both "does X have perm Y in org Z" and the cross-org "what orgs grant perm Y to X" lookups.
-- `public.permission_presets(id, organization_id?, name, slugs[])` — UX-only catalog of named bundles for the admin UI; carries no enforcement. `organization_id IS NULL` = global preset (seeded: Dueño / Contadora / Manager / Empleado); non-null = tenant-specific custom bundle. A trigger validates every slug in `permission_preset_slugs` exists in the catalog.
+- `public.permission_presets(id, organization_id?, name, slugs[])` — UX-only catalog of named bundles for the admin UI; carries no enforcement. `organization_id IS NULL` = global preset; non-null = tenant-specific custom bundle. A trigger validates every slug in `permission_preset_slugs` exists in the catalog.
 
 Permissions are deliberately NOT in the JWT (size, and they change at runtime). All enforcement reads `public.membership_permissions` at query time via the security-definer helpers below.
 
@@ -233,53 +225,6 @@ Permission-backed (DB lookup, security definer; wildcard `*` is honored):
 
 Concierge is global and lives in `protected.concierges` (service-role only).
 
-## User Roles
-
-5 product personas, each with a distinct surface. These are UX/product labels, **not** DB-enforced enum values — access is gated by individual permission slugs in `membership_permissions`. The seeded global `permission_presets` (Dueño / Contadora / Manager / Empleado) map these personas to bundles for the admin UI.
-
-| Role | Count/company | Primary UI | Key journeys |
-|---|---|---|---|
-| **Empleado** | 50–250 | WhatsApp | Liquidaciones, vacaciones, certificados, firma, asistencia |
-| **Manager** | 5–30 | WhatsApp + Web | Aprobar vacaciones (with legal context), team status, evaluaciones, turnos |
-| **Contadora/HR** | 1–3 | Web | Payroll cycle, Previred, LRE, banco nómina, finiquitos, compliance dashboard |
-| **Dueño/CEO** | 1 | Web + WhatsApp digest | Costo nómina, aprobar pagos, métricas rotación |
-| **Concierge** | internal | `apps/platform` internal routes | Migrations, legal edge cases, regulatory updates |
-
-The **Manager** surface is NOT a smaller admin console — it's opinionated, mobile-first, designed for someone who never wanted to be in an HR system. Embedded legal coaching (Art. 66, 66 bis, 159, 160, 161) inline in every decision.
-
-## Chilean Labor Law — Critical Rules for Code
-
-**Never hardcode these values.** Read from `topes_imponibles_history` table (seeded monthly):
-- UF (daily), UTM (monthly), IMM (annual negotiation), tope imponible (89.1 UF), AFP rates per fund
-
-**Key articles you'll encounter in code:**
-- Art. 44: Sueldo mínimo
-- Art. 45: Semana corrida
-- Art. 50: Gratificación legal
-- Art. 66: Permisos matrimonio (5 días, mandatory)
-- Art. 66 bis: Duelo (3–7 días by parentesco, mandatory)
-- Art. 67–68: Vacaciones (15 días hábiles/año + progresivas after 10 years)
-- Art. 159–161: Causales de término (different indemnización rules per causal)
-- Art. 163: Indemnización por años de servicio (1 month per year, cap 11)
-- Art. 195–199: Fuero maternal
-- Ley Bustos: If finiquito payment is late, sueldo keeps running
-
-When implementing any termination/finiquito flow: always check fuero (maternal, sindical, edad). If fuero exists, block the action and explain why.
-
-**Cross-reference `docs/04-legal-regulatory-compendium.md` for the full regulatory reference.**
-
-## Payroll Calculation Flow
-
-```
-Novedades (attendance, overtime, licencias, vacaciones)
-  → Cálculo bruto (base + gratificación + bonos + semana corrida)
-  → Descuentos legales (AFP + Salud + Seguro Cesantía)
-  → Descuentos voluntarios (APV, préstamos)
-  → Impuesto Único (tramos, apply after descuentos previsionales)
-  → Líquido
-  → Generate: Liquidación PDF, Previred CSV, LRE CSV, Banco Nómina (Shinkansen)
-```
-
 ## Critical Rules
 
 ### No barrel index files
@@ -300,7 +245,7 @@ Inside `declare` blocks in plpgsql functions/triggers, prefix local variables wi
 
 ### Imports
 - Use `~/` alias for imports within `apps/platform/` (e.g., `~/lib/...`, `~/hooks/...`).
-- Workspace packages: `@packages/ui-common`, `@packages/supabase`, `@packages/kapso`, `@packages/react-email`, `@packages/react-pdf`.
+- Workspace packages: `@packages/ui-common`, `@packages/supabase`, `@packages/react-email`, `@packages/react-pdf`, etc.
 - App code lives in `apps/platform/`; reusable logic belongs in `@packages/*`.
 
 ### Typed route helpers (Next.js 16) — REQUIRED
@@ -366,11 +311,11 @@ const inviteHref = `/[locale]/admin/agencies/${agency["slug"]}/affiliates/new`;
 ### Code Style
 - Biome.js handles formatting/linting — don't fight it
 - Follow existing patterns in the codebase
-- Chilean Spanish for user-facing strings, English for code/comments
+- English for code/comments; keep user-facing strings in your product's locale files (i18n)
 - **Pure functions → `UPPER_CASE`**. A pure function is deterministic on its inputs and has no observable side effects (no I/O, no DB/network/filesystem calls, no `redirect()`, no mutations of arguments, no `Date.now()`/`Math.random()`). Side-effectful or async-with-I/O functions stay `camelCase`. Constants stay `UPPER_CASE` as before. The visual cue is the same idea as bracket notation: at a glance, a caller can tell whether the function is safe to call repeatedly with no observable effect (`SLUGIFY(name)`, `RESOLVE_STEP(state, step)`) vs. one that touches the world (`loadOnboardingState()`, `createTenant(...)`). React components stay PascalCase regardless.
 - **Server Actions → `action*` prefix**. Every exported function from a `"use server"` file gets the `action` prefix (e.g. `actionSetPassword`, `actionUpdateEmail`, `actionDeletePasskey`). Same visual-cue motivation as bracket notation and `UPPER_CASE`: a caller seeing `actionSetPassword(...)` immediately knows it crosses the network into a server roundtrip, without having to chase imports or re-read `"use server"` directives. The prefix replaces verbs like `set`/`update`/`save`/`do` — write `actionSetPassword`, not `actionDoSetPassword`. Applies to both `next-safe-action` actions and `formAction()` adapters (e.g. `actionSignOutForm`).
 - **Named functions, never arrow functions**. Use `function myFn() {}` or `export function myFn() {}`, never `const myFn = () => {}`. Named functions are hoisted (can call before declaration), show up clearly in stack traces, and are clearer to read. The only exception: short inline callbacks in `.map()` / `.filter()` where clarity is obvious from context.
-- **Tailwind: prefer native scale sizes over arbitrary px.** For width/height/size/gap/padding use the scale (`size-5`, `h-9`, `gap-2`) — including v4 fractional steps like `size-4.5` (18px) — instead of arbitrary `h-[18px]` / `w-[18px]`. Arbitrary bracket values are reserved for things the scale genuinely can't express. (Exact-px `text-[13.5px]` / `text-[10.5px]` for typography from a design spec is the accepted exception; the rule targets box sizing.)
+- **Tailwind: prefer native scale sizes over arbitrary px.** For width/height/size/gap/padding use the scale (`size-5`, `h-9`, `gap-2`) — including v4 fractional steps like `size-4.5` (18px) — instead of arbitrary `h-[18px]` / `w-[18px]`. Arbitrary bracket values are reserved for things the scale genuinely can't express. (Exact-px typography from a design spec is the accepted exception; the rule targets box sizing.)
 - **Map a discriminant to values with a keyed lookup, not `let` + `if/else`.** When several values vary together by one key (a tab, a status, a kind), return them from a `Record`-typed helper indexed by the key — `const head = CONSOLE_HEAD(t)[tab]` — rather than declaring mutable `let`s and reassigning them in an `if/else if` chain.
 
 ### Hooks & Abstractions
@@ -406,10 +351,6 @@ async function onSubmit(email: string) {
 - It reduces boilerplate significantly (e.g., OTP send/verify pair with error/pending state)
 - It's a "headless" hook that owns behavior but returns primitives for the caller to render
 
-Examples:
-- `useOnboardingEmailOtp()` — reused across email form in login + onboarding. ✅
-- `useClipboardCopy()` — just wraps `navigator.clipboard`. Use `react-use` or similar instead. ❌
-
 If a package already does it (react-use, usehooks-ts, etc.), prefer the package. Don't invent.
 
 ### Components used only once stay in the same file
@@ -432,8 +373,8 @@ pnpm build:dry            # Turbo type-check / build without emitting output
 
 ### Commit Messages
 Conventional Commits with scope: `type(scope): description`
-- `feat(payroll): add semana corrida calculation`
-- `fix(kapso): handle expired WhatsApp session`
+- `feat(auth): add passkey registration`
+- `fix(proxy): handle subdomain redirect on auth routes`
 - `chore(supabase): regenerate types after schema migration`
 
 ### Generated Files
@@ -453,19 +394,12 @@ Three layers, each owned by a different runner:
 `pnpm test:db` and `pnpm test:e2e` both run against the same local Supabase as `pnpm dev`. The pgTAP tests wrap themselves in `begin … rollback` so they leave no trace; Playwright provisions/cleans up its own users via `auth.admin`. Playwright assumes a dev server is already running (`pnpm dev`).
 
 Guidelines:
-- Payroll calculations: unit tests with known inputs/outputs from `04-legal-regulatory-compendium.md`.
-- Run parallel calculations against Buk output during migration (internal ops validates).
-- Every new regulatory rule gets a test case before the implementation.
 - RLS policies: add a pgTAP file under `packages/supabase/supabase/tests/`; mock the caller with `set local role authenticated; set local request.jwt.claims to '…';`. Without `set local role`, RLS is bypassed silently.
-- User journeys (`docs/08-user-journeys.md`): add a Playwright spec under `tests/e2e/journeys/{role}/...`. Pre-create users with `CREATE_CONFIRMED_USER` from the supabase fixture; clean up in `afterAll`. Don't fight onboarding — it's not a hard gate (see `proxy.ts:161-164`); skip it via `page.goto` unless you're testing onboarding itself.
+- UI journeys: add a Playwright spec under `tests/e2e/journeys/...`. Pre-create users with `CREATE_CONFIRMED_USER` from the supabase fixture; clean up in `afterAll`. Don't fight onboarding — it's not a hard gate (see `proxy.ts`); skip it via `page.goto` unless you're testing onboarding itself.
 
 ## What NOT to Do
 
 - Don't add new technology without strong justification — the stack is intentionally familiar
-- Don't build HR-org navigation for managers — their surface is opinionated, not a mini-admin
-- Don't skip legal context in approval flows — inline Art. references are a core differentiator
-- Don't hardcode regulatory values — they change monthly/yearly
-- Don't process payroll without checking `04-legal-regulatory-compendium.md` first
-- Don't use a tenant slug from a reserved-route list (auth, home, tenants, health, …) — the schema check in `apps/platform/app/[locale]/tenants/create/schemas.ts` + `internal.reserved_slugs` is the source of truth
+- Don't use a tenant slug from the reserved-route list (auth, home, tenants, health, …) — the schema check in `apps/platform/app/[locale]/tenants/create/schemas.ts` + `internal.reserved_slugs` is the source of truth
 - Don't read `app_metadata.tenants` / `onboarded` from `auth.getUser()` — those claims live in the JWT only. Use `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server` (or decode `session.access_token` directly in middleware)
 - Don't put shadcn components in `apps/platform/` — they belong in `packages/ui-common/src/shadcn`

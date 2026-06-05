@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       url: `${base}/${safeLocale}/faq`,
       locale: LOCALE_TO_BCP47[safeLocale],
       title: t("heading"),
-      siteName: "Humane",
+      siteName: "SaaS Template",
     },
   };
 }

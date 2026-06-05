@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       locale: LOCALE_TO_BCP47[safeLocale],
       title: t("title"),
       description: t("description"),
-      siteName: "Humane",
+      siteName: "SaaS Template",
     },
     twitter: {
       card: "summary_large_image",
@@ -137,7 +137,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
                       <span className="truncate text-xs font-medium">{t("mock.agent")}</span>
                     </span>
                     <span className="hidden font-mono text-[10.5px] text-muted-foreground sm:inline">
-                      humane/payroll
+                      saas-template/app
                     </span>
                   </div>
                   <div className="flex flex-col gap-1 rounded-md border border-border bg-muted/40 px-3 py-2.5">
@@ -335,7 +335,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
 }
 
 const LOCALE_ES = {
-  title: "Humane",
+  title: "SaaS Template",
   description: "RR. HH. y nómina para empresas chilenas",
   "cta.signin": "Ingresar",
   "cta.dashboard": "Ir al panel",
@@ -359,7 +359,7 @@ const LOCALE_ES = {
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore.",
   "mock.send": "Enviar",
   "mock.edit": "Editar",
-  "social.title": "Equipos en crecimiento confían en Humane",
+  "social.title": "Equipos en crecimiento confían en SaaS Template",
   "stats.caption": "Actualizado hace 2 min",
   "stats.title": "Lorem ipsum dolor sit amet",
   "stats.subtitle": "Lorem ipsum dolor sit amet consectetur.",
@@ -425,7 +425,7 @@ const LOCALE_ES = {
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
-  title: "Humane",
+  title: "SaaS Template",
   description: "HR & Payroll for Chilean companies",
   "cta.signin": "Sign in",
   "cta.dashboard": "Go to dashboard",
@@ -449,7 +449,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore.",
   "mock.send": "Send",
   "mock.edit": "Edit",
-  "social.title": "Growing teams trust Humane",
+  "social.title": "Growing teams trust SaaS Template",
   "stats.caption": "Updated 2 min ago",
   "stats.title": "Lorem ipsum dolor sit amet",
   "stats.subtitle": "Lorem ipsum dolor sit amet consectetur.",
@@ -515,7 +515,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
-  title: "Humane",
+  title: "SaaS Template",
   description: "RH e folha de pagamento para empresas chilenas",
   "cta.signin": "Entrar",
   "cta.dashboard": "Ir para o painel",
@@ -539,7 +539,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore.",
   "mock.send": "Enviar",
   "mock.edit": "Editar",
-  "social.title": "Times em crescimento confiam na Humane",
+  "social.title": "Times em crescimento confiam na SaaS Template",
   "stats.caption": "Atualizado há 2 min",
   "stats.title": "Lorem ipsum dolor sit amet",
   "stats.subtitle": "Lorem ipsum dolor sit amet consectetur.",

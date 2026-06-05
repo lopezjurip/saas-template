@@ -1,6 +1,12 @@
-# Humane — Chilean HR/Payroll Platform
+# SaaS Template
 
-Chat-first HR and payroll platform for Chilean companies (50–250 employees).
+A production-grade starter for building a multi-tenant SaaS: Next.js 16 + React 19 +
+Supabase + Turborepo, with authentication (email/password, OAuth, phone OTP, WebAuthn
+passkeys), two-level multi-tenancy with Postgres RLS, capability-based permissions, i18n,
+transactional email, and a shadcn design system already wired together.
+
+The repo ships with example product surfaces as reference implementations — replace them with
+your own product; the infrastructure under `packages/*` is the part meant to be reused.
 
 ## Getting started
 
@@ -53,6 +59,5 @@ pnpm generate:types       # regenerate Supabase TS types
 
 ## Docs
 
-- `CLAUDE.md` — full architecture, stack, coding rules, and Chilean labor law reference
-- `docs/04-legal-regulatory-compendium.md` — authoritative payroll/labor law rules
-- `docs/08-user-journeys.md` — 5 roles, 38 journeys (source of truth for product behavior)
+- `CLAUDE.md` — full architecture, stack, and coding rules
+- `skills/my-*` — per-subsystem guides (Supabase, auth, i18n, permissions, email, PDF, GraphQL)

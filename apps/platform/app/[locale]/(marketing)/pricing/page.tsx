@@ -23,7 +23,7 @@ export async function generateMetadata(props: PageProps<"/[locale]/pricing">): P
       url: `${base}/${safeLocale}/pricing`,
       locale: LOCALE_TO_BCP47[safeLocale],
       title: t("title"),
-      siteName: "Humane",
+      siteName: "SaaS Template",
     },
   };
 }

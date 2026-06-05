@@ -1,4 +1,4 @@
--- Humane schema (prototype phase)
+-- SaaS Template schema (prototype phase)
 -- Edit this file directly, then run: pnpm db:reset && pnpm generate:types
 
 -- Extensions
@@ -361,7 +361,7 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 --
 -- Users belong to *organizations* via `public.memberships`. The set of tenants a user can
 -- access is derived from the tenants of the organizations they're a member of.
--- The subdomain `{tenant_slug}.humane.cl` routes to the tenant; org switching happens in-app.
+-- The subdomain `{tenant_slug}.example.com` routes to the tenant; org switching happens in-app.
 --
 -- Access control is permission-based (not role-based). Capabilities are atomic slugs in
 -- `public.permissions` (e.g. `organization_manage`, `payroll_run`). A grant lives in
@@ -847,7 +847,7 @@ insert into public.permission_presets (organization_id, permission_preset_name, 
 on conflict do nothing;
 
 -- ============================================================
--- agencies (cross-tenant groups of profiles, e.g. "Equipo Humane", "BDO Auditores")
+-- agencies (cross-tenant groups of profiles, e.g. "Equipo SaaS Template", "BDO Auditores")
 -- ============================================================
 -- Agencies are platform-level entities — they don't belong to any tenant.
 -- Profiles can belong to both organizations (as org members) and agencies (as affiliates).

@@ -167,7 +167,7 @@ export const AGENCIES: Agency[] = /*#__PURE__*/ [
   },
   {
     id: "ag_humane",
-    name: "Soporte Humane",
+    name: "Soporte SaaS Template",
     slug: "soporte-humane",
     kind: "internal",
     blurb:
