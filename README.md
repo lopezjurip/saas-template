@@ -60,4 +60,4 @@ pnpm generate:types       # regenerate Supabase TS types
 ## Docs
 
 - `CLAUDE.md` — full architecture, stack, and coding rules
-- `skills/my-auth` — auth subsystem guide
+- `skills/my-*` — per-subsystem guides (Supabase, auth, i18n, permissions, email, PDF, GraphQL)

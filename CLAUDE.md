@@ -140,7 +140,7 @@ After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) 
 
 ## Skills
 
-Agent skills extend Claude Code with reusable capabilities. Installed skills live in `.agents/skills/` (gitignored) and are symlinked into Claude Code automatically. The bundled `skills/my-auth` skill documents the auth subsystem — read it before working in that area.
+Agent skills extend Claude Code with reusable capabilities. Installed skills live in `.agents/skills/` (gitignored) and are symlinked into Claude Code automatically. The bundled `skills/my-*` skills document each subsystem (Supabase, auth, i18n, permissions, email, PDF, GraphQL) — read the relevant one before working in that area.
 
 To install a third-party skill:
 
