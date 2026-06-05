@@ -73,7 +73,7 @@ function COMPUTE_DEVICE_INFO(): DeviceInfo {
   const isWindows = os === DeviceOS.Windows;
   const isLinux = os === DeviceOS.Linux;
   const isMobile = os === DeviceOS.iOS || os === DeviceOS.Android;
-  const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+  const isTouch = (typeof window !== "undefined" && "ontouchstart" in window) || navigator.maxTouchPoints > 0;
 
   return {
     os,

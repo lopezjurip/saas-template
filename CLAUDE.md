@@ -351,6 +351,18 @@ const session = await graphy.query({ query: DashboardPageQuery });
 
 This is a deliberate visual cue: brackets mark "this shape is contractual with another system" so a reader can distinguish it from class properties/methods owned by the program. TypeScript narrowing still works through brackets, so there's no type-safety cost. Don't introduce intermediate `.map()`/`.filter()` arrays just to extract a key — iterate the original collection and bracket from there.
 
+**Mock/fixture data counts as external.** Objects from `~/lib/*-mock.ts` (and any fixture standing in for DB rows / API responses) are contractual with a future backend — read them with brackets too (`agency["name"]`, `aff["email"]`, `org["slug"]`), even though they're typed in-program consts today. When the mock becomes a real query, the access sites already match. (Destructuring the top-level object is still fine — `const { org } = item` — then bracket the leaf reads: `org["name"]`.)
+
+### Locale-prefixed links — use the `/[locale]/…` sentinel
+Client-side hrefs that need the active locale must use the **literal** `/[locale]/…` sentinel. `proxy.ts` rewrites `/[locale]/…` to the real locale on the way through (the same mechanism the server-side `redirect("/[locale]/auth")` calls rely on). Do **not** thread `locale` / `localePrefix` / a pre-built `base` string from a server `page.tsx` into a client component just to build links — build the href inside the component with the sentinel:
+
+```tsx
+// ✅ client component — no locale prop threaded in
+const inviteHref = `/[locale]/admin/agencies/${agency["slug"]}/affiliates/new`;
+<Link href={inviteHref}>…</Link>
+<Link href="/[locale]/agencies/create">…</Link>
+```
+
 ### Code Style
 - Biome.js handles formatting/linting — don't fight it
 - Follow existing patterns in the codebase
@@ -358,6 +370,8 @@ This is a deliberate visual cue: brackets mark "this shape is contractual with a
 - **Pure functions → `UPPER_CASE`**. A pure function is deterministic on its inputs and has no observable side effects (no I/O, no DB/network/filesystem calls, no `redirect()`, no mutations of arguments, no `Date.now()`/`Math.random()`). Side-effectful or async-with-I/O functions stay `camelCase`. Constants stay `UPPER_CASE` as before. The visual cue is the same idea as bracket notation: at a glance, a caller can tell whether the function is safe to call repeatedly with no observable effect (`SLUGIFY(name)`, `RESOLVE_STEP(state, step)`) vs. one that touches the world (`loadOnboardingState()`, `createTenant(...)`). React components stay PascalCase regardless.
 - **Server Actions → `action*` prefix**. Every exported function from a `"use server"` file gets the `action` prefix (e.g. `actionSetPassword`, `actionUpdateEmail`, `actionDeletePasskey`). Same visual-cue motivation as bracket notation and `UPPER_CASE`: a caller seeing `actionSetPassword(...)` immediately knows it crosses the network into a server roundtrip, without having to chase imports or re-read `"use server"` directives. The prefix replaces verbs like `set`/`update`/`save`/`do` — write `actionSetPassword`, not `actionDoSetPassword`. Applies to both `next-safe-action` actions and `formAction()` adapters (e.g. `actionSignOutForm`).
 - **Named functions, never arrow functions**. Use `function myFn() {}` or `export function myFn() {}`, never `const myFn = () => {}`. Named functions are hoisted (can call before declaration), show up clearly in stack traces, and are clearer to read. The only exception: short inline callbacks in `.map()` / `.filter()` where clarity is obvious from context.
+- **Tailwind: prefer native scale sizes over arbitrary px.** For width/height/size/gap/padding use the scale (`size-5`, `h-9`, `gap-2`) — including v4 fractional steps like `size-4.5` (18px) — instead of arbitrary `h-[18px]` / `w-[18px]`. Arbitrary bracket values are reserved for things the scale genuinely can't express. (Exact-px `text-[13.5px]` / `text-[10.5px]` for typography from a design spec is the accepted exception; the rule targets box sizing.)
+- **Map a discriminant to values with a keyed lookup, not `let` + `if/else`.** When several values vary together by one key (a tab, a status, a kind), return them from a `Record`-typed helper indexed by the key — `const head = CONSOLE_HEAD(t)[tab]` — rather than declaring mutable `let`s and reassigning them in an `if/else if` chain.
 
 ### Hooks & Abstractions
 

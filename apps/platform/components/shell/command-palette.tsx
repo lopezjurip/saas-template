@@ -149,7 +149,7 @@ export function CommandPalette({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="bg-foreground/30 absolute inset-0 backdrop-blur-[2px]" />
+      <div className="bg-foreground/30 absolute inset-0 backdrop-blur-[2px]" onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"

@@ -10,8 +10,10 @@
 -- ------------------------------------------------------------
 
 insert into public.reserved_slugs (reserved_slug) values
+  ('a'),
   ('admin'),
   ('affiliate'),
+  ('agencies'),
   ('api'),
   ('app'),
   ('assets'),

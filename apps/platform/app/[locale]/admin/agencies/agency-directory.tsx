@@ -53,8 +53,10 @@ export function AgencyDirectory({ base }: { base: string }) {
             {t("subtitle")}
           </p>
         </div>
-        <Button size="sm" className="h-9">
-          <Plus size={15} strokeWidth={2} /> {t("new_agency")}
+        <Button asChild size="sm" className="h-9">
+          <Link href="/[locale]/agencies/create">
+            <Plus size={15} strokeWidth={2} /> {t("new_agency")}
+          </Link>
         </Button>
       </header>
 

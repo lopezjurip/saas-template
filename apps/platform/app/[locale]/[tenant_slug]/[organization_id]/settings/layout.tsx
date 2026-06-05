@@ -1,4 +1,3 @@
-import { CreditCard, ExternalLink, Settings, Users } from "lucide-react";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { SubSidebar, type SubSidebarItem } from "~/components/sub-sidebar";
@@ -27,25 +26,25 @@ export default async function SettingsLayout({
           kind: "leaf",
           label: t("nav_general"),
           href: `${base}/general`,
-          icon: Settings,
+          icon: "Settings",
         },
         {
           kind: "leaf",
           label: t("nav_members"),
           href: `${base}/members`,
-          icon: Users,
+          icon: "Users",
         },
         {
           kind: "leaf",
           label: t("nav_billing"),
           href: `${base}/billing`,
-          icon: CreditCard,
+          icon: "CreditCard",
         },
         {
           kind: "leaf",
           label: t("nav_external_access"),
           href: `${base}/external-access`,
-          icon: ExternalLink,
+          icon: "ExternalLink",
         },
       ],
     },
@@ -54,7 +53,10 @@ export default async function SettingsLayout({
   return (
     <div className="flex h-full">
       <SubSidebar title={t("title")} items={items} />
-      <main className="bg-muted flex-1 overflow-y-auto">{children}</main>
+      {/* Light: muted canvas makes the bg-background cards read as elevated. Dark inverts
+          that lightness (muted > background), so fall back to the base bg — cards delineate
+          by border, matching the rest of the shell. */}
+      <main className="bg-muted dark:bg-background flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }

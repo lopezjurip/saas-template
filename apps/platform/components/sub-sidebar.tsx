@@ -1,24 +1,32 @@
 "use client";
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import type { LucideIcon } from "lucide-react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, CreditCard, ExternalLink, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+
+const ICON_MAP = {
+  Settings,
+  Users,
+  CreditCard,
+  ExternalLink,
+} as const;
+
+type IconKey = keyof typeof ICON_MAP;
 
 export type SubSidebarLeaf = {
   kind: "leaf";
   label: string;
   href: string;
-  icon?: LucideIcon;
+  icon?: IconKey;
 };
 
 export type SubSidebarNode = {
   kind: "node";
   label: string;
   defaultOpen?: boolean;
-  icon?: LucideIcon;
+  icon?: IconKey;
   children: SubSidebarItem[];
 };
 
@@ -37,7 +45,7 @@ function nodeContainsActive(pathname: string, node: SubSidebarNode): boolean {
 function TreeLeaf({ leaf }: { leaf: SubSidebarLeaf }) {
   const pathname = usePathname();
   const active = isActive(pathname, leaf.href);
-  const Icon = leaf.icon;
+  const Icon = leaf.icon ? ICON_MAP[leaf.icon] : null;
 
   return (
     <Link
@@ -57,7 +65,7 @@ function TreeNode({ node }: { node: SubSidebarNode }) {
   const pathname = usePathname();
   const containsActive = nodeContainsActive(pathname, node);
   const [isOpen, setIsOpen] = useState(node.defaultOpen ?? containsActive);
-  const Icon = node.icon;
+  const Icon = node.icon ? ICON_MAP[node.icon] : null;
 
   return (
     <details open={isOpen} onToggle={(e) => setIsOpen((e.currentTarget as HTMLDetailsElement).open)}>
