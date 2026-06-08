@@ -22,6 +22,7 @@ const SKILLS = [
   "my-pdf",
   "my-email",
   "my-permissions",
+  "my-proxy",
 ];
 
 async function symlink(target, source) {
