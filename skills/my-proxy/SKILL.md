@@ -19,8 +19,7 @@ Preserve gate order:
 6. Refresh Supabase session.
 7. Public path handling.
 8. Auth gate with same request URL in `next`.
-9. Decode JWT tenant claims.
-10. Tenant path gate for `/{locale}/t/{slug}/...` — resolve tenant, check membership.
+9. Tenant path gate for `/{locale}/t/{slug}/...` — resolve tenant, check access via session-scoped DB read.
 
 Reordering can break cookie/session visibility.
 
@@ -82,8 +81,10 @@ authUrl.searchParams.set("next", next);
 Tenant routes live at `/{locale}/t/{slug}/...`. The proxy is the access-control boundary:
 
 - Resolve active tenant from slug via service-role DB query (catches disabled tenants).
-- Decode `session.access_token`; `auth.getUser()` lacks hook-injected claims.
-- Require tenant ID in `app_metadata.tenants` JWT claim.
+- Verify access with a session-scoped DB read: query `tenants` through the user's session client.
+  RLS returns the row only if the caller is a member or has agency access (`viewer_tenant_ids` /
+  `viewer_agency_tenant_ids` resolve it server-side). The JWT carries only `profile_id` (`sub`);
+  tenant membership is never in the JWT.
 - Return 404 for unknown/disabled tenant, 403 for non-member.
 - No rewrite needed — path already maps to `app/[locale]/t/[tenant_slug]/...`.
 

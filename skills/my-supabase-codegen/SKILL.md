@@ -60,9 +60,9 @@ unless project leaves prototype phase.
 import type { Database } from "@packages/supabase/types";
 
 type Membership =
-  Database["public"]["Tables"]["memberships"]["Row"];
+  Database["public"]["Tables"]["organization_memberships"]["Row"];
 type MembershipInsert =
-  Database["public"]["Tables"]["memberships"]["Insert"];
+  Database["public"]["Tables"]["organization_memberships"]["Insert"];
 type ViewerHasPermissionArgs =
   Database["public"]["Functions"]["viewer_has_permission"]["Args"];
 ```

@@ -91,9 +91,9 @@ Where `<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.POR
 
 ### Auth + onboarding
 
-- `proxy.ts` calls `updateSession` (`@packages/supabase/client.middleware`) to refresh the JWT cookie, then **decodes the JWT directly** to read hook-injected claims. `auth.getUser()` returns the persisted user record without hook claims — always decode `session.access_token` (or use `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server` which does this internally).
-- Gates, in order: public path bypass → auth (redirect to `/auth?next=…`, `next` derived from the `Host` header since `request.url` drops the subdomain in Next dev) → for tenant subdomains, membership check against JWT `app_metadata.tenants`. Onboarding completion is **not** a hard gate — it's surfaced via the /home banner.
-- Reserved slugs (`auth`, `home`, `tenants`, `health`, `api`, `_next`, `www`, …) are rejected at tenant creation (`apps/platform/app/[locale]/tenants/create/schemas.ts`, enforced by `internal.reserved_slug_validate()` in the DB) so they never collide with first-party routes.
+- `proxy.ts` calls `updateSession` (`@packages/supabase/client.middleware`) to refresh the JWT cookie, then reads the `sub` claim (the `profile_id`) — the only claim the hook carries. The JWT no longer holds tenant/organization/agency/onboarding metadata; resolve those from the DB via the `viewer_*` helpers (or `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server`).
+- Gates, in order: public path bypass → auth (redirect to `/auth?next=…`, `next` derived from the `Host` header since `request.url` drops the subdomain in Next dev) → for tenant subdomains, membership check resolved from the DB (`viewer_tenant_validate`). Onboarding completion is **not** a hard gate — it's surfaced via the /home banner.
+- Reserved slugs (`auth`, `home`, `tenants`, `health`, `api`, `_next`, `www`, …) are rejected at tenant creation (`apps/platform/app/[locale]/tenants/create/schemas.ts`, enforced by `internal.slug_reserved_validate()` in the DB) so they never collide with first-party routes.
 - **Public paths in proxy:** when adding new marketing pages (e.g., `/faq`, `/pricing`), update `PUBLIC_PATH_REGEX` in `apps/platform/proxy.ts` to avoid auth gate. Regex matches root + any route under `/auth`, `/legal`, plus exact matches.
 
 ### Reserved Slugs
@@ -185,44 +185,39 @@ Two-level model:
 
 - `public.tenants` (int4 serial PK) — the billing / customer relationship. Subdomain `{tenant_slug}.example.com` routes to a tenant.
 - `public.organizations` (int4 serial PK, FK to tenants) — the actual operating unit. Most tenants have exactly one organization that mirrors the tenant; large companies have several (e.g. one per country / branch).
-- `public.memberships(membership_id, organization_id, profile_id, lifecycle timestamps, invite fields)` — users belong to organizations, not directly to tenants. No `role` column — access is permission-based. Pending invitations and active memberships share this table.
+- `public.organization_memberships(organization_membership_id, organization_id, profile_id, lifecycle timestamps, invite fields)` — users belong to organizations, not directly to tenants. No `role` column — access is permission-based. Pending invitations and active memberships share this table.
 
 Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to filter, cheap in indexes) and, when data is org-scoped, also `organization_id int`. Supabase RLS enforces isolation at the DB layer — never rely on application-level filtering alone.
 
-**Active tenant comes from the subdomain or locale-prefixed path segment.** `apps/platform/proxy.ts` resolves `{tenant_slug}.<apex>` via the service-role client, validates membership against the JWT, and **rewrites** the URL to `/{locale}/{tenant_slug}/...` — every tenant route lives under `app/[locale]/[tenant_slug]/...`. Path access (`<apex>/{locale}/{tenant_slug}/...`) works without a host rewrite. Pages use viewer-scoped GraphQL helpers or derive `tenant_id` from validated JWT metadata; no `x-tenant-*` headers. Direct table queries must explicitly filter `tenant_id`.
+**Active tenant comes from the subdomain or locale-prefixed path segment.** `apps/platform/proxy.ts` resolves `{tenant_slug}.<apex>` via the service-role client, validates membership against the DB (`viewer_tenant_validate`), and **rewrites** the URL to `/{locale}/{tenant_slug}/...` — every tenant route lives under `app/[locale]/[tenant_slug]/...`. Path access (`<apex>/{locale}/{tenant_slug}/...`) works without a host rewrite. Pages use viewer-scoped GraphQL helpers or resolve `tenant_id` from the DB via the `viewer_*` helpers; no `x-tenant-*` headers. Direct table queries must explicitly filter `tenant_id`.
 
 **Custom domain mapping (`public.tenant_domains`, many domains per tenant)** is staged in the schema but not yet wired into the proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates advanced features once billing exists.
 
 **Permissions (capability-based, not role-based):**
-- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs (`organization_manage`, `members_manage`, etc.). The reserved slug `*` is the wildcard — a membership holding `*` passes every permission check inside its organization. Used for the tenant creator and other "full admin" grants without enumerating every slug.
-- `public.membership_permissions(membership_id, permission_id)` — explicit grants. Organization/profile derive through the membership row. The composite PK prevents duplicate grants and deletion cascades from memberships.
-- `public.permission_presets(permission_preset_id, organization_id?, permission_preset_name, permission_preset_slugs[])` — UX-only named bundles; carries no enforcement. `organization_id IS NULL` = global preset. A trigger validates every slug.
+- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs. It ships English admin capabilities only: `*`, `organization_manage`, `members_manage`, `presets_manage`. The reserved slug `*` is the wildcard — a membership holding `*` passes every permission check inside its organization. Used for the tenant creator and other "full admin" grants without enumerating every slug.
+- `public.organization_membership_permissions(organization_membership_id, permission_id)` — explicit grants. Organization/profile derive through the membership row. The composite PK prevents duplicate grants and deletion cascades from memberships.
+- `public.permission_presets(permission_preset_id, organization_id?, permission_preset_name, permission_preset_slugs[])` — UX-only named bundles; carries no enforcement. `organization_id IS NULL` = global preset. The seeded global presets are `Owner` / `Administrator` / `Member manager`. A trigger validates every slug.
 
-Permissions are deliberately NOT in the JWT (size, and they change at runtime). All enforcement reads `public.membership_permissions` at query time via the security-definer helpers below.
+Permissions are deliberately NOT in the JWT (size, and they change at runtime). All enforcement reads `public.organization_membership_permissions` at query time via the security-definer helpers below.
 
-**JWT carries three arrays** (`public.user_auth_hook` on token issuance):
-- `app_metadata.tenants: [{id, slug}]` — distinct tenants the user has any org membership in
-- `app_metadata.organizations: [{id, tenant_id}]` — every active organization membership
-- `app_metadata.agencies: [{id}]` — every active agency affiliation
+**The JWT carries only `profile_id` (the `sub` claim).** `public.user_auth_hook` is now a pass-through — it injects nothing. Tenant / organization / agency / onboarding state is no longer embedded in the token; it is resolved from the DB at query time via the `viewer_*` helpers. Onboarding is a UX nudge, not a proxy hard gate.
 
-Plus `app_metadata.onboarded: boolean`. Onboarding is a UX nudge, not a proxy hard gate.
-
-After mutations affecting tenant, organization, agency, or onboarding claims, call `supabase.auth.refreshSession()`. Permission-only changes are DB-backed and take effect without new JWT claims.
+Because tenant/organization/agency/onboarding state is read from the DB, there is no `refreshSession()` dance after those mutations — they take effect immediately. Permission changes are likewise DB-backed.
 
 **Use the `viewer_*` SQL helpers in RLS policies, not raw JWT parsing:**
 
-JWT-backed (fast, no DB):
-- `public.viewer_profile_id()` / `public.viewer_profile()` — current user (with optional `strict => true`)
-- `public.viewer_tenant_ids()` — set of tenant_ids from JWT
+DB-resolved (SECURITY DEFINER; these query the DB directly, not the JWT):
+- `public.viewer_profile_id()` / `public.viewer_profile()` — current user from the `sub` claim (with optional `strict => true`)
+- `public.viewer_tenant_ids()` — set of tenant_ids the caller belongs to, resolved from the DB
 - `public.viewer_tenant_validate(tenant_id)` — true iff caller belongs to any org in this tenant
-- `public.viewer_organization_ids()` — set of organization_ids from JWT
+- `public.viewer_organization_ids()` — set of organization_ids the caller belongs to, resolved from the DB
 - `public.viewer_organization_validate(organization_id)` — true iff caller is a member of this org
-- `public.viewer_agency_ids()` / `public.viewer_is_agency_member()` — agency claims
+- `public.viewer_agency_ids()` / `public.viewer_is_agency_member()` — agency memberships, resolved from the DB
 
 Permission-backed (DB lookup, security definer; wildcard `*` is honored):
 - `public.viewer_permission_org_ids(permission_id)` — orgs where the caller has the perm (or `*`). Use this in RLS `IN`-subqueries.
 - `public.viewer_has_permission(organization_id, permission_id)` — boolean shortcut for a single (org, perm) check.
-- `public.viewer_membership_permissions()` — setof `(organization_id, permission_id)` for UI listing.
+- `public.viewer_organization_membership_permissions()` — setof `(organization_id, permission_id)` for UI listing.
 
 ## Critical Rules
 
@@ -354,7 +349,7 @@ elsif old.permission_id not in ('members_manage', '*') then
 end if;
 
 -- ✅ Same action → combine with `or`
-if old.membership_revoked_at is not null or new.membership_revoked_at is null then
+if old.organization_membership_revoked_at is not null or new.organization_membership_revoked_at is null then
   return new;
 end if;
 ```
@@ -463,5 +458,5 @@ Guidelines:
 
 - Don't add new technology without strong justification — the stack is intentionally familiar
 - Don't use a tenant slug from the reserved-route list (auth, home, tenants, health, …) — the schema check in `apps/platform/app/[locale]/tenants/create/schemas.ts` + `internal.reserved_slugs` is the source of truth
-- Don't read `app_metadata.tenants` / `onboarded` from `auth.getUser()` — those claims live in the JWT only. Use `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server` (or decode `session.access_token` directly in middleware)
+- Don't expect tenant / organization / agency / onboarding state in the JWT — the hook is a pass-through and only `profile_id` (the `sub` claim) is carried. Resolve those from the DB via the `viewer_*` helpers or `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server`
 - Don't put shadcn components in `apps/platform/` — they belong in `packages/ui-common/src/shadcn`
