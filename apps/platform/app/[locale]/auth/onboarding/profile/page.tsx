@@ -4,7 +4,7 @@ import { StepShell } from "../_components/step-shell";
 import { getViewerOnboardingState } from "../state.server";
 import { ProfileForm } from "./profile-form";
 
-export default async function OnboardingProfilePage(_props: PageProps<"/[locale]/auth/onboarding/profile">) {
+export default async function OnboardingProfilePage(props: PageProps<"/[locale]/auth/onboarding/profile">) {
   const state = await getViewerOnboardingState();
 
   return (

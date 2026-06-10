@@ -4,7 +4,7 @@ import { StepShell } from "../_components/step-shell";
 import { getViewerOnboardingState } from "../state.server";
 import { PasskeyForm } from "./passkey-form";
 
-export default async function OnboardingPasskeyPage(_props: PageProps<"/[locale]/auth/onboarding/passkey">) {
+export default async function OnboardingPasskeyPage(props: PageProps<"/[locale]/auth/onboarding/passkey">) {
   const state = await getViewerOnboardingState();
 
   return (

@@ -70,6 +70,7 @@
       },
       "correctness": {
         "noUnusedVariables": "off",
+        "noUnusedFunctionParameters": "off",
         "noUnreachable": "off",
         "useExhaustiveDependencies": "off"
       },

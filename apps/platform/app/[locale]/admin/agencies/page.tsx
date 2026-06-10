@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
+import { assertLocale } from "~/lib/i18n.server";
 import { AgencyDirectory } from "./agency-directory";
 
 export async function generateMetadata(props: PageProps<"/[locale]/admin/agencies">): Promise<Metadata> {
-  const { locale } = await props.params;
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t, locale } = await getRosetta(LOCALES);
   return { title: t("page_title") };
 }
 
 export default async function AdminAgenciesPage(props: PageProps<"/[locale]/admin/agencies">) {
   const { locale } = await props.params;
-  if (!IS_SUPPORTED_LOCALE(locale)) notFound();
+  assertLocale(locale);
 
   return <AgencyDirectory base={`/${locale}/admin/agencies`} />;
 }

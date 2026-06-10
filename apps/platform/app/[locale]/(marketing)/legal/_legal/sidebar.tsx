@@ -3,32 +3,67 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LEGAL_COPY, LEGAL_NAV, type LegalLocale, type LegalSection } from "./docs";
 
-function ACTIVE_SECTION(pathname: string): LegalSection | null {
-  const segments = pathname.split("/").filter(Boolean);
-  const last = segments[segments.length - 1];
-  const found = (["terms", "privacy", "cookies", "dpa", "security"] as const).find((s) => s === last);
-  return found ?? null;
+type LegalLocale = "es" | "en" | "pt";
+type LegalSection = "terms" | "privacy" | "cookies" | "dpa" | "security";
+
+const LEGAL_NAV: Record<LegalLocale, { id: LegalSection; label: string; slug: string }[]> = {
+  es: [
+    { id: "terms", label: "Términos del servicio", slug: "terms" },
+    { id: "privacy", label: "Privacidad", slug: "privacy" },
+    { id: "cookies", label: "Cookies", slug: "cookies" },
+    { id: "dpa", label: "DPA", slug: "dpa" },
+    { id: "security", label: "Seguridad", slug: "security" },
+  ],
+  en: [
+    { id: "terms", label: "Terms of Service", slug: "terms" },
+    { id: "privacy", label: "Privacy", slug: "privacy" },
+    { id: "cookies", label: "Cookies", slug: "cookies" },
+    { id: "dpa", label: "DPA", slug: "dpa" },
+    { id: "security", label: "Security", slug: "security" },
+  ],
+  pt: [
+    { id: "terms", label: "Termos de Serviço", slug: "terms" },
+    { id: "privacy", label: "Privacidade", slug: "privacy" },
+    { id: "cookies", label: "Cookies", slug: "cookies" },
+    { id: "dpa", label: "DPA", slug: "dpa" },
+    { id: "security", label: "Segurança", slug: "security" },
+  ],
+};
+
+const SIDEBAR_TITLE: Record<LegalLocale, string> = {
+  es: "Documentos",
+  en: "Documents",
+  pt: "Documentos",
+};
+
+function toLegalLocale(locale: string): LegalLocale {
+  if (locale.startsWith("en")) return "en";
+  if (locale.startsWith("pt")) return "pt";
+  return "es";
 }
 
-export function LegalSidebar({ locale }: { locale: LegalLocale }) {
+export function LegalSidebar() {
   const pathname = usePathname();
-  const active = ACTIVE_SECTION(pathname);
-  const items = LEGAL_NAV[locale];
-  const copy = LEGAL_COPY[locale];
+  const segments = pathname.split("/").filter(Boolean);
+  const appLocale = segments[0] ?? "es";
+  const last = segments.at(-1);
+  const legalLocale = toLegalLocale(appLocale);
+  const active = (["terms", "privacy", "cookies", "dpa", "security"] as const).find((s) => s === last) ?? null;
+  const items = LEGAL_NAV[legalLocale];
+  const sidebarTitle = SIDEBAR_TITLE[legalLocale];
 
   return (
     <aside className="lg:sticky lg:top-20 lg:self-start">
       <div className="bg-card overflow-hidden rounded-xl border">
         <div className="bg-muted/40 text-muted-foreground border-b px-3 py-2.5 text-[10.5px] font-semibold tracking-[0.08em] uppercase">
-          {copy.sidebarTitle}
+          {sidebarTitle}
         </div>
-        <nav className="flex flex-col p-1.5" aria-label={copy.sidebarTitle}>
+        <nav className="flex flex-col p-1.5" aria-label={sidebarTitle}>
           {items.map((item) => (
             <Link
               key={item.id}
-              href={`/${locale}${item.path}`}
+              href={`/${appLocale}/legal/${item.slug}`}
               data-active={item.id === active ? "true" : "false"}
               aria-current={item.id === active ? "page" : undefined}
               className={cn(
@@ -37,7 +72,7 @@ export function LegalSidebar({ locale }: { locale: LegalLocale }) {
               )}
             >
               <span>{item.label}</span>
-              <span className="font-mono text-[10.5px] opacity-60">{item.path.replace("/legal/", "")}</span>
+              <span className="font-mono text-[10.5px] opacity-60">{item.slug}</span>
             </Link>
           ))}
         </nav>

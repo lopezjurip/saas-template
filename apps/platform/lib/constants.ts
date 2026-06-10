@@ -1,4 +1,6 @@
-// Stable apex hostname (no port). Used for subdomain/apex matching in the proxy and
+import { URL_NEW } from "@packages/utils/url";
+
+// Stable apex hostname (no port). Used for apex matching in the proxy and
 // for any place that just needs to know "is this our domain".
 export const APEX_HOSTNAME = process.env["NEXT_PUBLIC_APEX_HOSTNAME"] ?? "lvh.me";
 
@@ -16,14 +18,12 @@ export const APP_PORT = process.env["PORT"] ?? (NODE_ENV === "development" ? "70
 // inlined into client bundles, so APP_HOST in browser-only paths will be missing the port.
 export const APP_HOST = APP_PORT ? `${APEX_HOSTNAME}:${APP_PORT}` : APEX_HOSTNAME;
 
-export const DEBUG = process.env["DEBUG"];
+// Full origin URL. Use for absolute URLs server-side (redirects, emails, OG tags).
+export const APP_URL: URL = URL_NEW(
+  NODE_ENV === "development" ? `http://${APP_HOST}` : `https://${APP_HOST}`,
+);
 
-// When false, tenant routing is path-only (/{locale}/{slug}/...) — no {slug}.apex subdomain.
-// Set NEXT_PUBLIC_SUBDOMAIN_MODE=false when wildcard DNS for *.apex is unavailable
-// (e.g. mounting the apex itself on a subdomain of an experiments domain).
-// Also set NEXT_PUBLIC_COOKIE_DOMAIN to the apex host (not the parent domain) so session
-// cookies stay scoped to a single origin instead of crossing subdomains.
-export const SUBDOMAIN_MODE = process.env["NEXT_PUBLIC_SUBDOMAIN_MODE"] !== "false";
+export const DEBUG = process.env["DEBUG"];
 
 // When false (default), account existence and method availability (exists, has_passkey,
 // has_password) are NOT included in redirect URLs after step-1 auth. Pages show generic

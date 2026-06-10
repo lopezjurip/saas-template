@@ -224,9 +224,6 @@ Permission-backed (DB lookup, security definer; wildcard `*` is honored):
 - `public.viewer_has_permission(organization_id, permission_id)` — boolean shortcut for a single (org, perm) check.
 - `public.viewer_membership_permissions()` — setof `(organization_id, permission_id)` for UI listing.
 
-`public.viewer_is_concierge()` remains only as a backward-compatible alias for
-`viewer_is_agency_member()`.
-
 ## Critical Rules
 
 ### No barrel index files
@@ -310,6 +307,58 @@ const inviteHref = `/[locale]/admin/agencies/${agency["slug"]}/affiliates/new`;
 <Link href="/[locale]/agencies/create">…</Link>
 ```
 
+### i18n dictionaries — each file owns its own copy
+
+Never pass a dictionary object as props, and never import or export `LOCALES` between files. Each file is the sole owner of its strings.
+
+- **Server page** (`page.tsx`): define its own minimal `LOCALES` with only what `generateMetadata` needs (e.g. `title`, `subtitle`). Use `ROSETTA(LOCALES, locale)` from `~/lib/i18n`.
+- **Client component**: define its own full `LOCALES` at the top of the file. Use `useRosetta(LOCALES)` from `@packages/rosetta/use-rosetta` inside the component — no `dict` prop.
+- Sub-components in the same file can also call `useRosetta(LOCALES)` directly — `LOCALES` is module-scoped.
+- If two files need the same key (e.g. `title`), each duplicates it. No sharing.
+
+```tsx
+// ❌ Never — passing dict as props
+export default async function Page() {
+  const { t } = await getRosetta(LOCALES);
+  const dict = { title: t("title"), ... };
+  return <MyClient dict={dict} />;
+}
+
+// ✅ Client component owns its strings
+"use client";
+const LOCALES = { es: { title: "Hola" }, en: { title: "Hello" } satisfies ... };
+export function MyClient() {
+  const { t } = useRosetta(LOCALES);
+  return <h1>{t("title")}</h1>;
+}
+```
+
+### SQL / PL/pgSQL style
+
+**Prefer `if / elsif` over consecutive `if … end if; if … end if;` blocks.** Consecutive guards with separate `end if; if` pairs waste lines and force the reader to scan more `end if`s. Use `elsif` to chain them, or combine with `or` when the body is identical:
+
+```sql
+-- ❌ Two separate blocks
+if public.viewer_profile_id() is null then
+  return old;
+end if;
+if old.permission_id not in ('members_manage', '*') then
+  return old;
+end if;
+
+-- ✅ Single block, elsif
+if public.viewer_profile_id() is null then
+  return old;
+elsif old.permission_id not in ('members_manage', '*') then
+  return old;
+end if;
+
+-- ✅ Same action → combine with `or`
+if old.membership_revoked_at is not null or new.membership_revoked_at is null then
+  return new;
+end if;
+```
+
 ### Code Style
 - Biome.js handles formatting/linting — don't fight it
 - Follow existing patterns in the codebase
@@ -319,6 +368,14 @@ const inviteHref = `/[locale]/admin/agencies/${agency["slug"]}/affiliates/new`;
 - **Named functions, never arrow functions**. Use `function myFn() {}` or `export function myFn() {}`, never `const myFn = () => {}`. Named functions are hoisted (can call before declaration), show up clearly in stack traces, and are clearer to read. The only exception: short inline callbacks in `.map()` / `.filter()` where clarity is obvious from context.
 - **Tailwind: prefer native scale sizes over arbitrary px.** For width/height/size/gap/padding use the scale (`size-5`, `h-9`, `gap-2`) — including v4 fractional steps like `size-4.5` (18px) — instead of arbitrary `h-[18px]` / `w-[18px]`. Arbitrary bracket values are reserved for things the scale genuinely can't express. (Exact-px typography from a design spec is the accepted exception; the rule targets box sizing.)
 - **Map a discriminant to values with a keyed lookup, not `let` + `if/else`.** When several values vary together by one key (a tab, a status, a kind), return them from a `Record`-typed helper indexed by the key — `const head = CONSOLE_HEAD(t)[tab]` — rather than declaring mutable `let`s and reassigning them in an `if/else if` chain.
+- **Logging pattern.** At the top of each file declare a namespaced logger whose name mirrors the file's route path:
+  ```ts
+  const log = debug("app:[locale]:t:[tenant_slug]:[organization_id]:settings:members:actions")
+  ```
+  Always call a method — `log.error(…)`, `log.warn(…)`, `log.info(…)` — never bare `log(…)`. Always prefix the message with `[functionName]` or `[handlerName]`:
+  ```ts
+  log.error("[actionInviteMember] permission check failed: %o", { organization_id, error })
+  ```
 
 ### Hooks & Abstractions
 

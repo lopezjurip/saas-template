@@ -2,10 +2,10 @@ import { updateSession } from "@packages/supabase/client.middleware";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { JWT_DECODE_PAYLOAD } from "@packages/utils/jwt";
 import { type NextRequest, NextResponse, userAgent } from "next/server";
-import { APEX_HOSTNAME, APP_HOST, SUBDOMAIN_MODE } from "~/lib/constants";
+import { APEX_HOSTNAME, APP_HOST } from "~/lib/constants";
 import { debug } from "~/lib/debug";
-import { getTenantReservedSlugs } from "~/lib/get-tenant-reserved-slugs";
-import { EXTRACT_LOCALE_FROM_PATH, LOCALE_COOKIE, RESOLVE_LOCALE_FROM_REQUEST, type SupportedLocale } from "~/lib/i18n";
+import { EXTRACT_LOCALE_FROM_PATH, LOCALE_COOKIE, type SupportedLocale } from "~/lib/i18n";
+import { RESOLVE_LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
 
 const log = debug("proxy");
 
@@ -23,18 +23,6 @@ async function resolveTenantIdFromSlug(slug: string): Promise<number | null> {
   return data.tenant_id;
 }
 
-function extractSubdomain(hostname: string): string | null {
-  if (!SUBDOMAIN_MODE) return null;
-  // Strip port before matching — port varies per dev session but the domain is stable.
-  const host = hostname.split(":")[0] ?? "";
-  if (!host) return null;
-  if (host === APEX_HOSTNAME || host === `www.${APEX_HOSTNAME}`) return null;
-  if (!host.endsWith(`.${APEX_HOSTNAME}`)) return null;
-  const slug = host.slice(0, host.length - APEX_HOSTNAME.length - 1);
-  if (!slug || slug === "www") return null;
-  return slug;
-}
-
 const PUBLIC_PATH_REGEX = /^(\/|(\/(?:auth|legal|faq|pricing|opengraph-image|twitter-image|icon)(?:\/|$)))/;
 
 function isLocalizedPublicPath(pathAfterLocale: string): boolean {
@@ -46,13 +34,6 @@ function copyCookies(from: NextResponse, to: NextResponse): NextResponse {
   return to;
 }
 
-/**
- * Persists the locale on the response so the browser keeps it for the next request.
- * The matching `request.cookies` mutation must happen before `updateSession` runs, otherwise
- * server components in the same request still read the stale value.
- * @example
- * return setLocaleCookieOnResponse(NextResponse.next(), "es");
- */
 function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse {
   const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
   response.cookies.set(LOCALE_COOKIE, locale, {
@@ -72,39 +53,23 @@ export async function proxy(request: NextRequest) {
   const { isBot, device } = userAgent(request);
   log.debug("request", { hostname, pathname, isBot, deviceType: device.type ?? "desktop" });
 
-  // Classify the host: apex/www, tenant subdomain, or unknown (custom apex, phase 2).
-  // Strip port for matching so the proxy works on any dev port, not just the configured default.
+  // Host classification: apex, Vercel preview (treat as apex), or unknown (bounce to apex).
+  // All tenant routing is path-based (/t/{slug}/...) — no subdomain extraction needed.
   const hostnameBase = hostname.split(":")[0] ?? "";
-  let isApex = hostnameBase === APEX_HOSTNAME || hostnameBase === `www.${APEX_HOSTNAME}`;
-  let slugFromHost: string | null = null;
-  // Vercel preview/dev deployments come in on `*.vercel.app` hosts that won't match APEX_HOSTNAME.
-  // Treat them as apex so previews stay reachable instead of bouncing to production.
+  const isApex = hostnameBase === APEX_HOSTNAME || hostnameBase === `www.${APEX_HOSTNAME}`;
   const vercelEnv = process.env["VERCEL_ENV"];
   const isVercelNonProd = vercelEnv === "preview" || vercelEnv === "development";
-  if (!isApex) {
-    if (SUBDOMAIN_MODE && hostnameBase.endsWith(`.${APEX_HOSTNAME}`)) {
-      slugFromHost = extractSubdomain(hostname);
-    } else if (isVercelNonProd) {
-      isApex = true;
-    } else if (!SUBDOMAIN_MODE) {
-      // Subdomain mode off — the apex is itself mounted on a subdomain (e.g. app.experiments.com).
-      // Treat any incoming host as apex; tenant routing is path-only (/{locale}/{slug}/...).
-      isApex = true;
-    } else {
-      // Unknown host (localhost/127.0.0.1/custom apex). Custom apexes are phase 2 —
-      // for now, bounce to the configured apex so cookies/session land on the right origin.
-      const apexUrl = new URL(`${pathname}${request.nextUrl.search}`, `${proto}://${APP_HOST}`);
-      return NextResponse.redirect(apexUrl);
-    }
+  if (!isApex && !isVercelNonProd) {
+    // Unknown host (localhost/127.0.0.1/custom domain — phase 2).
+    // Bounce to apex so session and cookies land on the right origin.
+    const apexUrl = new URL(`${pathname}${request.nextUrl.search}`, `${proto}://${APP_HOST}`);
+    return NextResponse.redirect(apexUrl);
   }
 
-  // /health stays canonical at the apex with no locale prefix.
+  // /health — no auth, no locale.
   if (pathname === "/health") {
-    if (isApex) {
-      const { response } = await updateSession(request);
-      return response;
-    }
-    return NextResponse.redirect(new URL("/health", `${proto}://${APP_HOST}`));
+    const { response } = await updateSession(request);
+    return response;
   }
 
   // Locale sentinel: /[locale]/path → /${locale}/path
@@ -136,25 +101,15 @@ export async function proxy(request: NextRequest) {
 
   const { response: sessionResponse, supabase } = await updateSession(request);
 
-  // Tenant subdomain: send /auth/* back to the apex so auth lives at one origin.
-  // `/auth/onboarding/*` lives under /auth now, so this single prefix check covers it.
-  if (slugFromHost) {
-    if (pathAfterLocale.startsWith("/auth")) {
-      const url = new URL(`/${locale}${pathAfterLocale}`, `${proto}://${APP_HOST}`);
-      url.search = request.nextUrl.search;
-      return setLocaleCookieOnResponse(NextResponse.redirect(url), locale);
-    }
-  }
-
-  // Bots get public apex content without session overhead.
-  if (isBot && isApex && isLocalizedPublicPath(pathAfterLocale)) {
+  // Bots get public content without session overhead.
+  if (isBot && isLocalizedPublicPath(pathAfterLocale)) {
     return setLocaleCookieOnResponse(NextResponse.next(), locale);
   }
 
-  // Apex public routes — no auth required, but logged-in users shouldn't see the auth entry pages
-  // (the form's server action gets bound to the wrong route after a client transition from /home
-  // and posts to the previous URL, producing "unexpected response from server").
-  if (isApex && isLocalizedPublicPath(pathAfterLocale)) {
+  // Public routes — no auth required, but logged-in users shouldn't see auth entry pages.
+  // (The form's server action gets bound to the wrong route after a client transition from /home
+  // and posts to the previous URL, producing "unexpected response from server".)
+  if (isLocalizedPublicPath(pathAfterLocale)) {
     const isAuthEntryPath =
       pathAfterLocale === "/auth" ||
       pathAfterLocale.startsWith("/auth/email") ||
@@ -185,49 +140,33 @@ export async function proxy(request: NextRequest) {
     return setLocaleCookieOnResponse(NextResponse.redirect(authUrl), locale);
   }
 
-  // Hook-injected claims (tenants) only exist in the JWT, not on the DB user record.
-  // The `onboarded` claim is no longer used as a gate here — onboarding completion is
-  // surfaced to users via page-level UX (e.g. a banner / nudge) rather than a hard redirect,
-  // so users can land on /home or any other route mid-onboarding without being bounced.
   const claims = JWT_DECODE_PAYLOAD(session.access_token) as JwtPayload | null;
   const tenants = claims?.["app_metadata"]?.["tenants"] ?? [];
 
-  // Subdomain → membership check + rewrite to /[locale]/[tenant_slug]{pathAfterLocale}.
-  if (slugFromHost) {
-    const reservedSlugs = await getTenantReservedSlugs();
-    if (reservedSlugs.has(slugFromHost.toLowerCase())) {
-      log.warn("reserved slug attempted as subdomain", { slug: slugFromHost, hostname });
+  // Tenant path gate: /{locale}/t/{slug}/... — verify tenant exists and user is a member.
+  // This is the access-control boundary: a logged-in non-member hitting /t/{slug} is blocked here.
+  if (pathAfterLocale.startsWith("/t/")) {
+    const segments = pathAfterLocale.split("/"); // ["", "t", "{slug}", ...]
+    const tenantSlug = segments[2];
+    if (!tenantSlug) {
       return new NextResponse("Tenant not found", { status: 404 });
     }
-
-    const tenant_id = await resolveTenantIdFromSlug(slugFromHost);
+    const tenant_id = await resolveTenantIdFromSlug(tenantSlug);
     if (!tenant_id) {
-      log.warn("unknown or disabled tenant subdomain", { slug: slugFromHost, hostname });
+      log.warn("unknown or disabled tenant", { slug: tenantSlug });
       return new NextResponse("Tenant not found", { status: 404 });
     }
     if (!tenants.some((t) => t["id"] === tenant_id)) {
-      log.warn("user lacks membership for tenant subdomain", {
-        slug: slugFromHost,
+      log.warn("user lacks membership for tenant", {
+        slug: tenantSlug,
         tenant_id,
         user_tenant_ids: tenants.map((t) => t["id"]),
       });
       return new NextResponse("No tienes acceso a esta empresa.", { status: 403 });
     }
-    const url = request.nextUrl.clone();
-    // The browser path may or may not already include the tenant slug as its first segment.
-    // Server-side redirects from tenant pages use absolute paths like /es/{slug}/... that work
-    // both on the apex and on the subdomain (where the proxy normally prepends the slug).
-    // Don't duplicate the slug if it's already there.
-    const prefix = `/${slugFromHost}`;
-    const alreadyPrefixed = pathAfterLocale === prefix || pathAfterLocale.startsWith(`${prefix}/`);
-    url.pathname = alreadyPrefixed ? `/${locale}${pathAfterLocale}` : `/${locale}/${slugFromHost}${pathAfterLocale}`;
-    const rewritten = NextResponse.rewrite(url, { request });
-    return setLocaleCookieOnResponse(copyCookies(sessionResponse, rewritten), locale);
   }
 
-  // Apex protected paths (/[locale]/dashboard, /[locale]/tenants/create, /[locale]/[tenant_slug]/...)
-  // — page-level membership for tenant routes is handled by app/[locale]/[tenant_slug]/page.tsx
-  // (notFound() if slug isn't in JWT).
+  // Protected paths — session verified above, tenant gate applied for /t/ routes.
   return setLocaleCookieOnResponse(sessionResponse, locale);
 }
 

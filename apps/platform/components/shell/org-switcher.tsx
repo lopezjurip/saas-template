@@ -79,7 +79,7 @@ export function OrgSwitcher({
               return (
                 <Link
                   key={organization.organization_id}
-                  href={`/${locale}/${tenant.tenant_slug}/${organization.organization_id}`}
+                  href={`/${locale}/t/${tenant.tenant_slug}/${organization.organization_id}`}
                   onClick={() => setOpen(false)}
                   className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
                 >
@@ -109,7 +109,7 @@ export function OrgSwitcher({
               <span>{t("switchTenant")}</span>
             </Link>
             <Link
-              href={`/${locale}/${tenant.tenant_slug}/${current.organization_id}/settings`}
+              href={`/${locale}/t/${tenant.tenant_slug}/${current.organization_id}/settings`}
               onClick={() => setOpen(false)}
               className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
             >

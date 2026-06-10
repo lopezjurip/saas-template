@@ -30,7 +30,9 @@ import {
   ORG_BY_ID,
   SCOPED_ORG_COUNT,
 } from "~/lib/agencies-mock";
-import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
+import { ROSETTA } from "~/lib/i18n";
+import { assertLocale } from "~/lib/i18n.server";
 
 const KIND_ICON: Record<AgencyKind, LucideIcon> = /*#__PURE__*/ {
   audit: Briefcase,
@@ -41,14 +43,15 @@ const KIND_ICON: Record<AgencyKind, LucideIcon> = /*#__PURE__*/ {
 
 export async function generateMetadata(props: PageProps<"/[locale]/admin/agencies/[slug]">): Promise<Metadata> {
   const { locale, slug } = await props.params;
+  const { t } = await getRosetta(LOCALES, locale);
   const agency = AGENCY_BY_SLUG(slug);
-  return { title: agency ? agency.name : ROSETTA(LOCALES, locale).t("page_title") };
+  return { title: agency ? agency.name : t("page_title") };
 }
 
 export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/admin/agencies/[slug]">) {
   const { locale, slug } = await props.params;
-  if (!IS_SUPPORTED_LOCALE(locale)) notFound();
-  const { t } = ROSETTA(LOCALES, locale);
+  assertLocale(locale);
+  const { t } = await getRosetta(LOCALES, locale);
 
   const agency = AGENCY_BY_SLUG(slug);
   if (!agency) notFound();

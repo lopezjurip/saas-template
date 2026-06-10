@@ -97,7 +97,7 @@ export function Sidebar({
   const collapsed = width < SIDEBAR_COMPACT_THRESHOLD;
   const visualWidth = collapsed ? SIDEBAR_COMPACT_WIDTH : width;
 
-  const base = `/${locale}/${tenant.tenant_slug}/${current.organization_id}`;
+  const base = `/${locale}/t/${tenant.tenant_slug}/${current.organization_id}`;
   const items = BUILD_NAV(base, {
     navHome: t("navHome"),
     navMembers: t("navMembers"),

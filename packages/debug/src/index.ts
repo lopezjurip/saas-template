@@ -20,7 +20,7 @@ export const LOGGER_CONSOLE: Diary = /*#__PURE__*/ {
   error: console.error.bind(console),
 };
 
-export function CREATE_DEBUGGER(base: string, filterQuery?: string | null) {
+export function CREATE_DEBUGGER(base: string, filterQuery?: string | null, separator = ":") {
   let excludesRegex: RegExp[] = [];
 
   if (filterQuery) {
@@ -35,13 +35,13 @@ export function CREATE_DEBUGGER(base: string, filterQuery?: string | null) {
       if (query.startsWith(base)) {
         enable(query);
       } else {
-        enable(`${base}:${query}`);
+        enable(`${base}${separator}${query}`);
       }
     }
   }
 
   return function namespaced(namespace: string): DebugInstance {
-    const name = `${base}:${namespace}`;
+    const name = `${base}${separator}${namespace}`;
     if (excludesRegex.some((r) => r.test(name))) {
       return LOGGER_NOOP;
     }

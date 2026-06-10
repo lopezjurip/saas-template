@@ -19,7 +19,7 @@ export default async function AuthPhonePage(props: PageProps<"/[locale]/auth/pho
 
   const channels = (SINGLE(sp["channels"]) ?? "sms,whatsapp")
     .split(",")
-    .filter((c): c is Channel => c === "sms" || c === "whatsapp");
+    .filter((c: string): c is Channel => c === "sms" || c === "whatsapp");
   const existsParam = SINGLE(sp["exists"]);
   const exists = existsParam === "1" ? true : existsParam === "0" ? false : null;
 

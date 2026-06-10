@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AGENCY_BY_SLUG } from "~/lib/agencies-mock";
-import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
+import { assertLocale } from "~/lib/i18n.server";
 import { AffiliationInvite } from "./affiliation-invite";
 
 export async function generateMetadata(
   props: PageProps<"/[locale]/admin/agencies/[slug]/affiliates/new">,
 ): Promise<Metadata> {
-  const { locale } = await props.params;
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t, locale } = await getRosetta(LOCALES);
   return { title: t("page_title") };
 }
 
@@ -16,7 +16,7 @@ export default async function AdminAgencyAffiliateNewPage(
   props: PageProps<"/[locale]/admin/agencies/[slug]/affiliates/new">,
 ) {
   const { locale, slug } = await props.params;
-  if (!IS_SUPPORTED_LOCALE(locale)) notFound();
+  assertLocale(locale);
 
   const agency = AGENCY_BY_SLUG(slug);
   if (!agency) notFound();

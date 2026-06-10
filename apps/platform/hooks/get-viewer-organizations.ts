@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { ResultOf } from "@graphql-typed-document-node/core";
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { cache } from "react";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
@@ -17,11 +17,8 @@ export const ViewerOrganizationGetFragment = /*#__PURE__*/ gql(`
 export type ViewerOrganizationGetFragmentType = ResultOf<typeof ViewerOrganizationGetFragment>;
 
 export const ViewerOrganizationsGetQuery = /*#__PURE__*/ gql(`
-  query ViewerOrganizationsGetQuery($tenant_id: Int) {
-    viewer_organizations(
-      filter: { tenant_id: { eq: $tenant_id } }
-      orderBy: [{ organization_name: AscNullsLast }]
-    ) {
+  query ViewerOrganizationsGetQuery($filter: organizationsFilter, $orderBy: [organizationsOrderBy!]) {
+    organizations: viewer_organizations(filter: $filter, orderBy: $orderBy) {
       edges {
         node {
           ...ViewerOrganizationGetFragment
@@ -33,19 +30,20 @@ export const ViewerOrganizationsGetQuery = /*#__PURE__*/ gql(`
 
 export const ViewerOrganizationByIdGetQuery = /*#__PURE__*/ gql(`
   query ViewerOrganizationByIdGetQuery($organization_id: Int!) {
-    viewer_organization_by_id(target_organization_id: $organization_id) {
+    organization: viewer_organization_by_id(target_organization_id: $organization_id) {
       ...ViewerOrganizationGetFragment
     }
   }
 `);
 
-export const getViewerOrganizations = cache(async (tenant_id?: number) => {
-  const graphy = await getGraphySession();
-  return await graphy.query({
-    query: ViewerOrganizationsGetQuery,
-    variables: { tenant_id: tenant_id ?? null },
-  });
-});
+type ViewerOrganizationsGetQueryVars = VariablesOf<typeof ViewerOrganizationsGetQuery>;
+
+export const getViewerOrganizations = cache(
+  async (options?: Pick<ViewerOrganizationsGetQueryVars, "filter" | "orderBy">) => {
+    const graphy = await getGraphySession();
+    return await graphy.query({ query: ViewerOrganizationsGetQuery, variables: options ?? {} });
+  },
+);
 
 export const getViewerOrganization = cache(async (organization_id: number) => {
   const graphy = await getGraphySession();

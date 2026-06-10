@@ -103,7 +103,7 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
               return (
                 <Link
                   key={organization["organization_id"]}
-                  href={`/${locale}/${tenant_slug}`}
+                  href={`/${locale}/t/${tenant_slug}`}
                   className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:-translate-y-[3px] hover:bg-muted/50"
                 >
                   <span

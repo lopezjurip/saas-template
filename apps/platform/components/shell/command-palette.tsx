@@ -55,7 +55,7 @@ export function CommandPalette({
   }, [open]);
 
   const groups = useMemo<PaletteGroup[]>(() => {
-    const base = `/${locale}/${tenant.tenant_slug}/${current.organization_id}`;
+    const base = `/${locale}/t/${tenant.tenant_slug}/${current.organization_id}`;
     const navigate: PaletteGroup = {
       heading: t("navigate"),
       items: [
@@ -87,7 +87,7 @@ export function CommandPalette({
         hint: organization.organization_id === current.organization_id ? t("current") : (tenant.tenant_tier ?? ""),
         orgInitials: INITIALS_FROM_NAME(organization.organization_name),
         orgColor: COLOR_FROM_ID(organization.organization_id),
-        onSelect: () => router.push(`/${locale}/${tenant.tenant_slug}/${organization.organization_id}`),
+        onSelect: () => router.push(`/${locale}/t/${tenant.tenant_slug}/${organization.organization_id}`),
       })),
     };
     return [navigate, switchOrg];

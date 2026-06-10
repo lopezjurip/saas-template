@@ -203,6 +203,10 @@ export function EMAIL_REMOVE_TAGS(email: string): string {
  * const params = URL_PARSE_HASH(url);
  * const object = Object.fromEntries(params.entries());
  */
+export function IS_EXTERNAL(href: string): boolean {
+  return href.startsWith("http://") || href.startsWith("https://") || href.startsWith("//");
+}
+
 export function URL_PARSE_HASH(url: URL): URLSearchParams {
   const hash = url.hash.slice(1);
   if (!hash) {

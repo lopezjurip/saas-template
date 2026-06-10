@@ -2,18 +2,16 @@ import { Logo } from "@packages/ui-common/logo";
 import { Building2 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ROSETTA } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
 import { CreateTenantForm } from "./create-form";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  const { locale } = await params;
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t, locale } = await getRosetta(LOCALES);
   return { title: t("heading") };
 }
 
 export default async function CreateTenantPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t, locale } = await getRosetta(LOCALES);
   return (
     <div
       className="relative flex min-h-dvh w-full items-center justify-center px-5 py-10"

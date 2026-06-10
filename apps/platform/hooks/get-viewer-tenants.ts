@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { ResultOf } from "@graphql-typed-document-node/core";
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { cache } from "react";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
@@ -17,10 +17,8 @@ export const ViewerTenantGetFragment = /*#__PURE__*/ gql(`
 export type ViewerTenantGetFragmentType = ResultOf<typeof ViewerTenantGetFragment>;
 
 export const ViewerTenantsGetQuery = /*#__PURE__*/ gql(`
-  query ViewerTenantsGetQuery {
-    viewer_tenants(
-      orderBy: [{ tenant_name: AscNullsLast }]
-    ) {
+  query ViewerTenantsGetQuery($filter: tenantsFilter, $orderBy: [tenantsOrderBy!]) {
+    tenants: viewer_tenants(filter: $filter, orderBy: $orderBy) {
       edges {
         node {
           ...ViewerTenantGetFragment
@@ -32,15 +30,17 @@ export const ViewerTenantsGetQuery = /*#__PURE__*/ gql(`
 
 export const ViewerTenantBySlugGetQuery = /*#__PURE__*/ gql(`
   query ViewerTenantBySlugGetQuery($tenant_slug: String!) {
-    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
+    tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
       ...ViewerTenantGetFragment
     }
   }
 `);
 
-export const getViewerTenants = cache(async () => {
+type ViewerTenantsGetQueryVars = VariablesOf<typeof ViewerTenantsGetQuery>;
+
+export const getViewerTenants = cache(async (options?: Pick<ViewerTenantsGetQueryVars, "filter" | "orderBy">) => {
   const graphy = await getGraphySession();
-  return await graphy.query({ query: ViewerTenantsGetQuery });
+  return await graphy.query({ query: ViewerTenantsGetQuery, variables: options ?? {} });
 });
 
 export const getViewerTenantBySlug = cache(async (tenant_slug: string) => {

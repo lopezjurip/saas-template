@@ -8,7 +8,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
-import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
+import { assertLocale } from "~/lib/i18n.server";
 import { EditPermissionsForm } from "./edit-form";
 
 function MEMBER_LABEL(row: {
@@ -42,15 +43,14 @@ function INITIALS_OF(name: string): string {
 }
 
 export async function generateMetadata(
-  props: PageProps<"/[locale]/[tenant_slug]/[organization_id]/settings/members/[membership_id]/edit">,
+  props: PageProps<"/[locale]/t/[tenant_slug]/[organization_id]/settings/members/[membership_id]/edit">,
 ): Promise<Metadata> {
-  const { locale } = await props.params;
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t, locale } = await getRosetta(LOCALES);
   return { title: t("page_title") };
 }
 
 export default async function MembershipEditPage(
-  props: PageProps<"/[locale]/[tenant_slug]/[organization_id]/settings/members/[membership_id]/edit">,
+  props: PageProps<"/[locale]/t/[tenant_slug]/[organization_id]/settings/members/[membership_id]/edit">,
 ) {
   const {
     locale,
@@ -58,9 +58,8 @@ export default async function MembershipEditPage(
     organization_id: organization_id_param,
     membership_id: membership_id_param,
   } = await props.params;
-
-  if (!IS_SUPPORTED_LOCALE(locale)) notFound();
-  const { t } = ROSETTA(LOCALES, locale);
+  assertLocale(locale);
+  const { t } = await getRosetta(LOCALES, locale);
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
@@ -68,10 +67,10 @@ export default async function MembershipEditPage(
   if (!Number.isInteger(membership_id) || membership_id <= 0) notFound();
 
   const { data: orgData } = await getViewerOrganization(organization_id);
-  const organization = orgData?.["viewer_organization_by_id"];
+  const organization = orgData?.["organization"];
   if (!organization) notFound();
 
-  const membersHref = `/${locale}/${tenant_slug}/${organization_id}/settings/members`;
+  const membersHref = `/${locale}/t/${tenant_slug}/${organization_id}/settings/members`;
   const supabase = await createServerClient();
   const { data: canManage } = await supabase.rpc("viewer_has_permission", {
     target_organization_id: organization_id,

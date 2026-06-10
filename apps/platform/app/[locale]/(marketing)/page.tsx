@@ -1,4 +1,4 @@
-import { createServerClient } from "@packages/supabase/client.server";
+import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import {
   Accordion,
   AccordionContent,
@@ -9,33 +9,31 @@ import { Avatar, AvatarFallback } from "@packages/ui-common/shadcn/components/ui
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Card, CardContent } from "@packages/ui-common/shadcn/components/ui/card";
+import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { APP_HOST } from "~/lib/constants";
-import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, ROSETTA, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
+import { APP_URL } from "~/lib/constants";
+import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { ContactBooking } from "./contact-booking";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  const { locale } = await params;
-  const { t } = ROSETTA(LOCALES, locale);
-  const base = `https://${APP_HOST}`;
-  const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
-
+export async function generateMetadata(props: PageProps<"/[locale]">): Promise<Metadata> {
+  const { t, locale } = await getRosetta(LOCALES);
   return {
     title: t("title"),
     description: t("description"),
     alternates: {
-      canonical: `${base}/${safeLocale}`,
+      canonical: `${APP_URL.origin}/${locale}`,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [LOCALE_TO_BCP47[l], `${base}/${l}`])),
-        "x-default": `${base}/${DEFAULT_LOCALE}`,
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [LOCALE_TO_BCP47[l], `${APP_URL.origin}/${l}`])),
+        "x-default": `${APP_URL.origin}/${DEFAULT_LOCALE}`,
       },
     },
     openGraph: {
       type: "website",
-      url: `${base}/${safeLocale}`,
-      locale: LOCALE_TO_BCP47[safeLocale],
+      url: `${APP_URL.origin}/${locale}`,
+      locale: locale,
       title: t("title"),
       description: t("description"),
       siteName: "SaaS Template",
@@ -50,23 +48,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 const LOGOS = ["Northwind", "Helia", "Vega Labs", "Quanta", "Lumens", "Brightside"];
 
-function INITIALS_OF(name: string): string {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 export default async function HomePage(props: PageProps<"/[locale]">) {
-  const { locale } = await props.params;
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t, locale } = await getRosetta(LOCALES);
 
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSupabaseServerUser();
 
   const ctaHref = user ? `/${locale}/home` : `/${locale}/auth`;
   const ctaLabel = user ? t("cta.dashboard") : t("cta.signin");

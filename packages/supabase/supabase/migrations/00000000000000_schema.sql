@@ -1150,7 +1150,6 @@ grant execute on function public.profile_id_by_email(text) to service_role;
 --   viewer_tenant_validate(tenant)      : true iff caller belongs to this tenant
 --   viewer_organization_ids             : organizations the caller is a member of
 --   viewer_organization_validate(org)   : true iff caller is a member of `org`
---   viewer_is_concierge                 : true iff caller has the global concierge claim
 --
 -- Permissions (DB lookup — `security definer` to bypass recursive RLS):
 --   viewer_permission_org_ids(perm)     : setof org_id where the caller has `perm` OR `*`
@@ -1178,7 +1177,7 @@ create or replace function public.viewer_profile(strict boolean default false)
         where profile_id = _user_id and profile_disabled_at is null
         limit 1;
       if not found and $1 is true then
-        raise exception 'Not logged-in or profile not found for user_id: %', _user_id;
+        raise exception '[viewer_profile] not logged-in or profile not found for user_id: %', _user_id;
       end if;
     end;
   $$;
@@ -1200,7 +1199,7 @@ create or replace function public.viewer_tenant_ids()
     ) as t;
   $$;
 
-create or replace function public.viewer_tenant_validate(target_tenant_id int)
+create or replace function public.viewer_tenant_validate(tenant_id int)
   returns boolean
   stable
   parallel safe
@@ -1216,7 +1215,7 @@ create or replace function public.viewer_tenant_validate(target_tenant_id int)
           '[]'::jsonb
         )
       ) as t
-      where (t->>'id')::int = target_tenant_id
+      where (t->>'id')::int = viewer_tenant_validate.tenant_id
     );
   $$;
 
@@ -1237,7 +1236,7 @@ create or replace function public.viewer_organization_ids()
     ) as o;
   $$;
 
-create or replace function public.viewer_organization_validate(target_organization_id int)
+create or replace function public.viewer_organization_validate(organization_id int)
   returns boolean
   stable
   parallel safe
@@ -1253,7 +1252,7 @@ create or replace function public.viewer_organization_validate(target_organizati
           '[]'::jsonb
         )
       ) as o
-      where (o->>'id')::int = target_organization_id
+      where (o->>'id')::int = viewer_organization_validate.organization_id
     );
   $$;
 
@@ -1263,7 +1262,7 @@ create or replace function public.viewer_organization_validate(target_organizati
 -- permission check inside that org. All helpers join via membership_id and filter to
 -- ACTIVE memberships only — claimed by the viewer, accepted, not revoked, not rejected.
 
-create or replace function public.viewer_permission_org_ids(target_permission_id extensions.citext)
+create or replace function public.viewer_permission_org_ids(permission_id extensions.citext)
   returns setof int
   stable
   security definer
@@ -1278,12 +1277,12 @@ create or replace function public.viewer_permission_org_ids(target_permission_id
       and m.membership_accepted_at is not null
       and m.membership_revoked_at is null
       and m.membership_rejected_at is null
-      and (mp.permission_id = target_permission_id or mp.permission_id = '*');
+      and (mp.permission_id = viewer_permission_org_ids.permission_id or mp.permission_id = '*');
   $$;
 
 create or replace function public.viewer_has_permission(
-  target_organization_id int,
-  target_permission_id extensions.citext
+  organization_id int,
+  permission_id extensions.citext
 )
   returns boolean
   stable
@@ -1296,12 +1295,12 @@ create or replace function public.viewer_has_permission(
       select 1
       from public.membership_permissions mp
       join public.memberships m on m.membership_id = mp.membership_id
-      where m.organization_id = target_organization_id
+      where m.organization_id = viewer_has_permission.organization_id
         and m.profile_id = (select public.viewer_profile_id())
         and m.membership_accepted_at is not null
         and m.membership_revoked_at is null
         and m.membership_rejected_at is null
-        and (mp.permission_id = target_permission_id or mp.permission_id = '*')
+        and (mp.permission_id = viewer_has_permission.permission_id or mp.permission_id = '*')
     );
   $$;
 
@@ -1357,7 +1356,7 @@ create or replace function public.viewer_is_agency_member()
 -- Covers: (1) explicit per-org grants, (2) global grants (org IS NULL) → all orgs,
 -- (3) implicit org opt-in grants (any active affiliate). Wildcard '*' honored throughout.
 create or replace function public.viewer_agency_permission_org_ids(
-  target_permission_id extensions.citext
+  permission_id extensions.citext
 )
   returns setof int
   stable
@@ -1370,7 +1369,7 @@ create or replace function public.viewer_agency_permission_org_ids(
     from public.agencies_organizations_grants aog
     where aog.agency_id in (select public.viewer_agency_ids())
       and aog.organization_id is not null
-      and (aog.permission_id = target_permission_id or aog.permission_id = '*')
+      and (aog.permission_id = viewer_agency_permission_org_ids.permission_id or aog.permission_id = '*')
 
     union
 
@@ -1380,20 +1379,20 @@ create or replace function public.viewer_agency_permission_org_ids(
       select 1 from public.agencies_organizations_grants aog
       where aog.agency_id in (select public.viewer_agency_ids())
         and aog.organization_id is null
-        and (aog.permission_id = target_permission_id or aog.permission_id = '*')
+        and (aog.permission_id = viewer_agency_permission_org_ids.permission_id or aog.permission_id = '*')
     )
 
     union
 
     select aoig.organization_id
     from public.agencies_organizations_implicit_grants aoig
-    where (aoig.permission_id = target_permission_id or aoig.permission_id = '*')
+    where (aoig.permission_id = viewer_agency_permission_org_ids.permission_id or aoig.permission_id = '*')
       and public.viewer_is_agency_member();
   $$;
 
 create or replace function public.viewer_has_agency_permission(
-  target_organization_id int,
-  target_permission_id extensions.citext
+  organization_id int,
+  permission_id extensions.citext
 )
   returns boolean
   stable
@@ -1402,8 +1401,8 @@ create or replace function public.viewer_has_agency_permission(
   language sql
   set search_path to ''
   as $$
-    select target_organization_id in (
-      select public.viewer_agency_permission_org_ids(target_permission_id)
+    select viewer_has_agency_permission.organization_id in (
+      select public.viewer_agency_permission_org_ids(viewer_has_agency_permission.permission_id)
     );
   $$;
 
@@ -1422,15 +1421,6 @@ create or replace function public.viewer_agency_tenant_ids()
       select public.viewer_agency_permission_org_ids('*')
     );
   $$;
-
--- Backward-compat alias. Remove once all callers migrated.
-create or replace function public.viewer_is_concierge()
-  returns boolean
-  stable
-  parallel safe
-  language sql
-  set search_path to ''
-  as $$ select public.viewer_is_agency_member(); $$;
 
 -- ============================================================
 -- RLS SELECT policies for agency tables (defined here because they
@@ -1526,7 +1516,7 @@ create or replace function public.viewer_organizations()
     where o.organization_id in (select organization_id from public.tenants_organizations_profiles);
   $$;
 
-create or replace function public.viewer_tenant_by_id(target_tenant_id int)
+create or replace function public.viewer_tenant_by_id(tenant_id int)
   returns setof public.tenants rows 1
   stable
   security definer
@@ -1536,12 +1526,12 @@ create or replace function public.viewer_tenant_by_id(target_tenant_id int)
   as $$
     select t.*
     from public.tenants t
-    where t.tenant_id = target_tenant_id
+    where t.tenant_id = viewer_tenant_by_id.tenant_id
       and t.tenant_id in (select tenant_id from public.tenants_organizations_profiles)
     limit 1;
   $$;
 
-create or replace function public.viewer_tenant_by_slug(target_tenant_slug text)
+create or replace function public.viewer_tenant_by_slug(tenant_slug text)
   returns setof public.tenants rows 1
   stable
   security definer
@@ -1551,12 +1541,12 @@ create or replace function public.viewer_tenant_by_slug(target_tenant_slug text)
   as $$
     select t.*
     from public.tenants t
-    where t.tenant_slug = target_tenant_slug
+    where t.tenant_slug = viewer_tenant_by_slug.tenant_slug
       and t.tenant_id in (select tenant_id from public.tenants_organizations_profiles)
     limit 1;
   $$;
 
-create or replace function public.viewer_organization_by_id(target_organization_id int)
+create or replace function public.viewer_organization_by_id(organization_id int)
   returns setof public.organizations rows 1
   stable
   security definer
@@ -1566,7 +1556,7 @@ create or replace function public.viewer_organization_by_id(target_organization_
   as $$
     select o.*
     from public.organizations o
-    where o.organization_id = target_organization_id
+    where o.organization_id = viewer_organization_by_id.organization_id
       and o.organization_id in (select organization_id from public.tenants_organizations_profiles)
     limit 1;
   $$;
@@ -1806,9 +1796,7 @@ begin
   -- service_role bypass: auth.uid() is NULL when called outside an authenticated session.
   if public.viewer_profile_id() is null then
     return old;
-  end if;
-
-  if old.permission_id not in ('members_manage', '*') then
+  elsif old.permission_id not in ('members_manage', '*') then
     return old;
   end if;
 
@@ -1817,13 +1805,10 @@ begin
   where membership_id = old.membership_id;
 
   -- Pending invites carry no live access — they cannot lock anyone out.
+  -- If the membership keeps the OTHER admin permission, it remains active — no lockout.
   if _profile_id is null then
     return old;
-  end if;
-
-  -- If this membership keeps the OTHER admin permission after the deletion,
-  -- it remains an active admin — no lockout risk regardless of other memberships.
-  if exists (
+  elsif exists (
     select 1 from public.membership_permissions
     where membership_id = old.membership_id
       and permission_id in ('members_manage', '*')
@@ -1859,10 +1844,7 @@ declare
   _viewer uuid;
 begin
   -- Only fire when revoked_at transitions from NULL → not NULL.
-  if old.membership_revoked_at is not null then
-    return new;
-  end if;
-  if new.membership_revoked_at is null then
+  if old.membership_revoked_at is not null or new.membership_revoked_at is null then
     return new;
   end if;
 
@@ -1877,10 +1859,8 @@ begin
   if new.profile_id is not null and new.profile_id = _viewer then
     raise exception 'self_remove_blocked'
       using hint = 'cannot revoke your own membership';
-  end if;
-
   -- Last-admin: pending invites carry no live access, only claimed seats lock the org.
-  if new.profile_id is not null
+  elsif new.profile_id is not null
      and not public.org_has_other_active_admin(new.organization_id, new.membership_id) then
     raise exception 'last_admin_protected'
       using hint = 'cannot revoke the last admin of the organization';
@@ -2569,7 +2549,7 @@ grant execute on function public.viewer_membership_pending() to authenticated;
 -- invite identifier (via viewer_membership_pending). SECURITY DEFINER so it can write
 -- through the RLS policy (the policy gates writes on members_manage, which the
 -- invitee does NOT have yet).
-create or replace function public.viewer_membership_accept(target_membership_id int)
+create or replace function public.viewer_membership_accept(membership_id int)
   returns public.memberships
   language plpgsql
   security definer
@@ -2581,10 +2561,9 @@ create or replace function public.viewer_membership_accept(target_membership_id 
     begin
       if _user_id is null then
         raise exception 'not authenticated';
-      end if;
-      if not exists (
+      elsif not exists (
         select 1 from public.viewer_membership_pending() vmp
-        where vmp.membership_id = target_membership_id
+        where vmp.membership_id = viewer_membership_accept.membership_id
       ) then
         raise exception 'invitation not found or does not match your account';
       end if;
@@ -2593,7 +2572,7 @@ create or replace function public.viewer_membership_accept(target_membership_id 
             membership_accepted_at = current_timestamp,
             -- Burn the token; the row is now claimed.
             membership_invite_token = null
-        where membership_id = target_membership_id
+        where membership_id = viewer_membership_accept.membership_id
         returning * into _row;
       return _row;
     end;
@@ -2603,7 +2582,7 @@ grant execute on function public.viewer_membership_accept(int) to authenticated;
 
 -- Reject an invite. Stamps rejected_at; profile_id stays null. Same matching guard
 -- as accept.
-create or replace function public.viewer_membership_reject(target_membership_id int)
+create or replace function public.viewer_membership_reject(membership_id int)
   returns public.memberships
   language plpgsql
   security definer
@@ -2614,17 +2593,16 @@ create or replace function public.viewer_membership_reject(target_membership_id 
     begin
       if public.viewer_profile_id() is null then
         raise exception 'not authenticated';
-      end if;
-      if not exists (
+      elsif not exists (
         select 1 from public.viewer_membership_pending() vmp
-        where vmp.membership_id = target_membership_id
+        where vmp.membership_id = viewer_membership_reject.membership_id
       ) then
         raise exception 'invitation not found or does not match your account';
       end if;
       update public.memberships
         set membership_rejected_at = current_timestamp,
             membership_invite_token = null
-        where membership_id = target_membership_id
+        where membership_id = viewer_membership_reject.membership_id
         returning * into _row;
       return _row;
     end;

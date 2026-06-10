@@ -1,11 +1,37 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_HOST } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
-import { LegalArticle } from "../_legal/article";
-import { LEGAL_LOCALE, LEGAL_NAV, type LegalSection } from "../_legal/docs";
+
+type LegalLocale = "es" | "en" | "pt";
+type LegalSection = "terms" | "privacy" | "cookies" | "dpa" | "security";
 
 const SECTIONS: LegalSection[] = ["terms", "privacy", "cookies", "dpa", "security"];
+
+const SECTION_LABELS: Record<LegalLocale, Record<LegalSection, string>> = {
+  es: { terms: "Términos del servicio", privacy: "Privacidad", cookies: "Cookies", dpa: "DPA", security: "Seguridad" },
+  en: { terms: "Terms of Service", privacy: "Privacy", cookies: "Cookies", dpa: "DPA", security: "Security" },
+  pt: { terms: "Termos de Serviço", privacy: "Privacidade", cookies: "Cookies", dpa: "DPA", security: "Segurança" },
+};
+
+function toLegalLocale(locale: string): LegalLocale {
+  if (locale.startsWith("en")) return "en";
+  if (locale.startsWith("pt")) return "pt";
+  return "es";
+}
+
+async function loadMarkdown(locale: LegalLocale, section: LegalSection): Promise<string | null> {
+  try {
+    return await fs.readFile(path.join(process.cwd(), "content/legal", locale, `${section}.md`), "utf-8");
+  } catch {
+    return null;
+  }
+}
 
 export function generateStaticParams() {
   return SECTIONS.map((section) => ({ section }));
@@ -14,11 +40,10 @@ export function generateStaticParams() {
 export async function generateMetadata(props: PageProps<"/[locale]/legal/[section]">): Promise<Metadata> {
   const { locale, section } = await props.params;
   if (!SECTIONS.includes(section as LegalSection)) notFound();
-  const legalLocale = LEGAL_LOCALE(locale);
+  const legalLocale = toLegalLocale(locale);
   const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
   const base = `https://${APP_HOST}`;
-  const nav = LEGAL_NAV[legalLocale].find((n) => n.id === section);
-  const title = nav?.["label"] ?? section;
+  const title = SECTION_LABELS[legalLocale][section as LegalSection];
   return {
     title,
     alternates: {
@@ -41,5 +66,40 @@ export async function generateMetadata(props: PageProps<"/[locale]/legal/[sectio
 export default async function LegalSectionPage(props: PageProps<"/[locale]/legal/[section]">) {
   const { locale, section } = await props.params;
   if (!SECTIONS.includes(section as LegalSection)) notFound();
-  return <LegalArticle locale={LEGAL_LOCALE(locale)} section={section as LegalSection} />;
+  const { t } = await getRosetta(LOCALES, locale);
+  const legalLocale = toLegalLocale(locale);
+  const content = await loadMarkdown(legalLocale, section as LegalSection);
+
+  return (
+    <article className="flex flex-col gap-6">
+      <nav aria-label="Breadcrumb">
+        <ol className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
+          <li>
+            <Link href={`/${locale}/legal`} className="hover:text-foreground no-underline">
+              /legal
+            </Link>
+          </li>
+          <li className="opacity-50" aria-hidden="true">
+            /
+          </li>
+          <li className="text-foreground" aria-current="page">
+            {section}
+          </li>
+        </ol>
+      </nav>
+
+      {content ? (
+        <div className="prose prose-neutral dark:prose-invert max-w-[68ch]">
+          <ReactMarkdown>{content}</ReactMarkdown>
+        </div>
+      ) : (
+        <p className="text-muted-foreground text-sm">{t("coming_soon")}</p>
+      )}
+    </article>
+  );
 }
+
+const LOCALE_ES = { coming_soon: "Próximamente." };
+const LOCALE_EN: typeof LOCALE_ES = { coming_soon: "Coming soon." };
+const LOCALE_PT: typeof LOCALE_ES = { coming_soon: "Em breve." };
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

@@ -993,7 +993,6 @@ export type Database = {
         Returns: boolean;
       };
       viewer_is_agency_member: { Args: never; Returns: boolean };
-      viewer_is_concierge: { Args: never; Returns: boolean };
       viewer_membership_accept: {
         Args: { target_membership_id: number };
         Returns: {

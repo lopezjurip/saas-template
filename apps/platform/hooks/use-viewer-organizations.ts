@@ -1,6 +1,6 @@
 "use client";
 
-import type { ResultOf } from "@graphql-typed-document-node/core";
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { useGraphyQuery } from "@packages/graphy/react";
 import { useSupabaseUser } from "@packages/supabase/react";
 import type { SWRConfiguration } from "swr";
@@ -18,11 +18,8 @@ export const ViewerOrganizationHookFragment = /*#__PURE__*/ gql(`
 export type ViewerOrganizationHookFragmentType = ResultOf<typeof ViewerOrganizationHookFragment>;
 
 export const ViewerOrganizationsHookQuery = /*#__PURE__*/ gql(`
-  query ViewerOrganizationsHookQuery($tenant_id: Int) {
-    viewer_organizations(
-      filter: { tenant_id: { eq: $tenant_id } }
-      orderBy: [{ organization_name: AscNullsLast }]
-    ) {
+  query ViewerOrganizationsHookQuery($filter: organizationsFilter, $orderBy: [organizationsOrderBy!]) {
+    organizations: viewer_organizations(filter: $filter, orderBy: $orderBy) {
       edges {
         node {
           ...ViewerOrganizationHookFragment
@@ -34,24 +31,22 @@ export const ViewerOrganizationsHookQuery = /*#__PURE__*/ gql(`
 
 export const ViewerOrganizationByIdHookQuery = /*#__PURE__*/ gql(`
   query ViewerOrganizationByIdHookQuery($organization_id: Int!) {
-    viewer_organization_by_id(target_organization_id: $organization_id) {
+    organization: viewer_organization_by_id(target_organization_id: $organization_id) {
       ...ViewerOrganizationHookFragment
     }
   }
 `);
 
 type ViewerOrganizationsHookQueryData = ResultOf<typeof ViewerOrganizationsHookQuery>;
+type ViewerOrganizationsHookQueryVars = VariablesOf<typeof ViewerOrganizationsHookQuery>;
 type ViewerOrganizationByIdHookQueryData = ResultOf<typeof ViewerOrganizationByIdHookQuery>;
 
 export function useViewerOrganizations(
-  tenant_id?: number,
+  options?: Pick<ViewerOrganizationsHookQueryVars, "filter" | "orderBy">,
   config?: SWRConfiguration<ViewerOrganizationsHookQueryData>,
 ) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(
-    user ? { query: ViewerOrganizationsHookQuery, variables: { tenant_id: tenant_id ?? null } } : null,
-    config,
-  );
+  return useGraphyQuery(user ? { query: ViewerOrganizationsHookQuery, variables: options ?? {} } : null, config);
 }
 
 export function useViewerOrganization(

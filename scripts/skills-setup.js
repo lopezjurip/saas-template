@@ -68,7 +68,20 @@ async function removeLegacySymlink(source) {
   }
 }
 
+async function initEnv() {
+  const envExample = join(rootDir, ".env.example");
+  const envLocal = join(rootDir, ".env.local");
+  try {
+    await fs.access(envLocal);
+    console.log("✓ .env.local already exists, skipping copy.");
+  } catch {
+    await fs.copyFile(envExample, envLocal);
+    console.log("✓ Created .env.local from .env.example (update with real values before deploying).");
+  }
+}
+
 async function main() {
+  await initEnv();
   console.log("Setting up custom skills symlinks...");
 
   try {

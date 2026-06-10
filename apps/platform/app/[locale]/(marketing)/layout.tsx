@@ -7,11 +7,10 @@ import type { Route } from "next";
 import Link from "next/link";
 import { LocaleToggle } from "~/components/locale-toggle";
 import { ThemeToggle } from "~/components/theme-toggle";
-import { ROSETTA } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
 
 export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
-  const { locale } = await props.params;
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t, locale } = await getRosetta(LOCALES);
   const user = await getSupabaseServerUser();
   const year = new Date().getFullYear().toString();
 

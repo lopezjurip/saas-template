@@ -14,7 +14,7 @@ import { useEffect, useMemo, useState } from "react";
  */
 export function GraphyClientProvider({ children }: { children: React.ReactNode }) {
   const supabase = useSupabase();
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>();
 
   useEffect(() => {
     let mounted = true;

@@ -4,7 +4,7 @@ import { StepShell } from "../_components/step-shell";
 import { getViewerOnboardingState } from "../state.server";
 import { DocumentForm } from "./document-form";
 
-export default async function OnboardingDocumentPage(_props: PageProps<"/[locale]/auth/onboarding/document">) {
+export default async function OnboardingDocumentPage(props: PageProps<"/[locale]/auth/onboarding/document">) {
   const state = await getViewerOnboardingState();
 
   return (

@@ -80,7 +80,7 @@ if (hostname) {
 }
 
 const config: NextConfig = {
-  allowedDevOrigins: ["lvh.me", "*.lvh.me"],
+  allowedDevOrigins: ["lvh.me"],
   typedRoutes: true,
   transpilePackages: [
     "@packages/debug",

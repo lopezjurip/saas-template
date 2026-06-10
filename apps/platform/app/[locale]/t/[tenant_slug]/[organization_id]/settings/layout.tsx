@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { SubSidebar, type SubSidebarItem } from "~/components/sub-sidebar";
-import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
+import { assertLocale } from "~/lib/i18n.server";
 
 export default async function SettingsLayout({
   children,
@@ -11,8 +11,8 @@ export default async function SettingsLayout({
   params: Promise<{ locale: string; tenant_slug: string; organization_id: string }>;
 }) {
   const { locale, tenant_slug, organization_id } = await params;
-  if (!IS_SUPPORTED_LOCALE(locale)) notFound();
-  const { t } = ROSETTA(LOCALES, locale);
+  assertLocale(locale);
+  const { t } = await getRosetta(LOCALES, locale);
 
   const base = `/${locale}/${tenant_slug}/${organization_id}/settings`;
 

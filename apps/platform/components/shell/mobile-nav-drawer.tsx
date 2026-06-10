@@ -63,7 +63,7 @@ export function MobileNavDrawer({
   onSettings: () => void;
 }) {
   const { t } = useRosetta(LOCALES);
-  const base = `/${locale}/${tenant.tenant_slug}/${organization.organization_id}`;
+  const base = `/${locale}/t/${tenant.tenant_slug}/${organization.organization_id}`;
   const items = BUILD_NAV(base, {
     navHome: t("navHome"),
     navMembers: t("navMembers"),
