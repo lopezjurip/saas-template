@@ -30,7 +30,7 @@ export const ViewerOrganizationsGetQuery = /*#__PURE__*/ gql(`
 
 export const ViewerOrganizationByIdGetQuery = /*#__PURE__*/ gql(`
   query ViewerOrganizationByIdGetQuery($organization_id: Int!) {
-    organization: viewer_organization_by_id(target_organization_id: $organization_id) {
+    organization: viewer_organization_by_id(organization_id: $organization_id) {
       ...ViewerOrganizationGetFragment
     }
   }

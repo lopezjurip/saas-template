@@ -31,7 +31,7 @@ export const ViewerTenantsHookQuery = /*#__PURE__*/ gql(`
 
 export const ViewerTenantBySlugHookQuery = /*#__PURE__*/ gql(`
   query ViewerTenantBySlugHookQuery($tenant_slug: String!) {
-    tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
+    tenant: viewer_tenant_by_slug(tenant_slug: $tenant_slug) {
       ...ViewerTenantHookFragment
     }
   }

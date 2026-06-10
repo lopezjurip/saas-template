@@ -21,11 +21,11 @@ function GENERATE_INVITATION_TOKEN(): string {
 export const actionInviteMember = authedAction
   .inputSchema(inviteMemberSchema)
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
-    const { TError } = await getRosetta(LOCALES);
+    const { t, TError } = await getRosetta(LOCALES);
     const { data: canManage } = await supabase
       .rpc("viewer_has_permission", {
-        target_organization_id: parsedInput["organization_id"],
-        target_permission_id: "members_manage",
+        organization_id: parsedInput["organization_id"],
+        permission_id: "members_manage",
       })
       .throwOnError();
     if (!canManage) {
@@ -62,13 +62,13 @@ export const actionInviteMember = authedAction
       if (!email) throw new Error(t("invite_failed"));
 
       const dup = await admin
-        .from("memberships")
-        .select("membership_id")
+        .from("organization_memberships")
+        .select("organization_membership_id")
         .eq("organization_id", parsedInput["organization_id"])
-        .eq("membership_invite_email", email)
+        .eq("organization_membership_invite_email", email)
         .is("profile_id", null)
-        .is("membership_revoked_at", null)
-        .is("membership_rejected_at", null)
+        .is("organization_membership_revoked_at", null)
+        .is("organization_membership_rejected_at", null)
         .maybeSingle();
       if (dup.data) {
         throw new TError("invitation_duplicate");
@@ -79,13 +79,13 @@ export const actionInviteMember = authedAction
         const existing_user = existing.data.users.find((u) => u["email"]?.toLowerCase() === email);
         if (existing_user) {
           const memberDup = await admin
-            .from("memberships")
-            .select("membership_id")
+            .from("organization_memberships")
+            .select("organization_membership_id")
             .eq("organization_id", parsedInput["organization_id"])
             .eq("profile_id", existing_user["id"])
-            .not("membership_accepted_at", "is", null)
-            .is("membership_revoked_at", null)
-            .is("membership_rejected_at", null)
+            .not("organization_membership_accepted_at", "is", null)
+            .is("organization_membership_revoked_at", null)
+            .is("organization_membership_rejected_at", null)
             .maybeSingle();
           if (memberDup.data) {
             throw new TError("email_already_member");
@@ -96,14 +96,14 @@ export const actionInviteMember = authedAction
       const token = GENERATE_INVITATION_TOKEN();
 
       const insertRes = await admin
-        .from("memberships")
+        .from("organization_memberships")
         .insert({
           organization_id: parsedInput["organization_id"],
-          membership_invite_email: email,
-          membership_invite_token: token,
-          membership_invite_expires_at: expires_at,
+          organization_membership_invite_email: email,
+          organization_membership_invite_token: token,
+          organization_membership_invite_expires_at: expires_at,
         })
-        .select("membership_id")
+        .select("organization_membership_id")
         .single();
 
       if (insertRes.error || !insertRes.data) {
@@ -120,13 +120,13 @@ export const actionInviteMember = authedAction
       const invite = await admin.auth.admin.inviteUserByEmail(email, {
         redirectTo: acceptUrl,
         data: {
-          membership_id: insertRes.data["membership_id"],
+          organization_membership_id: insertRes.data["organization_membership_id"],
           organization_id: parsedInput["organization_id"],
           tenant_slug,
         },
       });
       if (invite.error) {
-        log.warn("supabase inviteUserByEmail failed; membership row kept", {
+        log.warn("supabase inviteUserByEmail failed; organization_membership row kept", {
           organization_id: parsedInput["organization_id"],
           email,
           error: invite.error.message,
@@ -135,7 +135,7 @@ export const actionInviteMember = authedAction
 
       revalidatePath(`/${locale}/${tenant_slug}/${parsedInput["organization_id"]}/settings/members`);
       return {
-        membership_id: insertRes.data["membership_id"],
+        organization_membership_id: insertRes.data["organization_membership_id"],
         invitation_url: acceptUrl,
         channel: "email" as const,
       };
@@ -148,18 +148,18 @@ export const actionInviteMember = authedAction
       const token = GENERATE_INVITATION_TOKEN();
 
       const insertRes = await admin
-        .from("memberships")
+        .from("organization_memberships")
         .insert({
           organization_id: parsedInput["organization_id"],
-          membership_invite_phone: phone,
-          membership_invite_token: token,
-          membership_invite_expires_at: expires_at,
+          organization_membership_invite_phone: phone,
+          organization_membership_invite_token: token,
+          organization_membership_invite_expires_at: expires_at,
         })
-        .select("membership_id")
+        .select("organization_membership_id")
         .single();
 
       if (insertRes.error || !insertRes.data) {
-        log.error("membership phone insert failed", {
+        log.error("organization_membership phone insert failed", {
           profile_id: user.id,
           organization_id: parsedInput["organization_id"],
           error: insertRes.error,
@@ -177,7 +177,7 @@ export const actionInviteMember = authedAction
 
       revalidatePath(`/${locale}/${tenant_slug}/${parsedInput["organization_id"]}/settings/members`);
       return {
-        membership_id: insertRes.data["membership_id"],
+        organization_membership_id: insertRes.data["organization_membership_id"],
         invitation_url: acceptUrl,
         channel: "phone" as const,
       };
@@ -190,15 +190,15 @@ export const actionInviteMember = authedAction
     if (!country || !kind || !value) throw new Error(t("invite_failed"));
 
     const dup = await admin
-      .from("memberships")
-      .select("membership_id")
+      .from("organization_memberships")
+      .select("organization_membership_id")
       .eq("organization_id", parsedInput["organization_id"])
-      .eq("membership_invite_address_level0_id", country)
-      .eq("membership_invite_document_kind", kind)
-      .eq("membership_invite_document_value", value)
+      .eq("organization_membership_invite_address_level0_id", country)
+      .eq("organization_membership_invite_document_kind", kind)
+      .eq("organization_membership_invite_document_value", value)
       .is("profile_id", null)
-      .is("membership_revoked_at", null)
-      .is("membership_rejected_at", null)
+      .is("organization_membership_revoked_at", null)
+      .is("organization_membership_rejected_at", null)
       .maybeSingle();
     if (dup.data) {
       throw new TError("invitation_duplicate");
@@ -207,20 +207,20 @@ export const actionInviteMember = authedAction
     const token = GENERATE_INVITATION_TOKEN();
 
     const insertRes = await admin
-      .from("memberships")
+      .from("organization_memberships")
       .insert({
         organization_id: parsedInput["organization_id"],
-        membership_invite_address_level0_id: country,
-        membership_invite_document_kind: kind,
-        membership_invite_document_value: value,
-        membership_invite_token: token,
-        membership_invite_expires_at: expires_at,
+        organization_membership_invite_address_level0_id: country,
+        organization_membership_invite_document_kind: kind,
+        organization_membership_invite_document_value: value,
+        organization_membership_invite_token: token,
+        organization_membership_invite_expires_at: expires_at,
       })
-      .select("membership_id")
+      .select("organization_membership_id")
       .single();
 
     if (insertRes.error || !insertRes.data) {
-      log.error("membership document insert failed", {
+      log.error("organization_membership document insert failed", {
         profile_id: user.id,
         organization_id: parsedInput["organization_id"],
         error: insertRes.error,
@@ -235,7 +235,7 @@ export const actionInviteMember = authedAction
 
     revalidatePath(`/${locale}/${tenant_slug}/${parsedInput["organization_id"]}/settings/members`);
     return {
-      membership_id: insertRes.data["membership_id"],
+      organization_membership_id: insertRes.data["organization_membership_id"],
       invitation_url: acceptUrl,
       channel: "document" as const,
     };

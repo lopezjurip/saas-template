@@ -31,7 +31,7 @@ const HomePickerPageQuery = gql(`
 `);
 
 // /home is always the picker now (no single-org auto-redirect). The picker shows
-// every membership as a big tile plus a "nueva organización" tile pointing at
+// every organization_membership as a big tile plus a "nueva organización" tile pointing at
 // /tenants/create. A banner nudges back to onboarding if any method is pending.
 export default async function HomePage(props: PageProps<"/[locale]/home">) {
   const { locale } = await props.params;

@@ -2,9 +2,8 @@
 /** Internal type. DO NOT USE DIRECTLY. */
 type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
-export type Incremental<T> = T | { [P in keyof T]?: P extends " $fragmentName" | "__typename" ? T[P] : never };
-
-import type { DocumentTypeDecoration } from "@graphql-typed-document-node/core";
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
+import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
 /** Boolean expression comparing fields on type "Datetime" */
 export type DatetimeFilter = {
   eq?: string | null | undefined;
@@ -18,8 +17,8 @@ export type DatetimeFilter = {
 };
 
 export enum FilterIs {
-  NotNull = "NOT_NULL",
-  Null = "NULL",
+  NotNull = 'NOT_NULL',
+  Null = 'NULL'
 }
 
 /** Boolean expression comparing fields on type "ID" */
@@ -42,13 +41,13 @@ export type IntFilter = {
 /** Defines a per-field sorting order */
 export enum OrderByDirection {
   /** Ascending order, nulls first */
-  AscNullsFirst = "AscNullsFirst",
+  AscNullsFirst = 'AscNullsFirst',
   /** Ascending order, nulls last */
-  AscNullsLast = "AscNullsLast",
+  AscNullsLast = 'AscNullsLast',
   /** Descending order, nulls first */
-  DescNullsFirst = "DescNullsFirst",
+  DescNullsFirst = 'DescNullsFirst',
   /** Descending order, nulls last */
-  DescNullsLast = "DescNullsLast",
+  DescNullsLast = 'DescNullsLast'
 }
 
 /** Boolean expression comparing fields on type "String" */
@@ -112,10 +111,116 @@ export type OrganizationsOrderBy = {
   tenant_id?: OrderByDirection | null | undefined;
 };
 
+export type Profile_Webauthn_ChallengesFilter = {
+  /** Returns true only if all its inner filters are true, otherwise returns false */
+  and?: Array<Profile_Webauthn_ChallengesFilter> | null | undefined;
+  nodeId?: IdFilter | null | undefined;
+  /** Negates a filter */
+  not?: Profile_Webauthn_ChallengesFilter | null | undefined;
+  /** Returns true if at least one of its inner filters is true, otherwise returns false */
+  or?: Array<Profile_Webauthn_ChallengesFilter> | null | undefined;
+  profile_id?: UuidFilter | null | undefined;
+  webauthn_challenge_created_at?: DatetimeFilter | null | undefined;
+  webauthn_challenge_id?: UuidFilter | null | undefined;
+  webauthn_challenge_value?: StringFilter | null | undefined;
+};
+
+export type Profile_Webauthn_ChallengesInsertInput = {
+  profile_id?: string | null | undefined;
+  webauthn_challenge_created_at?: string | null | undefined;
+  webauthn_challenge_id?: string | null | undefined;
+  webauthn_challenge_value?: string | null | undefined;
+};
+
+export type Profile_Webauthn_ChallengesOrderBy = {
+  profile_id?: OrderByDirection | null | undefined;
+  webauthn_challenge_created_at?: OrderByDirection | null | undefined;
+  webauthn_challenge_id?: OrderByDirection | null | undefined;
+  webauthn_challenge_value?: OrderByDirection | null | undefined;
+};
+
+export type Profile_Webauthn_CredentialsFilter = {
+  /** Returns true only if all its inner filters are true, otherwise returns false */
+  and?: Array<Profile_Webauthn_CredentialsFilter> | null | undefined;
+  nodeId?: IdFilter | null | undefined;
+  /** Negates a filter */
+  not?: Profile_Webauthn_CredentialsFilter | null | undefined;
+  /** Returns true if at least one of its inner filters is true, otherwise returns false */
+  or?: Array<Profile_Webauthn_CredentialsFilter> | null | undefined;
+  profile_id?: UuidFilter | null | undefined;
+  webauthn_credential_aaguid?: StringFilter | null | undefined;
+  webauthn_credential_backup_state?: StringFilter | null | undefined;
+  webauthn_credential_created_at?: DatetimeFilter | null | undefined;
+  webauthn_credential_device_type?: StringFilter | null | undefined;
+  webauthn_credential_external_id?: StringFilter | null | undefined;
+  webauthn_credential_friendly_name?: StringFilter | null | undefined;
+  webauthn_credential_id?: UuidFilter | null | undefined;
+  webauthn_credential_last_used_at?: DatetimeFilter | null | undefined;
+  webauthn_credential_public_key?: StringFilter | null | undefined;
+  webauthn_credential_sign_count?: IntFilter | null | undefined;
+  webauthn_credential_transports?: StringListFilter | null | undefined;
+  webauthn_credential_type?: StringFilter | null | undefined;
+  webauthn_credential_updated_at?: DatetimeFilter | null | undefined;
+  webauthn_credential_user_verification_status?: StringFilter | null | undefined;
+};
+
+export type Profile_Webauthn_CredentialsInsertInput = {
+  profile_id?: string | null | undefined;
+  webauthn_credential_aaguid?: string | null | undefined;
+  webauthn_credential_backup_state?: string | null | undefined;
+  webauthn_credential_created_at?: string | null | undefined;
+  webauthn_credential_device_type?: string | null | undefined;
+  webauthn_credential_external_id?: string | null | undefined;
+  webauthn_credential_friendly_name?: string | null | undefined;
+  webauthn_credential_id?: string | null | undefined;
+  webauthn_credential_last_used_at?: string | null | undefined;
+  webauthn_credential_public_key?: string | null | undefined;
+  webauthn_credential_sign_count?: number | null | undefined;
+  webauthn_credential_transports?: Array<string | null | undefined> | null | undefined;
+  webauthn_credential_type?: string | null | undefined;
+  webauthn_credential_updated_at?: string | null | undefined;
+  webauthn_credential_user_verification_status?: string | null | undefined;
+};
+
+export type Profile_Webauthn_CredentialsOrderBy = {
+  profile_id?: OrderByDirection | null | undefined;
+  webauthn_credential_aaguid?: OrderByDirection | null | undefined;
+  webauthn_credential_backup_state?: OrderByDirection | null | undefined;
+  webauthn_credential_created_at?: OrderByDirection | null | undefined;
+  webauthn_credential_device_type?: OrderByDirection | null | undefined;
+  webauthn_credential_external_id?: OrderByDirection | null | undefined;
+  webauthn_credential_friendly_name?: OrderByDirection | null | undefined;
+  webauthn_credential_id?: OrderByDirection | null | undefined;
+  webauthn_credential_last_used_at?: OrderByDirection | null | undefined;
+  webauthn_credential_public_key?: OrderByDirection | null | undefined;
+  webauthn_credential_sign_count?: OrderByDirection | null | undefined;
+  webauthn_credential_type?: OrderByDirection | null | undefined;
+  webauthn_credential_updated_at?: OrderByDirection | null | undefined;
+  webauthn_credential_user_verification_status?: OrderByDirection | null | undefined;
+};
+
+export type Profile_Webauthn_CredentialsUpdateInput = {
+  profile_id?: string | null | undefined;
+  webauthn_credential_aaguid?: string | null | undefined;
+  webauthn_credential_backup_state?: string | null | undefined;
+  webauthn_credential_created_at?: string | null | undefined;
+  webauthn_credential_device_type?: string | null | undefined;
+  webauthn_credential_external_id?: string | null | undefined;
+  webauthn_credential_friendly_name?: string | null | undefined;
+  webauthn_credential_id?: string | null | undefined;
+  webauthn_credential_last_used_at?: string | null | undefined;
+  webauthn_credential_public_key?: string | null | undefined;
+  webauthn_credential_sign_count?: number | null | undefined;
+  webauthn_credential_transports?: Array<string | null | undefined> | null | undefined;
+  webauthn_credential_type?: string | null | undefined;
+  webauthn_credential_updated_at?: string | null | undefined;
+  webauthn_credential_user_verification_status?: string | null | undefined;
+};
+
 export enum Tenant_Tier {
-  Enterprise = "enterprise",
-  Free = "free",
-  Pro = "pro",
+  Enterprise = 'enterprise',
+  Free = 'free',
+  Pro = 'pro'
 }
 
 /** Boolean expression comparing fields on type "tenant_tier" */
@@ -153,495 +258,232 @@ export type TenantsOrderBy = {
   tenant_updated_at?: OrderByDirection | null | undefined;
 };
 
-export type Webauthn_ChallengesFilter = {
-  /** Returns true only if all its inner filters are true, otherwise returns false */
-  and?: Array<Webauthn_ChallengesFilter> | null | undefined;
-  nodeId?: IdFilter | null | undefined;
-  /** Negates a filter */
-  not?: Webauthn_ChallengesFilter | null | undefined;
-  /** Returns true if at least one of its inner filters is true, otherwise returns false */
-  or?: Array<Webauthn_ChallengesFilter> | null | undefined;
-  profile_id?: UuidFilter | null | undefined;
-  webauthn_challenge_created_at?: DatetimeFilter | null | undefined;
-  webauthn_challenge_id?: UuidFilter | null | undefined;
-  webauthn_challenge_value?: StringFilter | null | undefined;
-};
-
-export type Webauthn_ChallengesInsertInput = {
-  profile_id?: string | null | undefined;
-  webauthn_challenge_created_at?: string | null | undefined;
-  webauthn_challenge_id?: string | null | undefined;
-  webauthn_challenge_value?: string | null | undefined;
-};
-
-export type Webauthn_ChallengesOrderBy = {
-  profile_id?: OrderByDirection | null | undefined;
-  webauthn_challenge_created_at?: OrderByDirection | null | undefined;
-  webauthn_challenge_id?: OrderByDirection | null | undefined;
-  webauthn_challenge_value?: OrderByDirection | null | undefined;
-};
-
-export type Webauthn_CredentialsFilter = {
-  /** Returns true only if all its inner filters are true, otherwise returns false */
-  and?: Array<Webauthn_CredentialsFilter> | null | undefined;
-  nodeId?: IdFilter | null | undefined;
-  /** Negates a filter */
-  not?: Webauthn_CredentialsFilter | null | undefined;
-  /** Returns true if at least one of its inner filters is true, otherwise returns false */
-  or?: Array<Webauthn_CredentialsFilter> | null | undefined;
-  profile_id?: UuidFilter | null | undefined;
-  webauthn_credential_aaguid?: StringFilter | null | undefined;
-  webauthn_credential_backup_state?: StringFilter | null | undefined;
-  webauthn_credential_created_at?: DatetimeFilter | null | undefined;
-  webauthn_credential_device_type?: StringFilter | null | undefined;
-  webauthn_credential_external_id?: StringFilter | null | undefined;
-  webauthn_credential_friendly_name?: StringFilter | null | undefined;
-  webauthn_credential_id?: UuidFilter | null | undefined;
-  webauthn_credential_last_used_at?: DatetimeFilter | null | undefined;
-  webauthn_credential_public_key?: StringFilter | null | undefined;
-  webauthn_credential_sign_count?: IntFilter | null | undefined;
-  webauthn_credential_transports?: StringListFilter | null | undefined;
-  webauthn_credential_type?: StringFilter | null | undefined;
-  webauthn_credential_updated_at?: DatetimeFilter | null | undefined;
-  webauthn_credential_user_verification_status?: StringFilter | null | undefined;
-};
-
-export type Webauthn_CredentialsInsertInput = {
-  profile_id?: string | null | undefined;
-  webauthn_credential_aaguid?: string | null | undefined;
-  webauthn_credential_backup_state?: string | null | undefined;
-  webauthn_credential_created_at?: string | null | undefined;
-  webauthn_credential_device_type?: string | null | undefined;
-  webauthn_credential_external_id?: string | null | undefined;
-  webauthn_credential_friendly_name?: string | null | undefined;
-  webauthn_credential_id?: string | null | undefined;
-  webauthn_credential_last_used_at?: string | null | undefined;
-  webauthn_credential_public_key?: string | null | undefined;
-  webauthn_credential_sign_count?: number | null | undefined;
-  webauthn_credential_transports?: Array<string | null | undefined> | null | undefined;
-  webauthn_credential_type?: string | null | undefined;
-  webauthn_credential_updated_at?: string | null | undefined;
-  webauthn_credential_user_verification_status?: string | null | undefined;
-};
-
-export type Webauthn_CredentialsOrderBy = {
-  profile_id?: OrderByDirection | null | undefined;
-  webauthn_credential_aaguid?: OrderByDirection | null | undefined;
-  webauthn_credential_backup_state?: OrderByDirection | null | undefined;
-  webauthn_credential_created_at?: OrderByDirection | null | undefined;
-  webauthn_credential_device_type?: OrderByDirection | null | undefined;
-  webauthn_credential_external_id?: OrderByDirection | null | undefined;
-  webauthn_credential_friendly_name?: OrderByDirection | null | undefined;
-  webauthn_credential_id?: OrderByDirection | null | undefined;
-  webauthn_credential_last_used_at?: OrderByDirection | null | undefined;
-  webauthn_credential_public_key?: OrderByDirection | null | undefined;
-  webauthn_credential_sign_count?: OrderByDirection | null | undefined;
-  webauthn_credential_type?: OrderByDirection | null | undefined;
-  webauthn_credential_updated_at?: OrderByDirection | null | undefined;
-  webauthn_credential_user_verification_status?: OrderByDirection | null | undefined;
-};
-
-export type Webauthn_CredentialsUpdateInput = {
-  profile_id?: string | null | undefined;
-  webauthn_credential_aaguid?: string | null | undefined;
-  webauthn_credential_backup_state?: string | null | undefined;
-  webauthn_credential_created_at?: string | null | undefined;
-  webauthn_credential_device_type?: string | null | undefined;
-  webauthn_credential_external_id?: string | null | undefined;
-  webauthn_credential_friendly_name?: string | null | undefined;
-  webauthn_credential_id?: string | null | undefined;
-  webauthn_credential_last_used_at?: string | null | undefined;
-  webauthn_credential_public_key?: string | null | undefined;
-  webauthn_credential_sign_count?: number | null | undefined;
-  webauthn_credential_transports?: Array<string | null | undefined> | null | undefined;
-  webauthn_credential_type?: string | null | undefined;
-  webauthn_credential_updated_at?: string | null | undefined;
-  webauthn_credential_user_verification_status?: string | null | undefined;
-};
-
 export type OnboardingProfileFormUpdateNameMutationMutationVariables = Exact<{
   profile_id: string;
   profile_name_full: string;
 }>;
 
+
 export type OnboardingProfileFormUpdateNameMutationMutation = { updateprofilesCollection: { affectedCount: number } };
 
-export type ProfileSectionPageQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type ProfileSectionPageQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
-export type ProfileSectionPageQueryQuery = { profile: { profile_id: string; profile_name_full: string | null } | null };
+
+export type ProfileSectionPageQueryQuery = { profile: { profile_id: string, profile_name_full: string | null } | null };
 
 export type ProfileSectionUpdateNameMutationMutationVariables = Exact<{
   profile_id: string;
   profile_name_full: string;
 }>;
 
+
 export type ProfileSectionUpdateNameMutationMutation = { updateprofilesCollection: { affectedCount: number } };
 
-export type SecuritySectionPageQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type SecuritySectionPageQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
-export type SecuritySectionPageQueryQuery = {
-  profile: {
-    profile_id: string;
-    webauthn_credentialsCollection: {
-      edges: Array<{
-        node: {
-          webauthn_credential_id: string;
-          webauthn_credential_friendly_name: string | null;
-          webauthn_credential_device_type: string;
-          webauthn_credential_backup_state: string;
-          webauthn_credential_created_at: string;
-          webauthn_credential_last_used_at: string | null;
-        };
-      }>;
-    } | null;
-  } | null;
-};
+
+export type SecuritySectionPageQueryQuery = { profile: { profile_id: string, profile_webauthn_credentialsCollection: { edges: Array<{ node: { webauthn_credential_id: string, webauthn_credential_friendly_name: string | null, webauthn_credential_device_type: string, webauthn_credential_backup_state: string, webauthn_credential_created_at: string, webauthn_credential_last_used_at: string | null } }> } | null } | null };
 
 export type SecurityPasskeysListDeleteMutationMutationVariables = Exact<{
   webauthn_credential_id: string;
 }>;
 
-export type SecurityPasskeysListDeleteMutationMutation = {
-  deleteFromwebauthn_credentialsCollection: { affectedCount: number };
-};
 
-export type HomePickerPageQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type SecurityPasskeysListDeleteMutationMutation = { deleteFromprofile_webauthn_credentialsCollection: { affectedCount: number } };
 
-export type HomePickerPageQueryQuery = {
-  viewer_organizations: {
-    edges: Array<{
-      node: {
-        organization_id: number;
-        organization_name: string;
-        organization_slug: string;
-        tenants: { tenant_id: number; tenant_slug: string; tenant_name: string } | null;
-      };
-    }>;
-  } | null;
-};
+export type HomePickerPageQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
-export type EditMembershipGrantPermissionMutationMutationVariables = Exact<{
-  membership_id: number;
+
+export type HomePickerPageQueryQuery = { viewer_organizations: { edges: Array<{ node: { organization_id: number, organization_name: string, organization_slug: string, tenants: { tenant_id: number, tenant_slug: string, tenant_name: string } | null } }> } | null };
+
+export type EditOrganizationMembershipGrantPermissionMutationMutationVariables = Exact<{
+  organization_membership_id: number;
   permission_id: string;
 }>;
 
-export type EditMembershipGrantPermissionMutationMutation = {
-  insertIntomembership_permissionsCollection: { affectedCount: number } | null;
-};
 
-export type EditMembershipRevokePermissionMutationMutationVariables = Exact<{
-  membership_id: number;
+export type EditOrganizationMembershipGrantPermissionMutationMutation = { insertIntoorganization_membership_permissionsCollection: { affectedCount: number } | null };
+
+export type EditOrganizationMembershipRevokePermissionMutationMutationVariables = Exact<{
+  organization_membership_id: number;
   permission_id: string;
 }>;
 
-export type EditMembershipRevokePermissionMutationMutation = {
-  deleteFrommembership_permissionsCollection: { affectedCount: number };
-};
 
-export type EditMembershipRevokeMembershipMutationMutationVariables = Exact<{
-  membership_id: number;
+export type EditOrganizationMembershipRevokePermissionMutationMutation = { deleteFromorganization_membership_permissionsCollection: { affectedCount: number } };
+
+export type EditOrganizationMembershipRevokeOrganizationMembershipMutationMutationVariables = Exact<{
+  organization_membership_id: number;
   now: string;
 }>;
 
-export type EditMembershipRevokeMembershipMutationMutation = { updatemembershipsCollection: { affectedCount: number } };
+
+export type EditOrganizationMembershipRevokeOrganizationMembershipMutationMutation = { updateorganization_membershipsCollection: { affectedCount: number } };
 
 export type MembersPendingInvitationsCancelMutationMutationVariables = Exact<{
-  membership_id: number;
+  organization_membership_id: number;
   now: string;
 }>;
 
-export type MembersPendingInvitationsCancelMutationMutation = {
-  updatemembershipsCollection: { affectedCount: number };
-};
 
-export type HealthQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type MembersPendingInvitationsCancelMutationMutation = { updateorganization_membershipsCollection: { affectedCount: number } };
+
+export type HealthQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
 
 export type HealthQueryQuery = { health_current_timestamp: string | null };
 
-export type CountryGetFragmentFragment = {
-  address_level0_id: string;
-  address_level0_name: string;
-  address_level0_emoji: string | null;
-};
+export type CountryGetFragmentFragment = { address_level0_id: string, address_level0_name: string, address_level0_emoji: string | null };
 
-export type CountriesGetQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type CountriesGetQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
-export type CountriesGetQueryQuery = {
-  addresses_level0: {
-    edges: Array<{
-      node: { address_level0_id: string; address_level0_name: string; address_level0_emoji: string | null };
-    }>;
-  } | null;
-};
 
-export type ViewerOrganizationGetFragmentFragment = {
-  organization_id: number;
-  tenant_id: number;
-  organization_slug: string;
-  organization_name: string;
-};
+export type CountriesGetQueryQuery = { addresses_level0: { edges: Array<{ node: { address_level0_id: string, address_level0_name: string, address_level0_emoji: string | null } }> } | null };
+
+export type ViewerOrganizationGetFragmentFragment = { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string };
 
 export type ViewerOrganizationsGetQueryQueryVariables = Exact<{
   filter?: OrganizationsFilter | null | undefined;
   orderBy?: Array<OrganizationsOrderBy> | OrganizationsOrderBy | null | undefined;
 }>;
 
-export type ViewerOrganizationsGetQueryQuery = {
-  organizations: {
-    edges: Array<{
-      node: { organization_id: number; tenant_id: number; organization_slug: string; organization_name: string };
-    }>;
-  } | null;
-};
+
+export type ViewerOrganizationsGetQueryQuery = { organizations: { edges: Array<{ node: { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string } }> } | null };
 
 export type ViewerOrganizationByIdGetQueryQueryVariables = Exact<{
   organization_id: number;
 }>;
 
-export type ViewerOrganizationByIdGetQueryQuery = {
-  organization: {
-    organization_id: number;
-    tenant_id: number;
-    organization_slug: string;
-    organization_name: string;
-  } | null;
-};
 
-export type ViewerProfileGetFragmentFragment = {
-  profile_id: string;
-  profile_name_full: string | null;
-  profile_onboarded_at: string | null;
-  profile_disabled_at: string | null;
-  profile_created_at: string;
-  profile_updated_at: string;
-};
+export type ViewerOrganizationByIdGetQueryQuery = { organization: { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string } | null };
 
-export type ViewerProfileGetQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type ViewerProfileGetFragmentFragment = { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string };
 
-export type ViewerProfileGetQueryQuery = {
-  profile: {
-    profile_id: string;
-    profile_name_full: string | null;
-    profile_onboarded_at: string | null;
-    profile_disabled_at: string | null;
-    profile_created_at: string;
-    profile_updated_at: string;
-  } | null;
-};
+export type ViewerProfileGetQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
-export type ViewerTenantGetFragmentFragment = {
-  tenant_id: number;
-  tenant_slug: string;
-  tenant_name: string;
-  tenant_tier: Tenant_Tier;
-};
+
+export type ViewerProfileGetQueryQuery = { profile: { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string } | null };
+
+export type ViewerTenantGetFragmentFragment = { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier };
 
 export type ViewerTenantsGetQueryQueryVariables = Exact<{
   filter?: TenantsFilter | null | undefined;
   orderBy?: Array<TenantsOrderBy> | TenantsOrderBy | null | undefined;
 }>;
 
-export type ViewerTenantsGetQueryQuery = {
-  tenants: {
-    edges: Array<{ node: { tenant_id: number; tenant_slug: string; tenant_name: string; tenant_tier: Tenant_Tier } }>;
-  } | null;
-};
+
+export type ViewerTenantsGetQueryQuery = { tenants: { edges: Array<{ node: { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier } }> } | null };
 
 export type ViewerTenantBySlugGetQueryQueryVariables = Exact<{
   tenant_slug: string;
 }>;
 
-export type ViewerTenantBySlugGetQueryQuery = {
-  tenant: { tenant_id: number; tenant_slug: string; tenant_name: string; tenant_tier: Tenant_Tier } | null;
-};
 
-export type CountryHookFragmentFragment = {
-  address_level0_id: string;
-  address_level0_name: string;
-  address_level0_emoji: string | null;
-};
+export type ViewerTenantBySlugGetQueryQuery = { tenant: { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier } | null };
 
-export type CountriesHookQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type CountryHookFragmentFragment = { address_level0_id: string, address_level0_name: string, address_level0_emoji: string | null };
 
-export type CountriesHookQueryQuery = {
-  addresses_level0: {
-    edges: Array<{
-      node: { address_level0_id: string; address_level0_name: string; address_level0_emoji: string | null };
-    }>;
-  } | null;
-};
+export type CountriesHookQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
-export type ViewerOrganizationHookFragmentFragment = {
-  organization_id: number;
-  tenant_id: number;
-  organization_slug: string;
-  organization_name: string;
-};
+
+export type CountriesHookQueryQuery = { addresses_level0: { edges: Array<{ node: { address_level0_id: string, address_level0_name: string, address_level0_emoji: string | null } }> } | null };
+
+export type ViewerOrganizationHookFragmentFragment = { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string };
 
 export type ViewerOrganizationsHookQueryQueryVariables = Exact<{
   filter?: OrganizationsFilter | null | undefined;
   orderBy?: Array<OrganizationsOrderBy> | OrganizationsOrderBy | null | undefined;
 }>;
 
-export type ViewerOrganizationsHookQueryQuery = {
-  organizations: {
-    edges: Array<{
-      node: { organization_id: number; tenant_id: number; organization_slug: string; organization_name: string };
-    }>;
-  } | null;
-};
+
+export type ViewerOrganizationsHookQueryQuery = { organizations: { edges: Array<{ node: { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string } }> } | null };
 
 export type ViewerOrganizationByIdHookQueryQueryVariables = Exact<{
   organization_id: number;
 }>;
 
-export type ViewerOrganizationByIdHookQueryQuery = {
-  organization: {
-    organization_id: number;
-    tenant_id: number;
-    organization_slug: string;
-    organization_name: string;
-  } | null;
-};
 
-export type ViewerProfileHookFragmentFragment = {
-  profile_id: string;
-  profile_name_full: string | null;
-  profile_onboarded_at: string | null;
-  profile_disabled_at: string | null;
-  profile_created_at: string;
-  profile_updated_at: string;
-};
+export type ViewerOrganizationByIdHookQueryQuery = { organization: { organization_id: number, tenant_id: number, organization_slug: string, organization_name: string } | null };
 
-export type ViewerProfileHookQueryQueryVariables = Exact<{ [key: string]: never }>;
+export type ViewerProfileHookFragmentFragment = { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string };
 
-export type ViewerProfileHookQueryQuery = {
-  profile: {
-    profile_id: string;
-    profile_name_full: string | null;
-    profile_onboarded_at: string | null;
-    profile_disabled_at: string | null;
-    profile_created_at: string;
-    profile_updated_at: string;
-  } | null;
-};
+export type ViewerProfileHookQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
-export type ViewerTenantHookFragmentFragment = {
-  tenant_id: number;
-  tenant_slug: string;
-  tenant_name: string;
-  tenant_tier: Tenant_Tier;
-};
+
+export type ViewerProfileHookQueryQuery = { profile: { profile_id: string, profile_name_full: string | null, profile_onboarded_at: string | null, profile_disabled_at: string | null, profile_created_at: string, profile_updated_at: string } | null };
+
+export type ViewerTenantHookFragmentFragment = { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier };
 
 export type ViewerTenantsHookQueryQueryVariables = Exact<{
   filter?: TenantsFilter | null | undefined;
   orderBy?: Array<TenantsOrderBy> | TenantsOrderBy | null | undefined;
 }>;
 
-export type ViewerTenantsHookQueryQuery = {
-  tenants: {
-    edges: Array<{ node: { tenant_id: number; tenant_slug: string; tenant_name: string; tenant_tier: Tenant_Tier } }>;
-  } | null;
-};
+
+export type ViewerTenantsHookQueryQuery = { tenants: { edges: Array<{ node: { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier } }> } | null };
 
 export type ViewerTenantBySlugHookQueryQueryVariables = Exact<{
   tenant_slug: string;
 }>;
 
-export type ViewerTenantBySlugHookQueryQuery = {
-  tenant: { tenant_id: number; tenant_slug: string; tenant_name: string; tenant_tier: Tenant_Tier } | null;
-};
 
-export type PasskeyCredentialFragmentFragment = {
-  profile_id: string;
-  webauthn_credential_external_id: string;
-  webauthn_credential_type: string;
-  webauthn_credential_transports: Array<string | null>;
-  webauthn_credential_public_key: string;
-  webauthn_credential_sign_count: number;
-};
+export type ViewerTenantBySlugHookQueryQuery = { tenant: { tenant_id: number, tenant_slug: string, tenant_name: string, tenant_tier: Tenant_Tier } | null };
+
+export type PasskeyCredentialFragmentFragment = { profile_id: string, webauthn_credential_external_id: string, webauthn_credential_type: string, webauthn_credential_transports: Array<string | null>, webauthn_credential_public_key: string, webauthn_credential_sign_count: number };
 
 export type PasskeyCredentialsCollectionQueryQueryVariables = Exact<{
   first?: number | null | undefined;
-  filter?: Webauthn_CredentialsFilter | null | undefined;
-  orderBy?: Array<Webauthn_CredentialsOrderBy> | Webauthn_CredentialsOrderBy | null | undefined;
+  filter?: Profile_Webauthn_CredentialsFilter | null | undefined;
+  orderBy?: Array<Profile_Webauthn_CredentialsOrderBy> | Profile_Webauthn_CredentialsOrderBy | null | undefined;
 }>;
 
-export type PasskeyCredentialsCollectionQueryQuery = {
-  webauthn_credentialsCollection: {
-    edges: Array<{
-      node: {
-        profile_id: string;
-        webauthn_credential_external_id: string;
-        webauthn_credential_type: string;
-        webauthn_credential_transports: Array<string | null>;
-        webauthn_credential_public_key: string;
-        webauthn_credential_sign_count: number;
-      };
-    }>;
-  } | null;
-};
+
+export type PasskeyCredentialsCollectionQueryQuery = { profile_webauthn_credentialsCollection: { edges: Array<{ node: { profile_id: string, webauthn_credential_external_id: string, webauthn_credential_type: string, webauthn_credential_transports: Array<string | null>, webauthn_credential_public_key: string, webauthn_credential_sign_count: number } }> } | null };
 
 export type PasskeyCredentialsInsertMutationMutationVariables = Exact<{
-  objects: Array<Webauthn_CredentialsInsertInput> | Webauthn_CredentialsInsertInput;
+  objects: Array<Profile_Webauthn_CredentialsInsertInput> | Profile_Webauthn_CredentialsInsertInput;
 }>;
 
-export type PasskeyCredentialsInsertMutationMutation = {
-  insertIntowebauthn_credentialsCollection: {
-    records: Array<{
-      webauthn_credential_id: string;
-      webauthn_credential_friendly_name: string | null;
-      webauthn_credential_device_type: string;
-      webauthn_credential_backup_state: string;
-      webauthn_credential_created_at: string;
-    }>;
-  } | null;
-};
+
+export type PasskeyCredentialsInsertMutationMutation = { insertIntoprofile_webauthn_credentialsCollection: { records: Array<{ webauthn_credential_id: string, webauthn_credential_friendly_name: string | null, webauthn_credential_device_type: string, webauthn_credential_backup_state: string, webauthn_credential_created_at: string }> } | null };
 
 export type PasskeyCredentialsUpdateMutationMutationVariables = Exact<{
   atMost?: number;
-  filter?: Webauthn_CredentialsFilter | null | undefined;
-  set: Webauthn_CredentialsUpdateInput;
+  filter?: Profile_Webauthn_CredentialsFilter | null | undefined;
+  set: Profile_Webauthn_CredentialsUpdateInput;
 }>;
 
-export type PasskeyCredentialsUpdateMutationMutation = {
-  updatewebauthn_credentialsCollection: { affectedCount: number };
-};
+
+export type PasskeyCredentialsUpdateMutationMutation = { updateprofile_webauthn_credentialsCollection: { affectedCount: number } };
 
 export type PasskeyChallengesCollectionQueryQueryVariables = Exact<{
   first?: number | null | undefined;
-  filter?: Webauthn_ChallengesFilter | null | undefined;
-  orderBy?: Array<Webauthn_ChallengesOrderBy> | Webauthn_ChallengesOrderBy | null | undefined;
+  filter?: Profile_Webauthn_ChallengesFilter | null | undefined;
+  orderBy?: Array<Profile_Webauthn_ChallengesOrderBy> | Profile_Webauthn_ChallengesOrderBy | null | undefined;
 }>;
 
-export type PasskeyChallengesCollectionQueryQuery = {
-  webauthn_challengesCollection: {
-    edges: Array<{ node: { webauthn_challenge_id: string; webauthn_challenge_value: string } }>;
-  } | null;
-};
+
+export type PasskeyChallengesCollectionQueryQuery = { profile_webauthn_challengesCollection: { edges: Array<{ node: { webauthn_challenge_id: string, webauthn_challenge_value: string } }> } | null };
 
 export type PasskeyChallengesInsertMutationMutationVariables = Exact<{
-  objects: Array<Webauthn_ChallengesInsertInput> | Webauthn_ChallengesInsertInput;
+  objects: Array<Profile_Webauthn_ChallengesInsertInput> | Profile_Webauthn_ChallengesInsertInput;
 }>;
 
-export type PasskeyChallengesInsertMutationMutation = {
-  insertIntowebauthn_challengesCollection: {
-    records: Array<{ webauthn_challenge_id: string; webauthn_challenge_value: string }>;
-  } | null;
-};
+
+export type PasskeyChallengesInsertMutationMutation = { insertIntoprofile_webauthn_challengesCollection: { records: Array<{ webauthn_challenge_id: string, webauthn_challenge_value: string }> } | null };
 
 export type PasskeyChallengesDeleteMutationMutationVariables = Exact<{
   atMost?: number;
-  filter?: Webauthn_ChallengesFilter | null | undefined;
+  filter?: Profile_Webauthn_ChallengesFilter | null | undefined;
 }>;
 
-export type PasskeyChallengesDeleteMutationMutation = {
-  deleteFromwebauthn_challengesCollection: { affectedCount: number };
-};
+
+export type PasskeyChallengesDeleteMutationMutation = { deleteFromprofile_webauthn_challengesCollection: { affectedCount: number } };
 
 export type PasskeyProfileIdByEmailQueryQueryVariables = Exact<{
   email_to_check: string;
 }>;
+
 
 export type PasskeyProfileIdByEmailQueryQuery = { profile_id_by_email: string | null };
 
@@ -649,7 +491,7 @@ export class TypedDocumentString<TResult, TVariables>
   extends String
   implements DocumentTypeDecoration<TResult, TVariables>
 {
-  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>["__apiType"]>;
+  __apiType?: NonNullable<DocumentTypeDecoration<TResult, TVariables>['__apiType']>;
   private value: string;
   public __meta__?: Record<string, any> | undefined;
 
@@ -663,29 +505,22 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
-export const CountryGetFragmentFragmentDoc = new TypedDocumentString(
-  `
+export const CountryGetFragmentFragmentDoc = new TypedDocumentString(`
     fragment CountryGetFragment on addresses_level0 {
   address_level0_id
   address_level0_name
   address_level0_emoji
 }
-    `,
-  { fragmentName: "CountryGetFragment" },
-) as unknown as TypedDocumentString<CountryGetFragmentFragment, unknown>;
-export const ViewerOrganizationGetFragmentFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"CountryGetFragment"}) as unknown as TypedDocumentString<CountryGetFragmentFragment, unknown>;
+export const ViewerOrganizationGetFragmentFragmentDoc = new TypedDocumentString(`
     fragment ViewerOrganizationGetFragment on organizations {
   organization_id
   tenant_id
   organization_slug
   organization_name
 }
-    `,
-  { fragmentName: "ViewerOrganizationGetFragment" },
-) as unknown as TypedDocumentString<ViewerOrganizationGetFragmentFragment, unknown>;
-export const ViewerProfileGetFragmentFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"ViewerOrganizationGetFragment"}) as unknown as TypedDocumentString<ViewerOrganizationGetFragmentFragment, unknown>;
+export const ViewerProfileGetFragmentFragmentDoc = new TypedDocumentString(`
     fragment ViewerProfileGetFragment on profiles {
   profile_id
   profile_name_full
@@ -694,43 +529,31 @@ export const ViewerProfileGetFragmentFragmentDoc = new TypedDocumentString(
   profile_created_at
   profile_updated_at
 }
-    `,
-  { fragmentName: "ViewerProfileGetFragment" },
-) as unknown as TypedDocumentString<ViewerProfileGetFragmentFragment, unknown>;
-export const ViewerTenantGetFragmentFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"ViewerProfileGetFragment"}) as unknown as TypedDocumentString<ViewerProfileGetFragmentFragment, unknown>;
+export const ViewerTenantGetFragmentFragmentDoc = new TypedDocumentString(`
     fragment ViewerTenantGetFragment on tenants {
   tenant_id
   tenant_slug
   tenant_name
   tenant_tier
 }
-    `,
-  { fragmentName: "ViewerTenantGetFragment" },
-) as unknown as TypedDocumentString<ViewerTenantGetFragmentFragment, unknown>;
-export const CountryHookFragmentFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"ViewerTenantGetFragment"}) as unknown as TypedDocumentString<ViewerTenantGetFragmentFragment, unknown>;
+export const CountryHookFragmentFragmentDoc = new TypedDocumentString(`
     fragment CountryHookFragment on addresses_level0 {
   address_level0_id
   address_level0_name
   address_level0_emoji
 }
-    `,
-  { fragmentName: "CountryHookFragment" },
-) as unknown as TypedDocumentString<CountryHookFragmentFragment, unknown>;
-export const ViewerOrganizationHookFragmentFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"CountryHookFragment"}) as unknown as TypedDocumentString<CountryHookFragmentFragment, unknown>;
+export const ViewerOrganizationHookFragmentFragmentDoc = new TypedDocumentString(`
     fragment ViewerOrganizationHookFragment on organizations {
   organization_id
   tenant_id
   organization_slug
   organization_name
 }
-    `,
-  { fragmentName: "ViewerOrganizationHookFragment" },
-) as unknown as TypedDocumentString<ViewerOrganizationHookFragmentFragment, unknown>;
-export const ViewerProfileHookFragmentFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"ViewerOrganizationHookFragment"}) as unknown as TypedDocumentString<ViewerOrganizationHookFragmentFragment, unknown>;
+export const ViewerProfileHookFragmentFragmentDoc = new TypedDocumentString(`
     fragment ViewerProfileHookFragment on profiles {
   profile_id
   profile_name_full
@@ -739,23 +562,17 @@ export const ViewerProfileHookFragmentFragmentDoc = new TypedDocumentString(
   profile_created_at
   profile_updated_at
 }
-    `,
-  { fragmentName: "ViewerProfileHookFragment" },
-) as unknown as TypedDocumentString<ViewerProfileHookFragmentFragment, unknown>;
-export const ViewerTenantHookFragmentFragmentDoc = new TypedDocumentString(
-  `
+    `, {"fragmentName":"ViewerProfileHookFragment"}) as unknown as TypedDocumentString<ViewerProfileHookFragmentFragment, unknown>;
+export const ViewerTenantHookFragmentFragmentDoc = new TypedDocumentString(`
     fragment ViewerTenantHookFragment on tenants {
   tenant_id
   tenant_slug
   tenant_name
   tenant_tier
 }
-    `,
-  { fragmentName: "ViewerTenantHookFragment" },
-) as unknown as TypedDocumentString<ViewerTenantHookFragmentFragment, unknown>;
-export const PasskeyCredentialFragmentFragmentDoc = new TypedDocumentString(
-  `
-    fragment PasskeyCredentialFragment on webauthn_credentials {
+    `, {"fragmentName":"ViewerTenantHookFragment"}) as unknown as TypedDocumentString<ViewerTenantHookFragmentFragment, unknown>;
+export const PasskeyCredentialFragmentFragmentDoc = new TypedDocumentString(`
+    fragment PasskeyCredentialFragment on profile_webauthn_credentials {
   profile_id
   webauthn_credential_external_id
   webauthn_credential_type
@@ -763,9 +580,7 @@ export const PasskeyCredentialFragmentFragmentDoc = new TypedDocumentString(
   webauthn_credential_public_key
   webauthn_credential_sign_count
 }
-    `,
-  { fragmentName: "PasskeyCredentialFragment" },
-) as unknown as TypedDocumentString<PasskeyCredentialFragmentFragment, unknown>;
+    `, {"fragmentName":"PasskeyCredentialFragment"}) as unknown as TypedDocumentString<PasskeyCredentialFragmentFragment, unknown>;
 export const OnboardingProfileFormUpdateNameMutationDocument = new TypedDocumentString(`
     mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
   updateprofilesCollection(
@@ -775,10 +590,7 @@ export const OnboardingProfileFormUpdateNameMutationDocument = new TypedDocument
     affectedCount
   }
 }
-    `) as unknown as TypedDocumentString<
-  OnboardingProfileFormUpdateNameMutationMutation,
-  OnboardingProfileFormUpdateNameMutationMutationVariables
->;
+    `) as unknown as TypedDocumentString<OnboardingProfileFormUpdateNameMutationMutation, OnboardingProfileFormUpdateNameMutationMutationVariables>;
 export const ProfileSectionPageQueryDocument = new TypedDocumentString(`
     query ProfileSectionPageQuery {
   profile: viewer_profile {
@@ -796,15 +608,12 @@ export const ProfileSectionUpdateNameMutationDocument = new TypedDocumentString(
     affectedCount
   }
 }
-    `) as unknown as TypedDocumentString<
-  ProfileSectionUpdateNameMutationMutation,
-  ProfileSectionUpdateNameMutationMutationVariables
->;
+    `) as unknown as TypedDocumentString<ProfileSectionUpdateNameMutationMutation, ProfileSectionUpdateNameMutationMutationVariables>;
 export const SecuritySectionPageQueryDocument = new TypedDocumentString(`
     query SecuritySectionPageQuery {
   profile: viewer_profile {
     profile_id
-    webauthn_credentialsCollection(
+    profile_webauthn_credentialsCollection(
       orderBy: [{webauthn_credential_created_at: DescNullsLast}]
     ) {
       edges {
@@ -823,16 +632,13 @@ export const SecuritySectionPageQueryDocument = new TypedDocumentString(`
     `) as unknown as TypedDocumentString<SecuritySectionPageQueryQuery, SecuritySectionPageQueryQueryVariables>;
 export const SecurityPasskeysListDeleteMutationDocument = new TypedDocumentString(`
     mutation SecurityPasskeysListDeleteMutation($webauthn_credential_id: UUID!) {
-  deleteFromwebauthn_credentialsCollection(
+  deleteFromprofile_webauthn_credentialsCollection(
     filter: {webauthn_credential_id: {eq: $webauthn_credential_id}}
   ) {
     affectedCount
   }
 }
-    `) as unknown as TypedDocumentString<
-  SecurityPasskeysListDeleteMutationMutation,
-  SecurityPasskeysListDeleteMutationMutationVariables
->;
+    `) as unknown as TypedDocumentString<SecurityPasskeysListDeleteMutationMutation, SecurityPasskeysListDeleteMutationMutationVariables>;
 export const HomePickerPageQueryDocument = new TypedDocumentString(`
     query HomePickerPageQuery {
   viewer_organizations(
@@ -854,56 +660,44 @@ export const HomePickerPageQueryDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<HomePickerPageQueryQuery, HomePickerPageQueryQueryVariables>;
-export const EditMembershipGrantPermissionMutationDocument = new TypedDocumentString(`
-    mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {
-  insertIntomembership_permissionsCollection(
-    objects: [{membership_id: $membership_id, permission_id: $permission_id}]
+export const EditOrganizationMembershipGrantPermissionMutationDocument = new TypedDocumentString(`
+    mutation EditOrganizationMembershipGrantPermissionMutation($organization_membership_id: Int!, $permission_id: String!) {
+  insertIntoorganization_membership_permissionsCollection(
+    objects: [{organization_membership_id: $organization_membership_id, permission_id: $permission_id}]
   ) {
     affectedCount
   }
 }
-    `) as unknown as TypedDocumentString<
-  EditMembershipGrantPermissionMutationMutation,
-  EditMembershipGrantPermissionMutationMutationVariables
->;
-export const EditMembershipRevokePermissionMutationDocument = new TypedDocumentString(`
-    mutation EditMembershipRevokePermissionMutation($membership_id: Int!, $permission_id: String!) {
-  deleteFrommembership_permissionsCollection(
-    filter: {membership_id: {eq: $membership_id}, permission_id: {eq: $permission_id}}
+    `) as unknown as TypedDocumentString<EditOrganizationMembershipGrantPermissionMutationMutation, EditOrganizationMembershipGrantPermissionMutationMutationVariables>;
+export const EditOrganizationMembershipRevokePermissionMutationDocument = new TypedDocumentString(`
+    mutation EditOrganizationMembershipRevokePermissionMutation($organization_membership_id: Int!, $permission_id: String!) {
+  deleteFromorganization_membership_permissionsCollection(
+    filter: {organization_membership_id: {eq: $organization_membership_id}, permission_id: {eq: $permission_id}}
   ) {
     affectedCount
   }
 }
-    `) as unknown as TypedDocumentString<
-  EditMembershipRevokePermissionMutationMutation,
-  EditMembershipRevokePermissionMutationMutationVariables
->;
-export const EditMembershipRevokeMembershipMutationDocument = new TypedDocumentString(`
-    mutation EditMembershipRevokeMembershipMutation($membership_id: Int!, $now: Datetime!) {
-  updatemembershipsCollection(
-    filter: {membership_id: {eq: $membership_id}}
-    set: {membership_revoked_at: $now}
+    `) as unknown as TypedDocumentString<EditOrganizationMembershipRevokePermissionMutationMutation, EditOrganizationMembershipRevokePermissionMutationMutationVariables>;
+export const EditOrganizationMembershipRevokeOrganizationMembershipMutationDocument = new TypedDocumentString(`
+    mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($organization_membership_id: Int!, $now: Datetime!) {
+  updateorganization_membershipsCollection(
+    filter: {organization_membership_id: {eq: $organization_membership_id}}
+    set: {organization_membership_revoked_at: $now}
   ) {
     affectedCount
   }
 }
-    `) as unknown as TypedDocumentString<
-  EditMembershipRevokeMembershipMutationMutation,
-  EditMembershipRevokeMembershipMutationMutationVariables
->;
+    `) as unknown as TypedDocumentString<EditOrganizationMembershipRevokeOrganizationMembershipMutationMutation, EditOrganizationMembershipRevokeOrganizationMembershipMutationMutationVariables>;
 export const MembersPendingInvitationsCancelMutationDocument = new TypedDocumentString(`
-    mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {
-  updatemembershipsCollection(
-    filter: {membership_id: {eq: $membership_id}, profile_id: {is: NULL}, membership_revoked_at: {is: NULL}, membership_rejected_at: {is: NULL}}
-    set: {membership_revoked_at: $now, membership_invite_token: null}
+    mutation MembersPendingInvitationsCancelMutation($organization_membership_id: Int!, $now: Datetime!) {
+  updateorganization_membershipsCollection(
+    filter: {organization_membership_id: {eq: $organization_membership_id}, profile_id: {is: NULL}, organization_membership_revoked_at: {is: NULL}, organization_membership_rejected_at: {is: NULL}}
+    set: {organization_membership_revoked_at: $now, organization_membership_invite_token: null}
   ) {
     affectedCount
   }
 }
-    `) as unknown as TypedDocumentString<
-  MembersPendingInvitationsCancelMutationMutation,
-  MembersPendingInvitationsCancelMutationMutationVariables
->;
+    `) as unknown as TypedDocumentString<MembersPendingInvitationsCancelMutationMutation, MembersPendingInvitationsCancelMutationMutationVariables>;
 export const HealthQueryDocument = new TypedDocumentString(`
     query HealthQuery {
   health_current_timestamp
@@ -946,9 +740,7 @@ export const ViewerOrganizationsGetQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerOrganizationsGetQueryQuery, ViewerOrganizationsGetQueryQueryVariables>;
 export const ViewerOrganizationByIdGetQueryDocument = new TypedDocumentString(`
     query ViewerOrganizationByIdGetQuery($organization_id: Int!) {
-  organization: viewer_organization_by_id(
-    target_organization_id: $organization_id
-  ) {
+  organization: viewer_organization_by_id(organization_id: $organization_id) {
     ...ViewerOrganizationGetFragment
   }
 }
@@ -957,10 +749,7 @@ export const ViewerOrganizationByIdGetQueryDocument = new TypedDocumentString(`
   tenant_id
   organization_slug
   organization_name
-}`) as unknown as TypedDocumentString<
-  ViewerOrganizationByIdGetQueryQuery,
-  ViewerOrganizationByIdGetQueryQueryVariables
->;
+}`) as unknown as TypedDocumentString<ViewerOrganizationByIdGetQueryQuery, ViewerOrganizationByIdGetQueryQueryVariables>;
 export const ViewerProfileGetQueryDocument = new TypedDocumentString(`
     query ViewerProfileGetQuery {
   profile: viewer_profile {
@@ -993,7 +782,7 @@ export const ViewerTenantsGetQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerTenantsGetQueryQuery, ViewerTenantsGetQueryQueryVariables>;
 export const ViewerTenantBySlugGetQueryDocument = new TypedDocumentString(`
     query ViewerTenantBySlugGetQuery($tenant_slug: String!) {
-  tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
+  tenant: viewer_tenant_by_slug(tenant_slug: $tenant_slug) {
     ...ViewerTenantGetFragment
   }
 }
@@ -1040,9 +829,7 @@ export const ViewerOrganizationsHookQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerOrganizationsHookQueryQuery, ViewerOrganizationsHookQueryQueryVariables>;
 export const ViewerOrganizationByIdHookQueryDocument = new TypedDocumentString(`
     query ViewerOrganizationByIdHookQuery($organization_id: Int!) {
-  organization: viewer_organization_by_id(
-    target_organization_id: $organization_id
-  ) {
+  organization: viewer_organization_by_id(organization_id: $organization_id) {
     ...ViewerOrganizationHookFragment
   }
 }
@@ -1051,10 +838,7 @@ export const ViewerOrganizationByIdHookQueryDocument = new TypedDocumentString(`
   tenant_id
   organization_slug
   organization_name
-}`) as unknown as TypedDocumentString<
-  ViewerOrganizationByIdHookQueryQuery,
-  ViewerOrganizationByIdHookQueryQueryVariables
->;
+}`) as unknown as TypedDocumentString<ViewerOrganizationByIdHookQueryQuery, ViewerOrganizationByIdHookQueryQueryVariables>;
 export const ViewerProfileHookQueryDocument = new TypedDocumentString(`
     query ViewerProfileHookQuery {
   profile: viewer_profile {
@@ -1087,7 +871,7 @@ export const ViewerTenantsHookQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerTenantsHookQueryQuery, ViewerTenantsHookQueryQueryVariables>;
 export const ViewerTenantBySlugHookQueryDocument = new TypedDocumentString(`
     query ViewerTenantBySlugHookQuery($tenant_slug: String!) {
-  tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
+  tenant: viewer_tenant_by_slug(tenant_slug: $tenant_slug) {
     ...ViewerTenantHookFragment
   }
 }
@@ -1098,8 +882,8 @@ export const ViewerTenantBySlugHookQueryDocument = new TypedDocumentString(`
   tenant_tier
 }`) as unknown as TypedDocumentString<ViewerTenantBySlugHookQueryQuery, ViewerTenantBySlugHookQueryQueryVariables>;
 export const PasskeyCredentialsCollectionQueryDocument = new TypedDocumentString(`
-    query PasskeyCredentialsCollectionQuery($first: Int, $filter: webauthn_credentialsFilter, $orderBy: [webauthn_credentialsOrderBy!]) {
-  webauthn_credentialsCollection(
+    query PasskeyCredentialsCollectionQuery($first: Int, $filter: profile_webauthn_credentialsFilter, $orderBy: [profile_webauthn_credentialsOrderBy!]) {
+  profile_webauthn_credentialsCollection(
     first: $first
     filter: $filter
     orderBy: $orderBy
@@ -1111,20 +895,17 @@ export const PasskeyCredentialsCollectionQueryDocument = new TypedDocumentString
     }
   }
 }
-    fragment PasskeyCredentialFragment on webauthn_credentials {
+    fragment PasskeyCredentialFragment on profile_webauthn_credentials {
   profile_id
   webauthn_credential_external_id
   webauthn_credential_type
   webauthn_credential_transports
   webauthn_credential_public_key
   webauthn_credential_sign_count
-}`) as unknown as TypedDocumentString<
-  PasskeyCredentialsCollectionQueryQuery,
-  PasskeyCredentialsCollectionQueryQueryVariables
->;
+}`) as unknown as TypedDocumentString<PasskeyCredentialsCollectionQueryQuery, PasskeyCredentialsCollectionQueryQueryVariables>;
 export const PasskeyCredentialsInsertMutationDocument = new TypedDocumentString(`
-    mutation PasskeyCredentialsInsertMutation($objects: [webauthn_credentialsInsertInput!]!) {
-  insertIntowebauthn_credentialsCollection(objects: $objects) {
+    mutation PasskeyCredentialsInsertMutation($objects: [profile_webauthn_credentialsInsertInput!]!) {
+  insertIntoprofile_webauthn_credentialsCollection(objects: $objects) {
     records {
       webauthn_credential_id
       webauthn_credential_friendly_name
@@ -1134,13 +915,10 @@ export const PasskeyCredentialsInsertMutationDocument = new TypedDocumentString(
     }
   }
 }
-    `) as unknown as TypedDocumentString<
-  PasskeyCredentialsInsertMutationMutation,
-  PasskeyCredentialsInsertMutationMutationVariables
->;
+    `) as unknown as TypedDocumentString<PasskeyCredentialsInsertMutationMutation, PasskeyCredentialsInsertMutationMutationVariables>;
 export const PasskeyCredentialsUpdateMutationDocument = new TypedDocumentString(`
-    mutation PasskeyCredentialsUpdateMutation($atMost: Int! = 1, $filter: webauthn_credentialsFilter, $set: webauthn_credentialsUpdateInput!) {
-  updatewebauthn_credentialsCollection(
+    mutation PasskeyCredentialsUpdateMutation($atMost: Int! = 1, $filter: profile_webauthn_credentialsFilter, $set: profile_webauthn_credentialsUpdateInput!) {
+  updateprofile_webauthn_credentialsCollection(
     atMost: $atMost
     filter: $filter
     set: $set
@@ -1148,13 +926,14 @@ export const PasskeyCredentialsUpdateMutationDocument = new TypedDocumentString(
     affectedCount
   }
 }
-    `) as unknown as TypedDocumentString<
-  PasskeyCredentialsUpdateMutationMutation,
-  PasskeyCredentialsUpdateMutationMutationVariables
->;
+    `) as unknown as TypedDocumentString<PasskeyCredentialsUpdateMutationMutation, PasskeyCredentialsUpdateMutationMutationVariables>;
 export const PasskeyChallengesCollectionQueryDocument = new TypedDocumentString(`
-    query PasskeyChallengesCollectionQuery($first: Int, $filter: webauthn_challengesFilter, $orderBy: [webauthn_challengesOrderBy!]) {
-  webauthn_challengesCollection(first: $first, filter: $filter, orderBy: $orderBy) {
+    query PasskeyChallengesCollectionQuery($first: Int, $filter: profile_webauthn_challengesFilter, $orderBy: [profile_webauthn_challengesOrderBy!]) {
+  profile_webauthn_challengesCollection(
+    first: $first
+    filter: $filter
+    orderBy: $orderBy
+  ) {
     edges {
       node {
         webauthn_challenge_id
@@ -1163,33 +942,27 @@ export const PasskeyChallengesCollectionQueryDocument = new TypedDocumentString(
     }
   }
 }
-    `) as unknown as TypedDocumentString<
-  PasskeyChallengesCollectionQueryQuery,
-  PasskeyChallengesCollectionQueryQueryVariables
->;
+    `) as unknown as TypedDocumentString<PasskeyChallengesCollectionQueryQuery, PasskeyChallengesCollectionQueryQueryVariables>;
 export const PasskeyChallengesInsertMutationDocument = new TypedDocumentString(`
-    mutation PasskeyChallengesInsertMutation($objects: [webauthn_challengesInsertInput!]!) {
-  insertIntowebauthn_challengesCollection(objects: $objects) {
+    mutation PasskeyChallengesInsertMutation($objects: [profile_webauthn_challengesInsertInput!]!) {
+  insertIntoprofile_webauthn_challengesCollection(objects: $objects) {
     records {
       webauthn_challenge_id
       webauthn_challenge_value
     }
   }
 }
-    `) as unknown as TypedDocumentString<
-  PasskeyChallengesInsertMutationMutation,
-  PasskeyChallengesInsertMutationMutationVariables
->;
+    `) as unknown as TypedDocumentString<PasskeyChallengesInsertMutationMutation, PasskeyChallengesInsertMutationMutationVariables>;
 export const PasskeyChallengesDeleteMutationDocument = new TypedDocumentString(`
-    mutation PasskeyChallengesDeleteMutation($atMost: Int! = 1, $filter: webauthn_challengesFilter) {
-  deleteFromwebauthn_challengesCollection(atMost: $atMost, filter: $filter) {
+    mutation PasskeyChallengesDeleteMutation($atMost: Int! = 1, $filter: profile_webauthn_challengesFilter) {
+  deleteFromprofile_webauthn_challengesCollection(
+    atMost: $atMost
+    filter: $filter
+  ) {
     affectedCount
   }
 }
-    `) as unknown as TypedDocumentString<
-  PasskeyChallengesDeleteMutationMutation,
-  PasskeyChallengesDeleteMutationMutationVariables
->;
+    `) as unknown as TypedDocumentString<PasskeyChallengesDeleteMutationMutation, PasskeyChallengesDeleteMutationMutationVariables>;
 export const PasskeyProfileIdByEmailQueryDocument = new TypedDocumentString(`
     query PasskeyProfileIdByEmailQuery($email_to_check: String!) {
   profile_id_by_email(email_to_check: $email_to_check)

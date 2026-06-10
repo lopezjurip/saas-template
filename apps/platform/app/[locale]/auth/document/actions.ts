@@ -17,7 +17,7 @@ type CheckDocumentResult =
   | {
       kind: "pick_invite";
       invites: Array<{
-        membership_id: number;
+        organization_membership_id: number;
         invitation_token: string;
         organization_id: number;
         organization_name: string;
@@ -59,13 +59,13 @@ export const actionCheckDocument = action
       throw new Error("No pudimos validar el documento. Intenta de nuevo.");
     }
 
-    const { data: invites, error: invitesError } = await supabase.rpc("memberships_pending_by_document", {
+    const { data: invites, error: invitesError } = await supabase.rpc("organization_memberships_pending_by_document", {
       country,
       kind,
       value,
     });
     if (invitesError) {
-      log.error("memberships_pending_by_document failed", { invitesError });
+      log.error("organization_memberships_pending_by_document failed", { invitesError });
       throw new Error("No pudimos validar el documento. Intenta de nuevo.");
     }
     const invitesList = invites ?? [];
@@ -113,10 +113,10 @@ export const actionCheckDocument = action
 
     if (invitesList.length === 1) {
       const only = invitesList[0]!;
-      log.info("document check: single pending invite", { membership_id: only["membership_id"] });
-      const token = only["membership_invite_token"];
+      log.info("document check: single pending invite", { organization_membership_id: only["organization_membership_id"] });
+      const token = only["organization_membership_invite_token"];
       if (!token) {
-        log.error("pending invite without token", { membership_id: only["membership_id"] });
+        log.error("pending invite without token", { organization_membership_id: only["organization_membership_id"] });
         throw new Error("No pudimos validar la invitación. Contacta a tu administrador.");
       }
       return { kind: "redirect_accept", invitation_token: token };
@@ -126,14 +126,14 @@ export const actionCheckDocument = action
     return {
       kind: "pick_invite",
       invites: invitesList.map((i) => ({
-        membership_id: i["membership_id"],
-        invitation_token: i["membership_invite_token"] ?? "",
+        organization_membership_id: i["organization_membership_id"],
+        invitation_token: i["organization_membership_invite_token"] ?? "",
         organization_id: i["organization_id"],
         organization_name: i["organization_name"],
         tenant_id: i["tenant_id"],
         tenant_slug: String(i["tenant_slug"]),
         tenant_name: i["tenant_name"],
-        invitation_expires_at: i["membership_invite_expires_at"],
+        invitation_expires_at: i["organization_membership_invite_expires_at"],
       })),
     };
   });

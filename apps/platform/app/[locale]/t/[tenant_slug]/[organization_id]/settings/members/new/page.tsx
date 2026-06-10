@@ -41,8 +41,8 @@ export default async function NewMemberInvitePage(
   const supabase = await createServerClient();
   // viewer_has_permission is SECURITY DEFINER and honors '*' as a match.
   const { data: canManage } = await supabase.rpc("viewer_has_permission", {
-    target_organization_id: organization_id,
-    target_permission_id: "members_manage",
+    organization_id: organization_id,
+    permission_id: "members_manage",
   });
 
   return (

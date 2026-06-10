@@ -1,7 +1,7 @@
 -- Journey: anonymous document-based invite discovery + JWT-forging defense in depth.
 --
--- Part A — public.memberships_pending_by_document is the ONLY surface granted to anon
--- that reads through memberships. A visitor arriving on /auth/document hits this RPC
+-- Part A — public.organization_memberships_pending_by_document is the ONLY surface granted to anon
+-- that reads through organization_memberships. A visitor arriving on /auth/document hits this RPC
 -- before logging in. Threat model:
 --   * Anon enumerating RUTs to discover registered employees (only invite tokens, not
 --     existing profile_identities, surface — but lifecycle filters must be airtight).
@@ -9,12 +9,11 @@
 --     normalised value matches.
 --   * Cross-country leakage: same value, different country must not match.
 --
--- Part B — JWT-forging defense in depth. The viewer_*_ids() helpers trust the JWT.
--- In production Supabase signs it; in any scenario where signing is bypassed (leaked
--- secret, local-dev abuse) we want write policies to STILL deny because they do a
--- DB-backed lookup via viewer_permission_org_ids. Tests pin the trust boundary:
---   * Read policies fall to forged claims (acceptable — JWT is the trust root for reads).
---   * Write policies on permission-gated tables hold (members_manage / organization_manage).
+-- Part B — JWT-forging defense in depth. The viewer_*_ids() helpers are DB-backed: they
+-- resolve the caller from `sub` (auth.uid) and read membership straight from the DB, so a
+-- forged app_metadata array buys NOTHING. Tests pin the trust boundary:
+--   * Read policies deny forged claims (membership is resolved from the DB, not the token).
+--   * Write policies on permission-gated tables also hold (members_manage / organization_manage).
 
 begin;
 
@@ -48,12 +47,12 @@ set local role service_role;
 
 create temporary table _invites on commit drop as
   with rows as (
-    insert into public.memberships (
+    insert into public.organization_memberships (
       organization_id,
-      membership_invite_address_level0_id, membership_invite_document_kind, membership_invite_document_value,
-      membership_invite_token, membership_invite_expires_at,
-      membership_revoked_at, membership_rejected_at,
-      profile_id, membership_accepted_at
+      organization_membership_invite_address_level0_id, organization_membership_invite_document_kind, organization_membership_invite_document_value,
+      organization_membership_invite_token, organization_membership_invite_expires_at,
+      organization_membership_revoked_at, organization_membership_rejected_at,
+      profile_id, organization_membership_accepted_at
     ) values
       -- (a) Active doc invite in org 1.
       (1, 'CL', 'nin', '13.123.456-2',
@@ -77,20 +76,20 @@ create temporary table _invites on commit drop as
       (1, 'CL', 'nin', '13.123.456-2',
        null, current_timestamp + interval '7 days',
        null, null, '00000000-0000-0000-0000-00000000ca02', current_timestamp)
-    returning membership_id, membership_invite_token
+    returning organization_membership_id, organization_membership_invite_token
   )
   select
-    (select membership_id from rows where membership_invite_token = 'tok-pending-active')   as active_id,
-    (select membership_id from rows where membership_invite_token = 'tok-pending-expired')  as expired_id,
-    (select membership_id from rows where membership_invite_token = 'tok-pending-revoked')  as revoked_id,
-    (select membership_id from rows where membership_invite_token = 'tok-pending-rejected') as rejected_id;
+    (select organization_membership_id from rows where organization_membership_invite_token = 'tok-pending-active')   as active_id,
+    (select organization_membership_id from rows where organization_membership_invite_token = 'tok-pending-expired')  as expired_id,
+    (select organization_membership_id from rows where organization_membership_invite_token = 'tok-pending-revoked')  as revoked_id,
+    (select organization_membership_id from rows where organization_membership_invite_token = 'tok-pending-rejected') as rejected_id;
 
 grant select on _invites to anon, authenticated;
 
 reset role;
 
 -- ============================================================
--- A. memberships_pending_by_document — anon-callable surface
+-- A. organization_memberships_pending_by_document — anon-callable surface
 -- ============================================================
 
 set local role anon;
@@ -99,8 +98,8 @@ set local request.jwt.claims to '';
 -- Happy path: anon supplies the RUT in formatted form and gets only the ACTIVE invite.
 -- Token is exposed in the result (UI uses it as the accept link).
 select set_eq(
-  $$ select membership_invite_token
-       from public.memberships_pending_by_document('CL', 'nin', '13.123.456-2') $$,
+  $$ select organization_membership_invite_token
+       from public.organization_memberships_pending_by_document('CL', 'nin', '13.123.456-2') $$,
   $$ values ('tok-pending-active'::text) $$,
   'anon: only the active doc invite is returned; expired/revoked/rejected/accepted excluded'
 );
@@ -108,15 +107,15 @@ select set_eq(
 -- Normalisation: any formatting variant of the same RUT must hit the same row.
 -- Invariant: the function normalises the value before matching.
 select is(
-  (select membership_invite_token
-     from public.memberships_pending_by_document('CL', 'nin', '131234562')),
+  (select organization_membership_invite_token
+     from public.organization_memberships_pending_by_document('CL', 'nin', '131234562')),
   'tok-pending-active',
   'anon: unformatted RUT (no dots, no dash) matches via normalisation'
 );
 
 select is(
-  (select membership_invite_token
-     from public.memberships_pending_by_document('CL', 'nin', '13123456-2')),
+  (select organization_membership_invite_token
+     from public.organization_memberships_pending_by_document('CL', 'nin', '13123456-2')),
   'tok-pending-active',
   'anon: half-formatted RUT (no dots) matches via normalisation'
 );
@@ -124,7 +123,7 @@ select is(
 -- Bad check digit: normalize returns null → function returns empty (no oracle).
 select is(
   (select count(*)
-     from public.memberships_pending_by_document('CL', 'nin', '12345678-9')),
+     from public.organization_memberships_pending_by_document('CL', 'nin', '12345678-9')),
   0::bigint,
   'anon: invalid CL/NIN check digit yields empty (no enumeration oracle)'
 );
@@ -132,7 +131,7 @@ select is(
 -- Valid but unknown RUT: empty.
 select is(
   (select count(*)
-     from public.memberships_pending_by_document('CL', 'nin', '5126663-3')),
+     from public.organization_memberships_pending_by_document('CL', 'nin', '5126663-3')),
   0::bigint,
   'anon: valid but unrelated RUT yields empty'
 );
@@ -140,7 +139,7 @@ select is(
 -- Cross-country: same digits, different country must not match.
 select is(
   (select count(*)
-     from public.memberships_pending_by_document('AR', 'nin', '13.123.456-2')),
+     from public.organization_memberships_pending_by_document('AR', 'nin', '13.123.456-2')),
   0::bigint,
   'anon: same value under different country (AR) does not match CL invite'
 );
@@ -149,7 +148,7 @@ select is(
 -- so the UI picker can render — this is by design, just pin it.
 select is(
   (select tenant_slug
-     from public.memberships_pending_by_document('CL', 'nin', '13.123.456-2')),
+     from public.organization_memberships_pending_by_document('CL', 'nin', '13.123.456-2')),
   'acme',
   'anon: result includes tenant_slug for the UI picker'
 );
@@ -192,34 +191,34 @@ set local request.jwt.claims to '{
   }
 }';
 
--- Read policies trust the JWT — forging buys read access. This is the trust boundary:
--- preventing this is the JWT signature's job, NOT the DB's.
+-- Read policies are DB-backed now — forging app_metadata buys nothing. Bob's real
+-- membership (org 1 only) is what RLS resolves via viewer_tenant_ids(), so tenant 2 stays
+-- invisible regardless of the forged claim.
 select is(
   (select count(*) from public.tenants where tenant_id = 2),
-  1::bigint,
-  'forged JWT can read tenant 2 (JWT-trusted read policy — by design)'
+  0::bigint,
+  'forged JWT cannot read tenant 2 (reads resolve membership from the DB, not the token)'
 );
 
--- Count = 2 because seed has Alice's accepted membership and this test added an
--- expired invite (tok-pending-expired) in org 2 above. Either way, the point is
--- that the forged JWT can read org 2 rows that legitimate Bob (above) saw zero of.
-select ok(
-  (select count(*) from public.memberships where organization_id = 2) > 0,
-  'forged JWT can read memberships in org 2 (JWT-trusted)'
+-- Same for organization_memberships in org 2: Bob is not a member, so RLS hides them.
+select is(
+  (select count(*) from public.organization_memberships where organization_id = 2),
+  0::bigint,
+  'forged JWT cannot read organization_memberships in org 2 (DB-backed read policy)'
 );
 
 -- Write policies on permission-gated tables hold: viewer_permission_org_ids does a
 -- DB lookup keyed on viewer_profile_id (Bob's real sub) and returns no org 2 rows.
 
--- Get Alice's membership_id in org 2 (target for an attempted forged grant).
+-- Get Alice's organization_membership_id in org 2 (target for an attempted forged grant).
 set local request.jwt.claims to '';
 reset role;
 set local role service_role;
 create temporary table _targets on commit drop as
   select
-    (select membership_id from public.memberships
+    (select organization_membership_id from public.organization_memberships
        where organization_id = 2 and profile_id = '00000000-0000-0000-0000-00000000a11c') as alice_org2,
-    (select membership_id from public.memberships
+    (select organization_membership_id from public.organization_memberships
        where organization_id = 1 and profile_id = '00000000-0000-0000-0000-00000000b00b') as bob_org1;
 grant select on _targets to authenticated;
 reset role;
@@ -233,23 +232,23 @@ set local request.jwt.claims to '{
   }
 }';
 
--- Attempt 1: insert a permission grant into org 2 (Alice's membership). Forged JWT
--- claims org 2 membership, but Bob has no real members_manage anywhere → write blocked.
+-- Attempt 1: insert a permission grant into org 2 (Alice's organization_membership). Forged JWT
+-- claims org 2 organization_membership, but Bob has no real members_manage anywhere → write blocked.
 prepare forged_grant as
-  insert into public.membership_permissions (membership_id, permission_id)
-  values ((select alice_org2 from _targets), 'payroll_view');
+  insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+  values ((select alice_org2 from _targets), 'presets_manage');
 select throws_ok(
   'execute forged_grant',
   '42501',
   null,
-  'forged JWT cannot insert membership_permissions in org 2 (DB-backed members_manage check)'
+  'forged JWT cannot insert organization_membership_permissions in org 2 (DB-backed members_manage check)'
 );
 deallocate forged_grant;
 
 -- Attempt 2: forge a self-elevation in org 1 (Bob's real org). Bob has only
 -- vacations_request, no members_manage → also blocked.
 prepare self_elevate as
-  insert into public.membership_permissions (membership_id, permission_id)
+  insert into public.organization_membership_permissions (organization_membership_id, permission_id)
   values ((select bob_org1 from _targets), '*');
 select throws_ok(
   'execute self_elevate',

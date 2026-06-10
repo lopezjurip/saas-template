@@ -47,7 +47,7 @@ test.describe("owner creates first tenant", () => {
     await page.waitForURL(new RegExp(`/es/t/${tenantSlug}/\\d+`));
     expect(page.url()).toMatch(new RegExp(`/es/t/${tenantSlug}/\\d+`));
 
-    // ----- assertion 2: proxy membership gate blocks non-members -----
+    // ----- assertion 2: proxy organization_membership gate blocks non-members -----
     // Verified by the proxy gate in proxy.ts — a 403 is returned for non-member access.
     // The page itself also calls getViewerTenantBySlug which resolves null → notFound().
     await expect(page.getByText(tenantName).first()).toBeVisible();

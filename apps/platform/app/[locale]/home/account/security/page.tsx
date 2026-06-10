@@ -14,7 +14,7 @@ const SecuritySectionPageQuery = gql(`
   query SecuritySectionPageQuery {
     profile: viewer_profile {
       profile_id
-      webauthn_credentialsCollection(
+      profile_webauthn_credentialsCollection(
         orderBy: [{ webauthn_credential_created_at: DescNullsLast }]
       ) {
         edges {
@@ -39,7 +39,7 @@ export default async function SecurityPage(props: PageProps<"/[locale]/home/acco
 
   const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: SecuritySectionPageQuery });
-  const passkeys = data?.["profile"]?.["webauthn_credentialsCollection"]?.["edges"]?.map((e) => e["node"]) ?? [];
+  const passkeys = data?.["profile"]?.["profile_webauthn_credentialsCollection"]?.["edges"]?.map((e) => e["node"]) ?? [];
 
   const identities = user["identities"] ?? [];
   const hasPassword = identities.some((i) => i["provider"] === "email");

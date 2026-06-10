@@ -42,7 +42,7 @@ const LOCALES = {
     wildcard_description: "Covers every current and future permission in the organization.",
     done: "Done",
     remove_button: "Remove from organization",
-    remove_confirm: "Remove this membership? They'll lose access to the organization.",
+    remove_confirm: "Remove this organization_membership? They'll lose access to the organization.",
     wildcard_footer:
       'When someone has "full access" the wildcard covers any permission. Remove it to assign permissions individually.',
     save_failed: "We couldn't save the change. Try again.",
@@ -82,9 +82,9 @@ function MAP_PG_ERROR_KEY(err: GraphyError): "last_admin_protected" | "self_remo
 }
 
 const GrantPermissionMutation = /*#__PURE__*/ gql(`
-  mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {
-    insertIntomembership_permissionsCollection(
-      objects: [{ membership_id: $membership_id, permission_id: $permission_id }]
+  mutation EditOrganizationMembershipGrantPermissionMutation($organization_membership_id: Int!, $permission_id: String!) {
+    insertIntoorganization_membership_permissionsCollection(
+      objects: [{ organization_membership_id: $organization_membership_id, permission_id: $permission_id }]
     ) {
       affectedCount
     }
@@ -92,20 +92,20 @@ const GrantPermissionMutation = /*#__PURE__*/ gql(`
 `);
 
 const RevokePermissionMutation = /*#__PURE__*/ gql(`
-  mutation EditMembershipRevokePermissionMutation($membership_id: Int!, $permission_id: String!) {
-    deleteFrommembership_permissionsCollection(
-      filter: { membership_id: { eq: $membership_id }, permission_id: { eq: $permission_id } }
+  mutation EditOrganizationMembershipRevokePermissionMutation($organization_membership_id: Int!, $permission_id: String!) {
+    deleteFromorganization_membership_permissionsCollection(
+      filter: { organization_membership_id: { eq: $organization_membership_id }, permission_id: { eq: $permission_id } }
     ) {
       affectedCount
     }
   }
 `);
 
-const RevokeMembershipMutation = /*#__PURE__*/ gql(`
-  mutation EditMembershipRevokeMembershipMutation($membership_id: Int!, $now: Datetime!) {
-    updatemembershipsCollection(
-      filter: { membership_id: { eq: $membership_id } }
-      set: { membership_revoked_at: $now }
+const RevokeOrganizationMembershipMutation = /*#__PURE__*/ gql(`
+  mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($organization_membership_id: Int!, $now: Datetime!) {
+    updateorganization_membershipsCollection(
+      filter: { organization_membership_id: { eq: $organization_membership_id } }
+      set: { organization_membership_revoked_at: $now }
     ) {
       affectedCount
     }
@@ -125,7 +125,7 @@ interface PresetRow {
 }
 
 interface Props {
-  membership_id: number;
+  organization_membership_id: number;
   permissions: PermissionRow[];
   presets: PresetRow[];
   grantedSlugs: string[];
@@ -159,7 +159,7 @@ function APPLY_OPTIMISTIC(state: { wildcard: boolean; slugs: Set<string> }, acti
   }
 }
 
-export function EditPermissionsForm({ membership_id, permissions, presets, grantedSlugs, membersHref }: Props) {
+export function EditPermissionsForm({ organization_membership_id, permissions, presets, grantedSlugs, membersHref }: Props) {
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -167,7 +167,7 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
 
   const [, grantPermission] = useGraphyMutation(GrantPermissionMutation);
   const [, revokePermission] = useGraphyMutation(RevokePermissionMutation);
-  const [, revokeMembership] = useGraphyMutation(RevokeMembershipMutation);
+  const [, revokeOrganizationMembership] = useGraphyMutation(RevokeOrganizationMembershipMutation);
 
   const initialWildcard = grantedSlugs.includes(PERMISSION_SLUG_WILDCARD);
   const initialSlugs = new Set(grantedSlugs.filter((s) => s !== PERMISSION_SLUG_WILDCARD));
@@ -180,13 +180,13 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
    */
   async function writePermission(permission_id: string, granted: boolean): Promise<boolean> {
     if (granted) {
-      const { error: err } = await grantPermission({ membership_id, permission_id });
+      const { error: err } = await grantPermission({ organization_membership_id, permission_id });
       if (err) {
         setError(t(MAP_PG_ERROR_KEY(err)));
         return false;
       }
     } else {
-      const { error: err } = await revokePermission({ membership_id, permission_id });
+      const { error: err } = await revokePermission({ organization_membership_id, permission_id });
       if (err) {
         setError(t(MAP_PG_ERROR_KEY(err)));
         return false;
@@ -260,7 +260,7 @@ export function EditPermissionsForm({ membership_id, permissions, presets, grant
     if (!window.confirm(t("remove_confirm"))) return;
     setError(null);
     startTransition(async () => {
-      const { error: err } = await revokeMembership({ membership_id, now: new Date().toISOString() });
+      const { error: err } = await revokeOrganizationMembership({ organization_membership_id, now: new Date().toISOString() });
       if (err) {
         setError(t(MAP_PG_ERROR_KEY(err)));
         return;

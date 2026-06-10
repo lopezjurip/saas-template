@@ -1,6 +1,5 @@
 import { updateSession } from "@packages/supabase/client.middleware";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
-import { JWT_DECODE_PAYLOAD } from "@packages/utils/jwt";
 import { type NextRequest, NextResponse, userAgent } from "next/server";
 import { APEX_HOSTNAME, APP_HOST } from "~/lib/constants";
 import { debug } from "~/lib/debug";
@@ -8,9 +7,6 @@ import { EXTRACT_LOCALE_FROM_PATH, LOCALE_COOKIE, type SupportedLocale } from "~
 import { RESOLVE_LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
 
 const log = debug("proxy");
-
-type TenantClaim = { id: number; slug: string };
-type JwtPayload = { app_metadata?: { tenants?: TenantClaim[] } };
 
 async function resolveTenantIdFromSlug(slug: string): Promise<number | null> {
   const supabase = createServiceRoleClient();
@@ -140,11 +136,10 @@ export async function proxy(request: NextRequest) {
     return setLocaleCookieOnResponse(NextResponse.redirect(authUrl), locale);
   }
 
-  const claims = JWT_DECODE_PAYLOAD(session.access_token) as JwtPayload | null;
-  const tenants = claims?.["app_metadata"]?.["tenants"] ?? [];
-
-  // Tenant path gate: /{locale}/t/{slug}/... — verify tenant exists and user is a member.
+  // Tenant path gate: /{locale}/t/{slug}/... — verify tenant exists and the caller can access it.
   // This is the access-control boundary: a logged-in non-member hitting /t/{slug} is blocked here.
+  // Membership lives in the DB only (never in the JWT): the session-scoped client sees the tenant
+  // row iff RLS allows it (viewer_tenant_ids / viewer_agency_tenant_ids resolve it server-side).
   if (pathAfterLocale.startsWith("/t/")) {
     const segments = pathAfterLocale.split("/"); // ["", "t", "{slug}", ...]
     const tenantSlug = segments[2];
@@ -156,12 +151,13 @@ export async function proxy(request: NextRequest) {
       log.warn("unknown or disabled tenant", { slug: tenantSlug });
       return new NextResponse("Tenant not found", { status: 404 });
     }
-    if (!tenants.some((t) => t["id"] === tenant_id)) {
-      log.warn("user lacks membership for tenant", {
-        slug: tenantSlug,
-        tenant_id,
-        user_tenant_ids: tenants.map((t) => t["id"]),
-      });
+    const { data: accessibleTenant } = await supabase
+      .from("tenants")
+      .select("tenant_id")
+      .eq("tenant_id", tenant_id)
+      .maybeSingle();
+    if (!accessibleTenant) {
+      log.warn("user lacks access for tenant", { slug: tenantSlug, tenant_id });
       return new NextResponse("No tienes acceso a esta empresa.", { status: 403 });
     }
   }

@@ -43,8 +43,8 @@ export default async function MembersAdminPage(
 
   // viewer_has_permission is SECURITY DEFINER and honors '*' as a match.
   const { data: canManage } = await supabase.rpc("viewer_has_permission", {
-    target_organization_id: organization_id,
-    target_permission_id: "members_manage",
+    organization_id: organization_id,
+    permission_id: "members_manage",
   });
 
   if (!canManage) {
@@ -57,30 +57,30 @@ export default async function MembersAdminPage(
     );
   }
 
-  // memberships now models both ACTIVE members and PENDING invites — split client-side.
-  const [allMembershipsRes, membershipPermissionsRes] = await Promise.all([
+  // organization_memberships now models both ACTIVE members and PENDING invites — split client-side.
+  const [allOrganizationOrganizationMembershipsRes, organizationMembershipPermissionsRes] = await Promise.all([
     admin
-      .from("memberships")
+      .from("organization_memberships")
       .select(
-        "membership_id, profile_id, membership_invite_email, membership_invite_phone, membership_invite_address_level0_id, membership_invite_document_kind, membership_invite_document_value, membership_invite_expires_at, membership_accepted_at, membership_created_at, profiles(profile_name_full)",
+        "organization_membership_id, profile_id, organization_membership_invite_email, organization_membership_invite_phone, organization_membership_invite_address_level0_id, organization_membership_invite_document_kind, organization_membership_invite_document_value, organization_membership_invite_expires_at, organization_membership_accepted_at, organization_membership_created_at, profiles(profile_name_full)",
       )
       .eq("organization_id", organization_id)
-      .is("membership_revoked_at", null)
-      .is("membership_rejected_at", null)
-      .order("membership_created_at", { ascending: true }),
+      .is("organization_membership_revoked_at", null)
+      .is("organization_membership_rejected_at", null)
+      .order("organization_membership_created_at", { ascending: true }),
     admin
-      .from("membership_permissions")
-      .select("membership_id, permission_id, memberships!inner(organization_id)")
-      .eq("memberships.organization_id", organization_id),
+      .from("organization_membership_permissions")
+      .select("organization_membership_id, permission_id, organization_memberships!inner(organization_id)")
+      .eq("organization_memberships.organization_id", organization_id),
   ]);
 
-  const allMemberships = allMembershipsRes.data ?? [];
-  const activeMemberships = allMemberships.filter((m) => m["profile_id"] && m["membership_accepted_at"]);
-  const pendingMemberships = allMemberships.filter((m) => !m["profile_id"] && !m["membership_accepted_at"]);
+  const allOrganizationOrganizationMemberships = allOrganizationOrganizationMembershipsRes.data ?? [];
+  const activeOrganizationOrganizationMemberships = allOrganizationOrganizationMemberships.filter((m) => m["profile_id"] && m["organization_membership_accepted_at"]);
+  const pendingOrganizationOrganizationMemberships = allOrganizationOrganizationMemberships.filter((m) => !m["profile_id"] && !m["organization_membership_accepted_at"]);
 
   // Emails for member profiles (auth.users; not in profiles table). One paginated call
   // instead of N round-trips — Supabase admin rate-limits `getUserById`.
-  const memberProfileIds = new Set(activeMemberships.map((m) => m["profile_id"] as string));
+  const memberProfileIds = new Set(activeOrganizationOrganizationMemberships.map((m) => m["profile_id"] as string));
   const profileEmailById = new Map<string, string | null>();
   if (memberProfileIds.size > 0) {
     const usersRes = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -93,26 +93,26 @@ export default async function MembersAdminPage(
     }
   }
 
-  const permissionsByMembershipId = new Map<number, { permission_id: string; is_wildcard: boolean }[]>();
-  for (const mp of membershipPermissionsRes.data ?? []) {
-    const list = permissionsByMembershipId.get(mp["membership_id"] as number) ?? [];
+  const permissionsByOrganizationMembershipId = new Map<number, { permission_id: string; is_wildcard: boolean }[]>();
+  for (const mp of organizationMembershipPermissionsRes.data ?? []) {
+    const list = permissionsByOrganizationMembershipId.get(mp["organization_membership_id"] as number) ?? [];
     list.push({
       permission_id: mp["permission_id"] as string,
       is_wildcard: mp["permission_id"] === "*",
     });
-    permissionsByMembershipId.set(mp["membership_id"] as number, list);
+    permissionsByOrganizationMembershipId.set(mp["organization_membership_id"] as number, list);
   }
 
   const editHrefBase = `/${locale}/t/${tenant_slug}/${organization_id}/settings/members`;
 
-  const activeRows = activeMemberships.map((m) => {
-    const membership_id = m["membership_id"] as number;
-    const grants = permissionsByMembershipId.get(membership_id) ?? [];
+  const activeRows = activeOrganizationOrganizationMemberships.map((m) => {
+    const organization_membership_id = m["organization_membership_id"] as number;
+    const grants = permissionsByOrganizationMembershipId.get(organization_membership_id) ?? [];
     const has_wildcard = grants.some((g) => g.is_wildcard);
     const slugs = grants.filter((g) => !g.is_wildcard).map((g) => g.permission_id);
     const profile_id = m["profile_id"] as string;
     return {
-      membership_id,
+      organization_membership_id,
       profile_id,
       profile_name_full: m["profiles"]?.["profile_name_full"] ?? null,
       email: profileEmailById.get(profile_id) ?? null,
@@ -157,8 +157,8 @@ export default async function MembersAdminPage(
               const name = m.profile_name_full ?? m.email ?? m.profile_id.slice(0, 8);
               return (
                 <Link
-                  key={m.membership_id}
-                  href={`${editHrefBase}/${m.membership_id}/edit`}
+                  key={m.organization_membership_id}
+                  href={`${editHrefBase}/${m.organization_membership_id}/edit`}
                   className="group border-border bg-background hover:bg-accent/60 hover:border-foreground/25 grid grid-cols-[36px_1fr_auto_auto] items-center gap-3 rounded-md border px-3.5 py-3 transition-[background,border-color]"
                 >
                   <MemberAvatar name={name} />
@@ -199,24 +199,24 @@ export default async function MembersAdminPage(
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
             {t("pending_heading")}
           </span>
-          <span className="text-muted-foreground text-[11.5px] tabular-nums">{pendingMemberships.length}</span>
+          <span className="text-muted-foreground text-[11.5px] tabular-nums">{pendingOrganizationOrganizationMemberships.length}</span>
         </div>
         <PendingInvitations
           editHrefBase={editHrefBase}
-          invitations={pendingMemberships.map((i) => ({
-            membership_id: i["membership_id"] as number,
-            invitation_email: i["membership_invite_email"] as string | null,
-            invitation_phone: i["membership_invite_phone"] as string | null,
-            invitation_address_level0_id: i["membership_invite_address_level0_id"] as string | null,
-            invitation_document_kind: i["membership_invite_document_kind"] as string | null,
-            invitation_document_value: i["membership_invite_document_value"] as string | null,
+          invitations={pendingOrganizationOrganizationMemberships.map((i) => ({
+            organization_membership_id: i["organization_membership_id"] as number,
+            invitation_email: i["organization_membership_invite_email"] as string | null,
+            invitation_phone: i["organization_membership_invite_phone"] as string | null,
+            invitation_address_level0_id: i["organization_membership_invite_address_level0_id"] as string | null,
+            invitation_document_kind: i["organization_membership_invite_document_kind"] as string | null,
+            invitation_document_value: i["organization_membership_invite_document_value"] as string | null,
             invitation_permission_slugs:
-              permissionsByMembershipId.get(i["membership_id"] as number)?.map((g) => g.permission_id) ?? [],
-            invitation_created_at: i["membership_created_at"] as string,
-            invitation_expires_at: i["membership_invite_expires_at"] as string | null,
+              permissionsByOrganizationMembershipId.get(i["organization_membership_id"] as number)?.map((g) => g.permission_id) ?? [],
+            invitation_created_at: i["organization_membership_created_at"] as string,
+            invitation_expires_at: i["organization_membership_invite_expires_at"] as string | null,
           }))}
         />
-        {pendingMemberships.length > 0 ? (
+        {pendingOrganizationOrganizationMemberships.length > 0 ? (
           <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-[11.5px] leading-[1.5]">
             <span className="text-muted-foreground/80 mt-px shrink-0">
               <ShieldCheck size={13} />

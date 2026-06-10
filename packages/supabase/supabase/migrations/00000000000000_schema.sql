@@ -122,6 +122,32 @@ create or replace function internal.slug_validate(value text)
     select value ~ '^[a-z0-9]([a-z0-9-]{1,38}[a-z0-9])?$';
   $$;
 
+-- Email validation shared by invite/identity columns. citext-friendly; mirrors the
+-- length bounds those columns previously enforced inline.
+create or replace function internal.email_validate(value text)
+  returns boolean
+  language sql
+  immutable
+  parallel safe
+  strict
+  set search_path to ''
+  as $$
+    select char_length(value) between 3 and 254
+      and value ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$';
+  $$;
+
+-- Phone validation: E.164 with leading '+'. Mirrors public.phone_normalize's output shape.
+create or replace function internal.phone_validate(value text)
+  returns boolean
+  language sql
+  immutable
+  parallel safe
+  strict
+  set search_path to ''
+  as $$
+    select value ~ '^\+[1-9]\d{7,14}$';
+  $$;
+
 -- Predicate for canonical UUID text (8-4-4-4-12 hex). Cheaper and exception-free
 -- compared to `value::uuid` in a try/catch — useful for index predicates and
 -- view filters that must be IMMUTABLE.
@@ -308,7 +334,7 @@ create or replace function public.viewer_profile_id(strict boolean default false
       _user_id uuid := auth.uid();
     begin
       if _user_id is null and $1 is true then
-        raise exception 'Not logged-in';
+        raise exception '[viewer_profile_id] not logged-in';
       end if;
       return _user_id;
     end;
@@ -352,20 +378,20 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
     allowed_mime_types = excluded.allowed_mime_types;
 
 -- ============================================================
--- tenants + organizations + memberships + permissions
+-- tenants + organizations + organization_memberships + permissions
 -- ============================================================
 --
 -- A `tenant` is the billing / customer relationship (e.g. "Walmart").
 -- A tenant has one or more `organizations` — the actual operating units (e.g. "Walmart Chile").
 -- Most tenants have exactly one organization that mirrors the tenant.
 --
--- Users belong to *organizations* via `public.memberships`. The set of tenants a user can
+-- Users belong to *organizations* via `public.organization_memberships`. The set of tenants a user can
 -- access is derived from the tenants of the organizations they're a member of.
 -- The subdomain `{tenant_slug}.example.com` routes to the tenant; org switching happens in-app.
 --
 -- Access control is permission-based (not role-based). Capabilities are atomic slugs in
--- `public.permissions` (e.g. `organization_manage`, `payroll_run`). A grant lives in
--- `public.membership_permissions` for a (org, profile, permission) triple. The reserved
+-- `public.permissions` (e.g. `organization_manage`, `members_manage`). A grant lives in
+-- `public.organization_membership_permissions` for a (org, profile, permission) triple. The reserved
 -- slug `*` is the wildcard: anyone who has `(org, profile, '*')` passes every permission
 -- check inside that org — convenient for the tenant creator and for any other "full
 -- admin" relationship without forcing the catalog to be backfilled when a new permission
@@ -375,7 +401,7 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 -- public.reserved_slugs — list of slugs that cannot be used as tenant identifiers
 -- because they collide with first-party routes (`/auth`, `/home`, etc.) or with
 -- BCP47 locale codes. Seeded in seed.sql. The CHECK on `public.tenants.tenant_slug`
--- calls `internal.reserved_slug_validate()` which combines the slug-shape check with
+-- calls `internal.slug_reserved_validate()` which combines the slug-shape check with
 -- a lookup here. RLS: SELECT for anon + authenticated; no write policies (service_role
 -- bypasses RLS for seeding/mutations).
 
@@ -390,7 +416,7 @@ create policy "reserved_slugs_select"
   for select to anon, authenticated
   using (true);
 
-create or replace function internal.reserved_slug_validate(value text)
+create or replace function internal.slug_reserved_validate(value text)
   returns boolean
   language sql
   stable
@@ -407,7 +433,7 @@ create or replace function internal.reserved_slug_validate(value text)
 
 create table if not exists public.tenants (
   tenant_id serial primary key,
-  tenant_slug extensions.citext not null unique check (internal.reserved_slug_validate(tenant_slug::text)),
+  tenant_slug extensions.citext not null unique check (internal.slug_reserved_validate(tenant_slug::text)),
   tenant_name text not null check (char_length(tenant_name) between 1 and 256),
   tenant_disabled_at timestamptz,
   tenant_created_at timestamptz not null default current_timestamp,
@@ -466,10 +492,10 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
     file_size_limit = excluded.file_size_limit,
     allowed_mime_types = excluded.allowed_mime_types;
 
--- Forward declarations needed before `public.memberships` so its invite columns + triggers
+-- Forward declarations needed before `public.organization_memberships` so its invite columns + triggers
 -- can reference them. The full `public.addresses_level0` table (with seed + indexes) and
 -- the `profile_identities` section appear later in the file with their RLS policies; this
--- block only puts the pieces in place that memberships requires.
+-- block only puts the pieces in place that organization_memberships requires.
 
 create table if not exists public.addresses_level0 (
   address_level0_id text not null check (length(address_level0_id) = 2),
@@ -481,6 +507,61 @@ create table if not exists public.addresses_level0 (
   address_level0_updated_at timestamptz not null default current_timestamp,
   primary key (address_level0_id)
 );
+
+-- Chilean RUT (Rol Unico Tributario) helpers. cl_rut_normalize strips formatting,
+-- validates the modulo-11 check digit, and returns the canonical body+DV (digits + upper K)
+-- or NULL when the check digit is wrong. cl_rut_validate is the boolean shortcut.
+create or replace function public.cl_rut_normalize(value text)
+  returns text
+  language plpgsql
+  immutable
+  parallel safe
+  set search_path to ''
+  as $$
+    declare
+      _stripped text;
+      _t bigint;
+      _m int;
+      _s int;
+      _dv text;
+    begin
+      if value is null then
+        return null;
+      end if;
+      _stripped := upper(regexp_replace(value, '[^0-9a-zA-Z]', '', 'g'));
+      _stripped := regexp_replace(_stripped, '^0+', '', '');
+      if _stripped !~ '^[0-9]{1,9}[0-9K]$' then
+        return null;
+      end if;
+      _t := substring(_stripped from 1 for char_length(_stripped) - 1)::bigint;
+      _m := 0;
+      _s := 1;
+      while _t > 0 loop
+        _s := (_s + (_t % 10)::int * (9 - (_m % 6))) % 11;
+        _m := _m + 1;
+        _t := _t / 10;
+      end loop;
+      if _s > 0 then
+        _dv := (_s - 1)::text;
+      else
+        _dv := 'K';
+      end if;
+      if _dv <> substring(_stripped from char_length(_stripped) for 1) then
+        return null;
+      end if;
+      return _stripped;
+    end;
+  $$;
+
+create or replace function public.cl_rut_validate(value text)
+  returns boolean
+  language sql
+  immutable
+  parallel safe
+  set search_path to ''
+  as $$
+    select public.cl_rut_normalize(value) is not null;
+  $$;
 
 do $$ begin
   create type public.profile_identity_document_kind as enum ('nin', 'passport');
@@ -500,10 +581,6 @@ create or replace function internal.profile_identity_value_normalize(
   as $$
     declare
       _stripped text;
-      _t bigint;
-      _m int;
-      _s int;
-      _dv text;
     begin
       if value is null then
         return null;
@@ -513,32 +590,14 @@ create or replace function internal.profile_identity_value_normalize(
       if _stripped = '' or char_length(_stripped) < 4 or char_length(_stripped) > 32 then
         return null;
       end if;
-      if country = 'CL' and kind = 'nin' then
-        if _stripped !~ '^[0-9]{1,9}[0-9K]$' then
-          return null;
-        end if;
-        _t := substring(_stripped from 1 for char_length(_stripped) - 1)::bigint;
-        _m := 0;
-        _s := 1;
-        while _t > 0 loop
-          _s := (_s + (_t % 10)::int * (9 - (_m % 6))) % 11;
-          _m := _m + 1;
-          _t := _t / 10;
-        end loop;
-        if _s > 0 then
-          _dv := (_s - 1)::text;
-        else
-          _dv := 'K';
-        end if;
-        if _dv <> substring(_stripped from char_length(_stripped) for 1) then
-          return null;
-        end if;
+      if country = 'CL' and kind = 'nin' and not public.cl_rut_validate(_stripped) then
+        return null;
       end if;
       return _stripped;
     end;
   $$;
 
--- memberships: a single row models both a pending invite AND an active membership.
+-- organization_memberships: a single row models both a pending invite AND an active organization_membership.
 --
 -- A row is in one of these states (ordered by typical lifecycle):
 --   PENDING   profile_id is null,     accepted_at is null, rejected_at is null, revoked_at is null
@@ -547,136 +606,136 @@ create or replace function internal.profile_identity_value_normalize(
 --   REVOKED   revoked_at is not null   (terminal — admin removed)
 --
 -- For PENDING rows, at least one identifier (email / phone / document triplet) must be set
--- so the invitee can match it via viewer_membership_pending(). The shareable accept link
--- carries membership_invite_token (random opaque) + expires_at TTL.
-create table if not exists public.memberships (
-  membership_id serial primary key,
+-- so the invitee can match it via viewer_organization_membership_pending(). The shareable accept link
+-- carries organization_membership_invite_token (random opaque) + expires_at TTL.
+create table if not exists public.organization_memberships (
+  organization_membership_id serial primary key,
   organization_id int not null references public.organizations (organization_id) on delete cascade,
   profile_id uuid references public.profiles (profile_id) on delete set null,
 
   -- Invite identifiers (used to match the invitee at accept-time)
-  membership_invite_email extensions.citext
-    check (membership_invite_email is null or char_length(membership_invite_email) between 3 and 254),
-  membership_invite_phone text
-    check (membership_invite_phone is null or membership_invite_phone ~ '^\+[1-9]\d{7,14}$'),
-  membership_invite_address_level0_id text
+  organization_membership_invite_email extensions.citext
+    check (organization_membership_invite_email is null or internal.email_validate(organization_membership_invite_email::text)),
+  organization_membership_invite_phone text
+    check (organization_membership_invite_phone is null or internal.phone_validate(organization_membership_invite_phone)),
+  organization_membership_invite_address_level0_id text
     references public.addresses_level0 (address_level0_id),
-  membership_invite_document_kind public.profile_identity_document_kind,
-  membership_invite_document_value text
-    check (membership_invite_document_value is null or char_length(membership_invite_document_value) between 4 and 32),
+  organization_membership_invite_document_kind public.profile_identity_document_kind,
+  organization_membership_invite_document_value text
+    check (organization_membership_invite_document_value is null or char_length(organization_membership_invite_document_value) between 4 and 32),
 
   -- Shareable accept-link token (random secret; opaque to the user)
-  membership_invite_token text unique
-    check (membership_invite_token is null or char_length(membership_invite_token) between 8 and 256),
-  membership_invite_expires_at timestamptz,
+  organization_membership_invite_token text unique
+    check (organization_membership_invite_token is null or char_length(organization_membership_invite_token) between 8 and 256),
+  organization_membership_invite_expires_at timestamptz,
 
   -- Lifecycle timestamps
-  membership_accepted_at timestamptz,
-  membership_rejected_at timestamptz,
-  membership_revoked_at timestamptz,
-  membership_created_at timestamptz not null default current_timestamp,
-  membership_updated_at timestamptz not null default current_timestamp,
+  organization_membership_accepted_at timestamptz,
+  organization_membership_rejected_at timestamptz,
+  organization_membership_revoked_at timestamptz,
+  organization_membership_created_at timestamptz not null default current_timestamp,
+  organization_membership_updated_at timestamptz not null default current_timestamp,
 
   -- A claim (profile_id) and acceptance must move together.
-  constraint memberships_claim_consistency check (
-    (profile_id is null and membership_accepted_at is null)
-    or (profile_id is not null and membership_accepted_at is not null)
+  constraint organization_memberships_claim_consistency check (
+    (profile_id is null and organization_membership_accepted_at is null)
+    or (profile_id is not null and organization_membership_accepted_at is not null)
   ),
   -- Pending rows (no profile yet) must carry at least one identifier so an invitee can match.
-  constraint memberships_pending_has_identifier check (
+  constraint organization_memberships_pending_has_identifier check (
     profile_id is not null
-    or membership_invite_email is not null
-    or membership_invite_phone is not null
+    or organization_membership_invite_email is not null
+    or organization_membership_invite_phone is not null
     or (
-      membership_invite_address_level0_id is not null
-      and membership_invite_document_kind is not null
-      and membership_invite_document_value is not null
+      organization_membership_invite_address_level0_id is not null
+      and organization_membership_invite_document_kind is not null
+      and organization_membership_invite_document_value is not null
     )
   ),
   -- Document triplet is all-or-nothing.
-  constraint memberships_doc_triplet_complete check (
-    (membership_invite_address_level0_id is null
-     and membership_invite_document_kind is null
-     and membership_invite_document_value is null)
-    or (membership_invite_address_level0_id is not null
-        and membership_invite_document_kind is not null
-        and membership_invite_document_value is not null)
+  constraint organization_memberships_doc_triplet_complete check (
+    (organization_membership_invite_address_level0_id is null
+     and organization_membership_invite_document_kind is null
+     and organization_membership_invite_document_value is null)
+    or (organization_membership_invite_address_level0_id is not null
+        and organization_membership_invite_document_kind is not null
+        and organization_membership_invite_document_value is not null)
   )
 );
 
 -- A claimed (active) member appears at most once per (org, profile).
-create unique index if not exists memberships_org_profile_active_idx
-  on public.memberships (organization_id, profile_id)
+create unique index if not exists organization_memberships_org_profile_active_idx
+  on public.organization_memberships (organization_id, profile_id)
   where profile_id is not null
-    and membership_revoked_at is null
-    and membership_rejected_at is null;
+    and organization_membership_revoked_at is null
+    and organization_membership_rejected_at is null;
 
 -- At most one pending invite per (org, identifier).
-create unique index if not exists memberships_org_email_pending_idx
-  on public.memberships (organization_id, membership_invite_email)
+create unique index if not exists organization_memberships_org_email_pending_idx
+  on public.organization_memberships (organization_id, organization_membership_invite_email)
   where profile_id is null
-    and membership_invite_email is not null
-    and membership_rejected_at is null
-    and membership_revoked_at is null;
+    and organization_membership_invite_email is not null
+    and organization_membership_rejected_at is null
+    and organization_membership_revoked_at is null;
 
-create unique index if not exists memberships_org_phone_pending_idx
-  on public.memberships (organization_id, membership_invite_phone)
+create unique index if not exists organization_memberships_org_phone_pending_idx
+  on public.organization_memberships (organization_id, organization_membership_invite_phone)
   where profile_id is null
-    and membership_invite_phone is not null
-    and membership_rejected_at is null
-    and membership_revoked_at is null;
+    and organization_membership_invite_phone is not null
+    and organization_membership_rejected_at is null
+    and organization_membership_revoked_at is null;
 
-create unique index if not exists memberships_org_doc_pending_idx
-  on public.memberships (
-    organization_id, membership_invite_address_level0_id,
-    membership_invite_document_kind, membership_invite_document_value
+create unique index if not exists organization_memberships_org_doc_pending_idx
+  on public.organization_memberships (
+    organization_id, organization_membership_invite_address_level0_id,
+    organization_membership_invite_document_kind, organization_membership_invite_document_value
   )
   where profile_id is null
-    and membership_invite_document_value is not null
-    and membership_rejected_at is null
-    and membership_revoked_at is null;
+    and organization_membership_invite_document_value is not null
+    and organization_membership_rejected_at is null
+    and organization_membership_revoked_at is null;
 
--- Lookup: viewer's claimed memberships (used by viewer_organization_ids hook + RLS).
-create index if not exists memberships_profile_active_idx
-  on public.memberships (profile_id)
+-- Lookup: viewer's claimed organization_memberships (used by viewer_organization_ids hook + RLS).
+create index if not exists organization_memberships_profile_active_idx
+  on public.organization_memberships (profile_id)
   where profile_id is not null
-    and membership_accepted_at is not null
-    and membership_revoked_at is null
-    and membership_rejected_at is null;
+    and organization_membership_accepted_at is not null
+    and organization_membership_revoked_at is null
+    and organization_membership_rejected_at is null;
 
--- Lookups for viewer_membership_pending: scan by identifier.
-create index if not exists memberships_invite_email_pending_idx
-  on public.memberships (membership_invite_email)
+-- Lookups for viewer_organization_membership_pending: scan by identifier.
+create index if not exists organization_memberships_invite_email_pending_idx
+  on public.organization_memberships (organization_membership_invite_email)
   where profile_id is null
-    and membership_invite_email is not null
-    and membership_rejected_at is null
-    and membership_revoked_at is null;
+    and organization_membership_invite_email is not null
+    and organization_membership_rejected_at is null
+    and organization_membership_revoked_at is null;
 
-create index if not exists memberships_invite_phone_pending_idx
-  on public.memberships (membership_invite_phone)
+create index if not exists organization_memberships_invite_phone_pending_idx
+  on public.organization_memberships (organization_membership_invite_phone)
   where profile_id is null
-    and membership_invite_phone is not null
-    and membership_rejected_at is null
-    and membership_revoked_at is null;
+    and organization_membership_invite_phone is not null
+    and organization_membership_rejected_at is null
+    and organization_membership_revoked_at is null;
 
-create index if not exists memberships_invite_doc_pending_idx
-  on public.memberships (
-    membership_invite_address_level0_id,
-    membership_invite_document_kind,
-    membership_invite_document_value
+create index if not exists organization_memberships_invite_doc_pending_idx
+  on public.organization_memberships (
+    organization_membership_invite_address_level0_id,
+    organization_membership_invite_document_kind,
+    organization_membership_invite_document_value
   )
   where profile_id is null
-    and membership_invite_document_value is not null
-    and membership_rejected_at is null
-    and membership_revoked_at is null;
+    and organization_membership_invite_document_value is not null
+    and organization_membership_rejected_at is null
+    and organization_membership_revoked_at is null;
 
-drop trigger if exists handle_memberships_updated_at on public.memberships;
-create trigger handle_memberships_updated_at
-  before update on public.memberships
-  for each row execute procedure extensions.moddatetime(membership_updated_at);
+drop trigger if exists handle_organization_memberships_updated_at on public.organization_memberships;
+create trigger handle_organization_memberships_updated_at
+  before update on public.organization_memberships
+  for each row execute procedure extensions.moddatetime(organization_membership_updated_at);
 
 -- Normalize invite phone (E.164, default code +56).
-create or replace function internal.memberships_normalize_invite_phone()
+create or replace function internal.organization_memberships_normalize_invite_phone()
   returns trigger
   language plpgsql
   set search_path to ''
@@ -684,25 +743,25 @@ create or replace function internal.memberships_normalize_invite_phone()
     declare
       _normalized text;
     begin
-      if NEW.membership_invite_phone is null then
+      if NEW.organization_membership_invite_phone is null then
         return NEW;
       end if;
-      _normalized := public.phone_normalize(NEW.membership_invite_phone, '+56');
+      _normalized := public.phone_normalize(NEW.organization_membership_invite_phone, '+56');
       if _normalized is null then
-        raise exception 'Invalid invite phone: %', NEW.membership_invite_phone;
+        raise exception 'Invalid invite phone: %', NEW.organization_membership_invite_phone;
       end if;
-      NEW.membership_invite_phone := _normalized;
+      NEW.organization_membership_invite_phone := _normalized;
       return NEW;
     end;
   $$;
 
-drop trigger if exists memberships_trigger_normalize_invite_phone on public.memberships;
-create trigger memberships_trigger_normalize_invite_phone
-  before insert or update of membership_invite_phone on public.memberships
-  for each row execute procedure internal.memberships_normalize_invite_phone();
+drop trigger if exists organization_memberships_trigger_normalize_invite_phone on public.organization_memberships;
+create trigger organization_memberships_trigger_normalize_invite_phone
+  before insert or update of organization_membership_invite_phone on public.organization_memberships
+  for each row execute procedure internal.organization_memberships_normalize_invite_phone();
 
 -- Normalize invite document triplet (reuses profile_identity_value_normalize).
-create or replace function internal.memberships_normalize_invite_document()
+create or replace function internal.organization_memberships_normalize_invite_document()
   returns trigger
   language plpgsql
   set search_path to ''
@@ -710,33 +769,33 @@ create or replace function internal.memberships_normalize_invite_document()
     declare
       _normalized text;
     begin
-      if NEW.membership_invite_document_value is null then
+      if NEW.organization_membership_invite_document_value is null then
         return NEW;
       end if;
       _normalized := internal.profile_identity_value_normalize(
-        NEW.membership_invite_address_level0_id,
-        NEW.membership_invite_document_kind,
-        NEW.membership_invite_document_value
+        NEW.organization_membership_invite_address_level0_id,
+        NEW.organization_membership_invite_document_kind,
+        NEW.organization_membership_invite_document_value
       );
       if _normalized is null then
         raise exception 'Invalid % document value for %: %',
-          NEW.membership_invite_document_kind,
-          NEW.membership_invite_address_level0_id,
-          NEW.membership_invite_document_value;
+          NEW.organization_membership_invite_document_kind,
+          NEW.organization_membership_invite_address_level0_id,
+          NEW.organization_membership_invite_document_value;
       end if;
-      NEW.membership_invite_document_value := _normalized;
+      NEW.organization_membership_invite_document_value := _normalized;
       return NEW;
     end;
   $$;
 
-drop trigger if exists memberships_trigger_normalize_invite_document on public.memberships;
-create trigger memberships_trigger_normalize_invite_document
+drop trigger if exists organization_memberships_trigger_normalize_invite_document on public.organization_memberships;
+create trigger organization_memberships_trigger_normalize_invite_document
   before insert or update of
-    membership_invite_address_level0_id,
-    membership_invite_document_kind,
-    membership_invite_document_value
-  on public.memberships
-  for each row execute procedure internal.memberships_normalize_invite_document();
+    organization_membership_invite_address_level0_id,
+    organization_membership_invite_document_kind,
+    organization_membership_invite_document_value
+  on public.organization_memberships
+  for each row execute procedure internal.organization_memberships_normalize_invite_document();
 
 -- Catalog of permissions. Seeded below. permission_id is a snake_case identifier (we use
 -- it as a code-level constant, not a URL slug — so underscores, not hyphens). The reserved
@@ -757,21 +816,21 @@ create trigger handle_permissions_updated_at
   before update on public.permissions
   for each row execute procedure extensions.moddatetime(permission_updated_at);
 
--- Grants: one row per (membership, permission). Permissions can be attached to a membership
+-- Grants: one row per (organization_membership, permission). Permissions can be attached to a organization_membership
 -- BEFORE the invitee claims it — admins set the slugs at invite time, they apply once the
--- invitee accepts. Cascades from memberships (delete) and permissions (slug retirement).
-create table if not exists public.membership_permissions (
-  membership_id int not null
-    references public.memberships (membership_id) on delete cascade,
+-- invitee accepts. Cascades from organization_memberships (delete) and permissions (slug retirement).
+create table if not exists public.organization_membership_permissions (
+  organization_membership_id int not null
+    references public.organization_memberships (organization_membership_id) on delete cascade,
   permission_id extensions.citext not null
     references public.permissions (permission_id) on delete cascade,
-  membership_permission_created_at timestamptz not null default current_timestamp,
-  primary key (membership_id, permission_id)
+  organization_membership_permission_created_at timestamptz not null default current_timestamp,
+  primary key (organization_membership_id, permission_id)
 );
 
--- Secondary index for "what permission rows match slug X?" cross-membership scans.
-create index if not exists membership_permissions_permission_idx
-  on public.membership_permissions (permission_id);
+-- Secondary index for "what permission rows match slug X?" cross-organization_membership scans.
+create index if not exists organization_membership_permissions_permission_idx
+  on public.organization_membership_permissions (permission_id);
 
 -- UX-only catalog of named permission bundles. `organization_id IS NULL` = global preset
 -- visible to everyone; non-null = preset specific to that organization. The trigger validates
@@ -822,28 +881,17 @@ create trigger permission_presets_trigger_validate_slugs
 
 -- Seed catalog (idempotent: ON CONFLICT skips). Add new slugs here, then re-run db:reset.
 insert into public.permissions (permission_id, permission_description) values
-  ('*',                    'Comodín: cubre cualquier permiso dentro de la organización (uso típico: fundador).'),
-  ('organization_manage',  'Editar nombre, configuración y dominios del tenant/organización.'),
-  ('members_manage',       'Invitar, remover y reasignar permisos a miembros.'),
-  ('presets_manage',       'Crear/editar permission_presets de la organización.'),
-  ('payroll_run',          'Ejecutar el ciclo mensual de nómina y emitir liquidaciones.'),
-  ('payroll_view',         'Ver liquidaciones y datos de nómina del equipo.'),
-  ('vacations_approve',    'Aprobar o rechazar solicitudes de vacaciones.'),
-  ('vacations_request',    'Solicitar vacaciones para uno mismo.'),
-  ('terminations_create',  'Crear finiquitos.'),
-  ('previred_export',      'Exportar archivo Previred.'),
-  ('lre_export',           'Exportar Libro de Remuneraciones Electrónico.'),
-  ('banco_export',         'Exportar nómina bancaria (Shinkansen u otra).')
+  ('*',                    'Wildcard: grants every permission within the organization (typical use: founder).'),
+  ('organization_manage',  'Edit the name, settings, and domains of the tenant/organization.'),
+  ('members_manage',       'Invite, remove, and reassign permissions to members.'),
+  ('presets_manage',       'Create and edit the organization''s permission presets.')
 on conflict (permission_id) do nothing;
 
 -- Seed global presets (organization_id IS NULL → visibles para cualquier tenant).
 insert into public.permission_presets (organization_id, permission_preset_name, permission_preset_slugs) values
-  (null, 'Dueño',     array['*']::extensions.citext[]),
-  (null, 'Contadora', array[
-    'payroll_run','payroll_view','previred_export','lre_export','banco_export','terminations_create'
-  ]::extensions.citext[]),
-  (null, 'Manager',   array['payroll_view','vacations_approve']::extensions.citext[]),
-  (null, 'Empleado',  array['vacations_request']::extensions.citext[])
+  (null, 'Owner',         array['*']::extensions.citext[]),
+  (null, 'Administrator', array['organization_manage','members_manage','presets_manage']::extensions.citext[]),
+  (null, 'Member manager', array['members_manage']::extensions.citext[])
 on conflict do nothing;
 
 -- ============================================================
@@ -851,7 +899,7 @@ on conflict do nothing;
 -- ============================================================
 -- Agencies are platform-level entities — they don't belong to any tenant.
 -- Profiles can belong to both organizations (as org members) and agencies (as affiliates).
--- Access is controlled by agency grants (explicit or implicit), not by a binary flag.
+-- Access is controlled by explicit agency grants, not by a binary flag.
 
 create table if not exists public.agencies (
   agency_id uuid not null primary key default internal.uuid_generate_v7(),
@@ -867,25 +915,25 @@ create trigger handle_agencies_updated_at
   before update on public.agencies
   for each row execute procedure extensions.moddatetime(agency_updated_at);
 
--- Affiliations: a profile belongs to an agency. Mirrors public.memberships.
-create table if not exists public.affiliations (
-  affiliation_id serial primary key,
+-- AgencyMemberships: a profile belongs to an agency. Mirrors public.organization_memberships.
+create table if not exists public.agency_memberships (
+  agency_membership_id serial primary key,
   agency_id uuid not null references public.agencies (agency_id) on delete cascade,
   profile_id uuid not null references public.profiles (profile_id) on delete cascade,
-  affiliation_accepted_at timestamptz,
-  affiliation_revoked_at timestamptz,
-  affiliation_rejected_at timestamptz,
-  affiliation_created_at timestamptz not null default current_timestamp,
-  affiliation_updated_at timestamptz not null default current_timestamp,
+  agency_membership_accepted_at timestamptz,
+  agency_membership_revoked_at timestamptz,
+  agency_membership_rejected_at timestamptz,
+  agency_membership_created_at timestamptz not null default current_timestamp,
+  agency_membership_updated_at timestamptz not null default current_timestamp,
   unique (agency_id, profile_id)
 );
 
-create index if not exists affiliations_profile_idx on public.affiliations (profile_id);
+create index if not exists agency_memberships_profile_idx on public.agency_memberships (profile_id);
 
-drop trigger if exists handle_affiliations_updated_at on public.affiliations;
-create trigger handle_affiliations_updated_at
-  before update on public.affiliations
-  for each row execute procedure extensions.moddatetime(affiliation_updated_at);
+drop trigger if exists handle_agency_memberships_updated_at on public.agency_memberships;
+create trigger handle_agency_memberships_updated_at
+  before update on public.agency_memberships
+  for each row execute procedure extensions.moddatetime(agency_membership_updated_at);
 
 -- Explicit grants: an agency has a permission in a specific org or globally.
 -- organization_id IS NULL = all orgs. permission_id = '*' = all permissions.
@@ -906,32 +954,20 @@ create unique index if not exists agencies_organizations_grants_global_unique
   on public.agencies_organizations_grants (agency_id, permission_id)
   where organization_id is null;
 
--- Implicit grants: org opt-in. Any active affiliate inherits this permission in this org.
-create table if not exists public.agencies_organizations_implicit_grants (
-  agencies_organizations_implicit_grant_id uuid not null primary key default internal.uuid_generate_v7(),
-  organization_id int not null references public.organizations (organization_id) on delete cascade,
-  permission_id extensions.citext not null references public.permissions (permission_id) on delete cascade,
-  agencies_organizations_implicit_grant_created_at timestamptz not null default current_timestamp,
-  unique (organization_id, permission_id)
-);
-
 -- RLS for agency tables.
 alter table public.agencies enable row level security;
-alter table public.affiliations enable row level security;
+alter table public.agency_memberships enable row level security;
 alter table public.agencies_organizations_grants enable row level security;
-alter table public.agencies_organizations_implicit_grants enable row level security;
 
 revoke all on table public.agencies from anon, authenticated;
 grant select on table public.agencies to anon, authenticated;
 
-revoke all on table public.affiliations from anon, authenticated;
-grant select on table public.affiliations to anon, authenticated;
+revoke all on table public.agency_memberships from anon, authenticated;
+grant select on table public.agency_memberships to anon, authenticated;
 
 revoke all on table public.agencies_organizations_grants from anon, authenticated;
 grant select on table public.agencies_organizations_grants to anon, authenticated;
 
-revoke all on table public.agencies_organizations_implicit_grants from anon, authenticated;
-grant select on table public.agencies_organizations_implicit_grants to anon, authenticated;
 
 -- Writes on agency tables: service_role only (no authenticated write policies).
 -- RLS SELECT policies for agency tables are defined after viewer_agency_ids() is created.
@@ -940,9 +976,9 @@ grant select on table public.agencies_organizations_implicit_grants to anon, aut
 -- webauthn (passkeys)
 -- ============================================================
 -- Custom SimpleWebAuthn-backed implementation. Two tables:
---   webauthn_challenges  : transient challenges; one per profile during registration,
+--   profile_webauthn_challenges  : transient challenges; one per profile during registration,
 --                          NULL profile_id for anonymous sign-in challenges.
---   webauthn_credentials : persistent passkeys per profile.
+--   profile_webauthn_credentials : persistent passkeys per profile.
 -- The sign-in flow runs anonymously and goes through service-role; the registration
 -- flow runs as the authenticated user. RLS is locked down so anon/authenticated
 -- cannot touch challenges directly — only the credentials they own.
@@ -952,7 +988,7 @@ grant select on table public.agencies_organizations_implicit_grants to anon, aut
 -- rejects as enum value names — see CLAUDE.md "No hyphens in SQL identifiers
 -- or enum values". `check` constraints preserve enum-like safety at the DB.
 
-create table if not exists public.webauthn_challenges (
+create table if not exists public.profile_webauthn_challenges (
   webauthn_challenge_id uuid not null primary key default internal.uuid_generate_v7(),
   profile_id uuid references public.profiles (profile_id) on delete cascade,
   webauthn_challenge_value text not null unique,
@@ -963,10 +999,10 @@ create table if not exists public.webauthn_challenges (
   unique (profile_id)
 );
 
-create index if not exists webauthn_challenges_created_at_idx
-  on public.webauthn_challenges (webauthn_challenge_created_at);
+create index if not exists profile_webauthn_challenges_created_at_idx
+  on public.profile_webauthn_challenges (webauthn_challenge_created_at);
 
-create table if not exists public.webauthn_credentials (
+create table if not exists public.profile_webauthn_credentials (
   webauthn_credential_id uuid not null primary key default internal.uuid_generate_v7(),
   profile_id uuid not null references public.profiles (profile_id) on delete cascade,
   webauthn_credential_external_id varchar not null unique,
@@ -988,16 +1024,16 @@ create table if not exists public.webauthn_credentials (
   webauthn_credential_updated_at timestamptz not null default current_timestamp
 );
 
-create index if not exists webauthn_credentials_profile_idx
-  on public.webauthn_credentials (profile_id);
+create index if not exists profile_webauthn_credentials_profile_idx
+  on public.profile_webauthn_credentials (profile_id);
 
-drop trigger if exists handle_webauthn_credentials_updated_at on public.webauthn_credentials;
-create trigger handle_webauthn_credentials_updated_at
-  before update on public.webauthn_credentials
+drop trigger if exists handle_profile_webauthn_credentials_updated_at on public.profile_webauthn_credentials;
+create trigger handle_profile_webauthn_credentials_updated_at
+  before update on public.profile_webauthn_credentials
   for each row execute procedure extensions.moddatetime(webauthn_credential_updated_at);
 
-alter table public.webauthn_challenges enable row level security;
-alter table public.webauthn_credentials enable row level security;
+alter table public.profile_webauthn_challenges enable row level security;
+alter table public.profile_webauthn_credentials enable row level security;
 
 -- Challenges: 100% server-side via service-role (Server Actions in
 -- apps/platform/lib/passkeys.actions.ts). No authenticated policies — clients
@@ -1007,15 +1043,15 @@ alter table public.webauthn_credentials enable row level security;
 -- (passkey revocation). Inserts + updates happen exclusively via service-role
 -- Server Actions, so authenticated INSERT/UPDATE policies are intentionally absent
 -- — that closes the "user fabricates rows bypassing the WebAuthn ceremony" vector.
-drop policy if exists "webauthn_credentials select own" on public.webauthn_credentials;
-create policy "webauthn_credentials select own"
-  on public.webauthn_credentials for select
+drop policy if exists "profile_webauthn_credentials select own" on public.profile_webauthn_credentials;
+create policy "profile_webauthn_credentials select own"
+  on public.profile_webauthn_credentials for select
   to authenticated
   using (profile_id = (select public.viewer_profile_id()));
 
-drop policy if exists "webauthn_credentials delete own" on public.webauthn_credentials;
-create policy "webauthn_credentials delete own"
-  on public.webauthn_credentials for delete
+drop policy if exists "profile_webauthn_credentials delete own" on public.profile_webauthn_credentials;
+create policy "profile_webauthn_credentials delete own"
+  on public.profile_webauthn_credentials for delete
   to authenticated
   using (profile_id = (select public.viewer_profile_id()));
 
@@ -1031,7 +1067,7 @@ create or replace function public.email_has_passkey(email_to_check text)
     select exists (
       select 1
       from auth.users u
-      join public.webauthn_credentials c on c.profile_id = u.id
+      join public.profile_webauthn_credentials c on c.profile_id = u.id
       where lower(u.email) = lower(email_to_check)
     );
   $$;
@@ -1079,7 +1115,7 @@ create or replace function public.phone_has_passkey(phone_to_check text, default
       select exists (
         select 1
         from auth.users u
-        join public.webauthn_credentials c on c.profile_id = u.id
+        join public.profile_webauthn_credentials c on c.profile_id = u.id
         where u.phone = ltrim(_canonical, '+')
       ) into _result;
       return _result;
@@ -1154,10 +1190,10 @@ grant execute on function public.profile_id_by_email(text) to service_role;
 -- Permissions (DB lookup — `security definer` to bypass recursive RLS):
 --   viewer_permission_org_ids(perm)     : setof org_id where the caller has `perm` OR `*`
 --   viewer_has_permission(org, perm)    : boolean shortcut for a single (org, perm) check
---   viewer_membership_permissions()     : setof (org_id, permission_id) — for UI listing
+--   viewer_organization_membership_permissions()     : setof (org_id, permission_id) — for UI listing
 --
 -- Convenience over the join:
---   tenants_organizations_profiles (view)  : active tenant-org memberships for the viewer
+--   tenants_organizations_profiles (view)  : active tenant-org organization_memberships for the viewer
 --   viewer_tenants() / viewer_organizations() / viewer_tenant_by_id() / viewer_tenant_by_slug() / viewer_organization_by_id()
 
 create or replace function public.viewer_profile(strict boolean default false)
@@ -1185,18 +1221,21 @@ create or replace function public.viewer_profile(strict boolean default false)
 create or replace function public.viewer_tenant_ids()
   returns setof int
   stable
+  security definer
   parallel safe
   language sql
   set search_path to ''
   as $$
-    select (t->>'id')::int
-    from jsonb_array_elements(
-      coalesce(
-        nullif(current_setting('request.jwt.claims', true), '')::jsonb
-          -> 'app_metadata' -> 'tenants',
-        '[]'::jsonb
-      )
-    ) as t;
+    select distinct t.tenant_id
+    from public.organization_memberships m
+    join public.organizations o using (organization_id)
+    join public.tenants t using (tenant_id)
+    where m.profile_id = (select public.viewer_profile_id())
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null
+      and o.organization_disabled_at is null
+      and t.tenant_disabled_at is null;
   $$;
 
 create or replace function public.viewer_tenant_validate(tenant_id int)
@@ -1207,33 +1246,29 @@ create or replace function public.viewer_tenant_validate(tenant_id int)
   set search_path to ''
   as $$
     select exists (
-      select 1
-      from jsonb_array_elements(
-        coalesce(
-          nullif(current_setting('request.jwt.claims', true), '')::jsonb
-            -> 'app_metadata' -> 'tenants',
-          '[]'::jsonb
-        )
-      ) as t
-      where (t->>'id')::int = viewer_tenant_validate.tenant_id
+      select 1 from public.viewer_tenant_ids() vt
+      where vt = viewer_tenant_validate.tenant_id
     );
   $$;
 
 create or replace function public.viewer_organization_ids()
   returns setof int
   stable
+  security definer
   parallel safe
   language sql
   set search_path to ''
   as $$
-    select (o->>'id')::int
-    from jsonb_array_elements(
-      coalesce(
-        nullif(current_setting('request.jwt.claims', true), '')::jsonb
-          -> 'app_metadata' -> 'organizations',
-        '[]'::jsonb
-      )
-    ) as o;
+    select m.organization_id
+    from public.organization_memberships m
+    join public.organizations o using (organization_id)
+    join public.tenants t using (tenant_id)
+    where m.profile_id = (select public.viewer_profile_id())
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null
+      and o.organization_disabled_at is null
+      and t.tenant_disabled_at is null;
   $$;
 
 create or replace function public.viewer_organization_validate(organization_id int)
@@ -1244,23 +1279,16 @@ create or replace function public.viewer_organization_validate(organization_id i
   set search_path to ''
   as $$
     select exists (
-      select 1
-      from jsonb_array_elements(
-        coalesce(
-          nullif(current_setting('request.jwt.claims', true), '')::jsonb
-            -> 'app_metadata' -> 'organizations',
-          '[]'::jsonb
-        )
-      ) as o
-      where (o->>'id')::int = viewer_organization_validate.organization_id
+      select 1 from public.viewer_organization_ids() vo
+      where vo = viewer_organization_validate.organization_id
     );
   $$;
 
 -- Permission-based RLS helpers. SECURITY DEFINER so they bypass RLS on
--- membership_permissions itself (otherwise SELECT-RLS on the very table we're checking
--- could deadlock the logic). Wildcard-aware: an `(*, membership_id)` grant satisfies every
--- permission check inside that org. All helpers join via membership_id and filter to
--- ACTIVE memberships only — claimed by the viewer, accepted, not revoked, not rejected.
+-- organization_membership_permissions itself (otherwise SELECT-RLS on the very table we're checking
+-- could deadlock the logic). Wildcard-aware: an `(*, organization_membership_id)` grant satisfies every
+-- permission check inside that org. All helpers join via organization_membership_id and filter to
+-- ACTIVE organization_memberships only — claimed by the viewer, accepted, not revoked, not rejected.
 
 create or replace function public.viewer_permission_org_ids(permission_id extensions.citext)
   returns setof int
@@ -1271,12 +1299,12 @@ create or replace function public.viewer_permission_org_ids(permission_id extens
   set search_path to ''
   as $$
     select distinct m.organization_id
-    from public.membership_permissions mp
-    join public.memberships m on m.membership_id = mp.membership_id
+    from public.organization_membership_permissions mp
+    join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
     where m.profile_id = (select public.viewer_profile_id())
-      and m.membership_accepted_at is not null
-      and m.membership_revoked_at is null
-      and m.membership_rejected_at is null
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null
       and (mp.permission_id = viewer_permission_org_ids.permission_id or mp.permission_id = '*');
   $$;
 
@@ -1293,18 +1321,18 @@ create or replace function public.viewer_has_permission(
   as $$
     select exists (
       select 1
-      from public.membership_permissions mp
-      join public.memberships m on m.membership_id = mp.membership_id
+      from public.organization_membership_permissions mp
+      join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
       where m.organization_id = viewer_has_permission.organization_id
         and m.profile_id = (select public.viewer_profile_id())
-        and m.membership_accepted_at is not null
-        and m.membership_revoked_at is null
-        and m.membership_rejected_at is null
+        and m.organization_membership_accepted_at is not null
+        and m.organization_membership_revoked_at is null
+        and m.organization_membership_rejected_at is null
         and (mp.permission_id = viewer_has_permission.permission_id or mp.permission_id = '*')
     );
   $$;
 
-create or replace function public.viewer_membership_permissions()
+create or replace function public.viewer_organization_membership_permissions()
   returns table (organization_id int, permission_id extensions.citext)
   stable
   security definer
@@ -1313,12 +1341,12 @@ create or replace function public.viewer_membership_permissions()
   set search_path to ''
   as $$
     select m.organization_id, mp.permission_id
-    from public.membership_permissions mp
-    join public.memberships m on m.membership_id = mp.membership_id
+    from public.organization_membership_permissions mp
+    join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
     where m.profile_id = (select public.viewer_profile_id())
-      and m.membership_accepted_at is not null
-      and m.membership_revoked_at is null
-      and m.membership_rejected_at is null;
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null;
   $$;
 
 -- Agency viewer helpers. JWT-only checks are fast (no DB lookup).
@@ -1328,18 +1356,19 @@ create or replace function public.viewer_membership_permissions()
 create or replace function public.viewer_agency_ids()
   returns setof uuid
   stable
+  security definer
   parallel safe
   language sql
   set search_path to ''
   as $$
-    select (elem ->> 'id')::uuid
-    from jsonb_array_elements(
-      coalesce(
-        nullif(current_setting('request.jwt.claims', true), '')::jsonb
-          -> 'app_metadata' -> 'agencies',
-        '[]'::jsonb
-      )
-    ) elem;
+    select af.agency_id
+    from public.agency_memberships af
+    join public.agencies a using (agency_id)
+    where af.profile_id = (select public.viewer_profile_id())
+      and af.agency_membership_accepted_at is not null
+      and af.agency_membership_revoked_at is null
+      and af.agency_membership_rejected_at is null
+      and a.agency_disabled_at is null;
   $$;
 
 create or replace function public.viewer_is_agency_member()
@@ -1353,8 +1382,8 @@ create or replace function public.viewer_is_agency_member()
   $$;
 
 -- Returns org IDs where the viewer has the given permission via any of their agencies.
--- Covers: (1) explicit per-org grants, (2) global grants (org IS NULL) → all orgs,
--- (3) implicit org opt-in grants (any active affiliate). Wildcard '*' honored throughout.
+-- Covers: (1) explicit per-org grants, (2) global grants (org IS NULL) → all orgs.
+-- Wildcard '*' honored throughout.
 create or replace function public.viewer_agency_permission_org_ids(
   permission_id extensions.citext
 )
@@ -1380,14 +1409,7 @@ create or replace function public.viewer_agency_permission_org_ids(
       where aog.agency_id in (select public.viewer_agency_ids())
         and aog.organization_id is null
         and (aog.permission_id = viewer_agency_permission_org_ids.permission_id or aog.permission_id = '*')
-    )
-
-    union
-
-    select aoig.organization_id
-    from public.agencies_organizations_implicit_grants aoig
-    where (aoig.permission_id = viewer_agency_permission_org_ids.permission_id or aoig.permission_id = '*')
-      and public.viewer_is_agency_member();
+    );
   $$;
 
 create or replace function public.viewer_has_agency_permission(
@@ -1433,10 +1455,10 @@ create policy "agencies select by affiliates"
   on public.agencies for select to authenticated
   using (agency_id in (select public.viewer_agency_ids()));
 
--- affiliations: each profile sees their own.
-drop policy if exists "affiliations select own" on public.affiliations;
-create policy "affiliations select own"
-  on public.affiliations for select to authenticated
+-- agency_memberships: each profile sees their own.
+drop policy if exists "agency_memberships select own" on public.agency_memberships;
+create policy "agency_memberships select own"
+  on public.agency_memberships for select to authenticated
   using (profile_id = (select public.viewer_profile_id()));
 
 -- agencies_organizations_grants: visible to affiliates or to orgs with organization_manage.
@@ -1448,15 +1470,7 @@ create policy "agencies_organizations_grants select"
     or organization_id in (select public.viewer_permission_org_ids('organization_manage'))
   );
 
--- agencies_organizations_implicit_grants: visible to orgs with organization_manage.
-drop policy if exists "agencies_organizations_implicit_grants select" on public.agencies_organizations_implicit_grants;
-create policy "agencies_organizations_implicit_grants select"
-  on public.agencies_organizations_implicit_grants for select to authenticated
-  using (
-    organization_id in (select public.viewer_permission_org_ids('organization_manage'))
-  );
-
--- Active tenant-org memberships for the current viewer.
+-- Active tenant-org organization_memberships for the current viewer.
 -- Runs as view owner (postgres), bypassing RLS; scoped to the caller
 -- via viewer_profile_id(). Null uid → no rows (safe for unauthenticated).
 -- Used by viewer_tenants/viewer_organizations family below.
@@ -1477,13 +1491,13 @@ create view public.tenants_organizations_profiles as
     o.organization_created_at,
     o.organization_updated_at,
     m.profile_id
-  from public.memberships m
+  from public.organization_memberships m
   join public.organizations o using (organization_id)
   join public.tenants t using (tenant_id)
   where m.profile_id = public.viewer_profile_id()
-    and m.membership_accepted_at is not null
-    and m.membership_revoked_at is null
-    and m.membership_rejected_at is null
+    and m.organization_membership_accepted_at is not null
+    and m.organization_membership_revoked_at is null
+    and m.organization_membership_rejected_at is null
     and o.organization_disabled_at is null
     and t.tenant_disabled_at is null;
 
@@ -1562,7 +1576,7 @@ create or replace function public.viewer_organization_by_id(organization_id int)
   $$;
 
 -- ============================================================
--- profiles SELECT policy (now that memberships exists)
+-- profiles SELECT policy (now that organization_memberships exists)
 -- ============================================================
 -- Profiles are visible to: self, organization co-members, and agency affiliates with access.
 
@@ -1578,19 +1592,19 @@ create policy "Profiles visible to self or org co-members or agency affiliates"
       profile_id = (select public.viewer_profile_id())
       or exists (
         select 1
-        from public.memberships me
-        join public.memberships them using (organization_id)
+        from public.organization_memberships me
+        join public.organization_memberships them using (organization_id)
         where me.profile_id = (select public.viewer_profile_id())
           and them.profile_id = public.profiles.profile_id
-          and me.membership_accepted_at is not null
-          and me.membership_revoked_at is null
-          and me.membership_rejected_at is null
-          and them.membership_accepted_at is not null
-          and them.membership_revoked_at is null
-          and them.membership_rejected_at is null
+          and me.organization_membership_accepted_at is not null
+          and me.organization_membership_revoked_at is null
+          and me.organization_membership_rejected_at is null
+          and them.organization_membership_accepted_at is not null
+          and them.organization_membership_revoked_at is null
+          and them.organization_membership_rejected_at is null
       )
       or exists (
-        select 1 from public.memberships m
+        select 1 from public.organization_memberships m
         where m.profile_id = public.profiles.profile_id
           and m.organization_id in (select public.viewer_agency_permission_org_ids('*'))
       )
@@ -1598,7 +1612,7 @@ create policy "Profiles visible to self or org co-members or agency affiliates"
   );
 
 -- ============================================================
--- RLS policies for tenants + organizations + memberships + permissions
+-- RLS policies for tenants + organizations + organization_memberships + permissions
 -- ============================================================
 
 alter table public.tenants enable row level security;
@@ -1657,25 +1671,25 @@ create policy "organizations update with organization_manage"
 
 -- INSERT/DELETE on organizations: service_role only. No authenticated policy -> default deny.
 
-alter table public.memberships enable row level security;
+alter table public.organization_memberships enable row level security;
 
-revoke all on table public.memberships from anon, authenticated;
+revoke all on table public.organization_memberships from anon, authenticated;
 -- anon is required for graphql; RLS still gates row access.
-grant select, insert, update, delete on table public.memberships to anon, authenticated;
+grant select, insert, update, delete on table public.organization_memberships to anon, authenticated;
 
-drop policy if exists "memberships select by co-members" on public.memberships;
-drop policy if exists "memberships select by co-members or agency affiliates" on public.memberships;
-create policy "memberships select by co-members or agency affiliates"
-  on public.memberships for select
+drop policy if exists "organization_memberships select by co-members" on public.organization_memberships;
+drop policy if exists "organization_memberships select by co-members or agency affiliates" on public.organization_memberships;
+create policy "organization_memberships select by co-members or agency affiliates"
+  on public.organization_memberships for select
   to authenticated
   using (
     organization_id in (select public.viewer_organization_ids())
     or organization_id in (select public.viewer_agency_permission_org_ids('*'))
   );
 
-drop policy if exists "memberships write with members_manage" on public.memberships;
-create policy "memberships write with members_manage"
-  on public.memberships for all
+drop policy if exists "organization_memberships write with members_manage" on public.organization_memberships;
+create policy "organization_memberships write with members_manage"
+  on public.organization_memberships for all
   to authenticated
   using (organization_id in (select public.viewer_permission_org_ids('members_manage')))
   with check (organization_id in (select public.viewer_permission_org_ids('members_manage')));
@@ -1698,25 +1712,25 @@ create policy "permissions select to all authenticated"
   using (true);
 
 -- ============================================================
--- RLS for membership_permissions
+-- RLS for organization_membership_permissions
 -- ============================================================
 
-alter table public.membership_permissions enable row level security;
+alter table public.organization_membership_permissions enable row level security;
 
-revoke all on table public.membership_permissions from anon, authenticated;
-grant select, insert, update, delete on table public.membership_permissions to anon, authenticated;
+revoke all on table public.organization_membership_permissions from anon, authenticated;
+grant select, insert, update, delete on table public.organization_membership_permissions to anon, authenticated;
 
 -- Co-members in the same organization can see the grants in that organization.
--- Resolve organization via the referenced membership (no direct org column anymore).
-drop policy if exists "membership_permissions select by co-members" on public.membership_permissions;
-drop policy if exists "membership_permissions select by co-members or agency affiliates" on public.membership_permissions;
-create policy "membership_permissions select by co-members or agency affiliates"
-  on public.membership_permissions for select
+-- Resolve organization via the referenced organization_membership (no direct org column anymore).
+drop policy if exists "organization_membership_permissions select by co-members" on public.organization_membership_permissions;
+drop policy if exists "organization_membership_permissions select by co-members or agency affiliates" on public.organization_membership_permissions;
+create policy "organization_membership_permissions select by co-members or agency affiliates"
+  on public.organization_membership_permissions for select
   to authenticated
   using (
     exists (
-      select 1 from public.memberships m
-      where m.membership_id = public.membership_permissions.membership_id
+      select 1 from public.organization_memberships m
+      where m.organization_membership_id = public.organization_membership_permissions.organization_membership_id
         and (
           m.organization_id in (select public.viewer_organization_ids())
           or m.organization_id in (select public.viewer_agency_permission_org_ids('*'))
@@ -1725,27 +1739,27 @@ create policy "membership_permissions select by co-members or agency affiliates"
   );
 
 -- Only users with `members_manage` in the organization can grant/revoke.
-drop policy if exists "membership_permissions write with members_manage" on public.membership_permissions;
-create policy "membership_permissions write with members_manage"
-  on public.membership_permissions for all
+drop policy if exists "organization_membership_permissions write with members_manage" on public.organization_membership_permissions;
+create policy "organization_membership_permissions write with members_manage"
+  on public.organization_membership_permissions for all
   to authenticated
   using (
     exists (
-      select 1 from public.memberships m
-      where m.membership_id = public.membership_permissions.membership_id
+      select 1 from public.organization_memberships m
+      where m.organization_membership_id = public.organization_membership_permissions.organization_membership_id
         and m.organization_id in (select public.viewer_permission_org_ids('members_manage'))
     )
   )
   with check (
     exists (
-      select 1 from public.memberships m
-      where m.membership_id = public.membership_permissions.membership_id
+      select 1 from public.organization_memberships m
+      where m.organization_membership_id = public.organization_membership_permissions.organization_membership_id
         and m.organization_id in (select public.viewer_permission_org_ids('members_manage'))
     )
   );
 
 -- ============================================================
--- Business invariants on memberships / membership_permissions
+-- Business invariants on organization_memberships / organization_membership_permissions
 -- ============================================================
 -- These triggers protect against actions that would leave an organization
 -- without a usable admin surface, or let a user remove themselves. They run
@@ -1753,11 +1767,11 @@ create policy "membership_permissions write with members_manage"
 -- mutate", these gate "what may not happen". service_role bypasses (auth.uid()
 -- is NULL) so migrations and admin tools can still rescue stuck orgs.
 
--- True iff org has at least one OTHER claimed, accepted, active membership
+-- True iff org has at least one OTHER claimed, accepted, active organization_membership
 -- holding `members_manage` or the wildcard `*`. Pending invites don't count.
 create or replace function public.org_has_other_active_admin(
   _organization_id int,
-  _excluded_membership_id int
+  _excluded_organization_membership_id int
 ) returns boolean
   language sql
   stable
@@ -1766,14 +1780,14 @@ create or replace function public.org_has_other_active_admin(
 as $$
   select exists (
     select 1
-    from public.memberships m
-    join public.membership_permissions mp on mp.membership_id = m.membership_id
+    from public.organization_memberships m
+    join public.organization_membership_permissions mp on mp.organization_membership_id = m.organization_membership_id
     where m.organization_id = _organization_id
-      and m.membership_id <> _excluded_membership_id
+      and m.organization_membership_id <> _excluded_organization_membership_id
       and m.profile_id is not null
-      and m.membership_accepted_at is not null
-      and m.membership_revoked_at is null
-      and m.membership_rejected_at is null
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null
       and mp.permission_id in ('members_manage', '*')
   );
 $$;
@@ -1783,7 +1797,7 @@ grant execute on function public.org_has_other_active_admin(int, int) to authent
 
 -- Block deleting members_manage or '*' from the last claimed admin in an org.
 -- An admin who holds BOTH may demote one — the other still grants admin status.
-create or replace function public.membership_permissions_protect_last_admin()
+create or replace function public.organization_membership_permissions_protect_last_admin()
   returns trigger
   language plpgsql
   security definer
@@ -1801,25 +1815,25 @@ begin
   end if;
 
   select organization_id, profile_id into _organization_id, _profile_id
-  from public.memberships
-  where membership_id = old.membership_id;
+  from public.organization_memberships
+  where organization_membership_id = old.organization_membership_id;
 
   -- Pending invites carry no live access — they cannot lock anyone out.
-  -- If the membership keeps the OTHER admin permission, it remains active — no lockout.
+  -- If the organization_membership keeps the OTHER admin permission, it remains active — no lockout.
   if _profile_id is null then
     return old;
   elsif exists (
-    select 1 from public.membership_permissions
-    where membership_id = old.membership_id
+    select 1 from public.organization_membership_permissions
+    where organization_membership_id = old.organization_membership_id
       and permission_id in ('members_manage', '*')
       and permission_id <> old.permission_id
   ) then
     return old;
   end if;
 
-  -- This deletion does strip admin status from the membership. Ensure another
+  -- This deletion does strip admin status from the organization_membership. Ensure another
   -- claimed, accepted, active admin exists in the org.
-  if not public.org_has_other_active_admin(_organization_id, old.membership_id) then
+  if not public.org_has_other_active_admin(_organization_id, old.organization_membership_id) then
     raise exception 'last_admin_protected'
       using hint = 'cannot revoke the last admin permission in the organization';
   end if;
@@ -1828,13 +1842,13 @@ begin
 end;
 $$;
 
-drop trigger if exists membership_permissions_trigger_protect_last_admin on public.membership_permissions;
-create trigger membership_permissions_trigger_protect_last_admin
-  before delete on public.membership_permissions
-  for each row execute procedure public.membership_permissions_protect_last_admin();
+drop trigger if exists organization_membership_permissions_trigger_protect_last_admin on public.organization_membership_permissions;
+create trigger organization_membership_permissions_trigger_protect_last_admin
+  before delete on public.organization_membership_permissions
+  for each row execute procedure public.organization_membership_permissions_protect_last_admin();
 
 -- Block self-revocation and revoking the last claimed admin in an org.
-create or replace function public.memberships_protect_revoke()
+create or replace function public.organization_memberships_protect_revoke()
   returns trigger
   language plpgsql
   security definer
@@ -1844,7 +1858,7 @@ declare
   _viewer uuid;
 begin
   -- Only fire when revoked_at transitions from NULL → not NULL.
-  if old.membership_revoked_at is not null or new.membership_revoked_at is null then
+  if old.organization_membership_revoked_at is not null or new.organization_membership_revoked_at is null then
     return new;
   end if;
 
@@ -1855,13 +1869,13 @@ begin
     return new;
   end if;
 
-  -- Self-remove: caller cannot revoke their own membership row.
+  -- Self-remove: caller cannot revoke their own organization_membership row.
   if new.profile_id is not null and new.profile_id = _viewer then
     raise exception 'self_remove_blocked'
-      using hint = 'cannot revoke your own membership';
+      using hint = 'cannot revoke your own organization_membership';
   -- Last-admin: pending invites carry no live access, only claimed seats lock the org.
   elsif new.profile_id is not null
-     and not public.org_has_other_active_admin(new.organization_id, new.membership_id) then
+     and not public.org_has_other_active_admin(new.organization_id, new.organization_membership_id) then
     raise exception 'last_admin_protected'
       using hint = 'cannot revoke the last admin of the organization';
   end if;
@@ -1870,10 +1884,10 @@ begin
 end;
 $$;
 
-drop trigger if exists memberships_trigger_protect_revoke on public.memberships;
-create trigger memberships_trigger_protect_revoke
-  before update of membership_revoked_at on public.memberships
-  for each row execute procedure public.memberships_protect_revoke();
+drop trigger if exists organization_memberships_trigger_protect_revoke on public.organization_memberships;
+create trigger organization_memberships_trigger_protect_revoke
+  before update of organization_membership_revoked_at on public.organization_memberships
+  for each row execute procedure public.organization_memberships_protect_revoke();
 
 -- ============================================================
 -- RLS for permission_presets
@@ -1916,14 +1930,14 @@ create policy "permission_presets write with presets_manage"
 -- Custom access token hook
 -- ============================================================
 -- Injects JWT arrays into the token when issued:
---   app_metadata.tenants       : [{id, slug}]       — distinct tenants the user has any org membership in
+--   app_metadata.tenants       : [{id, slug}]       — distinct tenants the user has any org organization_membership in
 --   app_metadata.organizations : [{id, tenant_id}]  — every organization the user is a member of
 --   app_metadata.agencies      : [{id}]              — every agency the user is affiliated with
 -- Plus app_metadata.onboarded (gate).
 -- Permissions are deliberately NOT included in the JWT — a single user may have many
 -- per-org permissions, and putting them here can balloon cookie size past the 4KB limit.
 -- Permission checks happen at query time via viewer_has_permission / viewer_permission_org_ids,
--- which hit the indexed membership_permissions table.
+-- which hit the indexed organization_membership_permissions table.
 -- Lives in `public`, NOT security definer — supabase_auth_admin gets direct grants
 -- + permissive SELECT policies on the source tables (pattern from sibling project).
 
@@ -1934,81 +1948,11 @@ create or replace function public.user_auth_hook(event jsonb)
   parallel safe
   set search_path to ''
   as $$
-    declare
-      _claims jsonb;
-      _user_id uuid;
-      _tenants jsonb;
-      _organizations jsonb;
-      _agencies jsonb;
-      _onboarded boolean;
     begin
-      _claims := event->'claims';
-      _user_id := nullif(event->>'user_id', '')::uuid;
-
-      if jsonb_typeof(_claims->'app_metadata') is null then
-        _claims := jsonb_set(_claims, '{app_metadata}', '{}'::jsonb);
-      end if;
-
-      if _user_id is not null then
-        select coalesce(jsonb_agg(distinct jsonb_build_object(
-          'id', t.tenant_id,
-          'slug', t.tenant_slug::text
-        )), '[]'::jsonb)
-        into _tenants
-        from public.memberships m
-        join public.organizations o using (organization_id)
-        join public.tenants t using (tenant_id)
-        where m.profile_id = _user_id
-          and m.membership_accepted_at is not null
-          and m.membership_revoked_at is null
-          and m.membership_rejected_at is null
-          and o.organization_disabled_at is null
-          and t.tenant_disabled_at is null;
-
-        select coalesce(jsonb_agg(jsonb_build_object(
-          'id', m.organization_id,
-          'tenant_id', t.tenant_id
-        )), '[]'::jsonb)
-        into _organizations
-        from public.memberships m
-        join public.organizations o using (organization_id)
-        join public.tenants t using (tenant_id)
-        where m.profile_id = _user_id
-          and m.membership_accepted_at is not null
-          and m.membership_revoked_at is null
-          and m.membership_rejected_at is null
-          and o.organization_disabled_at is null
-          and t.tenant_disabled_at is null;
-
-        select coalesce(jsonb_agg(jsonb_build_object('id', a.agency_id::text)), '[]'::jsonb)
-        into _agencies
-        from public.affiliations af
-        join public.agencies a using (agency_id)
-        where af.profile_id = _user_id
-          and af.affiliation_accepted_at is not null
-          and af.affiliation_revoked_at is null
-          and af.affiliation_rejected_at is null
-          and a.agency_disabled_at is null;
-
-        select coalesce(p.profile_onboarded_at is not null, false)
-        into _onboarded
-        from public.profiles p
-        where p.profile_id = _user_id;
-
-        _onboarded := coalesce(_onboarded, false);
-      else
-        _tenants := '[]'::jsonb;
-        _organizations := '[]'::jsonb;
-        _agencies := '[]'::jsonb;
-        _onboarded := false;
-      end if;
-
-      _claims := jsonb_set(_claims, '{app_metadata,tenants}', _tenants);
-      _claims := jsonb_set(_claims, '{app_metadata,organizations}', _organizations);
-      _claims := jsonb_set(_claims, '{app_metadata,agencies}', _agencies);
-      _claims := jsonb_set(_claims, '{app_metadata,onboarded}', to_jsonb(_onboarded));
-
-      event := jsonb_set(event, '{claims}', _claims);
+      -- Only the subject (profile_id, carried as the `sub` claim) lives in the JWT.
+      -- Tenant / organization / agency organization_membership and onboarding state are resolved at
+      -- query time via the viewer_* helpers (which hit the DB directly), never embedded
+      -- in the token. Pass the event through unchanged.
       return event;
     end;
   $$;
@@ -2016,34 +1960,8 @@ create or replace function public.user_auth_hook(event jsonb)
 revoke execute on function public.user_auth_hook(jsonb) from authenticated, anon, public;
 grant execute on function public.user_auth_hook(jsonb) to supabase_auth_admin;
 
--- Hook is not security definer; grant supabase_auth_admin direct read on source tables.
+-- supabase_auth_admin only needs USAGE on public to call the (now pass-through) hook.
 grant usage on schema public to supabase_auth_admin;
-grant select on table public.tenants, public.organizations, public.memberships, public.agencies, public.affiliations to supabase_auth_admin;
-grant select (profile_id, profile_onboarded_at) on public.profiles to supabase_auth_admin;
-
-drop policy if exists "Allow auth admin to read tenants." on public.tenants;
-create policy "Allow auth admin to read tenants."
-  on public.tenants as permissive for select to supabase_auth_admin using (true);
-
-drop policy if exists "Allow auth admin to read organizations." on public.organizations;
-create policy "Allow auth admin to read organizations."
-  on public.organizations as permissive for select to supabase_auth_admin using (true);
-
-drop policy if exists "Allow auth admin to read memberships." on public.memberships;
-create policy "Allow auth admin to read memberships."
-  on public.memberships as permissive for select to supabase_auth_admin using (true);
-
-drop policy if exists "Allow auth admin to read agencies." on public.agencies;
-create policy "Allow auth admin to read agencies."
-  on public.agencies as permissive for select to supabase_auth_admin using (true);
-
-drop policy if exists "Allow auth admin to read affiliations." on public.affiliations;
-create policy "Allow auth admin to read affiliations."
-  on public.affiliations as permissive for select to supabase_auth_admin using (true);
-
-drop policy if exists "Allow auth admin to read profile onboarding state." on public.profiles;
-create policy "Allow auth admin to read profile onboarding state."
-  on public.profiles as permissive for select to supabase_auth_admin using (true);
 
 -- ============================================================
 -- addresses hierarchy
@@ -2264,10 +2182,6 @@ create or replace function internal.profile_identity_value_normalize(
   as $$
     declare
       _stripped text;
-      _t bigint;
-      _m int;
-      _s int;
-      _dv text;
     begin
       if value is null then
         return null;
@@ -2277,26 +2191,8 @@ create or replace function internal.profile_identity_value_normalize(
       if _stripped = '' or char_length(_stripped) < 4 or char_length(_stripped) > 32 then
         return null;
       end if;
-      if country = 'CL' and kind = 'nin' then
-        if _stripped !~ '^[0-9]{1,9}[0-9K]$' then
-          return null;
-        end if;
-        _t := substring(_stripped from 1 for char_length(_stripped) - 1)::bigint;
-        _m := 0;
-        _s := 1;
-        while _t > 0 loop
-          _s := (_s + (_t % 10)::int * (9 - (_m % 6))) % 11;
-          _m := _m + 1;
-          _t := _t / 10;
-        end loop;
-        if _s > 0 then
-          _dv := (_s - 1)::text;
-        else
-          _dv := 'K';
-        end if;
-        if _dv <> substring(_stripped from char_length(_stripped) for 1) then
-          return null;
-        end if;
+      if country = 'CL' and kind = 'nin' and not public.cl_rut_validate(_stripped) then
+        return null;
       end if;
       return _stripped;
     end;
@@ -2374,12 +2270,12 @@ create policy "profile_identities select"
   using (
     profile_id = (select public.viewer_profile_id())
     or exists (
-      select 1 from public.memberships m
+      select 1 from public.organization_memberships m
       where m.profile_id = public.profile_identities.profile_id
         and m.organization_id in (select public.viewer_permission_org_ids('members_manage'))
     )
     or exists (
-      select 1 from public.memberships m
+      select 1 from public.organization_memberships m
       where m.profile_id = public.profile_identities.profile_id
         and m.organization_id in (select public.viewer_agency_permission_org_ids('*'))
     )
@@ -2487,19 +2383,19 @@ create policy "Allow auth admin to read tenant_domains."
   on public.tenant_domains as permissive for select to supabase_auth_admin using (true);
 
 -- ============================================================
--- memberships — viewer-facing RPCs (pending / accept / reject)
+-- organization_memberships — viewer-facing RPCs (pending / accept / reject)
 -- ============================================================
--- The legacy `public.invitations` table was folded into `public.memberships` so a single
+-- The legacy `public.invitations` table was folded into `public.organization_memberships` so a single
 -- row models the full lifecycle (pending → accepted/rejected/revoked). These helpers
 -- expose the invitee side of that lifecycle: list invites that match the viewer, and
 -- mutate the row when the viewer accepts or declines.
 
--- Returns memberships in PENDING state where the viewer's identity (email / phone in
+-- Returns organization_memberships in PENDING state where the viewer's identity (email / phone in
 -- auth.users, or any profile_identities row) matches the invite identifier. Uses
 -- SECURITY DEFINER so we can read auth.users + bypass the row-level filter on
--- memberships that hides un-claimed invites from non-admins.
-create or replace function public.viewer_membership_pending()
-  returns setof public.memberships
+-- organization_memberships that hides un-claimed invites from non-admins.
+create or replace function public.viewer_organization_membership_pending()
+  returns setof public.organization_memberships
   language plpgsql
   stable
   security definer
@@ -2520,118 +2416,118 @@ create or replace function public.viewer_membership_pending()
 
       return query
         select m.*
-        from public.memberships m
+        from public.organization_memberships m
         where m.profile_id is null
-          and m.membership_accepted_at is null
-          and m.membership_rejected_at is null
-          and m.membership_revoked_at is null
-          and (m.membership_invite_expires_at is null or m.membership_invite_expires_at > current_timestamp)
+          and m.organization_membership_accepted_at is null
+          and m.organization_membership_rejected_at is null
+          and m.organization_membership_revoked_at is null
+          and (m.organization_membership_invite_expires_at is null or m.organization_membership_invite_expires_at > current_timestamp)
           and (
-            (_email is not null and m.membership_invite_email = _email)
-            or (_phone is not null and m.membership_invite_phone = _phone)
+            (_email is not null and m.organization_membership_invite_email = _email)
+            or (_phone is not null and m.organization_membership_invite_phone = _phone)
             or exists (
               select 1
                 from public.profile_identities pi
                 where pi.profile_id = _user_id
                   and pi.profile_identity_disabled_at is null
-                  and pi.address_level0_id = m.membership_invite_address_level0_id
-                  and pi.profile_identity_document_kind = m.membership_invite_document_kind
-                  and pi.profile_identity_document_value = m.membership_invite_document_value
+                  and pi.address_level0_id = m.organization_membership_invite_address_level0_id
+                  and pi.profile_identity_document_kind = m.organization_membership_invite_document_kind
+                  and pi.profile_identity_document_value = m.organization_membership_invite_document_value
             )
           );
     end;
   $$;
 
-grant execute on function public.viewer_membership_pending() to authenticated;
+grant execute on function public.viewer_organization_membership_pending() to authenticated;
 
 -- Accept an invite. Sets profile_id to the calling viewer and stamps accepted_at.
--- Validates that the membership is genuinely pending AND that the caller matches the
--- invite identifier (via viewer_membership_pending). SECURITY DEFINER so it can write
+-- Validates that the organization_membership is genuinely pending AND that the caller matches the
+-- invite identifier (via viewer_organization_membership_pending). SECURITY DEFINER so it can write
 -- through the RLS policy (the policy gates writes on members_manage, which the
 -- invitee does NOT have yet).
-create or replace function public.viewer_membership_accept(membership_id int)
-  returns public.memberships
+create or replace function public.viewer_organization_membership_accept(organization_membership_id int)
+  returns public.organization_memberships
   language plpgsql
   security definer
   set search_path to ''
   as $$
     declare
       _user_id uuid := public.viewer_profile_id();
-      _row public.memberships;
+      _row public.organization_memberships;
     begin
       if _user_id is null then
         raise exception 'not authenticated';
       elsif not exists (
-        select 1 from public.viewer_membership_pending() vmp
-        where vmp.membership_id = viewer_membership_accept.membership_id
+        select 1 from public.viewer_organization_membership_pending() vmp
+        where vmp.organization_membership_id = viewer_organization_membership_accept.organization_membership_id
       ) then
         raise exception 'invitation not found or does not match your account';
       end if;
-      update public.memberships
+      update public.organization_memberships
         set profile_id = _user_id,
-            membership_accepted_at = current_timestamp,
+            organization_membership_accepted_at = current_timestamp,
             -- Burn the token; the row is now claimed.
-            membership_invite_token = null
-        where membership_id = viewer_membership_accept.membership_id
+            organization_membership_invite_token = null
+        where public.organization_memberships.organization_membership_id = viewer_organization_membership_accept.organization_membership_id
         returning * into _row;
       return _row;
     end;
   $$;
 
-grant execute on function public.viewer_membership_accept(int) to authenticated;
+grant execute on function public.viewer_organization_membership_accept(int) to authenticated;
 
 -- Reject an invite. Stamps rejected_at; profile_id stays null. Same matching guard
 -- as accept.
-create or replace function public.viewer_membership_reject(membership_id int)
-  returns public.memberships
+create or replace function public.viewer_organization_membership_reject(organization_membership_id int)
+  returns public.organization_memberships
   language plpgsql
   security definer
   set search_path to ''
   as $$
     declare
-      _row public.memberships;
+      _row public.organization_memberships;
     begin
       if public.viewer_profile_id() is null then
         raise exception 'not authenticated';
       elsif not exists (
-        select 1 from public.viewer_membership_pending() vmp
-        where vmp.membership_id = viewer_membership_reject.membership_id
+        select 1 from public.viewer_organization_membership_pending() vmp
+        where vmp.organization_membership_id = viewer_organization_membership_reject.organization_membership_id
       ) then
         raise exception 'invitation not found or does not match your account';
       end if;
-      update public.memberships
-        set membership_rejected_at = current_timestamp,
-            membership_invite_token = null
-        where membership_id = viewer_membership_reject.membership_id
+      update public.organization_memberships
+        set organization_membership_rejected_at = current_timestamp,
+            organization_membership_invite_token = null
+        where public.organization_memberships.organization_membership_id = viewer_organization_membership_reject.organization_membership_id
         returning * into _row;
       return _row;
     end;
   $$;
 
-grant execute on function public.viewer_membership_reject(int) to authenticated;
+grant execute on function public.viewer_organization_membership_reject(int) to authenticated;
 
 -- Anonymous lookup: given a (country, kind, value), normalize the value and return
--- the pending memberships that match. Used in /auth/document BEFORE the visitor has
+-- the pending organization_memberships that match. Used in /auth/document BEFORE the visitor has
 -- a session — they're trying to discover their own invites. Returns tenant + org names
 -- alongside each row so the picker UI can render without an extra round-trip.
 --
--- SECURITY DEFINER + grant to anon so the function can read past RLS on memberships
+-- SECURITY DEFINER + grant to anon so the function can read past RLS on organization_memberships
 -- (otherwise anon would see nothing). Safe because the function projects only the
 -- public-safe columns and matches on a value the visitor already provided.
-create or replace function public.memberships_pending_by_document(
+create or replace function public.organization_memberships_pending_by_document(
   country text,
   kind public.profile_identity_document_kind,
   value text
 )
   returns table (
-    membership_id int,
+    organization_membership_id int,
     organization_id int,
     organization_name text,
     tenant_id int,
     tenant_slug text,
     tenant_name text,
-    membership_invite_token text,
-    membership_invite_expires_at timestamptz
+    organization_membership_invite_token text,
+    organization_membership_invite_expires_at timestamptz
   )
   language plpgsql
   stable
@@ -2647,29 +2543,29 @@ create or replace function public.memberships_pending_by_document(
       end if;
       return query
         select
-          m.membership_id,
+          m.organization_membership_id,
           m.organization_id,
           o.organization_name,
           o.tenant_id,
           t.tenant_slug::text,
           t.tenant_name,
-          m.membership_invite_token,
-          m.membership_invite_expires_at
-        from public.memberships m
+          m.organization_membership_invite_token,
+          m.organization_membership_invite_expires_at
+        from public.organization_memberships m
         join public.organizations o on o.organization_id = m.organization_id
         join public.tenants t on t.tenant_id = o.tenant_id
         where m.profile_id is null
-          and m.membership_accepted_at is null
-          and m.membership_rejected_at is null
-          and m.membership_revoked_at is null
-          and (m.membership_invite_expires_at is null or m.membership_invite_expires_at > current_timestamp)
-          and m.membership_invite_address_level0_id = country
-          and m.membership_invite_document_kind = kind
-          and m.membership_invite_document_value = _normalized;
+          and m.organization_membership_accepted_at is null
+          and m.organization_membership_rejected_at is null
+          and m.organization_membership_revoked_at is null
+          and (m.organization_membership_invite_expires_at is null or m.organization_membership_invite_expires_at > current_timestamp)
+          and m.organization_membership_invite_address_level0_id = country
+          and m.organization_membership_invite_document_kind = kind
+          and m.organization_membership_invite_document_value = _normalized;
     end;
   $$;
 
-grant execute on function public.memberships_pending_by_document(text, public.profile_identity_document_kind, text) to anon, authenticated;
+grant execute on function public.organization_memberships_pending_by_document(text, public.profile_identity_document_kind, text) to anon, authenticated;
 
 -- ============================================================
 -- users_handle_created — re-definition with identity-aware behavior

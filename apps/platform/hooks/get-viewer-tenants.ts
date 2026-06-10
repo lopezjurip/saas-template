@@ -30,7 +30,7 @@ export const ViewerTenantsGetQuery = /*#__PURE__*/ gql(`
 
 export const ViewerTenantBySlugGetQuery = /*#__PURE__*/ gql(`
   query ViewerTenantBySlugGetQuery($tenant_slug: String!) {
-    tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
+    tenant: viewer_tenant_by_slug(tenant_slug: $tenant_slug) {
       ...ViewerTenantGetFragment
     }
   }

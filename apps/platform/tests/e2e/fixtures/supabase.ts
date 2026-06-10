@@ -27,7 +27,7 @@ export async function DELETE_USER_BY_EMAIL(email: string) {
   await supabaseAdmin.auth.admin.deleteUser(user.id);
 }
 
-/** Delete a tenant + its cascading rows (organizations, memberships, grants). */
+/** Delete a tenant + its cascading rows (organizations, organization_memberships, grants). */
 export async function DELETE_TENANT_BY_SLUG(slug: string) {
   await supabaseAdmin.from("tenants").delete().eq("tenant_slug", slug);
 }

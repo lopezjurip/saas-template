@@ -1,7 +1,7 @@
 -- Local-dev seed. Not run in production.
--- Two tenants (acme + globex), each with one organization, and two users with crossed memberships:
---   alice@humane.test  -> '*' (full admin) @ acme org, accountant-like grants @ globex org
---   bob@humane.test    -> employee-like grants @ acme org
+-- Two tenants (acme + globex), each with one organization, and two users with crossed organization_memberships:
+--   alice@humane.test  -> '*' (full admin) @ acme org, presets_manage (non-admin) @ globex org
+--   bob@humane.test    -> presets_manage (non-admin) @ acme org
 -- Passwords: "password123" for both.
 
 -- ------------------------------------------------------------
@@ -119,35 +119,32 @@ on conflict (organization_id) do nothing;
 select setval(pg_get_serial_sequence('public.organizations', 'organization_id'), (select max(organization_id) from public.organizations));
 
 -- ------------------------------------------------------------
--- memberships + membership_permissions
+-- organization_memberships + organization_membership_permissions
 -- ------------------------------------------------------------
--- Memberships now carry their own serial PK. Seed inserts are accepted out of the
--- gate (profile_id set + membership_accepted_at = now) so the seeded users skip the
--- pending-invite flow. Permission rows reference membership_id, so we use CTEs to
+-- OrganizationMemberships now carry their own serial PK. Seed inserts are accepted out of the
+-- gate (profile_id set + organization_membership_accepted_at = now) so the seeded users skip the
+-- pending-invite flow. Permission rows reference organization_membership_id, so we use CTEs to
 -- thread the freshly-inserted ids into the grants below.
 
-with seeded_memberships as (
-  insert into public.memberships (organization_id, profile_id, membership_accepted_at)
+with seeded_organization_memberships as (
+  insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)
   values
     (1, '00000000-0000-0000-0000-00000000a11c', current_timestamp),
     (2, '00000000-0000-0000-0000-00000000a11c', current_timestamp),
     (1, '00000000-0000-0000-0000-00000000b00b', current_timestamp)
-  returning membership_id, organization_id, profile_id
+  returning organization_membership_id, organization_id, profile_id
 )
--- Alice: '*' (full admin) on acme org; "accountant"-like grants on globex org.
--- Bob: "employee"-like grants on acme org.
-insert into public.membership_permissions (membership_id, permission_id)
-select sm.membership_id, perm.permission_id
-from seeded_memberships sm
+-- Alice: '*' (full admin) on acme org; a single non-admin capability (presets_manage) on globex org.
+-- Bob: one non-admin capability (presets_manage) on acme org — a regular member, no admin rights.
+-- The catalog only ships admin capabilities now, so `presets_manage` doubles as the generic
+-- "non-admin capability" fixture (it is neither '*' nor members_manage/organization_manage).
+insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+select sm.organization_membership_id, perm.permission_id
+from seeded_organization_memberships sm
 join (values
   (1, '00000000-0000-0000-0000-00000000a11c'::uuid, '*'::extensions.citext),
-  (2, '00000000-0000-0000-0000-00000000a11c'::uuid, 'payroll_run'::extensions.citext),
-  (2, '00000000-0000-0000-0000-00000000a11c'::uuid, 'payroll_view'::extensions.citext),
-  (2, '00000000-0000-0000-0000-00000000a11c'::uuid, 'previred_export'::extensions.citext),
-  (2, '00000000-0000-0000-0000-00000000a11c'::uuid, 'lre_export'::extensions.citext),
-  (2, '00000000-0000-0000-0000-00000000a11c'::uuid, 'banco_export'::extensions.citext),
-  (2, '00000000-0000-0000-0000-00000000a11c'::uuid, 'terminations_create'::extensions.citext),
-  (1, '00000000-0000-0000-0000-00000000b00b'::uuid, 'vacations_request'::extensions.citext)
+  (2, '00000000-0000-0000-0000-00000000a11c'::uuid, 'presets_manage'::extensions.citext),
+  (1, '00000000-0000-0000-0000-00000000b00b'::uuid, 'presets_manage'::extensions.citext)
 ) as perm (organization_id, profile_id, permission_id)
   on perm.organization_id = sm.organization_id and perm.profile_id = sm.profile_id;
 

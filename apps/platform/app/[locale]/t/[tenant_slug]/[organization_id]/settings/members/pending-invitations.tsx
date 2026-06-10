@@ -12,17 +12,17 @@ import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/hooks/use-rosetta";
 
 const MembersPendingInvitationsCancelMutation = /*#__PURE__*/ gql(`
-  mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {
-    updatemembershipsCollection(
+  mutation MembersPendingInvitationsCancelMutation($organization_membership_id: Int!, $now: Datetime!) {
+    updateorganization_membershipsCollection(
       filter: {
-        membership_id: { eq: $membership_id }
+        organization_membership_id: { eq: $organization_membership_id }
         profile_id: { is: NULL }
-        membership_revoked_at: { is: NULL }
-        membership_rejected_at: { is: NULL }
+        organization_membership_revoked_at: { is: NULL }
+        organization_membership_rejected_at: { is: NULL }
       }
       set: {
-        membership_revoked_at: $now
-        membership_invite_token: null
+        organization_membership_revoked_at: $now
+        organization_membership_invite_token: null
       }
     ) {
       affectedCount
@@ -69,7 +69,7 @@ const LOCALES = {
 };
 
 interface InvitationRow {
-  membership_id: number;
+  organization_membership_id: number;
   invitation_email: string | null;
   invitation_phone: string | null;
   invitation_address_level0_id: string | null;
@@ -111,7 +111,7 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
   const [, cancelInvitation] = useGraphyMutation(MembersPendingInvitationsCancelMutation);
   const [optimisticInvitations, removeOptimistic] = useOptimistic(
     invitations,
-    (state: InvitationRow[], membership_id: number) => state.filter((i) => i["membership_id"] !== membership_id),
+    (state: InvitationRow[], organization_membership_id: number) => state.filter((i) => i["organization_membership_id"] !== organization_membership_id),
   );
 
   const dateFormatter = useMemo(() => new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short" }), [locale]);
@@ -119,11 +119,11 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
   function cancel(inv: InvitationRow) {
     if (!window.confirm(t("cancel_confirm", { email: INVITATION_LABEL(inv) }))) return;
     setError(null);
-    setPendingId(inv["membership_id"]);
+    setPendingId(inv["organization_membership_id"]);
     startTransition(async () => {
-      removeOptimistic(inv["membership_id"]);
+      removeOptimistic(inv["organization_membership_id"]);
       const { error: err } = await cancelInvitation({
-        membership_id: inv["membership_id"],
+        organization_membership_id: inv["organization_membership_id"],
         now: new Date().toISOString(),
       });
       setPendingId(null);
@@ -151,14 +151,14 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
 
         return (
           <div
-            key={inv["membership_id"]}
+            key={inv["organization_membership_id"]}
             className="group border-border bg-muted/30 hover:border-foreground/25 grid grid-cols-[36px_1fr_auto_auto] items-center gap-3 rounded-md border px-3.5 py-3 transition-[background,border-color]"
           >
             <span className="bg-muted text-muted-foreground border-border inline-flex size-9 shrink-0 items-center justify-center rounded-full border">
               <ChannelIcon size={15} />
             </span>
             <Link
-              href={`${editHrefBase}/${inv["membership_id"]}/edit`}
+              href={`${editHrefBase}/${inv["organization_membership_id"]}/edit`}
               className="flex min-w-0 flex-col gap-[2px] outline-none focus-visible:underline"
             >
               <span className="text-foreground truncate text-sm font-medium">{INVITATION_LABEL(inv)}</span>
@@ -189,7 +189,7 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
               variant="ghost"
               size="icon"
               className="text-muted-foreground hover:text-destructive size-[30px] shrink-0"
-              disabled={pendingId === inv["membership_id"]}
+              disabled={pendingId === inv["organization_membership_id"]}
               onClick={() => cancel(inv)}
               aria-label={t("cancel")}
               title={t("cancel")}

@@ -67,20 +67,20 @@ export const createTenant = authedAction
 
     const { organization_id } = orgRes.data;
 
-    // 3. Membership: creator joins the default org as an immediately-active member.
-    //    profile_id + accepted_at must move together (memberships_claim_consistency check).
+    // 3. OrganizationMembership: creator joins the default org as an immediately-active member.
+    //    profile_id + accepted_at must move together (organization_memberships_claim_consistency check).
     const memberRes = await admin
-      .from("memberships")
+      .from("organization_memberships")
       .insert({
         organization_id,
         profile_id: user.id,
-        membership_accepted_at: new Date().toISOString(),
+        organization_membership_accepted_at: new Date().toISOString(),
       })
-      .select("membership_id")
+      .select("organization_membership_id")
       .single();
 
     if (memberRes.error) {
-      log.error("membership insert failed; rolling back tenant + org", {
+      log.error("organization_membership insert failed; rolling back tenant + org", {
         profile_id: user.id,
         tenant_id,
         organization_id,
@@ -99,13 +99,13 @@ export const createTenant = authedAction
 
     // 4. Bootstrap: grant the wildcard `*` so the creator can do everything (and
     // automatically receives any permission slug we add to the catalog later).
-    const grantRes = await admin.from("membership_permissions").insert({
-      membership_id: memberRes.data["membership_id"],
+    const grantRes = await admin.from("organization_membership_permissions").insert({
+      organization_membership_id: memberRes.data["organization_membership_id"],
       permission_id: "*",
     });
 
     if (grantRes.error) {
-      log.error("permission grant failed; rolling back tenant + org + membership", {
+      log.error("permission grant failed; rolling back tenant + org + organization_membership", {
         profile_id: user.id,
         tenant_id,
         organization_id,

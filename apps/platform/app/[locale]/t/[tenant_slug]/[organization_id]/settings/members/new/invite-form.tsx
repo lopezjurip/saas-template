@@ -39,14 +39,14 @@ interface Props {
 }
 
 export function InviteMemberForm({ organization_id, countries, membersHref, editHrefBase }: Props) {
-  function editHrefFor(membership_id: number) {
-    return `${editHrefBase}/${membership_id}/edit`;
+  function editHrefFor(organization_membership_id: number) {
+    return `${editHrefBase}/${organization_membership_id}/edit`;
   }
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [documentResult, setDocumentResult] = useState<{ url: string; membership_id: number } | null>(null);
+  const [documentResult, setDocumentResult] = useState<{ url: string; organization_membership_id: number } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const form = useForm<InviteMemberValues>({
@@ -78,11 +78,11 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
       }
       if (error) return;
       if (data.channel === "document" || data.channel === "phone") {
-        setDocumentResult({ url: data.invitation_url, membership_id: data.membership_id });
+        setDocumentResult({ url: data.invitation_url, organization_membership_id: data.organization_membership_id });
         return;
       }
       // email channel: invitation email went out; jump to permissions editor.
-      router.push(editHrefFor(data.membership_id));
+      router.push(editHrefFor(data.organization_membership_id));
     });
   });
 
@@ -136,7 +136,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
           <Button type="button" variant="ghost" onClick={() => router.push(membersHref)}>
             {t("back_members")}
           </Button>
-          <Button type="button" onClick={() => router.push(editHrefFor(documentResult.membership_id))}>
+          <Button type="button" onClick={() => router.push(editHrefFor(documentResult.organization_membership_id))}>
             <ShieldCheck size={15} /> {t("define_permissions")}
           </Button>
         </div>

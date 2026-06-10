@@ -31,7 +31,7 @@ export const ViewerOrganizationsHookQuery = /*#__PURE__*/ gql(`
 
 export const ViewerOrganizationByIdHookQuery = /*#__PURE__*/ gql(`
   query ViewerOrganizationByIdHookQuery($organization_id: Int!) {
-    organization: viewer_organization_by_id(target_organization_id: $organization_id) {
+    organization: viewer_organization_by_id(organization_id: $organization_id) {
       ...ViewerOrganizationHookFragment
     }
   }
