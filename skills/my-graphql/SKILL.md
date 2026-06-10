@@ -1,362 +1,125 @@
 ---
 name: my-graphql
-description: GraphQL patterns for React/Next.js + Supabase. Use when writing queries, mutations, fragments, or when GraphQL/data-fetching are mentioned.
+description: Repository-specific pg_graphql operation patterns, naming, colocation, generated document use, and Supabase GraphQL limitations. Use when writing or changing GraphQL queries, mutations, fragments, or SQL exposed through pg_graphql.
 ---
 
-# GraphQL Patterns
+# GraphQL Operations
 
-## Stack
+Endpoint: Supabase `pg_graphql` at `/graphql/v1`. Generated `gql`:
 
-| Layer | Tool |
-|---|---|
-| GraphQL endpoint | Supabase PostgreSQL GraphQL (`{NEXT_PUBLIC_SUPABASE_URL}/graphql/v1`) |
-| Type generation | `@graphql-codegen/client-preset` |
-| Client | Custom Supabase GraphQL client |
-| React hooks | SWR-based hooks (e.g., `useGraphQLQuery`, `useGraphQLMutation`) |
-
-## Quick Start (Server Component)
-
-Fetch data server-side with a GraphQL client initialized from session:
-
-```tsx
+```ts
 import { gql } from "~/generated/graphql";
-import type { ResultOf } from "@graphql-typed-document-node/core";
-import { createGraphQLClient } from "~/lib/graphql/client.server";
-
-const UsersQuery = gql(`
-  query UsersQuery($limit: Int!) {
-    usersCollection(first: $limit) {
-      edges { node { id name email } }
-    }
-  }
-`);
-
-type UsersQueryType = ResultOf<typeof UsersQuery>;
-
-export default async function UsersPage() {
-  const { data: { session } } = await supabase.auth.getSession();
-  const client = createGraphQLClient(session?.access_token);
-  const { data } = await client.query({ query: UsersQuery, variables: { limit: 10 } });
-  return <div>{data?.usersCollection?.edges.map(e => <div key={e.node.id}>{e.node.name}</div>)}</div>;
-}
 ```
 
-## Quick Start (Client Component with SWR)
+Codegen workflow belongs to `my-graphql-codegen`. Runtime belongs to `my-graphy`.
 
-Fetch data client-side with automatic caching and revalidation:
+## Colocation
 
-```tsx
-import { gql } from "~/generated/graphql";
-import { useGraphQLQuery } from "~/hooks/use-graphql-query";
+Page-only operation stays in page:
 
-const CurrentUserQuery = gql(`
-  query CurrentUserQuery {
-    viewer {
-      id
-      name
-      email
+```ts
+const HomePickerPageQuery = gql(`
+  query HomePickerPageQuery {
+    viewer_organizations(
+      filter: { organization_disabled_at: { is: NULL } }
+      orderBy: [{ organization_name: AscNullsLast }]
+    ) {
+      edges {
+        node {
+          organization_id
+          organization_name
+          tenants { tenant_slug tenant_name }
+        }
+      }
     }
-  }
-`);
-
-function UserProfile() {
-  const { data, isLoading, error } = useGraphQLQuery({ query: CurrentUserQuery });
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-  return <div>Welcome, {data?.viewer?.name}</div>;
-}
-```
-
-## Setup with GraphQL Codegen
-
-1. **Install deps**:
-   ```bash
-   npm install -D @graphql-codegen/cli @graphql-codegen/client-preset @graphql-codegen/introspection graphql
-   ```
-
-2. **Create `graphql.config.ts`** at app root:
-   ```ts
-   import type { CodegenConfig } from "@graphql-codegen/cli";
-   const config: CodegenConfig = {
-     schema: process.env.GRAPHQL_ENDPOINT || "http://localhost:3000/graphql",
-     documents: ["src/**/*.tsx", "src/**/*.ts"],
-     generates: {
-       "./src/generated/graphql.ts": {
-         plugins: ["typescript", "typescript-operations", "typed-document-node"],
-       },
-     },
-   };
-   export default config;
-   ```
-
-3. **Add to `package.json`**:
-   ```json
-   "scripts": {
-     "generate:graphql": "graphql-codegen"
-   }
-   ```
-
-## Query Colocation
-
-**CRITICAL**: Queries must never be in standalone files. Define `gql(...)` in the **same file** that uses it.
-
-```tsx
-// ✅ src/pages/items/page.tsx — query lives here
-const ItemsPageQuery = gql(`
-  query ItemsPageQuery($limit: Int!) {
-    itemsCollection(first: $limit) {
-      edges { node { id name description } }
-    }
-  }
-`);
-
-// ❌ Never extract to lib/graphql/items.ts and import it
-import { ItemsPageQuery } from "~/lib/graphql/items";
-```
-
-## Operation Naming
-
-**CRITICAL**: Every GraphQL operation must have a **unique name** across the entire application.
-
-```tsx
-// ✅ Good — unique, descriptive
-const ItemsListPageQuery = /*#__PURE__*/ gql(`
-  query ItemsListPageQuery {
-    itemsCollection {
-      edges { node { id name } }
-    }
-  }
-`);
-
-// ❌ Bad — generic, may conflict
-const ItemsQuery = /*#__PURE__*/ gql(`
-  query ItemsQuery {
-    itemsCollection { edges { node { id } } }
   }
 `);
 ```
 
-**Pattern**: `{Component}{Feature}Query` or `{Component}{Feature}Mutation` — e.g., `UserProfileQuery`, `CreatePostMutation`
+Reusable server query lives in `hooks/get-*.ts`; reusable client query in `hooks/use-*.ts`.
+Do not create generic query barrels.
 
-## Queries with useGraphQLQuery
+## Naming
 
-```tsx
-// Basic query
-const { data, isLoading, error } = useGraphQLQuery({
-  query: ItemsListQuery,
+Operation names globally unique. Current suffixes:
+
+- Page: `HomePickerPageQuery`
+- Server helper: `ViewerOrganizationsGetQuery`
+- Client hook: `ViewerOrganizationsHookQuery`
+- Component mutation: `ProfileSectionUpdateNameMutation`
+
+Fragments follow consumer namespace:
+
+```ts
+export const ViewerOrganizationGetFragment = /*#__PURE__*/ gql(`
+  fragment ViewerOrganizationGetFragment on organizations {
+    organization_id
+    tenant_id
+    organization_slug
+    organization_name
+  }
+`);
+```
+
+Use fragments when reused or when exporting `ResultOf` shape.
+
+## Server operation
+
+```ts
+const graphy = await getGraphySession();
+const { data, error } = await graphy.query({
+  query: ViewerOrganizationByIdGetQuery,
+  variables: { organization_id },
 });
+if (error) throw error;
+const organization = data["viewer_organization_by_id"];
+```
 
-// Query with variables — variables reference is allowed
-const { data } = useGraphQLQuery({
-  query: ItemByIdQuery,
-  variables: { id: itemId },
-});
+External result fields use bracket notation.
 
-// Unauthenticated query
-const { data } = useGraphQLQuery({
-  query: PublicItemsQuery,
-  variables: { limit: 10 },
-  requiresAuth: false,
-});
+## Client operation
 
-// Conditional query — pause until ready
-const { data } = useGraphQLQuery(
-  userId ? { query: UserProfileQuery, variables: { id: userId } } : null,
+```ts
+const { data: user } = useSupabaseUser();
+return useGraphyQuery(
+  user
+    ? { query: ViewerOrganizationsHookQuery, variables: { tenant_id } }
+    : null,
+  config,
 );
 ```
 
-## Mutations with useGraphQLMutation
-
-```tsx
-import { useGraphQLMutation } from "~/hooks/use-graphql-mutation";
-
-const UpdateItemMutation = /*#__PURE__*/ gql`
-  mutation UpdateItemMutation($id: ID!, $name: String!) {
-    updateItem(id: $id, name: $name) {
-      id
-      name
-      updatedAt
-    }
-  }
-`;
-
-function EditItemForm({ itemId }: { itemId: string }) {
-  const [{ data, error }, mutate] = useGraphQLMutation(UpdateItemMutation);
-
-  const handleSubmit = async (newName: string) => {
-    const result = await mutate(
-      { id: itemId, name: newName },
-      { onSuccess: (data) => console.log("Updated:", data) },
-    );
-    if (result.error) setError(result.error.message);
-  };
-
-  return <button onClick={() => handleSubmit("New Name")}>Save</button>;
-}
-```
-
-## Direct Client Usage (Server Actions / Scripts)
+Mutations:
 
 ```ts
-import { createGraphQLClient } from "~/lib/graphql/server";
-
-export async function fetchItemsServerAction(token?: string | null) {
-  const client = createGraphQLClient(token);
-
-  try {
-    const { data } = await client.query({
-      query: ItemsQuery,
-      variables: { limit: 100 },
-    });
-    return data;
-  } catch (error) {
-    if (error instanceof NetworkError) {
-      console.error("Network unreachable");
-    } else if (error instanceof GraphQLError) {
-      console.error("GraphQL error:", error.message);
-    }
-  }
-}
+const [, updateName] = useGraphyMutation(ProfileSectionUpdateNameMutation);
+const { error } = await updateName({ profile_id, profile_name_full });
 ```
 
-## Fragments (Reusable Query Parts)
+## pg_graphql shapes
 
-```tsx
+- Tables: `tableCollection`, Relay `edges/node/pageInfo`.
+- Insert: `insertIntotableCollection(objects: ...)`.
+- Update/delete: pass `atMost`, `filter`, and `set` where required.
+- SQL functions become root fields, e.g. `viewer_organization_by_id(...)`.
+- Relationships follow DB foreign keys.
+
+## SQL compatibility
+
+- No hyphens in identifiers or enum values. One invalid enum can break whole introspection.
+- External literals containing hyphens: `text` + `check`.
+- Grant table privileges to `anon` when GraphQL requires schema visibility; RLS still gates rows.
+- Prefer `viewer_*` functions/views for viewer-scoped reads.
+- GraphQL lacks `ON CONFLICT`; use typed Supabase SDK for required upserts. Passkey challenge upsert is canonical example.
+- Supabase Auth Admin APIs are not GraphQL; use service-role SDK.
+
+## Type extraction
+
+```ts
 import type { ResultOf } from "@graphql-typed-document-node/core";
 
-export const UserFragment = /*#__PURE__*/ gql`
-  fragment UserFragment on User {
-    id
-    name
-    email
-    createdAt
-  }
-`;
-
-export type UserFragmentType = ResultOf<typeof UserFragment>;
-
-// Use in multiple queries
-const UserListQuery = /*#__PURE__*/ gql`
-  query UserListQuery {
-    users {
-      ...UserFragment
-    }
-  }
-`;
-
-const CurrentUserQuery = /*#__PURE__*/ gql`
-  query CurrentUserQuery {
-    viewer {
-      ...UserFragment
-    }
-  }
-`;
+export type ViewerOrganization =
+  ResultOf<typeof ViewerOrganizationGetFragment>;
 ```
 
-## Error Handling
-
-```tsx
-const { error } = useGraphQLQuery({ query: MyQuery });
-
-if (error) {
-  if (error.type === "network") {
-    // Network connection failed (offline, DNS, timeout)
-    setUserMessage("No internet connection");
-  } else if (error.type === "response") {
-    // HTTP error (4xx/5xx)
-    setUserMessage(`Server error: ${error.status}`);
-  } else if (error.type === "graphql") {
-    // GraphQL validation/resolver error
-    const messages = error.errors.map((e) => e.message);
-    setUserMessage(`Error: ${messages.join(", ")}`);
-  }
-}
-```
-
-## Common Scalar Types
-
-| GraphQL | JavaScript | Notes |
-|---------|-----------|-------|
-| `String` | `string` | Text |
-| `Int` | `number` | 32-bit integer |
-| `Float` | `number` | Floating point |
-| `Boolean` | `boolean` | true/false |
-| `ID` | `string` | Unique identifier |
-| `DateTime` | `string` | ISO 8601 timestamp |
-| `BigInt` | `string` | Large integers (64-bit+) |
-| `JSON` | `any` | Arbitrary JSON |
-
-## Column/Field Aliasing
-
-Use aliases to rename fields in the response:
-
-```tsx
-const UserWithAliasQuery = /*#__PURE__*/ gql`
-  query UserWithAliasQuery {
-    user {
-      userId: id             # Response: userId (not id)
-      displayName: name
-      contactEmail: email
-    }
-  }
-`;
-```
-
-## Cursor-Based Pagination
-
-```ts
-const ListItemsQuery = gql(`
-  query ListItems($first: Int, $after: String) {
-    itemsConnection(first: $first, after: $after) {
-      edges { cursor node { id name } }
-      pageInfo { hasNextPage endCursor }
-    }
-  }
-`);
-
-let cursor: string | null = null;
-let hasMore = true;
-
-while (hasMore) {
-  const { data } = await client.query({
-    query: ListItemsQuery,
-    variables: { first: 100, after: cursor },
-  });
-  
-  hasMore = data.itemsConnection.pageInfo.hasNextPage;
-  cursor = data.itemsConnection.pageInfo.endCursor;
-  
-  for (const edge of data.itemsConnection.edges) {
-    processItem(edge.node);
-  }
-}
-```
-
-## Table Permissions
-
-GraphQL mutations require appropriate database permissions. Ensure your GraphQL schema reflects:
-
-```graphql
-type Mutation {
-  createItem(input: CreateItemInput!): Item
-  updateItem(id: ID!, input: UpdateItemInput!): Item
-  deleteItem(id: ID!): Boolean
-}
-```
-
-Database must grant `INSERT`, `UPDATE`, `DELETE` as needed for mutations to appear in the schema.
-
-## Quick Reference
-
-| Use Case | Pattern |
-|----------|---------|
-| **Define query** | `const Q = gql(\`query Name($var: Type) { field }\`)` |
-| **Define mutation** | `const M = gql(\`mutation Name($var: Type) { field }\`)` |
-| **Define fragment** | `const F = gql(\`fragment F on Type { field }\`)` |
-| **Use in component** | `useGraphQLQuery({ query: Q, variables: { var } })` |
-| **Use mutation** | `const [state, mutate] = useGraphQLMutation(M)` |
-| **Skip query** | `useGraphQLQuery(ready ? { query: Q } : null)` |
-| **Server-side query** | `createGraphQLClient(token).query({ query: Q })` |
-| **Pagination** | Use `first`, `after`, `pageInfo.hasNextPage`, `pageInfo.endCursor` |
-| **Field alias** | `newName: originalName` in query |
-| **Generate types** | `npm run generate:graphql` |
+Do not edit `apps/platform/generated/graphql/**` manually.

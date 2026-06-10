@@ -19,11 +19,13 @@ const SKILLS = [
   "my-supabase-react",
   "my-graphy",
   "my-auth",
-  "my-pdf",
-  "my-email",
+  "my-react-pdf",
+  "my-react-email",
   "my-permissions",
   "my-proxy",
 ];
+
+const LEGACY_SKILLS = ["my-email", "my-pdf"];
 
 async function symlink(target, source) {
   try {
@@ -52,12 +54,31 @@ async function symlink(target, source) {
   console.log(`✓ ${source} → ${target}`);
 }
 
+async function removeLegacySymlink(source) {
+  try {
+    const stat = await fs.lstat(source);
+    if (stat.isSymbolicLink()) {
+      await fs.unlink(source);
+      console.log(`✓ Removed legacy symlink ${source}`);
+    } else {
+      console.warn(`⚠️  ${source} exists but is not a symlink. Skipping.`);
+    }
+  } catch (e) {
+    if (e.code !== "ENOENT") throw e;
+  }
+}
+
 async function main() {
   console.log("Setting up custom skills symlinks...");
 
   try {
     // Create /skills directory if needed
     await fs.mkdir(skillsDir, { recursive: true });
+
+    for (const skill of LEGACY_SKILLS) {
+      await removeLegacySymlink(join(agentsSkillsDir, skill));
+      await removeLegacySymlink(join(claudeSkillsDir, skill));
+    }
 
     // Set up symlinks in .agents/skills/
     for (const skill of SKILLS) {

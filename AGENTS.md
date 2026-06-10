@@ -5,7 +5,7 @@
 A production-grade starter for building a multi-tenant SaaS. It ships with the hard parts
 already wired together: authentication (email/password, OAuth, phone OTP, WebAuthn passkeys),
 two-level multi-tenancy with Postgres RLS, capability-based permissions, an agency/affiliate
-surface for cross-tenant partner access, i18n, transactional email, PDF generation, and a
+surface for cross-tenant partner access, i18n, React Email/PDF template packages, and a
 shadcn-based design system — all in a Turborepo monorepo.
 
 Reusable infrastructure (`packages/*`, auth, tenancy, routing, permissions, and the
@@ -26,17 +26,14 @@ Always use **pnpm**. Never npm or yarn.
 | Monorepo | Turborepo + pnpm workspaces |
 | Frontend | Next.js 16 (App Router), React 19, TypeScript 6 |
 | Styling | Tailwind CSS 4.x + shadcn/ui (new-york, in `packages/ui-common/src/shadcn`) |
-| API | Server Actions + tRPC (type-safe end-to-end) |
+| API | Server Actions + typed `pg_graphql` operations |
 | Database + Auth | Supabase (Postgres + Auth + Storage + Realtime + RLS) |
 | ORM | Supabase (generated types via CLI, no Drizzle) |
 | GraphQL | `pg_graphql` + a typed client (`@packages/graphy`) |
 | PDF generation | `@react-pdf/renderer` (in `packages/react-pdf`) |
-| Email | Resend + React Email (in `packages/react-email`) |
+| Email templates | React Email (in `packages/react-email`; delivery not wired) |
 | i18n | `@packages/rosetta` + `[locale]` route segment |
-| AI | Vercel AI Gateway + Anthropic Claude |
-| MCP server | `@modelcontextprotocol/sdk` (TS), exposed at `[tenant_slug]/mcp/` |
 | Linting/Formatting | Biome.js 2.x |
-| Analytics | PostHog (EU cloud) |
 | Hosting | Vercel |
 
 > Optional integrations included as examples: `@packages/kapso` (WhatsApp BSP). Remove the
@@ -52,15 +49,14 @@ routed by hostname and URL path. Shared logic lives in `@packages/*`.
 ├── apps/
 │   └── platform/             # @apps/platform — single Next.js app
 │       ├── app/
-│       │   ├── page.tsx              # / — marketing landing (public)
 │       │   ├── health/route.ts       # /health — canonical health check (public)
-│       │   ├── auth/                 # /auth/* — sign in/up, callback, logout, onboarding hub + substeps (public)
-│       │   ├── home/page.tsx         # /home — post-auth org picker (always shown, no auto-redirect)
-│       │   ├── home/account/         # /home/account/[section] — profile, security, sessions, etc.
-│       │   ├── tenants/create/       # /tenants/create — new tenant flow
-│       │   └── [tenant_slug]/        # /[slug]/* — tenant product (proxy rewrites {slug}.<apex>/* here)
-│       │       └── mcp/[transport]/  # MCP endpoint
-│       ├── proxy.ts          # Routes by host: apex vs {slug}.apex, auth + onboarded + membership gates
+│       │   └── [locale]/
+│       │       ├── (marketing)/      # /{locale} — public landing, FAQ, pricing, legal
+│       │       ├── auth/             # /{locale}/auth/* — auth + onboarding
+│       │       ├── home/             # /{locale}/home — org picker + account
+│       │       ├── tenants/create/   # /{locale}/tenants/create
+│       │       └── [tenant_slug]/    # /{locale}/{slug}/* tenant product
+│       ├── proxy.ts          # Locale, host routing, session, auth, tenant membership gates
 │       ├── styles/globals.css
 │       └── next.config.ts
 │
@@ -70,7 +66,7 @@ routed by hostname and URL path. Shared logic lives in `@packages/*`.
 │   ├── supabase/             # @packages/supabase — client factories + generated types + schema/RLS/seed/tests
 │   ├── graphy/               # @packages/graphy — typed pg_graphql client
 │   ├── rosetta/              # @packages/rosetta — i18n runtime
-│   ├── react-email/          # @packages/react-email — Resend email templates
+│   ├── react-email/          # @packages/react-email — React Email templates + preview
 │   ├── react-pdf/            # @packages/react-pdf — PDF templates
 │   ├── debug/ utils/ react-hooks/   # small shared utilities
 │   └── kapso/                # @packages/kapso — lite WhatsApp BSP client (optional)
@@ -87,9 +83,9 @@ routed by hostname and URL path. Shared logic lives in `@packages/*`.
 
 Hostname determines whether a request enters tenant context:
 
-- `<apex>/...` and `www.<apex>/...` → main site. URL path picks the page (`/`, `/auth/*`, `/home`, `/tenants/create`, `/[tenant_slug]/...`).
-- `{slug}.<apex>/...` → `apps/platform/proxy.ts` rewrites to `/{slug}{path}` so the same `[tenant_slug]` route renders. `/auth/*` (which now includes `/auth/onboarding/*`) and `/health` on a subdomain redirect back to the apex so auth lives at one origin.
-- Custom apex domains — phase 2; the proxy currently returns 404. Cookies can't span apexes without an SSO redirect/exchange flow.
+- `<apex>/...` and `www.<apex>/...` → main site. Proxy adds the locale segment when missing.
+- `{slug}.<apex>/...` → proxy rewrites to `/{locale}/{slug}{path}` so the same `[tenant_slug]` route renders. `/auth/*` and `/health` on a subdomain redirect to the apex.
+- Custom apex domains — phase 2; unknown hosts currently redirect to the configured apex. Cookies can't span apexes without an SSO redirect/exchange flow.
 
 Where `<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.PORT` (assigned per instance). `lvh.me` + `7003` in dev (Conductor reassigns `PORT` for parallel instances), `example.com` + implicit `443` in prod.
 
@@ -140,7 +136,9 @@ After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) 
 
 ## Skills
 
-Agent skills extend Claude Code with reusable capabilities. Installed skills live in `.agents/skills/` (gitignored) and are symlinked into Claude Code automatically. The bundled `skills/my-*` skills document each subsystem (Supabase, auth, i18n, permissions, email, PDF, GraphQL) — read the relevant one before working in that area.
+Agent skill sources live in `skills/my-*`. `pnpm install` runs `scripts/setup-skills.js`, which
+symlinks them into `.agents/skills/` and `.claude/skills/`. Read the relevant skill before
+working in that subsystem.
 
 To install a third-party skill:
 
@@ -166,9 +164,11 @@ Conventions:
 - Each app's `globals.css` imports `../../packages/ui-common/src/shadcn/globals.css` for CSS variables and `@source "../../packages/ui-common/src"` for Tailwind scanning.
 - Each app's `next.config.ts` includes `@packages/ui-common` in `transpilePackages`.
 
-## MCP Server
+## MCP Status
 
-Lives at `apps/platform/app/[tenant_slug]/mcp/[transport]/route.ts`. Exposed at `{slug}.<apex>/mcp/` (the proxy rewrites the subdomain into the route segment) or `<apex>/{slug}/mcp/` directly. Expose read-only, tenant-scoped tools that map to single user intents; each tool receives structured args and returns a typed response.
+`@modelcontextprotocol/sdk` is installed in `apps/platform`, but no MCP route is currently
+implemented. Do not document or expose an endpoint until a tenant-scoped route and auth model
+exist.
 
 ## Database Workflow (Prototype Phase)
 
@@ -185,28 +185,29 @@ Two-level model:
 
 - `public.tenants` (int4 serial PK) — the billing / customer relationship. Subdomain `{tenant_slug}.example.com` routes to a tenant.
 - `public.organizations` (int4 serial PK, FK to tenants) — the actual operating unit. Most tenants have exactly one organization that mirrors the tenant; large companies have several (e.g. one per country / branch).
-- `public.memberships(organization_id, profile_id)` — users belong to organizations, not directly to tenants. No `role` column — access is permission-based (see below). The set of tenants a user can access is derived from the tenants of their organizations.
+- `public.memberships(membership_id, organization_id, profile_id, lifecycle timestamps, invite fields)` — users belong to organizations, not directly to tenants. No `role` column — access is permission-based. Pending invitations and active memberships share this table.
 
 Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to filter, cheap in indexes) and, when data is org-scoped, also `organization_id int`. Supabase RLS enforces isolation at the DB layer — never rely on application-level filtering alone.
 
-**Active tenant comes from the subdomain or first path segment.** `apps/platform/proxy.ts` resolves `{tenant_slug}.<apex>` via the service-role client, validates membership against the JWT, and **rewrites** the URL to `/{tenant_slug}/...` — every tenant route lives under `app/[tenant_slug]/...` and reads the slug from route `params`. Path-segment access (`<apex>/{tenant_slug}/...`) works too without any rewrite. Pages derive `tenant_id` from the JWT `app_metadata.tenants` claim (slug→id mapping); no `x-tenant-*` headers. Server-side queries must explicitly `.eq("tenant_id", ...)` with that value. Org switching happens inside the app (per-tab or per-session selection).
+**Active tenant comes from the subdomain or locale-prefixed path segment.** `apps/platform/proxy.ts` resolves `{tenant_slug}.<apex>` via the service-role client, validates membership against the JWT, and **rewrites** the URL to `/{locale}/{tenant_slug}/...` — every tenant route lives under `app/[locale]/[tenant_slug]/...`. Path access (`<apex>/{locale}/{tenant_slug}/...`) works without a host rewrite. Pages use viewer-scoped GraphQL helpers or derive `tenant_id` from validated JWT metadata; no `x-tenant-*` headers. Direct table queries must explicitly filter `tenant_id`.
 
-**Custom domain mapping (`public.tenant_domains`, 1:1 with tenants)** is staged in the schema but not yet wired into the proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates these advanced features once billing exists.
+**Custom domain mapping (`public.tenant_domains`, many domains per tenant)** is staged in the schema but not yet wired into the proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates advanced features once billing exists.
 
 **Permissions (capability-based, not role-based):**
-- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs (`organization_manage`, `members_manage`, etc.). The reserved slug `*` is the wildcard — anyone holding `(org, profile, '*')` passes every permission check inside that org. Used for the tenant creator and other "full admin" grants without needing to enumerate every slug.
-- `public.membership_permissions(organization_id, profile_id, permission_id)` — explicit grants. Composite FK back to `memberships` so deleting a membership cascades. PK `(org, profile, permission)` + secondary index `(profile, permission)` cover both "does X have perm Y in org Z" and the cross-org "what orgs grant perm Y to X" lookups.
-- `public.permission_presets(id, organization_id?, name, slugs[])` — UX-only catalog of named bundles for the admin UI; carries no enforcement. `organization_id IS NULL` = global preset; non-null = tenant-specific custom bundle. A trigger validates every slug in `permission_preset_slugs` exists in the catalog.
+- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs (`organization_manage`, `members_manage`, etc.). The reserved slug `*` is the wildcard — a membership holding `*` passes every permission check inside its organization. Used for the tenant creator and other "full admin" grants without enumerating every slug.
+- `public.membership_permissions(membership_id, permission_id)` — explicit grants. Organization/profile derive through the membership row. The composite PK prevents duplicate grants and deletion cascades from memberships.
+- `public.permission_presets(permission_preset_id, organization_id?, permission_preset_name, permission_preset_slugs[])` — UX-only named bundles; carries no enforcement. `organization_id IS NULL` = global preset. A trigger validates every slug.
 
 Permissions are deliberately NOT in the JWT (size, and they change at runtime). All enforcement reads `public.membership_permissions` at query time via the security-definer helpers below.
 
-**JWT carries two arrays** (`public.user_auth_hook` on token issuance):
+**JWT carries three arrays** (`public.user_auth_hook` on token issuance):
 - `app_metadata.tenants: [{id, slug}]` — distinct tenants the user has any org membership in
-- `app_metadata.organizations: [{id}]` — every organization the user is a member of (no role)
+- `app_metadata.organizations: [{id, tenant_id}]` — every active organization membership
+- `app_metadata.agencies: [{id}]` — every active agency affiliation
 
-Plus `app_metadata.is_concierge: boolean` for the global internal role and `app_metadata.onboarded: boolean` for the onboarding gate.
+Plus `app_metadata.onboarded: boolean`. Onboarding is a UX nudge, not a proxy hard gate.
 
-After any `memberships` / `membership_permissions` (or `tenants` / `organizations`) mutation, call `supabase.auth.refreshSession()` so the client picks up the new claims; for revocations also call `supabase.auth.admin.signOut(profile_id)` server-side.
+After mutations affecting tenant, organization, agency, or onboarding claims, call `supabase.auth.refreshSession()`. Permission-only changes are DB-backed and take effect without new JWT claims.
 
 **Use the `viewer_*` SQL helpers in RLS policies, not raw JWT parsing:**
 
@@ -216,14 +217,15 @@ JWT-backed (fast, no DB):
 - `public.viewer_tenant_validate(tenant_id)` — true iff caller belongs to any org in this tenant
 - `public.viewer_organization_ids()` — set of organization_ids from JWT
 - `public.viewer_organization_validate(organization_id)` — true iff caller is a member of this org
-- `public.viewer_is_concierge()` — global internal role
+- `public.viewer_agency_ids()` / `public.viewer_is_agency_member()` — agency claims
 
 Permission-backed (DB lookup, security definer; wildcard `*` is honored):
 - `public.viewer_permission_org_ids(permission_id)` — orgs where the caller has the perm (or `*`). Use this in RLS `IN`-subqueries.
 - `public.viewer_has_permission(organization_id, permission_id)` — boolean shortcut for a single (org, perm) check.
 - `public.viewer_membership_permissions()` — setof `(organization_id, permission_id)` for UI listing.
 
-Concierge is global and lives in `protected.concierges` (service-role only).
+`public.viewer_is_concierge()` remains only as a backward-compatible alias for
+`viewer_is_agency_member()`.
 
 ## Critical Rules
 

@@ -60,7 +60,7 @@ export const getSupabaseServerSession = cache(async () => {
   return session;
 });
 
-// Hook-injected claims (tenants, organizations, onboarded, is_concierge) live only in the JWT —
+// Hook-injected claims (tenants, organizations, agencies, onboarded) live only in the JWT —
 // `auth.getUser()` hits /auth/v1/user which returns the persisted user record without them.
 // Decode the access_token directly. updateSession() in the proxy already validates the JWT.
 export const getSupabaseServerUserMetadata = cache(async (): Promise<AppMetadata | null> => {

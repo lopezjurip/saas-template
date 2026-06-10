@@ -1,188 +1,124 @@
 ---
 name: my-i18n
-description: Internationalization patterns for React/Next.js. Use when adding translations, multi-language support, or when i18n is mentioned.
+description: Repository-specific @packages/rosetta, locale routing, dictionaries, server/client translation, locale sentinel links, email, and PDF localization patterns.
 ---
 
-# Internationalization (i18n) — @packages/rosetta
+# i18n
 
-Use `@packages/rosetta` for all i18n needs. It's already in the monorepo.
+Supported app locales: `es`, `en`, `pt`. Default: `es`. Config:
+`apps/platform/lib/i18n.ts`.
 
-## Installation
+## Routing
 
-```typescript
-import { useRosetta, LocaleProvider, useLocale } from "@packages/rosetta";
-```
+`apps/platform/proxy.ts` owns locale routing:
 
-## Quick Start
+- Missing locale -> cookie/Accept-Language/default -> redirect.
+- `/[locale]/...` sentinel -> active locale redirect.
+- URL locale written to `NEXT_LOCALE` cookie before session update.
+
+Client links needing active locale use literal sentinel:
 
 ```tsx
-import { useRosetta } from "@packages/rosetta";
+<Link href="/[locale]/tenants/create">Crear</Link>
+```
 
+Do not thread locale props only to construct hrefs.
+
+## Server component
+
+Colocate dictionary:
+
+```ts
+const LOCALE_ES = {
+  title: "Miembros",
+  count: "{{count}} miembros",
+};
 const LOCALES = {
-  es: { hello: "Hola {{name}}" },
-  en: { hello: "Hello {{name}}" },
+  es: LOCALE_ES,
+  en: {
+    title: "Members",
+    count: "{{count}} members",
+  } satisfies typeof LOCALE_ES,
 };
 
-function MyComponent() {
-  const { t } = useRosetta(LOCALES);
-  return <h1>{t("hello", { name: "Alice" })}</h1>;
+export default async function Page(props: PageProps<"/[locale]/home">) {
+  const { locale } = await props.params;
+  const { t } = ROSETTA(LOCALES, locale);
+  return <h1>{t("title")}</h1>;
 }
 ```
 
-## Setup in Next.js App
+Use `ROSETTA` from `~/lib/i18n`. Route params are external: bracket access when not
+destructuring.
 
-Wrap root layout with `LocaleProvider`:
+## Server actions
 
-```typescript
-// app/layout.tsx
-import { LocaleProvider } from "@packages/rosetta";
+Cookie locale:
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = "es"; // Read from URL, cookies, or negotiation
-  
-  return (
-    <html>
-      <body>
-        <LocaleProvider locale={locale}>
-          {children}
-        </LocaleProvider>
-      </body>
-    </html>
-  );
-}
+```ts
+const locale = await getServerLocale();
+const r = ROSETTA(LOCALES, locale);
+throw new Error(r.t("invite_failed"));
 ```
 
-## Type-Safe Message Dictionary
+Use `getServerLocale()` from `~/lib/i18n.server`.
 
-Always define base locale first, then use `satisfies` for others:
+## Client component
 
-```tsx
-// 1. Define base locale as const to preserve types
-const LOCALE_EN = {
-  "common.yes": "Yes",
-  "common.no": "No",
-  "common.save": "Save",
-  greeting: "Hello {{name}}",
-  items: (p: { count: number }) =>
-    p.count === 1 ? "1 item" : "{{count}} items",
-} as const;
+App layout supplies `LocaleProvider`. Use:
 
-// 2. Define other locales with type safety
-const LOCALE_ES = {
-  "common.yes": "Sí",
-  "common.no": "No",
-  "common.save": "Guardar",
-  greeting: "¡Hola {{name}}!",
-  items: (p: { count: number }) =>
-    p.count === 1 ? "1 artículo" : "{{count}} artículos",
-} satisfies typeof LOCALE_EN;
+```ts
+import { useRosetta } from "~/hooks/use-rosetta";
 
-// 3. Combine into LOCALES dict
-const LOCALES = { en: LOCALE_EN, es: LOCALE_ES };
-```
-
-**Benefits:**
-- TypeScript enforces all keys exist in every locale
-- Missing keys → compile error
-- Function signatures must match
-- IDE autocomplete on `t("key")`
-
-## Usage Patterns
-
-```tsx
 const { t } = useRosetta(LOCALES);
-
-// Simple key
-t("common.yes");        // "Yes"
-
-// With parameters
-t("greeting", { name: "Alice" }); // "Hello Alice"
-
-// Function-based (pluralization)
-t("items", { count: 5 }); // "5 items"
-
-// Missing key falls back to key itself
-t("nonexistent.key");   // "nonexistent.key"
 ```
 
-## Locale Injection (email/PDF templates)
+For many children sharing same dictionary, use `RosettaProvider`. Do not use
+`withRosettaLocales` inside React PDF; it adds a DOM `<div>`.
 
-For packages without Next.js routing (email templates, PDF generators), inject locale via context:
+## Dictionary behavior
+
+- Base locale defines shape; other locales `satisfies typeof BASE`.
+- Dotted keys supported.
+- `{{name}}` interpolation supported.
+- Function values supported for plural/custom logic.
+- Regional locale inherits base: `es-CL` merges `es` + overrides.
+- Missing key returns `""` by default; `{ strict: true }` throws.
+
+Current package imports are direct:
+
+```ts
+import { RosettaImpl } from "@packages/rosetta/rosetta";
+import {
+  LocaleProvider,
+  RosettaProvider,
+  useLocale,
+  useRosetta,
+} from "@packages/rosetta/use-rosetta";
+```
+
+No `@packages/rosetta` barrel.
+
+## Email/PDF
+
+Non-Next renderers must inject BCP47 locale:
 
 ```tsx
-import { LocaleProvider, useRosetta } from "@packages/rosetta";
-
-export function EmailTemplate({ locale = "en", name }: { locale: string; name: string }) {
+export function Template({ locale = "es-CL", ...props }: Props) {
   return (
     <LocaleProvider locale={locale}>
-      <EmailContent name={name} />
-    </LocaleProvider>
-  );
-}
-
-// Separate component reads from context
-function EmailContent({ name }: { name: string }) {
-  const { t } = useRosetta(LOCALES);
-  return <p>{t("welcome", { name })}</p>;
-}
-```
-
-**Important:** Always split into provider + consumer components when both setting and reading locale.
-
-## Using in Lists
-
-Locale context works across list items automatically:
-
-```tsx
-function ItemRow({ item }: { item: Item }) {
-  const { t } = useRosetta(LOCALES);
-  return <li>{t("common.name")}: {item.name}</li>;
-}
-
-export function ItemList({ items }: { items: Item[] }) {
-  return (
-    <LocaleProvider locale="en">
-      <ul>
-        {items.map((item) => (
-          <ItemRow key={item.id} item={item} />
-        ))}
-      </ul>
+      <TemplateContent {...props} />
     </LocaleProvider>
   );
 }
 ```
 
-## Reading Current Locale
+Provider and consumer must be separate components; provider value is unavailable in same
+component render.
 
-```tsx
-import { useLocale } from "@packages/rosetta";
+## Rules
 
-function MyComponent() {
-  const locale = useLocale(); // "en", "es", etc.
-  return <div>Current locale: {locale}</div>;
-}
-```
-
-## Switching Locales
-
-Locale comes from `LocaleProvider` at the top level. Update it there to switch for entire app.
-
-```tsx
-// In root layout or provider
-const [locale, setLocale] = useState("es");
-
-<LocaleProvider locale={locale}>
-  <Button onClick={() => setLocale("en")}>English</Button>
-  <Button onClick={() => setLocale("es")}>Español</Button>
-  {children}
-</LocaleProvider>
-```
-
-## Performance Tips
-
-- Keep message dictionaries colocated with components that use them
-- Use `RosettaProvider` (not `LocaleProvider`) for .map() lists if you want isolated locale context
-- Avoid recreating dictionaries on every render
-- For large apps, consider lazy-loading locale data by region
-
-See `@packages/rosetta/src/rosetta.ts` for full API.
+- User-facing strings belong in dictionaries except deliberate prototypes.
+- Keep dictionaries near sole consumer.
+- Use `IS_SUPPORTED_LOCALE` before trusting route locale when needed.
+- HTML `lang` uses BCP47 mapping from `LOCALE_TO_BCP47` when full tag needed.

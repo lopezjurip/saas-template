@@ -74,7 +74,11 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
 
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto flex w-full max-w-6xl items-center gap-6 px-6 py-3">
-          <Link href={`/${locale}`} aria-label="SaaS Template" className="inline-block transition-opacity hover:opacity-80">
+          <Link
+            href={`/${locale}`}
+            aria-label="SaaS Template"
+            className="inline-block transition-opacity hover:opacity-80"
+          >
             <Logo />
           </Link>
           <nav aria-label="Primary" className="hidden items-center gap-1 text-sm md:flex">
@@ -120,7 +124,11 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
       <footer className="border-t border-border bg-muted/30">
         <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-8 px-6 py-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div className="col-span-2 flex max-w-xs flex-col gap-3 lg:col-span-1">
-            <Link href={`/${locale}`} aria-label="SaaS Template" className="inline-block transition-opacity hover:opacity-80">
+            <Link
+              href={`/${locale}`}
+              aria-label="SaaS Template"
+              className="inline-block transition-opacity hover:opacity-80"
+            >
               <Logo />
             </Link>
             <p className="text-[13px] leading-relaxed text-muted-foreground text-pretty">{t("footer.tagline")}</p>

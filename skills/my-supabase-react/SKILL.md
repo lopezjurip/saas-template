@@ -1,307 +1,127 @@
 ---
 name: my-supabase-react
-description: Supabase client usage in React (client-side & server-side), auth, real-time subscriptions, and mutations.
+description: Repository-specific typed Supabase client usage in Next.js server components, server actions, proxy, browser components, auth state, SWR hooks, and tenant-scoped queries.
 ---
 
-# Supabase + React — @packages/supabase
-
-Use `@packages/supabase` for all Supabase client initialization. It handles auth, cookies, and type safety.
-
-```typescript
-// Server-side
-import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
-
-// Browser
-import { createBrowserClient, getSupabaseClient } from "@packages/supabase/client.browser";
-```
-
-## Server-Side Setup
-
-### Server Component Query
-
-```typescript
-import type { Database } from "@packages/supabase/types";
-import { createServerClient } from "@packages/supabase/client.server";
-
-type Post = Database["public"]["Tables"]["posts"]["Row"];
-
-export default async function PostsPage() {
-  const supabase = await createServerClient();
-
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("published", true)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return <div>{data?.length} posts</div>;
-}
-```
-
-### Server Action with Auth
-
-```typescript
-"use server";
-
-import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
-
-export async function actionGetMyPosts() {
-  const user = await getSupabaseServerUser();
-  if (!user) throw new Error("Not authenticated");
-
-  const supabase = await createServerClient();
-
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("user_id", user.id);
-
-  if (error) throw error;
-  return data;
-}
-```
-
-## Client-Side Setup
-
-### Browser Client
-
-```typescript
-"use client";
-
-import { useEffect, useState } from "react";
-import { createBrowserClient } from "@packages/supabase/client.browser";
-import type { Database } from "@packages/supabase/types";
-
-type Post = Database["public"]["Tables"]["posts"]["Row"];
-
-export function PostList() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const supabase = createBrowserClient();
-
-    supabase
-      .from("posts")
-      .select("*")
-      .then(({ data }) => {
-        setPosts(data || []);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) return <div>Loading...</div>;
-
-  return (
-    <ul>
-      {posts.map((post) => (
-        <li key={post.id}>{post.title}</li>
-      ))}
-    </ul>
-  );
-}
-```
-
-## Real-Time Subscriptions
-
-```typescript
-"use client";
-
-import { useEffect, useState } from "react";
-import { createBrowserClient } from "@packages/supabase/client.browser";
-import type { Database } from "@packages/supabase/types";
-
-type Post = Database["public"]["Tables"]["posts"]["Row"];
-
-export function LivePostFeed() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const supabase = createBrowserClient();
-
-  useEffect(() => {
-    // Initial fetch
-    supabase
-      .from("posts")
-      .select("*")
-      .then(({ data }) => setPosts(data || []));
-
-    // Subscribe to changes
-    const channel = supabase
-      .channel("posts")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "posts" },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            setPosts((prev) => [...prev, payload.new as Post]);
-          } else if (payload.eventType === "UPDATE") {
-            setPosts((prev) =>
-              prev.map((p) => (p.id === payload.new.id ? (payload.new as Post) : p))
-            );
-          } else if (payload.eventType === "DELETE") {
-            setPosts((prev) => prev.filter((p) => p.id !== payload.old.id));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  return <div>{posts.length} live posts</div>;
-}
-```
-
-## Auth State
-
-```typescript
-"use client";
-
-import { useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
-import { createBrowserClient } from "@packages/supabase/client.browser";
-
-export function UserProfile() {
-  const [user, setUser] = useState<User | null>(null);
-  const supabase = createBrowserClient();
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-    });
-
-    // Listen to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => setUser(session?.user ?? null)
-    );
-
-    return () => subscription?.unsubscribe();
-  }, []);
-
-  if (!user) return <div>Not logged in</div>;
-  return <div>Welcome, {user.email}</div>;
-}
-```
-
-## Mutations with Optimistic Updates
-
-```typescript
-"use client";
-
-import { useState } from "react";
-import { createBrowserClient } from "@packages/supabase/client.browser";
-import type { Database } from "@packages/supabase/types";
-
-type Post = Database["public"]["Tables"]["posts"]["Row"];
-
-export function UpdatePostTitle({ post }: { post: Post }) {
-  const [title, setTitle] = useState(post.title);
-  const [optimisticTitle, setOptimisticTitle] = useState(post.title);
-  const [error, setError] = useState<string | null>(null);
-  const supabase = createBrowserClient();
-
-  const handleSave = async () => {
-    // Optimistic update
-    setOptimisticTitle(title);
-
-    const { error: updateError } = await supabase
-      .from("posts")
-      .update({ title })
-      .eq("id", post.id);
-
-    if (updateError) {
-      setError(updateError.message);
-      setOptimisticTitle(post.title); // Revert on error
-    }
-  };
-
-  return (
-    <div>
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Post title"
-      />
-      <button onClick={handleSave}>Save</button>
-      {error && <div className="error">{error}</div>}
-      <p>Display: {optimisticTitle}</p>
-    </div>
-  );
-}
-```
-
-## Error Handling
-
-```typescript
-const { data, error } = await supabase
-  .from("posts")
-  .select("*");
-
-if (error) {
-  if (error.code === "PGRST116") {
-    // Relation not found
-    console.error("Table doesn't exist");
-  } else if (error.code === "PGRST201") {
-    // No rows found
-    return [];
-  } else {
-    console.error("Query error:", error.message);
-  }
-}
-```
-
-## Type Safety
-
-Always use `Database` type from `@packages/supabase/types`:
-
-```typescript
-import type { Database } from "@packages/supabase/types";
-
-type Users = Database["public"]["Tables"]["users"]["Row"];
-type UserInsert = Database["public"]["Tables"]["users"]["Insert"];
-type UserUpdate = Database["public"]["Tables"]["users"]["Update"];
-
-const user: Users = { ... };
-const insert: UserInsert = { ... };
-```
-
-## JWT Claims / App Metadata
-
-Extract metadata after authentication:
-
-```typescript
-import { getSupabaseServerUserMetadata } from "@packages/supabase/metadata";
-
-const metadata = await getSupabaseServerUserMetadata();
-console.log(metadata.tenants);        // Array<{id, slug}>
-console.log(metadata.organizations);  // number[]
-console.log(metadata.is_concierge);   // boolean
-```
-
-## Batch Operations
-
-```typescript
-// Insert multiple rows
-const { data } = await supabase
-  .from("posts")
-  .insert([
-    { title: "Post 1", user_id: 1 },
-    { title: "Post 2", user_id: 1 },
-  ])
-  .select();
-
-// Batch update
-const updates = await Promise.all([
-  supabase.from("posts").update({ published: true }).eq("id", 1),
-  supabase.from("posts").update({ published: true }).eq("id", 2),
+# Supabase in React/Next
+
+Use factories from `@packages/supabase`. Never instantiate app clients elsewhere.
+
+## Server
+
+```ts
+import {
+  createServerClient,
+  getSupabaseServerUser,
+  getSupabaseServerUserMetadata,
+} from "@packages/supabase/client.server";
+
+const [supabase, user, metadata] = await Promise.all([
+  createServerClient(),
+  getSupabaseServerUser(),
+  getSupabaseServerUserMetadata(),
 ]);
 ```
 
-## See Also
+Exports are React `cache()`-wrapped per request. `createServerClient()` uses cookies and anon
+key, so RLS applies.
 
-- `@packages/supabase/src/types.ts` — generated Database type
-- `@packages/supabase/src/client.server.ts` — server client API
-- `@packages/supabase/src/client.browser.ts` — browser client API
-- `@packages/supabase/src/metadata.ts` — JWT metadata helpers
+## Browser
+
+```ts
+import { createBrowserClient } from
+  "@packages/supabase/client.browser";
+
+const supabase = createBrowserClient();
+```
+
+For component reuse:
+
+```ts
+import { useSupabase, useSupabaseUser } from
+  "@packages/supabase/react";
+
+const supabase = useSupabase();
+const { data: user } = useSupabaseUser();
+```
+
+`useSupabaseUser` uses SWR key `supabase-user`. Do not add thin wrapper for one SDK call.
+
+## User vs metadata
+
+- `getSupabaseServerUser()`: verified persisted auth user.
+- `getSupabaseServerSession()`: raw access token.
+- `getSupabaseServerUserMetadata()`: decoded + Zod-validated hook claims.
+
+Browser equivalents exist. Never trust `session.user` as validated identity; never expect
+hook claims from `auth.getUser()`.
+
+## Tenant-scoped query
+
+RLS is mandatory but app queries still scope tenant:
+
+```ts
+const tenant = metadata?.["tenants"]?.find(
+  (item) => item["slug"] === tenant_slug,
+);
+if (!tenant) notFound();
+
+const { data, error } = await supabase
+  .from("some_table")
+  .select("*")
+  .eq("tenant_id", tenant["id"]);
+```
+
+For org-scoped data, validate org belongs to active tenant and filter `organization_id`.
+
+## Server action
+
+Use `authedAction` when possible; context already supplies validated `user` + server client:
+
+```ts
+export const actionSave = authedAction
+  .inputSchema(schema)
+  .action(async ({ parsedInput, ctx: { supabase, user } }) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ profile_name_full: parsedInput.name })
+      .eq("profile_id", user.id);
+    if (error) throw error;
+  });
+```
+
+Exported server action name starts `action`.
+
+## Service role
+
+```ts
+import { createServiceRoleClient } from
+  "@packages/supabase/client.service";
+```
+
+Bypasses RLS. Server-only. Validate caller and permission with RLS client first. Use for auth
+admin, bootstrap, cross-row orchestration, or intentionally privileged lookups.
+
+## Auth changes
+
+After mutations affecting JWT claims:
+
+```ts
+await supabase.auth.refreshSession();
+```
+
+`GraphyClientProvider` listens for auth changes and rebuilds token-scoped Graphy client.
+
+## Realtime
+
+Supabase Realtime is available but no shared repository abstraction exists. If adding:
+create channel inside effect, include tenant/org filter when API supports it, validate payload
+shape, remove channel on cleanup. Do not cast payload with `as any`.
+
+## Rules
+
+- External rows/payloads: bracket notation.
+- `NEXT_PUBLIC_COOKIE_DOMAIN` makes browser/server cookies cross `*.lvh.me`.
+- Proxy owns token refresh; server component cookie write failures are intentionally ignored.
+- Prefer Graphy for existing typed GraphQL read/mutation patterns; use SDK where GraphQL lacks
+  feature, auth API is needed, or current code already uses SDK.
