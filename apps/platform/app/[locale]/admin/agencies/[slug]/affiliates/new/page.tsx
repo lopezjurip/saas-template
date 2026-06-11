@@ -1,6 +1,6 @@
+import { createServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AGENCY_BY_SLUG } from "~/lib/agencies-mock";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { assertLocale } from "~/lib/i18n.server";
 import { AffiliationInvite } from "./affiliation-invite";
@@ -18,16 +18,19 @@ export default async function AdminAgencyAffiliateNewPage(
   const { locale, slug } = await props.params;
   assertLocale(locale);
 
-  const agency = AGENCY_BY_SLUG(slug);
+  const admin = createServiceRoleClient();
+  const { data: agency } = await admin
+    .from("agencies")
+    .select("agency_id, agency_name, agency_slug")
+    .eq("agency_slug", slug)
+    .maybeSingle();
   if (!agency) notFound();
-
-  const pending = agency.affiliates.find((aff) => aff.state === "pending");
 
   return (
     <AffiliationInvite
-      agencyName={agency.name}
-      agencyHref={`/${locale}/admin/agencies/${agency.slug}`}
-      defaultEmail={pending?.email ?? ""}
+      agencyId={agency.agency_id}
+      agencyName={agency.agency_name}
+      agencyHref={`/${locale}/admin/agencies/${agency.agency_slug}`}
     />
   );
 }

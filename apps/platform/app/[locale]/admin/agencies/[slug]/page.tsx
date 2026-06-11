@@ -1,51 +1,21 @@
+import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import {
-  BadgeCheck,
-  Briefcase,
-  Building2,
-  Globe,
-  Hourglass,
-  Landmark,
-  LifeBuoy,
-  Link2,
-  type LucideIcon,
-  ShieldCheck,
-  UserPlus,
-  X,
-} from "lucide-react";
+import { BadgeCheck, Building2, Eye, Globe, Hourglass, ShieldCheck, UserPlus, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ACTIVE_AFFILIATES,
-  type Affiliate,
-  type AffiliationState,
-  AGENCY_BY_SLUG,
-  AGENCY_WILDCARD,
-  type AgencyKind,
-  type Grant,
-  INITIALS_OF,
-  IS_GLOBAL_AGENCY,
-  ORG_BY_ID,
-  SCOPED_ORG_COUNT,
-} from "~/lib/agencies-mock";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { ROSETTA } from "~/lib/i18n";
 import { assertLocale } from "~/lib/i18n.server";
-
-const KIND_ICON: Record<AgencyKind, LucideIcon> = /*#__PURE__*/ {
-  audit: Briefcase,
-  government: Landmark,
-  internal: LifeBuoy,
-  accounting: Building2,
-};
+import { type AffiliationState, AFFILIATION_STATE, INITIALS_OF } from "~/lib/agencies";
 
 export async function generateMetadata(props: PageProps<"/[locale]/admin/agencies/[slug]">): Promise<Metadata> {
   const { locale, slug } = await props.params;
   const { t } = await getRosetta(LOCALES, locale);
-  const agency = AGENCY_BY_SLUG(slug);
-  return { title: agency ? agency.name : t("page_title") };
+  const admin = createServiceRoleClient();
+  const { data } = await admin.from("agencies").select("agency_name").eq("agency_slug", slug).maybeSingle();
+  return { title: data?.agency_name ?? t("page_title") };
 }
 
 export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/admin/agencies/[slug]">) {
@@ -53,13 +23,49 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
   assertLocale(locale);
   const { t } = await getRosetta(LOCALES, locale);
 
-  const agency = AGENCY_BY_SLUG(slug);
-  if (!agency) notFound();
+  const admin = createServiceRoleClient();
 
-  const Icon = KIND_ICON[agency.kind];
-  const internal = agency.kind === "internal";
-  const active = ACTIVE_AFFILIATES(agency).length;
-  const global = IS_GLOBAL_AGENCY(agency);
+  const agencyRes = await admin
+    .from("agencies")
+    .select("agency_id, agency_name, agency_slug, agency_disabled_at")
+    .eq("agency_slug", slug)
+    .maybeSingle();
+  if (!agencyRes.data) notFound();
+  const agency = agencyRes.data;
+
+  const [membershipsRes, grantsRes, usersRes] = await Promise.all([
+    admin
+      .from("agency_memberships")
+      .select(
+        "agency_membership_id, profile_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at, agency_membership_created_at, profiles(profile_name_full)",
+      )
+      .eq("agency_id", agency.agency_id)
+      .order("agency_membership_created_at", { ascending: true }),
+    admin
+      .from("agencies_organizations_grants")
+      .select("agency_id, organization_id, permission_id, organizations(organization_name, organization_slug)")
+      .eq("agency_id", agency.agency_id),
+    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+  ]);
+
+  const emailByProfileId = new Map<string, string | null>();
+  if (!usersRes.error) {
+    for (const u of usersRes.data.users) emailByProfileId.set(u.id, u.email ?? null);
+  }
+
+  const affiliates = (membershipsRes.data ?? []).map((m) => ({
+    agency_membership_id: m.agency_membership_id,
+    state: AFFILIATION_STATE(m),
+    name: m.profiles?.profile_name_full ?? emailByProfileId.get(m.profile_id) ?? m.profile_id.slice(0, 8),
+    email: emailByProfileId.get(m.profile_id) ?? null,
+  }));
+  const activeCount = affiliates.filter((a) => a.state === "accepted").length;
+
+  const grants = grantsRes.data ?? [];
+  const globalGrant = grants.find((g) => g.organization_id === null && g.permission_id === "*");
+  const orgGrants = grants.filter((g) => g.organization_id !== null);
+  const isGlobal = Boolean(globalGrant);
+
   const base = `/${locale}/admin/agencies`;
 
   return (
@@ -69,7 +75,7 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
           <Link href={base}>← {t("back")}</Link>
         </Button>
         <Button asChild size="sm" className="h-9">
-          <Link href={`${base}/${agency.slug}/affiliates/new`}>
+          <Link href={`${base}/${agency.agency_slug}/affiliates/new`}>
             <UserPlus size={15} strokeWidth={2} /> {t("invite")}
           </Link>
         </Button>
@@ -80,35 +86,28 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
           {t("eyebrow")}
         </span>
         <div className="flex items-start gap-3.5">
-          <span
-            style={{ width: 48, height: 48 }}
-            className={cn(
-              "inline-flex shrink-0 items-center justify-center rounded-lg border",
-              internal
-                ? "border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                : "border-border bg-muted text-foreground",
-            )}
-          >
-            <Icon size={22} />
+          <span className="border-border bg-muted text-foreground inline-flex size-12 shrink-0 items-center justify-center rounded-lg border">
+            <Building2 size={22} />
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-foreground m-0 text-[20px] font-semibold tracking-[-0.02em]">{agency.name}</h1>
+              <h1 className="text-foreground m-0 text-[20px] font-semibold tracking-[-0.02em]">{agency.agency_name}</h1>
               <ScopeBadge
-                global={global}
-                label={global ? t("scope_global") : t("scope_orgs", { count: SCOPED_ORG_COUNT(agency) })}
+                global={isGlobal}
+                label={isGlobal ? t("scope_global") : t("scope_orgs", { count: orgGrants.length })}
               />
             </div>
             <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[12.5px]">
-              <code className="font-mono text-[11px]">{agency.slug}</code>
-              <span className="opacity-40">·</span>
-              <span>{t(`kind_${agency.kind}`)}</span>
+              <code className="font-mono text-[11px]">{agency.agency_slug}</code>
+              {agency.agency_disabled_at ? (
+                <>
+                  <span className="opacity-40">·</span>
+                  <span>{t("disabled")}</span>
+                </>
+              ) : null}
             </span>
           </div>
         </div>
-        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] [text-wrap:pretty]">
-          {agency.blurb}
-        </p>
       </header>
 
       <section className="flex flex-col gap-2.5">
@@ -117,14 +116,24 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
             {t("affiliates")}
           </span>
           <span className="text-muted-foreground text-[11.5px] tabular-nums">
-            {t("affiliates_count", { active, total: agency.affiliates.length })}
+            {t("affiliates_count", { active: activeCount, total: affiliates.length })}
           </span>
         </div>
-        <div className="flex flex-col gap-2">
-          {agency.affiliates.map((aff) => (
-            <AffiliateRow key={aff.id} aff={aff} stateLabel={t(`state_${aff.state}`)} />
-          ))}
-        </div>
+        {affiliates.length === 0 ? (
+          <p className="text-muted-foreground px-1 text-[12.5px]">{t("affiliates_empty")}</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {affiliates.map((aff) => (
+              <AffiliateRow
+                key={aff.agency_membership_id}
+                name={aff.name}
+                email={aff.email}
+                state={aff.state}
+                stateLabel={t(`state_${aff.state}`)}
+              />
+            ))}
+          </div>
+        )}
         <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-[11.5px] leading-[1.5]">
           <span className="text-muted-foreground/80 mt-px shrink-0">
             <ShieldCheck size={13} />
@@ -136,25 +145,28 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
       <section className="flex flex-col gap-2.5">
         <div className="flex min-h-7 items-center justify-between gap-2.5">
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">{t("grants")}</span>
-          {!global ? (
+          {!isGlobal ? (
             <span className="text-muted-foreground text-[11.5px] tabular-nums">
-              {t("scope_orgs", { count: SCOPED_ORG_COUNT(agency) })}
+              {t("scope_orgs", { count: orgGrants.length })}
             </span>
           ) : null}
         </div>
-        <div className="flex flex-col gap-2">
-          {agency.grants.map((grant, i) => (
-            <GrantOrgCard
-              key={grant.orgId ?? `global-${i}`}
-              grant={grant}
-              globalTitle={t("global_title")}
-              globalDesc={t("global_desc")}
-              implicitLabel={t("grant_implicit")}
-              explicitLabel={t("grant_explicit")}
-              permLabel={(slug) => PERM_LABEL(slug, t)}
-            />
-          ))}
-        </div>
+        {isGlobal ? (
+          <GlobalGrantCard title={t("global_title")} desc={t("global_desc")} accessLabel={t("read_access")} />
+        ) : orgGrants.length === 0 ? (
+          <p className="text-muted-foreground px-1 text-[12.5px]">{t("grants_empty")}</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {orgGrants.map((g) => (
+              <OrgGrantCard
+                key={`${g.organization_id}`}
+                orgName={g.organizations?.organization_name ?? String(g.organization_id)}
+                orgSlug={g.organizations?.organization_slug ?? null}
+                accessLabel={t("read_access")}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
@@ -219,8 +231,18 @@ function AffiliationBadge({ state, label }: { state: AffiliationState; label: st
   );
 }
 
-function AffiliateRow({ aff, stateLabel }: { aff: Affiliate; stateLabel: string }) {
-  const dim = aff.state === "revoked" || aff.state === "rejected";
+function AffiliateRow({
+  name,
+  email,
+  state,
+  stateLabel,
+}: {
+  name: string;
+  email: string | null;
+  state: AffiliationState;
+  stateLabel: string;
+}) {
+  const dim = state === "revoked" || state === "rejected";
   return (
     <div
       className={cn(
@@ -231,11 +253,11 @@ function AffiliateRow({ aff, stateLabel }: { aff: Affiliate; stateLabel: string 
     >
       <span
         className={cn(
-          "bg-muted text-foreground inline-flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full text-[12px] font-semibold tracking-[-0.01em]",
+          "bg-muted text-foreground inline-flex size-[34px] shrink-0 items-center justify-center rounded-full text-[12px] font-semibold tracking-[-0.01em]",
           dim && "opacity-60",
         )}
       >
-        {INITIALS_OF(aff.name)}
+        {INITIALS_OF(name)}
       </span>
       <span className="flex min-w-0 flex-col gap-[1px]">
         <span
@@ -244,116 +266,82 @@ function AffiliateRow({ aff, stateLabel }: { aff: Affiliate; stateLabel: string 
             dim ? "text-muted-foreground" : "text-foreground",
           )}
         >
-          {aff.name}
+          {name}
         </span>
-        <span className="text-muted-foreground inline-flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-[12px]">
-          <span className="overflow-hidden text-ellipsis">{aff.email}</span>
-          <span className="hidden shrink-0 opacity-40 @min-[640px]:inline">·</span>
-          <span className="hidden shrink-0 overflow-hidden text-ellipsis @min-[640px]:inline">{aff.role}</span>
-        </span>
+        {email && email !== name ? (
+          <span className="text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap text-[12px]">
+            {email}
+          </span>
+        ) : null}
       </span>
-      <AffiliationBadge state={aff.state} label={stateLabel} />
+      <AffiliationBadge state={state} label={stateLabel} />
     </div>
   );
 }
 
-function GrantPill({ slug, implicit, label }: { slug: string; implicit: boolean; label: string }) {
-  const isWild = slug === AGENCY_WILDCARD;
+function GlobalGrantCard({ title, desc, accessLabel }: { title: string; desc: string; accessLabel: string }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium leading-[1.3]",
-        isWild
-          ? "border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-          : implicit
-            ? "border-border text-muted-foreground bg-muted/30 border border-dashed"
-            : "border-border text-foreground bg-background border",
-      )}
-    >
-      {isWild ? <Globe size={10.5} /> : null}
-      {label}
-    </span>
+    <div className="flex items-start gap-3 rounded-lg border border-emerald-600/30 bg-emerald-500/[0.06] px-3.5 py-3">
+      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+        <Globe size={17} />
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-foreground text-[13.5px] font-semibold">{title}</span>
+          <span className="text-muted-foreground/80 font-mono text-[10.5px]">org = NULL</span>
+        </div>
+        <span className="text-muted-foreground text-[12px] leading-[1.45] [text-wrap:pretty]">{desc}</span>
+        <div className="mt-0.5">
+          <AccessPill global label={accessLabel} />
+        </div>
+      </div>
+    </div>
   );
 }
 
-function GrantOrgCard({
-  grant,
-  globalTitle,
-  globalDesc,
-  implicitLabel,
-  explicitLabel,
-  permLabel,
+function OrgGrantCard({
+  orgName,
+  orgSlug,
+  accessLabel,
 }: {
-  grant: Grant;
-  globalTitle: string;
-  globalDesc: string;
-  implicitLabel: string;
-  explicitLabel: string;
-  permLabel: (slug: string) => string;
+  orgName: string;
+  orgSlug: string | null;
+  accessLabel: string;
 }) {
-  if (grant.orgId === null) {
-    return (
-      <div className="flex items-start gap-3 rounded-lg border border-emerald-600/30 bg-emerald-500/[0.06] px-3.5 py-3">
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-          <Globe size={17} />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-foreground text-[13.5px] font-semibold">{globalTitle}</span>
-            <span className="text-muted-foreground/80 font-mono text-[10.5px]">org = NULL</span>
-          </div>
-          <span className="text-muted-foreground text-[12px] leading-[1.45] [text-wrap:pretty]">{globalDesc}</span>
-          <div className="mt-0.5 flex flex-wrap gap-1.5">
-            {grant.slugs.map((s) => (
-              <GrantPill key={s} slug={s} implicit={false} label={permLabel(s)} />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-  const org = ORG_BY_ID(grant.orgId);
-  const orgName = org?.name ?? grant.orgId;
   return (
     <div
       className="border-border bg-background grid items-start gap-3 rounded-lg border px-3.5 py-3"
       style={{ gridTemplateColumns: "36px 1fr" }}
     >
-      <span className="bg-muted text-foreground border-border inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-[12.5px] font-semibold">
+      <span className="bg-muted text-foreground border-border inline-flex size-9 shrink-0 items-center justify-center rounded-lg border text-[12.5px] font-semibold">
         {INITIALS_OF(orgName)}
       </span>
       <div className="flex min-w-0 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-foreground text-[13.5px] font-medium">{orgName}</span>
-          {grant.kind === "implicit" ? (
-            <span className="border-border text-muted-foreground bg-muted/30 inline-flex items-center gap-1 rounded-md border border-dashed px-1.5 py-0.5 text-[10px] font-medium leading-none tracking-[0.02em]">
-              <Link2 size={10} /> {implicitLabel}
-            </span>
-          ) : (
-            <span className="border-border text-muted-foreground bg-muted/40 inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-none tracking-[0.02em]">
-              {explicitLabel}
-            </span>
-          )}
+          {orgSlug ? <code className="text-muted-foreground/80 font-mono text-[10.5px]">{orgSlug}</code> : null}
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {grant.slugs.map((s) => (
-            <GrantPill key={s} slug={s} implicit={grant.kind === "implicit"} label={permLabel(s)} />
-          ))}
+          <AccessPill global={false} label={accessLabel} />
         </div>
       </div>
     </div>
   );
 }
 
-function PERM_LABEL(slug: string, t: ReturnType<typeof ROSETTA<typeof LOCALE_ES>>["t"]): string {
-  if (slug === AGENCY_WILDCARD) return t("perm_wildcard");
-  if (slug === "payroll_view") return t("perm_payroll_view");
-  if (slug === "reports_view") return t("perm_reports_view");
-  if (slug === "documents_view") return t("perm_documents_view");
-  if (slug === "members_view") return t("perm_members_view");
-  if (slug === "compliance_view") return t("perm_compliance_view");
-  if (slug === "audit_export") return t("perm_audit_export");
-  return slug;
+function AccessPill({ global, label }: { global: boolean; label: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium leading-[1.3]",
+        global
+          ? "border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+          : "border-border text-foreground bg-background border",
+      )}
+    >
+      <Eye size={10.5} /> {label}
+    </span>
+  );
 }
 
 const LOCALE_ES = {
@@ -361,33 +349,24 @@ const LOCALE_ES = {
   back: "Agencias",
   invite: "Afiliar persona",
   eyebrow: "SaaS Template · Agencia",
+  disabled: "Deshabilitada",
   scope_global: "Acceso global",
   scope_orgs: "{{count}} organizaciones",
-  kind_audit: "Auditoría",
-  kind_government: "Fiscalización",
-  kind_internal: "Interna",
-  kind_accounting: "Contable",
   affiliates: "Afiliados",
   affiliates_count: "{{active}} activos · {{total}} total",
+  affiliates_empty: "Esta agencia aún no tiene afiliados.",
   affiliates_note:
     "Los afiliados son personas externas, no miembros de ninguna organización. Su sesión lleva la agencia — heredan los accesos de abajo y nunca pueden escribir.",
   grants: "Accesos",
+  grants_empty: "Ninguna organización le ha dado acceso a esta agencia todavía.",
+  read_access: "Acceso de lectura",
   global_title: "Todas las organizaciones",
   global_desc:
     "Acceso global de solo lectura a todos los tenants y organizaciones de la plataforma, actuales y futuros.",
-  grant_implicit: "Heredado (opt-in)",
-  grant_explicit: "Otorgado",
   state_accepted: "Activo",
   state_pending: "Pendiente",
   state_revoked: "Revocado",
   state_rejected: "Rechazado",
-  perm_wildcard: "Acceso global",
-  perm_payroll_view: "Ver remuneraciones",
-  perm_reports_view: "Ver reportes",
-  perm_documents_view: "Ver documentos",
-  perm_members_view: "Ver miembros",
-  perm_compliance_view: "Ver cumplimiento",
-  perm_audit_export: "Exportar auditoría",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
@@ -395,32 +374,23 @@ const LOCALE_EN: typeof LOCALE_ES = {
   back: "Agencies",
   invite: "Affiliate a person",
   eyebrow: "SaaS Template · Agency",
+  disabled: "Disabled",
   scope_global: "Global access",
   scope_orgs: "{{count}} organizations",
-  kind_audit: "Audit",
-  kind_government: "Regulator",
-  kind_internal: "Internal",
-  kind_accounting: "Accounting",
   affiliates: "Affiliates",
   affiliates_count: "{{active}} active · {{total}} total",
+  affiliates_empty: "This agency has no affiliates yet.",
   affiliates_note:
     "Affiliates are external people, not members of any organization. Their session carries the agency — they inherit the access below and can never write.",
   grants: "Access",
+  grants_empty: "No organization has given this agency access yet.",
+  read_access: "Read access",
   global_title: "All organizations",
   global_desc: "Global read-only access to every tenant and organization on the platform, current and future.",
-  grant_implicit: "Inherited (opt-in)",
-  grant_explicit: "Granted",
   state_accepted: "Active",
   state_pending: "Pending",
   state_revoked: "Revoked",
   state_rejected: "Rejected",
-  perm_wildcard: "Global access",
-  perm_payroll_view: "View payroll",
-  perm_reports_view: "View reports",
-  perm_documents_view: "View documents",
-  perm_members_view: "View members",
-  perm_compliance_view: "View compliance",
-  perm_audit_export: "Export audit",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
@@ -428,32 +398,23 @@ const LOCALE_PT: typeof LOCALE_ES = {
   back: "Agências",
   invite: "Afiliar uma pessoa",
   eyebrow: "SaaS Template · Agência",
+  disabled: "Desabilitada",
   scope_global: "Acesso global",
   scope_orgs: "{{count}} organizações",
-  kind_audit: "Auditoria",
-  kind_government: "Fiscalização",
-  kind_internal: "Interna",
-  kind_accounting: "Contábil",
   affiliates: "Afiliados",
   affiliates_count: "{{active}} ativos · {{total}} total",
+  affiliates_empty: "Esta agência ainda não tem afiliados.",
   affiliates_note:
     "Os afiliados são pessoas externas, não membros de nenhuma organização. Sua sessão carrega a agência — herdam os acessos abaixo e nunca podem escrever.",
   grants: "Acessos",
+  grants_empty: "Nenhuma organização deu acesso a esta agência ainda.",
+  read_access: "Acesso de leitura",
   global_title: "Todas as organizações",
   global_desc: "Acesso global somente leitura a todos os tenants e organizações da plataforma, atuais e futuros.",
-  grant_implicit: "Herdado (opt-in)",
-  grant_explicit: "Concedido",
   state_accepted: "Ativo",
   state_pending: "Pendente",
   state_revoked: "Revogado",
   state_rejected: "Rejeitado",
-  perm_wildcard: "Acesso global",
-  perm_payroll_view: "Ver remunerações",
-  perm_reports_view: "Ver relatórios",
-  perm_documents_view: "Ver documentos",
-  perm_members_view: "Ver membros",
-  perm_compliance_view: "Ver conformidade",
-  perm_audit_export: "Exportar auditoria",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

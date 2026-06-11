@@ -157,6 +157,81 @@ update public.profiles
   );
 
 -- ------------------------------------------------------------
+-- agencies — one demo agency so the agency screens render with real data.
+--
+-- A DEDICATED affiliate user (iris@humane.test) is the ACCEPTED affiliate and
+-- opens the agency console. Using a dedicated user — not Alice/Bob — is
+-- deliberate: an accepted affiliate of an agency with a wildcard grant gains
+-- cross-org read visibility through every agency-bypass RLS policy
+-- (viewer_agency_permission_org_ids / viewer_agency_tenant_ids). The
+-- org-membership pgTAP fixtures authenticate as Alice and Bob and assume they
+-- have NO agency, so the affiliate must be someone no test signs in as.
+--
+-- Alice gets a PENDING invite (drives the affiliate-portal accept/reject
+-- surface). A pending membership is filtered out by viewer_agency_ids()
+-- (it checks accepted_at IS NOT NULL), so it stays invisible to Alice's JWT
+-- and the viewer_jwt_helpers assertions still pass.
+--
+-- The agency is granted read access to the acme org via the wildcard permission
+-- (the only permission the catalog ships and the only one the read-visibility
+-- RLS checks for agencies). UUID is fixed and distinct from the pgTAP fixture
+-- agency (…0001).
+-- ------------------------------------------------------------
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at,
+  confirmation_token, email_change, email_change_token_new, recovery_token
+)
+values
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '00000000-0000-0000-0000-0000000ca401',
+    'authenticated', 'authenticated',
+    'iris@humane.test',
+    crypt('password123', gen_salt('bf')),
+    current_timestamp,
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"full_name":"Iris Affiliate"}'::jsonb,
+    current_timestamp, current_timestamp,
+    '', '', '', ''
+  )
+on conflict (id) do nothing;
+
+insert into auth.identities (
+  provider_id, user_id, identity_data, provider,
+  last_sign_in_at, created_at, updated_at
+)
+values
+  (
+    '00000000-0000-0000-0000-0000000ca401',
+    '00000000-0000-0000-0000-0000000ca401',
+    '{"sub":"00000000-0000-0000-0000-0000000ca401","email":"iris@humane.test"}'::jsonb,
+    'email',
+    current_timestamp, current_timestamp, current_timestamp
+  )
+on conflict (provider_id, provider) do nothing;
+
+update public.profiles
+  set profile_onboarded_at = current_timestamp
+  where profile_id = '00000000-0000-0000-0000-0000000ca401';
+
+insert into public.agencies (agency_id, agency_name, agency_slug)
+values ('a0000000-0000-0000-0000-0000000000de', 'Demo Auditores', 'demo-auditores')
+on conflict (agency_id) do nothing;
+
+insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
+values
+  ('a0000000-0000-0000-0000-0000000000de', '00000000-0000-0000-0000-0000000ca401', current_timestamp),
+  ('a0000000-0000-0000-0000-0000000000de', '00000000-0000-0000-0000-00000000a11c', null)
+on conflict (agency_id, profile_id) do nothing;
+
+insert into public.agencies_organizations_grants (agency_id, organization_id, permission_id)
+values ('a0000000-0000-0000-0000-0000000000de', 1, '*')
+on conflict do nothing;
+
+-- ------------------------------------------------------------
 -- addresses — Chile administrative hierarchy (CL)
 -- level0 = country, level1 = region (ISO 3166-2), level2 = province, level3 = commune
 -- 1 country · 16 regions · 56 provinces · 345 communes

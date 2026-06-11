@@ -1,8 +1,9 @@
 import { expect, type Page, test } from "@playwright/test";
 import { CREATE_CONFIRMED_USER, DELETE_USER_BY_EMAIL } from "../fixtures/supabase";
 
-// Admin agencies screens (/admin/agencies/**) are backed by the agencies-mock fixture —
-// no tenant/membership needed, any confirmed auth user reaches them.
+// Admin agencies screens (/admin/agencies/**) list every agency via the
+// service-role client, so any confirmed auth user reaches them. The seed
+// provides "Demo Auditores" (demo-auditores) with affiliates + a grant.
 
 test.describe("admin agencies screens", () => {
   const runId = Math.random().toString(36).slice(2, 8);
@@ -25,13 +26,13 @@ test.describe("admin agencies screens", () => {
     await page.goto("/es/admin/agencies");
     await expect(page.getByRole("heading", { name: "Agencias" })).toBeVisible();
     await expect(page.getByRole("link", { name: /Nueva agencia/i })).toBeVisible();
-    // BDO is seeded in mock data.
-    await expect(page.getByText("BDO Auditores")).toBeVisible();
+    // Demo Auditores is seeded.
+    await expect(page.getByText("Demo Auditores")).toBeVisible();
   });
 
   test("agency detail renders for known slug", async ({ page }) => {
-    await page.goto("/es/admin/agencies/bdo-auditores");
-    await expect(page.getByRole("heading", { name: "BDO Auditores" })).toBeVisible();
+    await page.goto("/es/admin/agencies/demo-auditores");
+    await expect(page.getByRole("heading", { name: "Demo Auditores" })).toBeVisible();
     await expect(page.getByRole("link", { name: /Afiliar persona/i })).toBeVisible();
   });
 
@@ -41,8 +42,9 @@ test.describe("admin agencies screens", () => {
   });
 
   test("affiliate invite form renders for known slug", async ({ page }) => {
-    await page.goto("/es/admin/agencies/bdo-auditores/affiliates/new");
-    await expect(page.getByText("BDO Auditores").first()).toBeVisible();
+    await page.goto("/es/admin/agencies/demo-auditores/affiliates/new");
+    await expect(page.getByText("Demo Auditores").first()).toBeVisible();
+    await expect(page.getByLabel(/Correo de la persona/)).toBeVisible();
   });
 });
 
