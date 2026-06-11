@@ -6,9 +6,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { ROSETTA } from "~/lib/i18n";
+import { AFFILIATION_STATE, type AffiliationState, INITIALS_OF } from "~/lib/agencies";
 import { assertLocale } from "~/lib/i18n.server";
-import { type AffiliationState, AFFILIATION_STATE, INITIALS_OF } from "~/lib/agencies";
 
 export async function generateMetadata(props: PageProps<"/[locale]/admin/agencies/[slug]">): Promise<Metadata> {
   const { locale, slug } = await props.params;

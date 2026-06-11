@@ -21,8 +21,8 @@ import {
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
-import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { type AffiliationState, INITIALS_OF } from "~/lib/agencies";
+import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionUpdateAffiliateMembership } from "./actions";
 
 export type ConsoleAffiliate = {
@@ -296,10 +296,15 @@ function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: string; aff: Cons
   }
 
   // Revoke an active member; reactivate a revoked one. Pending/rejected/self have no action.
-  let action: { operation: "revoke" | "reactivate"; tone: "danger" | "neutral"; label: string; icon: LucideIcon } | null =
-    null;
+  let action: {
+    operation: "revoke" | "reactivate";
+    tone: "danger" | "neutral";
+    label: string;
+    icon: LucideIcon;
+  } | null = null;
   if (!aff.is_self) {
-    if (aff.state === "accepted") action = { operation: "revoke", tone: "danger", label: t("action_revoke"), icon: Ban };
+    if (aff.state === "accepted")
+      action = { operation: "revoke", tone: "danger", label: t("action_revoke"), icon: Ban };
     else if (aff.state === "revoked")
       action = { operation: "reactivate", tone: "neutral", label: t("action_reactivate"), icon: RefreshCw };
   }
@@ -478,11 +483,7 @@ function ConsoleProfileTab({ data, t }: { data: ConsoleData; t: Translate }) {
             style={{ gridTemplateColumns: "1fr auto" }}
           >
             <span className="text-muted-foreground text-[12px] font-medium">{row.label}</span>
-            <span
-              className={cn("text-foreground text-[13px]", row.mono && "font-mono text-[12px]")}
-            >
-              {row.value}
-            </span>
+            <span className={cn("text-foreground text-[13px]", row.mono && "font-mono text-[12px]")}>{row.value}</span>
           </div>
         ))}
       </div>
@@ -743,7 +744,8 @@ const LOCALE_PT: typeof LOCALE_ES = {
   access_global_desc:
     "Como equipe interna, você tem acesso global somente leitura a todos os tenants e organizações — atuais e futuros.",
   access_empty_title: "Nenhuma organização lhe deu acesso",
-  access_empty_desc: "Quando o administrador de uma organização habilitar sua agência, ela aparecerá aqui com acesso de leitura.",
+  access_empty_desc:
+    "Quando o administrador de uma organização habilitar sua agência, ela aparecerá aqui com acesso de leitura.",
   access_group: "Organizações que lhe deram acesso",
   profile_group: "Perfil da agência",
   profile_name: "Nome",

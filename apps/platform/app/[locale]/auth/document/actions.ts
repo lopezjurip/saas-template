@@ -113,7 +113,9 @@ export const actionCheckDocument = action
 
     if (invitesList.length === 1) {
       const only = invitesList[0]!;
-      log.info("document check: single pending invite", { organization_membership_id: only["organization_membership_id"] });
+      log.info("document check: single pending invite", {
+        organization_membership_id: only["organization_membership_id"],
+      });
       const token = only["organization_membership_invite_token"];
       if (!token) {
         log.error("pending invite without token", { organization_membership_id: only["organization_membership_id"] });

@@ -172,7 +172,11 @@ export const actionUpdateAffiliateMembership = authedAction
     const patch =
       parsedInput.operation === "revoke"
         ? { agency_membership_revoked_at: now }
-        : { agency_membership_revoked_at: null, agency_membership_rejected_at: null, agency_membership_accepted_at: now };
+        : {
+            agency_membership_revoked_at: null,
+            agency_membership_rejected_at: null,
+            agency_membership_accepted_at: now,
+          };
 
     const updateRes = await admin
       .from("agency_memberships")

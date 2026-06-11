@@ -1,8 +1,8 @@
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { assertLocale } from "~/lib/i18n.server";
 import { AGENCY_WILDCARD, IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
+import { assertLocale } from "~/lib/i18n.server";
 import { AgencyDirectory, type AgencyDirItem } from "./agency-directory";
 
 export async function generateMetadata(props: PageProps<"/[locale]/admin/agencies">): Promise<Metadata> {
@@ -25,9 +25,7 @@ export default async function AdminAgenciesPage(props: PageProps<"/[locale]/admi
       .order("agency_created_at", { ascending: true }),
     admin
       .from("agency_memberships")
-      .select(
-        "agency_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at",
-      ),
+      .select("agency_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at"),
     admin.from("agencies_organizations_grants").select("agency_id, organization_id, permission_id"),
   ]);
 

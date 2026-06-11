@@ -39,7 +39,8 @@ export default async function SecurityPage(props: PageProps<"/[locale]/home/acco
 
   const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: SecuritySectionPageQuery });
-  const passkeys = data?.["profile"]?.["profile_webauthn_credentialsCollection"]?.["edges"]?.map((e) => e["node"]) ?? [];
+  const passkeys =
+    data?.["profile"]?.["profile_webauthn_credentialsCollection"]?.["edges"]?.map((e) => e["node"]) ?? [];
 
   const identities = user["identities"] ?? [];
   const hasPassword = identities.some((i) => i["provider"] === "email");

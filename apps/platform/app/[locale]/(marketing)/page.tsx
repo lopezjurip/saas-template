@@ -1,4 +1,4 @@
-import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import {
   Accordion,
   AccordionContent,
@@ -15,7 +15,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_URL } from "~/lib/constants";
-import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { DEFAULT_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { ContactBooking } from "./contact-booking";
 
 export async function generateMetadata(props: PageProps<"/[locale]">): Promise<Metadata> {
@@ -321,17 +321,17 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
 
 const LOCALE_ES = {
   title: "SaaS Template",
-  description: "RR. HH. y nómina para empresas chilenas",
+  description: "Plantilla SaaS lista para producción",
   "cta.signin": "Ingresar",
   "cta.dashboard": "Ir al panel",
-  "hero.tag": "Plataforma de RR. HH. y nómina",
+  "hero.tag": "Plataforma SaaS multi-tenant",
   "hero.title1": "Lorem ipsum dolor sit amet,",
   "hero.title2": "consectetur adipiscing elit sed do.",
   "hero.subtitle":
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   "hero.secondary": "Agendar demo",
   "hero.trust": "Sin tarjeta · 14 días de prueba",
-  "mock.agent": "Asistente · Nómina",
+  "mock.agent": "Asistente · SaaS Template",
   "mock.taskLabel": "Tarea actual",
   "mock.task": "Lorem ipsum dolor sit amet consectetur.",
   "mock.stepsLabel": "Pasos",
@@ -411,17 +411,17 @@ const LOCALE_ES = {
 
 const LOCALE_EN: typeof LOCALE_ES = {
   title: "SaaS Template",
-  description: "HR & Payroll for Chilean companies",
+  description: "Production-ready SaaS template",
   "cta.signin": "Sign in",
   "cta.dashboard": "Go to dashboard",
-  "hero.tag": "HR & payroll platform",
+  "hero.tag": "Multi-tenant SaaS platform",
   "hero.title1": "Lorem ipsum dolor sit amet,",
   "hero.title2": "consectetur adipiscing elit sed do.",
   "hero.subtitle":
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   "hero.secondary": "Book a demo",
   "hero.trust": "No card · 14-day trial",
-  "mock.agent": "Assistant · Payroll",
+  "mock.agent": "Assistant · SaaS Template",
   "mock.taskLabel": "Current task",
   "mock.task": "Lorem ipsum dolor sit amet consectetur.",
   "mock.stepsLabel": "Steps",
@@ -501,17 +501,17 @@ const LOCALE_EN: typeof LOCALE_ES = {
 
 const LOCALE_PT: typeof LOCALE_ES = {
   title: "SaaS Template",
-  description: "RH e folha de pagamento para empresas chilenas",
+  description: "Template SaaS pronto para produção",
   "cta.signin": "Entrar",
   "cta.dashboard": "Ir para o painel",
-  "hero.tag": "Plataforma de RH e folha",
+  "hero.tag": "Plataforma SaaS multi-tenant",
   "hero.title1": "Lorem ipsum dolor sit amet,",
   "hero.title2": "consectetur adipiscing elit sed do.",
   "hero.subtitle":
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   "hero.secondary": "Agendar demo",
   "hero.trust": "Sem cartão · 14 dias de teste",
-  "mock.agent": "Assistente · Folha",
+  "mock.agent": "Assistente · SaaS Template",
   "mock.taskLabel": "Tarefa atual",
   "mock.task": "Lorem ipsum dolor sit amet consectetur.",
   "mock.stepsLabel": "Passos",

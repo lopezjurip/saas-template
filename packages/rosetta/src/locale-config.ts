@@ -29,12 +29,11 @@ export class LocaleConfig<L extends string> {
     this.defaultLocale = defaultLocale;
     this.cookie = cookie;
     this.supported = languages.map((l) => l.tag) as readonly L[];
-    this.bcp47 = Object.fromEntries(
-      languages.map((l) => [l.tag, `${l.tag}-${l.regions[0].subtag}`]),
-    ) as Record<L, string>;
-    this.label = Object.fromEntries(
-      languages.map((l) => [l.tag, l.label]),
-    ) as Record<L, string>;
+    this.bcp47 = Object.fromEntries(languages.map((l) => [l.tag, `${l.tag}-${l.regions[0].subtag}`])) as Record<
+      L,
+      string
+    >;
+    this.label = Object.fromEntries(languages.map((l) => [l.tag, l.label])) as Record<L, string>;
   }
 
   private findSupported(value: string): L | undefined {
@@ -72,9 +71,9 @@ export class LocaleConfig<L extends string> {
       // 2. Language-prefix fallback: 'es-AR' → first supported 'es-*' or 'es'
       const lang = code.split("-").at(0);
       if (lang) {
-        const prefix = this.supported.find(
-          (s) => s.toLowerCase() === lang || s.toLowerCase().startsWith(`${lang}-`),
-        ) as L | undefined;
+        const prefix = this.supported.find((s) => s.toLowerCase() === lang || s.toLowerCase().startsWith(`${lang}-`)) as
+          | L
+          | undefined;
         if (prefix) return prefix;
       }
     }

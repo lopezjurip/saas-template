@@ -5,12 +5,12 @@ import Link from "next/link";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { CreateTenantForm } from "./create-form";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<"/[locale]/tenants/create">): Promise<Metadata> {
   const { t, locale } = await getRosetta(LOCALES);
   return { title: t("heading") };
 }
 
-export default async function CreateTenantPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function CreateTenantPage(props: PageProps<"/[locale]/tenants/create">) {
   const { t, locale } = await getRosetta(LOCALES);
   return (
     <div

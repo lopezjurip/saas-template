@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(`https://${APP_HOST}`),
   title: { default: "SaaS Template", template: "%s | SaaS Template" },
-  description: "HR y Nómina para empresas chilenas",
+  description: "Production-ready SaaS template",
   applicationName: "SaaS Template",
   formatDetection: { telephone: false, email: false, address: false },
   appleWebApp: {

@@ -4,8 +4,8 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Copy, Download, Mail } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
 import { getRosetta } from "~/hooks/get-rosetta";
+import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { assertLocale } from "~/lib/i18n.server";
 
 type InvoiceStatus = "paid" | "refunded" | "failed";
@@ -41,9 +41,9 @@ export default async function OrganizationBillingPage(
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
 
-  const { data: orgData } = await getViewerOrganization(organization_id);
-  const organization = orgData?.["organization"];
-  if (!organization) notFound();
+  const {
+    data: { organization },
+  } = await getViewerOrganizationByIdAssert(organization_id);
 
   const pct = Math.min(100, Math.round((SEATS / SEATS_TOTAL) * 100));
   const free = SEATS_TOTAL - SEATS;

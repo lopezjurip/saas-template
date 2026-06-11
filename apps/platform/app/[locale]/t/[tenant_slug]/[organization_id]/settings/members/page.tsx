@@ -7,8 +7,8 @@ import { ChevronRight, ShieldCheck, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
 import { getRosetta } from "~/hooks/get-rosetta";
+import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { assertLocale } from "~/lib/i18n.server";
 import { PendingInvitations } from "./pending-invitations";
 
@@ -29,9 +29,9 @@ export default async function MembersAdminPage(
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
 
-  const { data: orgData } = await getViewerOrganization(organization_id);
-  const organization = orgData?.["organization"];
-  if (!organization) notFound();
+  const {
+    data: { organization },
+  } = await getViewerOrganizationByIdAssert(organization_id);
 
   const supabase = await createServerClient();
   const admin = createServiceRoleClient();
@@ -75,8 +75,12 @@ export default async function MembersAdminPage(
   ]);
 
   const allOrganizationOrganizationMemberships = allOrganizationOrganizationMembershipsRes.data ?? [];
-  const activeOrganizationOrganizationMemberships = allOrganizationOrganizationMemberships.filter((m) => m["profile_id"] && m["organization_membership_accepted_at"]);
-  const pendingOrganizationOrganizationMemberships = allOrganizationOrganizationMemberships.filter((m) => !m["profile_id"] && !m["organization_membership_accepted_at"]);
+  const activeOrganizationOrganizationMemberships = allOrganizationOrganizationMemberships.filter(
+    (m) => m["profile_id"] && m["organization_membership_accepted_at"],
+  );
+  const pendingOrganizationOrganizationMemberships = allOrganizationOrganizationMemberships.filter(
+    (m) => !m["profile_id"] && !m["organization_membership_accepted_at"],
+  );
 
   // Emails for member profiles (auth.users; not in profiles table). One paginated call
   // instead of N round-trips — Supabase admin rate-limits `getUserById`.
@@ -199,7 +203,9 @@ export default async function MembersAdminPage(
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
             {t("pending_heading")}
           </span>
-          <span className="text-muted-foreground text-[11.5px] tabular-nums">{pendingOrganizationOrganizationMemberships.length}</span>
+          <span className="text-muted-foreground text-[11.5px] tabular-nums">
+            {pendingOrganizationOrganizationMemberships.length}
+          </span>
         </div>
         <PendingInvitations
           editHrefBase={editHrefBase}
@@ -211,7 +217,9 @@ export default async function MembersAdminPage(
             invitation_document_kind: i["organization_membership_invite_document_kind"] as string | null,
             invitation_document_value: i["organization_membership_invite_document_value"] as string | null,
             invitation_permission_slugs:
-              permissionsByOrganizationMembershipId.get(i["organization_membership_id"] as number)?.map((g) => g.permission_id) ?? [],
+              permissionsByOrganizationMembershipId
+                .get(i["organization_membership_id"] as number)
+                ?.map((g) => g.permission_id) ?? [],
             invitation_created_at: i["organization_membership_created_at"] as string,
             invitation_expires_at: i["organization_membership_invite_expires_at"] as string | null,
           }))}

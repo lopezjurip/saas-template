@@ -5,10 +5,10 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowUpRight, Building2, Check, Eye, Globe, Hourglass, X } from "lucide-react";
 import { useState, useTransition } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
-import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
-import { INITIALS_OF } from "~/lib/agencies";
 import { actionRespondInvitation } from "~/app/[locale]/a/[agency_slug]/actions";
+import { useRosetta } from "~/hooks/use-rosetta";
+import { INITIALS_OF } from "~/lib/agencies";
+import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 
 export type AffiliateOrg = {
   organization_id: number;
@@ -173,7 +173,9 @@ function AgencySection({ agency, t }: { agency: AffiliateAgency; t: Translate })
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="text-foreground text-[13.5px] font-semibold">{t("global_title")}</span>
-            <span className="text-muted-foreground text-[12px] leading-[1.45] [text-wrap:pretty]">{t("global_desc")}</span>
+            <span className="text-muted-foreground text-[12px] leading-[1.45] [text-wrap:pretty]">
+              {t("global_desc")}
+            </span>
           </div>
         </div>
       ) : agency.orgs.length === 0 ? (
@@ -191,11 +193,7 @@ function AgencySection({ agency, t }: { agency: AffiliateAgency; t: Translate })
 
 function OrgAccessCard({ org, accessLabel }: { org: AffiliateOrg; accessLabel: string }) {
   return (
-    <div
-      className={cn(
-        "border-border bg-background flex h-full flex-col gap-3 rounded-xl border p-4",
-      )}
-    >
+    <div className={cn("border-border bg-background flex h-full flex-col gap-3 rounded-xl border p-4")}>
       <div className="flex items-start justify-between gap-2">
         <span className="bg-muted text-foreground border-border inline-flex size-11 items-center justify-center rounded-lg border text-[14px] font-semibold tracking-[-0.01em]">
           {INITIALS_OF(org.organization_name)}

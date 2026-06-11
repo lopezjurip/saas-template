@@ -1,15 +1,11 @@
-import type { ReactNode } from "react";
-import { SubSidebar, type SubSidebarItem } from "~/components/sub-sidebar";
+import { SubSidebar, type SubSidebarItem } from "~/components/shell/sidebar-sub";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { assertLocale } from "~/lib/i18n.server";
 
 export default async function SettingsLayout({
   children,
   params,
-}: {
-  children: ReactNode;
-  params: Promise<{ locale: string; tenant_slug: string; organization_id: string }>;
-}) {
+}: LayoutProps<"/[locale]/t/[tenant_slug]/[organization_id]/settings">) {
   const { locale, tenant_slug, organization_id } = await params;
   assertLocale(locale);
   const { t } = await getRosetta(LOCALES, locale);

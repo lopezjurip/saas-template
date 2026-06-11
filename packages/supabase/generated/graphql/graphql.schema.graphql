@@ -259,35 +259,6 @@ type Mutation {
     """Restricts the mutation's impact to records matching the criteria"""
     filter: profile_webauthn_credentialsFilter
   ): profile_webauthn_credentialsDeleteResponse!
-  """Deletes zero or more records from the `reserved_slugs` collection"""
-  deleteFromreserved_slugsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: reserved_slugsFilter
-  ): reserved_slugsDeleteResponse!
-  """
-  Deletes zero or more records from the `storage_organizations` collection
-  """
-  deleteFromstorage_organizationsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: storage_organizationsFilter
-  ): storage_organizationsDeleteResponse!
-  """Deletes zero or more records from the `storage_profiles` collection"""
-  deleteFromstorage_profilesCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: storage_profilesFilter
-  ): storage_profilesDeleteResponse!
   """Deletes zero or more records from the `tenant_domains` collection"""
   deleteFromtenant_domainsCollection(
     """
@@ -315,12 +286,6 @@ type Mutation {
   Adds one or more `profile_webauthn_credentials` records to the collection
   """
   insertIntoprofile_webauthn_credentialsCollection(objects: [profile_webauthn_credentialsInsertInput!]!): profile_webauthn_credentialsInsertResponse
-  """Adds one or more `reserved_slugs` records to the collection"""
-  insertIntoreserved_slugsCollection(objects: [reserved_slugsInsertInput!]!): reserved_slugsInsertResponse
-  """Adds one or more `storage_organizations` records to the collection"""
-  insertIntostorage_organizationsCollection(objects: [storage_organizationsInsertInput!]!): storage_organizationsInsertResponse
-  """Adds one or more `storage_profiles` records to the collection"""
-  insertIntostorage_profilesCollection(objects: [storage_profilesInsertInput!]!): storage_profilesInsertResponse
   """Adds one or more `tenant_domains` records to the collection"""
   insertIntotenant_domainsCollection(objects: [tenant_domainsInsertInput!]!): tenant_domainsInsertResponse
   """
@@ -393,21 +358,6 @@ type Mutation {
     set: profile_identitiesUpdateInput!
   ): profile_identitiesUpdateResponse!
   """
-  Updates zero or more records in the `profile_webauthn_challenges` collection
-  """
-  updateprofile_webauthn_challengesCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: profile_webauthn_challengesFilter
-    """
-    Fields that are set will be updated for all records matching the `filter`
-    """
-    set: profile_webauthn_challengesUpdateInput!
-  ): profile_webauthn_challengesUpdateResponse!
-  """
   Updates zero or more records in the `profile_webauthn_credentials` collection
   """
   updateprofile_webauthn_credentialsCollection(
@@ -435,45 +385,6 @@ type Mutation {
     """
     set: profilesUpdateInput!
   ): profilesUpdateResponse!
-  """Updates zero or more records in the `reserved_slugs` collection"""
-  updatereserved_slugsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: reserved_slugsFilter
-    """
-    Fields that are set will be updated for all records matching the `filter`
-    """
-    set: reserved_slugsUpdateInput!
-  ): reserved_slugsUpdateResponse!
-  """Updates zero or more records in the `storage_organizations` collection"""
-  updatestorage_organizationsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: storage_organizationsFilter
-    """
-    Fields that are set will be updated for all records matching the `filter`
-    """
-    set: storage_organizationsUpdateInput!
-  ): storage_organizationsUpdateResponse!
-  """Updates zero or more records in the `storage_profiles` collection"""
-  updatestorage_profilesCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: storage_profilesFilter
-    """
-    Fields that are set will be updated for all records matching the `filter`
-    """
-    set: storage_profilesUpdateInput!
-  ): storage_profilesUpdateResponse!
   """Updates zero or more records in the `tenant_domains` collection"""
   updatetenant_domainsCollection(
     """
@@ -685,7 +596,6 @@ type Query {
     """The record's `ID`"""
     nodeId: ID!
   ): Node
-  org_has_other_active_admin(_excluded_organization_membership_id: Int!, _organization_id: Int!): Boolean
   """A pagable collection of type `organization_membership_permissions`"""
   organization_membership_permissionsCollection(
     """Query values in the collection after the provided cursor"""
@@ -862,25 +772,6 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [profilesOrderBy!]
   ): profilesConnection
-  """A pagable collection of type `reserved_slugs`"""
-  reserved_slugsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: reserved_slugsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [reserved_slugsOrderBy!]
-  ): reserved_slugsConnection
   """A pagable collection of type `storage_organizations`"""
   storage_organizationsCollection(
     """Query values in the collection after the provided cursor"""
@@ -957,6 +848,26 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [tenantsOrderBy!]
   ): tenantsConnection
+  viewer_agencies(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: agenciesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [agenciesOrderBy!]
+  ): agenciesConnection
+  viewer_agency_by_id(agency_id: UUID!): agencies
+  viewer_agency_by_slug(agency_slug: String!): agencies
   viewer_has_agency_permission(organization_id: Int!, permission_id: String!): Boolean
   viewer_has_permission(organization_id: Int!, permission_id: String!): Boolean
   viewer_is_agency_member: Boolean
@@ -2326,20 +2237,6 @@ input profile_webauthn_challengesOrderBy {
   webauthn_challenge_value: OrderByDirection
 }
 
-input profile_webauthn_challengesUpdateInput {
-  profile_id: UUID
-  webauthn_challenge_created_at: Datetime
-  webauthn_challenge_id: UUID
-  webauthn_challenge_value: String
-}
-
-type profile_webauthn_challengesUpdateResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [profile_webauthn_challenges!]!
-}
-
 type profile_webauthn_credentials implements Node {
   """Globally Unique Record Identifier"""
   nodeId: ID!
@@ -2631,70 +2528,6 @@ type profilesUpdateResponse {
   records: [profiles!]!
 }
 
-type reserved_slugs implements Node {
-  """Globally Unique Record Identifier"""
-  nodeId: ID!
-  reserved_slug: String!
-}
-
-type reserved_slugsConnection {
-  edges: [reserved_slugsEdge!]!
-  pageInfo: PageInfo!
-}
-
-type reserved_slugsDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [reserved_slugs!]!
-}
-
-type reserved_slugsEdge {
-  cursor: String!
-  node: reserved_slugs!
-}
-
-input reserved_slugsFilter {
-  """
-  Returns true only if all its inner filters are true, otherwise returns false
-  """
-  and: [reserved_slugsFilter!]
-  nodeId: IDFilter
-  """Negates a filter"""
-  not: reserved_slugsFilter
-  """
-  Returns true if at least one of its inner filters is true, otherwise returns false
-  """
-  or: [reserved_slugsFilter!]
-  reserved_slug: StringFilter
-}
-
-input reserved_slugsInsertInput {
-  reserved_slug: String
-}
-
-type reserved_slugsInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [reserved_slugs!]!
-}
-
-input reserved_slugsOrderBy {
-  reserved_slug: OrderByDirection
-}
-
-input reserved_slugsUpdateInput {
-  reserved_slug: String
-}
-
-type reserved_slugsUpdateResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [reserved_slugs!]!
-}
-
 type storage_organizations implements Node {
   bucket_id: String
   content_length: BigInt
@@ -2715,13 +2548,6 @@ type storage_organizations implements Node {
 type storage_organizationsConnection {
   edges: [storage_organizationsEdge!]!
   pageInfo: PageInfo!
-}
-
-type storage_organizationsDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [storage_organizations!]!
 }
 
 type storage_organizationsEdge {
@@ -2753,27 +2579,6 @@ input storage_organizationsFilter {
   updated_at: DatetimeFilter
 }
 
-input storage_organizationsInsertInput {
-  bucket_id: String
-  content_length: BigInt
-  created_at: Datetime
-  folder: String
-  metadata: JSON
-  mimetype: String
-  name: String
-  organization_id: Int
-  src: String
-  storage_organization_id: UUID
-  updated_at: Datetime
-}
-
-type storage_organizationsInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [storage_organizations!]!
-}
-
 input storage_organizationsOrderBy {
   bucket_id: OrderByDirection
   content_length: OrderByDirection
@@ -2785,27 +2590,6 @@ input storage_organizationsOrderBy {
   src: OrderByDirection
   storage_organization_id: OrderByDirection
   updated_at: OrderByDirection
-}
-
-input storage_organizationsUpdateInput {
-  bucket_id: String
-  content_length: BigInt
-  created_at: Datetime
-  folder: String
-  metadata: JSON
-  mimetype: String
-  name: String
-  organization_id: Int
-  src: String
-  storage_organization_id: UUID
-  updated_at: Datetime
-}
-
-type storage_organizationsUpdateResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [storage_organizations!]!
 }
 
 type storage_profiles implements Node {
@@ -2828,13 +2612,6 @@ type storage_profiles implements Node {
 type storage_profilesConnection {
   edges: [storage_profilesEdge!]!
   pageInfo: PageInfo!
-}
-
-type storage_profilesDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [storage_profiles!]!
 }
 
 type storage_profilesEdge {
@@ -2866,27 +2643,6 @@ input storage_profilesFilter {
   updated_at: DatetimeFilter
 }
 
-input storage_profilesInsertInput {
-  bucket_id: String
-  content_length: BigInt
-  created_at: Datetime
-  folder: String
-  metadata: JSON
-  mimetype: String
-  name: String
-  profile_id: UUID
-  src: String
-  storage_profile_id: UUID
-  updated_at: Datetime
-}
-
-type storage_profilesInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [storage_profiles!]!
-}
-
 input storage_profilesOrderBy {
   bucket_id: OrderByDirection
   content_length: OrderByDirection
@@ -2898,27 +2654,6 @@ input storage_profilesOrderBy {
   src: OrderByDirection
   storage_profile_id: OrderByDirection
   updated_at: OrderByDirection
-}
-
-input storage_profilesUpdateInput {
-  bucket_id: String
-  content_length: BigInt
-  created_at: Datetime
-  folder: String
-  metadata: JSON
-  mimetype: String
-  name: String
-  profile_id: UUID
-  src: String
-  storage_profile_id: UUID
-  updated_at: Datetime
-}
-
-type storage_profilesUpdateResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [storage_profiles!]!
 }
 
 type tenant_domains implements Node {

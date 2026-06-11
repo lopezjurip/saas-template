@@ -3,10 +3,10 @@ import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { assertLocale } from "~/lib/i18n.server";
+import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
+import { assertLocale } from "~/lib/i18n.server";
 import { ExternalAccess, type ExternalAccessAgency } from "./external-access";
 
 export async function generateMetadata(
@@ -26,9 +26,9 @@ export default async function OrganizationExternalAccessPage(
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
 
-  const { data: orgData } = await getViewerOrganization(organization_id);
-  const organization = orgData?.["organization"];
-  if (!organization) notFound();
+  const {
+    data: { organization },
+  } = await getViewerOrganizationByIdAssert(organization_id);
 
   const supabase = await createServerClient();
   const { data: canManage } = await supabase.rpc("viewer_has_permission", {
@@ -59,9 +59,7 @@ export default async function OrganizationExternalAccessPage(
     admin.from("agencies_organizations_grants").select("agency_id, organization_id, permission_id"),
     admin
       .from("agency_memberships")
-      .select(
-        "agency_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at",
-      ),
+      .select("agency_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at"),
   ]);
 
   const activeByAgency = new Map<string, number>();
@@ -113,7 +111,16 @@ export default async function OrganizationExternalAccessPage(
   );
 }
 
-const LOCALE_ES = { page_title: "Acceso externo", no_permission_alert: "No tienes permiso para administrar el acceso externo de esta organización." };
-const LOCALE_EN: typeof LOCALE_ES = { page_title: "External access", no_permission_alert: "You don't have permission to manage external access for this organization." };
-const LOCALE_PT: typeof LOCALE_ES = { page_title: "Acesso externo", no_permission_alert: "Você não tem permissão para administrar o acesso externo desta organização." };
+const LOCALE_ES = {
+  page_title: "Acceso externo",
+  no_permission_alert: "No tienes permiso para administrar el acceso externo de esta organización.",
+};
+const LOCALE_EN: typeof LOCALE_ES = {
+  page_title: "External access",
+  no_permission_alert: "You don't have permission to manage external access for this organization.",
+};
+const LOCALE_PT: typeof LOCALE_ES = {
+  page_title: "Acesso externo",
+  no_permission_alert: "Você não tem permissão para administrar o acesso externo desta organização.",
+};
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

@@ -1,3 +1,4 @@
+Connecting to db 5432
 export type Json =
   | string
   | number
@@ -960,6 +961,57 @@ export type Database = {
         Returns: string
       }
       user_auth_hook: { Args: { event: Json }; Returns: Json }
+      viewer_agencies: {
+        Args: never
+        Returns: {
+          agency_created_at: string
+          agency_disabled_at: string | null
+          agency_id: string
+          agency_name: string
+          agency_slug: string
+          agency_updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "agencies"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      viewer_agency_by_id: {
+        Args: { agency_id: string }
+        Returns: {
+          agency_created_at: string
+          agency_disabled_at: string | null
+          agency_id: string
+          agency_name: string
+          agency_slug: string
+          agency_updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "agencies"
+          isOneToOne: true
+          isSetofReturn: true
+        }
+      }
+      viewer_agency_by_slug: {
+        Args: { agency_slug: string }
+        Returns: {
+          agency_created_at: string
+          agency_disabled_at: string | null
+          agency_id: string
+          agency_name: string
+          agency_slug: string
+          agency_updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "agencies"
+          isOneToOne: true
+          isSetofReturn: true
+        }
+      }
       viewer_agency_ids: { Args: never; Returns: string[] }
       viewer_agency_permission_org_ids: {
         Args: { permission_id: string }

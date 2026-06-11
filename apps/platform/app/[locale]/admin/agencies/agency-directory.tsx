@@ -301,7 +301,8 @@ const LOCALE_ES = {
   scope_global: "Acceso global",
   scope_orgs: "{{count}} organizaciones",
   empty_title: "Aún no hay agencias",
-  empty_desc: "Crea la primera agencia para agrupar a personas externas con acceso de solo lectura entre organizaciones.",
+  empty_desc:
+    "Crea la primera agencia para agrupar a personas externas con acceso de solo lectura entre organizaciones.",
   read_only_note:
     "Las agencias nunca pueden escribir. Su acceso es de solo lectura, sin importar los permisos que se les otorguen.",
 };

@@ -46,7 +46,9 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [documentResult, setDocumentResult] = useState<{ url: string; organization_membership_id: number } | null>(null);
+  const [documentResult, setDocumentResult] = useState<{ url: string; organization_membership_id: number } | null>(
+    null,
+  );
   const [copied, setCopied] = useState(false);
 
   const form = useForm<InviteMemberValues>({

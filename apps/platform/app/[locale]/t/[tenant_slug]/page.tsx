@@ -7,30 +7,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@packages/ui-common/shadcn/components/ui/card";
+import { SINGLE } from "@packages/utils/array";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { getViewerOrganizations } from "~/hooks/get-viewer-organizations";
-import { getViewerTenantBySlug } from "~/hooks/get-viewer-tenants";
+import { getViewerTenantBySlugAssert } from "~/hooks/get-viewer-tenants";
 
-export default async function TenantHomePage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ locale: string; tenant_slug: string }>;
-  searchParams: Promise<{ redirect?: string }>;
-}) {
-  const { locale, tenant_slug } = await params;
-  const { redirect: redirectParam } = await searchParams;
+export default async function TenantHomePage(props: PageProps<"/[locale]/t/[tenant_slug]">) {
+  const { locale, tenant_slug } = await props.params;
+  const { redirect: redirectParams } = await props.searchParams;
+  const redirectParam = SINGLE(redirectParams);
 
-  const { data: tenantData } = await getViewerTenantBySlug(tenant_slug);
-  const tenant = tenantData?.["tenant"];
-  if (!tenant) notFound();
+  const {
+    data: { tenant },
+  } = await getViewerTenantBySlugAssert(tenant_slug);
   const tenant_id = tenant["tenant_id"];
 
-  const { data: orgsData } = await getViewerOrganizations({ filter: { tenant_id: { eq: tenant_id } } });
-  const orgs = orgsData?.["organizations"]?.["edges"]?.map((e) => e["node"]) ?? [];
+  const { data } = await getViewerOrganizations({
+    filter: { tenant_id: { eq: tenant_id } },
+  });
+  const organizations = data?.["organizations"]?.["edges"] || [];
 
-  if (orgs.length === 0) {
+  if (organizations.length === 0) {
     return (
       <main className="bg-muted flex min-h-svh items-center justify-center p-6">
         <Card className="w-full max-w-md">
@@ -51,8 +49,8 @@ export default async function TenantHomePage({
     );
   }
 
-  if (redirectParam !== "false" && orgs.length === 1) {
-    const only = orgs[0]!;
+  if (redirectParam !== "false" && organizations.length === 1) {
+    const only = organizations[0]!["node"];
     redirect(`/[locale]/t/${tenant_slug}/${only["organization_id"]}`);
   }
 
@@ -64,14 +62,22 @@ export default async function TenantHomePage({
           <CardDescription>Elige una organización para continuar</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
-          {orgs.map((organization) => (
-            <Button asChild key={organization["organization_id"]} variant="outline" className="w-full justify-between">
-              <Link href={`/${locale}/t/${tenant_slug}/${organization["organization_id"]}`}>
-                <span>{organization["organization_name"]}</span>
-                <span className="text-xs text-muted-foreground">{organization["organization_slug"]}</span>
-              </Link>
-            </Button>
-          ))}
+          {organizations.map(({ ["node"]: organization }) => {
+            return (
+              <Button
+                asChild
+                key={organization["organization_id"]}
+                data-organization_id={organization["organization_id"]}
+                variant="outline"
+                className="w-full justify-between"
+              >
+                <Link href={`/${locale}/t/${tenant_slug}/${organization["organization_id"]}`}>
+                  <span>{organization["organization_name"]}</span>
+                  <span className="text-xs text-muted-foreground">{organization["organization_slug"]}</span>
+                </Link>
+              </Button>
+            );
+          })}
         </CardContent>
         <CardFooter>
           <Button asChild variant="ghost" className="w-full">

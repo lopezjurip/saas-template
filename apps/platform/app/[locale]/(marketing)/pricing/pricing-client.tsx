@@ -1,5 +1,6 @@
 "use client";
 
+import { useRosetta } from "@packages/rosetta/use-rosetta";
 import {
   Accordion,
   AccordionContent,
@@ -25,7 +26,6 @@ import {
 } from "@packages/ui-common/shadcn/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@packages/ui-common/shadcn/components/ui/tabs";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { useRosetta } from "@packages/rosetta/use-rosetta";
 import { ArrowRight, Check, Minus, Star } from "lucide-react";
 import { useState } from "react";
 

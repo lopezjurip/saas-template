@@ -7,9 +7,9 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { ArrowRight, Check, Eye, Mail, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { actionInviteAffiliate } from "~/app/[locale]/a/[agency_slug]/actions";
 import { useRosetta } from "~/hooks/use-rosetta";
 import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
-import { actionInviteAffiliate } from "~/app/[locale]/a/[agency_slug]/actions";
 
 type Stage = "form" | "sent";
 

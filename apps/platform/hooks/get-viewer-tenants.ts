@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
+import { notFound } from "next/navigation";
 import { cache } from "react";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
@@ -16,9 +17,23 @@ export const ViewerTenantGetFragment = /*#__PURE__*/ gql(`
 
 export type ViewerTenantGetFragmentType = ResultOf<typeof ViewerTenantGetFragment>;
 
-export const ViewerTenantsGetQuery = /*#__PURE__*/ gql(`
-  query ViewerTenantsGetQuery($filter: tenantsFilter, $orderBy: [tenantsOrderBy!]) {
-    tenants: viewer_tenants(filter: $filter, orderBy: $orderBy) {
+export const ViewerTenantsGet = /*#__PURE__*/ gql(`
+  query ViewerTenantsGet(
+    $first: Int
+    $last: Int
+    $after: Cursor
+    $before: Cursor
+    $filter: tenantsFilter
+    $orderBy: [tenantsOrderBy!]
+  ) {
+    tenants: viewer_tenants(
+      first: $first
+      last: $last
+      after: $after
+      before: $before
+      filter: $filter
+      orderBy: $orderBy
+    ) {
       edges {
         node {
           ...ViewerTenantGetFragment
@@ -28,22 +43,68 @@ export const ViewerTenantsGetQuery = /*#__PURE__*/ gql(`
   }
 `);
 
-export const ViewerTenantBySlugGetQuery = /*#__PURE__*/ gql(`
-  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {
+export const ViewerTenantByIdGet = /*#__PURE__*/ gql(`
+  query ViewerTenantByIdGet($tenant_id: Int!) {
+    tenant: viewer_tenant_by_id(tenant_id: $tenant_id) {
+      ...ViewerTenantGetFragment
+    }
+  }
+`);
+
+export const ViewerTenantBySlugGet = /*#__PURE__*/ gql(`
+  query ViewerTenantBySlugGet($tenant_slug: String!) {
     tenant: viewer_tenant_by_slug(tenant_slug: $tenant_slug) {
       ...ViewerTenantGetFragment
     }
   }
 `);
 
-type ViewerTenantsGetQueryVars = VariablesOf<typeof ViewerTenantsGetQuery>;
+type ViewerTenantsGetVars = VariablesOf<typeof ViewerTenantsGet>;
 
-export const getViewerTenants = cache(async (options?: Pick<ViewerTenantsGetQueryVars, "filter" | "orderBy">) => {
+/**
+ * Fetches the tenants that the viewer has access to.
+ */
+export const getViewerTenants = cache(async (options?: ViewerTenantsGetVars) => {
   const graphy = await getGraphySession();
-  return await graphy.query({ query: ViewerTenantsGetQuery, variables: options ?? {} });
+  return await graphy.query({ query: ViewerTenantsGet, variables: options ?? {} });
 });
 
+/**
+ * Fetches the tenant that the viewer has access to by its ID.
+ */
+export const getViewerTenantById = cache(async (tenant_id: number) => {
+  const graphy = await getGraphySession();
+  return await graphy.query({ query: ViewerTenantByIdGet, variables: { tenant_id } });
+});
+
+/**
+ * Fetches the tenant by its ID and asserts it exists. Throws a 404 if not found.
+ */
+export async function getViewerTenantByIdAssert(tenant_id: number) {
+  const { data, ...extra } = await getViewerTenantById(tenant_id);
+  const tenant = data && data["tenant"];
+  if (!tenant) {
+    notFound();
+  }
+  return { data: { tenant }, ...extra };
+}
+
+/**
+ * Fetches the tenant that the viewer has access to by its slug.
+ */
 export const getViewerTenantBySlug = cache(async (tenant_slug: string) => {
   const graphy = await getGraphySession();
-  return await graphy.query({ query: ViewerTenantBySlugGetQuery, variables: { tenant_slug } });
+  return await graphy.query({ query: ViewerTenantBySlugGet, variables: { tenant_slug } });
 });
+
+/**
+ * Fetches the tenant by its slug and asserts it exists. Throws a 404 if not found.
+ */
+export async function getViewerTenantBySlugAssert(tenant_slug: string) {
+  const { data, ...extra } = await getViewerTenantBySlug(tenant_slug);
+  const tenant = data && data["tenant"];
+  if (!tenant) {
+    notFound();
+  }
+  return { data: { tenant }, ...extra };
+}

@@ -13,8 +13,8 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Ban, Building2, Eye, Globe, Lock, Plus, Users } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
-import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { INITIALS_OF } from "~/lib/agencies";
+import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionGrantAgencyAccess, actionRevokeAgencyAccess } from "./actions";
 
 export type ExternalAccessAgency = {
@@ -75,7 +75,9 @@ export function ExternalAccess({
       ) : null}
 
       <section className="flex flex-col gap-2.5">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">{t("grant_heading")}</span>
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+          {t("grant_heading")}
+        </span>
         {available.length === 0 ? (
           <p className="text-muted-foreground px-1 text-[12.5px]">{t("grant_empty")}</p>
         ) : (
@@ -113,7 +115,9 @@ export function ExternalAccess({
             </span>
             <div className="flex max-w-[42ch] flex-col gap-1">
               <span className="text-foreground text-sm font-semibold">{t("none_title")}</span>
-              <span className="text-[12.5px] leading-[1.5] [text-wrap:pretty]">{t("none_desc", { org: organizationName })}</span>
+              <span className="text-[12.5px] leading-[1.5] [text-wrap:pretty]">
+                {t("none_desc", { org: organizationName })}
+              </span>
             </div>
           </div>
         ) : (

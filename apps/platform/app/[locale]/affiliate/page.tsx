@@ -2,9 +2,9 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { assertLocale } from "~/lib/i18n.server";
 import { AFFILIATION_STATE } from "~/lib/agencies";
-import { AffiliateDashboard, type AffiliateAgency, type AffiliateInvitation } from "./affiliate-dashboard";
+import { assertLocale } from "~/lib/i18n.server";
+import { type AffiliateAgency, AffiliateDashboard, type AffiliateInvitation } from "./affiliate-dashboard";
 
 export async function generateMetadata(props: PageProps<"/[locale]/affiliate">): Promise<Metadata> {
   const { t, locale } = await getRosetta(LOCALES);
@@ -49,7 +49,10 @@ export default async function AffiliatePage(props: PageProps<"/[locale]/affiliat
       : { data: [] as never[] };
 
   const globalByAgency = new Set<string>();
-  const orgsByAgency = new Map<string, { organization_id: number; organization_name: string; organization_slug: string | null }[]>();
+  const orgsByAgency = new Map<
+    string,
+    { organization_id: number; organization_name: string; organization_slug: string | null }[]
+  >();
   for (const g of grantsRes.data ?? []) {
     if (g.organization_id === null) {
       if (g.permission_id === "*") globalByAgency.add(g.agency_id);

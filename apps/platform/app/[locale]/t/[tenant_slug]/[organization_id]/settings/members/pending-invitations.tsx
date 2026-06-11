@@ -111,7 +111,8 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
   const [, cancelInvitation] = useGraphyMutation(MembersPendingInvitationsCancelMutation);
   const [optimisticInvitations, removeOptimistic] = useOptimistic(
     invitations,
-    (state: InvitationRow[], organization_membership_id: number) => state.filter((i) => i["organization_membership_id"] !== organization_membership_id),
+    (state: InvitationRow[], organization_membership_id: number) =>
+      state.filter((i) => i["organization_membership_id"] !== organization_membership_id),
   );
 
   const dateFormatter = useMemo(() => new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short" }), [locale]);

@@ -3,8 +3,8 @@ import { createServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { assertLocale } from "~/lib/i18n.server";
 import { AFFILIATION_STATE, IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
+import { assertLocale } from "~/lib/i18n.server";
 import { AgencyConsole, type ConsoleData } from "./agency-console";
 
 export async function generateMetadata(props: PageProps<"/[locale]/a/[agency_slug]">): Promise<Metadata> {
@@ -52,9 +52,7 @@ export default async function AgencyConsolePage(props: PageProps<"/[locale]/a/[a
   const memberships = membershipsRes.data ?? [];
 
   // Only an ACTIVE affiliate of this agency may open its console.
-  const viewerIsActive = memberships.some(
-    (m) => user && m.profile_id === user.id && IS_ACTIVE_MEMBERSHIP(m),
-  );
+  const viewerIsActive = memberships.some((m) => user && m.profile_id === user.id && IS_ACTIVE_MEMBERSHIP(m));
   if (!viewerIsActive) notFound();
 
   const emailByProfileId = new Map<string, string | null>();
@@ -91,9 +89,7 @@ export default async function AgencyConsolePage(props: PageProps<"/[locale]/a/[a
     orgs,
   };
 
-  return (
-    <AgencyConsole data={data} inviteHref={`/${locale}/admin/agencies/${agency.agency_slug}/affiliates/new`} />
-  );
+  return <AgencyConsole data={data} inviteHref={`/${locale}/admin/agencies/${agency.agency_slug}/affiliates/new`} />;
 }
 
 const LOCALE_ES = { page_title: "Consola de agencia" };

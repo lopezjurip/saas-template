@@ -159,7 +159,13 @@ function APPLY_OPTIMISTIC(state: { wildcard: boolean; slugs: Set<string> }, acti
   }
 }
 
-export function EditPermissionsForm({ organization_membership_id, permissions, presets, grantedSlugs, membersHref }: Props) {
+export function EditPermissionsForm({
+  organization_membership_id,
+  permissions,
+  presets,
+  grantedSlugs,
+  membersHref,
+}: Props) {
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -260,7 +266,10 @@ export function EditPermissionsForm({ organization_membership_id, permissions, p
     if (!window.confirm(t("remove_confirm"))) return;
     setError(null);
     startTransition(async () => {
-      const { error: err } = await revokeOrganizationMembership({ organization_membership_id, now: new Date().toISOString() });
+      const { error: err } = await revokeOrganizationMembership({
+        organization_membership_id,
+        now: new Date().toISOString(),
+      });
       if (err) {
         setError(t(MAP_PG_ERROR_KEY(err)));
         return;

@@ -7,8 +7,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
 import { getRosetta } from "~/hooks/get-rosetta";
+import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { assertLocale } from "~/lib/i18n.server";
 import { EditPermissionsForm } from "./edit-form";
 
@@ -66,9 +66,9 @@ export default async function OrganizationMembershipEditPage(
   const organization_membership_id = Number(organization_membership_id_param);
   if (!Number.isInteger(organization_membership_id) || organization_membership_id <= 0) notFound();
 
-  const { data: orgData } = await getViewerOrganization(organization_id);
-  const organization = orgData?.["organization"];
-  if (!organization) notFound();
+  const {
+    data: { organization },
+  } = await getViewerOrganizationByIdAssert(organization_id);
 
   const membersHref = `/${locale}/t/${tenant_slug}/${organization_id}/settings/members`;
   const supabase = await createServerClient();
@@ -101,7 +101,10 @@ export default async function OrganizationMembershipEditPage(
       .from("permissions")
       .select("permission_id, permission_description")
       .order("permission_id", { ascending: true }),
-    admin.from("organization_membership_permissions").select("permission_id").eq("organization_membership_id", organization_membership_id),
+    admin
+      .from("organization_membership_permissions")
+      .select("permission_id")
+      .eq("organization_membership_id", organization_membership_id),
     admin
       .from("permission_presets")
       .select("permission_preset_id, permission_preset_name, permission_preset_slugs, organization_id")
@@ -110,7 +113,11 @@ export default async function OrganizationMembershipEditPage(
   ]);
 
   const organization_membership = organizationMembershipRes.data;
-  if (!organization_membership || organization_membership["organization_membership_revoked_at"] || organization_membership["organization_membership_rejected_at"]) {
+  if (
+    !organization_membership ||
+    organization_membership["organization_membership_revoked_at"] ||
+    organization_membership["organization_membership_rejected_at"]
+  ) {
     return (
       <EditShell membersHref={membersHref} backLabel={t("back")}>
         <Alert variant="destructive">
@@ -133,8 +140,10 @@ export default async function OrganizationMembershipEditPage(
     email,
     organization_membership_invite_email: organization_membership["organization_membership_invite_email"],
     organization_membership_invite_phone: organization_membership["organization_membership_invite_phone"],
-    organization_membership_invite_document_value: organization_membership["organization_membership_invite_document_value"],
-    organization_membership_invite_address_level0_id: organization_membership["organization_membership_invite_address_level0_id"],
+    organization_membership_invite_document_value:
+      organization_membership["organization_membership_invite_document_value"],
+    organization_membership_invite_address_level0_id:
+      organization_membership["organization_membership_invite_address_level0_id"],
   });
   const isPending = !organization_membership["profile_id"];
   const channel = organization_membership["organization_membership_invite_phone"]

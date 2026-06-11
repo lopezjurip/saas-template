@@ -3,17 +3,14 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { Shell } from "~/components/shell/shell";
 import { SIDEBAR_DEFAULT_WIDTH, SIDEBAR_WIDTH_COOKIE } from "~/components/shell/sidebar";
-import { getViewerOrganization, getViewerOrganizations } from "~/hooks/get-viewer-organizations";
+import { getViewerOrganizationById, getViewerOrganizations } from "~/hooks/get-viewer-organizations";
 import { getViewerProfile } from "~/hooks/get-viewer-profile";
 import { getViewerTenantBySlug } from "~/hooks/get-viewer-tenants";
 
 export default async function OrganizationLayout({
   children,
   params,
-}: {
-  children: React.ReactNode;
-  params: Promise<{ locale: string; tenant_slug: string; organization_id: string }>;
-}) {
+}: LayoutProps<"/[locale]/t/[tenant_slug]/[organization_id]">) {
   const { locale, tenant_slug, organization_id: organization_id_param } = await params;
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
@@ -21,7 +18,7 @@ export default async function OrganizationLayout({
   const [user, { data: tenantData }, { data: orgData }, { data: profileData }] = await Promise.all([
     getSupabaseServerUser(),
     getViewerTenantBySlug(tenant_slug),
-    getViewerOrganization(organization_id),
+    getViewerOrganizationById(organization_id),
     getViewerProfile(),
   ]);
 

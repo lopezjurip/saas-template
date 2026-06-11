@@ -1035,6 +1035,12 @@ create trigger handle_profile_webauthn_credentials_updated_at
 alter table public.profile_webauthn_challenges enable row level security;
 alter table public.profile_webauthn_credentials enable row level security;
 
+revoke all on table public.profile_webauthn_challenges from anon, authenticated;
+grant select, insert, delete on table public.profile_webauthn_challenges to anon, authenticated;
+
+revoke all on table public.profile_webauthn_credentials from anon, authenticated;
+grant select, insert, update, delete on table public.profile_webauthn_credentials to anon, authenticated;
+
 -- Challenges: 100% server-side via service-role (Server Actions in
 -- apps/platform/lib/passkeys.actions.ts). No authenticated policies — clients
 -- never touch this table directly. Default-deny keeps anon + authenticated out.
@@ -1442,6 +1448,49 @@ create or replace function public.viewer_agency_tenant_ids()
     where org.organization_id in (
       select public.viewer_agency_permission_org_ids('*')
     );
+  $$;
+
+create or replace function public.viewer_agencies()
+  returns setof public.agencies
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select a.*
+    from public.agencies a
+    where a.agency_id in (select public.viewer_agency_ids());
+  $$;
+
+create or replace function public.viewer_agency_by_id(agency_id uuid)
+  returns setof public.agencies rows 1
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select a.*
+    from public.agencies a
+    where a.agency_id = viewer_agency_by_id.agency_id
+      and a.agency_id in (select public.viewer_agency_ids())
+    limit 1;
+  $$;
+
+create or replace function public.viewer_agency_by_slug(agency_slug text)
+  returns setof public.agencies rows 1
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select a.*
+    from public.agencies a
+    where a.agency_slug = viewer_agency_by_slug.agency_slug
+      and a.agency_id in (select public.viewer_agency_ids())
+    limit 1;
   $$;
 
 -- ============================================================

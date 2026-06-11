@@ -23,8 +23,12 @@ export const actionStartDocumentSignup = action.inputSchema(sendOtpSchema).actio
   const invite = inviteRow;
   if (invite["organization_membership_revoked_at"]) throw new Error("Esta invitación fue cancelada");
   if (invite["organization_membership_rejected_at"]) throw new Error("Esta invitación fue rechazada");
-  if (invite["organization_membership_accepted_at"] || invite["profile_id"]) throw new Error("Esta invitación ya fue aceptada");
-  if (invite["organization_membership_invite_expires_at"] && new Date(invite["organization_membership_invite_expires_at"]) <= new Date()) {
+  if (invite["organization_membership_accepted_at"] || invite["profile_id"])
+    throw new Error("Esta invitación ya fue aceptada");
+  if (
+    invite["organization_membership_invite_expires_at"] &&
+    new Date(invite["organization_membership_invite_expires_at"]) <= new Date()
+  ) {
     throw new Error("Esta invitación expiró");
   }
 
@@ -86,8 +90,12 @@ export const actionVerifyDocumentSignup = action.inputSchema(verifyOtpSchema).ac
   const invite = inviteRow;
   if (invite["organization_membership_revoked_at"]) throw new Error("Esta invitación fue cancelada");
   if (invite["organization_membership_rejected_at"]) throw new Error("Esta invitación fue rechazada");
-  if (invite["organization_membership_accepted_at"] || invite["profile_id"]) throw new Error("Esta invitación ya fue aceptada");
-  if (invite["organization_membership_invite_expires_at"] && new Date(invite["organization_membership_invite_expires_at"]) <= new Date()) {
+  if (invite["organization_membership_accepted_at"] || invite["profile_id"])
+    throw new Error("Esta invitación ya fue aceptada");
+  if (
+    invite["organization_membership_invite_expires_at"] &&
+    new Date(invite["organization_membership_invite_expires_at"]) <= new Date()
+  ) {
     throw new Error("Esta invitación expiró");
   }
 

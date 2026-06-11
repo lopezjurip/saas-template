@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
 import { getRosetta } from "~/hooks/get-rosetta";
+import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { assertLocale } from "~/lib/i18n.server";
 import { DashboardOverview } from "./dashboard-overview";
 
@@ -19,9 +19,9 @@ export default async function OrganizationHomePage(props: PageProps<"/[locale]/t
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
 
-  const { data: orgData } = await getViewerOrganization(organization_id);
-  const organization = orgData?.["organization"];
-  if (!organization) notFound();
+  const {
+    data: { organization },
+  } = await getViewerOrganizationByIdAssert(organization_id);
 
   const base = `/${locale}/t/${tenant_slug}/${organization_id}`;
 

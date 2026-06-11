@@ -18,8 +18,8 @@ export const ViewerProfileGetFragment = /*#__PURE__*/ gql(`
 
 export type ViewerProfileGetFragmentType = ResultOf<typeof ViewerProfileGetFragment>;
 
-export const ViewerProfileGetQuery = /*#__PURE__*/ gql(`
-  query ViewerProfileGetQuery {
+export const ViewerProfileGet = /*#__PURE__*/ gql(`
+  query ViewerProfileGet {
     profile: viewer_profile {
       ...ViewerProfileGetFragment
     }
@@ -31,5 +31,5 @@ export const ViewerProfileGetQuery = /*#__PURE__*/ gql(`
  */
 export const getViewerProfile = cache(async () => {
   const graphy = await getGraphySession();
-  return await graphy.query({ query: ViewerProfileGetQuery });
+  return await graphy.query({ query: ViewerProfileGet });
 });

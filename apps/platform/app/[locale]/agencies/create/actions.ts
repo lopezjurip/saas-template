@@ -34,11 +34,7 @@ export const actionCreateAgency = authedAction
 
     // Reject duplicate slug up-front for a friendly error (the unique index is the
     // real guard).
-    const dup = await admin
-      .from("agencies")
-      .select("agency_id")
-      .eq("agency_slug", slug)
-      .maybeSingle();
+    const dup = await admin.from("agencies").select("agency_id").eq("agency_slug", slug).maybeSingle();
     if (dup.data) {
       throw new TError("slug_taken");
     }

@@ -5,8 +5,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCountries } from "~/hooks/get-countries";
-import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
 import { getRosetta } from "~/hooks/get-rosetta";
+import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { assertLocale } from "~/lib/i18n.server";
 import { InviteMemberForm } from "./invite-form";
 
@@ -27,12 +27,12 @@ export default async function NewMemberInvitePage(
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
 
-  const [{ data: orgData }, { data: countriesData }] = await Promise.all([
-    getViewerOrganization(organization_id),
-    getCountries(),
-  ]);
-  const organization = orgData?.["organization"];
-  if (!organization) notFound();
+  const [
+    {
+      data: { organization },
+    },
+    { data: countriesData },
+  ] = await Promise.all([getViewerOrganizationByIdAssert(organization_id), getCountries()]);
   const countries = countriesData?.["addresses_level0"]?.["edges"]?.map((e) => e["node"]) ?? [];
 
   const membersHref = `/${locale}/t/${tenant_slug}/${organization_id}/settings/members`;
