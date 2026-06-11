@@ -102,7 +102,7 @@ export function NotificationsMatrix() {
             <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
               {group.title}
             </span>
-            {group.meta && <span className="text-[11.5px] text-muted-foreground">{group.meta}</span>}
+            {group.meta && <span className="text-xs text-muted-foreground">{group.meta}</span>}
           </div>
           <div className="flex flex-col overflow-hidden rounded-md border bg-background">
             {group.rows.map((row) => (
@@ -114,7 +114,7 @@ export function NotificationsMatrix() {
                   <span className="text-[13.5px] font-medium text-foreground">{row.title}</span>
                   <span className="text-pretty text-xs leading-relaxed text-muted-foreground">{row.desc}</span>
                   {row.locked && (
-                    <span className="mt-0.5 text-[10.5px] tracking-[0.03em] text-muted-foreground">
+                    <span className="mt-0.5 text-tiny tracking-[0.03em] text-muted-foreground">
                       Siempre activa por seguridad
                     </span>
                   )}

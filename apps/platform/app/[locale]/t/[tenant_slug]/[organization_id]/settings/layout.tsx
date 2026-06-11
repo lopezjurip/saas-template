@@ -1,6 +1,7 @@
 import { SubSidebar, type SubSidebarItem } from "~/components/shell/sidebar-sub";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { assertLocale } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
 
 export default async function SettingsLayout({
   children,
@@ -9,8 +10,6 @@ export default async function SettingsLayout({
   const { locale, tenant_slug, organization_id } = await params;
   assertLocale(locale);
   const { t } = await getRosetta(LOCALES, locale);
-
-  const base = `/${locale}/${tenant_slug}/${organization_id}/settings`;
 
   const items: SubSidebarItem[] = [
     {
@@ -21,25 +20,41 @@ export default async function SettingsLayout({
         {
           kind: "leaf",
           label: t("nav_general"),
-          href: `${base}/general`,
+          href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/general", {
+            locale,
+            tenant_slug,
+            organization_id,
+          }),
           icon: "Settings",
         },
         {
           kind: "leaf",
           label: t("nav_members"),
-          href: `${base}/members`,
+          href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
+            locale,
+            tenant_slug,
+            organization_id,
+          }),
           icon: "Users",
         },
         {
           kind: "leaf",
           label: t("nav_billing"),
-          href: `${base}/billing`,
+          href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/billing", {
+            locale,
+            tenant_slug,
+            organization_id,
+          }),
           icon: "CreditCard",
         },
         {
           kind: "leaf",
           label: t("nav_external_access"),
-          href: `${base}/external-access`,
+          href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/external-access", {
+            locale,
+            tenant_slug,
+            organization_id,
+          }),
           icon: "ExternalLink",
         },
       ],

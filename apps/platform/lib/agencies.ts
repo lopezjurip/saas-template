@@ -22,26 +22,13 @@ export type MembershipTimestamps = {
  * Precedence: revoked > rejected > accepted > pending.
  */
 export function AFFILIATION_STATE(m: MembershipTimestamps): AffiliationState {
-  if (m.agency_membership_revoked_at) return "revoked";
-  if (m.agency_membership_rejected_at) return "rejected";
-  if (m.agency_membership_accepted_at) return "accepted";
+  if (m["agency_membership_revoked_at"]) return "revoked";
+  if (m["agency_membership_rejected_at"]) return "rejected";
+  if (m["agency_membership_accepted_at"]) return "accepted";
   return "pending";
 }
 
 /** An affiliate is "active" when accepted and neither revoked nor rejected. */
 export function IS_ACTIVE_MEMBERSHIP(m: MembershipTimestamps): boolean {
   return AFFILIATION_STATE(m) === "accepted";
-}
-
-/** Two-letter avatar initials for a name (or email local-part). Pure. */
-export function INITIALS_OF(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0] ?? "")
-      .join("")
-      .toUpperCase() || "?"
-  );
 }

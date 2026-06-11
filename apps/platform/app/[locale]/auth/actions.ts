@@ -7,6 +7,7 @@ import { z } from "zod";
 import { isOAuthProvider, OAUTH_PROVIDER_IDS } from "~/app/[locale]/auth/providers";
 import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
 import { debug } from "~/lib/debug";
+import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 import { action } from "~/lib/safe-action.server";
 
 const log = debug("auth");
@@ -37,7 +38,7 @@ const signInWithOAuthRun = action
       log.error("signInWithOAuth failed", { provider, error });
       redirect(`/[locale]/auth/error?reason=${encodeURIComponent(error?.message ?? "oauth_init_failed")}`);
     }
-    redirect(data.url);
+    redirect(ROUTE_HREF(UNSAFE_ROUTE(data["url"])));
   });
 
 export async function signInWithOAuth(formData: FormData) {

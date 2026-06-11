@@ -3,10 +3,10 @@
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Building2, ChevronRight, Eye, Globe, LayoutGrid, List, Plus, Users } from "lucide-react";
-import type { Route } from "next";
 import Link from "next/link";
 import { useState } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { type AppRoute, ROUTE } from "~/lib/route";
 
 export type AgencyDirItem = {
   agency_id: string;
@@ -20,13 +20,10 @@ export type AgencyDirItem = {
 
 type AgencyDirLayout = "rows" | "cards";
 
-export function AgencyDirectory({ base, items }: { base: string; items: AgencyDirItem[] }) {
+export function AgencyDirectory({ locale, items }: { locale: string; items: AgencyDirItem[] }) {
   const { t } = useRosetta(LOCALES);
   const [layout, setLayout] = useState<AgencyDirLayout>("rows");
-  // `base` is already locale-interpolated (e.g. /es/admin/agencies); derive the sibling
-  // create route from it. A literal "/[locale]/…" href would crash <Link> at render time
-  // (App Router rejects dynamic hrefs), so we never hand the sentinel to <Link>.
-  const createHref = base.replace(/\/admin\/agencies$/, "/agencies/create") as Route;
+  const createHref = ROUTE("/[locale]/agencies/create", { locale });
 
   return (
     <div className="@container mx-auto flex w-full max-w-4xl flex-col gap-7 px-6 py-8">
@@ -53,7 +50,7 @@ export function AgencyDirectory({ base, items }: { base: string; items: AgencyDi
             {t("group_all")}
           </span>
           <div className="flex items-center gap-2.5">
-            <span className="text-muted-foreground text-[11.5px] tabular-nums">{items.length}</span>
+            <span className="text-muted-foreground text-xs tabular-nums">{items.length}</span>
             <LayoutToggle
               value={layout}
               onChange={setLayout}
@@ -82,11 +79,11 @@ export function AgencyDirectory({ base, items }: { base: string; items: AgencyDi
           <div className="grid grid-cols-1 gap-3 @min-[640px]:grid-cols-2">
             {items.map((agency) => (
               <AgencyDirCard
-                key={agency.agency_id}
+                key={agency["agency_id"]}
                 agency={agency}
-                href={`${base}/${agency.agency_slug}`}
+                href={ROUTE("/[locale]/admin/agencies/[slug]", { locale, slug: agency["agency_slug"] })}
                 scopeLabel={SCOPE_LABEL(agency, t)}
-                activeLabel={t("active", { count: agency.active_affiliates })}
+                activeLabel={t("active", { count: agency["active_affiliates"] })}
               />
             ))}
           </div>
@@ -94,18 +91,18 @@ export function AgencyDirectory({ base, items }: { base: string; items: AgencyDi
           <div className="flex flex-col gap-2">
             {items.map((agency) => (
               <AgencyDirRow
-                key={agency.agency_id}
+                key={agency["agency_id"]}
                 agency={agency}
-                href={`${base}/${agency.agency_slug}`}
+                href={ROUTE("/[locale]/admin/agencies/[slug]", { locale, slug: agency["agency_slug"] })}
                 scopeLabel={SCOPE_LABEL(agency, t)}
-                activeLabel={t("active", { count: agency.active_affiliates })}
+                activeLabel={t("active", { count: agency["active_affiliates"] })}
                 disabledLabel={t("disabled")}
               />
             ))}
           </div>
         )}
 
-        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-[11.5px] leading-[1.5]">
+        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-[1.5]">
           <span className="text-muted-foreground/80 mt-px shrink-0">
             <Eye size={13} />
           </span>
@@ -133,7 +130,7 @@ function ScopeBadge({ global, label }: { global: boolean; label: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-medium leading-[1.2] tracking-[0.01em]",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-tiny font-medium leading-[1.2] tracking-[0.01em]",
         global
           ? "border border-emerald-600/30 bg-emerald-500/15 font-semibold text-emerald-700 dark:text-emerald-300"
           : "border-border text-foreground bg-background border tabular-nums",
@@ -153,7 +150,7 @@ function AgencyDirRow({
   disabledLabel,
 }: {
   agency: AgencyDirItem;
-  href: string;
+  href: AppRoute;
   scopeLabel: string;
   activeLabel: string;
   disabledLabel: string;
@@ -171,16 +168,16 @@ function AgencyDirRow({
       style={{ gridTemplateColumns: "40px 1fr auto auto" }}
     >
       <AgencyTile />
-      <span className="flex min-w-0 flex-col gap-[2px]">
+      <span className="flex min-w-0 flex-col gap-0.5">
         <span className="inline-flex min-w-0 items-center gap-2">
           <span className="text-foreground overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium">
-            {agency.agency_name}
+            {agency["agency_name"]}
           </span>
-          <code className="text-muted-foreground/80 hidden truncate font-mono text-[10.5px] @min-[640px]:inline">
-            {agency.agency_slug}
+          <code className="text-muted-foreground/80 hidden truncate font-mono text-tiny @min-[640px]:inline">
+            {agency["agency_slug"]}
           </code>
-          {agency.disabled ? (
-            <span className="border-border text-muted-foreground bg-muted/50 inline-flex shrink-0 items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-none tracking-[0.02em]">
+          {agency["disabled"] ? (
+            <span className="border-border text-muted-foreground bg-muted/50 inline-flex shrink-0 items-center rounded-md border px-1.5 py-0.5 text-tiny font-medium leading-none tracking-[0.02em]">
               {disabledLabel}
             </span>
           ) : null}
@@ -189,7 +186,7 @@ function AgencyDirRow({
           {activeLabel}
         </span>
       </span>
-      <ScopeBadge global={agency.is_global} label={scopeLabel} />
+      <ScopeBadge global={agency["is_global"]} label={scopeLabel} />
       <span className="text-muted-foreground/70 group-hover:text-foreground shrink-0 transition-colors">
         <ChevronRight size={16} />
       </span>
@@ -204,7 +201,7 @@ function AgencyDirCard({
   activeLabel,
 }: {
   agency: AgencyDirItem;
-  href: string;
+  href: AppRoute;
   scopeLabel: string;
   activeLabel: string;
 }) {
@@ -221,15 +218,15 @@ function AgencyDirCard({
     >
       <div className="flex items-start justify-between gap-2">
         <AgencyTile size={44} />
-        <ScopeBadge global={agency.is_global} label={scopeLabel} />
+        <ScopeBadge global={agency["is_global"]} label={scopeLabel} />
       </div>
       <div className="flex min-w-0 flex-col gap-1">
         <span className="text-foreground truncate text-[14.5px] font-semibold tracking-[-0.01em]">
-          {agency.agency_name}
+          {agency["agency_name"]}
         </span>
-        <code className="text-muted-foreground/80 truncate font-mono text-[11px]">{agency.agency_slug}</code>
+        <code className="text-muted-foreground/80 truncate font-mono text-[11px]">{agency["agency_slug"]}</code>
       </div>
-      <div className="text-muted-foreground mt-auto flex items-center justify-between gap-2 pt-1 text-[11.5px]">
+      <div className="text-muted-foreground mt-auto flex items-center justify-between gap-2 pt-1 text-xs">
         <span className="inline-flex items-center gap-1.5 tabular-nums">
           <Users size={13} /> {activeLabel}
         </span>

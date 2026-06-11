@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_HOST } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { ROUTE } from "~/lib/route";
 
 type LegalLocale = "es" | "en" | "pt";
 type LegalSection = "terms" | "privacy" | "cookies" | "dpa" | "security";
@@ -75,7 +76,7 @@ export default async function LegalSectionPage(props: PageProps<"/[locale]/legal
       <nav aria-label="Breadcrumb">
         <ol className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
           <li>
-            <Link href={`/${locale}/legal`} className="hover:text-foreground no-underline">
+            <Link href={ROUTE("/[locale]/legal", { locale })} className="hover:text-foreground no-underline">
               /legal
             </Link>
           </li>

@@ -1,6 +1,7 @@
 import { IS_EXTERNAL } from "@packages/utils/url";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import { UNSAFE_ROUTE } from "~/lib/route";
 
 function MarkdownA({ href, children }: { href?: string; children?: React.ReactNode }) {
   if (!href) return <a>{children}</a>;
@@ -11,7 +12,7 @@ function MarkdownA({ href, children }: { href?: string; children?: React.ReactNo
       </a>
     );
   }
-  return <Link href={href}>{children}</Link>;
+  return <Link href={UNSAFE_ROUTE(href)}>{children}</Link>;
 }
 
 const components: React.ComponentProps<typeof ReactMarkdown>["components"] = {

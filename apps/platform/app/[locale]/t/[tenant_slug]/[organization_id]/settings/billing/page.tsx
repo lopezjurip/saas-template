@@ -64,7 +64,7 @@ export default async function OrganizationBillingPage(
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="inline-flex items-center gap-2">
-              <span className="text-muted-foreground whitespace-nowrap text-[10.5px] font-semibold uppercase tracking-[0.06em]">
+              <span className="text-muted-foreground whitespace-nowrap text-tiny font-semibold uppercase tracking-[0.06em]">
                 {t("current_plan")}
               </span>
               <Badge variant="outline" className="text-muted-foreground">
@@ -78,7 +78,7 @@ export default async function OrganizationBillingPage(
           </div>
           <div className="flex shrink-0 flex-col items-end gap-0.5">
             <span className="text-foreground text-[22px] font-semibold tabular-nums tracking-[-0.02em]">$24</span>
-            <span className="text-muted-foreground text-[11.5px]">{t("plan_per")}</span>
+            <span className="text-muted-foreground text-xs">{t("plan_per")}</span>
           </div>
         </div>
 
@@ -92,7 +92,7 @@ export default async function OrganizationBillingPage(
           <div className="bg-muted h-2 overflow-hidden rounded-full">
             <div className="bg-foreground h-full rounded-full" style={{ width: `${pct}%` }} />
           </div>
-          <span className="text-muted-foreground text-[11.5px]">{t("seats_free", { count: free })}</span>
+          <span className="text-muted-foreground text-xs">{t("seats_free", { count: free })}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -114,7 +114,7 @@ export default async function OrganizationBillingPage(
         </span>
         <div className="flex flex-col gap-2">
           <div className="border-border bg-background grid grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border px-3.5 py-3">
-            <span className="bg-foreground text-background inline-flex size-9 shrink-0 items-center justify-center rounded-[9px] text-[10px] font-bold tracking-wider">
+            <span className="bg-foreground text-background inline-flex size-9 shrink-0 items-center justify-center rounded-[9px] text-tiny font-bold tracking-wider">
               VISA
             </span>
             <div className="flex min-w-0 flex-col gap-[3px]">
@@ -158,7 +158,7 @@ export default async function OrganizationBillingPage(
                 i > 0 && "border-border border-t",
               )}
             >
-              <span className="text-muted-foreground font-mono text-[11.5px] tabular-nums">{inv.id}</span>
+              <span className="text-muted-foreground font-mono text-xs tabular-nums">{inv.id}</span>
               <span className="text-foreground text-[12.5px]">{inv.date}</span>
               <span className="text-foreground text-[12.5px] font-medium tabular-nums">{inv.amount}</span>
               <InvoiceStatusBadge status={inv.status} label={t(`status_${inv.status}`)} />

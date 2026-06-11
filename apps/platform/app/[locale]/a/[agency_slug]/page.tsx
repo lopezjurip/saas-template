@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { AFFILIATION_STATE, IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
 import { assertLocale } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
 import { AgencyConsole, type ConsoleData } from "./agency-console";
 
 export async function generateMetadata(props: PageProps<"/[locale]/a/[agency_slug]">): Promise<Metadata> {
@@ -89,7 +90,15 @@ export default async function AgencyConsolePage(props: PageProps<"/[locale]/a/[a
     orgs,
   };
 
-  return <AgencyConsole data={data} inviteHref={`/${locale}/admin/agencies/${agency.agency_slug}/affiliates/new`} />;
+  return (
+    <AgencyConsole
+      data={data}
+      inviteHref={ROUTE("/[locale]/admin/agencies/[slug]/affiliates/new", {
+        locale,
+        slug: agency["agency_slug"],
+      })}
+    />
+  );
 }
 
 const LOCALE_ES = { page_title: "Consola de agencia" };

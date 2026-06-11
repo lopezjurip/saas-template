@@ -10,6 +10,7 @@ import { Tip, useClickOutside } from "~/components/shell/atoms";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
 import { useRosetta } from "~/hooks/use-rosetta";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
+import type { AppRoute } from "~/lib/route";
 
 export function SettingsMenu({
   locale,
@@ -17,7 +18,7 @@ export function SettingsMenu({
   compact,
 }: {
   locale: string;
-  settingsHref: string;
+  settingsHref: AppRoute;
   compact?: boolean;
 }) {
   const { t } = useRosetta(LOCALES);

@@ -70,7 +70,7 @@ export async function proxy(request: NextRequest) {
 
   // Locale sentinel: /[locale]/path → /${locale}/path
   // Handles both raw brackets and percent-encoded form (%5Blocale%5D) browsers send after redirects.
-  const sentinelMatch = /^\/(?:\[locale\]|%5[Bb]locale%5[Dd])\//i.exec(pathname);
+  const sentinelMatch = /^\/(?:\[locale\]|%5[Bb]locale%5[Dd]|_)\//i.exec(pathname);
   if (sentinelMatch) {
     const detected = RESOLVE_LOCALE_FROM_REQUEST(request);
     const url = request.nextUrl.clone();

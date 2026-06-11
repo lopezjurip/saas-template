@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { type AppRoute, ROUTE_HREF } from "~/lib/route";
 import { PERMISSION_SLUG_WILDCARD } from "../../schemas";
 
 const LOCALE_ES = {
@@ -129,7 +130,7 @@ interface Props {
   permissions: PermissionRow[];
   presets: PresetRow[];
   grantedSlugs: string[];
-  membersHref: string;
+  membersHref: AppRoute;
 }
 
 type OptimisticAction =
@@ -274,7 +275,7 @@ export function EditPermissionsForm({
         setError(t(MAP_PG_ERROR_KEY(err)));
         return;
       }
-      router.push(membersHref);
+      router.push(ROUTE_HREF(membersHref));
     });
   }
 
@@ -301,7 +302,7 @@ export function EditPermissionsForm({
               </Button>
             ))}
           </div>
-          <p className="text-muted-foreground text-[11.5px] leading-[1.5]">{t("presets_hint")}</p>
+          <p className="text-muted-foreground text-xs leading-[1.5]">{t("presets_hint")}</p>
         </section>
       )}
 
@@ -329,7 +330,7 @@ export function EditPermissionsForm({
             onCheckedChange={(checked) => toggleWildcard(Boolean(checked))}
             className="mt-0.5"
           />
-          <div className="flex min-w-0 flex-col gap-[2px]">
+          <div className="flex min-w-0 flex-col gap-0.5">
             <span className="inline-flex items-center gap-2">
               <Label htmlFor="perm_wildcard" className="cursor-pointer text-[13.5px] font-semibold">
                 {t("wildcard_label")}
@@ -362,12 +363,12 @@ export function EditPermissionsForm({
                   onCheckedChange={(value) => togglePermission(slug, Boolean(value))}
                   className="mt-0.5"
                 />
-                <div className="flex min-w-0 flex-col gap-[2px]">
+                <div className="flex min-w-0 flex-col gap-0.5">
                   <Label htmlFor={`perm_${slug}`} className="cursor-pointer">
                     <code className="text-foreground font-mono text-[12px]">{slug}</code>
                   </Label>
                   {perm["permission_description"] && (
-                    <span className="text-muted-foreground text-[11.5px] leading-[1.4] [text-wrap:pretty]">
+                    <span className="text-muted-foreground text-xs leading-[1.4] [text-wrap:pretty]">
                       {perm["permission_description"]}
                     </span>
                   )}
@@ -377,7 +378,7 @@ export function EditPermissionsForm({
           })}
         </div>
 
-        <p className="text-muted-foreground text-[11.5px] leading-[1.5] [text-wrap:pretty]">{t("wildcard_footer")}</p>
+        <p className="text-muted-foreground text-xs leading-[1.5] [text-wrap:pretty]">{t("wildcard_footer")}</p>
       </section>
 
       {error && (
@@ -396,7 +397,7 @@ export function EditPermissionsForm({
         >
           {t("remove_button")}
         </Button>
-        <Button type="button" disabled={pending} onClick={() => router.push(membersHref)}>
+        <Button type="button" disabled={pending} onClick={() => router.push(ROUTE_HREF(membersHref))}>
           {t("done")} <ArrowRight size={15} />
         </Button>
       </div>

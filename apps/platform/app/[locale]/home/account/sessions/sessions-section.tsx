@@ -105,12 +105,12 @@ export function SessionsSection() {
               <span className="inline-flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
                 <span>{s.device}</span>
                 {s.current && (
-                  <Badge className="bg-foreground text-[10px] uppercase tracking-[0.04em] text-background">
+                  <Badge className="bg-foreground text-tiny uppercase tracking-[0.04em] text-background">
                     Este dispositivo
                   </Badge>
                 )}
                 {s.stale && (
-                  <Badge variant="outline" className="text-[10.5px]">
+                  <Badge variant="outline" className="text-tiny">
                     Inactivo
                   </Badge>
                 )}

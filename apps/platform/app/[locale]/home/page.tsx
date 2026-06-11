@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { ROUTE } from "~/lib/route";
 import { COUNT_DONE, METHOD_ORDER } from "../auth/onboarding/state";
 import { getViewerOnboardingState } from "../auth/onboarding/state.server";
 import { UserMenu } from "./_components/user-menu";
@@ -75,7 +76,7 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                 </span>
               </span>
               <Link
-                href={`/${locale}/auth/onboarding`}
+                href={ROUTE("/[locale]/auth/onboarding", { locale })}
                 className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md border bg-background px-3 text-[12.5px] font-medium text-foreground hover:bg-accent"
               >
                 Continuar
@@ -103,7 +104,7 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
               return (
                 <Link
                   key={organization["organization_id"]}
-                  href={`/${locale}/t/${tenant_slug}`}
+                  href={ROUTE("/[locale]/t/[tenant_slug]", { locale, tenant_slug })}
                   className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:-translate-y-[3px] hover:bg-muted/50"
                 >
                   <span
@@ -117,19 +118,19 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                     {initials}
                   </span>
                   <span className="text-center text-[13.5px] font-medium text-balance">{name}</span>
-                  <span className="-mt-1 text-[11.5px] text-muted-foreground">{tenant?.["tenant_name"] ?? "—"}</span>
+                  <span className="-mt-1 text-xs text-muted-foreground">{tenant?.["tenant_name"] ?? "—"}</span>
                 </Link>
               );
             })}
             <Link
-              href={`/${locale}/tenants/create`}
+              href={ROUTE("/[locale]/tenants/create", { locale })}
               className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:-translate-y-[3px] hover:bg-muted/50"
             >
               <span className="inline-flex size-28 items-center justify-center rounded-[18px] border border-dashed bg-background text-muted-foreground transition-colors duration-150 group-hover:bg-muted/40 group-hover:text-foreground">
                 <Plus size={36} />
               </span>
               <span className="text-center text-[13.5px] font-medium text-balance">Nueva organización</span>
-              <span className="-mt-1 text-[11.5px] text-muted-foreground">Empieza desde cero</span>
+              <span className="-mt-1 text-xs text-muted-foreground">Empieza desde cero</span>
             </Link>
           </div>
         </div>

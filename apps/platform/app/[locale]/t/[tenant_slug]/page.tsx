@@ -12,6 +12,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getViewerOrganizations } from "~/hooks/get-viewer-organizations";
 import { getViewerTenantBySlugAssert } from "~/hooks/get-viewer-tenants";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
 export default async function TenantHomePage(props: PageProps<"/[locale]/t/[tenant_slug]">) {
   const { locale, tenant_slug } = await props.params;
@@ -41,7 +42,7 @@ export default async function TenantHomePage(props: PageProps<"/[locale]/t/[tena
           </CardContent>
           <CardFooter>
             <Button asChild variant="ghost" className="w-full">
-              <Link href={`/${locale}/auth/logout`}>Cerrar sesión</Link>
+              <Link href={ROUTE("/[locale]/auth/logout", { locale })}>Cerrar sesión</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -51,7 +52,15 @@ export default async function TenantHomePage(props: PageProps<"/[locale]/t/[tena
 
   if (redirectParam !== "false" && organizations.length === 1) {
     const only = organizations[0]!["node"];
-    redirect(`/[locale]/t/${tenant_slug}/${only["organization_id"]}`);
+    redirect(
+      ROUTE_HREF(
+        ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+          locale,
+          tenant_slug,
+          organization_id: only["organization_id"],
+        }),
+      ),
+    );
   }
 
   return (
@@ -71,7 +80,13 @@ export default async function TenantHomePage(props: PageProps<"/[locale]/t/[tena
                 variant="outline"
                 className="w-full justify-between"
               >
-                <Link href={`/${locale}/t/${tenant_slug}/${organization["organization_id"]}`}>
+                <Link
+                  href={ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+                    locale,
+                    tenant_slug,
+                    organization_id: organization["organization_id"],
+                  })}
+                >
                   <span>{organization["organization_name"]}</span>
                   <span className="text-xs text-muted-foreground">{organization["organization_slug"]}</span>
                 </Link>
@@ -81,7 +96,7 @@ export default async function TenantHomePage(props: PageProps<"/[locale]/t/[tena
         </CardContent>
         <CardFooter>
           <Button asChild variant="ghost" className="w-full">
-            <Link href={`/${locale}/auth/logout`}>Cerrar sesión</Link>
+            <Link href={ROUTE("/[locale]/auth/logout", { locale })}>Cerrar sesión</Link>
           </Button>
         </CardFooter>
       </Card>

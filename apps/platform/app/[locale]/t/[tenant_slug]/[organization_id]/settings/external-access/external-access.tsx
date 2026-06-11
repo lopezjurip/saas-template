@@ -10,10 +10,10 @@ import {
   SelectValue,
 } from "@packages/ui-common/shadcn/components/ui/select";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { INITIALS_OF } from "@packages/utils/string";
 import { Ban, Building2, Eye, Globe, Lock, Plus, Users } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
-import { INITIALS_OF } from "~/lib/agencies";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionGrantAgencyAccess, actionRevokeAgencyAccess } from "./actions";
 
@@ -106,7 +106,7 @@ export function ExternalAccess({
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
             {t("with_access")}
           </span>
-          <span className="text-muted-foreground text-[11.5px] tabular-nums">{withAccess.length}</span>
+          <span className="text-muted-foreground text-xs tabular-nums">{withAccess.length}</span>
         </div>
         {withAccess.length === 0 ? (
           <div className="border-border text-muted-foreground flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-12 text-center">
@@ -133,7 +133,7 @@ export function ExternalAccess({
             ))}
           </div>
         )}
-        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-[11.5px] leading-[1.5]">
+        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-[1.5]">
           <span className="text-muted-foreground/80 mt-px shrink-0">
             <Eye size={13} />
           </span>

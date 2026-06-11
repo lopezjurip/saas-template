@@ -2,6 +2,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { SINGLE } from "@packages/utils/array";
 import { ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
+import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 
 export default async function AuthSuccessPage(props: PageProps<"/[locale]/auth/success">) {
@@ -11,7 +12,7 @@ export default async function AuthSuccessPage(props: PageProps<"/[locale]/auth/s
 
   return (
     <AuthCard className="max-w-115">
-      <div className="flex flex-col items-center gap-[18px] text-center">
+      <div className="flex flex-col items-center gap-4.5 text-center">
         <span className="inline-flex size-[76px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_8px_hsl(var(--primary)/0.08)]">
           <Check size={36} strokeWidth={2.8} />
         </span>
@@ -23,13 +24,13 @@ export default async function AuthSuccessPage(props: PageProps<"/[locale]/auth/s
         </p>
         <div className="mt-2 flex w-full max-w-70 flex-col gap-2.5">
           <Button asChild className="h-10 w-full">
-            <Link href={`/${locale}/home`}>
+            <Link href={ROUTE("/[locale]/home", { locale })}>
               <span>Ir a Inicio</span>
               <ArrowRight size={16} />
             </Link>
           </Button>
           <Button asChild variant="ghost" className="h-10 w-full text-[12.5px] text-muted-foreground">
-            <Link href={`/${locale}/home/account/security`}>Revisar mi cuenta primero</Link>
+            <Link href={ROUTE("/[locale]/home/account/security", { locale })}>Revisar mi cuenta primero</Link>
           </Button>
         </div>
       </div>

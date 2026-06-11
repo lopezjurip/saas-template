@@ -15,6 +15,7 @@ import { ArrowRight, Check, IdCard } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
 type DocumentType = "rut" | "passport" | "dni";
 
@@ -84,7 +85,7 @@ export function DocumentForm() {
       return;
     }
     setDone(true);
-    setTimeout(() => router.push(`/${locale}/auth/onboarding`), 700);
+    setTimeout(() => router.push(ROUTE_HREF(ROUTE("/[locale]/auth/onboarding", { locale }))), 700);
   }
 
   if (done) {
@@ -138,7 +139,7 @@ export function DocumentForm() {
         {error ? (
           <p className="text-destructive text-xs">{error}</p>
         ) : (
-          <p className="text-[11.5px] leading-[1.4] text-muted-foreground">
+          <p className="text-xs leading-[1.4] text-muted-foreground">
             {type === "rut"
               ? "Validamos el formato y el dígito verificador. Para procesos formales también te pediremos una foto del documento."
               : "Validamos el formato. Para procesos formales también te pediremos una foto del documento."}

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { assertLocale } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
 import { DashboardOverview } from "./dashboard-overview";
 
 export async function generateMetadata(
@@ -23,10 +24,15 @@ export default async function OrganizationHomePage(props: PageProps<"/[locale]/t
     data: { organization },
   } = await getViewerOrganizationByIdAssert(organization_id);
 
-  const base = `/${locale}/t/${tenant_slug}/${organization_id}`;
-
   return (
-    <DashboardOverview organizationName={organization["organization_name"]} membersHref={`${base}/settings/members`} />
+    <DashboardOverview
+      organizationName={organization["organization_name"]}
+      membersHref={ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
+        locale,
+        tenant_slug,
+        organization_id,
+      })}
+    />
   );
 }
 

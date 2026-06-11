@@ -2,6 +2,7 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
+import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowLeft, FileText, Mail, Phone, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import type { ReactNode } from "react";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { assertLocale } from "~/lib/i18n.server";
+import { type AppRoute, ROUTE } from "~/lib/route";
 import { EditPermissionsForm } from "./edit-form";
 
 function MEMBER_LABEL(row: {
@@ -28,18 +30,6 @@ function MEMBER_LABEL(row: {
     return `${row.organization_membership_invite_address_level0_id ?? ""} · ${row.organization_membership_invite_document_value}`;
   }
   return "—";
-}
-
-function INITIALS_OF(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase() || "?"
-  );
 }
 
 export async function generateMetadata(
@@ -70,7 +60,11 @@ export default async function OrganizationMembershipEditPage(
     data: { organization },
   } = await getViewerOrganizationByIdAssert(organization_id);
 
-  const membersHref = `/${locale}/t/${tenant_slug}/${organization_id}/settings/members`;
+  const membersHref = ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
+    locale,
+    tenant_slug,
+    organization_id,
+  });
   const supabase = await createServerClient();
   const { data: canManage } = await supabase.rpc("viewer_has_permission", {
     organization_id: organization_id,
@@ -216,7 +210,7 @@ function EditShell({
   backLabel,
   children,
 }: {
-  membersHref: string;
+  membersHref: AppRoute;
   backLabel: string;
   children: ReactNode;
 }) {

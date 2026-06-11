@@ -11,6 +11,7 @@ import { useState, useTransition } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
 import { notifyDevMailbox } from "~/lib/dev-mailbox-toast.client";
 import { signInWithPasskey } from "~/lib/passkeys.client";
+import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 import { OtpField } from "../_components/otp-field";
 
 type Props = {
@@ -72,7 +73,7 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
         return;
       }
       await supabase.auth.refreshSession();
-      router.push(RESOLVE_TARGET(locale, next));
+      router.push(ROUTE_HREF(UNSAFE_ROUTE(RESOLVE_TARGET(locale, next))));
       router.refresh();
     });
   }
@@ -88,7 +89,7 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
         return;
       }
       await supabase.auth.refreshSession();
-      router.push(RESOLVE_TARGET(locale, next));
+      router.push(ROUTE_HREF(UNSAFE_ROUTE(RESOLVE_TARGET(locale, next))));
       router.refresh();
     });
   }

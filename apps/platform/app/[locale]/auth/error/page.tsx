@@ -2,6 +2,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { SINGLE } from "@packages/utils/array";
 import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
+import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 
 const KNOWN_REASONS: Record<string, string> = {
@@ -24,11 +25,11 @@ export default async function AuthErrorPage(props: PageProps<"/[locale]/auth/err
           <TriangleAlert size={22} />
         </span>
         <div className="flex flex-col gap-1.5">
-          <h1 className="m-0 text-[20px] font-semibold tracking-[-0.02em] text-foreground">No pudimos continuar</h1>
-          <p className="m-0 text-[13px] leading-normal text-muted-foreground text-pretty">{message}</p>
+          <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">No pudimos continuar</h1>
+          <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{message}</p>
         </div>
         <Button asChild className="h-10 w-full">
-          <Link href={`/${locale}/auth`}>Volver a iniciar sesión</Link>
+          <Link href={ROUTE("/[locale]/auth", { locale })}>Volver a iniciar sesión</Link>
         </Button>
       </div>
     </AuthCard>

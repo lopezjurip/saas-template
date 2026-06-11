@@ -53,10 +53,8 @@ export function DeleteAccountDialog() {
               <DialogTitle className="text-[15px]">Confirma que eres tú.</DialogTitle>
               <DialogDescription className="text-[12.5px]">
                 Escribe{" "}
-                <code className="rounded bg-muted px-1 py-px font-mono text-[11.5px] text-foreground">
-                  {CONFIRM_WORD}
-                </code>{" "}
-                y tu contraseña actual para borrar la cuenta.
+                <code className="rounded bg-muted px-1 py-px font-mono text-xs text-foreground">{CONFIRM_WORD}</code> y
+                tu contraseña actual para borrar la cuenta.
               </DialogDescription>
             </div>
           </div>

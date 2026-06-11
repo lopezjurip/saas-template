@@ -961,13 +961,16 @@ alter table public.agencies_organizations_grants enable row level security;
 
 revoke all on table public.agencies from anon, authenticated;
 grant select on table public.agencies to anon, authenticated;
+grant select, insert, update, delete on table public.agencies to service_role;
 
 revoke all on table public.agency_memberships from anon, authenticated;
 grant select on table public.agency_memberships to anon, authenticated;
+grant select, insert, update, delete on table public.agency_memberships to service_role;
+grant usage, select on sequence public.agency_memberships_agency_membership_id_seq to service_role;
 
 revoke all on table public.agencies_organizations_grants from anon, authenticated;
 grant select on table public.agencies_organizations_grants to anon, authenticated;
-
+grant select, insert, update, delete on table public.agencies_organizations_grants to service_role;
 
 -- Writes on agency tables: service_role only (no authenticated write policies).
 -- RLS SELECT policies for agency tables are defined after viewer_agency_ids() is created.
@@ -1669,6 +1672,8 @@ alter table public.tenants enable row level security;
 revoke all on table public.tenants from anon, authenticated;
 -- anon is required for graphql; RLS still gates row access.
 grant select, update on table public.tenants to anon, authenticated;
+grant select, insert, update, delete on table public.tenants to service_role;
+grant usage, select on sequence public.tenants_tenant_id_seq to service_role;
 
 drop policy if exists "tenants select by members or concierge" on public.tenants;
 drop policy if exists "tenants select by members or agency affiliates" on public.tenants;
@@ -1700,6 +1705,8 @@ alter table public.organizations enable row level security;
 revoke all on table public.organizations from anon, authenticated;
 -- anon is required for graphql; RLS still gates row access.
 grant select, update on table public.organizations to anon, authenticated;
+grant select, insert, update, delete on table public.organizations to service_role;
+grant usage, select on sequence public.organizations_organization_id_seq to service_role;
 
 drop policy if exists "organizations select by members or concierge" on public.organizations;
 drop policy if exists "organizations select by members or agency affiliates" on public.organizations;
@@ -1725,6 +1732,8 @@ alter table public.organization_memberships enable row level security;
 revoke all on table public.organization_memberships from anon, authenticated;
 -- anon is required for graphql; RLS still gates row access.
 grant select, insert, update, delete on table public.organization_memberships to anon, authenticated;
+grant select, insert, update, delete on table public.organization_memberships to service_role;
+grant usage, select on sequence public.organization_memberships_organization_membership_id_seq to service_role;
 
 drop policy if exists "organization_memberships select by co-members" on public.organization_memberships;
 drop policy if exists "organization_memberships select by co-members or agency affiliates" on public.organization_memberships;
@@ -1753,6 +1762,7 @@ alter table public.permissions enable row level security;
 
 revoke all on table public.permissions from anon, authenticated;
 grant select on table public.permissions to anon, authenticated;
+grant select, insert, update, delete on table public.permissions to service_role;
 
 drop policy if exists "permissions select to all authenticated" on public.permissions;
 create policy "permissions select to all authenticated"
@@ -1768,6 +1778,7 @@ alter table public.organization_membership_permissions enable row level security
 
 revoke all on table public.organization_membership_permissions from anon, authenticated;
 grant select, insert, update, delete on table public.organization_membership_permissions to anon, authenticated;
+grant select, insert, update, delete on table public.organization_membership_permissions to service_role;
 
 -- Co-members in the same organization can see the grants in that organization.
 -- Resolve organization via the referenced organization_membership (no direct org column anymore).
@@ -1950,6 +1961,8 @@ alter table public.permission_presets enable row level security;
 
 revoke all on table public.permission_presets from anon, authenticated;
 grant select, insert, update, delete on table public.permission_presets to anon, authenticated;
+grant select, insert, update, delete on table public.permission_presets to service_role;
+grant usage, select on sequence public.permission_presets_permission_preset_id_seq to service_role;
 
 drop policy if exists "permission_presets select globals or own org" on public.permission_presets;
 drop policy if exists "permission_presets select globals or own org or agency affiliates" on public.permission_presets;

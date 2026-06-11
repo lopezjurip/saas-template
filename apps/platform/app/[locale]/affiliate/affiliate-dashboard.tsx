@@ -3,11 +3,11 @@
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowUpRight, Building2, Check, Eye, Globe, Hourglass, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { actionRespondInvitation } from "~/app/[locale]/a/[agency_slug]/actions";
 import { useRosetta } from "~/hooks/use-rosetta";
-import { INITIALS_OF } from "~/lib/agencies";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 
 export type AffiliateOrg = {
@@ -53,7 +53,7 @@ export function AffiliateDashboard({
               {t("portal")}
             </span>
             <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
-              <span className="text-muted-foreground bg-muted/60 border-border inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[10.5px] font-medium leading-[1.2] tracking-[0.02em]">
+              <span className="text-muted-foreground bg-muted/60 border-border inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-tiny font-medium leading-[1.2] tracking-[0.02em]">
                 <Eye size={11} /> {t("read_only")}
               </span>
             </span>
@@ -64,8 +64,8 @@ export function AffiliateDashboard({
       <main className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-8 @min-[768px]:px-6 @min-[768px]:py-7 @min-[768px]:pb-10">
         <div className="mx-auto flex w-full max-w-[860px] flex-col gap-7">
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-foreground m-0 text-[20px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-            <p className="text-muted-foreground m-0 max-w-[58ch] text-[13px] leading-[1.55] [text-wrap:pretty]">
+            <h1 className="text-foreground m-0 text-xl/normal font-semibold tracking-[-0.02em]">{t("title")}</h1>
+            <p className="text-muted-foreground m-0 max-w-[58ch] text-sm/normal leading-[1.55] [text-wrap:pretty]">
               {t("subtitle")}
             </p>
           </div>
@@ -128,7 +128,7 @@ function InvitationRow({ invitation, t }: { invitation: AffiliateInvitation; t: 
           <span className="text-foreground truncate text-[13.5px] font-semibold tracking-[-0.01em]">
             {invitation.agency_name}
           </span>
-          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11.5px]">
+          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
             <Hourglass size={11} /> {t("invitation_pending")}
           </span>
         </div>
@@ -158,11 +158,11 @@ function AgencySection({ agency, t }: { agency: AffiliateAgency; t: Translate })
           {agency.agency_name}
         </span>
         {agency.is_global ? (
-          <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-600/30 bg-emerald-500/15 px-2 py-0.5 text-[10.5px] font-semibold leading-[1.2] tracking-[0.01em] text-emerald-700 dark:text-emerald-300">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-600/30 bg-emerald-500/15 px-2 py-0.5 text-tiny font-semibold leading-[1.2] tracking-[0.01em] text-emerald-700 dark:text-emerald-300">
             <Globe size={11} strokeWidth={2.25} /> {t("scope_global")}
           </span>
         ) : (
-          <span className="text-muted-foreground text-[11.5px] tabular-nums">{agency.orgs.length}</span>
+          <span className="text-muted-foreground text-xs tabular-nums">{agency.orgs.length}</span>
         )}
       </div>
 
@@ -207,7 +207,7 @@ function OrgAccessCard({ org, accessLabel }: { org: AffiliateOrg; accessLabel: s
           {org.organization_name}
         </span>
         {org.organization_slug ? (
-          <code className="text-muted-foreground/80 truncate font-mono text-[11.5px]">{org.organization_slug}</code>
+          <code className="text-muted-foreground/80 truncate font-mono text-xs">{org.organization_slug}</code>
         ) : null}
       </div>
       <div className="flex flex-wrap gap-1.5">

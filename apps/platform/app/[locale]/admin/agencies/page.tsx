@@ -58,7 +58,7 @@ export default async function AdminAgenciesPage(props: PageProps<"/[locale]/admi
     org_count: orgIdsByAgency.get(a.agency_id)?.size ?? 0,
   }));
 
-  return <AgencyDirectory base={`/${locale}/admin/agencies`} items={items} />;
+  return <AgencyDirectory locale={locale} items={items} />;
 }
 
 const LOCALE_ES = { page_title: "Agencias" };

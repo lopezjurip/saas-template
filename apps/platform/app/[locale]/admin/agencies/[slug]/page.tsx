@@ -1,13 +1,15 @@
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { INITIALS_OF } from "@packages/utils/string";
 import { BadgeCheck, Building2, Eye, Globe, Hourglass, ShieldCheck, UserPlus, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { AFFILIATION_STATE, type AffiliationState, INITIALS_OF } from "~/lib/agencies";
+import { AFFILIATION_STATE, type AffiliationState } from "~/lib/agencies";
 import { assertLocale } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
 
 export async function generateMetadata(props: PageProps<"/[locale]/admin/agencies/[slug]">): Promise<Metadata> {
   const { locale, slug } = await props.params;
@@ -65,16 +67,19 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
   const orgGrants = grants.filter((g) => g.organization_id !== null);
   const isGlobal = Boolean(globalGrant);
 
-  const base = `/${locale}/admin/agencies`;
-
   return (
     <div className="@container mx-auto flex w-full max-w-3xl flex-col gap-7 px-6 py-8">
       <div className="flex items-center justify-between gap-3">
         <Button asChild variant="ghost" size="sm" className="text-muted-foreground -ml-2">
-          <Link href={base}>← {t("back")}</Link>
+          <Link href={ROUTE("/[locale]/admin/agencies", { locale })}>← {t("back")}</Link>
         </Button>
         <Button asChild size="sm" className="h-9">
-          <Link href={`${base}/${agency.agency_slug}/affiliates/new`}>
+          <Link
+            href={ROUTE("/[locale]/admin/agencies/[slug]/affiliates/new", {
+              locale,
+              slug: agency["agency_slug"],
+            })}
+          >
             <UserPlus size={15} strokeWidth={2} /> {t("invite")}
           </Link>
         </Button>
@@ -90,7 +95,9 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-foreground m-0 text-[20px] font-semibold tracking-[-0.02em]">{agency.agency_name}</h1>
+              <h1 className="text-foreground m-0 text-xl/normal font-semibold tracking-[-0.02em]">
+                {agency.agency_name}
+              </h1>
               <ScopeBadge
                 global={isGlobal}
                 label={isGlobal ? t("scope_global") : t("scope_orgs", { count: orgGrants.length })}
@@ -114,7 +121,7 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
             {t("affiliates")}
           </span>
-          <span className="text-muted-foreground text-[11.5px] tabular-nums">
+          <span className="text-muted-foreground text-xs tabular-nums">
             {t("affiliates_count", { active: activeCount, total: affiliates.length })}
           </span>
         </div>
@@ -133,7 +140,7 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
             ))}
           </div>
         )}
-        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-[11.5px] leading-[1.5]">
+        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-[1.5]">
           <span className="text-muted-foreground/80 mt-px shrink-0">
             <ShieldCheck size={13} />
           </span>
@@ -145,7 +152,7 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
         <div className="flex min-h-7 items-center justify-between gap-2.5">
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">{t("grants")}</span>
           {!isGlobal ? (
-            <span className="text-muted-foreground text-[11.5px] tabular-nums">
+            <span className="text-muted-foreground text-xs tabular-nums">
               {t("scope_orgs", { count: orgGrants.length })}
             </span>
           ) : null}
@@ -177,7 +184,7 @@ function ScopeBadge({ global, label }: { global: boolean; label: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-medium leading-[1.2] tracking-[0.01em]",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-tiny font-medium leading-[1.2] tracking-[0.01em]",
         global
           ? "border border-emerald-600/30 bg-emerald-500/15 font-semibold text-emerald-700 dark:text-emerald-300"
           : "border-border text-foreground bg-background border tabular-nums",
@@ -191,7 +198,7 @@ function ScopeBadge({ global, label }: { global: boolean; label: string }) {
 
 function AffiliationBadge({ state, label }: { state: AffiliationState; label: string }) {
   const base =
-    "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-medium leading-[1.2] tracking-[0.01em]";
+    "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-tiny font-medium leading-[1.2] tracking-[0.01em]";
   if (state === "accepted") {
     return (
       <span
@@ -287,7 +294,7 @@ function GlobalGrantCard({ title, desc, accessLabel }: { title: string; desc: st
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-foreground text-[13.5px] font-semibold">{title}</span>
-          <span className="text-muted-foreground/80 font-mono text-[10.5px]">org = NULL</span>
+          <span className="text-muted-foreground/80 font-mono text-tiny">org = NULL</span>
         </div>
         <span className="text-muted-foreground text-[12px] leading-[1.45] [text-wrap:pretty]">{desc}</span>
         <div className="mt-0.5">
@@ -318,7 +325,7 @@ function OrgGrantCard({
       <div className="flex min-w-0 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-foreground text-[13.5px] font-medium">{orgName}</span>
-          {orgSlug ? <code className="text-muted-foreground/80 font-mono text-[10.5px]">{orgSlug}</code> : null}
+          {orgSlug ? <code className="text-muted-foreground/80 font-mono text-tiny">{orgSlug}</code> : null}
         </div>
         <div className="flex flex-wrap gap-1.5">
           <AccessPill global={false} label={accessLabel} />

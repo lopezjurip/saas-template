@@ -6,10 +6,10 @@ import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { SLUGIFY } from "@packages/utils/slug";
 import { ArrowRight, Briefcase, Building2, Check, Eye, Plus, UserPlus } from "lucide-react";
-import type { Route } from "next";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { ROUTE } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { actionCreateAgency } from "./actions";
 
@@ -29,9 +29,7 @@ export function AgencyCreate({ locale }: { locale: string }) {
   const autoSlug = SLUGIFY(name).slice(0, 40);
   const effectiveSlug = (touchedSlug ? slug : autoSlug) || t("slug_fallback");
   const consoleUrl = `app.example.com/a/${createdSlug}`;
-  // <Link> rejects the "/[locale]/…" sentinel at render time (App Router bans dynamic hrefs),
-  // so we interpolate the real locale the page resolved from its route params.
-  const backHref = `/${locale}/admin/agencies` as Route;
+  const backHref = ROUTE("/[locale]/admin/agencies", { locale });
 
   function submit() {
     setServerError(null);
@@ -57,13 +55,13 @@ export function AgencyCreate({ locale }: { locale: string }) {
         return;
       }
       if (error) return;
-      setCreatedSlug(data.agency_slug);
+      setCreatedSlug(data["agency_slug"]);
       setStage("created");
     });
   }
 
-  const consoleHref = `/${locale}/a/${createdSlug}` as Route;
-  const inviteHref = `/${locale}/admin/agencies/${createdSlug}/affiliates/new` as Route;
+  const consoleHref = ROUTE("/[locale]/a/[agency_slug]", { locale, agency_slug: createdSlug });
+  const inviteHref = ROUTE("/[locale]/admin/agencies/[slug]/affiliates/new", { locale, slug: createdSlug });
 
   return (
     <div className="mx-auto flex w-full max-w-[520px] flex-col gap-7 px-6 py-8">
@@ -110,7 +108,7 @@ export function AgencyCreate({ locale }: { locale: string }) {
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="ag-slug">{t("slug_label")}</Label>
               <div className="border-input focus-within:border-ring focus-within:ring-ring/40 flex items-stretch overflow-hidden rounded-md border bg-transparent focus-within:ring-[3px]">
-                <span className="text-muted-foreground bg-muted/50 border-border inline-flex items-center whitespace-nowrap border-r pl-3 pr-1.5 font-mono text-[13px]">
+                <span className="text-muted-foreground bg-muted/50 border-border inline-flex items-center whitespace-nowrap border-r pl-3 pr-1.5 font-mono text-sm/normal">
                   app.example.com/a/
                 </span>
                 <input
@@ -167,9 +165,9 @@ export function AgencyCreate({ locale }: { locale: string }) {
                 <span className="text-foreground truncate text-[13.5px] font-semibold tracking-[-0.01em]">
                   {name || t("created_fallback")}
                 </span>
-                <code className="text-muted-foreground font-mono text-[11.5px]">{createdSlug}</code>
+                <code className="text-muted-foreground font-mono text-xs">{createdSlug}</code>
               </div>
-              <span className="text-muted-foreground bg-muted/60 border-border hidden items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[10.5px] font-medium leading-[1.2] tracking-[0.02em] sm:inline-flex">
+              <span className="text-muted-foreground bg-muted/60 border-border hidden items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-tiny font-medium leading-[1.2] tracking-[0.02em] sm:inline-flex">
                 <Eye size={11} /> {t("read_only_badge")}
               </span>
             </div>
@@ -179,7 +177,7 @@ export function AgencyCreate({ locale }: { locale: string }) {
                 {t("console_address")}
               </span>
               <div className="border-border bg-muted/40 flex items-center gap-2 rounded-md border px-3 py-2.5">
-                <code className="text-foreground flex-1 truncate font-mono text-[11.5px]">{consoleUrl}</code>
+                <code className="text-foreground flex-1 truncate font-mono text-xs">{consoleUrl}</code>
               </div>
             </div>
 

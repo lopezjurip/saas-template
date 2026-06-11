@@ -4,6 +4,7 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { action } from "~/lib/safe-action.server";
 import { sendOtpSchema, verifyOtpSchema } from "./schemas";
 
@@ -160,7 +161,7 @@ export const actionVerifyDocumentSignup = action.inputSchema(verifyOtpSchema).ac
 
   const tenant_slug = invite["organizations"]?.["tenants"]?.["tenant_slug"];
   if (tenant_slug) {
-    redirect(`/[locale]/t/${tenant_slug}`);
+    redirect(ROUTE_HREF(ROUTE("/[locale]/t/[tenant_slug]", { tenant_slug })));
   }
   redirect("/[locale]/home");
 });

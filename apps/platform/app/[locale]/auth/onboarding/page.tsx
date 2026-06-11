@@ -3,11 +3,18 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Check, Star } from "lucide-react";
 import Link from "next/link";
 import { AUTH_TWEAKS } from "~/lib/auth-tweaks";
+import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 import { METHOD_CATALOG } from "./_components/method-catalog";
 import { ObProgress } from "./_components/ob-progress";
 import { actionFinishOnboarding } from "./actions";
-import { COUNT_DONE, METHOD_ORDER, type OnboardingMethodId, type OnboardingMethodStatus } from "./state";
+import {
+  COUNT_DONE,
+  METHOD_ORDER,
+  ONBOARDING_METHOD_PATH,
+  type OnboardingMethodId,
+  type OnboardingMethodStatus,
+} from "./state";
 import { getViewerOnboardingState } from "./state.server";
 
 // Hub sort: recommended-pending → pending → skipped → done. Done sinks to the bottom.
@@ -49,14 +56,14 @@ export default async function OnboardingHubPage(props: PageProps<"/[locale]/auth
           <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] text-foreground">
             {firstName ? `Asegura tu cuenta, ${firstName}` : "Asegura tu cuenta"}
           </h1>
-          <p className="m-0 text-[13px] leading-normal text-muted-foreground text-pretty">
+          <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">
             {remaining === 0
               ? "Todo listo. Igual puedes editar cualquiera de tus métodos."
               : "Agrega más formas de iniciar sesión. Puedes hacerlas en cualquier orden o saltártelas — se quedan disponibles en tu cuenta."}
           </p>
         </div>
 
-        <ObProgress methods={state.methods} meter />
+        {/* <ObProgress methods={state.methods} meter /> */}
 
         <div className="flex flex-col gap-2">
           {sorted.map((id) => {
@@ -68,7 +75,7 @@ export default async function OnboardingHubPage(props: PageProps<"/[locale]/auth
             return (
               <Link
                 key={id}
-                href={`/${locale}/auth/onboarding/${id}`}
+                href={ROUTE(ONBOARDING_METHOD_PATH(id), { locale })}
                 className={cn(
                   "grid w-full grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border bg-background px-3.5 py-3 text-left text-foreground no-underline transition-colors hover:bg-accent",
                   isRecommended && "border-foreground/50",
@@ -92,16 +99,16 @@ export default async function OnboardingHubPage(props: PageProps<"/[locale]/auth
                       {meta.label}
                     </span>
                     {isRecommended && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-[5px] py-px text-[10px] font-semibold uppercase tracking-[0.02em] text-background">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-[5px] py-px text-tiny font-semibold uppercase tracking-[0.02em] text-background">
                         <Star size={9} /> Recomendado
                       </span>
                     )}
                     {isDone && (
-                      <span className="inline-flex items-center gap-1 rounded-full border px-[5px] py-px text-[10px] font-semibold uppercase tracking-[0.02em] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full border px-[5px] py-px text-tiny font-semibold uppercase tracking-[0.02em] text-muted-foreground">
                         <Check size={10} /> Listo
                       </span>
                     )}
-                    {isSkipped && <span className="text-[11.5px] text-muted-foreground">Saltado · puedes volver</span>}
+                    {isSkipped && <span className="text-xs text-muted-foreground">Saltado · puedes volver</span>}
                   </span>
                   <span className="text-[12.5px] leading-[1.45] text-muted-foreground text-pretty">{meta.desc}</span>
                 </span>

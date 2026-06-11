@@ -4,21 +4,33 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Home, MoreHorizontal, Settings, Users } from "lucide-react";
 import { BUILD_NAV, PICK_ACTIVE_NAV } from "~/components/shell/sidebar";
 import { useRosetta } from "~/hooks/use-rosetta";
+import type { AppRoute } from "~/lib/route";
 
 export function MobileBottomTabs({
-  base,
+  locale,
+  tenantSlug,
+  organizationId,
   activePath,
   onNavigate,
   onMore,
 }: {
-  base: string;
+  locale: string;
+  tenantSlug: string;
+  organizationId: number;
   activePath: string;
-  onNavigate: (href: string) => void;
+  onNavigate: (href: AppRoute) => void;
   onMore: () => void;
 }) {
   const { t } = useRosetta(LOCALES);
-  const navItems = BUILD_NAV(base, { navHome: t("home"), navMembers: t("members"), navSettings: t("settings") });
-  const activeId = PICK_ACTIVE_NAV(navItems, activePath, base);
+  const navItems = BUILD_NAV(locale, tenantSlug, organizationId, {
+    navHome: t("home"),
+    navMembers: t("members"),
+    navSettings: t("settings"),
+  });
+  const activeId = PICK_ACTIVE_NAV(navItems, activePath);
+  const home = navItems[0];
+  const members = navItems[1];
+  const settings = navItems[2];
 
   const tabs = [
     {
@@ -26,21 +38,21 @@ export function MobileBottomTabs({
       label: t("home"),
       Icon: Home,
       active: activeId === "home",
-      onClick: () => onNavigate(base),
+      onClick: () => home && onNavigate(home.href),
     },
     {
       id: "members",
       label: t("members"),
       Icon: Users,
       active: activeId === "members",
-      onClick: () => onNavigate(`${base}/settings/members`),
+      onClick: () => members && onNavigate(members.href),
     },
     {
       id: "settings",
       label: t("settings"),
       Icon: Settings,
       active: activeId === "settings",
-      onClick: () => onNavigate(`${base}/settings`),
+      onClick: () => settings && onNavigate(settings.href),
     },
     { id: "more", label: t("more"), Icon: MoreHorizontal, active: false, onClick: onMore },
   ];
@@ -59,7 +71,7 @@ export function MobileBottomTabs({
             )}
           >
             <tab.Icon size={20} strokeWidth={tab.active ? 2.2 : 1.75} />
-            <span className="text-[10px] font-medium leading-none">{tab.label}</span>
+            <span className="text-tiny font-medium leading-none">{tab.label}</span>
             {tab.active ? <span className="bg-foreground absolute top-1 h-0.5 w-6 rounded-full" /> : null}
           </button>
         ))}

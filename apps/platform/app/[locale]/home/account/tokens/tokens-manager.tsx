@@ -206,12 +206,12 @@ export function TokensManager() {
                       </span>
                       <span className="text-sm font-medium text-foreground">{tk.name}</span>
                       {tk.expired && (
-                        <Badge variant="outline" className="text-[10.5px]">
+                        <Badge variant="outline" className="text-tiny">
                           Caducado
                         </Badge>
                       )}
                       {tk.stale && !tk.expired && (
-                        <Badge variant="outline" className="text-[10.5px]">
+                        <Badge variant="outline" className="text-tiny">
                           Sin uso
                         </Badge>
                       )}
@@ -219,7 +219,7 @@ export function TokensManager() {
                   </TableCell>
                   <TableCell>
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="font-mono text-[11.5px] text-muted-foreground">{tk.prefix}</span>
+                      <span className="font-mono text-xs text-muted-foreground">{tk.prefix}</span>
                       <button
                         type="button"
                         aria-label="Copiar prefijo"
@@ -233,7 +233,7 @@ export function TokensManager() {
                   <TableCell>
                     <span className="inline-flex flex-wrap gap-1">
                       {tk.scopes.map((sc) => (
-                        <Badge key={sc} variant="outline" className="text-[10.5px]">
+                        <Badge key={sc} variant="outline" className="text-tiny">
                           {sc}
                         </Badge>
                       ))}

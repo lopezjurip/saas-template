@@ -10,6 +10,7 @@ import { useMemo, useOptimistic, useState, useTransition } from "react";
 import { useLocale } from "~/components/locale-provider";
 import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { ROUTE } from "~/lib/route";
 
 const MembersPendingInvitationsCancelMutation = /*#__PURE__*/ gql(`
   mutation MembersPendingInvitationsCancelMutation($organization_membership_id: Int!, $now: Datetime!) {
@@ -82,7 +83,9 @@ interface InvitationRow {
 
 interface Props {
   invitations: InvitationRow[];
-  editHrefBase: string;
+  locale: string;
+  tenantSlug: string;
+  organizationId: number;
 }
 
 function INVITATION_LABEL(inv: InvitationRow): string {
@@ -101,9 +104,9 @@ function CHANNEL_OF(inv: InvitationRow): "email" | "phone" | "document" {
   return "email";
 }
 
-export function PendingInvitations({ invitations, editHrefBase }: Props) {
+export function PendingInvitations({ invitations, locale, tenantSlug, organizationId }: Props) {
   const { t } = useRosetta(LOCALES);
-  const locale = useLocale();
+  const activeLocale = useLocale();
   const router = useRouter();
   const [pendingId, setPendingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +118,10 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
       state.filter((i) => i["organization_membership_id"] !== organization_membership_id),
   );
 
-  const dateFormatter = useMemo(() => new Intl.DateTimeFormat(locale, { day: "2-digit", month: "short" }), [locale]);
+  const dateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(activeLocale, { day: "2-digit", month: "short" }),
+    [activeLocale],
+  );
 
   function cancel(inv: InvitationRow) {
     if (!window.confirm(t("cancel_confirm", { email: INVITATION_LABEL(inv) }))) return;
@@ -159,8 +165,16 @@ export function PendingInvitations({ invitations, editHrefBase }: Props) {
               <ChannelIcon size={15} />
             </span>
             <Link
-              href={`${editHrefBase}/${inv["organization_membership_id"]}/edit`}
-              className="flex min-w-0 flex-col gap-[2px] outline-none focus-visible:underline"
+              href={ROUTE(
+                "/[locale]/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit",
+                {
+                  locale,
+                  tenant_slug: tenantSlug,
+                  organization_id: organizationId,
+                  organization_membership_id: inv["organization_membership_id"],
+                },
+              )}
+              className="flex min-w-0 flex-col gap-0.5 outline-none focus-visible:underline"
             >
               <span className="text-foreground truncate text-sm font-medium">{INVITATION_LABEL(inv)}</span>
               <span className="text-muted-foreground inline-flex min-w-0 items-center gap-1.5 truncate text-[12px]">

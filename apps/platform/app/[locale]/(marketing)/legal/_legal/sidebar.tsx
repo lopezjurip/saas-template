@@ -3,6 +3,7 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ROUTE } from "~/lib/route";
 
 type LegalLocale = "es" | "en" | "pt";
 type LegalSection = "terms" | "privacy" | "cookies" | "dpa" | "security";
@@ -56,23 +57,23 @@ export function LegalSidebar() {
   return (
     <aside className="lg:sticky lg:top-20 lg:self-start">
       <div className="bg-card overflow-hidden rounded-xl border">
-        <div className="bg-muted/40 text-muted-foreground border-b px-3 py-2.5 text-[10.5px] font-semibold tracking-[0.08em] uppercase">
+        <div className="bg-muted/40 text-muted-foreground border-b px-3 py-2.5 text-tiny font-semibold tracking-[0.08em] uppercase">
           {sidebarTitle}
         </div>
         <nav className="flex flex-col p-1.5" aria-label={sidebarTitle}>
           {items.map((item) => (
             <Link
-              key={item.id}
-              href={`/${appLocale}/legal/${item.slug}`}
-              data-active={item.id === active ? "true" : "false"}
-              aria-current={item.id === active ? "page" : undefined}
+              key={item["id"]}
+              href={ROUTE("/[locale]/legal/[section]", { locale: appLocale, section: item["slug"] })}
+              data-active={item["id"] === active ? "true" : "false"}
+              aria-current={item["id"] === active ? "page" : undefined}
               className={cn(
-                "text-muted-foreground hover:bg-accent hover:text-foreground flex h-9 items-center justify-between gap-2 rounded-md px-2.5 text-left text-[13px] no-underline",
+                "text-muted-foreground hover:bg-accent hover:text-foreground flex h-9 items-center justify-between gap-2 rounded-md px-2.5 text-left text-sm/normal no-underline",
                 "data-[active=true]:bg-accent data-[active=true]:text-foreground data-[active=true]:font-medium",
               )}
             >
-              <span>{item.label}</span>
-              <span className="font-mono text-[10.5px] opacity-60">{item.slug}</span>
+              <span>{item["label"]}</span>
+              <span className="font-mono text-tiny opacity-60">{item["slug"]}</span>
             </Link>
           ))}
         </nav>

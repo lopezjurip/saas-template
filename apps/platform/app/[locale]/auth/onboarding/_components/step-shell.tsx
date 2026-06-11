@@ -4,6 +4,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { ROUTE, UNSAFE_ROUTE } from "~/lib/route";
 import type { OnboardingMethodId, OnboardingState } from "../state";
 import { ObProgress } from "./ob-progress";
 
@@ -23,7 +24,7 @@ export function StepShell({
   skipHref?: string;
 }) {
   const locale = useLocaleParam();
-  const hubHref = `/${locale}/auth/onboarding`;
+  const hubHref = ROUTE("/[locale]/auth/onboarding", { locale });
 
   return (
     <div className="flex flex-col gap-4.5">
@@ -39,8 +40,8 @@ export function StepShell({
       <ObProgress methods={methods} current={current} dense />
 
       <div className="flex flex-col gap-1">
-        <h1 className="m-0 text-[20px] font-semibold tracking-[-0.02em] text-foreground">{title}</h1>
-        {subtitle && <p className="m-0 text-[13px] leading-normal text-muted-foreground text-pretty">{subtitle}</p>}
+        <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">{title}</h1>
+        {subtitle && <p className="m-0 text-sm leading-normal text-muted-foreground text-pretty">{subtitle}</p>}
       </div>
 
       {children}
@@ -50,7 +51,7 @@ export function StepShell({
         variant="outline"
         className="mt-1 h-[44px] w-full text-[13.5px] text-muted-foreground hover:text-foreground"
       >
-        <Link href={skipHref ?? hubHref}>
+        <Link href={skipHref ? UNSAFE_ROUTE(skipHref) : hubHref}>
           <span>Saltar por ahora — lo configuro después</span>
         </Link>
       </Button>

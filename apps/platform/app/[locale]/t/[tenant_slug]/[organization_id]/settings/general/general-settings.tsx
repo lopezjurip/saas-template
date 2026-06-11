@@ -13,6 +13,7 @@ import {
 } from "@packages/ui-common/shadcn/components/ui/select";
 import { Switch } from "@packages/ui-common/shadcn/components/ui/switch";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { INITIALS_OF } from "@packages/utils/string";
 import { Check, Globe, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
@@ -25,18 +26,6 @@ const DOMAINS: DomainRow[] = /*#__PURE__*/ [
   { domain: "empresa.com", verified: true, meta: "domain_members" },
   { domain: "studio.cl", verified: false, meta: "domain_dns" },
 ];
-
-function INITIALS_OF(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase() || "?"
-  );
-}
 
 export function GeneralSettings({ organizationName, slug }: { organizationName: string; slug: string }) {
   const { t } = useRosetta(LOCALES);
@@ -77,7 +66,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="org-slug">{t("slug_label")}</Label>
           <div className="relative">
-            <span className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[13px]">
+            <span className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm/normal">
               acme.com/o/
             </span>
             <Input id="org-slug" defaultValue={slug} className="pl-[104px]" />
@@ -163,7 +152,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
               </span>
             </div>
             <Select value={access} onValueChange={(value) => setAccess(value as Access)}>
-              <SelectTrigger className="w-full text-[13px]">
+              <SelectTrigger className="w-full text-sm/normal">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -209,7 +198,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
         {deleteOpen ? (
           <div className="border-destructive/45 bg-destructive/[0.04] flex flex-col gap-3 rounded-xl border px-4 py-3.5">
             <div className="flex flex-col gap-0.5">
-              <strong className="text-destructive text-[13px] font-semibold">
+              <strong className="text-destructive text-sm/normal font-semibold">
                 {t("delete_confirm_title", { name: organizationName })}
               </strong>
               <span className="text-muted-foreground text-[12px] leading-[1.5] [text-wrap:pretty]">

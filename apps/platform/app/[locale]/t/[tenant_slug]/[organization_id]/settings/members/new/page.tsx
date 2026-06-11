@@ -8,6 +8,7 @@ import { getCountries } from "~/hooks/get-countries";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { assertLocale } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
 import { InviteMemberForm } from "./invite-form";
 
 export async function generateMetadata(
@@ -35,8 +36,11 @@ export default async function NewMemberInvitePage(
   ] = await Promise.all([getViewerOrganizationByIdAssert(organization_id), getCountries()]);
   const countries = countriesData?.["addresses_level0"]?.["edges"]?.map((e) => e["node"]) ?? [];
 
-  const membersHref = `/${locale}/t/${tenant_slug}/${organization_id}/settings/members`;
-  const editHrefBase = membersHref;
+  const membersHref = ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
+    locale,
+    tenant_slug,
+    organization_id,
+  });
 
   const supabase = await createServerClient();
   // viewer_has_permission is SECURITY DEFINER and honors '*' as a match.
@@ -68,7 +72,8 @@ export default async function NewMemberInvitePage(
           organization_id={organization_id}
           countries={countries}
           membersHref={membersHref}
-          editHrefBase={editHrefBase}
+          locale={locale}
+          tenantSlug={tenant_slug}
         />
       ) : (
         <Alert variant="destructive">

@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
+import type { AppRoute } from "~/lib/route";
 
 type Period = "today" | "week" | "month";
 
@@ -88,7 +89,7 @@ export function DashboardOverview({
   membersHref,
 }: {
   organizationName: string;
-  membersHref: string;
+  membersHref: AppRoute;
 }) {
   const { t } = useRosetta(LOCALES);
   const [period, setPeriod] = useState<Period>("week");
@@ -142,11 +143,11 @@ export function DashboardOverview({
             {ACTIVITY.map((item) => (
               <li key={`${item.who}-${item.verb}`} className="flex items-center gap-3 px-4 py-3">
                 <InitialsAvatar initials={item.initials} tone={item.tone} size={32} />
-                <p className="text-muted-foreground m-0 min-w-0 flex-1 text-[13px] leading-snug [text-wrap:pretty]">
+                <p className="text-muted-foreground m-0 min-w-0 flex-1 text-sm/normal leading-snug [text-wrap:pretty]">
                   <strong className="text-foreground font-semibold">{item.who}</strong> {t(`verb_${item.verb}`)}
                   {item.target ? <span className="text-foreground font-medium"> {item.target}</span> : null}
                 </p>
-                <span className="text-muted-foreground shrink-0 whitespace-nowrap text-[11.5px]">{item.time}</span>
+                <span className="text-muted-foreground shrink-0 whitespace-nowrap text-xs">{item.time}</span>
               </li>
             ))}
           </ul>
@@ -160,12 +161,12 @@ export function DashboardOverview({
                 <li key={member.name} className="flex items-center gap-3 px-4 py-2.5">
                   <InitialsAvatar initials={member.initials} tone={member.tone} size={30} />
                   <span className="min-w-0 flex-1">
-                    <span className="text-foreground block truncate text-[13px] font-medium">
+                    <span className="text-foreground block truncate text-sm/normal font-medium">
                       {member.name}
                       {member.you ? <span className="text-muted-foreground font-normal"> · {t("you")}</span> : null}
                     </span>
                   </span>
-                  <span className="text-muted-foreground shrink-0 text-[11.5px]">{t(`role_${member.role}`)}</span>
+                  <span className="text-muted-foreground shrink-0 text-xs">{t(`role_${member.role}`)}</span>
                 </li>
               ))}
             </ul>
@@ -197,7 +198,10 @@ export function DashboardOverview({
                     <Circle size={17} className="text-muted-foreground/50 shrink-0" />
                   )}
                   <span
-                    className={cn("text-[13px]", step.done ? "text-muted-foreground line-through" : "text-foreground")}
+                    className={cn(
+                      "text-sm/normal",
+                      step.done ? "text-muted-foreground line-through" : "text-foreground",
+                    )}
                   >
                     {t(`checklist_${step.key}`)}
                   </span>
@@ -222,7 +226,7 @@ function OverviewStatCard({ stat, label, sub }: { stat: Stat; label: string; sub
         {stat.delta ? (
           <span
             className={cn(
-              "inline-flex items-center gap-0.5 text-[11.5px] font-semibold",
+              "inline-flex items-center gap-0.5 text-xs font-semibold",
               stat.up ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400",
             )}
           >

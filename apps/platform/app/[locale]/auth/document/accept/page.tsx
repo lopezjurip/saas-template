@@ -20,8 +20,10 @@ export default async function AuthDocumentAcceptPage(props: PageProps<"/[locale]
         <div className="flex flex-col gap-4.5">
           <AuthBackLink />
           <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-[20px] font-semibold tracking-[-0.02em] text-foreground">Tienes una invitación</h1>
-            <p className="m-0 text-[13px] leading-normal text-muted-foreground text-pretty">
+            <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">
+              Tienes una invitación
+            </h1>
+            <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">
               Completa tus datos para crear tu cuenta y unirte. Verificamos con un código de un solo uso.
             </p>
           </div>

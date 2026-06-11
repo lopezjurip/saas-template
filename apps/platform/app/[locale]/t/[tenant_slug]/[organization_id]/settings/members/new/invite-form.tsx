@@ -15,6 +15,7 @@ import {
   DocumentTripletFields,
 } from "~/app/[locale]/auth/_components/document-triplet-fields";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { actionInviteMember } from "../actions";
 import { type InviteMemberValues, inviteMemberSchema } from "../schemas";
@@ -34,13 +35,19 @@ const CHANNELS: {
 interface Props {
   organization_id: number;
   countries: DocumentTripletCountry[];
-  membersHref: string;
-  editHrefBase: string;
+  membersHref: AppRoute;
+  locale: string;
+  tenantSlug: string;
 }
 
-export function InviteMemberForm({ organization_id, countries, membersHref, editHrefBase }: Props) {
+export function InviteMemberForm({ organization_id, countries, membersHref, locale, tenantSlug }: Props) {
   function editHrefFor(organization_membership_id: number) {
-    return `${editHrefBase}/${organization_membership_id}/edit`;
+    return ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit", {
+      locale,
+      tenant_slug: tenantSlug,
+      organization_id,
+      organization_membership_id,
+    });
   }
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
@@ -79,12 +86,15 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
         return;
       }
       if (error) return;
-      if (data.channel === "document" || data.channel === "phone") {
-        setDocumentResult({ url: data.invitation_url, organization_membership_id: data.organization_membership_id });
+      if (data["channel"] === "document" || data["channel"] === "phone") {
+        setDocumentResult({
+          url: data["invitation_url"],
+          organization_membership_id: data["organization_membership_id"],
+        });
         return;
       }
       // email channel: invitation email went out; jump to permissions editor.
-      router.push(editHrefFor(data.organization_membership_id));
+      router.push(ROUTE_HREF(editHrefFor(data["organization_membership_id"])));
     });
   });
 
@@ -135,10 +145,13 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
         </div>
 
         <div className="border-border flex items-center justify-between gap-3 border-t pt-3.5">
-          <Button type="button" variant="ghost" onClick={() => router.push(membersHref)}>
+          <Button type="button" variant="ghost" onClick={() => router.push(ROUTE_HREF(membersHref))}>
             {t("back_members")}
           </Button>
-          <Button type="button" onClick={() => router.push(editHrefFor(documentResult.organization_membership_id))}>
+          <Button
+            type="button"
+            onClick={() => router.push(ROUTE_HREF(editHrefFor(documentResult["organization_membership_id"])))}
+          >
             <ShieldCheck size={15} /> {t("define_permissions")}
           </Button>
         </div>
@@ -228,7 +241,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, edit
       )}
 
       <div className="border-border flex items-center justify-between gap-3 border-t pt-3.5">
-        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11.5px]">
+        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
           <ShieldCheck size={13} /> {t("perms_next")}
         </span>
         <Button type="submit" disabled={pending}>

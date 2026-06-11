@@ -5,6 +5,7 @@ import { ChevronRight, CreditCard, ExternalLink, Settings, Users } from "lucide-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { type AppRoute, ROUTE_HREF } from "~/lib/route";
 
 const ICON_MAP = {
   Settings,
@@ -18,7 +19,7 @@ type IconKey = keyof typeof ICON_MAP;
 export type SubSidebarLeaf = {
   kind: "leaf";
   label: string;
-  href: string;
+  href: AppRoute;
   icon?: IconKey;
 };
 
@@ -32,8 +33,9 @@ export type SubSidebarNode = {
 
 export type SubSidebarItem = SubSidebarLeaf | SubSidebarNode;
 
-function isActive(pathname: string, href: string): boolean {
-  return pathname === href || pathname.startsWith(`${href}/`);
+function isActive(pathname: string, href: AppRoute): boolean {
+  const path = ROUTE_HREF(href);
+  return pathname === path || pathname.startsWith(`${path}/`);
 }
 
 function nodeContainsActive(pathname: string, node: SubSidebarNode): boolean {

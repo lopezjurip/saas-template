@@ -10,6 +10,7 @@ import { ArrowRight, IdCard } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { ErrorSafeAction } from "~/lib/safe-action.client";
 import { OtpField } from "../_components/otp-field";
 import { actionCheckDocument, actionVerifyDocumentLoginOtp } from "./actions";
@@ -48,20 +49,36 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
         setError(err.message);
         return;
       }
-      switch (result.kind) {
+      switch (result["kind"]) {
         case "login":
-          setLogin({ channel: result.channel, contact: result.contact, masked: result.masked });
+          setLogin({
+            channel: result["channel"],
+            contact: result["contact"],
+            masked: result["masked"],
+          });
           break;
         case "error":
           setError("No pudimos enviar el código. Intenta de nuevo.");
           break;
         case "redirect_accept":
-          router.push(`/${locale}/auth/document/accept?token=${encodeURIComponent(result.invitation_token)}`);
+          router.push(
+            ROUTE_HREF(
+              ROUTE("/[locale]/auth/document/accept", {
+                locale,
+                token: result["invitation_token"],
+              }),
+            ),
+          );
           break;
         case "pick_invite":
           // Multiple invites: send to accept with the first; the accept screen lists the rest.
           router.push(
-            `/${locale}/auth/document/accept?token=${encodeURIComponent(result.invites[0]?.invitation_token ?? "")}`,
+            ROUTE_HREF(
+              ROUTE("/[locale]/auth/document/accept", {
+                locale,
+                token: result["invites"][0]?.["invitation_token"] ?? "",
+              }),
+            ),
           );
           break;
         case "redirect_signup":
@@ -137,7 +154,7 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
             onClick={() => setKind(k)}
             data-active={kind === k}
             className={cn(
-              "h-8 rounded text-[13px] font-medium text-muted-foreground transition-colors",
+              "h-8 rounded text-sm/normal font-medium text-muted-foreground transition-colors",
               "data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm",
             )}
           >

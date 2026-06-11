@@ -3,11 +3,11 @@ import { Logo } from "@packages/ui-common/logo";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
-import type { Route } from "next";
 import Link from "next/link";
 import { LocaleToggle } from "~/components/locale-toggle";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { getRosetta } from "~/hooks/get-rosetta";
+import { ROUTE } from "~/lib/route";
 
 export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
   const { t, locale } = await getRosetta(LOCALES);
@@ -18,36 +18,36 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
     {
       title: t("footer.product.title"),
       links: [
-        { label: t("footer.product.a"), href: `/${locale}` },
-        { label: t("footer.product.b"), href: `/${locale}#product` },
-        { label: t("footer.product.c"), href: `/${locale}/pricing` },
-        { label: t("footer.product.d"), href: `/${locale}#customers` },
+        { label: t("footer.product.a"), href: ROUTE("/[locale]", { locale }) },
+        { label: t("footer.product.b"), href: ROUTE("/[locale]", { locale }, "product") },
+        { label: t("footer.product.c"), href: ROUTE("/[locale]/pricing", { locale }) },
+        { label: t("footer.product.d"), href: ROUTE("/[locale]", { locale }, "customers") },
       ],
     },
     {
       title: t("footer.resources.title"),
       links: [
-        { label: t("footer.resources.a"), href: `/${locale}#faq` },
-        { label: t("footer.resources.b"), href: `/${locale}#contact` },
-        { label: t("footer.resources.c"), href: `/${locale}` },
-        { label: t("footer.resources.d"), href: `/${locale}` },
+        { label: t("footer.resources.a"), href: ROUTE("/[locale]", { locale }, "faq") },
+        { label: t("footer.resources.b"), href: ROUTE("/[locale]", { locale }, "contact") },
+        { label: t("footer.resources.c"), href: ROUTE("/[locale]", { locale }) },
+        { label: t("footer.resources.d"), href: ROUTE("/[locale]", { locale }) },
       ],
     },
     {
       title: t("footer.company.title"),
       links: [
-        { label: t("footer.company.a"), href: `/${locale}` },
-        { label: t("footer.company.b"), href: `/${locale}#customers` },
-        { label: t("footer.company.c"), href: `/${locale}#contact` },
-        { label: t("footer.company.d"), href: `/${locale}` },
+        { label: t("footer.company.a"), href: ROUTE("/[locale]", { locale }) },
+        { label: t("footer.company.b"), href: ROUTE("/[locale]", { locale }, "customers") },
+        { label: t("footer.company.c"), href: ROUTE("/[locale]", { locale }, "contact") },
+        { label: t("footer.company.d"), href: ROUTE("/[locale]", { locale }) },
       ],
     },
     {
       title: t("footer.legal.title"),
       links: [
-        { label: t("footer.terms"), href: `/${locale}/legal/terms` },
-        { label: t("footer.privacy"), href: `/${locale}/legal/privacy` },
-        { label: t("footer.cookies"), href: `/${locale}/legal/cookies` },
+        { label: t("footer.terms"), href: ROUTE("/[locale]/legal/terms", { locale }) },
+        { label: t("footer.privacy"), href: ROUTE("/[locale]/legal/privacy", { locale }) },
+        { label: t("footer.cookies"), href: ROUTE("/[locale]/legal/cookies", { locale }) },
       ],
     },
   ];
@@ -55,14 +55,14 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
   return (
     <div className="flex min-h-svh flex-col">
       <div className="w-full bg-foreground text-background">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-center gap-2 px-6 py-1.5 text-center text-[11.5px] font-medium tracking-[0.01em]">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-center gap-2 px-6 py-1.5 text-center text-xs font-medium tracking-[0.01em]">
           <Sparkles aria-hidden="true" className="hidden h-3 w-3 shrink-0 opacity-70 sm:inline-block" />
           <span className="truncate">{t("announce.message")}</span>
           <span aria-hidden="true" className="hidden opacity-40 sm:inline">
             ·
           </span>
           <Link
-            href={`/${locale}#contact`}
+            href={ROUTE("/[locale]", { locale }, "contact")}
             className="hidden shrink-0 items-center gap-1 underline-offset-2 hover:underline sm:inline-flex"
           >
             {t("announce.cta")}
@@ -71,10 +71,10 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
         </div>
       </div>
 
-      <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70">
         <div className="mx-auto flex w-full max-w-6xl items-center gap-6 px-6 py-3">
           <Link
-            href={`/${locale}`}
+            href={ROUTE("/[locale]", { locale })}
             aria-label="SaaS Template"
             className="inline-block transition-opacity hover:opacity-80"
           >
@@ -82,25 +82,25 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
           </Link>
           <nav aria-label="Primary" className="hidden items-center gap-1 text-sm md:flex">
             <Link
-              href={`/${locale}#product`}
+              href={ROUTE("/[locale]", { locale }, "product")}
               className="rounded-md px-2.5 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               {t("nav.product")}
             </Link>
             <Link
-              href={`/${locale}/pricing`}
+              href={ROUTE("/[locale]/pricing", { locale })}
               className="rounded-md px-2.5 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               {t("nav.pricing")}
             </Link>
             <Link
-              href={`/${locale}#customers`}
+              href={ROUTE("/[locale]", { locale }, "customers")}
               className="rounded-md px-2.5 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               {t("nav.customers")}
             </Link>
             <Link
-              href={`/${locale}#faq`}
+              href={ROUTE("/[locale]", { locale }, "faq")}
               className="rounded-md px-2.5 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               {t("nav.faq")}
@@ -112,7 +112,9 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
             </div>
             <ThemeToggle />
             <Button asChild size="sm" className="cursor-pointer">
-              <a href={user ? `/${locale}/home` : `/${locale}/auth`}>{user ? t("cta.dashboard") : t("cta.signin")}</a>
+              <Link href={user ? ROUTE("/[locale]/home", { locale }) : ROUTE("/[locale]/auth", { locale })}>
+                {user ? t("cta.dashboard") : t("cta.signin")}
+              </Link>
             </Button>
           </div>
         </div>
@@ -124,13 +126,13 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
         <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-8 px-6 py-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           <div className="col-span-2 flex max-w-xs flex-col gap-3 lg:col-span-1">
             <Link
-              href={`/${locale}`}
+              href={ROUTE("/[locale]", { locale })}
               aria-label="SaaS Template"
               className="inline-block transition-opacity hover:opacity-80"
             >
               <Logo />
             </Link>
-            <p className="text-[13px] leading-relaxed text-muted-foreground text-pretty">{t("footer.tagline")}</p>
+            <p className="text-sm/normal leading-relaxed text-muted-foreground text-pretty">{t("footer.tagline")}</p>
             <Badge variant="outline" className="mt-1 w-fit gap-1.5 rounded-full font-normal text-muted-foreground">
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               {t("footer.status")}
@@ -138,14 +140,12 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
           </div>
           {footerColumns.map((col) => (
             <nav key={col.title} aria-label={col.title} className="flex min-w-0 flex-col gap-2.5">
-              <span className="text-[11.5px] font-semibold uppercase tracking-[0.06em] text-foreground">
-                {col.title}
-              </span>
+              <span className="text-xs font-semibold uppercase tracking-[0.06em] text-foreground">{col.title}</span>
               <ul className="flex flex-col gap-1.5">
                 {col.links.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href as Route} className="text-[13px] text-muted-foreground hover:text-foreground">
-                      {link.label}
+                    <Link href={link["href"]} className="text-sm/normal text-muted-foreground hover:text-foreground">
+                      {link["label"]}
                     </Link>
                   </li>
                 ))}
@@ -154,7 +154,7 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
           ))}
         </div>
         <div className="border-t border-border">
-          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-1.5 px-6 py-4 text-[11.5px] text-muted-foreground">
+          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-1.5 px-6 py-4 text-xs text-muted-foreground">
             <span>{t("footer.copyright", { year })}</span>
             <span aria-hidden="true" className="hidden opacity-50 sm:inline">
               ·

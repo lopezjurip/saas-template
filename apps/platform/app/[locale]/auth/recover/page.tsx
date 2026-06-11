@@ -1,6 +1,7 @@
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { KeyRound, Mail } from "lucide-react";
 import Link from "next/link";
+import { ROUTE } from "~/lib/route";
 import { AuthBackLink } from "../_components/auth-back-link";
 import { AuthCard } from "../_components/auth-card";
 
@@ -21,7 +22,7 @@ export default async function AuthRecoverPage(props: PageProps<"/[locale]/auth/r
           </span>
           <div>
             <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] text-foreground">¿Perdiste el acceso?</h1>
-            <p className="mt-1 mb-0 text-[13px] leading-normal text-muted-foreground text-pretty">
+            <p className="mt-1 mb-0 text-sm/normal leading-normal text-muted-foreground text-pretty">
               Te enviamos un enlace mágico al correo o teléfono de tu cuenta para que vuelvas a entrar. No necesitas
               recordar ninguna contraseña.
             </p>
@@ -29,7 +30,7 @@ export default async function AuthRecoverPage(props: PageProps<"/[locale]/auth/r
         </div>
 
         <Button asChild className="h-10 w-full">
-          <Link href={`/${locale}/auth`}>
+          <Link href={ROUTE("/[locale]/auth", { locale })}>
             <Mail size={16} />
             <span>Recibir un enlace para entrar</span>
           </Link>

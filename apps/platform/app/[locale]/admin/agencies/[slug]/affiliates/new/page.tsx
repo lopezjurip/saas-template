@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { assertLocale } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
 import { AffiliationInvite } from "./affiliation-invite";
 
 export async function generateMetadata(
@@ -30,7 +31,7 @@ export default async function AdminAgencyAffiliateNewPage(
     <AffiliationInvite
       agencyId={agency.agency_id}
       agencyName={agency.agency_name}
-      agencyHref={`/${locale}/admin/agencies/${agency.agency_slug}`}
+      agencyHref={ROUTE("/[locale]/admin/agencies/[slug]", { locale, slug: agency["agency_slug"] })}
     />
   );
 }

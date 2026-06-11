@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { INITIALS_OF } from "@packages/utils/string";
 import { ChevronRight, ShieldCheck, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -10,6 +11,7 @@ import { notFound } from "next/navigation";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { assertLocale } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
 import { PendingInvitations } from "./pending-invitations";
 
 export async function generateMetadata(
@@ -107,8 +109,6 @@ export default async function MembersAdminPage(
     permissionsByOrganizationMembershipId.set(mp["organization_membership_id"] as number, list);
   }
 
-  const editHrefBase = `/${locale}/t/${tenant_slug}/${organization_id}/settings/members`;
-
   const activeRows = activeOrganizationOrganizationMemberships.map((m) => {
     const organization_membership_id = m["organization_membership_id"] as number;
     const grants = permissionsByOrganizationMembershipId.get(organization_membership_id) ?? [];
@@ -139,7 +139,13 @@ export default async function MembersAdminPage(
           </p>
         </div>
         <Button asChild>
-          <Link href={`${editHrefBase}/new`}>
+          <Link
+            href={ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members/new", {
+              locale,
+              tenant_slug,
+              organization_id,
+            })}
+          >
             <UserPlus className="h-4 w-4" />
             {t("invite_button")}
           </Link>
@@ -151,42 +157,50 @@ export default async function MembersAdminPage(
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
             {t("members_heading")}
           </span>
-          <span className="text-muted-foreground text-[11.5px] tabular-nums">{activeRows.length}</span>
+          <span className="text-muted-foreground text-xs tabular-nums">{activeRows.length}</span>
         </div>
         {activeRows.length === 0 ? (
           <p className="text-muted-foreground px-1 text-[12.5px]">{t("members_empty")}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {activeRows.map((m) => {
-              const name = m.profile_name_full ?? m.email ?? m.profile_id.slice(0, 8);
+              const name = m["profile_name_full"] ?? m["email"] ?? m["profile_id"].slice(0, 8);
               return (
                 <Link
-                  key={m.organization_membership_id}
-                  href={`${editHrefBase}/${m.organization_membership_id}/edit`}
+                  key={m["organization_membership_id"]}
+                  href={ROUTE(
+                    "/[locale]/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit",
+                    {
+                      locale,
+                      tenant_slug,
+                      organization_id,
+                      organization_membership_id: m["organization_membership_id"],
+                    },
+                  )}
                   className="group border-border bg-background hover:bg-accent/60 hover:border-foreground/25 grid grid-cols-[36px_1fr_auto_auto] items-center gap-3 rounded-md border px-3.5 py-3 transition-[background,border-color]"
                 >
                   <MemberAvatar name={name} />
-                  <span className="flex min-w-0 flex-col gap-[2px]">
+                  <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="inline-flex min-w-0 items-center gap-2">
                       <span className="text-foreground truncate text-sm font-medium">{name}</span>
-                      {m.is_self ? (
-                        <span className="bg-foreground text-background shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none tracking-[0.04em]">
+                      {m["is_self"] ? (
+                        <span className="bg-foreground text-background shrink-0 rounded-full px-1.5 py-0.5 text-tiny font-semibold uppercase leading-none tracking-[0.04em]">
                           {t("self")}
                         </span>
                       ) : null}
                     </span>
-                    {m.email && m.email !== name ? (
-                      <span className="text-muted-foreground truncate text-[12.5px]">{m.email}</span>
+                    {m["email"] && m["email"] !== name ? (
+                      <span className="text-muted-foreground truncate text-[12.5px]">{m["email"]}</span>
                     ) : null}
                   </span>
-                  {m.has_wildcard ? (
+                  {m["has_wildcard"] ? (
                     <Badge>{t("full_access_badge")}</Badge>
-                  ) : m.permission_count === 0 ? (
+                  ) : m["permission_count"] === 0 ? (
                     <Badge variant="outline" className="text-muted-foreground">
                       {t("no_permissions")}
                     </Badge>
                   ) : (
-                    <Badge variant="secondary">{t("permissions_count", { count: m.permission_count })}</Badge>
+                    <Badge variant="secondary">{t("permissions_count", { count: m["permission_count"] })}</Badge>
                   )}
                   <span className="text-muted-foreground/70 group-hover:text-foreground shrink-0 transition-colors">
                     <ChevronRight className="h-4 w-4" />
@@ -203,12 +217,14 @@ export default async function MembersAdminPage(
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
             {t("pending_heading")}
           </span>
-          <span className="text-muted-foreground text-[11.5px] tabular-nums">
+          <span className="text-muted-foreground text-xs tabular-nums">
             {pendingOrganizationOrganizationMemberships.length}
           </span>
         </div>
         <PendingInvitations
-          editHrefBase={editHrefBase}
+          locale={locale}
+          tenantSlug={tenant_slug}
+          organizationId={organization_id}
           invitations={pendingOrganizationOrganizationMemberships.map((i) => ({
             organization_membership_id: i["organization_membership_id"] as number,
             invitation_email: i["organization_membership_invite_email"] as string | null,
@@ -225,11 +241,11 @@ export default async function MembersAdminPage(
           }))}
         />
         {pendingOrganizationOrganizationMemberships.length > 0 ? (
-          <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-[11.5px] leading-[1.5]">
+          <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs/normal">
             <span className="text-muted-foreground/80 mt-px shrink-0">
               <ShieldCheck size={13} />
             </span>
-            <span className="[text-wrap:pretty]">{t("pre_accept_note")}</span>
+            <span className="text-pretty">{t("pre_accept_note")}</span>
           </p>
         ) : null}
       </section>
@@ -238,17 +254,9 @@ export default async function MembersAdminPage(
 }
 
 function MemberAvatar({ name }: { name: string }) {
-  const initials =
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase() || "?";
   return (
     <span className="bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-full text-[12.5px] font-semibold tracking-[-0.01em]">
-      {initials}
+      {INITIALS_OF(name)}
     </span>
   );
 }

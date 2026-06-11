@@ -20,20 +20,20 @@ export default async function ConnectionsPage(props: PageProps<"/[locale]/home/a
   const linkedIds = new Set(identities.map((i) => i["provider"]));
 
   return (
-    <div className="flex max-w-[720px] flex-col gap-[18px]">
+    <div className="flex max-w-[720px] flex-col gap-4.5">
       <header className="flex flex-col gap-1">
         <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           Cuenta · Conexiones
         </span>
         <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">Cuentas vinculadas</h1>
-        <p className="text-pretty text-[13px] leading-normal text-muted-foreground">
+        <p className="text-pretty text-sm/normal leading-normal text-muted-foreground">
           Vincula proveedores externos para iniciar sesión con un clic. Vincular un proveedor también agrega su correo
           como identificador verificado.
         </p>
       </header>
 
       {error && (
-        <div className="rounded-md border border-dashed bg-muted/25 p-3.5 text-center text-[13px] text-muted-foreground">
+        <div className="rounded-md border border-dashed bg-muted/25 p-3.5 text-center text-sm/normal text-muted-foreground">
           {error}
         </div>
       )}
@@ -57,7 +57,7 @@ export default async function ConnectionsPage(props: PageProps<"/[locale]/home/a
                 <span className="inline-flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
                   <span>{p.label}</span>
                   {isLinked && (
-                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.02em] text-emerald-600">
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-tiny font-semibold uppercase tracking-[0.02em] text-emerald-600">
                       Vinculada
                     </span>
                   )}

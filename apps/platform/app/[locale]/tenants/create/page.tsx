@@ -3,6 +3,7 @@ import { Building2 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getRosetta } from "~/hooks/get-rosetta";
+import { ROUTE } from "~/lib/route";
 import { CreateTenantForm } from "./create-form";
 
 export async function generateMetadata(props: PageProps<"/[locale]/tenants/create">): Promise<Metadata> {
@@ -20,7 +21,7 @@ export default async function CreateTenantPage(props: PageProps<"/[locale]/tenan
       }}
     >
       <Link
-        href={`/${locale}/home`}
+        href={ROUTE("/[locale]/home", { locale })}
         aria-label="Inicio"
         className="absolute left-6 top-5 transition-opacity hover:opacity-80"
       >
@@ -32,8 +33,8 @@ export default async function CreateTenantPage(props: PageProps<"/[locale]/tenan
           <span className="inline-flex size-11 items-center justify-center rounded-xl bg-muted text-foreground">
             <Building2 size={20} strokeWidth={2.25} />
           </span>
-          <h1 className="m-0 mt-1 text-[20px] font-semibold tracking-[-0.01em] text-foreground">{t("heading")}</h1>
-          <p className="m-0 text-[13px] leading-normal text-muted-foreground text-pretty">{t("subtitle")}</p>
+          <h1 className="m-0 mt-1 text-xl/normal font-semibold tracking-[-0.01em] text-foreground">{t("heading")}</h1>
+          <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{t("subtitle")}</p>
         </div>
         <CreateTenantForm />
       </div>

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { isOAuthProvider, OAUTH_PROVIDER_IDS } from "~/app/[locale]/auth/providers";
 import { debug } from "~/lib/debug";
 import { getServerLocale } from "~/lib/i18n.server";
+import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 import { authedAction, formAction } from "~/lib/safe-action.server";
 
 const log = debug("account");
@@ -126,7 +127,7 @@ const linkProviderRun = authedAction
       log.error("linkIdentity failed", { profile_id: user.id, provider, error });
       redirect(`/[locale]/home/account/connections?error=${encodeURIComponent(error?.message ?? "link_failed")}`);
     }
-    redirect(data.url);
+    redirect(ROUTE_HREF(UNSAFE_ROUTE(data["url"])));
   });
 
 export const actionLinkProvider = formAction(linkProviderRun, (fd) => {

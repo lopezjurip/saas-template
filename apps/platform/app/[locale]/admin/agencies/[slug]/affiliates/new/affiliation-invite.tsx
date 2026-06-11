@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { actionInviteAffiliate } from "~/app/[locale]/a/[agency_slug]/actions";
 import { useRosetta } from "~/hooks/use-rosetta";
+import type { AppRoute } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 
 type Stage = "form" | "sent";
@@ -20,7 +21,7 @@ export function AffiliationInvite({
 }: {
   agencyId: string;
   agencyName: string;
-  agencyHref: string;
+  agencyHref: AppRoute;
 }) {
   const { t } = useRosetta(LOCALES);
   const [stage, setStage] = useState<Stage>("form");
@@ -49,7 +50,7 @@ export function AffiliationInvite({
         return;
       }
       if (error) return;
-      setSentTo(data.email);
+      setSentTo(data["email"]);
       setStage("sent");
     });
   }

@@ -3,6 +3,7 @@
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@packages/ui-common/shadcn/components/ui/tabs";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { INITIALS_OF } from "@packages/utils/string";
 import {
   BadgeCheck,
   Ban,
@@ -21,7 +22,8 @@ import {
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
-import { type AffiliationState, INITIALS_OF } from "~/lib/agencies";
+import type { AffiliationState } from "~/lib/agencies";
+import type { AppRoute } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionUpdateAffiliateMembership } from "./actions";
 
@@ -52,7 +54,7 @@ export type ConsoleData = {
 
 type ConsoleTab = "team" | "access" | "profile";
 
-export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteHref: string }) {
+export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteHref: AppRoute }) {
   const { t } = useRosetta(LOCALES);
   const [tab, setTab] = useState<ConsoleTab>("team");
 
@@ -75,12 +77,12 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
             <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
               <span>{t("topbar_console")}</span>
               <span className="opacity-40">·</span>
-              <code className="font-mono text-[10.5px]">{data.agency_slug}</code>
+              <code className="font-mono text-tiny">{data.agency_slug}</code>
             </span>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-3">
-          <span className="border-border text-muted-foreground bg-muted/50 hidden items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-[10.5px] font-medium leading-none tracking-[0.02em] @min-[768px]:flex">
+          <span className="border-border text-muted-foreground bg-muted/50 hidden items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-tiny font-medium leading-none tracking-[0.02em] @min-[768px]:flex">
             <ShieldCheck size={11} /> {t("topbar_affiliate")}
           </span>
           <div className="flex min-w-0 items-center gap-2">
@@ -94,7 +96,7 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
                 </span>
               ) : null}
             </span>
-            <span className="bg-muted text-foreground inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[11.5px] font-semibold">
+            <span className="bg-muted text-foreground inline-flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
               {INITIALS_OF(owner?.name ?? "?")}
             </span>
           </div>
@@ -171,12 +173,12 @@ function ConsoleTabTrigger({
   return (
     <TabsTrigger
       value={value}
-      className="group/trigger text-muted-foreground data-[state=active]:text-foreground h-auto flex-none gap-1.5 px-2.5 py-2.5 text-[13px]"
+      className="group/trigger text-muted-foreground data-[state=active]:text-foreground h-auto flex-none gap-1.5 px-2.5 py-2.5 text-sm/normal"
     >
       <Icon size={15} />
       {label}
       {count != null ? (
-        <span className="bg-muted text-muted-foreground group-data-[state=active]/trigger:bg-foreground group-data-[state=active]/trigger:text-background inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10.5px] font-semibold leading-none tabular-nums">
+        <span className="bg-muted text-muted-foreground group-data-[state=active]/trigger:bg-foreground group-data-[state=active]/trigger:text-background inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-tiny font-semibold leading-none tabular-nums">
           {count}
         </span>
       ) : null}
@@ -203,7 +205,7 @@ function ConsoleStatStrip({ data, active, t }: { data: ConsoleData; active: numb
     <div className="grid grid-cols-3 gap-2.5">
       {stats.map((s) => (
         <div key={s.label} className="border-border bg-background flex flex-col gap-0.5 rounded-lg border px-3.5 py-3">
-          <span className="text-muted-foreground truncate text-[10.5px] font-semibold uppercase tracking-[0.04em]">
+          <span className="text-muted-foreground truncate text-tiny font-semibold uppercase tracking-[0.04em]">
             {s.label}
           </span>
           <span className="text-foreground text-[19px] font-semibold leading-tight tracking-[-0.02em] tabular-nums">
@@ -226,7 +228,7 @@ function ConsoleTeamTab({
 }: {
   data: ConsoleData;
   active: number;
-  inviteHref: string;
+  inviteHref: AppRoute;
   t: Translate;
 }) {
   if (data.affiliates.length === 0) {
@@ -254,7 +256,7 @@ function ConsoleTeamTab({
         <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
           {t("team_group")}
         </span>
-        <span className="text-muted-foreground text-[11.5px] tabular-nums">
+        <span className="text-muted-foreground text-xs tabular-nums">
           {t("team_count", { active, total: data.affiliates.length })}
         </span>
       </div>
@@ -263,7 +265,7 @@ function ConsoleTeamTab({
           <ConsoleAffiliateRow key={aff.agency_membership_id} agencyId={data.agency_id} aff={aff} t={t} />
         ))}
       </div>
-      <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-[11.5px] leading-[1.5]">
+      <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-[1.5]">
         <span className="text-muted-foreground/80 mt-px shrink-0">
           <ShieldCheck size={13} />
         </span>
@@ -336,7 +338,7 @@ function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: string; aff: Cons
             {aff.name}
           </span>
           {aff.is_self ? (
-            <span className="bg-foreground text-background shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none tracking-[0.04em]">
+            <span className="bg-foreground text-background shrink-0 rounded-full px-1.5 py-0.5 text-tiny font-semibold uppercase leading-none tracking-[0.04em]">
               {t("self")}
             </span>
           ) : null}
@@ -366,7 +368,7 @@ function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: string; aff: Cons
           <action.icon size={13.5} /> <span className="hidden @min-[768px]:inline">{action.label}</span>
         </button>
       ) : (
-        <span className="text-muted-foreground/70 hidden shrink-0 pr-1 text-[11.5px] italic @min-[768px]:inline">
+        <span className="text-muted-foreground/70 hidden shrink-0 pr-1 text-xs italic @min-[768px]:inline">
           {aff.state === "rejected" ? t("action_declined") : ""}
         </span>
       )}
@@ -398,7 +400,7 @@ function ConsoleAccessTab({ global, orgs, t }: { global: boolean; orgs: ConsoleO
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-foreground text-[13.5px] font-semibold">{t("access_global_title")}</span>
-                <span className="text-muted-foreground/80 font-mono text-[10.5px]">org = NULL</span>
+                <span className="text-muted-foreground/80 font-mono text-tiny">org = NULL</span>
               </div>
               <span className="text-muted-foreground text-[12px] leading-[1.45] [text-wrap:pretty]">
                 {t("access_global_desc")}
@@ -425,7 +427,7 @@ function ConsoleAccessTab({ global, orgs, t }: { global: boolean; orgs: ConsoleO
             <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
               {t("access_group")}
             </span>
-            <span className="text-muted-foreground text-[11.5px] tabular-nums">{orgs.length}</span>
+            <span className="text-muted-foreground text-xs tabular-nums">{orgs.length}</span>
           </div>
           <div className="flex flex-col gap-2">
             {orgs.map((org) => (
@@ -451,7 +453,7 @@ function ConsoleAccessCard({ org, accessLabel }: { org: ConsoleOrg; accessLabel:
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-foreground text-[13.5px] font-medium">{org.organization_name}</span>
           {org.organization_slug ? (
-            <code className="text-muted-foreground/80 font-mono text-[10.5px]">{org.organization_slug}</code>
+            <code className="text-muted-foreground/80 font-mono text-tiny">{org.organization_slug}</code>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -483,11 +485,13 @@ function ConsoleProfileTab({ data, t }: { data: ConsoleData; t: Translate }) {
             style={{ gridTemplateColumns: "1fr auto" }}
           >
             <span className="text-muted-foreground text-[12px] font-medium">{row.label}</span>
-            <span className={cn("text-foreground text-[13px]", row.mono && "font-mono text-[12px]")}>{row.value}</span>
+            <span className={cn("text-foreground text-sm/normal", row.mono && "font-mono text-[12px]")}>
+              {row.value}
+            </span>
           </div>
         ))}
       </div>
-      <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-[11.5px] leading-[1.5]">
+      <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-[1.5]">
         <span className="text-muted-foreground/80 mt-px shrink-0">
           <Eye size={13} />
         </span>
@@ -512,7 +516,7 @@ function AgencyTile({ size = 40 }: { size?: number }) {
 
 function AffiliationBadge({ state, label }: { state: AffiliationState; label: string }) {
   const base =
-    "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-medium leading-[1.2] tracking-[0.01em]";
+    "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-tiny font-medium leading-[1.2] tracking-[0.01em]";
   if (state === "accepted") {
     return (
       <span
@@ -566,6 +570,7 @@ function AccessPill({ global, label }: { global: boolean; label: string }) {
   );
 }
 
+// TODO: NEVER PASS DICT TRANSLATIONS AS PROPS OR ARGUMENTS.
 function CONSOLE_HEAD(t: Translate): Record<ConsoleTab, { title: string; desc: string }> {
   return {
     team: { title: t("team_title"), desc: t("team_desc") },

@@ -1,5 +1,7 @@
 import { Logo } from "@packages/ui-common/logo";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import Link from "next/link";
+import { ROUTE } from "~/lib/route";
 
 /**
  * Brand header for the auth card. `full` (default) shows brand + welcome title + tagline
@@ -9,7 +11,9 @@ export function AuthHeader({ small = false }: { small?: boolean }) {
   if (small) {
     return (
       <div className="flex justify-center">
-        <Logo />
+        <Link href={ROUTE("/[locale]", { locale: "_" })} aria-label="Inicio">
+          <Logo />
+        </Link>
       </div>
     );
   }
@@ -19,7 +23,7 @@ export function AuthHeader({ small = false }: { small?: boolean }) {
       <Logo className="text-lg" />
       <div>
         <h1 className={cn("m-0 text-[22px] font-semibold tracking-[-0.02em]")}>Bienvenido a SaaS Template</h1>
-        <p className="mt-1 mb-0 text-[13px] text-muted-foreground">La forma simple de gestionar a tu equipo</p>
+        <p className="mt-1 mb-0 text-sm/normal text-muted-foreground">La forma simple de gestionar a tu equipo</p>
       </div>
     </div>
   );

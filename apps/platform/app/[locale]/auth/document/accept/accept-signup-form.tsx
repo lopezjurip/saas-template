@@ -122,7 +122,7 @@ export function AcceptSignupForm({ token }: { token: string }) {
             }}
             data-active={channel === c}
             className={cn(
-              "h-8 rounded text-[13px] font-medium text-muted-foreground transition-colors",
+              "h-8 rounded text-sm/normal font-medium text-muted-foreground transition-colors",
               "data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm",
             )}
           >

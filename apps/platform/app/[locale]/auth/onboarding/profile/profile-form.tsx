@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -13,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { gql } from "~/generated/graphql";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
 const schema = z.object({
   profile_name_full: z.string().min(2, "Ingresa tu nombre completo").max(256),
@@ -31,18 +33,6 @@ const OnboardingProfileFormUpdateNameMutation = /*#__PURE__*/ gql(`
     }
   }
 `);
-
-function INITIALS_OF(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((s) => s[0])
-      .join("")
-      .toUpperCase() || "?"
-  );
-}
 
 export function ProfileForm({
   profile_id,
@@ -70,14 +60,14 @@ export function ProfileForm({
         setServerError("No pudimos guardar tu nombre.");
         return;
       }
-      router.push(`/${locale}/auth/onboarding`);
+      router.push(ROUTE_HREF(ROUTE("/[locale]/auth/onboarding", { locale })));
     });
   });
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div className="flex items-center gap-4">
-        <div className="inline-flex size-[88px] shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted text-[30px] font-semibold tracking-[-0.02em] text-muted-foreground">
+        <div className="inline-flex size-22 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted text-[30px] font-semibold tracking-[-0.02em] text-muted-foreground">
           {INITIALS_OF(name)}
         </div>
         <div className="flex flex-col items-start gap-1.5">
@@ -89,7 +79,7 @@ export function ProfileForm({
           </Button>
         </div>
       </div>
-      <p className="text-[11.5px] leading-snug text-muted-foreground">
+      <p className="text-xs leading-snug text-muted-foreground">
         Próximamente — por ahora usamos tus iniciales como avatar.
       </p>
 

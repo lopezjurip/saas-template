@@ -444,7 +444,7 @@ export function PricingClient() {
             <TabsTrigger value="monthly">{t("billing.monthly")}</TabsTrigger>
             <TabsTrigger value="yearly" className="gap-2">
               {t("billing.yearly")}
-              <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+              <Badge variant="secondary" className="h-4 px-1.5 text-tiny">
                 {t("billing.save")}
               </Badge>
             </TabsTrigger>

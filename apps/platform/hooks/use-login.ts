@@ -4,6 +4,7 @@ import { createBrowserClient } from "@packages/supabase/client.browser";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { LoginValues, MagicLinkValues, VerifyMagicOtpValues } from "~/app/[locale]/auth/email/schemas";
+import { ROUTE, ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 
 function SAFE_NEXT(next: string | undefined, locale: string): string {
   if (!next || !next.startsWith("/")) return `/${locale}/home`;
@@ -28,7 +29,7 @@ export function useLoginPassword(locale: string, next?: string) {
         return { serverError: "Correo o contraseña incorrectos" };
       }
 
-      router.push(SAFE_NEXT(next, locale));
+      router.push(ROUTE_HREF(UNSAFE_ROUTE(SAFE_NEXT(next, locale))));
       return { serverError: null };
     } catch (e) {
       const msg = "Error en login";
@@ -107,8 +108,10 @@ export function useVerifyMagicOtp(locale: string, next?: string) {
         return { serverError: "Código incorrecto o expirado" };
       }
 
-      const target = input.isNewUser ? `/${locale}/auth/onboarding` : SAFE_NEXT(next, locale);
-      router.push(target);
+      const target = input.isNewUser
+        ? ROUTE("/[locale]/auth/onboarding", { locale })
+        : UNSAFE_ROUTE(SAFE_NEXT(next, locale));
+      router.push(ROUTE_HREF(target));
       return { serverError: null };
     } catch (e) {
       const msg = "Error verificando código";
