@@ -63,10 +63,7 @@ type ViewerAgenciesUseVars = VariablesOf<typeof ViewerAgenciesUse>;
 type ViewerAgencyByIdUseData = ResultOf<typeof ViewerAgencyByIdUse>;
 type ViewerAgencyBySlugUseData = ResultOf<typeof ViewerAgencyBySlugUse>;
 
-export function useViewerAgencies(
-  options?: ViewerAgenciesUseVars,
-  config?: SWRConfiguration<ViewerAgenciesUseData>,
-) {
+export function useViewerAgencies(options?: ViewerAgenciesUseVars, config?: SWRConfiguration<ViewerAgenciesUseData>) {
   const { data: user } = useSupabaseUser();
   return useGraphyQuery(user ? { query: ViewerAgenciesUse, variables: options ?? {} } : null, config);
 }
