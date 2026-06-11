@@ -102,10 +102,10 @@ export function DashboardOverview({
           <div className="text-muted-foreground mb-1.5 text-[11px] font-semibold uppercase tracking-[0.09em]">
             {organizationName}
           </div>
-          <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.025em] @min-[900px]:text-[27px]">
+          <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-tight @min-[900px]:text-[27px]">
             {t("heading")}
           </h1>
-          <p className="text-muted-foreground m-0 mt-1 text-[13.5px] [text-wrap:pretty]">{t("subtitle")}</p>
+          <p className="text-muted-foreground m-0 mt-1 text-[13.5px] text-pretty">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden @min-[760px]:block">
@@ -143,7 +143,7 @@ export function DashboardOverview({
             {ACTIVITY.map((item) => (
               <li key={`${item.who}-${item.verb}`} className="flex items-center gap-3 px-4 py-3">
                 <InitialsAvatar initials={item.initials} tone={item.tone} size={32} />
-                <p className="text-muted-foreground m-0 min-w-0 flex-1 text-sm/normal leading-snug [text-wrap:pretty]">
+                <p className="text-muted-foreground m-0 min-w-0 flex-1 text-sm/normal leading-snug text-pretty">
                   <strong className="text-foreground font-semibold">{item.who}</strong> {t(`verb_${item.verb}`)}
                   {item.target ? <span className="text-foreground font-medium"> {item.target}</span> : null}
                 </p>

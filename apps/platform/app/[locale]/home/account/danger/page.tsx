@@ -21,7 +21,7 @@ export default function DangerPage() {
         </p>
       </header>
 
-      <div className="flex flex-col gap-3.5 rounded-xl border border-destructive/50 bg-destructive/[0.04] px-5 py-4 dark:border-[hsl(0_70%_50%/0.45)] dark:bg-[hsl(0_70%_30%/0.1)]">
+      <div className="flex flex-col gap-3.5 rounded-xl border border-destructive/50 bg-destructive/4 px-5 py-4 dark:border-[hsl(0_70%_50%/0.45)] dark:bg-[hsl(0_70%_30%/0.1)]">
         <div className="flex flex-col gap-1">
           <span className="text-sm font-semibold text-destructive dark:text-[hsl(0_70%_70%)]">
             Esto no se puede deshacer.

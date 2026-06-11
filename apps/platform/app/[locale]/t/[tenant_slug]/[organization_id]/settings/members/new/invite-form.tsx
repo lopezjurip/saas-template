@@ -101,13 +101,13 @@ export function InviteMemberForm({ organization_id, countries, membersHref, loca
   if (documentResult) {
     return (
       <div className="flex flex-col gap-4">
-        <div className="flex items-start gap-3 rounded-xl border border-emerald-600/30 bg-emerald-500/[0.06] p-4">
+        <div className="flex items-start gap-3 rounded-xl border border-emerald-600/30 bg-emerald-500/6 p-4">
           <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
             <Check size={18} strokeWidth={2.25} />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
             <strong className="text-foreground text-[13.5px] font-semibold">{t("created_title")}</strong>
-            <span className="text-muted-foreground text-[12.5px] leading-[1.5] [text-wrap:pretty]">
+            <span className="text-muted-foreground text-[12.5px] leading-normal text-pretty">
               {t("created_desc")}
             </span>
           </div>
@@ -139,7 +139,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, loca
           <span className="mt-px shrink-0 text-amber-600 dark:text-amber-400">
             <MessageCircle size={14} />
           </span>
-          <span className="text-[12px] leading-[1.5] text-amber-800 [text-wrap:pretty] dark:text-amber-200">
+          <span className="text-[12px] leading-normal text-amber-800 text-pretty dark:text-amber-200">
             {t("share_warning")}
           </span>
         </div>

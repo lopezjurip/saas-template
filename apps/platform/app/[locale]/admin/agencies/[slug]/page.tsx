@@ -140,11 +140,11 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
             ))}
           </div>
         )}
-        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-[1.5]">
+        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-normal">
           <span className="text-muted-foreground/80 mt-px shrink-0">
             <ShieldCheck size={13} />
           </span>
-          <span className="[text-wrap:pretty]">{t("affiliates_note")}</span>
+          <span className="text-pretty">{t("affiliates_note")}</span>
         </p>
       </section>
 
@@ -220,7 +220,7 @@ function AffiliationBadge({ state, label }: { state: AffiliationState; label: st
   }
   if (state === "rejected") {
     return (
-      <span className={cn(base, "border-destructive/35 text-destructive bg-destructive/[0.06] border")}>
+      <span className={cn(base, "border-destructive/35 text-destructive bg-destructive/6 border")}>
         <X size={10} strokeWidth={2.5} /> {label}
       </span>
     );
@@ -265,7 +265,7 @@ function AffiliateRow({
       >
         {INITIALS_OF(name)}
       </span>
-      <span className="flex min-w-0 flex-col gap-[1px]">
+      <span className="flex min-w-0 flex-col gap-px">
         <span
           className={cn(
             "overflow-hidden text-ellipsis whitespace-nowrap text-[13.5px] font-medium",
@@ -287,7 +287,7 @@ function AffiliateRow({
 
 function GlobalGrantCard({ title, desc, accessLabel }: { title: string; desc: string; accessLabel: string }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-emerald-600/30 bg-emerald-500/[0.06] px-3.5 py-3">
+    <div className="flex items-start gap-3 rounded-lg border border-emerald-600/30 bg-emerald-500/6 px-3.5 py-3">
       <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
         <Globe size={17} />
       </span>
@@ -296,7 +296,7 @@ function GlobalGrantCard({ title, desc, accessLabel }: { title: string; desc: st
           <span className="text-foreground text-[13.5px] font-semibold">{title}</span>
           <span className="text-muted-foreground/80 font-mono text-tiny">org = NULL</span>
         </div>
-        <span className="text-muted-foreground text-[12px] leading-[1.45] [text-wrap:pretty]">{desc}</span>
+        <span className="text-muted-foreground text-[12px] leading-[1.45] text-pretty">{desc}</span>
         <div className="mt-0.5">
           <AccessPill global label={accessLabel} />
         </div>

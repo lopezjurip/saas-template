@@ -58,7 +58,7 @@ export function MobileBottomTabs({
   ];
 
   return (
-    <div className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/85 relative shrink-0 border-t backdrop-blur md:hidden">
+    <div className="border-border bg-background/95 supports-backdrop-filter:bg-background/85 relative shrink-0 border-t backdrop-blur md:hidden">
       <div className="flex h-14 items-stretch px-1 pb-safe">
         {tabs.map((tab) => (
           <button

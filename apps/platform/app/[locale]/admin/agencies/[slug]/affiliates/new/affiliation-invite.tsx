@@ -67,7 +67,7 @@ export function AffiliationInvite({
             {t("eyebrow", { agency: agencyName })}
           </span>
           <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-          <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+          <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
             {t("subtitle", { agency: agencyName })}
           </p>
         </header>
@@ -98,14 +98,14 @@ export function AffiliationInvite({
                   className="pl-9"
                 />
               </div>
-              <p className="text-muted-foreground text-xs leading-[1.5]">{t("email_hint")}</p>
+              <p className="text-muted-foreground text-xs leading-normal">{t("email_hint")}</p>
             </div>
 
             <div className="border-border bg-muted/40 flex items-start gap-2.5 rounded-md border px-3.5 py-3">
               <span className="text-muted-foreground mt-px shrink-0">
                 <Eye size={15} />
               </span>
-              <span className="text-muted-foreground text-[12px] leading-[1.5] [text-wrap:pretty]">
+              <span className="text-muted-foreground text-[12px] leading-normal text-pretty">
                 {t("read_only_note", { agency: agencyName })}
               </span>
             </div>
@@ -122,7 +122,7 @@ export function AffiliationInvite({
               </span>
               <div className="flex flex-col gap-1">
                 <span className="text-foreground text-[15px] font-semibold tracking-[-0.01em]">{t("sent_title")}</span>
-                <span className="text-muted-foreground text-[12.5px] leading-[1.5] [text-wrap:pretty]">
+                <span className="text-muted-foreground text-[12.5px] leading-normal text-pretty">
                   {t("sent_desc_prefix")} <strong className="text-foreground font-medium">{sentTo}</strong>.{" "}
                   {t("sent_desc_suffix")}
                 </span>

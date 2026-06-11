@@ -44,10 +44,10 @@ export function SystemMessage({ kind = "notFound", reset }: { kind?: SystemKind;
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-foreground m-0 text-[21px] font-semibold tracking-[-0.02em] [text-wrap:balance]">
+          <h1 className="text-foreground m-0 text-[21px] font-semibold tracking-[-0.02em] text-balance">
             {copy.title}
           </h1>
-          <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] [text-wrap:pretty]">{copy.desc}</p>
+          <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] text-pretty">{copy.desc}</p>
         </div>
 
         <div className="flex items-center gap-2">

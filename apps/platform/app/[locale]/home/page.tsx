@@ -105,7 +105,7 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                 <Link
                   key={organization["organization_id"]}
                   href={ROUTE("/[locale]/t/[tenant_slug]", { locale, tenant_slug })}
-                  className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:-translate-y-[3px] hover:bg-muted/50"
+                  className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
                 >
                   <span
                     className="inline-flex size-28 items-center justify-center rounded-[18px] border text-4xl font-semibold tracking-[-0.02em] transition-shadow duration-150 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)]"
@@ -124,7 +124,7 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
             })}
             <Link
               href={ROUTE("/[locale]/tenants/create", { locale })}
-              className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:-translate-y-[3px] hover:bg-muted/50"
+              className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
             >
               <span className="inline-flex size-28 items-center justify-center rounded-[18px] border border-dashed bg-background text-muted-foreground transition-colors duration-150 group-hover:bg-muted/40 group-hover:text-foreground">
                 <Plus size={36} />

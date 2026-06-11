@@ -75,7 +75,7 @@ export function AgencyCreate({ locale }: { locale: string }) {
             {t("eyebrow")}
           </span>
           <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-          <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+          <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
             {t("subtitle")}
           </p>
         </header>
@@ -123,14 +123,14 @@ export function AgencyCreate({ locale }: { locale: string }) {
                   className="text-foreground placeholder:text-muted-foreground h-10 min-w-0 flex-1 bg-transparent px-2.5 font-mono text-sm outline-none"
                 />
               </div>
-              <p className="text-muted-foreground text-xs leading-[1.5]">{t("slug_hint")}</p>
+              <p className="text-muted-foreground text-xs leading-normal">{t("slug_hint")}</p>
             </div>
 
             <div className="border-border bg-muted/40 flex items-start gap-2.5 rounded-md border px-3.5 py-3">
               <span className="text-muted-foreground mt-px shrink-0">
                 <Eye size={15} />
               </span>
-              <span className="text-muted-foreground text-[12px] leading-[1.5] [text-wrap:pretty]">
+              <span className="text-muted-foreground text-[12px] leading-normal text-pretty">
                 {t("read_only_prefix")} <strong className="text-foreground font-medium">{t("read_only_strong")}</strong>{" "}
                 {t("read_only_suffix")}
               </span>
@@ -150,7 +150,7 @@ export function AgencyCreate({ locale }: { locale: string }) {
                 <span className="text-foreground text-[15px] font-semibold tracking-[-0.01em]">
                   {t("created_title")}
                 </span>
-                <span className="text-muted-foreground max-w-[44ch] text-[12.5px] leading-[1.5] [text-wrap:pretty]">
+                <span className="text-muted-foreground max-w-[44ch] text-[12.5px] leading-normal text-pretty">
                   <strong className="text-foreground font-medium">{name || t("created_fallback")}</strong>{" "}
                   {t("created_desc")}
                 </span>

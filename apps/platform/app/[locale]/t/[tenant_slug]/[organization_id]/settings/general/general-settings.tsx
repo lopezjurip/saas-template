@@ -40,7 +40,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
           {organizationName} · {t("eyebrow")}
         </span>
         <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
           {t("subtitle")}
         </p>
       </header>
@@ -71,7 +71,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
             </span>
             <Input id="org-slug" defaultValue={slug} className="pl-[104px]" />
           </div>
-          <p className="text-muted-foreground text-xs leading-[1.5]">{t("slug_hint")}</p>
+          <p className="text-muted-foreground text-xs leading-normal">{t("slug_hint")}</p>
         </div>
       </section>
 
@@ -138,7 +138,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
           <div className="border-border grid grid-cols-[1fr_auto] items-start gap-3.5 border-b px-4 py-3.5">
             <div className="flex min-w-0 flex-col gap-[3px]">
               <span className="text-foreground text-[13.5px] font-medium">{t("auto_join_title")}</span>
-              <span className="text-muted-foreground text-xs leading-[1.45] [text-wrap:pretty]">
+              <span className="text-muted-foreground text-xs leading-[1.45] text-pretty">
                 {t("auto_join_desc")}
               </span>
             </div>
@@ -147,7 +147,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
           <div className="grid grid-cols-[1fr_260px] items-center gap-3.5 px-4 py-3.5">
             <div className="flex min-w-0 flex-col gap-[3px]">
               <span className="text-foreground text-[13.5px] font-medium">{t("default_access_title")}</span>
-              <span className="text-muted-foreground text-xs leading-[1.45] [text-wrap:pretty]">
+              <span className="text-muted-foreground text-xs leading-[1.45] text-pretty">
                 {t("default_access_desc")}
               </span>
             </div>
@@ -188,7 +188,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
               variant="outline"
               size="sm"
               onClick={() => setDeleteOpen((open) => !open)}
-              className="border-destructive/45 text-destructive hover:bg-destructive/[0.06]"
+              className="border-destructive/45 text-destructive hover:bg-destructive/6"
             >
               <Trash2 size={14} /> {t("delete_action")}
             </Button>
@@ -196,12 +196,12 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
         </div>
 
         {deleteOpen ? (
-          <div className="border-destructive/45 bg-destructive/[0.04] flex flex-col gap-3 rounded-xl border px-4 py-3.5">
+          <div className="border-destructive/45 bg-destructive/4 flex flex-col gap-3 rounded-xl border px-4 py-3.5">
             <div className="flex flex-col gap-0.5">
               <strong className="text-destructive text-sm/normal font-semibold">
                 {t("delete_confirm_title", { name: organizationName })}
               </strong>
-              <span className="text-muted-foreground text-[12px] leading-[1.5] [text-wrap:pretty]">
+              <span className="text-muted-foreground text-[12px] leading-normal text-pretty">
                 {t("delete_confirm_desc", { slug })}
               </span>
             </div>

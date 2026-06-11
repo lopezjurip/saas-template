@@ -61,7 +61,7 @@ export function AccountMobileNav({ locale }: { locale: string }) {
   const pathname = usePathname();
   const active = ACTIVE_SECTION(pathname);
   return (
-    <div className="flex gap-1 overflow-x-auto border-b px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex gap-1 overflow-x-auto border-b px-3 py-2 scrollbar-none [&::-webkit-scrollbar]:hidden">
       {ACCOUNT_SECTIONS.map((s) => (
         <Link
           key={s.id}

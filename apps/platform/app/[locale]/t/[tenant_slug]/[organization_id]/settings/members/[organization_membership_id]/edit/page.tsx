@@ -187,7 +187,7 @@ export default async function OrganizationMembershipEditPage(
             <span className="text-muted-foreground mt-px shrink-0">
               <ShieldCheck size={14} />
             </span>
-            <span className="text-muted-foreground text-[12px] leading-[1.5] [text-wrap:pretty]">
+            <span className="text-muted-foreground text-[12px] leading-normal text-pretty">
               {t("pending_note")}
             </span>
           </div>

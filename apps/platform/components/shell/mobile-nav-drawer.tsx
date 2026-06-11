@@ -75,7 +75,7 @@ export function MobileNavDrawer({
       <Scrim show={open} onClick={onClose} />
       <aside
         aria-hidden={!open}
-        className="border-border bg-muted/30 absolute inset-y-0 left-0 z-[70] flex w-[78%] flex-col border-r"
+        className="border-border bg-muted/30 absolute inset-y-0 left-0 z-70 flex w-[78%] flex-col border-r"
         style={{
           transform: open ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 280ms cubic-bezier(0.32, 0.72, 0, 1)",

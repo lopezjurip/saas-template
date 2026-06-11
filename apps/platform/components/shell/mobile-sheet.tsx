@@ -11,7 +11,7 @@ export function Scrim({ show, onClick, blur = false }: { show: boolean; onClick:
       aria-hidden="true"
       onClick={onClick}
       className={cn(
-        "bg-foreground/40 absolute inset-0 z-[60] transition-opacity duration-200",
+        "bg-foreground/40 absolute inset-0 z-60 transition-opacity duration-200",
         blur ? "backdrop-blur-[2px]" : "",
         show ? "opacity-100" : "pointer-events-none opacity-0",
       )}
@@ -48,7 +48,7 @@ export function Sheet({
         role="dialog"
         aria-modal="true"
         aria-hidden={!open}
-        className="border-border bg-card text-card-foreground shadow-foreground/20 absolute inset-x-0 bottom-0 z-[70] flex flex-col rounded-t-2xl border border-b-0 shadow-2xl"
+        className="border-border bg-card text-card-foreground shadow-foreground/20 absolute inset-x-0 bottom-0 z-70 flex flex-col rounded-t-2xl border border-b-0 shadow-2xl"
         style={{
           transform: open ? "translateY(0)" : "translateY(100%)",
           transition: "transform 280ms cubic-bezier(0.32, 0.72, 0, 1)",

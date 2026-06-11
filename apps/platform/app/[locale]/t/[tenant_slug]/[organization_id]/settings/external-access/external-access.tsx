@@ -63,7 +63,7 @@ export function ExternalAccess({
           {organizationName} · {t("eyebrow")}
         </span>
         <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
           {t("subtitle", { org: organizationName })}
         </p>
       </header>
@@ -115,7 +115,7 @@ export function ExternalAccess({
             </span>
             <div className="flex max-w-[42ch] flex-col gap-1">
               <span className="text-foreground text-sm font-semibold">{t("none_title")}</span>
-              <span className="text-[12.5px] leading-[1.5] [text-wrap:pretty]">
+              <span className="text-[12.5px] leading-normal text-pretty">
                 {t("none_desc", { org: organizationName })}
               </span>
             </div>
@@ -133,11 +133,11 @@ export function ExternalAccess({
             ))}
           </div>
         )}
-        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-[1.5]">
+        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-normal">
           <span className="text-muted-foreground/80 mt-px shrink-0">
             <Eye size={13} />
           </span>
-          <span className="[text-wrap:pretty]">{t("read_only_note")}</span>
+          <span className="text-pretty">{t("read_only_note")}</span>
         </p>
       </section>
     </div>
@@ -200,7 +200,7 @@ function AgencyAccessCard({
             size="sm"
             disabled={pending}
             onClick={revoke}
-            className="text-destructive hover:bg-destructive/[0.06] hover:border-destructive/40 shrink-0 self-center"
+            className="text-destructive hover:bg-destructive/6 hover:border-destructive/40 shrink-0 self-center"
           >
             <Ban size={13} /> {t("revoke")}
           </Button>

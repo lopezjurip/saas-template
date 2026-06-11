@@ -302,7 +302,7 @@ export function EditPermissionsForm({
               </Button>
             ))}
           </div>
-          <p className="text-muted-foreground text-xs leading-[1.5]">{t("presets_hint")}</p>
+          <p className="text-muted-foreground text-xs leading-normal">{t("presets_hint")}</p>
         </section>
       )}
 
@@ -320,7 +320,7 @@ export function EditPermissionsForm({
         <div
           className={cn(
             "flex items-start gap-2.5 rounded-lg border px-3.5 py-3 transition-[background,border-color]",
-            state.wildcard ? "border-emerald-600/40 bg-emerald-500/[0.06]" : "border-border bg-background",
+            state.wildcard ? "border-emerald-600/40 bg-emerald-500/6" : "border-border bg-background",
           )}
         >
           <Checkbox
@@ -337,7 +337,7 @@ export function EditPermissionsForm({
               </Label>
               <code className="text-muted-foreground/80 font-mono text-[11px]">*</code>
             </span>
-            <span className="text-muted-foreground text-[12px] leading-[1.45] [text-wrap:pretty]">
+            <span className="text-muted-foreground text-[12px] leading-[1.45] text-pretty">
               {t("wildcard_description")}
             </span>
           </div>
@@ -368,7 +368,7 @@ export function EditPermissionsForm({
                     <code className="text-foreground font-mono text-[12px]">{slug}</code>
                   </Label>
                   {perm["permission_description"] && (
-                    <span className="text-muted-foreground text-xs leading-[1.4] [text-wrap:pretty]">
+                    <span className="text-muted-foreground text-xs leading-[1.4] text-pretty">
                       {perm["permission_description"]}
                     </span>
                   )}
@@ -378,7 +378,7 @@ export function EditPermissionsForm({
           })}
         </div>
 
-        <p className="text-muted-foreground text-xs leading-[1.5] [text-wrap:pretty]">{t("wildcard_footer")}</p>
+        <p className="text-muted-foreground text-xs leading-normal text-pretty">{t("wildcard_footer")}</p>
       </section>
 
       {error && (

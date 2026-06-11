@@ -50,7 +50,7 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
             <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em]">
               {state === "rejected" ? t("rejected_title") : t("expired_title")}
             </h1>
-            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] text-pretty">
               {state === "rejected"
                 ? t("rejected_desc", { name: firstName, org: ORG })
                 : t("expired_desc", { org: ORG })}
@@ -69,7 +69,7 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
             <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em]">
               {t("claimed_title", { org: ORG })}
             </h1>
-            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] text-pretty">
               {t("claimed_desc")}
             </p>
           </div>
@@ -94,10 +94,10 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
           </div>
 
           <div className="flex flex-col gap-1">
-            <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em] [text-wrap:balance]">
+            <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em] text-balance">
               {t("invited_title", { name: firstName })}
             </h1>
-            <p className="text-muted-foreground m-0 text-sm/normal leading-[1.5] [text-wrap:pretty]">
+            <p className="text-muted-foreground m-0 text-sm/normal leading-normal text-pretty">
               {t("invited_desc", { name: INVITED_BY, org: ORG })}
             </p>
           </div>
@@ -120,7 +120,7 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
 
           {state === "loggedout" ? (
             <div className="flex flex-col gap-2.5">
-              <p className="text-muted-foreground text-[12.5px] leading-[1.5] [text-wrap:pretty]">
+              <p className="text-muted-foreground text-[12.5px] leading-normal text-pretty">
                 {t("loggedout_desc", { dest: DESTINATION })}
               </p>
               <Button asChild className="w-full">

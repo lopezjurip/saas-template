@@ -48,7 +48,7 @@ export function AffiliateDashboard({
           <span className="border-border bg-muted text-foreground inline-flex size-[34px] shrink-0 items-center justify-center rounded-lg border">
             <Building2 size={16} />
           </span>
-          <div className="flex min-w-0 flex-col gap-[1px]">
+          <div className="flex min-w-0 flex-col gap-px">
             <span className="text-foreground truncate text-[13.5px] font-semibold tracking-[-0.01em]">
               {t("portal")}
             </span>
@@ -65,7 +65,7 @@ export function AffiliateDashboard({
         <div className="mx-auto flex w-full max-w-[860px] flex-col gap-7">
           <div className="flex flex-col gap-1.5">
             <h1 className="text-foreground m-0 text-xl/normal font-semibold tracking-[-0.02em]">{t("title")}</h1>
-            <p className="text-muted-foreground m-0 max-w-[58ch] text-sm/normal leading-[1.55] [text-wrap:pretty]">
+            <p className="text-muted-foreground m-0 max-w-[58ch] text-sm/normal leading-[1.55] text-pretty">
               {t("subtitle")}
             </p>
           </div>
@@ -90,7 +90,7 @@ export function AffiliateDashboard({
               </span>
               <div className="flex max-w-[42ch] flex-col gap-1">
                 <span className="text-foreground text-sm font-semibold">{t("empty_title")}</span>
-                <span className="text-[12.5px] leading-[1.5] [text-wrap:pretty]">{t("empty_desc")}</span>
+                <span className="text-[12.5px] leading-normal text-pretty">{t("empty_desc")}</span>
               </div>
             </div>
           ) : (
@@ -167,13 +167,13 @@ function AgencySection({ agency, t }: { agency: AffiliateAgency; t: Translate })
       </div>
 
       {agency.is_global ? (
-        <div className="flex items-start gap-3 rounded-lg border border-emerald-600/30 bg-emerald-500/[0.06] px-3.5 py-3">
+        <div className="flex items-start gap-3 rounded-lg border border-emerald-600/30 bg-emerald-500/6 px-3.5 py-3">
           <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
             <Globe size={17} />
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="text-foreground text-[13.5px] font-semibold">{t("global_title")}</span>
-            <span className="text-muted-foreground text-[12px] leading-[1.45] [text-wrap:pretty]">
+            <span className="text-muted-foreground text-[12px] leading-[1.45] text-pretty">
               {t("global_desc")}
             </span>
           </div>

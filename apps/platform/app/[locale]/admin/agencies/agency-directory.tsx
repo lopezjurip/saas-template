@@ -33,7 +33,7 @@ export function AgencyDirectory({ locale, items }: { locale: string; items: Agen
             {t("eyebrow")}
           </span>
           <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-          <p className="text-muted-foreground m-0 max-w-[68ch] text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+          <p className="text-muted-foreground m-0 max-w-[68ch] text-[13.5px] leading-[1.55] text-pretty">
             {t("subtitle")}
           </p>
         </div>
@@ -67,7 +67,7 @@ export function AgencyDirectory({ locale, items }: { locale: string; items: Agen
             </span>
             <div className="flex max-w-[42ch] flex-col gap-1">
               <span className="text-foreground text-sm font-semibold">{t("empty_title")}</span>
-              <span className="text-[12.5px] leading-[1.5] [text-wrap:pretty]">{t("empty_desc")}</span>
+              <span className="text-[12.5px] leading-normal text-pretty">{t("empty_desc")}</span>
             </div>
             <Button asChild size="sm" className="mt-1">
               <Link href={createHref}>
@@ -102,11 +102,11 @@ export function AgencyDirectory({ locale, items }: { locale: string; items: Agen
           </div>
         )}
 
-        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-[1.5]">
+        <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-normal">
           <span className="text-muted-foreground/80 mt-px shrink-0">
             <Eye size={13} />
           </span>
-          <span className="[text-wrap:pretty]">{t("read_only_note")}</span>
+          <span className="text-pretty">{t("read_only_note")}</span>
         </p>
       </section>
     </div>

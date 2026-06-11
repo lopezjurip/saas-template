@@ -25,7 +25,7 @@ export function MobileTopBar({
   onProfile: () => void;
 }) {
   return (
-    <div className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 flex shrink-0 flex-col border-b pt-safe backdrop-blur">
+    <div className="border-border bg-background/95 supports-backdrop-filter:bg-background/80 flex shrink-0 flex-col border-b pt-safe backdrop-blur">
       <div className="flex h-12 items-center gap-1 px-1.5">
         <button
           type="button"

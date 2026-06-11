@@ -70,7 +70,7 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
       <header className="border-border bg-background flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 @min-[768px]:px-6">
         <div className="flex min-w-0 items-center gap-2.5">
           <AgencyTile size={36} />
-          <div className="flex min-w-0 flex-col gap-[1px]">
+          <div className="flex min-w-0 flex-col gap-px">
             <span className="text-foreground truncate text-[14px] font-semibold tracking-[-0.01em]">
               {data.agency_name}
             </span>
@@ -86,12 +86,12 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
             <ShieldCheck size={11} /> {t("topbar_affiliate")}
           </span>
           <div className="flex min-w-0 items-center gap-2">
-            <span className="hidden min-w-0 flex-col items-end gap-[1px] @min-[768px]:flex">
-              <span className="text-foreground max-w-[160px] truncate text-[12.5px] font-medium leading-none">
+            <span className="hidden min-w-0 flex-col items-end gap-px @min-[768px]:flex">
+              <span className="text-foreground max-w-40 truncate text-[12.5px] font-medium leading-none">
                 {owner?.name}
               </span>
               {owner?.email ? (
-                <span className="text-muted-foreground mt-0.5 max-w-[160px] truncate text-[11px] leading-none">
+                <span className="text-muted-foreground mt-0.5 max-w-40 truncate text-[11px] leading-none">
                   {owner.email}
                 </span>
               ) : null}
@@ -119,13 +119,13 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
         </TabsList>
 
         <main className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-8 @min-[768px]:px-6 @min-[768px]:py-6 @min-[768px]:pb-10">
-          <div className="mx-auto flex w-full max-w-[820px] flex-col gap-6">
+          <div className="mx-auto flex w-full max-w-205 flex-col gap-6">
             <ConsoleStatStrip data={data} active={active} t={t} />
 
             <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-1">
                 <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.02em]">{head.title}</h1>
-                <p className="text-muted-foreground m-0 max-w-[60ch] text-[12.5px] leading-[1.5] [text-wrap:pretty]">
+                <p className="text-muted-foreground m-0 max-w-[60ch] text-[12.5px] leading-normal text-pretty">
                   {head.desc}
                 </p>
               </div>
@@ -239,7 +239,7 @@ function ConsoleTeamTab({
         </span>
         <div className="flex max-w-[42ch] flex-col gap-1">
           <span className="text-foreground text-sm font-semibold">{t("team_empty_title")}</span>
-          <span className="text-[12.5px] leading-[1.5] [text-wrap:pretty]">{t("team_empty_desc")}</span>
+          <span className="text-[12.5px] leading-normal text-pretty">{t("team_empty_desc")}</span>
         </div>
         <Button asChild size="sm" className="mt-1">
           <Link href={inviteHref}>
@@ -265,11 +265,11 @@ function ConsoleTeamTab({
           <ConsoleAffiliateRow key={aff.agency_membership_id} agencyId={data.agency_id} aff={aff} t={t} />
         ))}
       </div>
-      <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-[1.5]">
+      <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-normal">
         <span className="text-muted-foreground/80 mt-px shrink-0">
           <ShieldCheck size={13} />
         </span>
-        <span className="[text-wrap:pretty]">
+        <span className="text-pretty">
           {t("team_note_prefix")} <strong className="text-foreground font-medium">{t("tab_access")}</strong>{" "}
           {t("team_note_suffix")}
         </span>
@@ -321,13 +321,13 @@ function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: string; aff: Cons
     >
       <span
         className={cn(
-          "bg-muted text-foreground inline-flex size-[34px] shrink-0 items-center justify-center rounded-full text-[12px] font-semibold tracking-[-0.01em]",
+          "bg-muted text-foreground inline-flex size-8.5 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold tracking-[-0.01em]",
           dim && "opacity-60",
         )}
       >
         {INITIALS_OF(aff.name)}
       </span>
-      <span className="flex min-w-0 flex-col gap-[1px]">
+      <span className="flex min-w-0 flex-col gap-px">
         <span className="inline-flex min-w-0 items-center gap-2">
           <span
             className={cn(
@@ -361,7 +361,7 @@ function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: string; aff: Cons
             "inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-medium transition-colors disabled:opacity-50",
             "bg-background border-border",
             action.tone === "danger"
-              ? "text-muted-foreground hover:text-destructive hover:border-destructive/40 hover:bg-destructive/[0.05]"
+              ? "text-muted-foreground hover:text-destructive hover:border-destructive/40 hover:bg-destructive/5"
               : "text-foreground hover:bg-accent",
           )}
         >
@@ -385,7 +385,7 @@ function ConsoleAccessTab({ global, orgs, t }: { global: boolean; orgs: ConsoleO
         <span className="text-muted-foreground mt-px shrink-0">
           <Eye size={15} />
         </span>
-        <span className="text-muted-foreground text-[12px] leading-[1.5] [text-wrap:pretty]">{t("access_banner")}</span>
+        <span className="text-muted-foreground text-[12px] leading-normal text-pretty">{t("access_banner")}</span>
       </div>
 
       {global ? (
@@ -393,7 +393,7 @@ function ConsoleAccessTab({ global, orgs, t }: { global: boolean; orgs: ConsoleO
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
             {t("access_scope")}
           </span>
-          <div className="flex items-start gap-3 rounded-lg border border-emerald-600/30 bg-emerald-500/[0.06] px-3.5 py-3">
+          <div className="flex items-start gap-3 rounded-lg border border-emerald-600/30 bg-emerald-500/6 px-3.5 py-3">
             <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
               <Globe size={17} />
             </span>
@@ -402,7 +402,7 @@ function ConsoleAccessTab({ global, orgs, t }: { global: boolean; orgs: ConsoleO
                 <span className="text-foreground text-[13.5px] font-semibold">{t("access_global_title")}</span>
                 <span className="text-muted-foreground/80 font-mono text-tiny">org = NULL</span>
               </div>
-              <span className="text-muted-foreground text-[12px] leading-[1.45] [text-wrap:pretty]">
+              <span className="text-muted-foreground text-[12px] leading-[1.45] text-pretty">
                 {t("access_global_desc")}
               </span>
               <div className="mt-0.5">
@@ -418,7 +418,7 @@ function ConsoleAccessTab({ global, orgs, t }: { global: boolean; orgs: ConsoleO
           </span>
           <div className="flex max-w-[42ch] flex-col gap-1">
             <span className="text-foreground text-sm font-semibold">{t("access_empty_title")}</span>
-            <span className="text-[12.5px] leading-[1.5] [text-wrap:pretty]">{t("access_empty_desc")}</span>
+            <span className="text-[12.5px] leading-normal text-pretty">{t("access_empty_desc")}</span>
           </div>
         </div>
       ) : (
@@ -491,11 +491,11 @@ function ConsoleProfileTab({ data, t }: { data: ConsoleData; t: Translate }) {
           </div>
         ))}
       </div>
-      <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-[1.5]">
+      <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-normal">
         <span className="text-muted-foreground/80 mt-px shrink-0">
           <Eye size={13} />
         </span>
-        <span className="[text-wrap:pretty]">{t("profile_note")}</span>
+        <span className="text-pretty">{t("profile_note")}</span>
       </p>
     </section>
   );
@@ -538,7 +538,7 @@ function AffiliationBadge({ state, label }: { state: AffiliationState; label: st
   }
   if (state === "rejected") {
     return (
-      <span className={cn(base, "border-destructive/35 text-destructive bg-destructive/[0.06] border")}>
+      <span className={cn(base, "border-destructive/35 text-destructive bg-destructive/6 border")}>
         <X size={10} strokeWidth={2.5} /> {label}
       </span>
     );

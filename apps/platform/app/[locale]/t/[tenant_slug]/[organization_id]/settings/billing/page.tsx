@@ -55,12 +55,12 @@ export default async function OrganizationBillingPage(
           {organization["organization_name"]} · {t("eyebrow")}
         </span>
         <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
           {t("subtitle")}
         </p>
       </header>
 
-      <section className="border-border from-muted/40 to-background flex flex-col gap-4 rounded-xl border bg-gradient-to-b p-5">
+      <section className="border-border from-muted/40 to-background flex flex-col gap-4 rounded-xl border bg-linear-to-b p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="inline-flex items-center gap-2">
@@ -72,7 +72,7 @@ export default async function OrganizationBillingPage(
               </Badge>
             </span>
             <span className="text-foreground text-[26px] font-semibold leading-[1.1] tracking-[-0.02em]">Pro</span>
-            <span className="text-muted-foreground max-w-[44ch] text-[12.5px] [text-wrap:pretty]">
+            <span className="text-muted-foreground max-w-[44ch] text-[12.5px] text-pretty">
               {t("plan_blurb")}
             </span>
           </div>

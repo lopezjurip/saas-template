@@ -62,7 +62,7 @@ export default async function NewMemberInvitePage(
           {organization["organization_name"]} · {t("eyebrow")}
         </span>
         <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("page_title")}</h1>
-        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
           {t("description")}
         </p>
       </header>
