@@ -2,12 +2,13 @@ import { expect, type Page, test } from "@playwright/test";
 
 // The agency console (/a/:slug) is an apex auth-gated surface backed by real DB
 // data. Only an ACTIVE affiliate of the agency may open it — the seed makes
-// bob@humane.test an accepted affiliate of "Demo Auditores" (demo-auditores),
-// granted read access to the acme org. The create flow (/agencies/create) is
-// reachable by any confirmed user.
+// iris@humane.test an accepted affiliate of "Demo Auditores" (demo-auditores),
+// granted read access to the acme org. (A dedicated user, not Alice/Bob, so the
+// org-membership pgTAP fixtures keep assuming Alice/Bob have no agency.) The
+// create flow (/agencies/create) is reachable by any confirmed user.
 
 test.describe("agency screens", () => {
-  const email = "bob@humane.test";
+  const email = "iris@humane.test";
   const password = "password123";
 
   test.beforeEach(async ({ page }) => {
@@ -56,11 +57,11 @@ test.describe("agency screens", () => {
 
 // Sign in through the consolidated two-step /auth/email flow (mirrors owner-creates-tenant).
 async function signIn(page: Page, email: string, password: string) {
-  await page.goto("/es/auth/email");
-  await page.getByLabel("Correo electrónico").fill(email);
+  await page.goto("/es/auth");
+  await page.getByLabel("Cuenta").fill(email);
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
   await page.waitForURL(/\/auth\/email\?/);
   await page.getByLabel("Contraseña").fill(password);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await page.getByRole("button", { name: "Ingresar con contraseña" }).click();
   await page.waitForURL((url) => !url.pathname.includes("/auth/"));
 }

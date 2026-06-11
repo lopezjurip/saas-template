@@ -1,14 +1,16 @@
 import { expect, type Page, test } from "@playwright/test";
 
 // Affiliate portal (/affiliate) renders the viewer's real agency memberships.
-// The seed gives bob@humane.test an ACCEPTED membership of "Demo Auditores"
+// The seed gives iris@humane.test an ACCEPTED membership of "Demo Auditores"
 // (granted read access to the acme org) and alice@humane.test a PENDING invite.
+// iris is a dedicated affiliate user (not Alice/Bob) so the org-membership pgTAP
+// fixtures keep assuming Alice/Bob have no agency.
 
 test.describe("affiliate screens", () => {
   const password = "password123";
 
   test("accepted affiliate sees their agency and granted org", async ({ page }) => {
-    await signIn(page, "bob@humane.test", password);
+    await signIn(page, "iris@humane.test", password);
     await page.goto("/es/affiliate");
 
     await expect(page.getByText("Demo Auditores").first()).toBeVisible();
@@ -29,11 +31,11 @@ test.describe("affiliate screens", () => {
 });
 
 async function signIn(page: Page, email: string, password: string) {
-  await page.goto("/es/auth/email");
-  await page.getByLabel("Correo electrónico").fill(email);
+  await page.goto("/es/auth");
+  await page.getByLabel("Cuenta").fill(email);
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
   await page.waitForURL(/\/auth\/email\?/);
   await page.getByLabel("Contraseña").fill(password);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await page.getByRole("button", { name: "Ingresar con contraseña" }).click();
   await page.waitForURL((url) => !url.pathname.includes("/auth/"));
 }

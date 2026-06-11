@@ -11,12 +11,12 @@ import { authedAction } from "~/lib/safe-action.server";
 
 const log = debug("agencies:create");
 
-export const createAgencySchema = z.object({
+const createAgencySchema = z.object({
   agency_name: z.string().trim().min(1).max(100),
   agency_slug: z.string().trim().min(3).max(40),
 });
 
-export type CreateAgencyValues = z.infer<typeof createAgencySchema>;
+type CreateAgencyValues = z.infer<typeof createAgencySchema>;
 
 // Any authenticated user can create an agency; the creator becomes the first
 // ACCEPTED affiliate. Agency tables are service_role-only in RLS, so we use the

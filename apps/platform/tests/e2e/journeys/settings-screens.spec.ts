@@ -20,7 +20,7 @@ test.describe("settings screens", () => {
     const page = await browser.newPage();
     await signIn(page, email, password);
     await page.goto("/es/tenants/create");
-    await page.getByLabel("Nombre de la empresa").fill(tenantName);
+    await page.getByLabel("Nombre", { exact: true }).fill(tenantName);
     await page.getByLabel("Identificador").fill(tenantSlug);
     await page.getByRole("button", { name: /crear empresa/i }).click();
     await page.waitForURL(new RegExp(`/es/t/${tenantSlug}/\\d+`));
@@ -72,11 +72,11 @@ test.describe("settings screens", () => {
 });
 
 async function signIn(page: Page, email: string, password: string) {
-  await page.goto("/es/auth/email");
-  await page.getByLabel("Correo electrónico").fill(email);
+  await page.goto("/es/auth");
+  await page.getByLabel("Cuenta").fill(email);
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
   await page.waitForURL(/\/auth\/email\?/);
   await page.getByLabel("Contraseña").fill(password);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await page.getByRole("button", { name: "Ingresar con contraseña" }).click();
   await page.waitForURL((url) => !url.pathname.includes("/auth/"));
 }

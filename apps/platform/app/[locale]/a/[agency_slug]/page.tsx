@@ -91,7 +91,9 @@ export default async function AgencyConsolePage(props: PageProps<"/[locale]/a/[a
     orgs,
   };
 
-  return <AgencyConsole data={data} inviteHref={`/[locale]/admin/agencies/${agency.agency_slug}/affiliates/new`} />;
+  return (
+    <AgencyConsole data={data} inviteHref={`/${locale}/admin/agencies/${agency.agency_slug}/affiliates/new`} />
+  );
 }
 
 const LOCALE_ES = { page_title: "Consola de agencia" };

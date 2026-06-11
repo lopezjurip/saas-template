@@ -20,8 +20,8 @@ const baseSchema = z.object({
   agency_id: z.string().uuid(),
 });
 
-export const grantAgencyAccessSchema = baseSchema;
-export type GrantAgencyAccessValues = z.infer<typeof grantAgencyAccessSchema>;
+const grantAgencyAccessSchema = baseSchema;
+type GrantAgencyAccessValues = z.infer<typeof grantAgencyAccessSchema>;
 
 // Grant or revoke an agency's read access to one organization. The caller must hold
 // `organization_manage` on that org (viewer-scoped check via the RLS server client),
@@ -80,8 +80,8 @@ export const actionGrantAgencyAccess = authedAction
     return { agencies_organizations_grant_id: insertRes.data.agencies_organizations_grant_id };
   });
 
-export const revokeAgencyAccessSchema = baseSchema;
-export type RevokeAgencyAccessValues = z.infer<typeof revokeAgencyAccessSchema>;
+const revokeAgencyAccessSchema = baseSchema;
+type RevokeAgencyAccessValues = z.infer<typeof revokeAgencyAccessSchema>;
 
 export const actionRevokeAgencyAccess = authedAction
   .inputSchema(revokeAgencyAccessSchema)

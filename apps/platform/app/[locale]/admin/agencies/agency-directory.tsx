@@ -3,6 +3,7 @@
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Building2, ChevronRight, Eye, Globe, LayoutGrid, List, Plus, Users } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { useState } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
@@ -22,6 +23,10 @@ type AgencyDirLayout = "rows" | "cards";
 export function AgencyDirectory({ base, items }: { base: string; items: AgencyDirItem[] }) {
   const { t } = useRosetta(LOCALES);
   const [layout, setLayout] = useState<AgencyDirLayout>("rows");
+  // `base` is already locale-interpolated (e.g. /es/admin/agencies); derive the sibling
+  // create route from it. A literal "/[locale]/…" href would crash <Link> at render time
+  // (App Router rejects dynamic hrefs), so we never hand the sentinel to <Link>.
+  const createHref = base.replace(/\/admin\/agencies$/, "/agencies/create") as Route;
 
   return (
     <div className="@container mx-auto flex w-full max-w-4xl flex-col gap-7 px-6 py-8">
@@ -36,7 +41,7 @@ export function AgencyDirectory({ base, items }: { base: string; items: AgencyDi
           </p>
         </div>
         <Button asChild size="sm" className="h-9">
-          <Link href="/[locale]/agencies/create">
+          <Link href={createHref}>
             <Plus size={15} strokeWidth={2} /> {t("new_agency")}
           </Link>
         </Button>
@@ -68,7 +73,7 @@ export function AgencyDirectory({ base, items }: { base: string; items: AgencyDi
               <span className="text-[12.5px] leading-[1.5] [text-wrap:pretty]">{t("empty_desc")}</span>
             </div>
             <Button asChild size="sm" className="mt-1">
-              <Link href="/[locale]/agencies/create">
+              <Link href={createHref}>
                 <Plus size={14} strokeWidth={2} /> {t("new_agency")}
               </Link>
             </Button>

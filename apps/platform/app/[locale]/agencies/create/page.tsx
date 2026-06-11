@@ -12,7 +12,7 @@ export default async function AgencyCreatePage(props: PageProps<"/[locale]/agenc
   const { locale } = await props.params;
   assertLocale(locale);
 
-  return <AgencyCreate />;
+  return <AgencyCreate locale={locale} />;
 }
 
 const LOCALE_ES = { page_title: "Crear agencia" };

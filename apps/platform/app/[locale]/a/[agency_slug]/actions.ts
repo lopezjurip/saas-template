@@ -31,12 +31,12 @@ async function ASSERT_ACTIVE_AFFILIATE(
   return Boolean(res.data);
 }
 
-export const inviteAffiliateSchema = z.object({
+const inviteAffiliateSchema = z.object({
   agency_id: z.string().uuid(),
   invitation_email: z.string().trim().email().max(254),
 });
 
-export type InviteAffiliateValues = z.infer<typeof inviteAffiliateSchema>;
+type InviteAffiliateValues = z.infer<typeof inviteAffiliateSchema>;
 
 // Invite a person to an agency by email. agency_memberships has profile_id NOT NULL
 // with no invite/token columns, so we must resolve a profile first: look up the
@@ -148,13 +148,13 @@ export const actionInviteAffiliate = authedAction
     return { email };
   });
 
-export const membershipActionSchema = z.object({
+const membershipActionSchema = z.object({
   agency_id: z.string().uuid(),
   agency_membership_id: z.number().int().positive(),
   operation: z.enum(["revoke", "reactivate"]),
 });
 
-export type MembershipActionValues = z.infer<typeof membershipActionSchema>;
+type MembershipActionValues = z.infer<typeof membershipActionSchema>;
 
 // Revoke or reactivate another affiliate's membership. Any active affiliate may do this.
 export const actionUpdateAffiliateMembership = authedAction
@@ -201,12 +201,12 @@ export const actionUpdateAffiliateMembership = authedAction
   });
 
 // The invited person responds to their own pending invite from the affiliate portal.
-export const respondInvitationSchema = z.object({
+const respondInvitationSchema = z.object({
   agency_membership_id: z.number().int().positive(),
   response: z.enum(["accept", "reject"]),
 });
 
-export type RespondInvitationValues = z.infer<typeof respondInvitationSchema>;
+type RespondInvitationValues = z.infer<typeof respondInvitationSchema>;
 
 export const actionRespondInvitation = authedAction
   .inputSchema(respondInvitationSchema)

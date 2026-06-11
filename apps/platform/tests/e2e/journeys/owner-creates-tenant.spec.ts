@@ -23,12 +23,12 @@ test.describe("owner creates first tenant", () => {
     // ----- sign in via the consolidated two-step /auth/email flow -----
     // Step 1: email input. Step 2 (same route, ?value=…&has_password=1): method picker
     // renders the password form for an account that has a password.
-    await page.goto("/es/auth/email");
-    await page.getByLabel("Correo electrónico").fill(email);
+    await page.goto("/es/auth");
+    await page.getByLabel("Cuenta").fill(email);
     await page.getByRole("button", { name: "Continuar", exact: true }).click();
     await page.waitForURL(/\/auth\/email\?/);
     await page.getByLabel("Contraseña").fill(password);
-    await page.getByRole("button", { name: "Iniciar sesión" }).click();
+    await page.getByRole("button", { name: "Ingresar con contraseña" }).click();
 
     // Password login sets the session and routes to `next`. Onboarding is not a hard gate.
     // Wait until we leave the auth flow, then force-navigate to the tenant creator — the
@@ -37,7 +37,7 @@ test.describe("owner creates first tenant", () => {
     await page.goto("/es/tenants/create");
 
     // ----- create tenant -----
-    await page.getByLabel("Nombre de la empresa").fill(tenantName);
+    await page.getByLabel("Nombre", { exact: true }).fill(tenantName);
     await page.getByLabel("Identificador").fill(tenantSlug);
     await page.getByRole("button", { name: /crear empresa/i }).click();
 

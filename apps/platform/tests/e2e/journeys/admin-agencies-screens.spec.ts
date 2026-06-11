@@ -49,11 +49,11 @@ test.describe("admin agencies screens", () => {
 });
 
 async function signIn(page: Page, email: string, password: string) {
-  await page.goto("/es/auth/email");
-  await page.getByLabel("Correo electrónico").fill(email);
+  await page.goto("/es/auth");
+  await page.getByLabel("Cuenta").fill(email);
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
   await page.waitForURL(/\/auth\/email\?/);
   await page.getByLabel("Contraseña").fill(password);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await page.getByRole("button", { name: "Ingresar con contraseña" }).click();
   await page.waitForURL((url) => !url.pathname.includes("/auth/"));
 }

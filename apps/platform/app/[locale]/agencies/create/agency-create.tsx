@@ -6,6 +6,7 @@ import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { SLUGIFY } from "@packages/utils/slug";
 import { ArrowRight, Briefcase, Building2, Check, Eye, Plus, UserPlus } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
@@ -14,7 +15,7 @@ import { actionCreateAgency } from "./actions";
 
 type Stage = "form" | "created";
 
-export function AgencyCreate() {
+export function AgencyCreate({ locale }: { locale: string }) {
   const { t } = useRosetta(LOCALES);
   const [stage, setStage] = useState<Stage>("form");
   const [name, setName] = useState("");
@@ -28,8 +29,9 @@ export function AgencyCreate() {
   const autoSlug = SLUGIFY(name).slice(0, 40);
   const effectiveSlug = (touchedSlug ? slug : autoSlug) || t("slug_fallback");
   const consoleUrl = `app.example.com/a/${createdSlug}`;
-  // Locale stays a literal sentinel — proxy.ts rewrites /[locale]/… to the active locale.
-  const backHref = "/[locale]/admin/agencies";
+  // <Link> rejects the "/[locale]/…" sentinel at render time (App Router bans dynamic hrefs),
+  // so we interpolate the real locale the page resolved from its route params.
+  const backHref = `/${locale}/admin/agencies` as Route;
 
   function submit() {
     setServerError(null);
@@ -60,8 +62,8 @@ export function AgencyCreate() {
     });
   }
 
-  const consoleHref = `/[locale]/a/${createdSlug}`;
-  const inviteHref = `/[locale]/admin/agencies/${createdSlug}/affiliates/new`;
+  const consoleHref = `/${locale}/a/${createdSlug}` as Route;
+  const inviteHref = `/${locale}/admin/agencies/${createdSlug}/affiliates/new` as Route;
 
   return (
     <div className="mx-auto flex w-full max-w-[520px] flex-col gap-7 px-6 py-8">
