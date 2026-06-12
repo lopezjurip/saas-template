@@ -9,10 +9,12 @@ import { Avatar, AvatarFallback } from "@packages/ui-common/shadcn/components/ui
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Card, CardContent } from "@packages/ui-common/shadcn/components/ui/card";
+import { URL_NEW } from "@packages/utils/url";
 import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import type { Organization, WebSite, WithContext } from "schema-dts";
 import { JsonLd } from "~/components/json-ld";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_URL } from "~/lib/constants";
@@ -26,15 +28,15 @@ export async function generateMetadata(props: PageProps<"/[locale]">): Promise<M
     title: t("title"),
     description: t("description"),
     alternates: {
-      canonical: `${APP_URL.origin}/${locale}`,
+      canonical: URL_NEW(`/${locale}`, APP_URL).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${APP_URL.origin}/${l}`])),
-        "x-default": `${APP_URL.origin}/${DEFAULT_LOCALE}`,
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW(`/${l}`, APP_URL).href])),
+        "x-default": URL_NEW(`/${DEFAULT_LOCALE}`, APP_URL).href,
       },
     },
     openGraph: {
       type: "website",
-      url: `${APP_URL.origin}/${locale}`,
+      url: URL_NEW(`/${locale}`, APP_URL).href,
       locale: locale,
       title: t("title"),
       description: t("description"),
@@ -83,15 +85,15 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
 
   const contactBullets = [t("contact.bullet.a"), t("contact.bullet.b"), t("contact.bullet.c")];
 
-  const websiteSchema = {
+  const websiteSchema: WithContext<WebSite> = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": `${APP_URL.origin}/${locale}#website`,
-    url: `${APP_URL.origin}/${locale}`,
+    "@id": URL_NEW(`/${locale}#website`, APP_URL).href,
+    url: URL_NEW(`/${locale}`, APP_URL).href,
     inLanguage: locale,
   };
 
-  const organizationSchema = {
+  const organizationSchema: WithContext<Organization> = {
     "@context": "https://schema.org",
     "@type": "Organization",
     "@id": `${APP_URL.origin}#organization`,

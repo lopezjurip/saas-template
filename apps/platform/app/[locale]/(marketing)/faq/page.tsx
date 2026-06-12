@@ -1,25 +1,26 @@
+import { URL_NEW } from "@packages/utils/url";
 import type { Metadata } from "next";
+import type { WebPage, WithContext } from "schema-dts";
 import { JsonLd } from "~/components/json-ld";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { APP_HOST, APP_URL } from "~/lib/constants";
+import { APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
 
 export async function generateMetadata(props: PageProps<"/[locale]/faq">): Promise<Metadata> {
   const { t, locale } = await getRosetta(LOCALES);
-  const base = `https://${APP_HOST}`;
   const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
   return {
     title: t("heading"),
     alternates: {
-      canonical: `${base}/${safeLocale}/faq`,
+      canonical: URL_NEW(`/${safeLocale}/faq`, APP_URL).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${base}/${l}/faq`])),
-        "x-default": `${base}/${DEFAULT_LOCALE}/faq`,
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW(`/${l}/faq`, APP_URL).href])),
+        "x-default": URL_NEW(`/${DEFAULT_LOCALE}/faq`, APP_URL).href,
       },
     },
     openGraph: {
       type: "website",
-      url: `${base}/${safeLocale}/faq`,
+      url: URL_NEW(`/${safeLocale}/faq`, APP_URL).href,
       locale: safeLocale,
       title: t("heading"),
       siteName: "SaaS Template",
@@ -30,10 +31,10 @@ export async function generateMetadata(props: PageProps<"/[locale]/faq">): Promi
 export default async function FaqPage(props: PageProps<"/[locale]/faq">) {
   const { t, locale } = await getRosetta(LOCALES);
 
-  const webPageSchema = {
+  const webPageSchema: WithContext<WebPage> = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    url: `${APP_URL.origin}/${locale}/faq`,
+    url: URL_NEW(`/${locale}/faq`, APP_URL).href,
     inLanguage: locale,
   };
 

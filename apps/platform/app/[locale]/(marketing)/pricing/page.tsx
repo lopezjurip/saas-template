@@ -1,27 +1,28 @@
+import { URL_NEW } from "@packages/utils/url";
 import type { Metadata } from "next";
+import type { WebPage, WithContext } from "schema-dts";
 import { JsonLd } from "~/components/json-ld";
-import { APP_HOST, APP_URL } from "~/lib/constants";
+import { APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, ROSETTA, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { PricingClient } from "./pricing-client";
 
 export async function generateMetadata(props: PageProps<"/[locale]/pricing">): Promise<Metadata> {
   const { locale } = await props.params;
   const { t } = ROSETTA(LOCALES, locale);
-  const base = `https://${APP_HOST}`;
   const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
   return {
     title: t("title"),
     description: t("subtitle"),
     alternates: {
-      canonical: `${base}/${safeLocale}/pricing`,
+      canonical: URL_NEW(`/${safeLocale}/pricing`, APP_URL).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${base}/${l}/pricing`])),
-        "x-default": `${base}/${DEFAULT_LOCALE}/pricing`,
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW(`/${l}/pricing`, APP_URL).href])),
+        "x-default": URL_NEW(`/${DEFAULT_LOCALE}/pricing`, APP_URL).href,
       },
     },
     openGraph: {
       type: "website",
-      url: `${base}/${safeLocale}/pricing`,
+      url: URL_NEW(`/${safeLocale}/pricing`, APP_URL).href,
       locale: safeLocale,
       title: t("title"),
       siteName: "SaaS Template",
@@ -32,10 +33,10 @@ export async function generateMetadata(props: PageProps<"/[locale]/pricing">): P
 export default async function PricingPage(props: PageProps<"/[locale]/pricing">) {
   const { locale } = await props.params;
 
-  const webPageSchema = {
+  const webPageSchema: WithContext<WebPage> = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    url: `${APP_URL.origin}/${locale}/pricing`,
+    url: URL_NEW(`/${locale}/pricing`, APP_URL).href,
     inLanguage: locale,
   };
 

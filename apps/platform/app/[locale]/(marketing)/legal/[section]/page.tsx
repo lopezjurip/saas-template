@@ -1,12 +1,14 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { URL_NEW } from "@packages/utils/url";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import type { WebPage, WithContext } from "schema-dts";
 import { JsonLd } from "~/components/json-ld";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { APP_HOST, APP_URL } from "~/lib/constants";
+import { APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { ROUTE } from "~/lib/route";
 
@@ -44,20 +46,19 @@ export async function generateMetadata(props: PageProps<"/[locale]/legal/[sectio
   if (!SECTIONS.includes(section as LegalSection)) notFound();
   const legalLocale = toLegalLocale(locale);
   const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
-  const base = `https://${APP_HOST}`;
   const title = SECTION_LABELS[legalLocale][section as LegalSection];
   return {
     title,
     alternates: {
-      canonical: `${base}/${safeLocale}/legal/${section}`,
+      canonical: URL_NEW(`/${safeLocale}/legal/${section}`, APP_URL).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${base}/${l}/legal/${section}`])),
-        "x-default": `${base}/${DEFAULT_LOCALE}/legal/${section}`,
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW(`/${l}/legal/${section}`, APP_URL).href])),
+        "x-default": URL_NEW(`/${DEFAULT_LOCALE}/legal/${section}`, APP_URL).href,
       },
     },
     openGraph: {
       type: "website",
-      url: `${base}/${safeLocale}/legal/${section}`,
+      url: URL_NEW(`/${safeLocale}/legal/${section}`, APP_URL).href,
       locale: safeLocale,
       title,
       siteName: "SaaS Template",
@@ -72,10 +73,10 @@ export default async function LegalSectionPage(props: PageProps<"/[locale]/legal
   const legalLocale = toLegalLocale(locale);
   const content = await loadMarkdown(legalLocale, section as LegalSection);
 
-  const webPageSchema = {
+  const webPageSchema: WithContext<WebPage> = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    url: `${APP_URL.origin}/${locale}/legal/${section}`,
+    url: URL_NEW(`/${locale}/legal/${section}`, APP_URL).href,
     inLanguage: locale,
   };
 
