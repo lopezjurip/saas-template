@@ -37,7 +37,7 @@ export const getViewerProfile = cache(async () => {
   return await graphy.query({ query: ViewerProfileGet });
 });
 
-export async function getViewerProfileAssert() {
+export async function getViewerProfileRedirect() {
   const { data, ...extra } = await getViewerProfile();
   const profile = data && data["profile"];
   if (!profile) {
