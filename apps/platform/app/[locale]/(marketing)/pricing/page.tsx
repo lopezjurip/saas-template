@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { APP_HOST } from "~/lib/constants";
+import { JsonLd } from "~/components/json-ld";
+import { APP_HOST, APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, ROSETTA, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { PricingClient } from "./pricing-client";
 
@@ -28,8 +29,22 @@ export async function generateMetadata(props: PageProps<"/[locale]/pricing">): P
   };
 }
 
-export default async function PricingPage() {
-  return <PricingClient />;
+export default async function PricingPage(props: PageProps<"/[locale]/pricing">) {
+  const { locale } = await props.params;
+
+  const webPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    url: `${APP_URL.origin}/${locale}/pricing`,
+    inLanguage: locale,
+  };
+
+  return (
+    <>
+      <JsonLd data={webPageSchema} />
+      <PricingClient />
+    </>
+  );
 }
 
 const LOCALE_ES = {

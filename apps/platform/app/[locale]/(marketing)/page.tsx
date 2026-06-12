@@ -13,6 +13,7 @@ import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd } from "~/components/json-ld";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
@@ -82,243 +83,270 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
 
   const contactBullets = [t("contact.bullet.a"), t("contact.bullet.b"), t("contact.bullet.c")];
 
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${APP_URL.origin}/${locale}#website`,
+    url: `${APP_URL.origin}/${locale}`,
+    inLanguage: locale,
+  };
+
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${APP_URL.origin}#organization`,
+    url: APP_URL.origin,
+    name: "SaaS Template",
+  };
+
   return (
-    <main className="flex-1">
-      <section id="product" className="relative overflow-hidden">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,var(--muted),transparent_70%)]"
-        />
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 pb-16 pt-12 text-center sm:gap-7 sm:pb-20 sm:pt-16">
-          <Badge variant="outline" className="gap-1.5 rounded-full bg-background/80 py-1 font-normal">
-            <Sparkles aria-hidden="true" className="h-3 w-3" />
-            {t("hero.tag")}
-          </Badge>
-          <h1 className="max-w-[18ch] text-balance text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-            {t("hero.title1")} <span className="text-muted-foreground">{t("hero.title2")}</span>
-          </h1>
-          <p className="max-w-[58ch] text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-            {t("hero.subtitle")}
-          </p>
-          <div className="flex w-full max-w-xs flex-col items-stretch justify-center gap-2 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
-            <Button asChild size="lg" className="cursor-pointer">
-              <Link href={ctaHref}>
-                {ctaLabel}
-                <ArrowRight aria-hidden="true" className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="cursor-pointer">
-              <Link href={ROUTE("/[locale]", { locale }, "contact")}>{t("hero.secondary")}</Link>
-            </Button>
-          </div>
-          <p className="font-mono text-xs text-muted-foreground">{t("hero.trust")}</p>
+    <>
+      <JsonLd data={websiteSchema} />
+      <JsonLd data={organizationSchema} />
+      <main className="flex-1">
+        <section id="product" className="relative overflow-hidden">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px] bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,var(--muted),transparent_70%)]"
+          />
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 pb-16 pt-12 text-center sm:gap-7 sm:pb-20 sm:pt-16">
+            <Badge variant="outline" className="gap-1.5 rounded-full bg-background/80 py-1 font-normal">
+              <Sparkles aria-hidden="true" className="h-3 w-3" />
+              {t("hero.tag")}
+            </Badge>
+            <h1 className="max-w-[18ch] text-balance text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+              {t("hero.title1")} <span className="text-muted-foreground">{t("hero.title2")}</span>
+            </h1>
+            <p className="max-w-[58ch] text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
+              {t("hero.subtitle")}
+            </p>
+            <div className="flex w-full max-w-xs flex-col items-stretch justify-center gap-2 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
+              <Button asChild size="lg" className="cursor-pointer">
+                <Link href={ctaHref}>
+                  {ctaLabel}
+                  <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="cursor-pointer">
+                <Link href={ROUTE("/[locale]", { locale }, "contact")}>{t("hero.secondary")}</Link>
+              </Button>
+            </div>
+            <p className="font-mono text-xs text-muted-foreground">{t("hero.trust")}</p>
 
-          <div className="mt-4 w-full sm:mt-8">
-            <Card className="mx-auto max-w-4xl overflow-hidden text-left shadow-lg">
-              <CardContent className="grid gap-3 p-4 md:grid-cols-[1.15fr_1fr]">
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-2">
-                      <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-                      <span className="truncate text-xs font-medium">{t("mock.agent")}</span>
-                    </span>
-                    <span className="hidden font-mono text-tiny text-muted-foreground sm:inline">
-                      saas-template/app
-                    </span>
+            <div className="mt-4 w-full sm:mt-8">
+              <Card className="mx-auto max-w-4xl overflow-hidden text-left shadow-lg">
+                <CardContent className="grid gap-3 p-4 md:grid-cols-[1.15fr_1fr]">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-2">
+                        <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                        <span className="truncate text-xs font-medium">{t("mock.agent")}</span>
+                      </span>
+                      <span className="hidden font-mono text-tiny text-muted-foreground sm:inline">
+                        saas-template/app
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1 rounded-md border border-border bg-muted/40 px-3 py-2.5">
+                      <span className="text-tiny font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                        {t("mock.taskLabel")}
+                      </span>
+                      <span className="text-sm/normal leading-snug">{t("mock.task")}</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-tiny font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                        {t("mock.stepsLabel")}
+                      </span>
+                      <ol className="flex flex-col gap-1.5">
+                        {mockSteps.map((step, index) => (
+                          <li key={step} className="flex items-center gap-2 text-[12.5px]">
+                            <span
+                              className={
+                                index < 3
+                                  ? "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-foreground text-background"
+                                  : "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground"
+                              }
+                            >
+                              {index < 3 ? (
+                                <Check aria-hidden="true" className="h-2.5 w-2.5" strokeWidth={3} />
+                              ) : (
+                                <span
+                                  aria-hidden="true"
+                                  className="h-1.5 w-1.5 animate-pulse rounded-full bg-current"
+                                />
+                              )}
+                            </span>
+                            <span className={index === 3 ? "text-muted-foreground" : undefined}>{step}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1 rounded-md border border-border bg-muted/40 px-3 py-2.5">
-                    <span className="text-tiny font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                      {t("mock.taskLabel")}
-                    </span>
-                    <span className="text-sm/normal leading-snug">{t("mock.task")}</span>
+                  <div className="flex flex-col rounded-md border border-border bg-background">
+                    <div className="flex items-center justify-between border-b border-border px-3 py-2">
+                      <span className="text-xs font-medium">{t("mock.replyLabel")}</span>
+                      <span className="font-mono text-tiny text-muted-foreground">draft · v2</span>
+                    </div>
+                    <p className="flex-1 px-3 py-2.5 text-[12.5px] leading-relaxed">{t("mock.reply")}</p>
+                    <div className="flex flex-wrap items-center gap-1.5 border-t border-border bg-muted/30 px-3 py-2">
+                      <Button size="sm" className="h-7 cursor-pointer px-2.5 text-[12px]">
+                        <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.5} />
+                        {t("mock.send")}
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-7 cursor-pointer px-2.5 text-[12px]">
+                        {t("mock.edit")}
+                      </Button>
+                      <span className="ml-auto font-mono text-tiny text-muted-foreground">320 ms · $0.0021</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-tiny font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-                      {t("mock.stepsLabel")}
-                    </span>
-                    <ol className="flex flex-col gap-1.5">
-                      {mockSteps.map((step, index) => (
-                        <li key={step} className="flex items-center gap-2 text-[12.5px]">
-                          <span
-                            className={
-                              index < 3
-                                ? "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-foreground text-background"
-                                : "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground"
-                            }
-                          >
-                            {index < 3 ? (
-                              <Check aria-hidden="true" className="h-2.5 w-2.5" strokeWidth={3} />
-                            ) : (
-                              <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
-                            )}
-                          </span>
-                          <span className={index === 3 ? "text-muted-foreground" : undefined}>{step}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                </div>
-                <div className="flex flex-col rounded-md border border-border bg-background">
-                  <div className="flex items-center justify-between border-b border-border px-3 py-2">
-                    <span className="text-xs font-medium">{t("mock.replyLabel")}</span>
-                    <span className="font-mono text-tiny text-muted-foreground">draft · v2</span>
-                  </div>
-                  <p className="flex-1 px-3 py-2.5 text-[12.5px] leading-relaxed">{t("mock.reply")}</p>
-                  <div className="flex flex-wrap items-center gap-1.5 border-t border-border bg-muted/30 px-3 py-2">
-                    <Button size="sm" className="h-7 cursor-pointer px-2.5 text-[12px]">
-                      <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.5} />
-                      {t("mock.send")}
-                    </Button>
-                    <Button size="sm" variant="outline" className="h-7 cursor-pointer px-2.5 text-[12px]">
-                      {t("mock.edit")}
-                    </Button>
-                    <span className="ml-auto font-mono text-tiny text-muted-foreground">320 ms · $0.0021</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="customers" className="border-y border-border bg-muted/25">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10 sm:py-12">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            {t("social.title")}
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:gap-x-10">
-            {LOGOS.map((name) => (
-              <span key={name} className="inline-flex items-center gap-2 px-2 text-muted-foreground/85">
-                <span aria-hidden="true" className="h-4 w-4 rounded-[3px] border-[1.5px] border-current opacity-70" />
-                <span className="text-sm font-semibold tracking-tight">{name}</span>
+        <section id="customers" className="border-y border-border bg-muted/25">
+          <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10 sm:py-12">
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              {t("social.title")}
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:gap-x-10">
+              {LOGOS.map((name) => (
+                <span key={name} className="inline-flex items-center gap-2 px-2 text-muted-foreground/85">
+                  <span aria-hidden="true" className="h-4 w-4 rounded-[3px] border-[1.5px] border-current opacity-70" />
+                  <span className="text-sm font-semibold tracking-tight">{name}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
+            <div className="flex max-w-[44ch] flex-col gap-1.5">
+              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                {t("stats.caption")}
               </span>
+              <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("stats.title")}</h2>
+              <p className="text-pretty text-sm text-muted-foreground">{t("stats.subtitle")}</p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-2 font-mono text-xs text-muted-foreground">
+              <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              live
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4">
+            {stats.map((stat) => (
+              <div key={stat.label} className="flex flex-col gap-1.5 bg-background px-5 py-6">
+                <span className="text-3xl font-semibold leading-none tracking-tight tabular-nums sm:text-4xl">
+                  {stat.kpi}
+                  <span className="text-muted-foreground">{stat.unit}</span>
+                </span>
+                <span className="text-pretty text-sm">{stat.label}</span>
+                <span className="mt-1 font-mono text-[11px] text-muted-foreground">{stat.foot}</span>
+              </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
-          <div className="flex max-w-[44ch] flex-col gap-1.5">
+        <section className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
+          <div className="mb-8 flex max-w-[44ch] flex-col gap-2 sm:mb-10">
             <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              {t("stats.caption")}
+              {t("testimonials.tag")}
             </span>
-            <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("stats.title")}</h2>
-            <p className="text-pretty text-sm text-muted-foreground">{t("stats.subtitle")}</p>
+            <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">
+              {t("testimonials.title")}
+            </h2>
           </div>
-          <span className="inline-flex shrink-0 items-center gap-2 font-mono text-xs text-muted-foreground">
-            <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-            live
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className="flex flex-col gap-1.5 bg-background px-5 py-6">
-              <span className="text-3xl font-semibold leading-none tracking-tight tabular-nums sm:text-4xl">
-                {stat.kpi}
-                <span className="text-muted-foreground">{stat.unit}</span>
-              </span>
-              <span className="text-pretty text-sm">{stat.label}</span>
-              <span className="mt-1 font-mono text-[11px] text-muted-foreground">{stat.foot}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
-        <div className="mb-8 flex max-w-[44ch] flex-col gap-2 sm:mb-10">
-          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            {t("testimonials.tag")}
-          </span>
-          <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("testimonials.title")}</h2>
-        </div>
-        <div className="grid gap-5 md:grid-cols-3">
-          {testimonials.map((item) => (
-            <Card key={item.name} className="h-full">
-              <CardContent className="flex h-full flex-col gap-4">
-                <blockquote className="text-pretty text-[15px] leading-snug">{`"${item.quote}"`}</blockquote>
-                <figcaption className="mt-auto flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="text-sm/normal font-semibold">{INITIALS_OF(item.name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="flex flex-col leading-tight">
-                    <span className="text-[13.5px] font-medium">{item.name}</span>
-                    <span className="text-xs text-muted-foreground">{item.role}</span>
-                  </span>
-                </figcaption>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section id="faq" className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
-        <div className="grid gap-6 lg:grid-cols-[0.85fr_1.4fr] lg:gap-10">
-          <div className="flex flex-col gap-2.5">
-            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              {t("faq.tag")}
-            </span>
-            <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("faq.title")}</h2>
-            <p className="max-w-[40ch] text-pretty text-sm text-muted-foreground">{t("faq.subtitle")}</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card px-4 sm:px-5">
-            <Accordion type="single" collapsible defaultValue="a">
-              {faqs.map((faq) => {
-                return (
-                  <AccordionItem key={faq.value} value={faq.value}>
-                    <AccordionTrigger className="text-[14.5px]">{faq.q}</AccordionTrigger>
-                    <AccordionContent className="max-w-[68ch] text-[13.5px] leading-relaxed text-muted-foreground">
-                      {faq.a}
-                    </AccordionContent>
-                  </AccordionItem>
-                );
-              })}
-            </Accordion>
-          </div>
-        </div>
-      </section>
-
-      <section id="contact" className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
-        <Card>
-          <CardContent className="grid items-start gap-8 p-6 sm:p-8 md:grid-cols-[1fr_1.05fr] md:gap-10 lg:p-10">
-            <div className="flex min-w-0 flex-col gap-5">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                {t("contact.tag")}
-              </span>
-              <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("contact.title")}</h2>
-              <p className="max-w-[44ch] text-pretty leading-relaxed text-muted-foreground">{t("contact.subtitle")}</p>
-              <ul className="flex flex-col gap-2.5">
-                {contactBullets.map((bullet) => (
-                  <li key={bullet} className="flex items-start gap-2.5 text-[13.5px]">
-                    <span className="mt-px inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
-                      <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.5} />
+          <div className="grid gap-5 md:grid-cols-3">
+            {testimonials.map((item) => (
+              <Card key={item.name} className="h-full">
+                <CardContent className="flex h-full flex-col gap-4">
+                  <blockquote className="text-pretty text-[15px] leading-snug">{`"${item.quote}"`}</blockquote>
+                  <figcaption className="mt-auto flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="text-sm/normal font-semibold">{INITIALS_OF(item.name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="flex flex-col leading-tight">
+                      <span className="text-[13.5px] font-medium">{item.name}</span>
+                      <span className="text-xs text-muted-foreground">{item.role}</span>
                     </span>
-                    <span className="text-pretty">{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="font-mono text-xs text-muted-foreground">{t("contact.nospam")}</p>
+                  </figcaption>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section id="faq" className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
+          <div className="grid gap-6 lg:grid-cols-[0.85fr_1.4fr] lg:gap-10">
+            <div className="flex flex-col gap-2.5">
+              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                {t("faq.tag")}
+              </span>
+              <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("faq.title")}</h2>
+              <p className="max-w-[40ch] text-pretty text-sm text-muted-foreground">{t("faq.subtitle")}</p>
             </div>
-            <ContactBooking
-              locale={locale}
-              labels={{
-                week: t("contact.week"),
-                timezone: t("contact.timezone"),
-                book: t("contact.book"),
-                write: t("contact.write"),
-              }}
-              days={[
-                t("contact.day.mon"),
-                t("contact.day.tue"),
-                t("contact.day.wed"),
-                t("contact.day.thu"),
-                t("contact.day.fri"),
-              ]}
-            />
-          </CardContent>
-        </Card>
-      </section>
-    </main>
+            <div className="rounded-xl border border-border bg-card px-4 sm:px-5">
+              <Accordion type="single" collapsible defaultValue="a">
+                {faqs.map((faq) => {
+                  return (
+                    <AccordionItem key={faq.value} value={faq.value}>
+                      <AccordionTrigger className="text-[14.5px]">{faq.q}</AccordionTrigger>
+                      <AccordionContent className="max-w-[68ch] text-[13.5px] leading-relaxed text-muted-foreground">
+                        {faq.a}
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            </div>
+          </div>
+        </section>
+
+        <section id="contact" className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
+          <Card>
+            <CardContent className="grid items-start gap-8 p-6 sm:p-8 md:grid-cols-[1fr_1.05fr] md:gap-10 lg:p-10">
+              <div className="flex min-w-0 flex-col gap-5">
+                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  {t("contact.tag")}
+                </span>
+                <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("contact.title")}</h2>
+                <p className="max-w-[44ch] text-pretty leading-relaxed text-muted-foreground">
+                  {t("contact.subtitle")}
+                </p>
+                <ul className="flex flex-col gap-2.5">
+                  {contactBullets.map((bullet) => (
+                    <li key={bullet} className="flex items-start gap-2.5 text-[13.5px]">
+                      <span className="mt-px inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
+                        <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.5} />
+                      </span>
+                      <span className="text-pretty">{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="font-mono text-xs text-muted-foreground">{t("contact.nospam")}</p>
+              </div>
+              <ContactBooking
+                locale={locale}
+                labels={{
+                  week: t("contact.week"),
+                  timezone: t("contact.timezone"),
+                  book: t("contact.book"),
+                  write: t("contact.write"),
+                }}
+                days={[
+                  t("contact.day.mon"),
+                  t("contact.day.tue"),
+                  t("contact.day.wed"),
+                  t("contact.day.thu"),
+                  t("contact.day.fri"),
+                ]}
+              />
+            </CardContent>
+          </Card>
+        </section>
+      </main>
+    </>
   );
 }
 

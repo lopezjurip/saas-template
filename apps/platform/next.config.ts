@@ -39,6 +39,14 @@ if (missingFeatures.length > 0) {
   );
 }
 
+const otelEnvVars = ["OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_SERVICE_NAME"];
+const missingOtel = otelEnvVars.filter((v) => !process.env[v]);
+if (missingOtel.length > 0) {
+  console.debug(
+    `[next.config] Missing OTEL env vars: ${missingOtel.join(", ")}. Traces will not be exported — see .env.example.`,
+  );
+}
+
 const DEBUG = process.env.DEBUG;
 
 const VERCEL_GIT_COMMIT_SHA = process.env.VERCEL_GIT_COMMIT_SHA;

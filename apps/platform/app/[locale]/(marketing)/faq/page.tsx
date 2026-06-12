@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import { JsonLd } from "~/components/json-ld";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { APP_HOST } from "~/lib/constants";
+import { APP_HOST, APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
 
 export async function generateMetadata(props: PageProps<"/[locale]/faq">): Promise<Metadata> {
@@ -28,11 +29,22 @@ export async function generateMetadata(props: PageProps<"/[locale]/faq">): Promi
 
 export default async function FaqPage(props: PageProps<"/[locale]/faq">) {
   const { t, locale } = await getRosetta(LOCALES);
+
+  const webPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    url: `${APP_URL.origin}/${locale}/faq`,
+    inLanguage: locale,
+  };
+
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-6 py-12">
-      <h1 className="text-2xl font-semibold">{t("heading")}</h1>
-      <p className="text-muted-foreground">{t("placeholder")}</p>
-    </main>
+    <>
+      <JsonLd data={webPageSchema} />
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-6 py-12">
+        <h1 className="text-2xl font-semibold">{t("heading")}</h1>
+        <p className="text-muted-foreground">{t("placeholder")}</p>
+      </main>
+    </>
   );
 }
 

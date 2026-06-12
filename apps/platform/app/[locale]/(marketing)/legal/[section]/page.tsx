@@ -4,8 +4,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import { JsonLd } from "~/components/json-ld";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { APP_HOST } from "~/lib/constants";
+import { APP_HOST, APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { ROUTE } from "~/lib/route";
 
@@ -71,32 +72,42 @@ export default async function LegalSectionPage(props: PageProps<"/[locale]/legal
   const legalLocale = toLegalLocale(locale);
   const content = await loadMarkdown(legalLocale, section as LegalSection);
 
-  return (
-    <article className="flex flex-col gap-6">
-      <nav aria-label="Breadcrumb">
-        <ol className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
-          <li>
-            <Link href={ROUTE("/[locale]/legal", { locale })} className="hover:text-foreground no-underline">
-              /legal
-            </Link>
-          </li>
-          <li className="opacity-50" aria-hidden="true">
-            /
-          </li>
-          <li className="text-foreground" aria-current="page">
-            {section}
-          </li>
-        </ol>
-      </nav>
+  const webPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    url: `${APP_URL.origin}/${locale}/legal/${section}`,
+    inLanguage: locale,
+  };
 
-      {content ? (
-        <div className="prose prose-neutral dark:prose-invert max-w-[68ch]">
-          <ReactMarkdown>{content}</ReactMarkdown>
-        </div>
-      ) : (
-        <p className="text-muted-foreground text-sm">{t("coming_soon")}</p>
-      )}
-    </article>
+  return (
+    <>
+      <JsonLd data={webPageSchema} />
+      <article className="flex flex-col gap-6">
+        <nav aria-label="Breadcrumb">
+          <ol className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
+            <li>
+              <Link href={ROUTE("/[locale]/legal", { locale })} className="hover:text-foreground no-underline">
+                /legal
+              </Link>
+            </li>
+            <li className="opacity-50" aria-hidden="true">
+              /
+            </li>
+            <li className="text-foreground" aria-current="page">
+              {section}
+            </li>
+          </ol>
+        </nav>
+
+        {content ? (
+          <div className="prose prose-neutral dark:prose-invert max-w-[68ch]">
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm">{t("coming_soon")}</p>
+        )}
+      </article>
+    </>
   );
 }
 
