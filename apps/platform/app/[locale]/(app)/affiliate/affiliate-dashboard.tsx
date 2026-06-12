@@ -173,9 +173,7 @@ function AgencySection({ agency, t }: { agency: AffiliateAgency; t: Translate })
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="text-foreground text-[13.5px] font-semibold">{t("global_title")}</span>
-            <span className="text-muted-foreground text-[12px] leading-[1.45] text-pretty">
-              {t("global_desc")}
-            </span>
+            <span className="text-muted-foreground text-[12px] leading-[1.45] text-pretty">{t("global_desc")}</span>
           </div>
         </div>
       ) : agency.orgs.length === 0 ? (

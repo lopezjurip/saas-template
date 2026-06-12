@@ -72,9 +72,7 @@ export default async function OrganizationBillingPage(
               </Badge>
             </span>
             <span className="text-foreground text-[26px] font-semibold leading-[1.1] tracking-[-0.02em]">Pro</span>
-            <span className="text-muted-foreground max-w-[44ch] text-[12.5px] text-pretty">
-              {t("plan_blurb")}
-            </span>
+            <span className="text-muted-foreground max-w-[44ch] text-[12.5px] text-pretty">{t("plan_blurb")}</span>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-0.5">
             <span className="text-foreground text-[22px] font-semibold tabular-nums tracking-[-0.02em]">$24</span>

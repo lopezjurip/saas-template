@@ -1,6 +1,7 @@
 import { JWT_DECODE_PAYLOAD } from "@packages/utils/jwt";
 import { type CookieOptions, createServerClient as createServerClientSsr } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { type AppMetadata, AppMetadataSchema } from "./metadata";
 import type { Database } from "./types.ts";
@@ -11,6 +12,10 @@ export { type AppMetadata, AppMetadataSchema } from "./metadata";
 // a request only hits Supabase Auth once for the user, and reads cookies once for the session.
 // `cache()` is per-request: nothing leaks across requests or between users.
 
+/**
+ * Creates a Supabase server client with per-request caching.
+ * @returns Cached Supabase client instance with cookie management.
+ */
 export const createServerClient = cache(async () => {
   const cookieStore = await cookies();
   const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
@@ -41,17 +46,55 @@ export const createServerClient = cache(async () => {
   );
 });
 
-// Returns the authenticated user (validated against Supabase Auth) or null.
-// Safe to read `.email`, `.identities`, etc. — unlike `session.user`, this object is verified.
+/**
+ * Gets the authenticated user from Supabase Auth.
+ * @returns Verified user object or null. Safe to read `.email`, `.identities`, etc.
+ * @example
+ * const user = await getSupabaseServerUser();
+ * if (user) {
+ *   console.log("User email:", user.email);
+ * }
+ */
 export const getSupabaseServerUser = cache(async () => {
   const supabase = await createServerClient();
   const { data } = await supabase.auth.getUser();
   return data.user;
 });
 
-// Returns the cookie-backed session (or null). Use this only when you need the raw
-// `access_token` (e.g. to forward to a downstream API). For the user identity, prefer
-// `getSupabaseServerUser()` — `session.user` is not authenticated.
+/**
+ * Gets the authenticated user or redirects to auth if not found.
+ * @example
+ * const user = await getSupabaseServerUserRedirect();
+ */
+export async function getSupabaseServerUserRedirect() {
+  const user = await getSupabaseServerUser();
+  if (!user) {
+    // Short circuit.
+    redirect("/[locale]/auth");
+  }
+  return user;
+}
+
+/**
+ * Gets the authenticated user or throws a 404 if not found.
+ * @returns Verified user object. Safe to read `.email`, `.identities`, etc.
+ * @example
+ * const user = await getSupabaseServerUserAssert();
+ */
+export async function getSupabaseServerUserAssert() {
+  const user = await getSupabaseServerUser();
+  if (!user) {
+    // Short circuit.
+    notFound();
+  }
+  return user;
+}
+
+/**
+ * Gets the cookie-backed session (or null).
+ * Use only when you need the raw `access_token`. For user identity, prefer `getSupabaseServerUser()`.
+ * @returns Session with auth token or null. Note: `session.user` is not authenticated.
+ */
 export const getSupabaseServerSession = cache(async () => {
   const supabase = await createServerClient();
   const {
@@ -60,13 +103,15 @@ export const getSupabaseServerSession = cache(async () => {
   return session;
 });
 
-// Hook-injected claims (tenants, organizations, agencies, onboarded) live only in the JWT —
-// `auth.getUser()` hits /auth/v1/user which returns the persisted user record without them.
-// Decode the access_token directly. updateSession() in the proxy already validates the JWT.
+/**
+ * Gets hook-injected claims from the JWT (tenants, organizations, agencies, onboarded).
+ * These claims live only in the JWT; use this instead of `auth.getUser()` for them.
+ * @returns Parsed app metadata or null if session unavailable.
+ */
 export const getSupabaseServerUserMetadata = cache(async (): Promise<AppMetadata | null> => {
   const session = await getSupabaseServerSession();
   if (!session) return null;
-  const payload = JWT_DECODE_PAYLOAD(session.access_token) as { app_metadata?: unknown } | null;
+  const payload = JWT_DECODE_PAYLOAD(session["access_token"]) as { app_metadata?: unknown } | null;
   const result = AppMetadataSchema.safeParse(payload?.["app_metadata"]);
   return result.success ? result.data : null;
 });

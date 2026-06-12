@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { clsx } from "clsx";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";

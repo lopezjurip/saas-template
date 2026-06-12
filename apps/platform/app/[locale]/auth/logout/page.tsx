@@ -1,11 +1,9 @@
 import { getSupabaseClientUser } from "@packages/supabase/client.browser";
-import { createServerClient } from "@packages/supabase/client.server";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { INITIALS_OF } from "@packages/utils/string";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getViewerProfileAssert } from "~/hooks/get-viewer-profile";
+import { getViewerProfileRedirect } from "~/hooks/get-viewer-profile";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 import { signOutForm } from "./actions";
@@ -14,7 +12,7 @@ export default async function AuthLogoutPage(props: PageProps<"/[locale]/auth/lo
   const { locale } = await props.params;
   const {
     data: { profile },
-  } = await getViewerProfileAssert();
+  } = await getViewerProfileRedirect();
   const user = await getSupabaseClientUser();
 
   const name_full = profile["profile_name_full"];

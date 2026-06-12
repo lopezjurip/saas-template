@@ -6,7 +6,6 @@ import { AUTH_TWEAKS } from "~/lib/auth-tweaks";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 import { METHOD_CATALOG } from "./_components/method-catalog";
-import { ObProgress } from "./_components/ob-progress";
 import { actionFinishOnboarding } from "./actions";
 import {
   COUNT_DONE,

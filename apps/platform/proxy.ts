@@ -1,5 +1,4 @@
 import { updateSession } from "@packages/supabase/client.middleware";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { URL_NEW } from "@packages/utils/url";
 import { type NextRequest, NextResponse, userAgent } from "next/server";
 import { APEX_HOSTNAME, APP_HOST } from "~/lib/constants";
@@ -8,17 +7,6 @@ import { EXTRACT_LOCALE_FROM_PATH, LOCALE_COOKIE, type SupportedLocale } from "~
 import { RESOLVE_LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
 
 const log = debug("proxy");
-
-async function resolveTenantIdFromSlug(slug: string): Promise<number | null> {
-  const supabase = createServiceRoleClient();
-  const { data } = await supabase
-    .from("tenants")
-    .select("tenant_id, tenant_disabled_at")
-    .eq("tenant_slug", slug)
-    .maybeSingle();
-  if (!data || data.tenant_disabled_at) return null;
-  return data.tenant_id;
-}
 
 const PUBLIC_PATH_REGEX = /^(\/|(\/(?:auth|legal|faq|pricing|opengraph-image|twitter-image|icon)(?:\/|$)))/;
 
@@ -128,46 +116,7 @@ export async function proxy(request: NextRequest) {
     return setLocaleCookieOnResponse(sessionResponse, locale);
   }
 
-  /** Auth gate. */
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  if (!session) {
-    const next = `${proto}://${hostname}${pathname}${request.nextUrl.search}`;
-    const authUrl = URL_NEW(`/${locale}/auth`, `${proto}://${APP_HOST}`);
-    authUrl.searchParams.set("next", next);
-    return setLocaleCookieOnResponse(NextResponse.redirect(authUrl), locale);
-  }
-
-  /**
-   * Tenant path gate: /{locale}/t/{slug}/... — verify tenant exists and the caller can access it.
-   * This is the access-control boundary: a logged-in non-member hitting /t/{slug} is blocked here.
-   * Membership lives in the DB only (never in the JWT): the session-scoped client sees the tenant
-   * row iff RLS allows it (viewer_tenant_ids / viewer_agency_tenant_ids resolve it server-side).
-   */
-  if (pathAfterLocale.startsWith("/t/")) {
-    const segments = pathAfterLocale.split("/"); // ["", "t", "{slug}", ...]
-    const tenantSlug = segments[2];
-    if (!tenantSlug) {
-      return new NextResponse("Tenant not found", { status: 404 });
-    }
-    const tenant_id = await resolveTenantIdFromSlug(tenantSlug);
-    if (!tenant_id) {
-      log.warn("unknown or disabled tenant", { slug: tenantSlug });
-      return new NextResponse("Tenant not found", { status: 404 });
-    }
-    const { data: accessibleTenant } = await supabase
-      .from("tenants")
-      .select("tenant_id")
-      .eq("tenant_id", tenant_id)
-      .maybeSingle();
-    if (!accessibleTenant) {
-      log.warn("user lacks access for tenant", { slug: tenantSlug, tenant_id });
-      return new NextResponse("No tienes acceso a esta empresa.", { status: 403 });
-    }
-  }
-
-  /** Protected paths — session verified above, tenant gate applied for /t/ routes. */
+  /** Protected paths — auth and tenant gates handled by layout. */
   return setLocaleCookieOnResponse(sessionResponse, locale);
 }
 
