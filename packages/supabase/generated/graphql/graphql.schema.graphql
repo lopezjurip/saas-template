@@ -237,28 +237,6 @@ type Mutation {
     """Restricts the mutation's impact to records matching the criteria"""
     filter: permission_presetsFilter
   ): permission_presetsDeleteResponse!
-  """
-  Deletes zero or more records from the `profile_webauthn_challenges` collection
-  """
-  deleteFromprofile_webauthn_challengesCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: profile_webauthn_challengesFilter
-  ): profile_webauthn_challengesDeleteResponse!
-  """
-  Deletes zero or more records from the `profile_webauthn_credentials` collection
-  """
-  deleteFromprofile_webauthn_credentialsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: profile_webauthn_credentialsFilter
-  ): profile_webauthn_credentialsDeleteResponse!
   """Deletes zero or more records from the `tenant_domains` collection"""
   deleteFromtenant_domainsCollection(
     """
@@ -278,14 +256,6 @@ type Mutation {
   insertIntopermission_presetsCollection(objects: [permission_presetsInsertInput!]!): permission_presetsInsertResponse
   """Adds one or more `profile_identities` records to the collection"""
   insertIntoprofile_identitiesCollection(objects: [profile_identitiesInsertInput!]!): profile_identitiesInsertResponse
-  """
-  Adds one or more `profile_webauthn_challenges` records to the collection
-  """
-  insertIntoprofile_webauthn_challengesCollection(objects: [profile_webauthn_challengesInsertInput!]!): profile_webauthn_challengesInsertResponse
-  """
-  Adds one or more `profile_webauthn_credentials` records to the collection
-  """
-  insertIntoprofile_webauthn_credentialsCollection(objects: [profile_webauthn_credentialsInsertInput!]!): profile_webauthn_credentialsInsertResponse
   """Adds one or more `tenant_domains` records to the collection"""
   insertIntotenant_domainsCollection(objects: [tenant_domainsInsertInput!]!): tenant_domainsInsertResponse
   revoke_session(session_id: UUID!): Opaque
@@ -358,21 +328,6 @@ type Mutation {
     """
     set: profile_identitiesUpdateInput!
   ): profile_identitiesUpdateResponse!
-  """
-  Updates zero or more records in the `profile_webauthn_credentials` collection
-  """
-  updateprofile_webauthn_credentialsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: profile_webauthn_credentialsFilter
-    """
-    Fields that are set will be updated for all records matching the `filter`
-    """
-    set: profile_webauthn_credentialsUpdateInput!
-  ): profile_webauthn_credentialsUpdateResponse!
   """Updates zero or more records in the `profiles` collection"""
   updateprofilesCollection(
     """
@@ -589,7 +544,6 @@ type Query {
   cl_rut_normalize(value: String!): String
   cl_rut_validate(value: String!): Boolean
   email_exists(email_to_check: String!): Boolean
-  email_has_passkey(email_to_check: String!): Boolean
   email_has_password(email_to_check: String!): Boolean
   health_current_timestamp: Datetime
   """Retrieve a record by its `ID`"""
@@ -693,10 +647,8 @@ type Query {
     orderBy: [permissionsOrderBy!]
   ): permissionsConnection
   phone_exists(default_code: String = "+56", phone_to_check: String!): Boolean
-  phone_has_passkey(default_code: String = "+56", phone_to_check: String!): Boolean
   phone_has_password(default_code: String = "+56", phone_to_check: String!): Boolean
   phone_normalize(default_code: String = "+56", value: String!): String
-  profile_id_by_email(email_to_check: String!): UUID
   """A pagable collection of type `profile_identities`"""
   profile_identitiesCollection(
     """Query values in the collection after the provided cursor"""
@@ -716,44 +668,6 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [profile_identitiesOrderBy!]
   ): profile_identitiesConnection
-  """A pagable collection of type `profile_webauthn_challenges`"""
-  profile_webauthn_challengesCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: profile_webauthn_challengesFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [profile_webauthn_challengesOrderBy!]
-  ): profile_webauthn_challengesConnection
-  """A pagable collection of type `profile_webauthn_credentials`"""
-  profile_webauthn_credentialsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: profile_webauthn_credentialsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [profile_webauthn_credentialsOrderBy!]
-  ): profile_webauthn_credentialsConnection
   """A pagable collection of type `profiles`"""
   profilesCollection(
     """Query values in the collection after the provided cursor"""
@@ -2209,206 +2123,6 @@ input profile_identity_document_kindFilter {
   neq: profile_identity_document_kind
 }
 
-type profile_webauthn_challenges implements Node {
-  """Globally Unique Record Identifier"""
-  nodeId: ID!
-  profile_id: UUID
-  profiles: profiles
-  webauthn_challenge_created_at: Datetime!
-  webauthn_challenge_id: UUID!
-  webauthn_challenge_value: String!
-}
-
-type profile_webauthn_challengesConnection {
-  edges: [profile_webauthn_challengesEdge!]!
-  pageInfo: PageInfo!
-}
-
-type profile_webauthn_challengesDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [profile_webauthn_challenges!]!
-}
-
-type profile_webauthn_challengesEdge {
-  cursor: String!
-  node: profile_webauthn_challenges!
-}
-
-input profile_webauthn_challengesFilter {
-  """
-  Returns true only if all its inner filters are true, otherwise returns false
-  """
-  and: [profile_webauthn_challengesFilter!]
-  nodeId: IDFilter
-  """Negates a filter"""
-  not: profile_webauthn_challengesFilter
-  """
-  Returns true if at least one of its inner filters is true, otherwise returns false
-  """
-  or: [profile_webauthn_challengesFilter!]
-  profile_id: UUIDFilter
-  webauthn_challenge_created_at: DatetimeFilter
-  webauthn_challenge_id: UUIDFilter
-  webauthn_challenge_value: StringFilter
-}
-
-input profile_webauthn_challengesInsertInput {
-  profile_id: UUID
-  webauthn_challenge_created_at: Datetime
-  webauthn_challenge_id: UUID
-  webauthn_challenge_value: String
-}
-
-type profile_webauthn_challengesInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [profile_webauthn_challenges!]!
-}
-
-input profile_webauthn_challengesOrderBy {
-  profile_id: OrderByDirection
-  webauthn_challenge_created_at: OrderByDirection
-  webauthn_challenge_id: OrderByDirection
-  webauthn_challenge_value: OrderByDirection
-}
-
-type profile_webauthn_credentials implements Node {
-  """Globally Unique Record Identifier"""
-  nodeId: ID!
-  profile_id: UUID!
-  profiles: profiles
-  webauthn_credential_aaguid: String!
-  webauthn_credential_backup_state: String!
-  webauthn_credential_created_at: Datetime!
-  webauthn_credential_device_type: String!
-  webauthn_credential_external_id: String!
-  webauthn_credential_friendly_name: String
-  webauthn_credential_id: UUID!
-  webauthn_credential_last_used_at: Datetime
-  webauthn_credential_public_key: String!
-  webauthn_credential_sign_count: Int!
-  webauthn_credential_transports: [String]!
-  webauthn_credential_type: String!
-  webauthn_credential_updated_at: Datetime!
-  webauthn_credential_user_verification_status: String!
-}
-
-type profile_webauthn_credentialsConnection {
-  edges: [profile_webauthn_credentialsEdge!]!
-  pageInfo: PageInfo!
-}
-
-type profile_webauthn_credentialsDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [profile_webauthn_credentials!]!
-}
-
-type profile_webauthn_credentialsEdge {
-  cursor: String!
-  node: profile_webauthn_credentials!
-}
-
-input profile_webauthn_credentialsFilter {
-  """
-  Returns true only if all its inner filters are true, otherwise returns false
-  """
-  and: [profile_webauthn_credentialsFilter!]
-  nodeId: IDFilter
-  """Negates a filter"""
-  not: profile_webauthn_credentialsFilter
-  """
-  Returns true if at least one of its inner filters is true, otherwise returns false
-  """
-  or: [profile_webauthn_credentialsFilter!]
-  profile_id: UUIDFilter
-  webauthn_credential_aaguid: StringFilter
-  webauthn_credential_backup_state: StringFilter
-  webauthn_credential_created_at: DatetimeFilter
-  webauthn_credential_device_type: StringFilter
-  webauthn_credential_external_id: StringFilter
-  webauthn_credential_friendly_name: StringFilter
-  webauthn_credential_id: UUIDFilter
-  webauthn_credential_last_used_at: DatetimeFilter
-  webauthn_credential_public_key: StringFilter
-  webauthn_credential_sign_count: IntFilter
-  webauthn_credential_transports: StringListFilter
-  webauthn_credential_type: StringFilter
-  webauthn_credential_updated_at: DatetimeFilter
-  webauthn_credential_user_verification_status: StringFilter
-}
-
-input profile_webauthn_credentialsInsertInput {
-  profile_id: UUID
-  webauthn_credential_aaguid: String
-  webauthn_credential_backup_state: String
-  webauthn_credential_created_at: Datetime
-  webauthn_credential_device_type: String
-  webauthn_credential_external_id: String
-  webauthn_credential_friendly_name: String
-  webauthn_credential_id: UUID
-  webauthn_credential_last_used_at: Datetime
-  webauthn_credential_public_key: String
-  webauthn_credential_sign_count: Int
-  webauthn_credential_transports: [String]
-  webauthn_credential_type: String
-  webauthn_credential_updated_at: Datetime
-  webauthn_credential_user_verification_status: String
-}
-
-type profile_webauthn_credentialsInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [profile_webauthn_credentials!]!
-}
-
-input profile_webauthn_credentialsOrderBy {
-  profile_id: OrderByDirection
-  webauthn_credential_aaguid: OrderByDirection
-  webauthn_credential_backup_state: OrderByDirection
-  webauthn_credential_created_at: OrderByDirection
-  webauthn_credential_device_type: OrderByDirection
-  webauthn_credential_external_id: OrderByDirection
-  webauthn_credential_friendly_name: OrderByDirection
-  webauthn_credential_id: OrderByDirection
-  webauthn_credential_last_used_at: OrderByDirection
-  webauthn_credential_public_key: OrderByDirection
-  webauthn_credential_sign_count: OrderByDirection
-  webauthn_credential_type: OrderByDirection
-  webauthn_credential_updated_at: OrderByDirection
-  webauthn_credential_user_verification_status: OrderByDirection
-}
-
-input profile_webauthn_credentialsUpdateInput {
-  profile_id: UUID
-  webauthn_credential_aaguid: String
-  webauthn_credential_backup_state: String
-  webauthn_credential_created_at: Datetime
-  webauthn_credential_device_type: String
-  webauthn_credential_external_id: String
-  webauthn_credential_friendly_name: String
-  webauthn_credential_id: UUID
-  webauthn_credential_last_used_at: Datetime
-  webauthn_credential_public_key: String
-  webauthn_credential_sign_count: Int
-  webauthn_credential_transports: [String]
-  webauthn_credential_type: String
-  webauthn_credential_updated_at: Datetime
-  webauthn_credential_user_verification_status: String
-}
-
-type profile_webauthn_credentialsUpdateResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [profile_webauthn_credentials!]!
-}
-
 type profiles implements Node {
   agency_membershipsCollection(
     """Query values in the collection after the provided cursor"""
@@ -2472,25 +2186,6 @@ type profiles implements Node {
   profile_name_full: String
   profile_onboarded_at: Datetime
   profile_updated_at: Datetime!
-  profile_webauthn_challenges: profile_webauthn_challenges
-  profile_webauthn_credentialsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: profile_webauthn_credentialsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [profile_webauthn_credentialsOrderBy!]
-  ): profile_webauthn_credentialsConnection
   storage_profiles(
     """Query values in the collection after the provided cursor"""
     after: Cursor

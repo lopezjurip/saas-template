@@ -16,8 +16,6 @@ import * as types from './graphql';
  */
 type Documents = {
     "\n  mutation ProfileSectionUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.ProfileSectionUpdateNameMutationDocument,
-    "\n  query SecuritySectionPageQuery {\n    profile: viewer_profile {\n      profile_id\n      profile_webauthn_credentialsCollection(\n        orderBy: [{ webauthn_credential_created_at: DescNullsLast }]\n      ) {\n        edges {\n          node {\n            webauthn_credential_id\n            webauthn_credential_friendly_name\n            webauthn_credential_device_type\n            webauthn_credential_backup_state\n            webauthn_credential_created_at\n            webauthn_credential_last_used_at\n          }\n        }\n      }\n    }\n  }\n": typeof types.SecuritySectionPageQueryDocument,
-    "\n  mutation SecurityPasskeysListDeleteMutation($webauthn_credential_id: UUID!) {\n    deleteFromprofile_webauthn_credentialsCollection(\n      filter: { webauthn_credential_id: { eq: $webauthn_credential_id } }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.SecurityPasskeysListDeleteMutationDocument,
     "\n  query SessionsSectionPageQuery {\n    viewer_sessions {\n      edges {\n        node {\n          ...SessionsSectionSessionFragment\n        }\n      }\n    }\n  }\n": typeof types.SessionsSectionPageQueryDocument,
     "\n  fragment SessionsSectionSessionFragment on user_sessions {\n    id\n    user_agent\n    ip\n    created_at\n    refreshed_at\n    not_after\n  }\n": typeof types.SessionsSectionSessionFragmentFragmentDoc,
     "\n  query HomePickerPageQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n          tenants {\n            tenant_id\n            tenant_slug\n            tenant_name\n          }\n        }\n      }\n    }\n  }\n": typeof types.HomePickerPageQueryDocument,
@@ -60,19 +58,9 @@ type Documents = {
     "\n  query ViewerTenantsUse(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: tenantsFilter\n    $orderBy: [tenantsOrderBy!]\n  ) {\n    tenants: viewer_tenants(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...ViewerTenantUseFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantsUseDocument,
     "\n  query ViewerTenantByIdUse($tenant_id: Int!) {\n    tenant: viewer_tenant_by_id(tenant_id: $tenant_id) {\n      ...ViewerTenantUseFragment\n    }\n  }\n": typeof types.ViewerTenantByIdUseDocument,
     "\n  query ViewerTenantBySlugUse($tenant_slug: String!) {\n    tenant: viewer_tenant_by_slug(tenant_slug: $tenant_slug) {\n      ...ViewerTenantUseFragment\n    }\n  }\n": typeof types.ViewerTenantBySlugUseDocument,
-    "\n  fragment PasskeyCredentialFragment on profile_webauthn_credentials {\n    profile_id\n    webauthn_credential_external_id\n    webauthn_credential_type\n    webauthn_credential_transports\n    webauthn_credential_public_key\n    webauthn_credential_sign_count\n  }\n": typeof types.PasskeyCredentialFragmentFragmentDoc,
-    "\n  query PasskeyCredentialsCollectionQuery(\n    $first: Int\n    $filter: profile_webauthn_credentialsFilter\n    $orderBy: [profile_webauthn_credentialsOrderBy!]\n  ) {\n    profile_webauthn_credentials: profile_webauthn_credentialsCollection(first: $first, filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...PasskeyCredentialFragment\n        }\n      }\n    }\n  }\n": typeof types.PasskeyCredentialsCollectionQueryDocument,
-    "\n  mutation PasskeyCredentialsInsertMutation($objects: [profile_webauthn_credentialsInsertInput!]!) {\n    inserted: insertIntoprofile_webauthn_credentialsCollection(objects: $objects) {\n      records {\n        webauthn_credential_id\n        webauthn_credential_friendly_name\n        webauthn_credential_device_type\n        webauthn_credential_backup_state\n        webauthn_credential_created_at\n      }\n    }\n  }\n": typeof types.PasskeyCredentialsInsertMutationDocument,
-    "\n  mutation PasskeyCredentialsUpdateMutation(\n    $atMost: Int! = 1\n    $filter: profile_webauthn_credentialsFilter\n    $set: profile_webauthn_credentialsUpdateInput!\n  ) {\n    updated: updateprofile_webauthn_credentialsCollection(atMost: $atMost, filter: $filter, set: $set) {\n      affectedCount\n    }\n  }\n": typeof types.PasskeyCredentialsUpdateMutationDocument,
-    "\n  query PasskeyChallengesCollectionQuery(\n    $first: Int\n    $filter: profile_webauthn_challengesFilter\n    $orderBy: [profile_webauthn_challengesOrderBy!]\n  ) {\n    profile_webauthn_challenges: profile_webauthn_challengesCollection(first: $first, filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          webauthn_challenge_id\n          webauthn_challenge_value\n        }\n      }\n    }\n  }\n": typeof types.PasskeyChallengesCollectionQueryDocument,
-    "\n  mutation PasskeyChallengesInsertMutation($objects: [profile_webauthn_challengesInsertInput!]!) {\n    inserted: insertIntoprofile_webauthn_challengesCollection(objects: $objects) {\n      records {\n        webauthn_challenge_id\n        webauthn_challenge_value\n      }\n    }\n  }\n": typeof types.PasskeyChallengesInsertMutationDocument,
-    "\n  mutation PasskeyChallengesDeleteMutation(\n    $atMost: Int! = 1\n    $filter: profile_webauthn_challengesFilter\n  ) {\n    deleted: deleteFromprofile_webauthn_challengesCollection(atMost: $atMost, filter: $filter) {\n      affectedCount\n    }\n  }\n": typeof types.PasskeyChallengesDeleteMutationDocument,
-    "\n  query PasskeyProfileIdByEmailQuery($email_to_check: String!) {\n    profile_id_by_email(email_to_check: $email_to_check)\n  }\n": typeof types.PasskeyProfileIdByEmailQueryDocument,
 };
 const documents: Documents = {
     "\n  mutation ProfileSectionUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n": types.ProfileSectionUpdateNameMutationDocument,
-    "\n  query SecuritySectionPageQuery {\n    profile: viewer_profile {\n      profile_id\n      profile_webauthn_credentialsCollection(\n        orderBy: [{ webauthn_credential_created_at: DescNullsLast }]\n      ) {\n        edges {\n          node {\n            webauthn_credential_id\n            webauthn_credential_friendly_name\n            webauthn_credential_device_type\n            webauthn_credential_backup_state\n            webauthn_credential_created_at\n            webauthn_credential_last_used_at\n          }\n        }\n      }\n    }\n  }\n": types.SecuritySectionPageQueryDocument,
-    "\n  mutation SecurityPasskeysListDeleteMutation($webauthn_credential_id: UUID!) {\n    deleteFromprofile_webauthn_credentialsCollection(\n      filter: { webauthn_credential_id: { eq: $webauthn_credential_id } }\n    ) {\n      affectedCount\n    }\n  }\n": types.SecurityPasskeysListDeleteMutationDocument,
     "\n  query SessionsSectionPageQuery {\n    viewer_sessions {\n      edges {\n        node {\n          ...SessionsSectionSessionFragment\n        }\n      }\n    }\n  }\n": types.SessionsSectionPageQueryDocument,
     "\n  fragment SessionsSectionSessionFragment on user_sessions {\n    id\n    user_agent\n    ip\n    created_at\n    refreshed_at\n    not_after\n  }\n": types.SessionsSectionSessionFragmentFragmentDoc,
     "\n  query HomePickerPageQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n          tenants {\n            tenant_id\n            tenant_slug\n            tenant_name\n          }\n        }\n      }\n    }\n  }\n": types.HomePickerPageQueryDocument,
@@ -115,28 +103,12 @@ const documents: Documents = {
     "\n  query ViewerTenantsUse(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: tenantsFilter\n    $orderBy: [tenantsOrderBy!]\n  ) {\n    tenants: viewer_tenants(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...ViewerTenantUseFragment\n        }\n      }\n    }\n  }\n": types.ViewerTenantsUseDocument,
     "\n  query ViewerTenantByIdUse($tenant_id: Int!) {\n    tenant: viewer_tenant_by_id(tenant_id: $tenant_id) {\n      ...ViewerTenantUseFragment\n    }\n  }\n": types.ViewerTenantByIdUseDocument,
     "\n  query ViewerTenantBySlugUse($tenant_slug: String!) {\n    tenant: viewer_tenant_by_slug(tenant_slug: $tenant_slug) {\n      ...ViewerTenantUseFragment\n    }\n  }\n": types.ViewerTenantBySlugUseDocument,
-    "\n  fragment PasskeyCredentialFragment on profile_webauthn_credentials {\n    profile_id\n    webauthn_credential_external_id\n    webauthn_credential_type\n    webauthn_credential_transports\n    webauthn_credential_public_key\n    webauthn_credential_sign_count\n  }\n": types.PasskeyCredentialFragmentFragmentDoc,
-    "\n  query PasskeyCredentialsCollectionQuery(\n    $first: Int\n    $filter: profile_webauthn_credentialsFilter\n    $orderBy: [profile_webauthn_credentialsOrderBy!]\n  ) {\n    profile_webauthn_credentials: profile_webauthn_credentialsCollection(first: $first, filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...PasskeyCredentialFragment\n        }\n      }\n    }\n  }\n": types.PasskeyCredentialsCollectionQueryDocument,
-    "\n  mutation PasskeyCredentialsInsertMutation($objects: [profile_webauthn_credentialsInsertInput!]!) {\n    inserted: insertIntoprofile_webauthn_credentialsCollection(objects: $objects) {\n      records {\n        webauthn_credential_id\n        webauthn_credential_friendly_name\n        webauthn_credential_device_type\n        webauthn_credential_backup_state\n        webauthn_credential_created_at\n      }\n    }\n  }\n": types.PasskeyCredentialsInsertMutationDocument,
-    "\n  mutation PasskeyCredentialsUpdateMutation(\n    $atMost: Int! = 1\n    $filter: profile_webauthn_credentialsFilter\n    $set: profile_webauthn_credentialsUpdateInput!\n  ) {\n    updated: updateprofile_webauthn_credentialsCollection(atMost: $atMost, filter: $filter, set: $set) {\n      affectedCount\n    }\n  }\n": types.PasskeyCredentialsUpdateMutationDocument,
-    "\n  query PasskeyChallengesCollectionQuery(\n    $first: Int\n    $filter: profile_webauthn_challengesFilter\n    $orderBy: [profile_webauthn_challengesOrderBy!]\n  ) {\n    profile_webauthn_challenges: profile_webauthn_challengesCollection(first: $first, filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          webauthn_challenge_id\n          webauthn_challenge_value\n        }\n      }\n    }\n  }\n": types.PasskeyChallengesCollectionQueryDocument,
-    "\n  mutation PasskeyChallengesInsertMutation($objects: [profile_webauthn_challengesInsertInput!]!) {\n    inserted: insertIntoprofile_webauthn_challengesCollection(objects: $objects) {\n      records {\n        webauthn_challenge_id\n        webauthn_challenge_value\n      }\n    }\n  }\n": types.PasskeyChallengesInsertMutationDocument,
-    "\n  mutation PasskeyChallengesDeleteMutation(\n    $atMost: Int! = 1\n    $filter: profile_webauthn_challengesFilter\n  ) {\n    deleted: deleteFromprofile_webauthn_challengesCollection(atMost: $atMost, filter: $filter) {\n      affectedCount\n    }\n  }\n": types.PasskeyChallengesDeleteMutationDocument,
-    "\n  query PasskeyProfileIdByEmailQuery($email_to_check: String!) {\n    profile_id_by_email(email_to_check: $email_to_check)\n  }\n": types.PasskeyProfileIdByEmailQueryDocument,
 };
 
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  mutation ProfileSectionUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').ProfileSectionUpdateNameMutationDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  query SecuritySectionPageQuery {\n    profile: viewer_profile {\n      profile_id\n      profile_webauthn_credentialsCollection(\n        orderBy: [{ webauthn_credential_created_at: DescNullsLast }]\n      ) {\n        edges {\n          node {\n            webauthn_credential_id\n            webauthn_credential_friendly_name\n            webauthn_credential_device_type\n            webauthn_credential_backup_state\n            webauthn_credential_created_at\n            webauthn_credential_last_used_at\n          }\n        }\n      }\n    }\n  }\n"): typeof import('./graphql').SecuritySectionPageQueryDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  mutation SecurityPasskeysListDeleteMutation($webauthn_credential_id: UUID!) {\n    deleteFromprofile_webauthn_credentialsCollection(\n      filter: { webauthn_credential_id: { eq: $webauthn_credential_id } }\n    ) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').SecurityPasskeysListDeleteMutationDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -305,38 +277,6 @@ export function gql(source: "\n  query ViewerTenantByIdUse($tenant_id: Int!) {\n
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(source: "\n  query ViewerTenantBySlugUse($tenant_slug: String!) {\n    tenant: viewer_tenant_by_slug(tenant_slug: $tenant_slug) {\n      ...ViewerTenantUseFragment\n    }\n  }\n"): typeof import('./graphql').ViewerTenantBySlugUseDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  fragment PasskeyCredentialFragment on profile_webauthn_credentials {\n    profile_id\n    webauthn_credential_external_id\n    webauthn_credential_type\n    webauthn_credential_transports\n    webauthn_credential_public_key\n    webauthn_credential_sign_count\n  }\n"): typeof import('./graphql').PasskeyCredentialFragmentFragmentDoc;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  query PasskeyCredentialsCollectionQuery(\n    $first: Int\n    $filter: profile_webauthn_credentialsFilter\n    $orderBy: [profile_webauthn_credentialsOrderBy!]\n  ) {\n    profile_webauthn_credentials: profile_webauthn_credentialsCollection(first: $first, filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...PasskeyCredentialFragment\n        }\n      }\n    }\n  }\n"): typeof import('./graphql').PasskeyCredentialsCollectionQueryDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  mutation PasskeyCredentialsInsertMutation($objects: [profile_webauthn_credentialsInsertInput!]!) {\n    inserted: insertIntoprofile_webauthn_credentialsCollection(objects: $objects) {\n      records {\n        webauthn_credential_id\n        webauthn_credential_friendly_name\n        webauthn_credential_device_type\n        webauthn_credential_backup_state\n        webauthn_credential_created_at\n      }\n    }\n  }\n"): typeof import('./graphql').PasskeyCredentialsInsertMutationDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  mutation PasskeyCredentialsUpdateMutation(\n    $atMost: Int! = 1\n    $filter: profile_webauthn_credentialsFilter\n    $set: profile_webauthn_credentialsUpdateInput!\n  ) {\n    updated: updateprofile_webauthn_credentialsCollection(atMost: $atMost, filter: $filter, set: $set) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').PasskeyCredentialsUpdateMutationDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  query PasskeyChallengesCollectionQuery(\n    $first: Int\n    $filter: profile_webauthn_challengesFilter\n    $orderBy: [profile_webauthn_challengesOrderBy!]\n  ) {\n    profile_webauthn_challenges: profile_webauthn_challengesCollection(first: $first, filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          webauthn_challenge_id\n          webauthn_challenge_value\n        }\n      }\n    }\n  }\n"): typeof import('./graphql').PasskeyChallengesCollectionQueryDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  mutation PasskeyChallengesInsertMutation($objects: [profile_webauthn_challengesInsertInput!]!) {\n    inserted: insertIntoprofile_webauthn_challengesCollection(objects: $objects) {\n      records {\n        webauthn_challenge_id\n        webauthn_challenge_value\n      }\n    }\n  }\n"): typeof import('./graphql').PasskeyChallengesInsertMutationDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  mutation PasskeyChallengesDeleteMutation(\n    $atMost: Int! = 1\n    $filter: profile_webauthn_challengesFilter\n  ) {\n    deleted: deleteFromprofile_webauthn_challengesCollection(atMost: $atMost, filter: $filter) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').PasskeyChallengesDeleteMutationDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(source: "\n  query PasskeyProfileIdByEmailQuery($email_to_check: String!) {\n    profile_id_by_email(email_to_check: $email_to_check)\n  }\n"): typeof import('./graphql').PasskeyProfileIdByEmailQueryDocument;
 
 
 export function gql(source: string) {

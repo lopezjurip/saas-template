@@ -10,6 +10,7 @@ const config: CodegenConfig = {
   schema: "../../packages/supabase/generated/graphql/graphql.schema.json",
   documents: ["./{app,components,hooks,lib}/**/*.{graphql,ts,tsx}"],
   ignoreNoDocuments: true,
+  allowPartialOutputs: true,
   generates: {
     "./generated/graphql/": {
       preset: "client",

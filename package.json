@@ -34,7 +34,7 @@
     "typecheck:platform": "turbo run build:dry --filter=@apps/platform"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.16",
+    "@biomejs/biome": "2.5.0",
     "@packages/typescript-config": "workspace:*",
     "@types/qrcode-terminal": "^0.12.2",
     "graphql": "^16.14.2",
