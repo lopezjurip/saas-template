@@ -45,11 +45,7 @@ export default async function SessionsPage() {
 
     for (const s of rawSessions) {
       const { device, browser, kind } = parseUserAgent(s.user_agent ?? null);
-      const lastActiveDate = s.refreshed_at
-        ? new Date(s.refreshed_at)
-        : s.created_at
-          ? new Date(s.created_at)
-          : null;
+      const lastActiveDate = s.refreshed_at ? new Date(s.refreshed_at) : s.created_at ? new Date(s.created_at) : null;
       const location = s.ip ? (geoMap.get(s.ip) ?? s.ip) : "Ubicación desconocida";
       const stale = lastActiveDate ? Date.now() - lastActiveDate.getTime() > 30 * 24 * 60 * 60 * 1000 : false;
 

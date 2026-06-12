@@ -69,9 +69,7 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
             <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em]">
               {t("claimed_title", { org: ORG })}
             </h1>
-            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] text-pretty">
-              {t("claimed_desc")}
-            </p>
+            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] text-pretty">{t("claimed_desc")}</p>
           </div>
           <Button asChild className="w-full">
             <Link href={homeHref}>

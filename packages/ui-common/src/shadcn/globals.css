@@ -1,4 +1,4 @@
-@import 'tailwindcss-safe-area';
+@import "tailwindcss-safe-area";
 
 @plugin "@tailwindcss/typography";
 
