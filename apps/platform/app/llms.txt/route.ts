@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { APP_HOST } from "~/lib/constants";
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest, ctx: RouteContext<"/llms.txt">) {
   const host = request.headers.get("host") ?? "";
   const hostBase = host.split(":")[0] ?? "";
   const apexBase = APP_HOST.split(":")[0] ?? "";

@@ -19,7 +19,7 @@ function IS_ALLOWED_TYPE(value: string | null): value is EmailOtpType {
   return !!value && ALLOWED_TYPES.has(value as EmailOtpType);
 }
 
-export async function GET(request: NextRequest, _ctx: RouteContext<"/[locale]/auth/confirm">) {
+export async function GET(request: NextRequest, ctx: RouteContext<"/[locale]/auth/confirm">) {
   const { searchParams, origin } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const rawType = searchParams.get("type");

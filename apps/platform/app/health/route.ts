@@ -8,7 +8,7 @@ const HealthQuery = /*#__PURE__*/ gql(`
   }
 `);
 
-export async function GET() {
+export async function GET(req: Request, ctx: RouteContext<"/health">) {
   try {
     const graphy = await getGraphySession();
     const { data, error } = await graphy.query({ query: HealthQuery });

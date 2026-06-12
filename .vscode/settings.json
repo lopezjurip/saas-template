@@ -35,6 +35,7 @@
     "claude",
     "codegen",
     "graphy",
+    "llms",
     "magiclink",
     "mailpit",
     "posthog",

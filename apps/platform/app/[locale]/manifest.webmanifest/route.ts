@@ -1,8 +1,10 @@
-import { getRosettaAssert } from "~/lib/i18n.server";
+import { ROSETTA } from "~/lib/i18n";
+import { assertLocale } from "~/lib/i18n.server";
 
-export async function GET(req: Request, props: { params: Promise<{ locale: string }> }) {
-  const { locale } = await props.params;
-  const { t } = getRosettaAssert(LOCALES, locale);
+export async function GET(req: Request, ctx: RouteContext<"/[locale]/manifest.webmanifest">) {
+  const { locale } = await ctx.params;
+  assertLocale(locale);
+  const { t } = ROSETTA(LOCALES, locale);
   return Response.json({
     name: t("name"),
     short_name: t("short_name"),
