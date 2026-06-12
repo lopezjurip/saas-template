@@ -138,9 +138,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
           <div className="border-border grid grid-cols-[1fr_auto] items-start gap-3.5 border-b px-4 py-3.5">
             <div className="flex min-w-0 flex-col gap-[3px]">
               <span className="text-foreground text-[13.5px] font-medium">{t("auto_join_title")}</span>
-              <span className="text-muted-foreground text-xs leading-[1.45] text-pretty">
-                {t("auto_join_desc")}
-              </span>
+              <span className="text-muted-foreground text-xs leading-[1.45] text-pretty">{t("auto_join_desc")}</span>
             </div>
             <Switch checked={autoJoin} onCheckedChange={setAutoJoin} aria-label={t("auto_join_title")} />
           </div>

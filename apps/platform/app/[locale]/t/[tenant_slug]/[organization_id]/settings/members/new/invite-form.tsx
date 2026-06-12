@@ -107,9 +107,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, loca
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
             <strong className="text-foreground text-[13.5px] font-semibold">{t("created_title")}</strong>
-            <span className="text-muted-foreground text-[12.5px] leading-normal text-pretty">
-              {t("created_desc")}
-            </span>
+            <span className="text-muted-foreground text-[12.5px] leading-normal text-pretty">{t("created_desc")}</span>
           </div>
         </div>
 

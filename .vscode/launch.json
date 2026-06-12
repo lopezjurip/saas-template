@@ -57,18 +57,12 @@
   "compounds": [
     {
       "name": "Next.js: server + client (compound, standalone)",
-      "configurations": [
-        "Next.js: launch server-side (standalone)",
-        "Next.js: debug client-side"
-      ],
+      "configurations": ["Next.js: launch server-side (standalone)", "Next.js: debug client-side"],
       "stopAll": true
     },
     {
       "name": "Next.js: attach + client (Conductor)",
-      "configurations": [
-        "Next.js: attach server (debug mode)",
-        "Next.js: debug client-side"
-      ],
+      "configurations": ["Next.js: attach server (debug mode)", "Next.js: debug client-side"],
       "stopAll": true
     }
   ]
