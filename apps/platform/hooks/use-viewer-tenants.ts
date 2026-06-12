@@ -1,6 +1,6 @@
 "use client";
 
-import type { ResultOf } from "@graphql-typed-document-node/core";
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { useGraphyQuery } from "@packages/graphy/react";
 import { useSupabaseUser } from "@packages/supabase/react";
 import type { SWRConfiguration } from "swr";
@@ -18,10 +18,8 @@ export const ViewerTenantHookFragment = /*#__PURE__*/ gql(`
 export type ViewerTenantHookFragmentType = ResultOf<typeof ViewerTenantHookFragment>;
 
 export const ViewerTenantsHookQuery = /*#__PURE__*/ gql(`
-  query ViewerTenantsHookQuery {
-    viewer_tenants(
-      orderBy: [{ tenant_name: AscNullsLast }]
-    ) {
+  query ViewerTenantsHookQuery($filter: tenantsFilter, $orderBy: [tenantsOrderBy!]) {
+    tenants: viewer_tenants(filter: $filter, orderBy: $orderBy) {
       edges {
         node {
           ...ViewerTenantHookFragment
@@ -33,18 +31,22 @@ export const ViewerTenantsHookQuery = /*#__PURE__*/ gql(`
 
 export const ViewerTenantBySlugHookQuery = /*#__PURE__*/ gql(`
   query ViewerTenantBySlugHookQuery($tenant_slug: String!) {
-    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
+    tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
       ...ViewerTenantHookFragment
     }
   }
 `);
 
 type ViewerTenantsHookQueryData = ResultOf<typeof ViewerTenantsHookQuery>;
+type ViewerTenantsHookQueryVars = VariablesOf<typeof ViewerTenantsHookQuery>;
 type ViewerTenantBySlugHookQueryData = ResultOf<typeof ViewerTenantBySlugHookQuery>;
 
-export function useViewerTenants(config?: SWRConfiguration<ViewerTenantsHookQueryData>) {
+export function useViewerTenants(
+  options?: Pick<ViewerTenantsHookQueryVars, "filter" | "orderBy">,
+  config?: SWRConfiguration<ViewerTenantsHookQueryData>,
+) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(user ? { query: ViewerTenantsHookQuery } : null, config);
+  return useGraphyQuery(user ? { query: ViewerTenantsHookQuery, variables: options ?? {} } : null, config);
 }
 
 export function useViewerTenantBySlug(tenant_slug: string, config?: SWRConfiguration<ViewerTenantBySlugHookQueryData>) {

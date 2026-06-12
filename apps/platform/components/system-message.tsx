@@ -3,6 +3,7 @@
 import { Logo } from "@packages/ui-common/logo";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { type LucideIcon, RotateCcw, Search, TriangleAlert, Wrench } from "lucide-react";
+import { useLocaleParam } from "~/hooks/use-locale-param";
 
 type SystemKind = "notFound" | "error" | "maintenance";
 
@@ -14,15 +15,8 @@ const DEFS: Record<SystemKind, SystemDef> = /*#__PURE__*/ {
   maintenance: { code: "503", Icon: Wrench },
 };
 
-export function SystemMessage({
-  kind = "notFound",
-  locale = "es",
-  reset,
-}: {
-  kind?: SystemKind;
-  locale?: string;
-  reset?: () => void;
-}) {
+export function SystemMessage({ kind = "notFound", reset }: { kind?: SystemKind; reset?: () => void }) {
+  const locale = useLocaleParam();
   const { code, Icon } = DEFS[kind];
   const copy = (LOCALES[locale] ?? LOCALE_ES)[kind];
   const homeHref = `/${locale}`;
@@ -37,7 +31,7 @@ export function SystemMessage({
     >
       <Logo className="absolute left-6 top-5 text-sm" />
 
-      <div className="flex max-w-[420px] flex-col items-center gap-5 text-center">
+      <div className="flex max-w-105 flex-col items-center gap-5 text-center">
         <div className="relative inline-flex items-center justify-center">
           <span className="text-muted/70 select-none font-mono text-[88px] font-semibold leading-none tracking-[-0.04em]">
             {code}
@@ -108,7 +102,7 @@ const LOCALE_ES: Record<SystemKind, Copy> = {
   },
 };
 
-const LOCALE_EN: Record<SystemKind, Copy> = {
+const LOCALE_EN = {
   notFound: {
     title: "This page doesn't exist",
     desc: "The link is broken or the page moved. Check the address or head back somewhere familiar.",
@@ -127,9 +121,9 @@ const LOCALE_EN: Record<SystemKind, Copy> = {
     primary: "Retry",
     secondary: "Go home",
   },
-};
+} satisfies typeof LOCALE_ES;
 
-const LOCALE_PT: Record<SystemKind, Copy> = {
+const LOCALE_PT = {
   notFound: {
     title: "Esta página não existe",
     desc: "O link está quebrado ou a página foi movida. Verifique o endereço ou volte para um lugar conhecido.",
@@ -148,6 +142,6 @@ const LOCALE_PT: Record<SystemKind, Copy> = {
     primary: "Tentar de novo",
     secondary: "Ir para o início",
   },
-};
+} satisfies typeof LOCALE_ES;
 
 const LOCALES: Record<string, Record<SystemKind, Copy>> = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

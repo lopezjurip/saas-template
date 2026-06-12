@@ -152,7 +152,7 @@ export const actionVerifyDocumentSignup = action.inputSchema(verifyOtpSchema).ac
 
   const tenant_slug = invite["organizations"]?.["tenants"]?.["tenant_slug"];
   if (tenant_slug) {
-    redirect(`/[locale]/${tenant_slug}`);
+    redirect(`/[locale]/t/${tenant_slug}`);
   }
   redirect("/[locale]/home");
 });

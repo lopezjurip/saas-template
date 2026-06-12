@@ -4,8 +4,8 @@ import { SINGLE } from "@packages/utils/array";
 import { ArrowRight, Check, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
+import { assertLocale } from "~/lib/i18n.server";
 
 type AcceptState = "valid" | "loggedout" | "expired" | "claimed" | "rejected";
 
@@ -17,15 +17,14 @@ const VIEWER = { name: "Nora Bravo", initials: "NB" };
 const SLUGS = /*#__PURE__*/ ["content_edit", "content_publish", "reports_view"];
 
 export async function generateMetadata(props: PageProps<"/[locale]/home/invites/[invite_id]">): Promise<Metadata> {
-  const { locale } = await props.params;
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t, locale } = await getRosetta(LOCALES);
   return { title: t("page_title") };
 }
 
 export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/invites/[invite_id]">) {
   const { locale } = await props.params;
-  if (!IS_SUPPORTED_LOCALE(locale)) notFound();
-  const { t } = ROSETTA(LOCALES, locale);
+  assertLocale(locale);
+  const { t } = await getRosetta(LOCALES, locale);
   const sp = await props.searchParams;
   const state = (SINGLE(sp["state"]) ?? "valid") as AcceptState;
 

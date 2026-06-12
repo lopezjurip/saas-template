@@ -23,12 +23,12 @@ export default async function TenantHomePage({
   const { redirect: redirectParam } = await searchParams;
 
   const { data: tenantData } = await getViewerTenantBySlug(tenant_slug);
-  const tenant = tenantData?.["viewer_tenant_by_slug"];
+  const tenant = tenantData?.["tenant"];
   if (!tenant) notFound();
   const tenant_id = tenant["tenant_id"];
 
-  const { data: orgsData } = await getViewerOrganizations(tenant_id);
-  const orgs = orgsData?.["viewer_organizations"]?.["edges"]?.map((e) => e["node"]) ?? [];
+  const { data: orgsData } = await getViewerOrganizations({ filter: { tenant_id: { eq: tenant_id } } });
+  const orgs = orgsData?.["organizations"]?.["edges"]?.map((e) => e["node"]) ?? [];
 
   if (orgs.length === 0) {
     return (
@@ -53,7 +53,7 @@ export default async function TenantHomePage({
 
   if (redirectParam !== "false" && orgs.length === 1) {
     const only = orgs[0]!;
-    redirect(`/[locale]/${tenant_slug}/${only["organization_id"]}`);
+    redirect(`/[locale]/t/${tenant_slug}/${only["organization_id"]}`);
   }
 
   return (
@@ -66,7 +66,7 @@ export default async function TenantHomePage({
         <CardContent className="flex flex-col gap-2">
           {orgs.map((organization) => (
             <Button asChild key={organization["organization_id"]} variant="outline" className="w-full justify-between">
-              <Link href={`/${locale}/${tenant_slug}/${organization["organization_id"]}`}>
+              <Link href={`/${locale}/t/${tenant_slug}/${organization["organization_id"]}`}>
                 <span>{organization["organization_name"]}</span>
                 <span className="text-xs text-muted-foreground">{organization["organization_slug"]}</span>
               </Link>

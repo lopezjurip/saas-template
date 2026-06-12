@@ -68,7 +68,7 @@ export function CreateTenantForm() {
       }
       if (error) return;
       // Hard navigate so the browser picks up the refreshed JWT (new tenant claim) on the next request.
-      window.location.assign(`/${locale}/${data.slug}`);
+      window.location.assign(`/${locale}/t/${data.slug}`);
     });
   });
 

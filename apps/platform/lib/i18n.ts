@@ -1,14 +1,26 @@
 import { LocaleConfig } from "@packages/rosetta/locale-config";
 import { type RosettaDict, RosettaImpl } from "@packages/rosetta/rosetta";
-import type { NextRequest } from "next/server";
 
 export const LOCALE_CONFIG = new LocaleConfig({
-  supported: ["es", "en", "pt"] as const,
-  defaultLocale: "es" as const,
-  bcp47: { es: "es-CL", en: "en-US", pt: "pt-BR" },
-  label: { es: "Español", en: "English", pt: "Português" },
+  defaultLocale: "es",
+  languages: [
+    { tag: "es", label: "Español", regions: [{ subtag: "CL" }] },
+    { tag: "en", label: "English", regions: [{ subtag: "US" }] },
+    { tag: "pt", label: "Português", regions: [{ subtag: "BR" }] },
+  ],
 });
 
+/**
+ * Creates a typed translation accessor from a locale dictionary.
+ *
+ * @example
+ * const LOCALE_ES = { page_title: "Crear agencia" };
+ * const LOCALE_EN: typeof LOCALE_ES = { page_title: "Create agency" };
+ * const LOCALES = { es: LOCALE_ES, en: LOCALE_EN };
+ *
+ * const { t } = ROSETTA(LOCALES, locale);
+ * t("page_title"); // "Crear agencia" | "Create agency"
+ */
 export function ROSETTA<T>(dict: RosettaDict<T>, locale: string) {
   return RosettaImpl.fromDictionary(dict, locale);
 }
@@ -33,8 +45,4 @@ export function EXTRACT_LOCALE_FROM_PATH(pathname: string): {
 
 export function PARSE_ACCEPT_LANGUAGE(header: string | null): SupportedLocale | null {
   return LOCALE_CONFIG.parseAcceptLanguage(header);
-}
-
-export function RESOLVE_LOCALE_FROM_REQUEST(request: NextRequest): SupportedLocale {
-  return LOCALE_CONFIG.resolveFromRequest(request);
 }

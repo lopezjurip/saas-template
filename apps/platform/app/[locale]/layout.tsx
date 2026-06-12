@@ -1,7 +1,6 @@
-import { notFound } from "next/navigation";
-import { FloatingChrome } from "~/components/floating-chrome";
 import { LocaleProvider } from "~/components/locale-provider";
-import { IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { assertLocale } from "~/lib/i18n.server";
 
 export function generateStaticParams() {
   return SUPPORTED_LOCALES.map((locale) => ({ locale }));
@@ -15,12 +14,7 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  if (!IS_SUPPORTED_LOCALE(locale)) notFound();
+  assertLocale(locale);
 
-  return (
-    <LocaleProvider locale={LOCALE_TO_BCP47[locale]}>
-      <FloatingChrome />
-      {children}
-    </LocaleProvider>
-  );
+  return <LocaleProvider locale={LOCALE_TO_BCP47[locale]}>{children}</LocaleProvider>;
 }

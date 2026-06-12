@@ -13,37 +13,37 @@ import * as types from "./graphql";
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-  "\n  mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {\n    insertIntomembership_permissionsCollection(\n      objects: [{ membership_id: $membership_id, permission_id: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditMembershipGrantPermissionMutationDocument;
-  "\n  mutation EditMembershipRevokePermissionMutation($membership_id: Int!, $permission_id: String!) {\n    deleteFrommembership_permissionsCollection(\n      filter: { membership_id: { eq: $membership_id }, permission_id: { eq: $permission_id } }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditMembershipRevokePermissionMutationDocument;
-  "\n  mutation EditMembershipRevokeMembershipMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: { membership_id: { eq: $membership_id } }\n      set: { membership_revoked_at: $now }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditMembershipRevokeMembershipMutationDocument;
-  "\n  mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: {\n        membership_id: { eq: $membership_id }\n        profile_id: { is: NULL }\n        membership_revoked_at: { is: NULL }\n        membership_rejected_at: { is: NULL }\n      }\n      set: {\n        membership_revoked_at: $now\n        membership_invite_token: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.MembersPendingInvitationsCancelMutationDocument;
   "\n  mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.OnboardingProfileFormUpdateNameMutationDocument;
   "\n  query ProfileSectionPageQuery {\n    profile: viewer_profile {\n      profile_id\n      profile_name_full\n    }\n  }\n": typeof types.ProfileSectionPageQueryDocument;
   "\n  mutation ProfileSectionUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.ProfileSectionUpdateNameMutationDocument;
   "\n  query SecuritySectionPageQuery {\n    profile: viewer_profile {\n      profile_id\n      webauthn_credentialsCollection(\n        orderBy: [{ webauthn_credential_created_at: DescNullsLast }]\n      ) {\n        edges {\n          node {\n            webauthn_credential_id\n            webauthn_credential_friendly_name\n            webauthn_credential_device_type\n            webauthn_credential_backup_state\n            webauthn_credential_created_at\n            webauthn_credential_last_used_at\n          }\n        }\n      }\n    }\n  }\n": typeof types.SecuritySectionPageQueryDocument;
   "\n  mutation SecurityPasskeysListDeleteMutation($webauthn_credential_id: UUID!) {\n    deleteFromwebauthn_credentialsCollection(\n      filter: { webauthn_credential_id: { eq: $webauthn_credential_id } }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.SecurityPasskeysListDeleteMutationDocument;
   "\n  query HomePickerPageQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n          tenants {\n            tenant_id\n            tenant_slug\n            tenant_name\n          }\n        }\n      }\n    }\n  }\n": typeof types.HomePickerPageQueryDocument;
+  "\n  mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {\n    insertIntomembership_permissionsCollection(\n      objects: [{ membership_id: $membership_id, permission_id: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditMembershipGrantPermissionMutationDocument;
+  "\n  mutation EditMembershipRevokePermissionMutation($membership_id: Int!, $permission_id: String!) {\n    deleteFrommembership_permissionsCollection(\n      filter: { membership_id: { eq: $membership_id }, permission_id: { eq: $permission_id } }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditMembershipRevokePermissionMutationDocument;
+  "\n  mutation EditMembershipRevokeMembershipMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: { membership_id: { eq: $membership_id } }\n      set: { membership_revoked_at: $now }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditMembershipRevokeMembershipMutationDocument;
+  "\n  mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: {\n        membership_id: { eq: $membership_id }\n        profile_id: { is: NULL }\n        membership_revoked_at: { is: NULL }\n        membership_rejected_at: { is: NULL }\n      }\n      set: {\n        membership_revoked_at: $now\n        membership_invite_token: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.MembersPendingInvitationsCancelMutationDocument;
   "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": typeof types.HealthQueryDocument;
   "\n  fragment CountryGetFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n": typeof types.CountryGetFragmentFragmentDoc;
-  "\n  query CountriesGetQuery {\n    addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryGetFragment\n        }\n      }\n    }\n  }\n": typeof types.CountriesGetQueryDocument;
+  "\n  query CountriesGetQuery {\n    addresses_level0: addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryGetFragment\n        }\n      }\n    }\n  }\n": typeof types.CountriesGetQueryDocument;
   "\n  fragment ViewerOrganizationGetFragment on organizations {\n    organization_id\n    tenant_id\n    organization_slug\n    organization_name\n  }\n": typeof types.ViewerOrganizationGetFragmentFragmentDoc;
-  "\n  query ViewerOrganizationsGetQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationsGetQueryDocument;
-  "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationGetFragment\n    }\n  }\n": typeof types.ViewerOrganizationByIdGetQueryDocument;
+  "\n  query ViewerOrganizationsGetQuery($filter: organizationsFilter, $orderBy: [organizationsOrderBy!]) {\n    organizations: viewer_organizations(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationsGetQueryDocument;
+  "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    organization: viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationGetFragment\n    }\n  }\n": typeof types.ViewerOrganizationByIdGetQueryDocument;
   "\n  fragment ViewerProfileGetFragment on profiles {\n    profile_id\n    profile_name_full\n    profile_onboarded_at\n    profile_disabled_at\n    profile_created_at\n    profile_updated_at\n  }\n": typeof types.ViewerProfileGetFragmentFragmentDoc;
   "\n  query ViewerProfileGetQuery {\n    profile: viewer_profile {\n      ...ViewerProfileGetFragment\n    }\n  }\n": typeof types.ViewerProfileGetQueryDocument;
   "\n  fragment ViewerTenantGetFragment on tenants {\n    tenant_id\n    tenant_slug\n    tenant_name\n    tenant_tier\n  }\n": typeof types.ViewerTenantGetFragmentFragmentDoc;
-  "\n  query ViewerTenantsGetQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantsGetQueryDocument;
-  "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantGetFragment\n    }\n  }\n": typeof types.ViewerTenantBySlugGetQueryDocument;
+  "\n  query ViewerTenantsGetQuery($filter: tenantsFilter, $orderBy: [tenantsOrderBy!]) {\n    tenants: viewer_tenants(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantsGetQueryDocument;
+  "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantGetFragment\n    }\n  }\n": typeof types.ViewerTenantBySlugGetQueryDocument;
   "\n  fragment CountryHookFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n": typeof types.CountryHookFragmentFragmentDoc;
-  "\n  query CountriesHookQuery {\n    addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryHookFragment\n        }\n      }\n    }\n  }\n": typeof types.CountriesHookQueryDocument;
+  "\n  query CountriesHookQuery {\n    addresses_level0: addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryHookFragment\n        }\n      }\n    }\n  }\n": typeof types.CountriesHookQueryDocument;
   "\n  fragment ViewerOrganizationHookFragment on organizations {\n    organization_id\n    tenant_id\n    organization_slug\n    organization_name\n  }\n": typeof types.ViewerOrganizationHookFragmentFragmentDoc;
-  "\n  query ViewerOrganizationsHookQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationsHookQueryDocument;
-  "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationHookFragment\n    }\n  }\n": typeof types.ViewerOrganizationByIdHookQueryDocument;
+  "\n  query ViewerOrganizationsHookQuery($filter: organizationsFilter, $orderBy: [organizationsOrderBy!]) {\n    organizations: viewer_organizations(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationsHookQueryDocument;
+  "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    organization: viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationHookFragment\n    }\n  }\n": typeof types.ViewerOrganizationByIdHookQueryDocument;
   "\n  fragment ViewerProfileHookFragment on profiles {\n    profile_id\n    profile_name_full\n    profile_onboarded_at\n    profile_disabled_at\n    profile_created_at\n    profile_updated_at\n  }\n": typeof types.ViewerProfileHookFragmentFragmentDoc;
   "\n  query ViewerProfileHookQuery {\n    profile: viewer_profile {\n      ...ViewerProfileHookFragment\n    }\n  }\n": typeof types.ViewerProfileHookQueryDocument;
   "\n  fragment ViewerTenantHookFragment on tenants {\n    tenant_id\n    tenant_slug\n    tenant_name\n    tenant_tier\n  }\n": typeof types.ViewerTenantHookFragmentFragmentDoc;
-  "\n  query ViewerTenantsHookQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantsHookQueryDocument;
-  "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantHookFragment\n    }\n  }\n": typeof types.ViewerTenantBySlugHookQueryDocument;
+  "\n  query ViewerTenantsHookQuery($filter: tenantsFilter, $orderBy: [tenantsOrderBy!]) {\n    tenants: viewer_tenants(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantsHookQueryDocument;
+  "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantHookFragment\n    }\n  }\n": typeof types.ViewerTenantBySlugHookQueryDocument;
   "\n  fragment PasskeyCredentialFragment on webauthn_credentials {\n    profile_id\n    webauthn_credential_external_id\n    webauthn_credential_type\n    webauthn_credential_transports\n    webauthn_credential_public_key\n    webauthn_credential_sign_count\n  }\n": typeof types.PasskeyCredentialFragmentFragmentDoc;
   "\n  query PasskeyCredentialsCollectionQuery(\n    $first: Int\n    $filter: webauthn_credentialsFilter\n    $orderBy: [webauthn_credentialsOrderBy!]\n  ) {\n    webauthn_credentialsCollection(first: $first, filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...PasskeyCredentialFragment\n        }\n      }\n    }\n  }\n": typeof types.PasskeyCredentialsCollectionQueryDocument;
   "\n  mutation PasskeyCredentialsInsertMutation($objects: [webauthn_credentialsInsertInput!]!) {\n    insertIntowebauthn_credentialsCollection(objects: $objects) {\n      records {\n        webauthn_credential_id\n        webauthn_credential_friendly_name\n        webauthn_credential_device_type\n        webauthn_credential_backup_state\n        webauthn_credential_created_at\n      }\n    }\n  }\n": typeof types.PasskeyCredentialsInsertMutationDocument;
@@ -54,14 +54,6 @@ type Documents = {
   "\n  query PasskeyProfileIdByEmailQuery($email_to_check: String!) {\n    profile_id_by_email(email_to_check: $email_to_check)\n  }\n": typeof types.PasskeyProfileIdByEmailQueryDocument;
 };
 const documents: Documents = {
-  "\n  mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {\n    insertIntomembership_permissionsCollection(\n      objects: [{ membership_id: $membership_id, permission_id: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n":
-    types.EditMembershipGrantPermissionMutationDocument,
-  "\n  mutation EditMembershipRevokePermissionMutation($membership_id: Int!, $permission_id: String!) {\n    deleteFrommembership_permissionsCollection(\n      filter: { membership_id: { eq: $membership_id }, permission_id: { eq: $permission_id } }\n    ) {\n      affectedCount\n    }\n  }\n":
-    types.EditMembershipRevokePermissionMutationDocument,
-  "\n  mutation EditMembershipRevokeMembershipMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: { membership_id: { eq: $membership_id } }\n      set: { membership_revoked_at: $now }\n    ) {\n      affectedCount\n    }\n  }\n":
-    types.EditMembershipRevokeMembershipMutationDocument,
-  "\n  mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: {\n        membership_id: { eq: $membership_id }\n        profile_id: { is: NULL }\n        membership_revoked_at: { is: NULL }\n        membership_rejected_at: { is: NULL }\n      }\n      set: {\n        membership_revoked_at: $now\n        membership_invite_token: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n":
-    types.MembersPendingInvitationsCancelMutationDocument,
   "\n  mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n":
     types.OnboardingProfileFormUpdateNameMutationDocument,
   "\n  query ProfileSectionPageQuery {\n    profile: viewer_profile {\n      profile_id\n      profile_name_full\n    }\n  }\n":
@@ -74,16 +66,24 @@ const documents: Documents = {
     types.SecurityPasskeysListDeleteMutationDocument,
   "\n  query HomePickerPageQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          organization_slug\n          tenants {\n            tenant_id\n            tenant_slug\n            tenant_name\n          }\n        }\n      }\n    }\n  }\n":
     types.HomePickerPageQueryDocument,
+  "\n  mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {\n    insertIntomembership_permissionsCollection(\n      objects: [{ membership_id: $membership_id, permission_id: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n":
+    types.EditMembershipGrantPermissionMutationDocument,
+  "\n  mutation EditMembershipRevokePermissionMutation($membership_id: Int!, $permission_id: String!) {\n    deleteFrommembership_permissionsCollection(\n      filter: { membership_id: { eq: $membership_id }, permission_id: { eq: $permission_id } }\n    ) {\n      affectedCount\n    }\n  }\n":
+    types.EditMembershipRevokePermissionMutationDocument,
+  "\n  mutation EditMembershipRevokeMembershipMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: { membership_id: { eq: $membership_id } }\n      set: { membership_revoked_at: $now }\n    ) {\n      affectedCount\n    }\n  }\n":
+    types.EditMembershipRevokeMembershipMutationDocument,
+  "\n  mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: {\n        membership_id: { eq: $membership_id }\n        profile_id: { is: NULL }\n        membership_revoked_at: { is: NULL }\n        membership_rejected_at: { is: NULL }\n      }\n      set: {\n        membership_revoked_at: $now\n        membership_invite_token: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n":
+    types.MembersPendingInvitationsCancelMutationDocument,
   "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": types.HealthQueryDocument,
   "\n  fragment CountryGetFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n":
     types.CountryGetFragmentFragmentDoc,
-  "\n  query CountriesGetQuery {\n    addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryGetFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query CountriesGetQuery {\n    addresses_level0: addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryGetFragment\n        }\n      }\n    }\n  }\n":
     types.CountriesGetQueryDocument,
   "\n  fragment ViewerOrganizationGetFragment on organizations {\n    organization_id\n    tenant_id\n    organization_slug\n    organization_name\n  }\n":
     types.ViewerOrganizationGetFragmentFragmentDoc,
-  "\n  query ViewerOrganizationsGetQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerOrganizationsGetQuery($filter: organizationsFilter, $orderBy: [organizationsOrderBy!]) {\n    organizations: viewer_organizations(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n":
     types.ViewerOrganizationsGetQueryDocument,
-  "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationGetFragment\n    }\n  }\n":
+  "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    organization: viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationGetFragment\n    }\n  }\n":
     types.ViewerOrganizationByIdGetQueryDocument,
   "\n  fragment ViewerProfileGetFragment on profiles {\n    profile_id\n    profile_name_full\n    profile_onboarded_at\n    profile_disabled_at\n    profile_created_at\n    profile_updated_at\n  }\n":
     types.ViewerProfileGetFragmentFragmentDoc,
@@ -91,19 +91,19 @@ const documents: Documents = {
     types.ViewerProfileGetQueryDocument,
   "\n  fragment ViewerTenantGetFragment on tenants {\n    tenant_id\n    tenant_slug\n    tenant_name\n    tenant_tier\n  }\n":
     types.ViewerTenantGetFragmentFragmentDoc,
-  "\n  query ViewerTenantsGetQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerTenantsGetQuery($filter: tenantsFilter, $orderBy: [tenantsOrderBy!]) {\n    tenants: viewer_tenants(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n":
     types.ViewerTenantsGetQueryDocument,
-  "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantGetFragment\n    }\n  }\n":
+  "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantGetFragment\n    }\n  }\n":
     types.ViewerTenantBySlugGetQueryDocument,
   "\n  fragment CountryHookFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n":
     types.CountryHookFragmentFragmentDoc,
-  "\n  query CountriesHookQuery {\n    addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryHookFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query CountriesHookQuery {\n    addresses_level0: addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryHookFragment\n        }\n      }\n    }\n  }\n":
     types.CountriesHookQueryDocument,
   "\n  fragment ViewerOrganizationHookFragment on organizations {\n    organization_id\n    tenant_id\n    organization_slug\n    organization_name\n  }\n":
     types.ViewerOrganizationHookFragmentFragmentDoc,
-  "\n  query ViewerOrganizationsHookQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerOrganizationsHookQuery($filter: organizationsFilter, $orderBy: [organizationsOrderBy!]) {\n    organizations: viewer_organizations(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n":
     types.ViewerOrganizationsHookQueryDocument,
-  "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationHookFragment\n    }\n  }\n":
+  "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    organization: viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationHookFragment\n    }\n  }\n":
     types.ViewerOrganizationByIdHookQueryDocument,
   "\n  fragment ViewerProfileHookFragment on profiles {\n    profile_id\n    profile_name_full\n    profile_onboarded_at\n    profile_disabled_at\n    profile_created_at\n    profile_updated_at\n  }\n":
     types.ViewerProfileHookFragmentFragmentDoc,
@@ -111,9 +111,9 @@ const documents: Documents = {
     types.ViewerProfileHookQueryDocument,
   "\n  fragment ViewerTenantHookFragment on tenants {\n    tenant_id\n    tenant_slug\n    tenant_name\n    tenant_tier\n  }\n":
     types.ViewerTenantHookFragmentFragmentDoc,
-  "\n  query ViewerTenantsHookQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n":
+  "\n  query ViewerTenantsHookQuery($filter: tenantsFilter, $orderBy: [tenantsOrderBy!]) {\n    tenants: viewer_tenants(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n":
     types.ViewerTenantsHookQueryDocument,
-  "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantHookFragment\n    }\n  }\n":
+  "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantHookFragment\n    }\n  }\n":
     types.ViewerTenantBySlugHookQueryDocument,
   "\n  fragment PasskeyCredentialFragment on webauthn_credentials {\n    profile_id\n    webauthn_credential_external_id\n    webauthn_credential_type\n    webauthn_credential_transports\n    webauthn_credential_public_key\n    webauthn_credential_sign_count\n  }\n":
     types.PasskeyCredentialFragmentFragmentDoc,
@@ -133,30 +133,6 @@ const documents: Documents = {
     types.PasskeyProfileIdByEmailQueryDocument,
 };
 
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(
-  source: "\n  mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {\n    insertIntomembership_permissionsCollection(\n      objects: [{ membership_id: $membership_id, permission_id: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n",
-): typeof import("./graphql").EditMembershipGrantPermissionMutationDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(
-  source: "\n  mutation EditMembershipRevokePermissionMutation($membership_id: Int!, $permission_id: String!) {\n    deleteFrommembership_permissionsCollection(\n      filter: { membership_id: { eq: $membership_id }, permission_id: { eq: $permission_id } }\n    ) {\n      affectedCount\n    }\n  }\n",
-): typeof import("./graphql").EditMembershipRevokePermissionMutationDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(
-  source: "\n  mutation EditMembershipRevokeMembershipMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: { membership_id: { eq: $membership_id } }\n      set: { membership_revoked_at: $now }\n    ) {\n      affectedCount\n    }\n  }\n",
-): typeof import("./graphql").EditMembershipRevokeMembershipMutationDocument;
-/**
- * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function gql(
-  source: "\n  mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: {\n        membership_id: { eq: $membership_id }\n        profile_id: { is: NULL }\n        membership_revoked_at: { is: NULL }\n        membership_rejected_at: { is: NULL }\n      }\n      set: {\n        membership_revoked_at: $now\n        membership_invite_token: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n",
-): typeof import("./graphql").MembersPendingInvitationsCancelMutationDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -197,6 +173,30 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
+  source: "\n  mutation EditMembershipGrantPermissionMutation($membership_id: Int!, $permission_id: String!) {\n    insertIntomembership_permissionsCollection(\n      objects: [{ membership_id: $membership_id, permission_id: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n",
+): typeof import("./graphql").EditMembershipGrantPermissionMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  mutation EditMembershipRevokePermissionMutation($membership_id: Int!, $permission_id: String!) {\n    deleteFrommembership_permissionsCollection(\n      filter: { membership_id: { eq: $membership_id }, permission_id: { eq: $permission_id } }\n    ) {\n      affectedCount\n    }\n  }\n",
+): typeof import("./graphql").EditMembershipRevokePermissionMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  mutation EditMembershipRevokeMembershipMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: { membership_id: { eq: $membership_id } }\n      set: { membership_revoked_at: $now }\n    ) {\n      affectedCount\n    }\n  }\n",
+): typeof import("./graphql").EditMembershipRevokeMembershipMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  mutation MembersPendingInvitationsCancelMutation($membership_id: Int!, $now: Datetime!) {\n    updatemembershipsCollection(\n      filter: {\n        membership_id: { eq: $membership_id }\n        profile_id: { is: NULL }\n        membership_revoked_at: { is: NULL }\n        membership_rejected_at: { is: NULL }\n      }\n      set: {\n        membership_revoked_at: $now\n        membership_invite_token: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n",
+): typeof import("./graphql").MembersPendingInvitationsCancelMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
   source: "\n  query HealthQuery {\n    health_current_timestamp\n  }\n",
 ): typeof import("./graphql").HealthQueryDocument;
 /**
@@ -209,7 +209,7 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query CountriesGetQuery {\n    addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryGetFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query CountriesGetQuery {\n    addresses_level0: addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryGetFragment\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").CountriesGetQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -221,13 +221,13 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerOrganizationsGetQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerOrganizationsGetQuery($filter: organizationsFilter, $orderBy: [organizationsOrderBy!]) {\n    organizations: viewer_organizations(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").ViewerOrganizationsGetQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationGetFragment\n    }\n  }\n",
+  source: "\n  query ViewerOrganizationByIdGetQuery($organization_id: Int!) {\n    organization: viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationGetFragment\n    }\n  }\n",
 ): typeof import("./graphql").ViewerOrganizationByIdGetQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -251,13 +251,13 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerTenantsGetQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerTenantsGetQuery($filter: tenantsFilter, $orderBy: [tenantsOrderBy!]) {\n    tenants: viewer_tenants(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerTenantGetFragment\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").ViewerTenantsGetQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantGetFragment\n    }\n  }\n",
+  source: "\n  query ViewerTenantBySlugGetQuery($tenant_slug: String!) {\n    tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantGetFragment\n    }\n  }\n",
 ): typeof import("./graphql").ViewerTenantBySlugGetQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -269,7 +269,7 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query CountriesHookQuery {\n    addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryHookFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query CountriesHookQuery {\n    addresses_level0: addresses_level0Collection(\n      filter: { address_level0_disabled_at: { is: NULL } }\n      orderBy: [{ address_level0_name: AscNullsLast }]\n      first: 250\n    ) {\n      edges {\n        node {\n          ...CountryHookFragment\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").CountriesHookQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -281,13 +281,13 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerOrganizationsHookQuery($tenant_id: Int) {\n    viewer_organizations(\n      filter: { tenant_id: { eq: $tenant_id } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerOrganizationsHookQuery($filter: organizationsFilter, $orderBy: [organizationsOrderBy!]) {\n    organizations: viewer_organizations(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerOrganizationHookFragment\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").ViewerOrganizationsHookQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationHookFragment\n    }\n  }\n",
+  source: "\n  query ViewerOrganizationByIdHookQuery($organization_id: Int!) {\n    organization: viewer_organization_by_id(target_organization_id: $organization_id) {\n      ...ViewerOrganizationHookFragment\n    }\n  }\n",
 ): typeof import("./graphql").ViewerOrganizationByIdHookQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -311,13 +311,13 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerTenantsHookQuery {\n    viewer_tenants(\n      orderBy: [{ tenant_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n",
+  source: "\n  query ViewerTenantsHookQuery($filter: tenantsFilter, $orderBy: [tenantsOrderBy!]) {\n    tenants: viewer_tenants(filter: $filter, orderBy: $orderBy) {\n      edges {\n        node {\n          ...ViewerTenantHookFragment\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").ViewerTenantsHookQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantHookFragment\n    }\n  }\n",
+  source: "\n  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {\n    tenant: viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {\n      ...ViewerTenantHookFragment\n    }\n  }\n",
 ): typeof import("./graphql").ViewerTenantBySlugHookQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.

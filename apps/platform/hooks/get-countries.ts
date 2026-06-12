@@ -17,7 +17,7 @@ export type CountryGetFragmentType = ResultOf<typeof CountryGetFragment>;
 
 export const CountriesGetQuery = /*#__PURE__*/ gql(`
   query CountriesGetQuery {
-    addresses_level0Collection(
+    addresses_level0: addresses_level0Collection(
       filter: { address_level0_disabled_at: { is: NULL } }
       orderBy: [{ address_level0_name: AscNullsLast }]
       first: 250

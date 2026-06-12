@@ -8,30 +8,29 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getViewerOrganization } from "~/hooks/get-viewer-organizations";
-import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
+import { assertLocale } from "~/lib/i18n.server";
 import { PendingInvitations } from "./pending-invitations";
 
 export async function generateMetadata(
-  props: PageProps<"/[locale]/[tenant_slug]/[organization_id]/settings/members">,
+  props: PageProps<"/[locale]/t/[tenant_slug]/[organization_id]/settings/members">,
 ): Promise<Metadata> {
-  const { locale } = await props.params;
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t, locale } = await getRosetta(LOCALES);
   return { title: t("page_title") };
 }
 
 export default async function MembersAdminPage(
-  props: PageProps<"/[locale]/[tenant_slug]/[organization_id]/settings/members">,
+  props: PageProps<"/[locale]/t/[tenant_slug]/[organization_id]/settings/members">,
 ) {
   const { locale, tenant_slug, organization_id: organization_id_param } = await props.params;
-
-  if (!IS_SUPPORTED_LOCALE(locale)) notFound();
-  const { t } = ROSETTA(LOCALES, locale);
+  assertLocale(locale);
+  const { t } = await getRosetta(LOCALES, locale);
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
 
   const { data: orgData } = await getViewerOrganization(organization_id);
-  const organization = orgData?.["viewer_organization_by_id"];
+  const organization = orgData?.["organization"];
   if (!organization) notFound();
 
   const supabase = await createServerClient();
@@ -104,7 +103,7 @@ export default async function MembersAdminPage(
     permissionsByMembershipId.set(mp["membership_id"] as number, list);
   }
 
-  const editHrefBase = `/${locale}/${tenant_slug}/${organization_id}/settings/members`;
+  const editHrefBase = `/${locale}/t/${tenant_slug}/${organization_id}/settings/members`;
 
   const activeRows = activeMemberships.map((m) => {
     const membership_id = m["membership_id"] as number;

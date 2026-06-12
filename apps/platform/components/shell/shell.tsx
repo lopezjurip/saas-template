@@ -45,7 +45,7 @@ export function Shell({
 
   useKeyboardShortcut("k", () => setPaletteOpen((value) => !value), { mod: true });
 
-  const base = `/${locale}/${tenant.tenant_slug}/${current.organization_id}`;
+  const base = `/${locale}/t/${tenant.tenant_slug}/${current.organization_id}`;
 
   return (
     <div className="bg-background text-foreground relative flex h-svh w-screen overflow-hidden">

@@ -20,7 +20,7 @@ export type CountryHookFragmentType = ResultOf<typeof CountryHookFragment>;
 // directive in schema.sql also caps page size at 250.
 export const CountriesHookQuery = /*#__PURE__*/ gql(`
   query CountriesHookQuery {
-    addresses_level0Collection(
+    addresses_level0: addresses_level0Collection(
       filter: { address_level0_disabled_at: { is: NULL } }
       orderBy: [{ address_level0_name: AscNullsLast }]
       first: 250

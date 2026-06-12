@@ -711,7 +711,6 @@ type Query {
     orderBy: [tenantsOrderBy!]
   ): tenantsConnection
   viewer_has_permission(target_organization_id: Int!, target_permission_id: String!): Boolean
-  viewer_is_concierge: Boolean
   viewer_membership_pending(
     """Query values in the collection after the provided cursor"""
     after: Cursor

@@ -1,3 +1,4 @@
+import { ErrorExtendable } from "@packages/utils/errors";
 import dlv from "dlv";
 import tmpl from "templite";
 
@@ -48,16 +49,36 @@ export class RosettaImpl<T> {
     this.locale = NORMALIZE_LOCALE(locale, Array.from(tree.keys()))!;
   }
 
+  /**
+   * Returns new instance with given locale. Safe to pass as callback — arrow preserves `this`.
+   * @example
+   * const es = rosetta.withLocale("es");
+   * const locales = ["en", "es", "pt"].map(rosetta.withLocale);
+   */
   public withLocale = (lang: string): RosettaImpl<T> => {
     return new RosettaImpl(this.tree, lang, this.options);
   };
 
+  /**
+   * Builds instance from a locale dictionary, merging dot-notated keys and overlapping locales.
+   * @example
+   * const rosetta = RosettaImpl.fromDictionary(
+   *   { en: { greeting: "Hello, {{name}}!" }, es: { greeting: "¡Hola, {{name}}!" } },
+   *   "en",
+   * );
+   */
   public static fromDictionary<T>(dict: RosettaDict<T>, locale: string, options?: RosettaOptions): RosettaImpl<T> {
     const expanded = OBJECT_EXPAND_DOTTED_KEYS(dict as unknown as Record<string, unknown>);
     const merged = MERGE_LOCALES(expanded);
     return new RosettaImpl<T>(new Map<string, T>(Object.entries(merged) as any), locale, options);
   }
 
+  /**
+   * Resolves a translation key, interpolating `params`. Falls back to `""` unless `strict` mode throws on missing.
+   * @example
+   * rosetta.t("greeting", { name: "Ana" })          // "Hello, Ana!"
+   * rosetta.t(["user", "role"], undefined, "es")     // dot-path via array, forced locale
+   */
   public t = <P extends Key | Key[], X extends Record<string, any> | any[] = Record<string, any> | any[]>(
     key: P,
     params?: X,
@@ -76,6 +97,16 @@ export class RosettaImpl<T> {
     if (typeof val === "string") return tmpl(val, params ?? {}) as any;
     return val as any;
   };
+
+  public get TError() {
+    const t = this.t;
+    type TParams = Parameters<typeof t>;
+    return class TError extends ErrorExtendable {
+      constructor(key: TParams[0], params?: TParams[1], cause?: unknown) {
+        super(t(key, params) as string, cause !== undefined ? { cause } : undefined);
+      }
+    };
+  }
 }
 
 function OBJECT_IS_PLAIN(value: unknown): value is Record<string, unknown> {
@@ -120,11 +151,11 @@ function OBJECT_MERGE_DEEP_INTO(
   return target;
 }
 
-function DEEP_CLONE(obj: Record<string, unknown>): Record<string, unknown> {
+function OBJECT_DEEP_CLONE(obj: Record<string, unknown>): Record<string, unknown> {
   const clone: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(obj)) {
     if (OBJECT_IS_PLAIN(value)) {
-      clone[key] = DEEP_CLONE(value as Record<string, unknown>);
+      clone[key] = OBJECT_DEEP_CLONE(value as Record<string, unknown>);
     } else {
       clone[key] = value;
     }
@@ -140,7 +171,7 @@ function MERGE_LOCALES(dict: Record<string, unknown>): Record<string, unknown> {
     const baseLanguage = locale.split(separator)[0];
     if (!baseLanguage || baseLanguage === locale) continue;
     if (baseLanguage in dict) {
-      const baseCopy = DEEP_CLONE(dict[baseLanguage] as Record<string, unknown>);
+      const baseCopy = OBJECT_DEEP_CLONE(dict[baseLanguage] as Record<string, unknown>);
       result[locale] = OBJECT_MERGE_DEEP_INTO(baseCopy, dict[locale] as Record<string, unknown>);
     }
   }

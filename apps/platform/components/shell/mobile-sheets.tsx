@@ -149,7 +149,7 @@ export function MobileOrgSheet({
         {organizations.map((organization) => (
           <Link
             key={organization.organization_id}
-            href={`/${locale}/${tenant.tenant_slug}/${organization.organization_id}`}
+            href={`/${locale}/t/${tenant.tenant_slug}/${organization.organization_id}`}
             onClick={onClose}
             className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left"
           >
@@ -178,7 +178,7 @@ export function MobileOrgSheet({
           <span>{t("switchTenant")}</span>
         </Link>
         <Link
-          href={`/${locale}/${tenant.tenant_slug}/${current.organization_id}/settings`}
+          href={`/${locale}/t/${tenant.tenant_slug}/${current.organization_id}/settings`}
           onClick={onClose}
           className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-[14px]"
         >
@@ -391,7 +391,7 @@ export function MobileSearchSheet({
     return () => clearTimeout(timeout);
   }, [open]);
 
-  const base = `/${locale}/${tenant.tenant_slug}/${current.organization_id}`;
+  const base = `/${locale}/t/${tenant.tenant_slug}/${current.organization_id}`;
   const groups = useMemo<SearchGroup[]>(
     () => [
       {
@@ -410,7 +410,7 @@ export function MobileSearchSheet({
           hint: organization.organization_id === current.organization_id ? t("current") : (tenant.tenant_tier ?? ""),
           orgInitials: INITIALS_FROM_NAME(organization.organization_name),
           orgColor: COLOR_FROM_ID(organization.organization_id),
-          href: `/${locale}/${tenant.tenant_slug}/${organization.organization_id}`,
+          href: `/${locale}/t/${tenant.tenant_slug}/${organization.organization_id}`,
         })),
       },
     ],

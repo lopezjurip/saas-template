@@ -23,11 +23,11 @@ mkdir -p "$CERT_DIR"
 echo "==> Installing mkcert root CA (idempotent)…"
 mkcert -install
 
-echo "==> Issuing cert for lvh.me + *.lvh.me + localhost + 127.0.0.1…"
+echo "==> Issuing cert for lvh.me + localhost + 127.0.0.1…"
 mkcert \
   -key-file "$CERT_DIR/lvh.me-key.pem" \
   -cert-file "$CERT_DIR/lvh.me-cert.pem" \
-  lvh.me '*.lvh.me' localhost 127.0.0.1
+  lvh.me localhost 127.0.0.1
 
 echo
 echo "✅ Certs written to apps/platform/certs/"
