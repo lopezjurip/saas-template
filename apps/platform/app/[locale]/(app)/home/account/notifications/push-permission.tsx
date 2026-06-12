@@ -1,21 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
-
-type PermissionState = "default" | "granted" | "denied" | "unsupported";
+import { usePushPermission } from "~/hooks/use-push-permission";
 
 export function PushPermission() {
-  const [permission, setPermission] = useState<PermissionState>("unsupported");
-
-  useEffect(() => {
-    if (!("Notification" in window)) return;
-    setPermission(Notification.permission as PermissionState);
-  }, []);
-
-  async function requestPermission() {
-    if (!("Notification" in window)) return;
-    const result = await Notification.requestPermission();
-    setPermission(result as PermissionState);
-  }
+  const { permission, requestPermission } = usePushPermission();
 
   if (permission === "unsupported") return null;
 
