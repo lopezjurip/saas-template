@@ -37,7 +37,7 @@ export type URLParts = Pick<URL, (typeof URL_FIELDS)[number]>;
 /**
  * Throws detailed error.
  * To remove querystring set `search` to `""`.
- * `replace` substitutes `[key]` placeholders in the path before URL construction.
+ * `replace` substitutes `[key]` placeholders in pathname after URL construction.
  * @example
  * URL_NEW("/[locale]/t/[tenant_slug]", base, { replace: { locale: "es-CL", tenant_slug: "acme" } })
  */
@@ -46,20 +46,17 @@ export function URL_NEW(
   base?: string | URL,
   overwrite?: Partial<URLParts> & { params?: Record<string | number, any>; replace?: Record<string, string | number> },
 ) {
-  let urlInput: string | URL = url;
-
-  if (overwrite?.replace && typeof url === "string") {
-    let replaced = url;
-    for (const [key, value] of Object.entries(overwrite.replace)) {
-      replaced = replaced.replaceAll(`[${key}]`, encodeURIComponent(String(value)));
-    }
-    urlInput = replaced;
-  }
-
   try {
-    const result = new URL(urlInput, base);
+    const result = new URL(url, base);
 
     if (overwrite) {
+      if (overwrite.replace) {
+        let { pathname } = result;
+        for (const [key, value] of Object.entries(overwrite.replace)) {
+          pathname = pathname.replaceAll(`[${key}]`, encodeURIComponent(String(value)));
+        }
+        result.pathname = pathname;
+      }
       for (const [key, value] of Object.entries(overwrite)) {
         if (URL_FIELDS.includes(key as any)) {
           // @ts-expect-error: ignore
@@ -81,7 +78,7 @@ export function URL_NEW(
 
     return result;
   } catch (e: any) {
-    throw new Error(`${e.message} — new URL('${urlInput}', '${base}')`);
+    throw new Error(`${e.message} — new URL('${url}', '${base}')`);
   }
 }
 

@@ -64,10 +64,10 @@ describe("NEW_URL", () => {
       expect(url.href).toBe("https://example.com/en-US/search?q=hello");
     });
 
-    it("ignores replace when url is a URL object", () => {
+    it("also replaces pathname segments when url is a URL object", () => {
       const input = new URL("https://example.com/[locale]/home");
       const url = URL_NEW(input, undefined, { replace: { locale: "es-CL" } });
-      expect(url.pathname).toBe("/[locale]/home");
+      expect(url.pathname).toBe("/es-CL/home");
     });
   });
 });
