@@ -3,6 +3,7 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import type { ComponentProps } from "react";
 import { useEffect, useState } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
 
@@ -10,7 +11,7 @@ import { useRosetta } from "~/hooks/use-rosetta";
  * Theme toggle component allowing users to switch between light, dark, and system themes.
  * Avoids hydration mismatch by only lighting up the active segment after mounting on the client.
  */
-export function ThemeToggle() {
+export function ThemeToggle({ className, ...props }: ComponentProps<"div">) {
   const { t } = useRosetta(LOCALES);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -24,9 +25,13 @@ export function ThemeToggle() {
 
   return (
     <div
+      {...props}
       role="radiogroup"
       aria-label={t("group")}
-      className="bg-card text-card-foreground border-border inline-flex items-center gap-0.5 rounded-full border p-0.5 shadow-sm"
+      className={cn(
+        "bg-card text-card-foreground border-border inline-flex items-center gap-0.5 rounded-full border p-0.5 shadow-sm",
+        className,
+      )}
     >
       {OPTIONS.map(({ value, label, Icon }) => {
         const active = mounted && theme === value;

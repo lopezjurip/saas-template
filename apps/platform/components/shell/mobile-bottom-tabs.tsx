@@ -2,6 +2,7 @@
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Home, MoreHorizontal, Settings, Users } from "lucide-react";
+import type { ComponentProps } from "react";
 import { BUILD_NAV, PICK_ACTIVE_NAV } from "~/components/shell/sidebar";
 import { useRosetta } from "~/hooks/use-rosetta";
 import type { AppRoute } from "~/lib/route";
@@ -13,6 +14,8 @@ export function MobileBottomTabs({
   activePath,
   onNavigate,
   onMore,
+  className,
+  ...props
 }: {
   locale: string;
   tenantSlug: string;
@@ -20,7 +23,7 @@ export function MobileBottomTabs({
   activePath: string;
   onNavigate: (href: AppRoute) => void;
   onMore: () => void;
-}) {
+} & ComponentProps<"div">) {
   const { t } = useRosetta(LOCALES);
   const navItems = BUILD_NAV(locale, tenantSlug, organizationId, {
     navHome: t("home"),
@@ -58,7 +61,13 @@ export function MobileBottomTabs({
   ];
 
   return (
-    <div className="border-border bg-background/95 supports-backdrop-filter:bg-background/85 relative shrink-0 border-t backdrop-blur md:hidden">
+    <div
+      {...props}
+      className={cn(
+        "border-border bg-background/95 supports-backdrop-filter:bg-background/85 relative shrink-0 border-t backdrop-blur md:hidden",
+        className,
+      )}
+    >
       <div className="flex h-14 items-stretch px-1 pb-safe">
         {tabs.map((tab) => (
           <button

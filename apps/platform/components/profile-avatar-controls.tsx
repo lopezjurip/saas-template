@@ -3,9 +3,10 @@
 import { getSupabaseClient } from "@packages/supabase/client.browser";
 import { Avatar, AvatarFallback, AvatarImage } from "@packages/ui-common/shadcn/components/ui/avatar";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { INITIALS_OF } from "@packages/utils/string";
 import { useRouter } from "next/navigation";
-import { type ChangeEvent, useRef, useState } from "react";
+import { type ChangeEvent, type ComponentProps, useRef, useState } from "react";
 
 const PROFILE_AVATAR_BUCKET = "profiles";
 const PROFILE_AVATAR_ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
@@ -62,11 +63,13 @@ export function ProfileAvatarControls({
   profileId,
   name,
   avatarSrc,
+  className,
+  ...props
 }: {
   profileId: string;
   name: string;
   avatarSrc: string | null;
-}) {
+} & ComponentProps<"div">) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
@@ -153,7 +156,7 @@ export function ProfileAvatarControls({
   }
 
   return (
-    <div className="flex flex-col gap-3.5">
+    <div {...props} className={cn("flex flex-col gap-3.5", className)}>
       <div className="flex items-center gap-4">
         <Avatar className="inline-flex size-22 shrink-0 overflow-hidden rounded-full border bg-muted text-3xl font-semibold tracking-[-0.02em] text-muted-foreground">
           {avatarSrc ? <AvatarImage src={avatarSrc} alt={name || "Avatar"} className="object-cover" /> : null}

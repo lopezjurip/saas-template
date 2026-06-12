@@ -1,48 +1,23 @@
-import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Check, Fingerprint, IdCard, Lock, Mail, Phone } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { gql } from "~/generated/graphql";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { UNSAFE_ROUTE } from "~/lib/route";
 import { EmailForm } from "./email-form";
 import { PasskeysList } from "./passkeys-list";
 import { PasswordForm } from "./password-form";
 import { PhoneForm } from "./phone-form";
 
-const SecuritySectionPageQuery = gql(`
-  query SecuritySectionPageQuery {
-    profile: viewer_profile {
-      profile_id
-      profile_webauthn_credentialsCollection(
-        orderBy: [{ webauthn_credential_created_at: DescNullsLast }]
-      ) {
-        edges {
-          node {
-            webauthn_credential_id
-            webauthn_credential_friendly_name
-            webauthn_credential_device_type
-            webauthn_credential_backup_state
-            webauthn_credential_created_at
-            webauthn_credential_last_used_at
-          }
-        }
-      }
-    }
-  }
-`);
-
 export default async function SecurityPage(props: PageProps<"/[locale]/home/account/security">) {
   const { locale } = await props.params;
   const user = await getSupabaseServerUser();
   if (!user) redirect("/[locale]/auth");
 
-  const graphy = await getGraphySession();
-  const { data } = await graphy.query({ query: SecuritySectionPageQuery });
-  const passkeys =
-    data?.["profile"]?.["profile_webauthn_credentialsCollection"]?.["edges"]?.map((e) => e["node"]) ?? [];
+  const supabase = await createServerClient();
+  const { data: passkeyData } = await supabase.auth.passkey.list();
+  const passkeys = passkeyData ?? [];
 
   const identities = user["identities"] ?? [];
   const hasPassword = identities.some((i) => i["provider"] === "email");

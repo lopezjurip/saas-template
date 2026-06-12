@@ -2,7 +2,9 @@
 
 import { Logo } from "@packages/ui-common/logo";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { type LucideIcon, RotateCcw, Search, TriangleAlert, Wrench } from "lucide-react";
+import type { ComponentProps } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
 
 type SystemKind = "notFound" | "error" | "maintenance";
@@ -15,7 +17,12 @@ const DEFS: Record<SystemKind, SystemDef> = /*#__PURE__*/ {
   maintenance: { code: "503", Icon: Wrench },
 };
 
-export function SystemMessage({ kind = "notFound", reset }: { kind?: SystemKind; reset?: () => void }) {
+export function SystemMessage({
+  kind = "notFound",
+  reset,
+  className,
+  ...props
+}: { kind?: SystemKind; reset?: () => void } & ComponentProps<"div">) {
   const locale = useLocaleParam();
   const { code, Icon } = DEFS[kind];
   const copy = RESOLVE_COPY(locale)[kind];
@@ -23,7 +30,8 @@ export function SystemMessage({ kind = "notFound", reset }: { kind?: SystemKind;
 
   return (
     <div
-      className="font-sans relative flex min-h-svh w-full items-center justify-center px-5 py-10"
+      {...props}
+      className={cn("font-sans relative flex min-h-svh w-full items-center justify-center px-5 py-10", className)}
       style={{
         background:
           "radial-gradient(ellipse at top, hsl(var(--muted) / 0.55), transparent 60%), hsl(var(--background))",

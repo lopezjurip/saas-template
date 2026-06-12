@@ -4,7 +4,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ChevronRight, CreditCard, ExternalLink, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 import { type AppRoute, ROUTE_HREF } from "~/lib/route";
 
 const ICON_MAP = {
@@ -97,9 +97,18 @@ function TreeNode({ node }: { node: SubSidebarNode }) {
   );
 }
 
-export function SubSidebar({ title, items }: { title: string; items: SubSidebarItem[] }) {
+export function SubSidebar({
+  title,
+  items,
+  className,
+  ...props
+}: { title: string; items: SubSidebarItem[] } & ComponentProps<"nav">) {
   return (
-    <nav aria-label={title} className="bg-background flex h-full w-52 shrink-0 flex-col gap-3 border-r p-3">
+    <nav
+      {...props}
+      aria-label={title}
+      className={cn("bg-background flex h-full w-52 shrink-0 flex-col gap-3 border-r p-3", className)}
+    >
       <p className="text-foreground px-2 pt-1 text-sm font-semibold">{title}</p>
       <div className="flex flex-col gap-1">
         {items.map((item, i) =>

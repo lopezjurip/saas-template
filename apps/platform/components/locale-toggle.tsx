@@ -2,6 +2,7 @@
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { useParams, usePathname, useRouter } from "next/navigation";
+import type { ComponentProps } from "react";
 import { useTransition } from "react";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
 import { useRosetta } from "~/hooks/use-rosetta";
@@ -12,7 +13,7 @@ import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
  * Locale toggle component allowing users to switch between supported languages.
  * Updates both the cookie and DOM lang attribute for accessibility.
  */
-export function LocaleToggle() {
+export function LocaleToggle({ className, ...props }: ComponentProps<"div">) {
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const pathname = usePathname();
@@ -38,10 +39,14 @@ export function LocaleToggle() {
 
   return (
     <div
+      {...props}
       role="radiogroup"
       aria-label={t("group")}
       aria-busy={pending}
-      className="bg-card text-card-foreground border-border inline-flex items-center gap-0.5 rounded-full border p-0.5 shadow-sm"
+      className={cn(
+        "bg-card text-card-foreground border-border inline-flex items-center gap-0.5 rounded-full border p-0.5 shadow-sm",
+        className,
+      )}
       data-component="LocaleToggle"
     >
       {SUPPORTED_LOCALES.map((locale) => {

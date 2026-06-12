@@ -1,6 +1,8 @@
 "use client";
 
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ChevronDown, Menu, Search } from "lucide-react";
+import type { ComponentProps } from "react";
 import { Avatar, COLOR_FROM_ID, INITIALS_FROM_NAME } from "~/components/shell/atoms";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
@@ -14,6 +16,8 @@ export function MobileTopBar({
   onSearch,
   onOrg,
   onProfile,
+  className,
+  ...props
 }: {
   tenant: ShellTenant;
   organization: ShellOrganization;
@@ -23,9 +27,15 @@ export function MobileTopBar({
   onSearch: () => void;
   onOrg: () => void;
   onProfile: () => void;
-}) {
+} & ComponentProps<"div">) {
   return (
-    <div className="border-border bg-background/95 supports-backdrop-filter:bg-background/80 flex shrink-0 flex-col border-b pt-safe backdrop-blur">
+    <div
+      {...props}
+      className={cn(
+        "border-border bg-background/95 supports-backdrop-filter:bg-background/80 flex shrink-0 flex-col border-b pt-safe backdrop-blur",
+        className,
+      )}
+    >
       <div className="flex h-12 items-center gap-1 px-1.5">
         <button
           type="button"
