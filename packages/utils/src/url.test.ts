@@ -20,6 +20,56 @@ describe("NEW_URL", () => {
     });
     expect(url.href).toBe("https://example.com/new-path?param=value");
   });
+
+  describe("replace option", () => {
+    const base = "https://example.com";
+
+    it("replaces a single segment", () => {
+      const url = URL_NEW("/[locale]/home", base, { replace: { locale: "es-CL" } });
+      expect(url.href).toBe("https://example.com/es-CL/home");
+    });
+
+    it("replaces multiple segments", () => {
+      const url = URL_NEW("/[locale]/t/[tenant_slug]", base, {
+        replace: { locale: "es-CL", tenant_slug: "acme" },
+      });
+      expect(url.href).toBe("https://example.com/es-CL/t/acme");
+    });
+
+    it("replaces all occurrences of the same segment", () => {
+      const url = URL_NEW("/[locale]/x/[locale]", base, { replace: { locale: "en-US" } });
+      expect(url.href).toBe("https://example.com/en-US/x/en-US");
+    });
+
+    it("URL-encodes replacement values with special characters", () => {
+      const url = URL_NEW("/[locale]/u/[slug]", base, { replace: { locale: "es-CL", slug: "hello world" } });
+      expect(url.href).toBe("https://example.com/es-CL/u/hello%20world");
+    });
+
+    it("accepts numeric replacement values", () => {
+      const url = URL_NEW("/orgs/[id]", base, { replace: { id: 42 } });
+      expect(url.href).toBe("https://example.com/orgs/42");
+    });
+
+    it("leaves unreplaced segments intact", () => {
+      const url = URL_NEW("/[locale]/[unknown]", base, { replace: { locale: "pt-BR" } });
+      expect(url.href).toBe("https://example.com/pt-BR/[unknown]");
+    });
+
+    it("combines replace with params (query string)", () => {
+      const url = URL_NEW("/[locale]/search", base, {
+        replace: { locale: "en-US" },
+        params: { q: "hello" },
+      });
+      expect(url.href).toBe("https://example.com/en-US/search?q=hello");
+    });
+
+    it("ignores replace when url is a URL object", () => {
+      const input = new URL("https://example.com/[locale]/home");
+      const url = URL_NEW(input, undefined, { replace: { locale: "es-CL" } });
+      expect(url.pathname).toBe("/[locale]/home");
+    });
+  });
 });
 
 describe("FORMAT_URL", () => {

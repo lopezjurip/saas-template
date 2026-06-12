@@ -50,15 +50,15 @@ export async function generateMetadata(props: PageProps<"/[locale]/legal/[sectio
   return {
     title,
     alternates: {
-      canonical: URL_NEW(`/${safeLocale}/legal/${section}`, APP_URL).href,
+      canonical: URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: safeLocale, section } }).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW(`/${l}/legal/${section}`, APP_URL).href])),
-        "x-default": URL_NEW(`/${DEFAULT_LOCALE}/legal/${section}`, APP_URL).href,
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: l, section } }).href])),
+        "x-default": URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: DEFAULT_LOCALE, section } }).href,
       },
     },
     openGraph: {
       type: "website",
-      url: URL_NEW(`/${safeLocale}/legal/${section}`, APP_URL).href,
+      url: URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: safeLocale, section } }).href,
       locale: safeLocale,
       title,
       siteName: "SaaS Template",
@@ -76,7 +76,7 @@ export default async function LegalSectionPage(props: PageProps<"/[locale]/legal
   const webPageSchema: WithContext<WebPage> = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    url: URL_NEW(`/${locale}/legal/${section}`, APP_URL).href,
+    url: URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale, section } }).href,
     inLanguage: locale,
   };
 

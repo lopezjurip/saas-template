@@ -28,15 +28,15 @@ export async function generateMetadata(props: PageProps<"/[locale]">): Promise<M
     title: t("title"),
     description: t("description"),
     alternates: {
-      canonical: URL_NEW(`/${locale}`, APP_URL).href,
+      canonical: URL_NEW("/[locale]", APP_URL, { replace: { locale } }).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW(`/${l}`, APP_URL).href])),
-        "x-default": URL_NEW(`/${DEFAULT_LOCALE}`, APP_URL).href,
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW("/[locale]", APP_URL, { replace: { locale: l } }).href])),
+        "x-default": URL_NEW("/[locale]", APP_URL, { replace: { locale: DEFAULT_LOCALE } }).href,
       },
     },
     openGraph: {
       type: "website",
-      url: URL_NEW(`/${locale}`, APP_URL).href,
+      url: URL_NEW("/[locale]", APP_URL, { replace: { locale } }).href,
       locale: locale,
       title: t("title"),
       description: t("description"),
@@ -88,8 +88,8 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
   const websiteSchema: WithContext<WebSite> = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": URL_NEW(`/${locale}#website`, APP_URL).href,
-    url: URL_NEW(`/${locale}`, APP_URL).href,
+    "@id": URL_NEW("/[locale]#website", APP_URL, { replace: { locale } }).href,
+    url: URL_NEW("/[locale]", APP_URL, { replace: { locale } }).href,
     inLanguage: locale,
   };
 

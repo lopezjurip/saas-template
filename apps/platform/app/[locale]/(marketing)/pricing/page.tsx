@@ -14,15 +14,15 @@ export async function generateMetadata(props: PageProps<"/[locale]/pricing">): P
     title: t("title"),
     description: t("subtitle"),
     alternates: {
-      canonical: URL_NEW(`/${safeLocale}/pricing`, APP_URL).href,
+      canonical: URL_NEW("/[locale]/pricing", APP_URL, { replace: { locale: safeLocale } }).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW(`/${l}/pricing`, APP_URL).href])),
-        "x-default": URL_NEW(`/${DEFAULT_LOCALE}/pricing`, APP_URL).href,
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW("/[locale]/pricing", APP_URL, { replace: { locale: l } }).href])),
+        "x-default": URL_NEW("/[locale]/pricing", APP_URL, { replace: { locale: DEFAULT_LOCALE } }).href,
       },
     },
     openGraph: {
       type: "website",
-      url: URL_NEW(`/${safeLocale}/pricing`, APP_URL).href,
+      url: URL_NEW("/[locale]/pricing", APP_URL, { replace: { locale: safeLocale } }).href,
       locale: safeLocale,
       title: t("title"),
       siteName: "SaaS Template",
@@ -36,7 +36,7 @@ export default async function PricingPage(props: PageProps<"/[locale]/pricing">)
   const webPageSchema: WithContext<WebPage> = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    url: URL_NEW(`/${locale}/pricing`, APP_URL).href,
+    url: URL_NEW("/[locale]/pricing", APP_URL, { replace: { locale } }).href,
     inLanguage: locale,
   };
 

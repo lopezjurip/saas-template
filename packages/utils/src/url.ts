@@ -37,14 +37,27 @@ export type URLParts = Pick<URL, (typeof URL_FIELDS)[number]>;
 /**
  * Throws detailed error.
  * To remove querystring set `search` to `""`.
+ * `replace` substitutes `[key]` placeholders in the path before URL construction.
+ * @example
+ * URL_NEW("/[locale]/t/[tenant_slug]", base, { replace: { locale: "es-CL", tenant_slug: "acme" } })
  */
 export function URL_NEW(
   url: string | URL,
   base?: string | URL,
-  overwrite?: Partial<URLParts> & { params?: Record<string | number, any> },
+  overwrite?: Partial<URLParts> & { params?: Record<string | number, any>; replace?: Record<string, string | number> },
 ) {
+  let urlInput: string | URL = url;
+
+  if (overwrite?.replace && typeof url === "string") {
+    let replaced = url;
+    for (const [key, value] of Object.entries(overwrite.replace)) {
+      replaced = replaced.replaceAll(`[${key}]`, encodeURIComponent(String(value)));
+    }
+    urlInput = replaced;
+  }
+
   try {
-    const result = new URL(url, base);
+    const result = new URL(urlInput, base);
 
     if (overwrite) {
       for (const [key, value] of Object.entries(overwrite)) {
@@ -68,7 +81,7 @@ export function URL_NEW(
 
     return result;
   } catch (e: any) {
-    throw new Error(`${e.message} — new URL('${url}', '${base}')`);
+    throw new Error(`${e.message} — new URL('${urlInput}', '${base}')`);
   }
 }
 

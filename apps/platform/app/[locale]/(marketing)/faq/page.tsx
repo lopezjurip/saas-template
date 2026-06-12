@@ -12,15 +12,15 @@ export async function generateMetadata(props: PageProps<"/[locale]/faq">): Promi
   return {
     title: t("heading"),
     alternates: {
-      canonical: URL_NEW(`/${safeLocale}/faq`, APP_URL).href,
+      canonical: URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: safeLocale } }).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW(`/${l}/faq`, APP_URL).href])),
-        "x-default": URL_NEW(`/${DEFAULT_LOCALE}/faq`, APP_URL).href,
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: l } }).href])),
+        "x-default": URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: DEFAULT_LOCALE } }).href,
       },
     },
     openGraph: {
       type: "website",
-      url: URL_NEW(`/${safeLocale}/faq`, APP_URL).href,
+      url: URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: safeLocale } }).href,
       locale: safeLocale,
       title: t("heading"),
       siteName: "SaaS Template",
@@ -34,7 +34,7 @@ export default async function FaqPage(props: PageProps<"/[locale]/faq">) {
   const webPageSchema: WithContext<WebPage> = {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    url: URL_NEW(`/${locale}/faq`, APP_URL).href,
+    url: URL_NEW("/[locale]/faq", APP_URL, { replace: { locale } }).href,
     inLanguage: locale,
   };
 
