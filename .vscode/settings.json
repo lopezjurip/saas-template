@@ -38,6 +38,8 @@
     "llms",
     "magiclink",
     "mailpit",
+    "noopener",
+    "noreferrer",
     "posthog",
     "rosetta",
     "simplewebauthn",

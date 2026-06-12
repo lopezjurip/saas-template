@@ -12,7 +12,7 @@ export const createTenant = authedAction
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
     const admin = createServiceRoleClient();
 
-    // 1. Tenant
+    // Step 1: Create tenant.
     const tenantRes = await admin
       .from("tenants")
       .insert({ tenant_name: parsedInput.tenant_name, tenant_slug: parsedInput.tenant_slug })
@@ -37,7 +37,7 @@ export const createTenant = authedAction
 
     const { tenant_id, tenant_slug } = tenantRes.data;
 
-    // 2. Default organization (mirrors the tenant).
+    // Step 2: Create default organization.
     const orgRes = await admin
       .from("organizations")
       .insert({
@@ -67,8 +67,7 @@ export const createTenant = authedAction
 
     const { organization_id } = orgRes.data;
 
-    // 3. OrganizationMembership: creator joins the default org as an immediately-active member.
-    //    profile_id + accepted_at must move together (organization_memberships_claim_consistency check).
+    // Step 3: Add creator as organization member. profile_id + accepted_at move together.
     const memberRes = await admin
       .from("organization_memberships")
       .insert({
@@ -97,8 +96,7 @@ export const createTenant = authedAction
       throw new Error("No pudimos asignarte como dueño. Intenta de nuevo.");
     }
 
-    // 4. Bootstrap: grant the wildcard `*` so the creator can do everything (and
-    // automatically receives any permission slug we add to the catalog later).
+    // Step 4: Grant wildcard permission so creator can do everything.
     const grantRes = await admin.from("organization_membership_permissions").insert({
       organization_membership_id: memberRes.data["organization_membership_id"],
       permission_id: "*",

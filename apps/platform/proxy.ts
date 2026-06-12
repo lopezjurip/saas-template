@@ -10,21 +10,11 @@ const log = debug("proxy");
 
 const PUBLIC_PATH_REGEX = /^(\/|(\/(?:auth|legal|faq|pricing|opengraph-image|twitter-image|icon)(?:\/|$)))/;
 
-function isLocalizedPublicPath(pathAfterLocale: string): boolean {
-  return PUBLIC_PATH_REGEX.test(pathAfterLocale);
-}
-
-function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse {
-  const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
-  response.cookies.set(LOCALE_COOKIE, locale, {
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-    sameSite: "lax",
-    domain: cookieDomain || undefined,
-  });
-  return response;
-}
-
+/**
+ * Name required by Next.js.
+ * Proxy incoming requests to the appropriate tenant based on path and host, and handle locale detection and session updates.
+ * This runs before all other middleware and routes, so it's the ideal place to centralize logic that should apply to all requests.
+ */
 export async function proxy(request: NextRequest) {
   const hostname = request.headers.get("host") ?? "";
   const pathname = request.nextUrl.pathname;
@@ -137,3 +127,18 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sitemap|llms.txt|manifest.webmanifest).*)",
   ],
 };
+
+function isLocalizedPublicPath(pathAfterLocale: string): boolean {
+  return PUBLIC_PATH_REGEX.test(pathAfterLocale);
+}
+
+function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse {
+  const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
+  response.cookies.set(LOCALE_COOKIE, locale, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+    domain: cookieDomain || undefined,
+  });
+  return response;
+}

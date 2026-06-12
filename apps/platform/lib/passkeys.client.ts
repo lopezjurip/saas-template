@@ -36,7 +36,11 @@ export async function signInWithPasskey(email: string) {
 
   const response = await startAuthentication({ optionsJSON: options });
 
-  // On success, the server action redirects to /[locale]/dashboard — this call never resolves normally. If it does resolve, verification failed and serverError carries the reason.
+  /**
+   * On success, the server action redirects to /[locale]/dashboard — this call never
+   * resolves normally. If it does resolve, verification failed and serverError carries
+   * the reason.
+   */
   const [_, verifyError] = await ErrorSafeAction.unwrap(actionVerifyPasskeySignIn(response));
   if (verifyError) {
     log.error("[signInWithPasskey] Failed to verify passkey sign-in", verifyError);

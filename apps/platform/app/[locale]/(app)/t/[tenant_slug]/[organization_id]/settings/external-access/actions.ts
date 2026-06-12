@@ -10,9 +10,11 @@ import { authedAction } from "~/lib/safe-action.server";
 
 const log = debug("settings:external-access");
 
-// Read-visibility for agencies is keyed on permission '*' (the catalog has no
-// read-only capability slugs and the data-table RLS only checks '*'). So an
-// org "grants an agency access" by inserting (agency_id, organization_id, '*').
+/**
+ * Read-visibility for agencies is keyed on permission '*' (the catalog has no
+ * read-only capability slugs and the data-table RLS only checks '*'). So an
+ * org "grants an agency access" by inserting (agency_id, organization_id, '*').
+ */
 const GRANT_PERMISSION = "*";
 
 const baseSchema = z.object({
@@ -23,9 +25,11 @@ const baseSchema = z.object({
 const grantAgencyAccessSchema = baseSchema;
 type GrantAgencyAccessValues = z.infer<typeof grantAgencyAccessSchema>;
 
-// Grant or revoke an agency's read access to one organization. The caller must hold
-// `organization_manage` on that org (viewer-scoped check via the RLS server client),
-// then the write goes through the service-role admin client (grants are service_role-only).
+/**
+ * Grant or revoke an agency's read access to one organization. The caller must hold
+ * `organization_manage` on that org (viewer-scoped check via the RLS server client),
+ * then the write goes through the service-role admin client (grants are service_role-only).
+ */
 export const actionGrantAgencyAccess = authedAction
   .inputSchema(grantAgencyAccessSchema)
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
@@ -100,8 +104,10 @@ export const actionRevokeAgencyAccess = authedAction
 
     const admin = createServiceRoleClient();
 
-    // Only org-scoped grants can be revoked here. Global grants (organization_id IS NULL)
-    // are platform-managed and never touched from the org settings surface.
+    /**
+     * Only org-scoped grants can be revoked here. Global grants (organization_id IS NULL)
+     * are platform-managed and never touched from the org settings surface.
+     */
     const deleteRes = await admin
       .from("agencies_organizations_grants")
       .delete()

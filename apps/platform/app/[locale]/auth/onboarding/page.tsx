@@ -16,7 +16,9 @@ import {
 } from "./state";
 import { getViewerOnboardingState } from "./state.server";
 
-// Hub sort: recommended-pending → pending → skipped → done. Done sinks to the bottom.
+/**
+ * Hub sort: recommended-pending → pending → skipped → done. Done sinks to the bottom.
+ */
 const STATUS_ORDER: Record<OnboardingMethodStatus, number> = {
   pending: 1,
   skipped: 2,
@@ -30,7 +32,7 @@ export default async function OnboardingHubPage(props: PageProps<"/[locale]/auth
   const done = COUNT_DONE(state.methods);
   const remaining = METHOD_ORDER.length - done;
 
-  // TODO: overkill, AUTH_TWEAKS recomed is always passkey. you can make it a constant in this file.
+  // TODO: overkill, AUTH_TWEAKS.OB_RECOMMENDED is always passkey. could be constant.
   const sorted: OnboardingMethodId[] = [...METHOD_ORDER].sort((a, b) => {
     const recA =
       a === AUTH_TWEAKS.OB_RECOMMENDED && state.methods[a] === "pending" ? 0 : STATUS_ORDER[state.methods[a]];

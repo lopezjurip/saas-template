@@ -18,6 +18,10 @@ const LOCALES = {
   pt: { group: "Idioma" } satisfies typeof LOCALE_ES,
 };
 
+/**
+ * Locale toggle component allowing users to switch between supported languages.
+ * Updates both the cookie and DOM lang attribute for accessibility.
+ */
 export function LocaleToggle() {
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
@@ -28,6 +32,9 @@ export function LocaleToggle() {
 
   const current = IS_SUPPORTED_LOCALE(params?.locale) ? params.locale : DEFAULT_LOCALE;
 
+  /**
+   * Changes the locale and updates the DOM to reflect the new language.
+   */
   function selectLocale(next: SupportedLocale) {
     if (next === current) return;
     // Fire-and-forget: the proxy re-sets this cookie (1yr) on the next request, so the bare write is enough.

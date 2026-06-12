@@ -5,10 +5,11 @@ import { redirect } from "next/navigation";
 import { OAUTH_PROVIDERS } from "~/app/[locale]/auth/providers";
 import { actionLinkProvider } from "../actions";
 
-// Real-ish: lists OAuth providers from the existing catalog and lets the user link new ones.
-// TODO once backend is ready: unlinking, per-provider last-activity, success/connected badges
-// driven by `auth.identities` joined to provider metadata.
-
+/**
+ * Lists OAuth providers from the existing catalog and lets the user link new ones.
+ * TODO once backend is ready: unlinking, per-provider last-activity, success/connected badges
+ * driven by `auth.identities` joined to provider metadata.
+ */
 export default async function ConnectionsPage(props: PageProps<"/[locale]/home/account/connections">) {
   const sp = await props.searchParams;
   const user = await getSupabaseServerUser();

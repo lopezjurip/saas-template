@@ -10,7 +10,7 @@ import { ROUTE } from "~/lib/route";
 
 type AcceptState = "valid" | "loggedout" | "expired" | "claimed" | "rejected";
 
-// Mock invitation — real lookup by token/invite_id lands in the backend pass.
+/** Mock invitation — real lookup by token/invite_id lands in the backend pass. */
 const ORG = "Acme Studio";
 const INVITED_BY = "Andrea Gómez";
 const DESTINATION = "nora@startup.io";

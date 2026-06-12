@@ -71,7 +71,7 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
           );
           break;
         case "pick_invite":
-          // Multiple invites: send to accept with the first; the accept screen lists the rest.
+          // multiple invites: send to accept with the first; the accept screen lists the rest
           router.push(
             ROUTE_HREF(
               ROUTE("/[locale]/auth/document/accept", {
@@ -95,7 +95,7 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
     if (!login) return;
     setError(null);
     startTransition(async () => {
-      // On success this action redirects server-side to /home; it only returns on failure.
+      // on success this action redirects server-side to /home; only returns on failure
       const [, err] = await ErrorSafeAction.unwrap(
         actionVerifyDocumentLoginOtp({
           address_level0_id: country,

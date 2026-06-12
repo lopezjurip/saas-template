@@ -7,7 +7,9 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/llms.txt">) 
   const apexBase = APP_HOST.split(":")[0] ?? "";
   const isApex = hostBase === apexBase || hostBase === `www.${apexBase}`;
 
-  // Tenant subdomains are private app instances — no public surface for LLMs.
+  /**
+   * Tenant subdomains are private app instances — no public surface for LLMs.
+   */
   if (!isApex) {
     return new NextResponse("Not found", { status: 404 });
   }

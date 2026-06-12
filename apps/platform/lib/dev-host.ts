@@ -1,5 +1,7 @@
-// Matches dev-only hostnames: localhost, *.localhost, *.test, 127.0.0.1, lvh.me, *.lvh.me.
-// Trailing port (or end-of-string) is allowed via the `(:|$)` group.
+/**
+ * Matches dev-only hostnames: localhost, *.localhost, *.test, 127.0.0.1, lvh.me, *.lvh.me.
+ * Trailing port (or end-of-string) is allowed via the `(:|$)` group.
+ */
 const DEV_HOST_RE = /(^localhost(:|$)|\.localhost(:|$)|\.test(:|$)|127\.0\.0\.1|(^|\.)lvh\.me(:|$))/;
 
 /**

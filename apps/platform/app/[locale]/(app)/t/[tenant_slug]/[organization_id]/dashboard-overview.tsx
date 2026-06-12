@@ -53,7 +53,9 @@ const TONES = /*#__PURE__*/ [
 
 const PERIODS: Period[] = /*#__PURE__*/ ["today", "week", "month"];
 
-// Mock data — replaced by real workspace metrics in the backend pass.
+/**
+ * Mock data — replaced by real workspace metrics in the backend pass.
+ */
 const STATS: Stat[] = /*#__PURE__*/ [
   { key: "members", value: "24", delta: "+3", up: true, Icon: Users },
   { key: "projects", value: "8", delta: "+2", up: true, Icon: LayoutPanelLeft },

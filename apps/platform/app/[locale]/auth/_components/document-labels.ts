@@ -1,8 +1,10 @@
 type DocumentKind = "nin" | "passport";
 
-// Preferred label per (country, kind) tuple. The "nin" kind is contextual per country —
-// in Chile it's "RUT", in Brazil "CPF", in Argentina "DNI", etc. The DB column stays
-// `nin` (national identification number) regardless of country.
+/**
+ * Preferred label per (country, kind) tuple. The "nin" kind is contextual per country —
+ * in Chile it's "RUT", in Brazil "CPF", in Argentina "DNI", etc. The DB column stays
+ * `nin` (national identification number) regardless of country.
+ */
 const NIN_LABEL_BY_COUNTRY: Record<string, string> = {
   CL: "RUT",
   BR: "CPF",

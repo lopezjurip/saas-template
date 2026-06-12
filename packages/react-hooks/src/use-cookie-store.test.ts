@@ -12,6 +12,9 @@ afterEach(() => {
 });
 
 describe("useCookieStore", () => {
+  /**
+   * Returns a stable reference across renders.
+   */
   it("returns a stable reference across renders", () => {
     const { result, rerender } = renderHook(() => useCookieStore());
     const first = result.current;
@@ -19,12 +22,18 @@ describe("useCookieStore", () => {
     expect(result.current).toBe(first);
   });
 
+  /**
+   * Writes a cookie via the polyfill (jsdom has no native Cookie Store).
+   */
   it("writes a cookie via the polyfill (jsdom has no native Cookie Store)", () => {
     const { result } = renderHook(() => useCookieStore());
     result.current.set("humane_locale", "es");
     expect(document.cookie).toContain("humane_locale=es");
   });
 
+  /**
+   * URL-encodes the value.
+   */
   it("url-encodes the value", () => {
     const { result } = renderHook(() => useCookieStore());
     result.current.set("k", "a b");

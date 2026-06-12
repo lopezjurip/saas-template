@@ -71,8 +71,7 @@ describe("NEW_URL", () => {
     });
 
     it("infers replace keys from string literal — type-level (compile-time check)", () => {
-      // TypeScript should accept known keys and reject unknown ones.
-      // If this compiles, the generic inference is working.
+      // Compile-time check: generic inference accepts known keys, rejects unknown.
       const url = URL_NEW("/[locale]/t/[tenant_slug]", "https://example.com", {
         replace: { locale: "es-CL", tenant_slug: "acme" },
       });
@@ -109,7 +108,7 @@ describe("FORMAT_URL", () => {
     expect(formattedUrl).toBe("https://example.com");
 
     formattedUrl = URL_FORMAT(url, { protocol: true, hostname: false, pathname: false, search: false, hash: false });
-    expect(formattedUrl).toBe("https://"); // TODO: should be "https", "https://", or "https:"?
+    expect(formattedUrl).toBe("https://"); // TODO: "https", "https://", or "https:"?
   });
 });
 

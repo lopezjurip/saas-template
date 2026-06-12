@@ -1,5 +1,6 @@
 "use client";
 
+import { HREF_FORMAT } from "@packages/utils/url";
 import { toast } from "sonner";
 import { APEX_HOSTNAME } from "~/lib/constants";
 import { isDevHost } from "~/lib/dev-host";
@@ -17,7 +18,7 @@ export function notifyDevMailbox(email?: string): void {
   if (!mailbox) return;
 
   const base = mailbox.replace(/\/$/, "");
-  const href = email ? `${base}/?q=${encodeURIComponent(`to:${email}`)}` : base;
+  const href = HREF_FORMAT(base, undefined, email ? { q: `to:${email}` } : undefined);
 
   toast.info("Development only", {
     description: "Abre la bandeja local para obtener el enlace mágico.",

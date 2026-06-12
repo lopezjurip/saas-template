@@ -1,5 +1,7 @@
-// Single source of truth for the UI knobs that came from the Claude design "Tweaks" panel.
-// Change a value here and the auth/onboarding/home surfaces follow — no plumbing required.
+/**
+ * Single source of truth for the UI knobs that came from the Claude design "Tweaks" panel.
+ * Change a value here and the auth/onboarding/home surfaces follow — no plumbing required.
+ */
 
 export type SectionOrder = "oauth-first" | "local-first";
 export type ObProgressKind = "chips" | "bar";

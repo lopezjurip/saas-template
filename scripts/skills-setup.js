@@ -1,4 +1,11 @@
 #!/usr/bin/env node
+/**
+ * Sets up symlinks for custom skills in .agents/skills/ and .claude/skills/.
+ * Each symlink points to the shared skills directory.
+ * Also initializes .env.local from .env.example if it doesn't exist.
+ *
+ * Usage: pnpm skills-setup
+ */
 
 import { promises as fs } from "node:fs";
 import { join, resolve } from "node:path";
@@ -27,14 +34,17 @@ const SKILLS = [
 
 const LEGACY_SKILLS = ["my-email", "my-pdf"];
 
+/**
+ * Creates a symlink from source to target, removing existing symlinks if needed.
+ * @param {string} target - The target path the symlink points to.
+ * @param {string} source - The symlink path to create.
+ */
 async function symlink(target, source) {
   try {
     const stat = await fs.lstat(source);
     if (stat.isSymbolicLink()) {
-      // Remove old symlink
       await fs.unlink(source);
     } else {
-      // Don't remove directories — log warning
       console.warn(`⚠️  ${source} exists but is not a symlink. Skipping.`);
       return;
     }
@@ -42,7 +52,6 @@ async function symlink(target, source) {
     if (e.code !== "ENOENT") throw e;
   }
 
-  // Create parent if needed
   const sourceDir = source.split("/").slice(0, -1).join("/");
   try {
     await fs.mkdir(sourceDir, { recursive: true });
@@ -54,6 +63,10 @@ async function symlink(target, source) {
   console.log(`✓ ${source} → ${target}`);
 }
 
+/**
+ * Removes a legacy symlink if it exists and is a symbolic link.
+ * @param {string} source - The symlink path to remove.
+ */
 async function removeLegacySymlink(source) {
   try {
     const stat = await fs.lstat(source);
@@ -68,6 +81,9 @@ async function removeLegacySymlink(source) {
   }
 }
 
+/**
+ * Initializes .env.local from .env.example if it doesn't already exist.
+ */
 async function initEnv() {
   const envExample = join(rootDir, ".env.example");
   const envLocal = join(rootDir, ".env.local");
@@ -85,7 +101,6 @@ async function main() {
   console.log("Setting up custom skills symlinks...");
 
   try {
-    // Create /skills directory if needed
     await fs.mkdir(skillsDir, { recursive: true });
 
     for (const skill of LEGACY_SKILLS) {
@@ -93,14 +108,12 @@ async function main() {
       await removeLegacySymlink(join(claudeSkillsDir, skill));
     }
 
-    // Set up symlinks in .agents/skills/
     for (const skill of SKILLS) {
       const source = join(agentsSkillsDir, skill);
       const target = `../../skills/${skill}`;
       await symlink(target, source);
     }
 
-    // Set up symlinks in .claude/skills/
     for (const skill of SKILLS) {
       const source = join(claudeSkillsDir, skill);
       const target = `../../skills/${skill}`;

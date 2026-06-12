@@ -2,9 +2,11 @@ import { z } from "zod";
 
 export const PERMISSION_SLUG_WILDCARD = "*";
 
-// Step 1 of the invite flow: collect the identifier only. Permissions are set on the
-// follow-up edit page (`settings/members/[organization_membership_id]/edit`) so the invitee row exists
-// before the admin commits to a permission shape.
+/**
+ * Step 1 of the invite flow: collect the identifier only. Permissions are set on the
+ * follow-up edit page (`settings/members/[organization_membership_id]/edit`) so the invitee row exists
+ * before the admin commits to a permission shape.
+ */
 export const inviteMemberSchema = z
   .object({
     channel: z.enum(["email", "document", "phone"]),

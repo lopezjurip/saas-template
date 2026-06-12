@@ -46,8 +46,10 @@ export default async function OrganizationExternalAccessPage(
     );
   }
 
-  // Grants + agencies are service_role-only in RLS; use the admin client now that the
-  // org-manage gate passed.
+  /**
+   * Grants + agencies are service_role-only in RLS; use the admin client now that the
+   * org-manage gate passed.
+   */
   const admin = createServiceRoleClient();
 
   const [agenciesRes, grantsRes, membershipsRes] = await Promise.all([

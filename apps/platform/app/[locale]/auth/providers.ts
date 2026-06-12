@@ -1,17 +1,20 @@
 import type { Provider } from "@supabase/supabase-js";
 import { AppleMark, FacebookMark, GitHubMark, GoogleMark, LinkedInMark, MicrosoftMark } from "./_components/auth-icons";
 
-// Unified OAuth catalog. Order = render order on /auth. The first three are "main"
-// (big buttons), the rest collapse into the "Más opciones" 4-up icon grid.
-//
-// `enabled` reflects whether the provider is wired in supabase/config.toml; flip via
-// SUPABASE_AUTH_EXTERNAL_<PROVIDER>_* envs. Hiding disabled providers from the UI
-// would mask the admin's intent — leaving them rendered lets the runtime surface a
-// clear "provider not configured" error if someone clicks before the env is set.
-
+/**
+ * Unified OAuth catalog. Order = render order on /auth. The first three are "main"
+ * (big buttons), the rest collapse into the "Más opciones" 4-up icon grid.
+ *
+ * `enabled` reflects whether the provider is wired in supabase/config.toml; flip via
+ * SUPABASE_AUTH_EXTERNAL_<PROVIDER>_* envs. Hiding disabled providers from the UI
+ * would mask the admin's intent — leaving them rendered lets the runtime surface a
+ * clear "provider not configured" error if someone clicks before the env is set.
+ */
 type MarkComponent = (props: { size?: number; className?: string }) => React.JSX.Element;
 
-// Tuple form is required for `z.enum(...)` consumers in action schemas.
+/**
+ * Tuple form is required for `z.enum(...)` consumers in action schemas.
+ */
 export const OAUTH_PROVIDER_IDS = [
   "google",
   "apple",

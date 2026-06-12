@@ -14,8 +14,10 @@ const checkPhoneSchema = z.object({
   next: z.string().default("/"),
 });
 
-// Step-1 → step-2 dispatcher. Resolves availability flags then redirects to the same
-// /auth/phone route with `value=` + flags so the page renders the method picker.
+/**
+ * Step-1 → step-2 dispatcher. Resolves availability flags then redirects to the same
+ * /auth/phone route with `value=` + flags so the page renders the method picker.
+ */
 const checkPhoneRun = action.inputSchema(checkPhoneSchema).action(async ({ parsedInput }) => {
   const supabase = await createServerClient();
   const phone = parsedInput["phone"];

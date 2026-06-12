@@ -1,6 +1,11 @@
 #!/usr/bin/env node
-// Writes .env.local for all apps from `supabase status -o env`.
-// Run after `pnpm db:start`: pnpm db:env:development
+/**
+ * Writes .env.development.local for all apps from `supabase status -o env`.
+ * Configures environment variables for local development, including Supabase credentials,
+ * WebAuthn settings, and Claude Code integration.
+ *
+ * Usage: Run after `pnpm db:start`: pnpm db:env:development
+ */
 
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -40,17 +45,15 @@ const DATABASE_URL = env["DB_URL"] ?? "";
 
 const APEX_HOSTNAME = "lvh.me";
 
+/** Environment variables for local development, including public and secret values. */
 const variables: Array<{ key: string; value: string; secret: boolean }> = [
   { key: "NEXT_PUBLIC_SUPABASE_URL", value: SUPABASE_URL, secret: false },
   { key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", value: SUPABASE_ANON_KEY, secret: false },
   { key: "NEXT_PUBLIC_COOKIE_DOMAIN", value: "lvh.me", secret: false },
   { key: "NEXT_PUBLIC_APEX_HOSTNAME", value: APEX_HOSTNAME, secret: false },
-  // Mailpit catch-all inbox — surfaced in dev UIs so signup confirmation emails are easy to open.
   { key: "NEXT_PUBLIC_DEV_MAILBOX_URL", value: env["INBUCKET_URL"] ?? "http://localhost:54424", secret: false },
   { key: "SUPABASE_SERVICE_ROLE_KEY", value: SUPABASE_SERVICE_ROLE_KEY, secret: true },
-  // Direct Postgres URL — consumed by psql-based skills/scripts; conventional name so ORMs pick it up too.
   { key: "DATABASE_URL", value: DATABASE_URL, secret: true },
-  // WebAuthn / passkeys — RP ID is the bare apex (no protocol/port), origin is the full HTTPS URL.
   { key: "WEBAUTHN_RELYING_PARTY_ID", value: "lvh.me", secret: false },
   { key: "WEBAUTHN_RELYING_PARTY_NAME", value: "SaaS Template", secret: false },
   { key: "WEBAUTHN_RELYING_PARTY_ORIGIN", value: `https://lvh.me:${process.env["PORT"] ?? "7003"}`, secret: false },
@@ -68,7 +71,7 @@ writeFileSync(TARGET_PATH, `${content}\n`);
 console.log(`wrote ${TARGET_FILENAME}`);
 
 /**
- * Inject DATABASE_URL into .claude/settings.local.json so Claude Code tool calls
+ * Injects DATABASE_URL into .claude/settings.local.json so Claude Code tool calls
  * see it as a regular env var — no need to source .env files per shell. Merges
  * into any existing settings (permissions, etc.) and preserves unrelated keys.
  */
@@ -83,8 +86,6 @@ if (DATABASE_URL.length > 0) {
     }
   }
   const envBlock = (settings["env"] as Record<string, string> | undefined) ?? {};
-  // Supabase status emits values wrapped in literal double quotes — strip them so
-  // the JSON string holds the raw URL, not `"postgresql://…"` with embedded quotes.
   envBlock["DATABASE_URL"] = DATABASE_URL.replace(/^"(.*)"$/, "$1");
   settings["env"] = envBlock;
   writeFileSync(CLAUDE_SETTINGS_PATH, `${JSON.stringify(settings, null, 2)}\n`);

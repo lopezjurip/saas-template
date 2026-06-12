@@ -125,9 +125,11 @@ export function DocumentTripletFields<TFormValues extends FieldValues>({
     </>
   );
 
-  // When required (page-level form like /auth/document or invite tab), render naked —
-  // the containing Card already provides a visual frame. When optional (signup forms),
-  // wrap in a fieldset to group it visually as a "secondary" block within a bigger form.
+  /**
+   * When required (page-level form like /auth/document or invite tab), render naked —
+   * the containing Card already provides a visual frame. When optional (signup forms),
+   * wrap in a fieldset to group it visually as a "secondary" block within a bigger form.
+   */
   if (required) {
     return <div className="flex flex-col gap-3">{fields}</div>;
   }

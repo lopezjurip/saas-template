@@ -8,9 +8,11 @@ import type { Database } from "./types.ts";
 
 export { type AppMetadata, AppMetadataSchema } from "./metadata";
 
-// All exports are wrapped in React's `cache()` so that within a single RSC render pass
-// a request only hits Supabase Auth once for the user, and reads cookies once for the session.
-// `cache()` is per-request: nothing leaks across requests or between users.
+/**
+ * All exports are wrapped in React's `cache()` so that within a single RSC render pass
+ * a request only hits Supabase Auth once for the user, and reads cookies once for the session.
+ * `cache()` is per-request: nothing leaks across requests or between users.
+ */
 
 /**
  * Creates a Supabase server client with per-request caching.

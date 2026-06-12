@@ -18,6 +18,8 @@ const F = "𝟊" as const;
 const AUTO_SMALL_DECIMAL = true as boolean;
 
 /**
+ * IntlNumberParser parses locale-aware number strings.
+ *
  * TODO: doesn't work on older browsers (eg: iPhone 6)
  * https://stackoverflow.com/a/55366435
  */

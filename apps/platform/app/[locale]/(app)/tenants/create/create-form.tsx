@@ -30,9 +30,11 @@ export function CreateTenantForm() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [plan, setPlan] = useState<PlanId>("free");
-  // Read the live host (hostname + port) so the previewed URL stays accurate in Conductor
-  // dev where parallel instances are bound to different ports. Empty on SSR → matches the
-  // initial client render to avoid hydration mismatches; populated after mount.
+  /**
+   * Read the live host (hostname + port) so the previewed URL stays accurate in Conductor
+   * dev where parallel instances are bound to different ports. Empty on SSR → matches the
+   * initial client render to avoid hydration mismatches; populated after mount.
+   */
   const [appHost, setAppHost] = useState("");
   useEffect(() => {
     setAppHost(window.location.host);
@@ -48,7 +50,9 @@ export function CreateTenantForm() {
   const slugTouched = Boolean(form.formState.dirtyFields.tenant_slug);
   const { setValue } = form;
 
-  // Suggest a slug derived from the tenant name until the user edits the slug field manually.
+  /**
+   * Suggest a slug derived from the tenant name until the user edits the slug field manually.
+   */
   useEffect(() => {
     if (slugTouched) return;
     const suggested = SLUGIFY(tenantName).slice(0, 40);
@@ -68,7 +72,7 @@ export function CreateTenantForm() {
         return;
       }
       if (error) return;
-      // Hard navigate so the browser picks up the refreshed JWT (new tenant claim) on the next request.
+      // Hard navigate so browser picks up refreshed JWT.
       window.location.assign(ROUTE_HREF(ROUTE("/[locale]/t/[tenant_slug]", { locale, tenant_slug: data["slug"] })));
     });
   });

@@ -11,7 +11,7 @@ import { assertLocale } from "~/lib/i18n.server";
 type InvoiceStatus = "paid" | "refunded" | "failed";
 type Invoice = { id: string; date: string; amount: string; status: InvoiceStatus };
 
-// Mock billing data — real plan/usage/invoices land in the billing backend pass.
+/** Mock billing data — real plan/usage/invoices land in the billing backend pass. */
 const SEATS = 5;
 const SEATS_TOTAL = 10;
 

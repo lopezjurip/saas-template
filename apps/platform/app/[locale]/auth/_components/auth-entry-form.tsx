@@ -39,7 +39,7 @@ export function AuthEntryForm({ next, error }: { next: string; error?: string | 
   const [value, setValue] = useState("");
   const detected = DETECT_LOCAL_TYPE(value);
   const Icon = detected ? KIND_META[detected].Icon : Search;
-  // The field name drives `actionContinueAuth`'s dispatch (email | phone | document).
+  // field name drives `actionContinueAuth`'s dispatch (email | phone | document)
   const fieldName: LocalKind = detected ?? "email";
 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {

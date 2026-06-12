@@ -14,7 +14,9 @@ describe("RUT_NORMALIZE", () => {
   });
 });
 
-// RUT must be normalized first
+/**
+ * RUT must be normalized first before validation.
+ */
 describe("RUT_VALIDATE", () => {
   it("should invalidate a falsy RUT", () => {
     expect(RUT_VALIDATE(undefined)).toBe(false);
