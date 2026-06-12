@@ -1,7 +1,6 @@
 "use client";
 
 import { createBrowserClient } from "@packages/supabase/client.browser";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Fingerprint } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -45,19 +44,11 @@ export function PasskeySignInButton({ next }: { next: string }) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Button
-        type="button"
-        variant="outline"
-        onClick={onClick}
-        disabled={pending}
-        className="h-10 w-full gap-2.5"
-      >
+      <Button type="button" variant="outline" onClick={onClick} disabled={pending} className="h-10 w-full gap-2.5">
         <Fingerprint size={18} />
         <span>{pending ? "Verificando…" : "Continuar con passkey"}</span>
       </Button>
-      {error && (
-        <p className="text-center text-xs text-destructive">{error}</p>
-      )}
+      {error && <p className="text-center text-xs text-destructive">{error}</p>}
     </div>
   );
 }

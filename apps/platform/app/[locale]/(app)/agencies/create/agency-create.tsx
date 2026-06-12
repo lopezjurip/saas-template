@@ -71,13 +71,11 @@ export function AgencyCreate({ locale }: { locale: string }) {
 
       <div className="flex flex-col gap-6">
         <header className="flex flex-col gap-2">
-          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
             {t("eyebrow")}
           </span>
-          <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-          <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
-            {t("subtitle")}
-          </p>
+          <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("title")}</h1>
+          <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">{t("subtitle")}</p>
         </header>
 
         {stage === "form" ? (
@@ -130,7 +128,7 @@ export function AgencyCreate({ locale }: { locale: string }) {
               <span className="text-muted-foreground mt-px shrink-0">
                 <Eye size={15} />
               </span>
-              <span className="text-muted-foreground text-[12px] leading-normal text-pretty">
+              <span className="text-muted-foreground text-xs leading-normal text-pretty">
                 {t("read_only_prefix")} <strong className="text-foreground font-medium">{t("read_only_strong")}</strong>{" "}
                 {t("read_only_suffix")}
               </span>
@@ -147,10 +145,8 @@ export function AgencyCreate({ locale }: { locale: string }) {
                 <Check size={22} strokeWidth={2.5} />
               </span>
               <div className="flex flex-col gap-1">
-                <span className="text-foreground text-[15px] font-semibold tracking-[-0.01em]">
-                  {t("created_title")}
-                </span>
-                <span className="text-muted-foreground max-w-[44ch] text-[12.5px] leading-normal text-pretty">
+                <span className="text-foreground text-sm font-semibold tracking-[-0.01em]">{t("created_title")}</span>
+                <span className="text-muted-foreground max-w-[44ch] text-xs leading-normal text-pretty">
                   <strong className="text-foreground font-medium">{name || t("created_fallback")}</strong>{" "}
                   {t("created_desc")}
                 </span>
@@ -162,7 +158,7 @@ export function AgencyCreate({ locale }: { locale: string }) {
                 <Building2 size={19} />
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-foreground truncate text-[13.5px] font-semibold tracking-[-0.01em]">
+                <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">
                   {name || t("created_fallback")}
                 </span>
                 <code className="text-muted-foreground font-mono text-xs">{createdSlug}</code>

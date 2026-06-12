@@ -155,9 +155,9 @@ export function ProfileAvatarControls({
   return (
     <div className="flex flex-col gap-3.5">
       <div className="flex items-center gap-4">
-        <Avatar className="inline-flex size-22 shrink-0 overflow-hidden rounded-full border bg-muted text-[30px] font-semibold tracking-[-0.02em] text-muted-foreground">
+        <Avatar className="inline-flex size-22 shrink-0 overflow-hidden rounded-full border bg-muted text-3xl font-semibold tracking-[-0.02em] text-muted-foreground">
           {avatarSrc ? <AvatarImage src={avatarSrc} alt={name || "Avatar"} className="object-cover" /> : null}
-          <AvatarFallback className="bg-muted text-[30px] font-semibold tracking-[-0.02em] text-muted-foreground">
+          <AvatarFallback className="bg-muted text-3xl font-semibold tracking-[-0.02em] text-muted-foreground">
             {INITIALS_OF(name)}
           </AvatarFallback>
         </Avatar>

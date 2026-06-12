@@ -10,6 +10,7 @@ import {
 import { SINGLE } from "@packages/utils/array";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getRosetta } from "~/hooks/get-rosetta";
 import { getViewerOrganizations } from "~/hooks/get-viewer-organizations";
 import { getViewerTenantBySlugAssert } from "~/hooks/get-viewer-tenants";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
@@ -18,6 +19,8 @@ export default async function TenantHomePage(props: PageProps<"/[locale]/t/[tena
   const { locale, tenant_slug } = await props.params;
   const { redirect: redirectParams } = await props.searchParams;
   const redirectParam = SINGLE(redirectParams);
+
+  const { t } = await getRosetta(LOCALES);
 
   const {
     data: { tenant },
@@ -38,11 +41,11 @@ export default async function TenantHomePage(props: PageProps<"/[locale]/t/[tena
             <CardDescription>{tenant_slug}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">No tienes organizaciones activas en esta empresa.</p>
+            <p className="text-sm text-muted-foreground">{t("noOrgs")}</p>
           </CardContent>
           <CardFooter>
             <Button asChild variant="ghost" className="w-full">
-              <Link href={ROUTE("/[locale]/auth/logout", { locale })}>Cerrar sesión</Link>
+              <Link href={ROUTE("/[locale]/auth/logout", { locale })}>{t("signOut")}</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -68,7 +71,7 @@ export default async function TenantHomePage(props: PageProps<"/[locale]/t/[tena
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>{tenant["tenant_name"]}</CardTitle>
-          <CardDescription>Elige una organización para continuar</CardDescription>
+          <CardDescription>{t("pickOrg")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           {organizations.map(({ ["node"]: organization }) => {
@@ -96,10 +99,30 @@ export default async function TenantHomePage(props: PageProps<"/[locale]/t/[tena
         </CardContent>
         <CardFooter>
           <Button asChild variant="ghost" className="w-full">
-            <Link href={ROUTE("/[locale]/auth/logout", { locale })}>Cerrar sesión</Link>
+            <Link href={ROUTE("/[locale]/auth/logout", { locale })}>{t("signOut")}</Link>
           </Button>
         </CardFooter>
       </Card>
     </main>
   );
 }
+
+const LOCALE_ES = {
+  noOrgs: "No tienes organizaciones activas en esta empresa.",
+  signOut: "Cerrar sesión",
+  pickOrg: "Elige una organización para continuar",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  noOrgs: "You have no active organizations in this company.",
+  signOut: "Sign out",
+  pickOrg: "Choose an organization to continue",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  noOrgs: "Você não tem organizações ativas nesta empresa.",
+  signOut: "Sair",
+  pickOrg: "Escolha uma organização para continuar",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

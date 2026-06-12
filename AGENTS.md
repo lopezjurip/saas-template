@@ -230,8 +230,8 @@ Critical safety rule for SQL. Always explicit.
 ### No hyphens in SQL identifiers or enum values
 Never use `-` in Postgres identifiers (tables, views, functions, columns, schemas, types) **or in enum values**. Use `snake_case` only — pg_graphql rejects names that don't match `[_a-zA-Z0-9]`, which silently breaks the entire GraphQL schema introspection (not just the offending object). If an external spec defines values that won't pass that constraint (e.g. WebAuthn's `"public-key"`), store the column as `text` with a `check` constraint instead of an enum — that keeps the spec literal in the DB without breaking pg_graphql.
 
-### plpgsql local variables prefixed with `_`
-Inside `declare` blocks in plpgsql functions/triggers, prefix local variables with a leading underscore (`_user_id`, `_claims`, `_canonical`). It visually disambiguates them from column names, parameters, and reserved words, and avoids ambiguous-reference errors when a variable shares a name with a column in a query inside the function body. Follow the existing `viewer_*` / `user_auth_hook` style.
+### plpgsql naming: `_` prefix for DECLARE locals only, not parameters
+Inside `declare` blocks in plpgsql functions/triggers, prefix **local variables** with a leading underscore (`_user_id`, `_claims`, `_canonical`). It visually disambiguates them from column names and avoids ambiguous-reference errors when a variable shares a name with a column. **Function parameters do NOT get the `_` prefix** — write `agency_id`, `profile_id`, `caller_id`, not `_agency_id`, `_profile_id`, `_caller_id`. Follow the existing `viewer_*` / `user_auth_hook` style.
 
 ### Type Generation
 - After Supabase schema changes: `pnpm generate:types` (runs against `@packages/supabase`)
@@ -310,6 +310,7 @@ Never pass a dictionary object as props, and never import or export `LOCALES` be
 - **Client component**: define its own full `LOCALES` at the top of the file. Use `useRosetta(LOCALES)` from `@packages/rosetta/use-rosetta` inside the component — no `dict` prop.
 - Sub-components in the same file can also call `useRosetta(LOCALES)` directly — `LOCALES` is module-scoped.
 - If two files need the same key (e.g. `title`), each duplicates it. No sharing.
+- **`LOCALE_ES` and `LOCALES` always go at the bottom of the file**, after all component/function definitions. They are data constants — placing them last keeps imports and logic at the top where readers expect them.
 
 ```tsx
 // ❌ Never — passing dict as props
@@ -327,6 +328,37 @@ export function MyClient() {
   return <h1>{t("title")}</h1>;
 }
 ```
+
+### Multi-step DB writes must be a single SQL RPC
+
+**Never sequence multiple `.from().insert()` / `.from().update()` calls for a single logical operation.** Each call is its own round-trip and transaction — a crash or race between them leaves the DB in a partial state. Instead, write a `security definer` plpgsql function that performs the read-check + write atomically, and call it via `.rpc()`.
+
+```ts
+// ❌ Race condition: check → insert are separate transactions
+const existing = await admin.from("agency_memberships").select(...).maybeSingle();
+if (!existing.data) {
+  await admin.from("agency_memberships").insert({ agency_id, profile_id });
+}
+
+// ✅ Atomic: permission check + upsert in one DB round-trip
+const { error } = await admin.rpc("agency_membership_invite", {
+  agency_id, profile_id, caller_id: user.id,
+});
+```
+
+**What moves to SQL vs. stays in TS:**
+- DB mutations (insert, update, upsert, permission checks) → SQL RPC, `security definer`
+- External side effects (`auth.admin.*`, GoTrue user creation, email send) → stay in the action; they can't be transactional
+
+**Error convention:** RPCs raise with a stable locale key as the message:
+```sql
+raise exception 'already_member' using errcode = 'P0001';
+```
+The action matches `rpcError.message` against the LOCALES keys — never parse prose.
+
+**Client choice:**
+- Use the **service-role client** for RPCs that require `caller_id` passed explicitly (the service role has no JWT `sub`).
+- Use the **authenticated server client** for RPCs that call `viewer_profile_id()` internally (e.g., `actionRespondInvitation`).
 
 ### SQL / PL/pgSQL style
 

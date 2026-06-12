@@ -101,13 +101,13 @@ export function DashboardOverview({
     <div className="@container px-5 py-5 @min-[900px]:px-8 @min-[900px]:py-7">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <div className="text-muted-foreground mb-1.5 text-[11px] font-semibold uppercase tracking-[0.09em]">
+          <div className="text-muted-foreground mb-1.5 text-xs font-semibold uppercase tracking-[0.09em]">
             {organizationName}
           </div>
-          <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-tight @min-[900px]:text-[27px]">
+          <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight @min-[900px]:text-2xl">
             {t("heading")}
           </h1>
-          <p className="text-muted-foreground m-0 mt-1 text-[13.5px] text-pretty">{t("subtitle")}</p>
+          <p className="text-muted-foreground m-0 mt-1 text-sm text-pretty">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden @min-[760px]:block">
@@ -176,8 +176,8 @@ export function DashboardOverview({
 
           <Card className="p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-foreground m-0 text-[14px] font-semibold tracking-[-0.01em]">{t("setup_title")}</h2>
-              <span className="text-muted-foreground text-[12px] font-medium tabular-nums">
+              <h2 className="text-foreground m-0 text-sm font-semibold tracking-[-0.01em]">{t("setup_title")}</h2>
+              <span className="text-muted-foreground text-xs font-medium tabular-nums">
                 {doneCount}/{CHECKLIST.length}
               </span>
             </div>
@@ -238,10 +238,10 @@ function OverviewStatCard({ stat, label, sub }: { stat: Stat; label: string; sub
         ) : null}
       </div>
       <div>
-        <div className="text-foreground text-[26px] font-semibold leading-none tracking-[-0.02em] tabular-nums">
+        <div className="text-foreground text-2xl font-semibold leading-none tracking-[-0.02em] tabular-nums">
           {stat.value}
         </div>
-        <div className="text-muted-foreground mt-1.5 text-[12.5px]">
+        <div className="text-muted-foreground mt-1.5 text-xs">
           {label}
           {sub ? <span className="text-muted-foreground/70"> · {sub}</span> : null}
         </div>
@@ -258,10 +258,10 @@ function OverviewStatCard({ stat, label, sub }: { stat: Stat; label: string; sub
 function CardHeading({ title, action }: { title: string; action: string }) {
   return (
     <div className="border-border flex h-12 items-center justify-between border-b px-4">
-      <h2 className="text-foreground m-0 text-[14px] font-semibold tracking-[-0.01em]">{title}</h2>
+      <h2 className="text-foreground m-0 text-sm font-semibold tracking-[-0.01em]">{title}</h2>
       <button
         type="button"
-        className="text-muted-foreground hover:bg-accent hover:text-foreground -mr-1.5 inline-flex cursor-pointer items-center gap-1 rounded-md border-0 bg-transparent px-1.5 py-1 text-[12.5px]"
+        className="text-muted-foreground hover:bg-accent hover:text-foreground -mr-1.5 inline-flex cursor-pointer items-center gap-1 rounded-md border-0 bg-transparent px-1.5 py-1 text-xs"
       >
         {action} <ArrowUpRight size={13} />
       </button>
@@ -296,7 +296,7 @@ function PeriodSegmented({
             aria-selected={isActive}
             onClick={() => onChange(option)}
             className={cn(
-              "h-7 cursor-pointer rounded-md px-2.5 text-[12.5px] font-medium transition-colors",
+              "h-7 cursor-pointer rounded-md px-2.5 text-xs font-medium transition-colors",
               isActive ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >

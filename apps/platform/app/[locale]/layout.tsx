@@ -5,7 +5,6 @@ import type { Metadata, Viewport } from "next";
 import { GraphyClientProvider } from "~/components/graphy-provider";
 import { PostHogIdentify } from "~/components/posthog-identify";
 import { PostHogProvider } from "~/components/posthog-provider";
-import { PwaInstallBanner } from "~/components/pwa-install-banner";
 import { PwaRegister } from "~/components/pwa-register";
 import { ThemeProvider } from "~/components/theme-provider";
 import { getRosetta } from "~/hooks/get-rosetta";
@@ -61,7 +60,6 @@ export default async function RootLayout(props: LayoutProps<"/[locale]">) {
               {children}
             </GraphyClientProvider>
             <Toaster richColors closeButton />
-            <PwaInstallBanner />
           </ThemeProvider>
         </PostHogProvider>
         <PwaRegister />

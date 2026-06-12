@@ -11,8 +11,9 @@ import {
   DocumentTripletFields,
 } from "~/app/[locale]/auth/_components/document-triplet-fields";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
-import { type CheckDocumentValues, checkDocumentSchema } from "../../../document/schemas";
+import { type CheckDocumentValues, checkDocumentSchema } from "../../document/schemas";
 
 type Props = {
   countries: DocumentTripletCountry[];
@@ -23,6 +24,7 @@ type Props = {
  * @example <DocumentForm countries={countries} />
  */
 export function DocumentForm({ countries }: Props) {
+  const { t } = useRosetta(LOCALES);
   const locale = useLocaleParam();
   const router = useRouter();
   const [done, setDone] = useState(false);
@@ -48,8 +50,8 @@ export function DocumentForm({ countries }: Props) {
         <span className="inline-flex size-9 items-center justify-center rounded-full bg-foreground text-background">
           <Check size={18} />
         </span>
-        <strong className="text-sm font-medium text-foreground">Documento guardado</strong>
-        <span className="text-[12.5px] text-muted-foreground">Volviendo al inicio…</span>
+        <strong className="text-sm font-medium text-foreground">{t("saved")}</strong>
+        <span className="text-[12.5px] text-muted-foreground">{t("redirecting")}</span>
       </div>
     );
   }
@@ -58,14 +60,34 @@ export function DocumentForm({ countries }: Props) {
     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
       <DocumentTripletFields form={form} countries={countries} required />
 
-      <p className="text-xs leading-[1.4] text-muted-foreground">
-        Necesitamos el país para adaptar el formato y la validación del documento. Para algunos países también pediremos
-        una foto más adelante.
-      </p>
+      <p className="text-xs leading-[1.4] text-muted-foreground">{t("hint")}</p>
 
       <Button type="submit" className="h-10 w-full">
-        <span>Guardar documento</span>
+        <span>{t("save")}</span>
       </Button>
     </form>
   );
 }
+
+const LOCALE_ES = {
+  saved: "Documento guardado",
+  redirecting: "Volviendo al inicio…",
+  hint: "Necesitamos el país para adaptar el formato y la validación del documento. Para algunos países también pediremos una foto más adelante.",
+  save: "Guardar documento",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    saved: "Document saved",
+    redirecting: "Returning to overview…",
+    hint: "We need the country to adapt the document format and validation. For some countries we will also ask for a photo later.",
+    save: "Save document",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    saved: "Documento salvo",
+    redirecting: "Voltando ao início…",
+    hint: "Precisamos do país para adaptar o formato e a validação do documento. Para alguns países também pediremos uma foto mais tarde.",
+    save: "Salvar documento",
+  } satisfies typeof LOCALE_ES,
+};

@@ -61,7 +61,7 @@ export function Avatar({
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
-  const sizing = size === "sm" ? "h-6 w-6 text-tiny" : size === "lg" ? "h-10 w-10 text-xs" : "h-8 w-8 text-[11px]";
+  const sizing = size === "sm" ? "h-6 w-6 text-tiny" : size === "lg" ? "h-10 w-10 text-xs" : "h-8 w-8 text-xs";
   return (
     <span
       className={cn(

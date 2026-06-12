@@ -11,12 +11,15 @@ const PostHogIdentifyQuery = /*#__PURE__*/ gql(`
       profile_id
       profile_name_full
       profile_onboarded_at
+      profile_created_at
     }
     tenants: viewer_tenants {
       edges {
         node {
           tenant_id
           tenant_slug
+          tenant_tier
+          tenant_created_at
         }
       }
     }
@@ -24,6 +27,7 @@ const PostHogIdentifyQuery = /*#__PURE__*/ gql(`
       edges {
         node {
           organization_id
+          organization_name
           tenant_id
         }
       }
@@ -35,12 +39,13 @@ export function PostHogIdentify() {
   const posthog = usePostHog();
   const { data: user } = useSupabaseUser();
   const { data } = useGraphyQuery(user ? { query: PostHogIdentifyQuery } : null);
-  const profile = data?.profile;
 
   useEffect(() => {
     if (!user) {
       return posthog?.reset();
-    } else if (!profile) {
+    }
+    const profile = data?.["profile"];
+    if (!profile) {
       return;
     }
 
@@ -48,17 +53,23 @@ export function PostHogIdentify() {
       email: user["email"],
       name: profile["profile_name_full"],
       onboarded_at: profile["profile_onboarded_at"],
+      created_at: profile["profile_created_at"],
     });
 
-    for (const edge of data?.tenants?.edges ?? []) {
-      posthog?.group("tenant", String(edge.node.tenant_id), { slug: edge.node.tenant_slug });
-    }
-    for (const edge of data?.organizations?.edges ?? []) {
-      posthog?.group("organization", String(edge.node.organization_id), {
-        tenant_id: String(edge.node.tenant_id),
+    for (const { ["node"]: tenant } of data["tenants"]?.["edges"] ?? []) {
+      posthog?.group("tenant", String(tenant["tenant_id"]), {
+        slug: tenant["tenant_slug"],
+        tier: tenant["tenant_tier"],
+        created_at: tenant["tenant_created_at"],
       });
     }
-  }, [user, profile, posthog, data]);
+    for (const { ["node"]: organization } of data["organizations"]?.["edges"] ?? []) {
+      posthog?.group("organization", String(organization["organization_id"]), {
+        name: organization["organization_name"],
+        tenant_id: String(organization["tenant_id"]),
+      });
+    }
+  }, [user, posthog, data]);
 
   return null;
 }

@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { debug } from "~/lib/debug";
 import { getServerLocale } from "~/lib/i18n.server";
+import { captureMemberInvited } from "~/lib/posthog/events.server";
 import { authedAction } from "~/lib/safe-action.server";
 import { inviteMemberSchema } from "./schemas";
 
@@ -135,6 +136,11 @@ export const actionInviteMember = authedAction
       }
 
       revalidatePath(`/${locale}/${tenant_slug}/${parsedInput["organization_id"]}/settings/members`);
+      void captureMemberInvited(user.id, {
+        organization_id: parsedInput["organization_id"],
+        tenant_id: orgRes.data["tenant_id"],
+        channel: "email",
+      });
       return {
         organization_membership_id: insertRes.data["organization_membership_id"],
         invitation_url: acceptUrl,
@@ -177,6 +183,11 @@ export const actionInviteMember = authedAction
       const acceptUrl = `${proto}://${host}/${locale}/auth/document/accept?token=${encodeURIComponent(token)}`;
 
       revalidatePath(`/${locale}/${tenant_slug}/${parsedInput["organization_id"]}/settings/members`);
+      void captureMemberInvited(user.id, {
+        organization_id: parsedInput["organization_id"],
+        tenant_id: orgRes.data["tenant_id"],
+        channel: "phone",
+      });
       return {
         organization_membership_id: insertRes.data["organization_membership_id"],
         invitation_url: acceptUrl,
@@ -235,6 +246,11 @@ export const actionInviteMember = authedAction
     const acceptUrl = `${proto}://${host}/${locale}/auth/document/accept?token=${encodeURIComponent(token)}`;
 
     revalidatePath(`/${locale}/${tenant_slug}/${parsedInput["organization_id"]}/settings/members`);
+    await captureMemberInvited(user.id, {
+      organization_id: parsedInput["organization_id"],
+      tenant_id: orgRes.data["tenant_id"],
+      channel: "document",
+    });
     return {
       organization_membership_id: insertRes.data["organization_membership_id"],
       invitation_url: acceptUrl,

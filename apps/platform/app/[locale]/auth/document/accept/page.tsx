@@ -1,5 +1,6 @@
 import { SINGLE } from "@packages/utils/array";
 import { redirect } from "next/navigation";
+import { getRosetta } from "~/hooks/get-rosetta";
 import { AuthBackLink } from "../../_components/auth-back-link";
 import { AuthCard } from "../../_components/auth-card";
 import { AuthHeader } from "../../_components/auth-header";
@@ -13,6 +14,8 @@ export default async function AuthDocumentAcceptPage(props: PageProps<"/[locale]
     redirect("/[locale]/auth");
   }
 
+  const { t } = await getRosetta(LOCALES);
+
   return (
     <AuthCard>
       <div className="flex flex-col gap-5">
@@ -20,12 +23,8 @@ export default async function AuthDocumentAcceptPage(props: PageProps<"/[locale]
         <div className="flex flex-col gap-4.5">
           <AuthBackLink />
           <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">
-              Tienes una invitación
-            </h1>
-            <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">
-              Completa tus datos para crear tu cuenta y unirte. Verificamos con un código de un solo uso.
-            </p>
+            <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">{t("heading")}</h1>
+            <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{t("body")}</p>
           </div>
           <AcceptSignupForm token={token} />
         </div>
@@ -33,3 +32,20 @@ export default async function AuthDocumentAcceptPage(props: PageProps<"/[locale]
     </AuthCard>
   );
 }
+
+const LOCALE_ES = {
+  heading: "Tienes una invitación",
+  body: "Completa tus datos para crear tu cuenta y unirte. Verificamos con un código de un solo uso.",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  heading: "You have an invitation",
+  body: "Complete your details to create your account and join. We verify with a one-time code.",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  heading: "Tem um convite",
+  body: "Complete os seus dados para criar a sua conta e aderir. Verificamos com um código único.",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

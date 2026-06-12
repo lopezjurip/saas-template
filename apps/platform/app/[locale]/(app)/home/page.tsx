@@ -5,6 +5,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FloatingChrome } from "~/components/floating-chrome";
 import { gql } from "~/generated/graphql";
+import { getRosetta } from "~/hooks/get-rosetta";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { ROUTE } from "~/lib/route";
 import { COUNT_DONE, METHOD_ORDER } from "../../auth/onboarding/state";
@@ -43,6 +44,8 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
   const user = await getSupabaseServerUser();
   if (!user) redirect(`/[locale]/auth?next=${encodeURIComponent("/[locale]/home")}`);
 
+  const { t } = await getRosetta(LOCALES);
+
   const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: HomePickerPageQuery });
   const edges = data?.["viewer_organizations"]?.["edges"] ?? [];
@@ -52,9 +55,7 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
   const obTotal = METHOD_ORDER.length;
   const obIncomplete = obDone < obTotal;
   const firstName = state.profile_name_full?.trim().split(/\s+/)[0] ?? "";
-  const greeting = firstName
-    ? `¿Con qué organización entramos hoy, ${firstName}?`
-    : "¿Con qué organización entramos hoy?";
+  const greeting = firstName ? t("greetingWithName", { name: firstName }) : t("greeting");
 
   return (
     <div className="relative flex min-h-svh w-full flex-col overflow-hidden bg-background">
@@ -68,11 +69,11 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
       <div className="flex flex-1 items-center justify-center px-6 pt-6 pb-24">
         <div className="flex w-full max-w-[1040px] flex-col items-center gap-7 text-center">
           <div className="flex flex-col gap-1.5 text-center">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Inicio</span>
+            <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              {t("badge")}
+            </span>
             <h1 className="text-[32px] font-semibold tracking-[-0.02em] text-foreground">{greeting}</h1>
-            <p className="text-[13.5px] leading-normal text-muted-foreground text-pretty">
-              Elige una para empezar. También puedes crear una nueva organización.
-            </p>
+            <p className="text-[13.5px] leading-normal text-muted-foreground text-pretty">{t("subtitle")}</p>
           </div>
 
           {obIncomplete && (
@@ -81,16 +82,16 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                 <Sparkles size={13} />
               </span>
               <span className="flex min-w-0 flex-col gap-px text-left">
-                <span className="text-[13.5px] font-medium text-foreground">Termina tu onboarding</span>
+                <span className="text-[13.5px] font-medium text-foreground">{t("onboardingTitle")}</span>
                 <span className="text-xs text-muted-foreground">
-                  {obDone} de {obTotal} métodos listos
+                  {t("onboardingProgress", { done: obDone, total: obTotal })}
                 </span>
               </span>
               <Link
                 href={ROUTE("/[locale]/auth/onboarding", { locale })}
                 className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md border bg-background px-3 text-[12.5px] font-medium text-foreground hover:bg-accent"
               >
-                Continuar
+                {t("onboardingCta")}
                 <ArrowRight size={13} />
               </Link>
             </div>
@@ -140,8 +141,8 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
               <span className="inline-flex size-28 items-center justify-center rounded-[18px] border border-dashed bg-background text-muted-foreground transition-colors duration-150 group-hover:bg-muted/40 group-hover:text-foreground">
                 <Plus size={36} />
               </span>
-              <span className="text-center text-[13.5px] font-medium text-balance">Nueva organización</span>
-              <span className="-mt-1 text-xs text-muted-foreground">Empieza desde cero</span>
+              <span className="text-center text-[13.5px] font-medium text-balance">{t("newOrg")}</span>
+              <span className="-mt-1 text-xs text-muted-foreground">{t("newOrgSub")}</span>
             </Link>
           </div>
         </div>
@@ -152,3 +153,41 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
     </div>
   );
 }
+
+const LOCALE_ES = {
+  badge: "Inicio",
+  greeting: "¿Con qué organización entramos hoy?",
+  greetingWithName: "¿Con qué organización entramos hoy, {{name}}?",
+  subtitle: "Elige una para empezar. También puedes crear una nueva organización.",
+  onboardingTitle: "Termina tu onboarding",
+  onboardingProgress: "{{done}} de {{total}} métodos listos",
+  onboardingCta: "Continuar",
+  newOrg: "Nueva organización",
+  newOrgSub: "Empieza desde cero",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  badge: "Home",
+  greeting: "Which organization are we jumping into today?",
+  greetingWithName: "Which organization are we jumping into today, {{name}}?",
+  subtitle: "Pick one to get started. You can also create a new organization.",
+  onboardingTitle: "Finish your onboarding",
+  onboardingProgress: "{{done}} of {{total}} methods ready",
+  onboardingCta: "Continue",
+  newOrg: "New organization",
+  newOrgSub: "Start from scratch",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  badge: "Início",
+  greeting: "Com qual organização vamos entrar hoje?",
+  greetingWithName: "Com qual organização vamos entrar hoje, {{name}}?",
+  subtitle: "Escolha uma para começar. Você também pode criar uma nova organização.",
+  onboardingTitle: "Conclua seu onboarding",
+  onboardingProgress: "{{done}} de {{total}} métodos prontos",
+  onboardingCta: "Continuar",
+  newOrg: "Nova organização",
+  newOrgSub: "Comece do zero",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

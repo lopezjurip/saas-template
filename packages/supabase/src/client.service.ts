@@ -10,6 +10,7 @@ export function createServiceRoleClient() {
       autoRefreshToken: false,
       detectSessionInUrl: false,
       persistSession: false,
+      experimental: { passkey: true },
     },
   });
 }

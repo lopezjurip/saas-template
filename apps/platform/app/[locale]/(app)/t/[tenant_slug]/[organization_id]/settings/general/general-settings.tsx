@@ -36,13 +36,11 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-[26px] px-6 py-8">
       <header className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
           {organizationName} · {t("eyebrow")}
         </span>
-        <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
-          {t("subtitle")}
-        </p>
+        <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("title")}</h1>
+        <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">{t("subtitle")}</p>
       </header>
 
       <section className="border-border bg-background flex flex-col gap-4 rounded-xl border p-5">
@@ -137,14 +135,14 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
         <div className="border-border bg-background flex flex-col overflow-hidden rounded-md border">
           <div className="border-border grid grid-cols-[1fr_auto] items-start gap-3.5 border-b px-4 py-3.5">
             <div className="flex min-w-0 flex-col gap-[3px]">
-              <span className="text-foreground text-[13.5px] font-medium">{t("auto_join_title")}</span>
+              <span className="text-foreground text-sm font-medium">{t("auto_join_title")}</span>
               <span className="text-muted-foreground text-xs leading-[1.45] text-pretty">{t("auto_join_desc")}</span>
             </div>
             <Switch checked={autoJoin} onCheckedChange={setAutoJoin} aria-label={t("auto_join_title")} />
           </div>
           <div className="grid grid-cols-[1fr_260px] items-center gap-3.5 px-4 py-3.5">
             <div className="flex min-w-0 flex-col gap-[3px]">
-              <span className="text-foreground text-[13.5px] font-medium">{t("default_access_title")}</span>
+              <span className="text-foreground text-sm font-medium">{t("default_access_title")}</span>
               <span className="text-muted-foreground text-xs leading-[1.45] text-pretty">
                 {t("default_access_desc")}
               </span>
@@ -170,7 +168,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
         <div className="border-border bg-background flex flex-col overflow-hidden rounded-xl border">
           <div className="border-border grid grid-cols-[1fr_auto] items-center gap-3.5 border-b px-4 py-3.5">
             <div className="flex min-w-0 flex-col gap-[3px]">
-              <span className="text-foreground text-[13.5px] font-medium">{t("transfer_title")}</span>
+              <span className="text-foreground text-sm font-medium">{t("transfer_title")}</span>
               <span className="text-muted-foreground text-xs leading-[1.45]">{t("transfer_desc")}</span>
             </div>
             <Button variant="outline" size="sm">
@@ -179,7 +177,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
           </div>
           <div className="grid grid-cols-[1fr_auto] items-center gap-3.5 px-4 py-3.5">
             <div className="flex min-w-0 flex-col gap-[3px]">
-              <span className="text-destructive text-[13.5px] font-medium">{t("delete_title")}</span>
+              <span className="text-destructive text-sm font-medium">{t("delete_title")}</span>
               <span className="text-muted-foreground text-xs leading-[1.45]">{t("delete_desc")}</span>
             </div>
             <Button
@@ -199,7 +197,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
               <strong className="text-destructive text-sm/normal font-semibold">
                 {t("delete_confirm_title", { name: organizationName })}
               </strong>
-              <span className="text-muted-foreground text-[12px] leading-normal text-pretty">
+              <span className="text-muted-foreground text-xs leading-normal text-pretty">
                 {t("delete_confirm_desc", { slug })}
               </span>
             </div>

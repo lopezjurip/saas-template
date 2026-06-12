@@ -10,21 +10,23 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useOnboardingEmailOtp } from "~/hooks/use-onboarding";
-
-const emailSchema = z.object({
-  email: z
-    .string()
-    .transform((v) => v.trim().toLowerCase())
-    .pipe(z.email("Correo inválido")),
-});
-type EmailValues = z.infer<typeof emailSchema>;
-
-const codeSchema = z.object({ token: z.string().regex(/^\d{6}$/, "Código de 6 dígitos") });
-type CodeValues = z.infer<typeof codeSchema>;
+import { useRosetta } from "~/hooks/use-rosetta";
 
 export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
+  const { t } = useRosetta(LOCALES);
   const { sendEmailOtp, verifyEmailOtp, error, pending } = useOnboardingEmailOtp();
   const [sentTo, setSentTo] = useState<string | null>(null);
+
+  const emailSchema = z.object({
+    email: z
+      .string()
+      .transform((v) => v.trim().toLowerCase())
+      .pipe(z.email(t("email_invalid"))),
+  });
+  type EmailValues = z.infer<typeof emailSchema>;
+
+  const codeSchema = z.object({ token: z.string().regex(/^\d{6}$/, t("code_invalid")) });
+  type CodeValues = z.infer<typeof codeSchema>;
 
   const emailForm = useForm<EmailValues>({
     resolver: zodResolver(emailSchema),
@@ -48,7 +50,7 @@ export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
     return (
       <form onSubmit={onVerifyCode} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email-code">Código enviado a {sentTo}</Label>
+          <Label htmlFor="email-code">{t("code_sent_to", { email: sentTo })}</Label>
           <Input
             id="email-code"
             className="h-10"
@@ -65,7 +67,7 @@ export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
           </Alert>
         )}
         <Button type="submit" disabled={pending} className="h-10 w-full">
-          <span>{pending ? "Verificando…" : "Verificar"}</span>
+          <span>{pending ? t("verifying") : t("verify")}</span>
           <ArrowRight size={16} />
         </Button>
         <button
@@ -73,7 +75,7 @@ export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
           className="inline-flex items-center gap-1.5 self-start -ml-1.5 rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
           onClick={() => setSentTo(null)}
         >
-          Cambiar correo
+          {t("change_email")}
         </button>
       </form>
     );
@@ -82,7 +84,7 @@ export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
   return (
     <form onSubmit={onSendEmail} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="email-input">Correo</Label>
+        <Label htmlFor="email-input">{t("label_email")}</Label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none flex">
             <Mail size={16} />
@@ -91,7 +93,7 @@ export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
             id="email-input"
             className="h-10 pl-9"
             type="email"
-            placeholder="tu@empresa.cl"
+            placeholder={t("placeholder_email")}
             autoComplete="email"
             aria-invalid={!!emailForm.formState.errors.email}
             {...emailForm.register("email")}
@@ -108,8 +110,49 @@ export function EmailForm({ defaultEmail }: { defaultEmail: string }) {
       )}
       <Button type="submit" disabled={pending} className="h-10 w-full">
         <Mail size={15} />
-        <span>{pending ? "Enviando…" : "Enviar código"}</span>
+        <span>{pending ? t("sending") : t("send_code")}</span>
       </Button>
     </form>
   );
 }
+
+const LOCALE_ES = {
+  email_invalid: "Correo inválido",
+  code_invalid: "Código de 6 dígitos",
+  label_email: "Correo",
+  placeholder_email: "tu@empresa.cl",
+  code_sent_to: "Código enviado a {{email}}",
+  verifying: "Verificando…",
+  verify: "Verificar",
+  change_email: "Cambiar correo",
+  sending: "Enviando…",
+  send_code: "Enviar código",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    email_invalid: "Invalid email",
+    code_invalid: "6-digit code",
+    label_email: "Email",
+    placeholder_email: "you@company.com",
+    code_sent_to: "Code sent to {{email}}",
+    verifying: "Verifying…",
+    verify: "Verify",
+    change_email: "Change email",
+    sending: "Sending…",
+    send_code: "Send code",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    email_invalid: "E-mail inválido",
+    code_invalid: "Código de 6 dígitos",
+    label_email: "E-mail",
+    placeholder_email: "voce@empresa.com.br",
+    code_sent_to: "Código enviado para {{email}}",
+    verifying: "Verificando…",
+    verify: "Verificar",
+    change_email: "Alterar e-mail",
+    sending: "Enviando…",
+    send_code: "Enviar código",
+  } satisfies typeof LOCALE_ES,
+};

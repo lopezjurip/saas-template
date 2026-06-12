@@ -134,13 +134,11 @@ export default async function MembersAdminPage(
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-7 px-6 py-8">
       <header className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
             {organization["organization_name"]} · {t("eyebrow")}
           </span>
-          <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("page_title")}</h1>
-          <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
-            {t("subtitle")}
-          </p>
+          <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("page_title")}</h1>
+          <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">{t("subtitle")}</p>
         </div>
         <Button asChild>
           <Link
@@ -164,7 +162,7 @@ export default async function MembersAdminPage(
           <span className="text-muted-foreground text-xs tabular-nums">{activeRows.length}</span>
         </div>
         {activeRows.length === 0 ? (
-          <p className="text-muted-foreground px-1 text-[12.5px]">{t("members_empty")}</p>
+          <p className="text-muted-foreground px-1 text-xs">{t("members_empty")}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {activeRows.map((m) => {
@@ -194,7 +192,7 @@ export default async function MembersAdminPage(
                       ) : null}
                     </span>
                     {m["email"] && m["email"] !== name ? (
-                      <span className="text-muted-foreground truncate text-[12.5px]">{m["email"]}</span>
+                      <span className="text-muted-foreground truncate text-xs">{m["email"]}</span>
                     ) : null}
                   </span>
                   {m["has_wildcard"] ? (
@@ -259,7 +257,7 @@ export default async function MembersAdminPage(
 
 function MemberAvatar({ name }: { name: string }) {
   return (
-    <span className="bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-full text-[12.5px] font-semibold tracking-[-0.01em]">
+    <span className="bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-[-0.01em]">
       {INITIALS_OF(name)}
     </span>
   );

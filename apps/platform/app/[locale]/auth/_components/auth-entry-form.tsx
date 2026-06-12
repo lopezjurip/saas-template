@@ -7,15 +7,10 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { RUT_FORMAT } from "@packages/utils/rut";
 import { ArrowRight, IdCard, Mail, Phone, Search } from "lucide-react";
 import { useState } from "react";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { actionContinueAuth } from "../actions";
 
 type LocalKind = "email" | "phone" | "document";
-
-const KIND_META: Record<LocalKind, { label: string; Icon: typeof Mail }> = {
-  email: { label: "correo", Icon: Mail },
-  phone: { label: "teléfono", Icon: Phone },
-  document: { label: "RUT", Icon: IdCard },
-};
 
 /**
  * Heuristic type detection for the single smart field. Email wins on "@"; a verifier-digit
@@ -36,11 +31,16 @@ function DETECT_LOCAL_TYPE(raw: string): LocalKind | null {
 }
 
 export function AuthEntryForm({ next, error }: { next: string; error?: string | null }) {
+  const { t } = useRosetta(LOCALES);
   const [value, setValue] = useState("");
   const detected = DETECT_LOCAL_TYPE(value);
-  const Icon = detected ? KIND_META[detected].Icon : Search;
+  const Icon = detected ? KIND_ICON[detected] : Search;
   // field name drives `actionContinueAuth`'s dispatch (email | phone | document)
   const fieldName: LocalKind = detected ?? "email";
+
+  const kindLabel = detected
+    ? t(detected === "email" ? "kind_email" : detected === "phone" ? "kind_phone" : "kind_document")
+    : null;
 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
     let next = e.target.value;
@@ -56,13 +56,15 @@ export function AuthEntryForm({ next, error }: { next: string; error?: string | 
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <Label htmlFor="auth-identifier" className="m-0">
-            Cuenta
+            {t("label_account")}
           </Label>
-          {detected && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+          {kindLabel && detected ? (
+            <span className="inline-flex items-center gap-1 text-tiny text-muted-foreground">
               <span className="size-1.5 rounded-full bg-foreground" />
-              {KIND_META[detected].label} detectado
+              {t("kind_detected", { kind: kindLabel })}
             </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-tiny invisible">Esperando input</span>
           )}
         </div>
         <div className="relative">
@@ -75,7 +77,7 @@ export function AuthEntryForm({ next, error }: { next: string; error?: string | 
             value={value}
             onChange={onChange}
             className={cn("h-10 pl-9", error && "border-destructive")}
-            placeholder="Correo, teléfono o RUT"
+            placeholder={t("placeholder")}
             autoComplete="username"
             autoFocus
           />
@@ -83,15 +85,57 @@ export function AuthEntryForm({ next, error }: { next: string; error?: string | 
         {error ? (
           <p className="text-xs leading-relaxed text-destructive">{error}</p>
         ) : (
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Si no tienes cuenta, te enviaremos un enlace mágico para crearla.
-          </p>
+          <p className="text-xs leading-relaxed text-muted-foreground">{t("hint")}</p>
         )}
       </div>
       <Button type="submit" className="h-10 w-full">
-        <span>Continuar</span>
+        <span>{t("submit")}</span>
         <ArrowRight size={16} />
       </Button>
     </form>
   );
 }
+
+const KIND_ICON: Record<LocalKind, typeof Mail> = {
+  email: Mail,
+  phone: Phone,
+  document: IdCard,
+};
+
+const LOCALE_ES = {
+  label_account: "Cuenta",
+  kind_email: "correo",
+  kind_phone: "teléfono",
+  kind_document: "RUT",
+  kind_detected: "{{kind}} detectado",
+  placeholder: "Correo, teléfono o RUT",
+  hint: "Si no tienes cuenta, te enviaremos un enlace mágico para crearla.",
+  submit: "Continuar",
+  waiting: "Esperando input",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  label_account: "Account",
+  kind_email: "email",
+  kind_phone: "phone",
+  kind_document: "ID",
+  kind_detected: "{{kind}} detected",
+  placeholder: "Email, phone or ID",
+  hint: "If you don't have an account, we'll send you a magic link to create one.",
+  submit: "Continue",
+  waiting: "Waiting for input",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  label_account: "Conta",
+  kind_email: "e-mail",
+  kind_phone: "telefone",
+  kind_document: "documento",
+  kind_detected: "{{kind}} detectado",
+  placeholder: "E-mail, telefone ou documento",
+  hint: "Se não tiver conta, enviaremos um link mágico para criá-la.",
+  submit: "Continuar",
+  waiting: "Aguardando entrada",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

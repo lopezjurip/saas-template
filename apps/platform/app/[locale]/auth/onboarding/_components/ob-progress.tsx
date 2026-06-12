@@ -4,6 +4,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Check, Star, X } from "lucide-react";
 import Link from "next/link";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { AUTH_TWEAKS } from "~/lib/auth-tweaks";
 import { ROUTE } from "~/lib/route";
 import { METHOD_ORDER, ONBOARDING_METHOD_PATH, type OnboardingMethodId, type OnboardingState } from "../state";
@@ -11,6 +12,8 @@ import { METHOD_CATALOG } from "./method-catalog";
 
 export function ObChips({ methods, current }: { methods: OnboardingState["methods"]; current?: OnboardingMethodId }) {
   const locale = useLocaleParam();
+  const { t } = useRosetta(LOCALES);
+  const methodLabels = t("methods") as typeof LOCALE_ES.methods;
 
   return (
     <div className="flex flex-wrap gap-1.5" data-component="ObChips">
@@ -56,7 +59,7 @@ export function ObChips({ methods, current }: { methods: OnboardingState["method
                 <meta.Icon size={11} />
               )}
             </span>
-            <span>{meta.label}</span>
+            <span>{methodLabels[id].label}</span>
           </Link>
         );
       })}
@@ -73,6 +76,7 @@ export function ObSummary({
   dense?: boolean;
   showMeter?: boolean;
 }) {
+  const { t } = useRosetta(LOCALES);
   const total = METHOD_ORDER.length;
   const done = METHOD_ORDER.filter((id) => methods[id] === "done").length;
   const skipped = METHOD_ORDER.filter((id) => methods[id] === "skipped").length;
@@ -96,17 +100,17 @@ export function ObSummary({
         </div>
       )}
       <div className="inline-flex flex-wrap items-center gap-1.5 whitespace-nowrap text-xs text-muted-foreground">
-        <strong className="font-semibold text-foreground">
-          {done} de {total}
-        </strong>
+        <strong className="font-semibold text-foreground">{t("summary_done_of", { done, total })}</strong>
         <span className="opacity-50">·</span>
-        {pending > 0 ? <span>{pending === 1 ? "1 pendiente" : `${pending} pendientes`}</span> : <span>completo</span>}
+        {pending > 0 ? (
+          <span>{pending === 1 ? t("summary_pending_one") : t("summary_pending_many", { count: pending })}</span>
+        ) : (
+          <span>{t("summary_complete")}</span>
+        )}
         {skipped > 0 && (
           <>
             <span className="opacity-50">·</span>
-            <span>
-              {skipped} saltado{skipped === 1 ? "" : "s"}
-            </span>
+            <span>{skipped === 1 ? t("summary_skipped_one") : t("summary_skipped_many", { count: skipped })}</span>
           </>
         )}
       </div>
@@ -135,3 +139,56 @@ export function ObProgress({
   }
   return <ObSummary methods={methods} dense={dense} showMeter />;
 }
+
+const LOCALE_ES = {
+  methods: {
+    passkey: { label: "Passkey" },
+    password: { label: "Contraseña" },
+    phone: { label: "Teléfono" },
+    email: { label: "Correo" },
+    document: { label: "Documento" },
+    profile: { label: "Perfil" },
+  },
+  summary_done_of: "{{done}} de {{total}}",
+  summary_pending_one: "1 pendiente",
+  summary_pending_many: "{{count}} pendientes",
+  summary_complete: "completo",
+  summary_skipped_one: "1 saltado",
+  summary_skipped_many: "{{count}} saltados",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    methods: {
+      passkey: { label: "Passkey" },
+      password: { label: "Password" },
+      phone: { label: "Phone" },
+      email: { label: "Email" },
+      document: { label: "Document" },
+      profile: { label: "Profile" },
+    },
+    summary_done_of: "{{done}} of {{total}}",
+    summary_pending_one: "1 pending",
+    summary_pending_many: "{{count}} pending",
+    summary_complete: "complete",
+    summary_skipped_one: "1 skipped",
+    summary_skipped_many: "{{count}} skipped",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    methods: {
+      passkey: { label: "Passkey" },
+      password: { label: "Senha" },
+      phone: { label: "Telefone" },
+      email: { label: "E-mail" },
+      document: { label: "Documento" },
+      profile: { label: "Perfil" },
+    },
+    summary_done_of: "{{done}} de {{total}}",
+    summary_pending_one: "1 pendente",
+    summary_pending_many: "{{count}} pendentes",
+    summary_complete: "completo",
+    summary_skipped_one: "1 pulado",
+    summary_skipped_many: "{{count}} pulados",
+  } satisfies typeof LOCALE_ES,
+};

@@ -162,7 +162,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
                       </span>
                       <ol className="flex flex-col gap-1.5">
                         {mockSteps.map((step, index) => (
-                          <li key={step} className="flex items-center gap-2 text-[12.5px]">
+                          <li key={step} className="flex items-center gap-2 text-xs">
                             <span
                               className={
                                 index < 3
@@ -190,13 +190,13 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
                       <span className="text-xs font-medium">{t("mock.replyLabel")}</span>
                       <span className="font-mono text-tiny text-muted-foreground">draft · v2</span>
                     </div>
-                    <p className="flex-1 px-3 py-2.5 text-[12.5px] leading-relaxed">{t("mock.reply")}</p>
+                    <p className="flex-1 px-3 py-2.5 text-xs leading-relaxed">{t("mock.reply")}</p>
                     <div className="flex flex-wrap items-center gap-1.5 border-t border-border bg-muted/30 px-3 py-2">
-                      <Button size="sm" className="h-7 cursor-pointer px-2.5 text-[12px]">
+                      <Button size="sm" className="h-7 cursor-pointer px-2.5 text-xs">
                         <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.5} />
                         {t("mock.send")}
                       </Button>
-                      <Button size="sm" variant="outline" className="h-7 cursor-pointer px-2.5 text-[12px]">
+                      <Button size="sm" variant="outline" className="h-7 cursor-pointer px-2.5 text-xs">
                         {t("mock.edit")}
                       </Button>
                       <span className="ml-auto font-mono text-tiny text-muted-foreground">320 ms · $0.0021</span>
@@ -246,7 +246,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
                   <span className="text-muted-foreground">{stat.unit}</span>
                 </span>
                 <span className="text-pretty text-sm">{stat.label}</span>
-                <span className="mt-1 font-mono text-[11px] text-muted-foreground">{stat.foot}</span>
+                <span className="mt-1 font-mono text-xs text-muted-foreground">{stat.foot}</span>
               </div>
             ))}
           </div>
@@ -265,13 +265,13 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
             {testimonials.map((item) => (
               <Card key={item.name} className="h-full">
                 <CardContent className="flex h-full flex-col gap-4">
-                  <blockquote className="text-pretty text-[15px] leading-snug">{`"${item.quote}"`}</blockquote>
+                  <blockquote className="text-pretty text-sm leading-snug">{`"${item.quote}"`}</blockquote>
                   <figcaption className="mt-auto flex items-center gap-3">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="text-sm/normal font-semibold">{INITIALS_OF(item.name)}</AvatarFallback>
                     </Avatar>
                     <span className="flex flex-col leading-tight">
-                      <span className="text-[13.5px] font-medium">{item.name}</span>
+                      <span className="text-sm font-medium">{item.name}</span>
                       <span className="text-xs text-muted-foreground">{item.role}</span>
                     </span>
                   </figcaption>
@@ -295,8 +295,8 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
                 {faqs.map((faq) => {
                   return (
                     <AccordionItem key={faq.value} value={faq.value}>
-                      <AccordionTrigger className="text-[14.5px]">{faq.q}</AccordionTrigger>
-                      <AccordionContent className="max-w-[68ch] text-[13.5px] leading-relaxed text-muted-foreground">
+                      <AccordionTrigger className="text-sm">{faq.q}</AccordionTrigger>
+                      <AccordionContent className="max-w-[68ch] text-sm leading-relaxed text-muted-foreground">
                         {faq.a}
                       </AccordionContent>
                     </AccordionItem>
@@ -320,7 +320,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
                 </p>
                 <ul className="flex flex-col gap-2.5">
                   {contactBullets.map((bullet) => (
-                    <li key={bullet} className="flex items-start gap-2.5 text-[13.5px]">
+                    <li key={bullet} className="flex items-start gap-2.5 text-sm">
                       <span className="mt-px inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
                         <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.5} />
                       </span>

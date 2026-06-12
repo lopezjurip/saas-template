@@ -35,98 +35,6 @@ import { useRosetta } from "~/hooks/use-rosetta";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
 
-/**
- * Spanish locale strings for mobile sheet components.
- */
-const LOCALE_ES = {
-  organizations: "Organizaciones",
-  switchTenant: "Cambiar de empresa",
-  orgSettings: "Configuración de la organización",
-  account: "Cuenta",
-  billing: "Facturación",
-  tokens: "Tokens de API",
-  notifications: "Notificaciones",
-  signOut: "Cerrar sesión",
-  settingsTitle: "Configuración",
-  appearance: "Apariencia",
-  themeLight: "Claro",
-  themeDark: "Oscuro",
-  themeSystem: "Sistema",
-  language: "Idioma",
-  more: "Más",
-  notif: "Notificaciones",
-  privacy: "Privacidad y seguridad",
-  help: "Ayuda y documentación",
-  searchPlaceholder: "Buscar proyectos, personas, comandos…",
-  empty: "Sin resultados para",
-  navigate: "Navegar",
-  switchOrg: "Cambiar de organización",
-  current: "Actual",
-  navHome: "Inicio",
-  navMembers: "Miembros",
-  navSettings: "Configuración",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    organizations: "Organizations",
-    switchTenant: "Switch company",
-    orgSettings: "Organization settings",
-    account: "Account",
-    billing: "Billing",
-    tokens: "API tokens",
-    notifications: "Notifications",
-    signOut: "Sign out",
-    settingsTitle: "Settings",
-    appearance: "Appearance",
-    themeLight: "Light",
-    themeDark: "Dark",
-    themeSystem: "System",
-    language: "Language",
-    more: "More",
-    notif: "Notifications",
-    privacy: "Privacy & security",
-    help: "Help & docs",
-    searchPlaceholder: "Search projects, people, commands…",
-    empty: "No results for",
-    navigate: "Navigate",
-    switchOrg: "Switch organization",
-    current: "Current",
-    navHome: "Home",
-    navMembers: "Members",
-    navSettings: "Settings",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    organizations: "Organizações",
-    switchTenant: "Trocar de empresa",
-    orgSettings: "Configurações da organização",
-    account: "Conta",
-    billing: "Faturamento",
-    tokens: "Tokens de API",
-    notifications: "Notificações",
-    signOut: "Sair",
-    settingsTitle: "Configurações",
-    appearance: "Aparência",
-    themeLight: "Claro",
-    themeDark: "Escuro",
-    themeSystem: "Sistema",
-    language: "Idioma",
-    more: "Mais",
-    notif: "Notificações",
-    privacy: "Privacidade e segurança",
-    help: "Ajuda e documentação",
-    searchPlaceholder: "Buscar projetos, pessoas, comandos…",
-    empty: "Sem resultados para",
-    navigate: "Navegar",
-    switchOrg: "Trocar organização",
-    current: "Atual",
-    navHome: "Início",
-    navMembers: "Membros",
-    navSettings: "Configurações",
-  } satisfies typeof LOCALE_ES,
-};
-
 export function MobileOrgSheet({
   open,
   onClose,
@@ -163,9 +71,9 @@ export function MobileOrgSheet({
               size="md"
             />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[14px] font-medium">{organization["organization_name"]}</div>
+              <div className="truncate text-sm font-medium">{organization["organization_name"]}</div>
               {organization["organization_slug"] ? (
-                <div className="text-muted-foreground truncate text-[11px]">{organization["organization_slug"]}</div>
+                <div className="text-muted-foreground truncate text-xs">{organization["organization_slug"]}</div>
               ) : null}
             </div>
             {organization["organization_id"] === current["organization_id"] ? <Check size={16} /> : null}
@@ -176,7 +84,7 @@ export function MobileOrgSheet({
         <Link
           href={ROUTE("/[locale]/home", { locale })}
           onClick={onClose}
-          className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-[14px]"
+          className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-sm"
         >
           <Plus size={16} className="text-muted-foreground" />
           <span>{t("switchTenant")}</span>
@@ -188,7 +96,7 @@ export function MobileOrgSheet({
             organization_id: current["organization_id"],
           })}
           onClick={onClose}
-          className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-[14px]"
+          className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-sm"
         >
           <SettingsIcon size={16} className="text-muted-foreground" />
           <span>{t("orgSettings")}</span>
@@ -226,8 +134,8 @@ export function MobileProfileSheet({
           size="lg"
         />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-semibold">{viewer["profile_name_full"] || viewer["email"]}</div>
-          <div className="text-muted-foreground truncate text-[12px]">{viewer["email"]}</div>
+          <div className="truncate text-sm font-semibold">{viewer["profile_name_full"] || viewer["email"]}</div>
+          <div className="text-muted-foreground truncate text-xs">{viewer["email"]}</div>
         </div>
       </div>
       <div className="px-2 py-1.5">
@@ -236,7 +144,7 @@ export function MobileProfileSheet({
             key={item.label}
             href={item.href}
             onClick={onClose}
-            className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-[14px]"
+            className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-sm"
           >
             <item.Icon size={16} className="text-muted-foreground" />
             <span className="flex-1">{item.label}</span>
@@ -248,7 +156,7 @@ export function MobileProfileSheet({
         <Link
           href={ROUTE("/[locale]/auth/logout", { locale })}
           onClick={onClose}
-          className="flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-[14px] text-rose-600 active:bg-rose-50 dark:active:bg-rose-950/30"
+          className="flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-sm text-rose-600 active:bg-rose-50 dark:active:bg-rose-950/30"
         >
           <LogOut size={16} />
           <span>{t("signOut")}</span>
@@ -288,7 +196,7 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
                 key={opt.value}
                 type="button"
                 onClick={() => setTheme(opt.value)}
-                className={`flex flex-col items-center gap-1 rounded px-2 py-2 text-[12px] transition-colors ${
+                className={`flex flex-col items-center gap-1 rounded px-2 py-2 text-xs transition-colors ${
                   isActive ? "bg-accent text-foreground" : "text-muted-foreground active:bg-accent/60"
                 }`}
               >
@@ -310,7 +218,7 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
                 key={value}
                 type="button"
                 onClick={() => setLocale(value)}
-                className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[14px] ${
+                className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm ${
                   i > 0 ? "border-border border-t" : ""
                 } ${isActive ? "bg-accent/50" : "active:bg-accent"}`}
               >
@@ -328,7 +236,7 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
         <div className="border-border bg-background overflow-hidden rounded-md border">
           <button
             type="button"
-            className="active:bg-accent flex w-full items-center gap-2 px-3 py-2.5 text-left text-[14px]"
+            className="active:bg-accent flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm"
           >
             <Bell size={14} className="text-muted-foreground" />
             <span className="flex-1">{t("notif")}</span>
@@ -336,7 +244,7 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
           </button>
           <button
             type="button"
-            className="border-border active:bg-accent flex w-full items-center gap-2 border-t px-3 py-2.5 text-left text-[14px]"
+            className="border-border active:bg-accent flex w-full items-center gap-2 border-t px-3 py-2.5 text-left text-sm"
           >
             <Shield size={14} className="text-muted-foreground" />
             <span className="flex-1">{t("privacy")}</span>
@@ -344,7 +252,7 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
           </button>
           <button
             type="button"
-            className="border-border active:bg-accent flex w-full items-center gap-2 border-t px-3 py-2.5 text-left text-[14px]"
+            className="border-border active:bg-accent flex w-full items-center gap-2 border-t px-3 py-2.5 text-left text-sm"
           >
             <HelpCircle size={14} className="text-muted-foreground" />
             <span className="flex-1">{t("help")}</span>
@@ -520,7 +428,7 @@ export function MobileSearchSheet({
                   key={item.id}
                   type="button"
                   onClick={() => goTo(item)}
-                  className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-[14px]"
+                  className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-sm"
                 >
                   {item.orgInitials && item.orgColor ? (
                     <Avatar initials={item.orgInitials} color={item.orgColor} size="sm" className="h-6 w-6" />
@@ -540,3 +448,95 @@ export function MobileSearchSheet({
     </Sheet>
   );
 }
+
+/**
+ * Spanish locale strings for mobile sheet components.
+ */
+const LOCALE_ES = {
+  organizations: "Organizaciones",
+  switchTenant: "Cambiar de empresa",
+  orgSettings: "Configuración de la organización",
+  account: "Cuenta",
+  billing: "Facturación",
+  tokens: "Tokens de API",
+  notifications: "Notificaciones",
+  signOut: "Cerrar sesión",
+  settingsTitle: "Configuración",
+  appearance: "Apariencia",
+  themeLight: "Claro",
+  themeDark: "Oscuro",
+  themeSystem: "Sistema",
+  language: "Idioma",
+  more: "Más",
+  notif: "Notificaciones",
+  privacy: "Privacidad y seguridad",
+  help: "Ayuda y documentación",
+  searchPlaceholder: "Buscar proyectos, personas, comandos…",
+  empty: "Sin resultados para",
+  navigate: "Navegar",
+  switchOrg: "Cambiar de organización",
+  current: "Actual",
+  navHome: "Inicio",
+  navMembers: "Miembros",
+  navSettings: "Configuración",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    organizations: "Organizations",
+    switchTenant: "Switch company",
+    orgSettings: "Organization settings",
+    account: "Account",
+    billing: "Billing",
+    tokens: "API tokens",
+    notifications: "Notifications",
+    signOut: "Sign out",
+    settingsTitle: "Settings",
+    appearance: "Appearance",
+    themeLight: "Light",
+    themeDark: "Dark",
+    themeSystem: "System",
+    language: "Language",
+    more: "More",
+    notif: "Notifications",
+    privacy: "Privacy & security",
+    help: "Help & docs",
+    searchPlaceholder: "Search projects, people, commands…",
+    empty: "No results for",
+    navigate: "Navigate",
+    switchOrg: "Switch organization",
+    current: "Current",
+    navHome: "Home",
+    navMembers: "Members",
+    navSettings: "Settings",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    organizations: "Organizações",
+    switchTenant: "Trocar de empresa",
+    orgSettings: "Configurações da organização",
+    account: "Conta",
+    billing: "Faturamento",
+    tokens: "Tokens de API",
+    notifications: "Notificações",
+    signOut: "Sair",
+    settingsTitle: "Configurações",
+    appearance: "Aparência",
+    themeLight: "Claro",
+    themeDark: "Escuro",
+    themeSystem: "Sistema",
+    language: "Idioma",
+    more: "Mais",
+    notif: "Notificações",
+    privacy: "Privacidade e segurança",
+    help: "Ajuda e documentação",
+    searchPlaceholder: "Buscar projetos, pessoas, comandos…",
+    empty: "Sem resultados para",
+    navigate: "Navegar",
+    switchOrg: "Trocar organização",
+    current: "Atual",
+    navHome: "Início",
+    navMembers: "Membros",
+    navSettings: "Configurações",
+  } satisfies typeof LOCALE_ES,
+};

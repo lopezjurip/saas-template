@@ -42,7 +42,7 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
       <Avatar initials={initials} color={color} size="md" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium leading-tight">{display_name}</div>
-        <div className="text-muted-foreground truncate text-[11px] leading-tight">{viewer["email"]}</div>
+        <div className="text-muted-foreground truncate text-xs leading-tight">{viewer["email"]}</div>
       </div>
       <ChevronsUpDown size={14} className="text-muted-foreground" />
     </button>
@@ -69,7 +69,7 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
             <Avatar initials={initials} color={color} size="md" />
             <div className="min-w-0">
               <div className="truncate text-sm font-medium">{display_name}</div>
-              <div className="text-muted-foreground truncate text-[11px]">{viewer["email"]}</div>
+              <div className="text-muted-foreground truncate text-xs">{viewer["email"]}</div>
             </div>
           </div>
           <div className="px-1 py-1">

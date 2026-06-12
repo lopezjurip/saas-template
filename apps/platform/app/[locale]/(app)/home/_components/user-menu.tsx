@@ -4,6 +4,7 @@ import { INITIALS_OF } from "@packages/utils/string";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { ROUTE } from "~/lib/route";
 
 /**
@@ -12,6 +13,7 @@ import { ROUTE } from "~/lib/route";
  */
 export function UserMenu({ locale, name, email }: { locale: string; name: string; email: string }) {
   const [open, setOpen] = useState(false);
+  const { t } = useRosetta(LOCALES);
 
   return (
     <div className="fixed bottom-4.5 left-4.5 z-5 flex flex-col gap-1">
@@ -25,7 +27,7 @@ export function UserMenu({ locale, name, email }: { locale: string; name: string
               {INITIALS_OF(name || email)}
             </span>
             <span className="flex min-w-0 flex-col leading-[1.2]">
-              <strong className="text-sm/normal font-medium text-foreground">{name || "Sin nombre"}</strong>
+              <strong className="text-sm/normal font-medium text-foreground">{name || t("noName")}</strong>
               <span className="text-xs text-muted-foreground">{email}</span>
             </span>
           </div>
@@ -34,13 +36,13 @@ export function UserMenu({ locale, name, email }: { locale: string; name: string
               href={ROUTE("/[locale]/home/account/profile", { locale })}
               className="flex h-8 items-center gap-2.5 rounded-md px-2.5 text-sm/normal text-foreground hover:bg-accent"
             >
-              Mi perfil
+              {t("profile")}
             </Link>
             <Link
               href={ROUTE("/[locale]/home/account/security", { locale })}
               className="flex h-8 items-center gap-2.5 rounded-md px-2.5 text-sm/normal text-foreground hover:bg-accent"
             >
-              Inicio de sesión
+              {t("security")}
             </Link>
           </div>
           <div className="flex flex-col py-1">
@@ -48,7 +50,7 @@ export function UserMenu({ locale, name, email }: { locale: string; name: string
               href={ROUTE("/[locale]/auth/logout", { locale })}
               className="flex h-8 items-center gap-2.5 rounded-md px-2.5 text-sm/normal text-destructive hover:bg-accent"
             >
-              Cerrar sesión
+              {t("signOut")}
             </Link>
           </div>
         </div>
@@ -64,8 +66,8 @@ export function UserMenu({ locale, name, email }: { locale: string; name: string
           {INITIALS_OF(name || email)}
         </span>
         <span className="flex flex-col items-start pr-1.5 leading-[1.15]">
-          <span className="whitespace-nowrap text-[12.5px] font-medium text-foreground">{name || "Sin nombre"}</span>
-          <span className="whitespace-nowrap text-[11px] text-muted-foreground">{email}</span>
+          <span className="whitespace-nowrap text-[12.5px] font-medium text-foreground">{name || t("noName")}</span>
+          <span className="whitespace-nowrap text-tiny text-muted-foreground">{email}</span>
         </span>
         <span className="mr-1 text-muted-foreground">
           <ChevronDown size={14} />
@@ -74,3 +76,26 @@ export function UserMenu({ locale, name, email }: { locale: string; name: string
     </div>
   );
 }
+
+const LOCALE_ES = {
+  noName: "Sin nombre",
+  profile: "Mi perfil",
+  security: "Inicio de sesión",
+  signOut: "Cerrar sesión",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  noName: "No name",
+  profile: "My profile",
+  security: "Sign-in & security",
+  signOut: "Sign out",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  noName: "Sem nome",
+  profile: "Meu perfil",
+  security: "Acesso e segurança",
+  signOut: "Sair",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

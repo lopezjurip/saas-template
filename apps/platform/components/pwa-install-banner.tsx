@@ -1,4 +1,5 @@
 "use client";
+import { useRosetta } from "@packages/rosetta/use-rosetta";
 import { useEffect, useState } from "react";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -6,7 +7,12 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-export function PwaInstallBanner() {
+/**
+ * Listens for the browser's `beforeinstallprompt` event and exposes
+ * `install` / `dismiss` actions. Returns `null` prompt when dismissed or
+ * already suppressed via localStorage.
+ */
+export function usePwaInstall() {
   const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
@@ -19,31 +25,59 @@ export function PwaInstallBanner() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
+  async function install() {
+    if (!prompt) return;
+    await prompt.prompt();
+    setPrompt(null);
+  }
+
+  function dismiss() {
+    localStorage.setItem("pwa-dismissed", "1");
+    setPrompt(null);
+  }
+
+  return { prompt, install, dismiss };
+}
+
+/** Fixed bottom-right banner that prompts the user to install the PWA. */
+export function PwaInstallBanner() {
+  const { prompt, install, dismiss } = usePwaInstall();
+  const { t } = useRosetta(LOCALES);
+
   if (!prompt) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 shadow-lg">
-      <span className="text-sm">Instalar app</span>
+      <span className="text-sm">{t("install_app")}</span>
       <button
         className="rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background"
-        onClick={async () => {
-          await prompt.prompt();
-          setPrompt(null);
-        }}
+        onClick={install}
         type="button"
       >
-        Instalar
+        {t("install")}
       </button>
-      <button
-        className="text-xs text-muted-foreground"
-        onClick={() => {
-          localStorage.setItem("pwa-dismissed", "1");
-          setPrompt(null);
-        }}
-        type="button"
-      >
-        No gracias
+      <button className="text-xs text-muted-foreground" onClick={dismiss} type="button">
+        {t("dismiss")}
       </button>
     </div>
   );
 }
+
+const LOCALE_ES = {
+  install_app: "Instalar app",
+  install: "Instalar",
+  dismiss: "No gracias",
+};
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    install_app: "Install app",
+    install: "Install",
+    dismiss: "No thanks",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    install_app: "Instalar app",
+    install: "Instalar",
+    dismiss: "Não obrigado",
+  } satisfies typeof LOCALE_ES,
+};

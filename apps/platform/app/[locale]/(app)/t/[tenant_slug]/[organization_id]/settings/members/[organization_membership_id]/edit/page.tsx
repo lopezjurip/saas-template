@@ -155,7 +155,7 @@ export default async function OrganizationMembershipEditPage(
   return (
     <EditShell membersHref={membersHref} backLabel={t("back")}>
       <header className="flex flex-col gap-3">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
           {organization["organization_name"]} · {t("eyebrow")}
         </span>
         <div className="flex items-center gap-3">
@@ -163,23 +163,21 @@ export default async function OrganizationMembershipEditPage(
             className={
               isPending
                 ? "bg-muted text-muted-foreground border-border inline-flex size-11 shrink-0 items-center justify-center rounded-full border"
-                : "bg-muted text-foreground inline-flex size-11 shrink-0 items-center justify-center rounded-full text-[15px] font-semibold tracking-[-0.01em]"
+                : "bg-muted text-foreground inline-flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold tracking-[-0.01em]"
             }
           >
             {isPending ? <ChannelIcon size={18} /> : INITIALS_OF(memberLabel)}
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="inline-flex min-w-0 items-center gap-2">
-              <h1 className="text-foreground m-0 truncate text-[18px] font-semibold tracking-[-0.01em]">
-                {memberLabel}
-              </h1>
+              <h1 className="text-foreground m-0 truncate text-lg font-semibold tracking-[-0.01em]">{memberLabel}</h1>
               {isPending ? (
                 <Badge variant="outline" className="text-muted-foreground shrink-0">
                   {t("invitation_badge")}
                 </Badge>
               ) : null}
             </span>
-            {secondary ? <span className="text-muted-foreground truncate text-[12.5px]">{secondary}</span> : null}
+            {secondary ? <span className="text-muted-foreground truncate text-xs">{secondary}</span> : null}
           </div>
         </div>
         {isPending ? (
@@ -187,7 +185,7 @@ export default async function OrganizationMembershipEditPage(
             <span className="text-muted-foreground mt-px shrink-0">
               <ShieldCheck size={14} />
             </span>
-            <span className="text-muted-foreground text-[12px] leading-normal text-pretty">{t("pending_note")}</span>
+            <span className="text-muted-foreground text-xs leading-normal text-pretty">{t("pending_note")}</span>
           </div>
         ) : null}
       </header>
@@ -216,7 +214,7 @@ function EditShell({
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-8">
       <Link
         href={membersHref}
-        className="text-muted-foreground hover:text-foreground -ml-1.5 inline-flex w-fit items-center gap-1.5 text-[12.5px] font-medium"
+        className="text-muted-foreground hover:text-foreground -ml-1.5 inline-flex w-fit items-center gap-1.5 text-xs font-medium"
       >
         <ArrowLeft size={14} /> {backLabel}
       </Link>

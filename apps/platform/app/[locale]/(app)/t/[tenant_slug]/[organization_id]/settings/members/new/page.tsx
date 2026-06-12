@@ -53,18 +53,16 @@ export default async function NewMemberInvitePage(
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-8">
       <Link
         href={membersHref}
-        className="text-muted-foreground hover:text-foreground -ml-1.5 inline-flex w-fit items-center gap-1.5 text-[12.5px] font-medium"
+        className="text-muted-foreground hover:text-foreground -ml-1.5 inline-flex w-fit items-center gap-1.5 text-xs font-medium"
       >
         <ArrowLeft size={14} /> {t("back")}
       </Link>
       <header className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
           {organization["organization_name"]} · {t("eyebrow")}
         </span>
-        <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("page_title")}</h1>
-        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
-          {t("description")}
-        </p>
+        <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("page_title")}</h1>
+        <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">{t("description")}</p>
       </header>
 
       {canManage ? (

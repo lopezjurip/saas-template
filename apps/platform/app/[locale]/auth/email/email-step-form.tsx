@@ -9,7 +9,9 @@ import { ArrowRight, Eye, EyeOff, Fingerprint, KeyRound, Lock, Mail } from "luci
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { notifyDevMailbox } from "~/lib/dev-mailbox-toast.client";
+import { signInWithPasskey } from "~/lib/passkeys.client";
 import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 import { OtpField } from "../_components/otp-field";
 
@@ -18,6 +20,7 @@ type Props = {
   next: string;
   /** null = privacy mode (existence not exposed). true/false = known. */
   exists: boolean | null;
+  hasPasskey: boolean;
   hasPassword: boolean;
 };
 
@@ -25,7 +28,8 @@ function RESOLVE_TARGET(locale: string, next: string): string {
   return next.startsWith("/") && next !== "/" ? next : `/${locale}/home`;
 }
 
-export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
+export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: Props) {
+  const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const locale = useLocaleParam();
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +41,7 @@ export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
   const [password, setPassword] = useState("");
 
   const isNew = exists === false;
+  const showPasskey = exists === true && hasPasskey;
   const showPasswordOption = exists === true && hasPassword;
 
   function onMagicLink() {
@@ -66,7 +71,7 @@ export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
       const supabase = createBrowserClient();
       const { error: err } = await supabase.auth.verifyOtp({ email, token, type: "email" });
       if (err) {
-        setError("Código incorrecto o expirado.");
+        setError(t("error_otp"));
         return;
       }
       await supabase.auth.refreshSession();
@@ -82,7 +87,7 @@ export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
       const supabase = createBrowserClient();
       const { error: err } = await supabase.auth.signInWithPassword({ email, password });
       if (err) {
-        setError("Correo o contraseña incorrectos.");
+        setError(t("error_password"));
         return;
       }
       await supabase.auth.refreshSession();
@@ -96,20 +101,15 @@ export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
     startTransition(async () => {
       try {
         if (typeof window === "undefined" || !window.PublicKeyCredential) {
-          setError("Tu navegador no soporta passkeys.");
+          setError(t("error_no_passkey"));
           return;
         }
-        const supabase = createBrowserClient();
-        const { error: err } = await supabase.auth.signInWithPasskey();
-        if (err) throw err;
-        await supabase.auth.refreshSession();
-        router.push(ROUTE_HREF(UNSAFE_ROUTE(RESOLVE_TARGET(locale, next))));
-        router.refresh();
+        await signInWithPasskey();
       } catch (err) {
         if (err instanceof Error && err.name === "NotAllowedError") {
-          setError("Cancelaste el inicio con passkey.");
+          setError(t("error_passkey_cancelled"));
         } else {
-          setError(err instanceof Error ? err.message : "No pudimos verificar tu passkey.");
+          setError(err instanceof Error ? err.message : t("error_passkey_failed"));
         }
       }
     });
@@ -125,7 +125,8 @@ export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
           onChange={setToken}
           sentTo={
             <>
-              Enviado a <strong className="font-medium text-foreground">{email}</strong>. Caduca en 10 minutos.
+              {t("sent_to_prefix")} <strong className="font-medium text-foreground">{email}</strong>.{" "}
+              {t("sent_expires")}
             </>
           }
         />
@@ -135,15 +136,15 @@ export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
           </Alert>
         )}
         <Button type="submit" disabled={pending || token.length !== 6} className="h-10 w-full">
-          <span>{pending ? "Verificando…" : "Verificar"}</span>
+          <span>{pending ? t("verifying") : t("verify")}</span>
           <ArrowRight size={16} />
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          ¿No llegó?{" "}
+          {t("not_arrived")}{" "}
           <button type="button" onClick={onMagicLink} disabled={pending} className="underline hover:text-foreground">
-            Reenviar
+            {t("resend")}
           </button>{" "}
-          · También puedes hacer clic en el enlace del correo.
+          {t("click_link")}
         </p>
       </form>
     );
@@ -152,14 +153,16 @@ export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
   // Step 2a: pick a method.
   return (
     <div className="flex flex-col gap-3">
-      <Button type="button" onClick={onPasskey} disabled={pending} className="h-10 w-full">
-        <Fingerprint size={16} />
-        <span>{pending ? "Verificando…" : "Continuar con passkey"}</span>
-      </Button>
+      {showPasskey && (
+        <Button type="button" onClick={onPasskey} disabled={pending} className="h-10 w-full">
+          <Fingerprint size={16} />
+          <span>{pending ? t("passkey_btn_verifying") : t("passkey_btn")}</span>
+        </Button>
+      )}
 
       {showPasswordOption && (
         <form onSubmit={onPassword} className="flex flex-col gap-2">
-          <Label htmlFor="email-password">Contraseña</Label>
+          <Label htmlFor="email-password">{t("label_password")}</Label>
           <div className="relative">
             <span className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 text-muted-foreground">
               <Lock size={16} />
@@ -177,7 +180,7 @@ export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
               type="button"
               onClick={() => setShowPassword((s) => !s)}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-              aria-label={showPassword ? "Ocultar" : "Mostrar"}
+              aria-label={showPassword ? t("hide_password") : t("show_password")}
             >
               {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
@@ -185,18 +188,22 @@ export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
           <Button
             type="submit"
             disabled={pending || password.length < 8}
-            variant="outline"
+            variant={showPasskey ? "outline" : "default"}
             className="h-10 w-full"
           >
-            <span>{pending ? "Ingresando…" : "Ingresar con contraseña"}</span>
+            <span>{pending ? t("signing_in") : t("sign_in_password")}</span>
             <ArrowRight size={16} />
           </Button>
         </form>
       )}
 
-      <div className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-        <span className="h-px flex-1 bg-border" />o<span className="h-px flex-1 bg-border" />
-      </div>
+      {(showPasskey || showPasswordOption) && (
+        <div className="flex items-center gap-3 text-tiny font-medium uppercase tracking-[0.08em] text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
+          {t("divider_or")}
+          <span className="h-px flex-1 bg-border" />
+        </div>
+      )}
 
       {error && (
         <Alert variant="destructive">
@@ -208,12 +215,92 @@ export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
         type="button"
         onClick={onMagicLink}
         disabled={pending}
-        variant="outline"
+        variant={showPasskey || showPasswordOption ? "outline" : "default"}
         className="h-10 w-full"
       >
         {isNew ? <KeyRound size={16} /> : <Mail size={16} />}
-        <span>{pending ? "Enviando…" : isNew ? "Crear cuenta con enlace mágico" : "Enviar enlace mágico"}</span>
+        <span>{pending ? t("sending") : isNew ? t("create_magic_link") : t("send_magic_link")}</span>
       </Button>
     </div>
   );
 }
+
+const LOCALE_ES = {
+  sent_to_prefix: "Enviado a",
+  sent_expires: "Caduca en 10 minutos.",
+  verifying: "Verificando…",
+  verify: "Verificar",
+  not_arrived: "¿No llegó?",
+  resend: "Reenviar",
+  click_link: "· También puedes hacer clic en el enlace del correo.",
+  passkey_btn_verifying: "Verificando…",
+  passkey_btn: "Continuar con passkey",
+  label_password: "Contraseña",
+  hide_password: "Ocultar",
+  show_password: "Mostrar",
+  signing_in: "Ingresando…",
+  sign_in_password: "Ingresar con contraseña",
+  divider_or: "o",
+  sending: "Enviando…",
+  create_magic_link: "Crear cuenta con enlace mágico",
+  send_magic_link: "Enviar enlace mágico",
+  error_otp: "Código incorrecto o expirado.",
+  error_password: "Correo o contraseña incorrectos.",
+  error_no_passkey: "Tu navegador no soporta passkeys.",
+  error_passkey_cancelled: "Cancelaste el inicio con passkey.",
+  error_passkey_failed: "No pudimos verificar tu passkey.",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  sent_to_prefix: "Sent to",
+  sent_expires: "Expires in 10 minutes.",
+  verifying: "Verifying…",
+  verify: "Verify",
+  not_arrived: "Didn't arrive?",
+  resend: "Resend",
+  click_link: "· You can also click the link in the email.",
+  passkey_btn_verifying: "Verifying…",
+  passkey_btn: "Continue with passkey",
+  label_password: "Password",
+  hide_password: "Hide",
+  show_password: "Show",
+  signing_in: "Signing in…",
+  sign_in_password: "Sign in with password",
+  divider_or: "or",
+  sending: "Sending…",
+  create_magic_link: "Create account with magic link",
+  send_magic_link: "Send magic link",
+  error_otp: "Incorrect or expired code.",
+  error_password: "Incorrect email or password.",
+  error_no_passkey: "Your browser doesn't support passkeys.",
+  error_passkey_cancelled: "You cancelled passkey sign-in.",
+  error_passkey_failed: "We couldn't verify your passkey.",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  sent_to_prefix: "Enviado para",
+  sent_expires: "Expira em 10 minutos.",
+  verifying: "A verificar…",
+  verify: "Verificar",
+  not_arrived: "Não chegou?",
+  resend: "Reenviar",
+  click_link: "· Também pode clicar no link do e-mail.",
+  passkey_btn_verifying: "A verificar…",
+  passkey_btn: "Continuar com passkey",
+  label_password: "Senha",
+  hide_password: "Ocultar",
+  show_password: "Mostrar",
+  signing_in: "A entrar…",
+  sign_in_password: "Entrar com senha",
+  divider_or: "ou",
+  sending: "A enviar…",
+  create_magic_link: "Criar conta com link mágico",
+  send_magic_link: "Enviar link mágico",
+  error_otp: "Código incorreto ou expirado.",
+  error_password: "E-mail ou senha incorretos.",
+  error_no_passkey: "O seu navegador não suporta passkeys.",
+  error_passkey_cancelled: "Cancelou o início de sessão com passkey.",
+  error_passkey_failed: "Não foi possível verificar a sua passkey.",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

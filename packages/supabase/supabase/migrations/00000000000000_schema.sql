@@ -2707,3 +2707,230 @@ create or replace function public.revoke_session(session_id uuid)
     where id = revoke_session.session_id
       and user_id = auth.uid();
   $$;
+
+-- ---------------------------------------------------------------------------
+-- public.create_tenant
+-- Creates a tenant + default organization + membership + wildcard permission
+-- atomically. Intended to be called from a trusted server-side context with the
+-- service-role key (bypasses RLS). Returns the new tenant_id, organization_id,
+-- organization_membership_id, and tenant_slug.
+-- ---------------------------------------------------------------------------
+create or replace function public.tenant_create(
+  tenant_slug  text,
+  tenant_name  text,
+  profile_id   uuid
+)
+  returns jsonb
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _tenant_id                    int;
+      _organization_id              int;
+      _organization_membership_id   int;
+    begin
+      insert into public.tenants (tenant_slug, tenant_name)
+        values (tenant_create.tenant_slug::extensions.citext, tenant_create.tenant_name)
+        returning tenants.tenant_id into _tenant_id;
+
+      insert into public.organizations (tenant_id, organization_slug, organization_name)
+        values (_tenant_id, tenant_create.tenant_slug::extensions.citext, tenant_create.tenant_name)
+        returning organizations.organization_id into _organization_id;
+
+      insert into public.organization_memberships (
+        organization_id,
+        profile_id,
+        organization_membership_accepted_at
+      )
+        values (_organization_id, tenant_create.profile_id, current_timestamp)
+        returning organization_memberships.organization_membership_id into _organization_membership_id;
+
+      insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+        values (_organization_membership_id, '*');
+
+      return jsonb_build_object(
+        'tenant_id',                  _tenant_id,
+        'tenant_slug',                tenant_create.tenant_slug,
+        'organization_id',            _organization_id,
+        'organization_membership_id', _organization_membership_id
+      );
+    end;
+  $$;
+
+grant execute on function public.tenant_create(text, text, uuid) to service_role;
+
+-- ============================================================
+-- agency_memberships — mutation RPCs
+-- ============================================================
+-- Errors use SQLSTATE P0001 with a stable, locale-key message so callers
+-- can match the key without parsing prose.
+
+-- Invite (upsert): called from actionInviteAffiliate after the caller resolves/creates
+-- the auth user. Validates that the caller is an active affiliate, then upserts the
+-- membership row atomically (insert on conflict → reset timestamps).
+-- Granted to service_role because the auth-user resolution step happens server-side
+-- and this RPC is always called from a trusted server action.
+create or replace function public.agency_membership_invite(
+  agency_id   uuid,
+  profile_id  uuid,
+  caller_id   uuid
+)
+  returns int
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _membership_id int;
+    begin
+      -- Caller must be an active affiliate.
+      if not exists (
+        select 1 from public.agency_memberships af
+        where af.agency_id = agency_membership_invite.agency_id
+          and af.profile_id = agency_membership_invite.caller_id
+          and af.agency_membership_accepted_at is not null
+          and af.agency_membership_revoked_at is null
+          and af.agency_membership_rejected_at is null
+      ) then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      if not exists (select 1 from public.agencies a where a.agency_id = agency_membership_invite.agency_id) then
+        raise exception 'agency_not_found' using errcode = 'P0001';
+      end if;
+
+      -- Check if already an active member (not revoked/rejected).
+      if exists (
+        select 1 from public.agency_memberships af
+        where af.agency_id = agency_membership_invite.agency_id
+          and af.profile_id = agency_membership_invite.profile_id
+          and af.agency_membership_accepted_at is not null
+          and af.agency_membership_revoked_at is null
+          and af.agency_membership_rejected_at is null
+      ) then
+        raise exception 'already_member' using errcode = 'P0001';
+      end if;
+
+      -- Upsert: insert fresh pending invite; on conflict reset any prior timestamps.
+      insert into public.agency_memberships (agency_id, profile_id)
+        values (agency_membership_invite.agency_id, agency_membership_invite.profile_id)
+        on conflict (agency_id, profile_id) do update
+          set agency_membership_accepted_at = null,
+              agency_membership_revoked_at  = null,
+              agency_membership_rejected_at = null
+        returning agency_membership_id into _membership_id;
+
+      return _membership_id;
+    end;
+  $$;
+
+grant execute on function public.agency_membership_invite(uuid, uuid, uuid) to service_role;
+
+-- Revoke or reactivate a membership. Any active affiliate may do this.
+-- Returns the updated agency_membership_id.
+create or replace function public.agency_membership_update(
+  agency_membership_id int,
+  agency_id            uuid,
+  operation            text,  -- 'revoke' | 'reactivate'
+  caller_id            uuid
+)
+  returns int
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    begin
+      if agency_membership_update.operation not in ('revoke', 'reactivate') then
+        raise exception 'invalid_operation' using errcode = 'P0001';
+      end if;
+
+      if not exists (
+        select 1 from public.agency_memberships af
+        where af.agency_id = agency_membership_update.agency_id
+          and af.profile_id = agency_membership_update.caller_id
+          and af.agency_membership_accepted_at is not null
+          and af.agency_membership_revoked_at is null
+          and af.agency_membership_rejected_at is null
+      ) then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      if agency_membership_update.operation = 'revoke' then
+        update public.agency_memberships
+          set agency_membership_revoked_at = current_timestamp
+          where public.agency_memberships.agency_membership_id = agency_membership_update.agency_membership_id
+            and public.agency_memberships.agency_id = agency_membership_update.agency_id;
+      else
+        update public.agency_memberships
+          set agency_membership_revoked_at  = null,
+              agency_membership_rejected_at = null,
+              agency_membership_accepted_at = current_timestamp
+          where public.agency_memberships.agency_membership_id = agency_membership_update.agency_membership_id
+            and public.agency_memberships.agency_id = agency_membership_update.agency_id;
+      end if;
+
+      if not found then
+        raise exception 'membership_not_found' using errcode = 'P0001';
+      end if;
+
+      return agency_membership_update.agency_membership_id;
+    end;
+  $$;
+
+grant execute on function public.agency_membership_update(int, uuid, text, uuid) to service_role;
+
+-- Respond to an invitation. The caller must own the pending membership.
+-- Returns the updated agency_membership_id.
+create or replace function public.agency_membership_respond(
+  agency_membership_id int,
+  response             text  -- 'accept' | 'reject'
+)
+  returns int
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _caller_id uuid := public.viewer_profile_id();
+      _row       public.agency_memberships;
+    begin
+      if agency_membership_respond.response not in ('accept', 'reject') then
+        raise exception 'invalid_response' using errcode = 'P0001';
+      end if;
+
+      if _caller_id is null then
+        raise exception 'not_authenticated' using errcode = 'P0001';
+      end if;
+
+      select * into _row
+        from public.agency_memberships
+        where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id
+          and profile_id = _caller_id;
+
+      if not found then
+        raise exception 'invitation_not_found' using errcode = 'P0001';
+      end if;
+
+      if _row.agency_membership_revoked_at is not null
+         or _row.agency_membership_accepted_at is not null
+         or _row.agency_membership_rejected_at is not null
+      then
+        raise exception 'invitation_not_pending' using errcode = 'P0001';
+      end if;
+
+      if agency_membership_respond.response = 'accept' then
+        update public.agency_memberships
+          set agency_membership_accepted_at = current_timestamp
+          where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id;
+      else
+        update public.agency_memberships
+          set agency_membership_rejected_at = current_timestamp
+          where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id;
+      end if;
+
+      return agency_membership_respond.agency_membership_id;
+    end;
+  $$;
+
+grant execute on function public.agency_membership_respond(int, text) to authenticated;

@@ -2,6 +2,7 @@
 
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import { useRosetta } from "~/hooks/use-rosetta";
 
 /**
  * Shared 6-digit code field for every OTP "sent" step (email, phone, document, accept).
@@ -18,9 +19,11 @@ export function OtpField({
   onChange: (next: string) => void;
   sentTo: React.ReactNode;
 }) {
+  const { t } = useRosetta(LOCALES);
+
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor={id}>Código de verificación</Label>
+      <Label htmlFor={id}>{t("label")}</Label>
       <Input
         id={id}
         value={value}
@@ -36,3 +39,17 @@ export function OtpField({
     </div>
   );
 }
+
+const LOCALE_ES = {
+  label: "Código de verificación",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  label: "Verification code",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  label: "Código de verificação",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

@@ -194,7 +194,7 @@ export function Sidebar({
       <nav className="mt-3 flex-1 overflow-y-auto px-2">
         <div className="mb-3">
           {collapsed ? null : (
-            <div className="text-muted-foreground px-2 pb-1 pt-1 text-[11px] font-medium uppercase tracking-wider">
+            <div className="text-muted-foreground px-2 pb-1 pt-1 text-xs font-medium uppercase tracking-wider">
               {t("workspace")}
             </div>
           )}
