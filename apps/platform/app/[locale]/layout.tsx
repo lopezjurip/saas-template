@@ -8,8 +8,8 @@ import { PostHogProvider } from "~/components/posthog-provider";
 import { PwaInstallBanner } from "~/components/pwa-install-banner";
 import { PwaRegister } from "~/components/pwa-register";
 import { ThemeProvider } from "~/components/theme-provider";
-import { APP_URL } from "~/lib/constants";
 import { getRosetta } from "~/hooks/get-rosetta";
+import { APP_URL } from "~/lib/constants";
 import { assertLocale } from "~/lib/i18n.server";
 import "~/styles/globals.css";
 
@@ -55,9 +55,11 @@ export default async function RootLayout(props: LayoutProps<"/[locale]">) {
     <html lang={locale} suppressHydrationWarning>
       <body>
         <PostHogProvider>
-          <PostHogIdentify />
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <GraphyClientProvider>{children}</GraphyClientProvider>
+            <GraphyClientProvider>
+              <PostHogIdentify />
+              {children}
+            </GraphyClientProvider>
             <Toaster richColors closeButton />
             <PwaInstallBanner />
           </ThemeProvider>

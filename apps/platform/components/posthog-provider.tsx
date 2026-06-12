@@ -1,4 +1,4 @@
-import { PostHogPageView, PostHogProvider as PHProvider } from "@posthog/next";
+import { PostHogProvider as PHProvider, PostHogPageView } from "@posthog/next";
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   return (

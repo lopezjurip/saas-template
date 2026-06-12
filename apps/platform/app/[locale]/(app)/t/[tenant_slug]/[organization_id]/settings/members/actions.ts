@@ -1,4 +1,5 @@
 "use server";
+import "server-only";
 
 import { randomBytes } from "node:crypto";
 import { createServiceRoleClient } from "@packages/supabase/client.service";

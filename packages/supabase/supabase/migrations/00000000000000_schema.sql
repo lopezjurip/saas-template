@@ -1556,33 +1556,37 @@ create view public.tenants_organizations_profiles as
 revoke all on public.tenants_organizations_profiles from anon, authenticated;
 grant select on public.tenants_organizations_profiles to authenticated;
 
+-- TODO: is this safe?
+create view public.user_sessions with (security_invoker = true, security_barrier = true) as (
+  select
+    s.id,
+    s.user_id,
+    s.user_agent,
+    s.ip::text as ip,
+    s.created_at,
+    s.refreshed_at,
+    s.not_after
+  from auth.sessions as s
+  -- where s.user_id = (select auth.uid())
+);
+
+revoke all on public.user_sessions from anon, authenticated;
+grant select on public.user_sessions to anon, authenticated;
+
 create or replace function public.viewer_sessions()
-  returns table (
-    id uuid,
-    user_agent text,
-    ip text,
-    created_at timestamptz,
-    refreshed_at timestamptz,
-    not_after timestamptz
-  )
+  returns setof public.user_sessions
   stable
   security definer
   language sql
   set search_path to ''
   as $$
-    select
-      s.id,
-      s.user_agent,
-      s.ip::text,
-      s.created_at,
-      s.refreshed_at,
-      s.not_after
-    from auth.sessions s
-    where s.user_id = auth.uid()
+    select s.*
+    from public.user_sessions as s
+    where s.user_id = (select auth.uid())
     order by s.refreshed_at desc nulls last;
   $$;
 
-create or replace function public.revoke_session(session_id uuid)
+create or replace function public.revoke_session(session_id auth.sessions.id%type)
   returns void
   security definer
   language sql

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { type CookieOptions, createServerClient as createServerClientSsr } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";

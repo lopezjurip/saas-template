@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createServerClient } from "@packages/supabase/client.server";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";

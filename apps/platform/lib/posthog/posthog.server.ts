@@ -1,3 +1,5 @@
+import "server-only";
+
 export { getPostHog } from "@posthog/next";
 
 import { PostHog } from "posthog-node";

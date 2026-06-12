@@ -9,8 +9,8 @@ import { Avatar, AvatarFallback } from "@packages/ui-common/shadcn/components/ui
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Card, CardContent } from "@packages/ui-common/shadcn/components/ui/card";
-import { URL_NEW } from "@packages/utils/url";
 import { INITIALS_OF } from "@packages/utils/string";
+import { URL_NEW } from "@packages/utils/url";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -30,7 +30,9 @@ export async function generateMetadata(props: PageProps<"/[locale]">): Promise<M
     alternates: {
       canonical: URL_NEW("/[locale]", APP_URL, { replace: { locale } }).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW("/[locale]", APP_URL, { replace: { locale: l } }).href])),
+        ...Object.fromEntries(
+          SUPPORTED_LOCALES.map((l) => [l, URL_NEW("/[locale]", APP_URL, { replace: { locale: l } }).href]),
+        ),
         "x-default": URL_NEW("/[locale]", APP_URL, { replace: { locale: DEFAULT_LOCALE } }).href,
       },
     },

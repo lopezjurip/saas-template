@@ -363,6 +363,14 @@ end if;
 - **Named functions, never arrow functions**. Use `function myFn() {}` or `export function myFn() {}`, never `const myFn = () => {}`. Named functions are hoisted (can call before declaration), show up clearly in stack traces, and are clearer to read. The only exception: short inline callbacks in `.map()` / `.filter()` where clarity is obvious from context.
 - **Tailwind: prefer native scale sizes over arbitrary px.** For width/height/size/gap/padding use the scale (`size-5`, `h-9`, `gap-2`) — including v4 fractional steps like `size-4.5` (18px) — instead of arbitrary `h-[18px]` / `w-[18px]`. Arbitrary bracket values are reserved for things the scale genuinely can't express. (Exact-px typography from a design spec is the accepted exception; the rule targets box sizing.)
 - **Map a discriminant to values with a keyed lookup, not `let` + `if/else`.** When several values vary together by one key (a tab, a status, a kind), return them from a `Record`-typed helper indexed by the key — `const head = CONSOLE_HEAD(t)[tab]` — rather than declaring mutable `let`s and reassigning them in an `if/else if` chain.
+- **JSDoc + `@example` for new exports.** Write a small JSDoc comment with at least one `@example` block on new functions, components, classes, and constants. Skip `page.tsx` and `layout.tsx` files — they are framework entry points, not reusable exports.
+  ```ts
+  /**
+   * Builds the full apex URL for the given path.
+   * @example APEX_URL("/home") // "https://example.com/home"
+   */
+  export function APEX_URL(path: string): string { … }
+  ```
 - **Logging pattern.** At the top of each file declare a namespaced logger whose name mirrors the file's route path:
   ```ts
   const log = debug("app:[locale]:t:[tenant_slug]:[organization_id]:settings:members:actions")

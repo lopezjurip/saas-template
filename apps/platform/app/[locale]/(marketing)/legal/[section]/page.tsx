@@ -52,8 +52,14 @@ export async function generateMetadata(props: PageProps<"/[locale]/legal/[sectio
     alternates: {
       canonical: URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: safeLocale, section } }).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: l, section } }).href])),
-        "x-default": URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: DEFAULT_LOCALE, section } }).href,
+        ...Object.fromEntries(
+          SUPPORTED_LOCALES.map((l) => [
+            l,
+            URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: l, section } }).href,
+          ]),
+        ),
+        "x-default": URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: DEFAULT_LOCALE, section } })
+          .href,
       },
     },
     openGraph: {

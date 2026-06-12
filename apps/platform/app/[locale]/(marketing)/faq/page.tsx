@@ -14,7 +14,9 @@ export async function generateMetadata(props: PageProps<"/[locale]/faq">): Promi
     alternates: {
       canonical: URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: safeLocale } }).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: l } }).href])),
+        ...Object.fromEntries(
+          SUPPORTED_LOCALES.map((l) => [l, URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: l } }).href]),
+        ),
         "x-default": URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: DEFAULT_LOCALE } }).href,
       },
     },

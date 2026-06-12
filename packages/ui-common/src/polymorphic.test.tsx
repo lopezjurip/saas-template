@@ -14,16 +14,28 @@ describe("PolymorphicProps", () => {
   });
 
   it("renders as another HTML element", () => {
-    render(<Box as="section" data-testid="box">content</Box>);
+    render(
+      <Box as="section" data-testid="box">
+        content
+      </Box>,
+    );
     expect(screen.getByTestId("box").tagName).toBe("SECTION");
   });
 
   it("renders as a custom component", () => {
     function CustomLink({ href, children, ...props }: React.ComponentPropsWithRef<"a">) {
-      return <a href={href} data-custom {...props}>{children}</a>;
+      return (
+        <a href={href} data-custom {...props}>
+          {children}
+        </a>
+      );
     }
 
-    render(<Box as={CustomLink} href="/home" data-testid="box">link</Box>);
+    render(
+      <Box as={CustomLink} href="/home" data-testid="box">
+        link
+      </Box>,
+    );
     const el = screen.getByTestId("box");
     expect(el.tagName).toBe("A");
     expect(el.hasAttribute("data-custom")).toBe(true);
@@ -33,7 +45,13 @@ describe("PolymorphicProps", () => {
   it("forwards ref", () => {
     let ref: HTMLButtonElement | null = null;
     render(
-      <Box as="button" ref={(el) => { ref = el; }} data-testid="box">
+      <Box
+        as="button"
+        ref={(el) => {
+          ref = el;
+        }}
+        data-testid="box"
+      >
         click
       </Box>,
     );
@@ -47,7 +65,11 @@ describe("PolymorphicProps", () => {
       return <Component {...props} />;
     }
 
-    render(<Card elevated data-testid="card">content</Card>);
+    render(
+      <Card elevated data-testid="card">
+        content
+      </Card>,
+    );
     expect(screen.getByTestId("card").hasAttribute("elevated")).toBe(false);
   });
 });

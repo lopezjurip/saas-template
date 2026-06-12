@@ -1,7 +1,6 @@
 import "server-only";
 
 import { match } from "@formatjs/intl-localematcher";
-import type { RosettaDict } from "@packages/rosetta/rosetta";
 import Negotiator from "negotiator";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -11,7 +10,6 @@ import {
   IS_SUPPORTED_LOCALE,
   LOCALE_COOKIE,
   LOCALE_SUPPORTED_RESOLVE,
-  ROSETTA,
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "./i18n";
