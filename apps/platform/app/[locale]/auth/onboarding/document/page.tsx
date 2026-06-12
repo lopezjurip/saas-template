@@ -1,11 +1,13 @@
+import { getCountries } from "~/hooks/get-countries";
 import { AuthCard } from "../../_components/auth-card";
 import { AuthHeader } from "../../_components/auth-header";
 import { StepShell } from "../_components/step-shell";
 import { getViewerOnboardingState } from "../state.server";
 import { DocumentForm } from "./document-form";
 
-export default async function OnboardingDocumentPage(props: PageProps<"/[locale]/auth/onboarding/document">) {
-  const state = await getViewerOnboardingState();
+export default async function OnboardingDocumentPage() {
+  const [state, countriesResult] = await Promise.all([getViewerOnboardingState(), getCountries()]);
+  const countries = countriesResult.data?.["addresses_level0"]?.["edges"]?.map((entry) => entry["node"]) ?? [];
 
   return (
     <AuthCard className="max-w-115">
@@ -15,9 +17,9 @@ export default async function OnboardingDocumentPage(props: PageProps<"/[locale]
           methods={state.methods}
           current="document"
           title="Agrega tu documento"
-          subtitle="Lo pediremos cuando lo necesites — para firmar contratos o pasar verificación KYC. No se publica en tu perfil."
+          subtitle="Necesitamos el país para adaptar el tipo, formato y validación del documento. No se publica en tu perfil."
         >
-          <DocumentForm />
+          <DocumentForm countries={countries} />
         </StepShell>
       </div>
     </AuthCard>

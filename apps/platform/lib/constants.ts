@@ -36,3 +36,5 @@ export const DEBUG = process.env["DEBUG"];
  * Trade-off: false = privacy (no enumeration via URL), true = better UX for power users.
  */
 export const AUTH_EXPOSE_ACCOUNT_EXISTENCE = true; // process.env["AUTH_EXPOSE_ACCOUNT_EXISTENCE"] === "true";
+
+export const PROXY_LOG_ENABLED = false;

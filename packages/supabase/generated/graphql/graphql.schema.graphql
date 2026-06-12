@@ -288,6 +288,7 @@ type Mutation {
   insertIntoprofile_webauthn_credentialsCollection(objects: [profile_webauthn_credentialsInsertInput!]!): profile_webauthn_credentialsInsertResponse
   """Adds one or more `tenant_domains` records to the collection"""
   insertIntotenant_domainsCollection(objects: [tenant_domainsInsertInput!]!): tenant_domainsInsertResponse
+  revoke_session(session_id: UUID!): Opaque
   """
   Updates zero or more records in the `organization_membership_permissions` collection
   """
@@ -848,6 +849,25 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [tenantsOrderBy!]
   ): tenantsConnection
+  """A pagable collection of type `user_sessions`"""
+  user_sessionsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: user_sessionsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [user_sessionsOrderBy!]
+  ): user_sessionsConnection
   viewer_agencies(
     """Query values in the collection after the provided cursor"""
     after: Cursor
@@ -911,6 +931,24 @@ type Query {
   ): organizationsConnection
   viewer_profile(strict: Boolean = false): profiles
   viewer_profile_id(strict: Boolean = false): UUID
+  viewer_sessions(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: user_sessionsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [user_sessionsOrderBy!]
+  ): user_sessionsConnection
   viewer_tenant_by_id(tenant_id: Int!): tenants
   viewer_tenant_by_slug(tenant_slug: String!): tenants
   viewer_tenant_validate(tenant_id: Int!): Boolean
@@ -2860,4 +2898,57 @@ type tenantsUpdateResponse {
   affectedCount: Int!
   """Array of records impacted by the mutation"""
   records: [tenants!]!
+}
+
+type user_sessions implements Node {
+  created_at: Datetime
+  id: UUID
+  ip: String
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  not_after: Datetime
+  refreshed_at: Datetime
+  user_agent: String
+  user_id: UUID
+}
+
+type user_sessionsConnection {
+  edges: [user_sessionsEdge!]!
+  pageInfo: PageInfo!
+}
+
+type user_sessionsEdge {
+  cursor: String!
+  node: user_sessions!
+}
+
+input user_sessionsFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [user_sessionsFilter!]
+  created_at: DatetimeFilter
+  id: UUIDFilter
+  ip: StringFilter
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: user_sessionsFilter
+  not_after: DatetimeFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [user_sessionsFilter!]
+  refreshed_at: DatetimeFilter
+  user_agent: StringFilter
+  user_id: UUIDFilter
+}
+
+input user_sessionsOrderBy {
+  created_at: OrderByDirection
+  id: OrderByDirection
+  ip: OrderByDirection
+  not_after: OrderByDirection
+  refreshed_at: OrderByDirection
+  user_agent: OrderByDirection
+  user_id: OrderByDirection
 }

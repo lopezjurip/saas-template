@@ -1,7 +1,7 @@
 import { updateSession } from "@packages/supabase/client.middleware";
 import { URL_NEW } from "@packages/utils/url";
 import { type NextRequest, NextResponse, userAgent } from "next/server";
-import { APEX_HOSTNAME, APP_HOST } from "~/lib/constants";
+import { APEX_HOSTNAME, APP_HOST, PROXY_LOG_ENABLED } from "~/lib/constants";
 import { debug } from "~/lib/debug";
 import { LOCALE_COOKIE, LOCALE_FROM_PATH, type SupportedLocale } from "~/lib/i18n";
 import { LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
@@ -9,6 +9,7 @@ import { LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
 const log = debug("proxy");
 
 const PUBLIC_PATH_REGEX = /^(\/|(\/(?:auth|legal|faq|pricing|opengraph-image|twitter-image|icon)(?:\/|$)))/;
+const GLOBAL_METADATA_ASSET_PATHS = new Set(["/apple-icon", "/icon", "/opengraph-image", "/twitter-image"]);
 
 /**
  * Name required by Next.js.
@@ -21,7 +22,9 @@ export async function proxy(request: NextRequest) {
   const proto = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
 
   const { isBot, device } = userAgent(request);
-  log.debug("[proxy] request", { hostname, pathname, isBot, deviceType: device.type ?? "desktop" });
+  if (PROXY_LOG_ENABLED) {
+    log.debug("[proxy] request", { hostname, pathname, isBot, deviceType: device.type ?? "desktop" });
+  }
 
   /**
    * Host classification: apex, Vercel preview (treat as apex), or unknown (bounce to apex).
@@ -35,6 +38,11 @@ export async function proxy(request: NextRequest) {
     /** Unknown host (localhost/127.0.0.1/custom domain — phase 2). Bounce to apex so session and cookies land on the right origin. */
     const apexUrl = URL_NEW(`${pathname}${request.nextUrl.search}`, `${proto}://${APP_HOST}`);
     return NextResponse.redirect(apexUrl);
+  }
+
+  if (isGlobalMetadataAssetPath(pathname)) {
+    const { response } = await updateSession(request);
+    return response;
   }
 
   /** /health — no auth, no locale. */
@@ -77,6 +85,12 @@ export async function proxy(request: NextRequest) {
     return setLocaleCookieOnResponse(NextResponse.redirect(url), detected);
   }
   const locale = localeFromPath;
+
+  if (isGlobalMetadataAssetPath(pathAfterLocale)) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathAfterLocale;
+    return setLocaleCookieOnResponse(NextResponse.rewrite(url), locale);
+  }
 
   /**
    * Mutate the incoming request's cookie BEFORE updateSession creates its NextResponse.next({request}).
@@ -124,7 +138,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sitemap|llms.txt|manifest.webmanifest).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sitemap|llms.txt|manifest.webmanifest|sw.js).*)",
   ],
 };
 
@@ -141,4 +155,8 @@ function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLoca
     domain: cookieDomain || undefined,
   });
   return response;
+}
+
+function isGlobalMetadataAssetPath(pathname: string): boolean {
+  return GLOBAL_METADATA_ASSET_PATHS.has(pathname);
 }

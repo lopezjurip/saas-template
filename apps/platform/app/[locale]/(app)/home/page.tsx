@@ -7,8 +7,8 @@ import { FloatingChrome } from "~/components/floating-chrome";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { ROUTE } from "~/lib/route";
-import { COUNT_DONE, METHOD_ORDER } from "../auth/onboarding/state";
-import { getViewerOnboardingState } from "../auth/onboarding/state.server";
+import { COUNT_DONE, METHOD_ORDER } from "../../auth/onboarding/state";
+import { getViewerOnboardingState } from "../../auth/onboarding/state.server";
 import { UserMenu } from "./_components/user-menu";
 
 const HomePickerPageQuery = gql(`

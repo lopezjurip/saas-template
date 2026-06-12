@@ -13,7 +13,7 @@ export function ObChips({ methods, current }: { methods: OnboardingState["method
   const locale = useLocaleParam();
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-1.5" data-component="ObChips">
       {METHOD_ORDER.map((id) => {
         const status = methods[id];
         const meta = METHOD_CATALOG[id];
@@ -26,11 +26,13 @@ export function ObChips({ methods, current }: { methods: OnboardingState["method
             className={cn(
               "inline-flex h-7 items-center gap-1.5 rounded-full border bg-background pl-1.5 pr-2.5 text-xs font-medium text-muted-foreground no-underline transition-colors hover:bg-accent hover:text-foreground",
               status === "done" &&
-                "border-primary bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+                "border-border bg-muted/35 text-muted-foreground hover:bg-muted/55 hover:text-foreground",
               status === "skipped" && "border-dashed",
               isRecommended && "border-foreground/55 text-foreground",
-              isCurrent && "border-ring text-foreground ring-[3px] ring-ring/20",
+              isCurrent && "border-ring ring-[3px] ring-ring/20",
+              isCurrent && status !== "done" && "text-foreground",
             )}
+            data-id={id}
             data-status={status}
             data-current={isCurrent ? "true" : "false"}
             data-recommended={isRecommended ? "true" : "false"}
@@ -38,8 +40,8 @@ export function ObChips({ methods, current }: { methods: OnboardingState["method
           >
             <span
               className={cn(
-                "inline-flex size-[18px] shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground",
-                status === "done" && "bg-primary-foreground/20 text-primary-foreground",
+                "inline-flex size-4.5 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground",
+                status === "done" && "bg-background text-muted-foreground ring-1 ring-border",
                 status === "skipped" && "bg-transparent",
                 isRecommended && "bg-foreground text-background",
               )}
@@ -82,6 +84,7 @@ export function ObSummary({
           {METHOD_ORDER.map((id) => (
             <span
               key={id}
+              data-id={id}
               data-status={methods[id]}
               className={cn(
                 "h-full rounded-sm bg-muted",

@@ -30,7 +30,19 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
     .select("webauthn_credential_id", { head: true, count: "exact" })
     .eq("profile_id", user.id);
 
+  const { data: avatar } = await supabase
+    .from("storage_profiles")
+    .select("src")
+    .eq("profile_id", user.id)
+    .eq("folder", "avatar")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   const profile_name_full = profile?.["profile_name_full"] ?? "";
+  const profile_avatar_src = avatar?.["src"]
+    ? new URL(avatar["src"], process.env["NEXT_PUBLIC_SUPABASE_URL"]!).toString()
+    : null;
   const identities = user["identities"] ?? [];
   const hasPassword = identities.some((i) => i["provider"] === "email");
   const hasPasskey = (passkeyCount ?? 0) > 0;
@@ -44,6 +56,7 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
     phone: user["phone"] ?? null,
     profile_name_full,
     profile_onboarded_at: profile?.["profile_onboarded_at"] ?? null,
+    profile_avatar_src,
     methods: {
       passkey: hasPasskey ? "done" : "pending",
       password: hasPassword ? "done" : "pending",

@@ -31,14 +31,21 @@ copy_if_exists() {
 #   +9  spare
 export BASE=${WORKTREE_PORT}
 export WS=$(echo "${WORKTREE_NAME}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
-export PROJECT=${WORKTREE_PROJECT}
+export PROJECT=$(echo "${WORKTREE_PROJECT}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+export PROJECT_PREFIX=$(printf '%s' "${PROJECT}" | cut -c1-20 | sed 's/-$//')
+export WS_HASH=$(printf '%s' "${PROJECT}:${WS}" | shasum -a 256 | cut -c1-12)
+
+if [ -z "$PROJECT_PREFIX" ]; then
+  export PROJECT_PREFIX="workspace"
+fi
+
+export INSTANCE_KEY="${PROJECT_PREFIX}-${WS_HASH}"
 
 python3 - <<PYEOF
 import re, os, sys
 
 base = int(os.environ['BASE'])
-ws = os.environ['WS']
-project = os.environ['PROJECT']
+instance_key = os.environ['INSTANCE_KEY']
 path = 'packages/supabase/supabase/config.toml'
 
 with open(path) as f:
@@ -52,7 +59,7 @@ for line in lines:
         section = m.group(1)
 
     if re.match(r'^project_id\s*=', line):
-        line = f'project_id = "{project}-{ws}"\n'
+        line = f'project_id = "{instance_key}"\n'
     elif section == 'api'       and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+1}\n'
     elif section == 'db'        and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+2}\n'
     elif section == 'db'        and re.match(r'^shadow_port\s*=', line): line = f'shadow_port = {base+3}\n'
@@ -64,7 +71,7 @@ for line in lines:
 with open(path, 'w') as f:
     f.writelines(result)
 
-print(f"Supabase config patched: project={project}-{ws}")
+print(f"Supabase config patched: project={instance_key}")
 print(f"  API:{base+1}  DB:{base+2}  shadow:{base+3}  Studio:{base+4}  Inbucket:{base+5}  Analytics:{base+6}")
 PYEOF
 
@@ -93,7 +100,6 @@ pnpm install
 # --- Register this worktree as a user of the shared Supabase instance ---
 # Multiple worktrees can share the same instance (same WORKTREE_NAME + WORKTREE_PROJECT).
 # Archive skips shutdown while any registered worktree remains.
-INSTANCE_KEY="${PROJECT}-${WS}"
 REF_DIR="$HOME/.worktree-refs/${INSTANCE_KEY}"
 REF_FILE="$REF_DIR/$(pwd | tr '/' '_')"
 mkdir -p "$REF_DIR"
