@@ -4,6 +4,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { ROUTE, UNSAFE_ROUTE } from "~/lib/route";
 import type { OnboardingMethodId, OnboardingState } from "../state";
 import { ObProgress } from "./ob-progress";
@@ -23,6 +24,7 @@ export function StepShell({
   children: React.ReactNode;
   skipHref?: string;
 }) {
+  const { t } = useRosetta(LOCALES);
   const locale = useLocaleParam();
   const hubHref = ROUTE("/[locale]/auth/onboarding", { locale });
 
@@ -33,7 +35,7 @@ export function StepShell({
           href={hubHref}
           className="inline-flex items-center gap-1.5 self-start -ml-1.5 rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
         >
-          <ArrowLeft size={14} /> Volver al inicio
+          <ArrowLeft size={14} /> {t("back")}
         </Link>
       </div>
 
@@ -52,9 +54,26 @@ export function StepShell({
         className="mt-1 h-[44px] w-full text-[13.5px] text-muted-foreground hover:text-foreground"
       >
         <Link href={skipHref ? UNSAFE_ROUTE(skipHref) : hubHref}>
-          <span>Saltar por ahora — lo configuro después</span>
+          <span>{t("skip")}</span>
         </Link>
       </Button>
     </div>
   );
 }
+
+const LOCALE_ES = {
+  back: "Volver al inicio",
+  skip: "Saltar por ahora — lo configuro después",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    back: "Back to overview",
+    skip: "Skip for now — I'll set it up later",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    back: "Voltar ao início",
+    skip: "Pular por agora — configuro depois",
+  } satisfies typeof LOCALE_ES,
+};

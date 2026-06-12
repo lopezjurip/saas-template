@@ -33,7 +33,7 @@ export function SystemMessage({ kind = "notFound", reset }: { kind?: SystemKind;
 
       <div className="flex max-w-105 flex-col items-center gap-5 text-center">
         <div className="relative inline-flex items-center justify-center">
-          <span className="text-muted/70 select-none font-mono text-[88px] font-semibold leading-none tracking-[-0.04em]">
+          <span className="text-muted/70 select-none font-mono text-8xl font-semibold leading-none tracking-[-0.04em]">
             {code}
           </span>
           <span className="absolute inset-0 inline-flex items-center justify-center">
@@ -44,10 +44,8 @@ export function SystemMessage({ kind = "notFound", reset }: { kind?: SystemKind;
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-foreground m-0 text-[21px] font-semibold tracking-[-0.02em] text-balance">
-            {copy.title}
-          </h1>
-          <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] text-pretty">{copy.desc}</p>
+          <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em] text-balance">{copy.title}</h1>
+          <p className="text-muted-foreground m-0 text-sm leading-[1.55] text-pretty">{copy.desc}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -72,7 +70,7 @@ export function SystemMessage({ kind = "notFound", reset }: { kind?: SystemKind;
         </div>
 
         {kind === "error" ? (
-          <code className="text-muted-foreground/70 mt-1 font-mono text-[11px]">ref: 7f2c8a3b</code>
+          <code className="text-muted-foreground/70 mt-1 font-mono text-xs">ref: 7f2c8a3b</code>
         ) : null}
       </div>
     </div>
@@ -80,6 +78,12 @@ export function SystemMessage({ kind = "notFound", reset }: { kind?: SystemKind;
 }
 
 type Copy = { title: string; desc: string; primary: string; secondary: string };
+
+function RESOLVE_COPY(locale: string): Record<SystemKind, Copy> {
+  if (locale.startsWith("en")) return LOCALE_EN;
+  if (locale.startsWith("pt")) return LOCALE_PT;
+  return LOCALE_ES;
+}
 
 const LOCALE_ES: Record<SystemKind, Copy> = {
   notFound: {
@@ -143,9 +147,3 @@ const LOCALE_PT = {
     secondary: "Ir para o início",
   },
 } satisfies typeof LOCALE_ES;
-
-function RESOLVE_COPY(locale: string): Record<SystemKind, Copy> {
-  if (locale.startsWith("en")) return LOCALE_EN;
-  if (locale.startsWith("pt")) return LOCALE_PT;
-  return LOCALE_ES;
-}

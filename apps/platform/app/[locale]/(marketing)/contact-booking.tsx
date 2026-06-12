@@ -24,7 +24,7 @@ export function ContactBooking({ locale, labels, days }: ContactBookingProps) {
     <div className="flex min-w-0 flex-col gap-4 rounded-lg border border-border bg-background p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm/normal font-medium">{labels.week}</span>
-        <span className="font-mono text-[11px] text-muted-foreground">{labels.timezone}</span>
+        <span className="font-mono text-xs text-muted-foreground">{labels.timezone}</span>
       </div>
       <div className="grid grid-cols-5 gap-1.5">
         {days.map((day, index) => {
@@ -42,7 +42,7 @@ export function ContactBooking({ locale, labels, days }: ContactBookingProps) {
               )}
             >
               <span className="text-tiny font-medium uppercase tracking-[0.04em] opacity-80">{day}</span>
-              <span className="text-[15px] font-semibold tabular-nums">{DATES[index]}</span>
+              <span className="text-sm font-semibold tabular-nums">{DATES[index]}</span>
             </button>
           );
         })}

@@ -47,10 +47,10 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
             <X size={22} />
           </span>
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em]">
+            <h1 className="text-foreground m-0 text-lg font-semibold tracking-[-0.01em]">
               {state === "rejected" ? t("rejected_title") : t("expired_title")}
             </h1>
-            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] text-pretty">
+            <p className="text-muted-foreground m-0 text-sm leading-[1.55] text-pretty">
               {state === "rejected"
                 ? t("rejected_desc", { name: firstName, org: ORG })
                 : t("expired_desc", { org: ORG })}
@@ -66,10 +66,10 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
             <Check size={24} strokeWidth={2.25} />
           </span>
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em]">
+            <h1 className="text-foreground m-0 text-lg font-semibold tracking-[-0.01em]">
               {t("claimed_title", { org: ORG })}
             </h1>
-            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] text-pretty">{t("claimed_desc")}</p>
+            <p className="text-muted-foreground m-0 text-sm leading-[1.55] text-pretty">{t("claimed_desc")}</p>
           </div>
           <Button asChild className="w-full">
             <Link href={homeHref}>
@@ -84,15 +84,15 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
               {ORG.slice(0, 2).toUpperCase()}
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.06em]">
+              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
                 {t("invitation")}
               </span>
-              <span className="text-foreground truncate text-[15px] font-semibold tracking-[-0.01em]">{ORG}</span>
+              <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">{ORG}</span>
             </div>
           </div>
 
           <div className="flex flex-col gap-1">
-            <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em] text-balance">
+            <h1 className="text-foreground m-0 text-lg font-semibold tracking-[-0.01em] text-balance">
               {t("invited_title", { name: firstName })}
             </h1>
             <p className="text-muted-foreground m-0 text-sm/normal leading-normal text-pretty">
@@ -118,7 +118,7 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
 
           {state === "loggedout" ? (
             <div className="flex flex-col gap-2.5">
-              <p className="text-muted-foreground text-[12.5px] leading-normal text-pretty">
+              <p className="text-muted-foreground text-xs leading-normal text-pretty">
                 {t("loggedout_desc", { dest: DESTINATION })}
               </p>
               <Button asChild className="w-full">
@@ -133,14 +133,14 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
           ) : (
             <div className="flex flex-col gap-2.5">
               <div className="border-border bg-muted/45 flex items-center gap-2.5 rounded-md border px-3 py-2">
-                <span className="bg-primary text-primary-foreground inline-flex size-7 items-center justify-center rounded-full text-[11px] font-semibold">
+                <span className="bg-primary text-primary-foreground inline-flex size-7 items-center justify-center rounded-full text-xs font-semibold">
                   {VIEWER["initials"]}
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col leading-[1.2]">
-                  <span className="text-foreground truncate text-[12.5px] font-medium">{VIEWER["name"]}</span>
+                  <span className="text-foreground truncate text-xs font-medium">{VIEWER["name"]}</span>
                   <span className="text-muted-foreground truncate text-xs">{DESTINATION}</span>
                 </div>
-                <span className="text-muted-foreground shrink-0 text-[11px]">{t("your_session")}</span>
+                <span className="text-muted-foreground shrink-0 text-xs">{t("your_session")}</span>
               </div>
               <Button className="w-full">
                 <Check size={16} strokeWidth={2.25} /> {t("accept")}
@@ -152,7 +152,7 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
           )}
 
           <div className="-mt-1 flex flex-col items-center gap-1">
-            <p className="text-muted-foreground/80 text-center text-[11px] leading-[1.45]">{t("expires_14")}</p>
+            <p className="text-muted-foreground/80 text-center text-xs leading-[1.45]">{t("expires_14")}</p>
           </div>
         </div>
       )}

@@ -15,60 +15,6 @@ import { useRosetta } from "~/hooks/use-rosetta";
 import { type AppRoute, ROUTE_HREF } from "~/lib/route";
 import { PERMISSION_SLUG_WILDCARD } from "../../schemas";
 
-const LOCALE_ES = {
-  presets_label: "Plantillas",
-  presets_hint: "Aplica una plantilla y luego ajusta los permisos individualmente.",
-  saved_instant: "Se guarda al instante",
-  permissions_label: "Permisos ({{count}})",
-  wildcard_label: "Acceso completo (dueño)",
-  wildcard_description: "Cubre todos los permisos actuales y futuros de la organización.",
-  done: "Listo",
-  remove_button: "Remover de la organización",
-  remove_confirm: "¿Remover esta membresía? Perderá acceso a la organización.",
-  wildcard_footer:
-    'Cuando alguien tiene "acceso completo" el comodín cubre cualquier permiso. Quítalo si quieres asignar permisos de forma individual.',
-  save_failed: "No pudimos guardar el cambio. Intenta de nuevo.",
-  last_admin_protected: "Esta organización quedaría sin administradores. Primero dale acceso completo a otra persona.",
-  self_remove_blocked: "Para salir de la organización pídele a otro administrador que te remueva.",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    presets_label: "Templates",
-    presets_hint: "Apply a template and tweak individual permissions afterwards.",
-    saved_instant: "Saved instantly",
-    permissions_label: "Permissions ({{count}})",
-    wildcard_label: "Full access (owner)",
-    wildcard_description: "Covers every current and future permission in the organization.",
-    done: "Done",
-    remove_button: "Remove from organization",
-    remove_confirm: "Remove this organization_membership? They'll lose access to the organization.",
-    wildcard_footer:
-      'When someone has "full access" the wildcard covers any permission. Remove it to assign permissions individually.',
-    save_failed: "We couldn't save the change. Try again.",
-    last_admin_protected:
-      "This would leave the organization without any administrators. Give full access to someone else first.",
-    self_remove_blocked: "To leave the organization, ask another administrator to remove you.",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    presets_label: "Modelos",
-    presets_hint: "Aplique um modelo e ajuste as permissões individualmente.",
-    saved_instant: "Salvo na hora",
-    permissions_label: "Permissões ({{count}})",
-    wildcard_label: "Acesso completo (dono)",
-    wildcard_description: "Cobre todas as permissões atuais e futuras da organização.",
-    done: "Pronto",
-    remove_button: "Remover da organização",
-    remove_confirm: "Remover esta membresia? Vai perder o acesso à organização.",
-    wildcard_footer:
-      'Quando alguém tem "acesso completo" o coringa cobre qualquer permissão. Remova-o se quiser atribuir permissões individualmente.',
-    save_failed: "Não conseguimos salvar a alteração. Tente novamente.",
-    last_admin_protected: "A organização ficaria sem administradores. Dê acesso completo a outra pessoa primeiro.",
-    self_remove_blocked: "Para sair da organização, peça a outro administrador para te remover.",
-  } satisfies typeof LOCALE_ES,
-};
-
 /**
  * Maps a Postgres trigger exception message to a locale key for the UI.
  * Falls back to `save_failed` when no specific code is recognized.
@@ -311,7 +257,7 @@ export function EditPermissionsForm({
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
             {t("permissions_label", { count })}
           </span>
-          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
+          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
             <Check size={12} strokeWidth={2.5} className="text-emerald-600 dark:text-emerald-400" />
             {t("saved_instant")}
           </span>
@@ -332,12 +278,12 @@ export function EditPermissionsForm({
           />
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="inline-flex items-center gap-2">
-              <Label htmlFor="perm_wildcard" className="cursor-pointer text-[13.5px] font-semibold">
+              <Label htmlFor="perm_wildcard" className="cursor-pointer text-sm font-semibold">
                 {t("wildcard_label")}
               </Label>
-              <code className="text-muted-foreground/80 font-mono text-[11px]">*</code>
+              <code className="text-muted-foreground/80 font-mono text-xs">*</code>
             </span>
-            <span className="text-muted-foreground text-[12px] leading-[1.45] text-pretty">
+            <span className="text-muted-foreground text-xs leading-[1.45] text-pretty">
               {t("wildcard_description")}
             </span>
           </div>
@@ -365,7 +311,7 @@ export function EditPermissionsForm({
                 />
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <Label htmlFor={`perm_${slug}`} className="cursor-pointer">
-                    <code className="text-foreground font-mono text-[12px]">{slug}</code>
+                    <code className="text-foreground font-mono text-xs">{slug}</code>
                   </Label>
                   {perm["permission_description"] && (
                     <span className="text-muted-foreground text-xs leading-[1.4] text-pretty">
@@ -404,3 +350,57 @@ export function EditPermissionsForm({
     </div>
   );
 }
+
+const LOCALE_ES = {
+  presets_label: "Plantillas",
+  presets_hint: "Aplica una plantilla y luego ajusta los permisos individualmente.",
+  saved_instant: "Se guarda al instante",
+  permissions_label: "Permisos ({{count}})",
+  wildcard_label: "Acceso completo (dueño)",
+  wildcard_description: "Cubre todos los permisos actuales y futuros de la organización.",
+  done: "Listo",
+  remove_button: "Remover de la organización",
+  remove_confirm: "¿Remover esta membresía? Perderá acceso a la organización.",
+  wildcard_footer:
+    'Cuando alguien tiene "acceso completo" el comodín cubre cualquier permiso. Quítalo si quieres asignar permisos de forma individual.',
+  save_failed: "No pudimos guardar el cambio. Intenta de nuevo.",
+  last_admin_protected: "Esta organización quedaría sin administradores. Primero dale acceso completo a otra persona.",
+  self_remove_blocked: "Para salir de la organización pídele a otro administrador que te remueva.",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    presets_label: "Templates",
+    presets_hint: "Apply a template and tweak individual permissions afterwards.",
+    saved_instant: "Saved instantly",
+    permissions_label: "Permissions ({{count}})",
+    wildcard_label: "Full access (owner)",
+    wildcard_description: "Covers every current and future permission in the organization.",
+    done: "Done",
+    remove_button: "Remove from organization",
+    remove_confirm: "Remove this organization_membership? They'll lose access to the organization.",
+    wildcard_footer:
+      'When someone has "full access" the wildcard covers any permission. Remove it to assign permissions individually.',
+    save_failed: "We couldn't save the change. Try again.",
+    last_admin_protected:
+      "This would leave the organization without any administrators. Give full access to someone else first.",
+    self_remove_blocked: "To leave the organization, ask another administrator to remove you.",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    presets_label: "Modelos",
+    presets_hint: "Aplique um modelo e ajuste as permissões individualmente.",
+    saved_instant: "Salvo na hora",
+    permissions_label: "Permissões ({{count}})",
+    wildcard_label: "Acesso completo (dono)",
+    wildcard_description: "Cobre todas as permissões atuais e futuras da organização.",
+    done: "Pronto",
+    remove_button: "Remover da organização",
+    remove_confirm: "Remover esta membresia? Vai perder o acesso à organização.",
+    wildcard_footer:
+      'Quando alguém tem "acesso completo" o coringa cobre qualquer permissão. Remova-o se quiser atribuir permissões individualmente.',
+    save_failed: "Não conseguimos salvar a alteração. Tente novamente.",
+    last_admin_protected: "A organização ficaria sem administradores. Dê acesso completo a outra pessoa primeiro.",
+    self_remove_blocked: "Para sair da organização, peça a outro administrador para te remover.",
+  } satisfies typeof LOCALE_ES,
+};

@@ -3,6 +3,7 @@ import "server-only";
 
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
+import { captureOnboardingCompleted, captureUserSignedUp } from "~/lib/posthog/events.server";
 import { authedAction, formAction } from "~/lib/safe-action.server";
 
 const log = debug("onboarding:finish");
@@ -29,9 +30,11 @@ const finishOnboardingRun = authedAction.action(async ({ ctx: { supabase, user }
   }
 
   log.info("onboarding finished", { profile_id: user.id });
-  const fullName = (user.user_metadata?.["full_name"] as string | undefined)?.trim();
-  const firstName = fullName?.split(/\s+/)[0];
-  redirect(firstName ? `/[locale]/auth/success?name=${encodeURIComponent(firstName)}` : "/[locale]/auth/success");
+
+  const provider = user.app_metadata?.["provider"];
+  void Promise.allSettled([captureUserSignedUp(user.id, { provider }), captureOnboardingCompleted(user.id)]);
+
+  redirect("/[locale]/auth/success");
 });
 
 /** The hub passes this as a `<form action>`, so we adapt via formAction. */

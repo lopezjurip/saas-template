@@ -86,9 +86,7 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
       </div>
 
       <header className="flex flex-col gap-3">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
-          {t("eyebrow")}
-        </span>
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">{t("eyebrow")}</span>
         <div className="flex items-start gap-3.5">
           <span className="border-border bg-muted text-foreground inline-flex size-12 shrink-0 items-center justify-center rounded-lg border">
             <Building2 size={22} />
@@ -103,8 +101,8 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
                 label={isGlobal ? t("scope_global") : t("scope_orgs", { count: orgGrants.length })}
               />
             </div>
-            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[12.5px]">
-              <code className="font-mono text-[11px]">{agency.agency_slug}</code>
+            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
+              <code className="font-mono text-xs">{agency.agency_slug}</code>
               {agency.agency_disabled_at ? (
                 <>
                   <span className="opacity-40">·</span>
@@ -126,7 +124,7 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
           </span>
         </div>
         {affiliates.length === 0 ? (
-          <p className="text-muted-foreground px-1 text-[12.5px]">{t("affiliates_empty")}</p>
+          <p className="text-muted-foreground px-1 text-xs">{t("affiliates_empty")}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {affiliates.map((aff) => (
@@ -160,7 +158,7 @@ export default async function AdminAgencyDetailPage(props: PageProps<"/[locale]/
         {isGlobal ? (
           <GlobalGrantCard title={t("global_title")} desc={t("global_desc")} accessLabel={t("read_access")} />
         ) : orgGrants.length === 0 ? (
-          <p className="text-muted-foreground px-1 text-[12.5px]">{t("grants_empty")}</p>
+          <p className="text-muted-foreground px-1 text-xs">{t("grants_empty")}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {orgGrants.map((g) => (
@@ -259,7 +257,7 @@ function AffiliateRow({
     >
       <span
         className={cn(
-          "bg-muted text-foreground inline-flex size-[34px] shrink-0 items-center justify-center rounded-full text-[12px] font-semibold tracking-[-0.01em]",
+          "bg-muted text-foreground inline-flex size-[34px] shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-[-0.01em]",
           dim && "opacity-60",
         )}
       >
@@ -268,16 +266,14 @@ function AffiliateRow({
       <span className="flex min-w-0 flex-col gap-px">
         <span
           className={cn(
-            "overflow-hidden text-ellipsis whitespace-nowrap text-[13.5px] font-medium",
+            "overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium",
             dim ? "text-muted-foreground" : "text-foreground",
           )}
         >
           {name}
         </span>
         {email && email !== name ? (
-          <span className="text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap text-[12px]">
-            {email}
-          </span>
+          <span className="text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap text-xs">{email}</span>
         ) : null}
       </span>
       <AffiliationBadge state={state} label={stateLabel} />
@@ -293,10 +289,10 @@ function GlobalGrantCard({ title, desc, accessLabel }: { title: string; desc: st
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-foreground text-[13.5px] font-semibold">{title}</span>
+          <span className="text-foreground text-sm font-semibold">{title}</span>
           <span className="text-muted-foreground/80 font-mono text-tiny">org = NULL</span>
         </div>
-        <span className="text-muted-foreground text-[12px] leading-[1.45] text-pretty">{desc}</span>
+        <span className="text-muted-foreground text-xs leading-[1.45] text-pretty">{desc}</span>
         <div className="mt-0.5">
           <AccessPill global label={accessLabel} />
         </div>
@@ -319,12 +315,12 @@ function OrgGrantCard({
       className="border-border bg-background grid items-start gap-3 rounded-lg border px-3.5 py-3"
       style={{ gridTemplateColumns: "36px 1fr" }}
     >
-      <span className="bg-muted text-foreground border-border inline-flex size-9 shrink-0 items-center justify-center rounded-lg border text-[12.5px] font-semibold">
+      <span className="bg-muted text-foreground border-border inline-flex size-9 shrink-0 items-center justify-center rounded-lg border text-xs font-semibold">
         {INITIALS_OF(orgName)}
       </span>
       <div className="flex min-w-0 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-foreground text-[13.5px] font-medium">{orgName}</span>
+          <span className="text-foreground text-sm font-medium">{orgName}</span>
           {orgSlug ? <code className="text-muted-foreground/80 font-mono text-tiny">{orgSlug}</code> : null}
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -339,7 +335,7 @@ function AccessPill({ global, label }: { global: boolean; label: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium leading-[1.3]",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-medium leading-[1.3]",
         global
           ? "border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
           : "border-border text-foreground bg-background border",

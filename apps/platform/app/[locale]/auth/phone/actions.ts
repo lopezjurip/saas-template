@@ -51,16 +51,15 @@ const checkPhoneRun = action.inputSchema(checkPhoneSchema).action(async ({ parse
     redirect(`/[locale]/auth/phone?${qs.toString()}`);
   }
 
-  const [passkeyRes, passwordRes] = await Promise.all([
-    supabase.rpc("phone_has_passkey", { phone_to_check: phone, default_code: "+56" }),
-    supabase.rpc("phone_has_password", { phone_to_check: phone, default_code: "+56" }),
-  ]);
+  const { data: hasPassword } = await supabase.rpc("phone_has_password", {
+    phone_to_check: phone,
+    default_code: "+56",
+  });
 
   const qs = new URLSearchParams({
     value: normalized as string,
     exists: "1",
-    has_passkey: passkeyRes.data ? "1" : "0",
-    has_password: passwordRes.data ? "1" : "0",
+    has_password: hasPassword ? "1" : "0",
     channels: "sms,whatsapp",
     next,
   });

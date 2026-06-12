@@ -4,6 +4,7 @@ import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getRosetta } from "~/hooks/get-rosetta";
 import { ROUTE } from "~/lib/route";
 import { AccountMobileNav, AccountSidebar } from "./_components/sidebar";
 
@@ -12,6 +13,7 @@ export default async function AccountLayout(props: LayoutProps<"/[locale]/home/a
   const user = await getSupabaseServerUser();
   if (!user) redirect("/[locale]/auth");
   const email = user["email"] ?? "";
+  const { t } = await getRosetta(LOCALES);
 
   return (
     <div className="bg-background relative flex min-h-svh w-full flex-col">
@@ -28,16 +30,16 @@ export default async function AccountLayout(props: LayoutProps<"/[locale]/home/a
           href={ROUTE("/[locale]/home", { locale })}
           className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex items-center gap-1.5 rounded-md py-1 pr-2 pl-1.5 text-[12.5px] font-medium no-underline"
         >
-          <ArrowLeft size={14} /> <span>Inicio</span>
+          <ArrowLeft size={14} /> <span>{t("home")}</span>
         </Link>
         <span className="text-muted-foreground text-sm/normal opacity-50">/</span>
-        <span className="text-foreground text-sm/normal font-medium">Mi cuenta</span>
+        <span className="text-foreground text-sm/normal font-medium">{t("my_account")}</span>
         <div className="flex-1" />
         <Link
           href={ROUTE("/[locale]/home/account/profile", { locale })}
           className="text-foreground bg-background hover:bg-accent inline-flex cursor-pointer items-center gap-2 rounded-full border py-1 pr-2 pl-1 text-xs"
         >
-          <span className="bg-primary text-primary-foreground inline-flex size-6.5 items-center justify-center rounded-full text-[11px] font-semibold">
+          <span className="bg-primary text-primary-foreground inline-flex size-6.5 items-center justify-center rounded-full text-tiny font-semibold">
             {INITIALS_OF(email)}
           </span>
           <span>{email}</span>
@@ -59,3 +61,20 @@ export default async function AccountLayout(props: LayoutProps<"/[locale]/home/a
     </div>
   );
 }
+
+const LOCALE_ES = {
+  home: "Inicio",
+  my_account: "Mi cuenta",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  home: "Home",
+  my_account: "My account",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  home: "Início",
+  my_account: "Minha conta",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

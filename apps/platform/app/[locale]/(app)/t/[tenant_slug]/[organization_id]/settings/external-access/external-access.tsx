@@ -59,11 +59,11 @@ export function ExternalAccess({
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-[26px] px-6 py-8">
       <header className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
           {organizationName} · {t("eyebrow")}
         </span>
-        <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
+        <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("title")}</h1>
+        <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">
           {t("subtitle", { org: organizationName })}
         </p>
       </header>
@@ -79,7 +79,7 @@ export function ExternalAccess({
           {t("grant_heading")}
         </span>
         {available.length === 0 ? (
-          <p className="text-muted-foreground px-1 text-[12.5px]">{t("grant_empty")}</p>
+          <p className="text-muted-foreground px-1 text-xs">{t("grant_empty")}</p>
         ) : (
           <div className="flex flex-col gap-2 @min-[520px]:flex-row @min-[520px]:items-center">
             <Select value={selected} onValueChange={setSelected}>
@@ -115,9 +115,7 @@ export function ExternalAccess({
             </span>
             <div className="flex max-w-[42ch] flex-col gap-1">
               <span className="text-foreground text-sm font-semibold">{t("none_title")}</span>
-              <span className="text-[12.5px] leading-normal text-pretty">
-                {t("none_desc", { org: organizationName })}
-              </span>
+              <span className="text-xs leading-normal text-pretty">{t("none_desc", { org: organizationName })}</span>
             </div>
           </div>
         ) : (
@@ -173,12 +171,12 @@ function AgencyAccessCard({
   return (
     <div className="border-border bg-background flex flex-col gap-3 rounded-lg border px-3.5 py-3">
       <div className="flex items-start gap-3">
-        <span className="border-border bg-muted text-foreground inline-flex size-10 shrink-0 items-center justify-center rounded-lg border text-[12.5px] font-semibold">
+        <span className="border-border bg-muted text-foreground inline-flex size-10 shrink-0 items-center justify-center rounded-lg border text-xs font-semibold">
           {INITIALS_OF(agency.agency_name)}
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-foreground text-[14px] font-semibold tracking-[-0.01em]">{agency.agency_name}</span>
-          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[12px]">
+          <span className="text-foreground text-sm font-semibold tracking-[-0.01em]">{agency.agency_name}</span>
+          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
             {agency.is_global ? (
               <>
                 <Globe size={12} /> {t("global_managed")}
@@ -191,7 +189,7 @@ function AgencyAccessCard({
           </span>
         </div>
         {agency.is_global ? (
-          <span className="text-muted-foreground/70 border-border inline-flex shrink-0 items-center gap-1 self-center rounded-md border border-dashed px-2 py-1 text-[11px]">
+          <span className="text-muted-foreground/70 border-border inline-flex shrink-0 items-center gap-1 self-center rounded-md border border-dashed px-2 py-1 text-xs">
             <Lock size={11} /> {t("platform")}
           </span>
         ) : (
@@ -209,7 +207,7 @@ function AgencyAccessCard({
       <div className="flex flex-wrap gap-1.5 pl-[52px]">
         <span
           className={cn(
-            "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium leading-[1.3]",
+            "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-medium leading-[1.3]",
             agency.is_global
               ? "border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
               : "border-border text-foreground bg-background border",

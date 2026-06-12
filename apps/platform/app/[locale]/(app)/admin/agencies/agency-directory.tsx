@@ -29,13 +29,11 @@ export function AgencyDirectory({ locale, items }: { locale: string; items: Agen
     <div className="@container mx-auto flex w-full max-w-4xl flex-col gap-7 px-6 py-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
             {t("eyebrow")}
           </span>
-          <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-          <p className="text-muted-foreground m-0 max-w-[68ch] text-[13.5px] leading-[1.55] text-pretty">
-            {t("subtitle")}
-          </p>
+          <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("title")}</h1>
+          <p className="text-muted-foreground m-0 max-w-[68ch] text-sm leading-[1.55] text-pretty">{t("subtitle")}</p>
         </div>
         <Button asChild size="sm" className="h-9">
           <Link href={createHref}>
@@ -67,7 +65,7 @@ export function AgencyDirectory({ locale, items }: { locale: string; items: Agen
             </span>
             <div className="flex max-w-[42ch] flex-col gap-1">
               <span className="text-foreground text-sm font-semibold">{t("empty_title")}</span>
-              <span className="text-[12.5px] leading-normal text-pretty">{t("empty_desc")}</span>
+              <span className="text-xs leading-normal text-pretty">{t("empty_desc")}</span>
             </div>
             <Button asChild size="sm" className="mt-1">
               <Link href={createHref}>
@@ -182,7 +180,7 @@ function AgencyDirRow({
             </span>
           ) : null}
         </span>
-        <span className="text-muted-foreground inline-flex items-center gap-1.5 whitespace-nowrap text-[12px] tabular-nums">
+        <span className="text-muted-foreground inline-flex items-center gap-1.5 whitespace-nowrap text-xs tabular-nums">
           {activeLabel}
         </span>
       </span>
@@ -221,10 +219,10 @@ function AgencyDirCard({
         <ScopeBadge global={agency["is_global"]} label={scopeLabel} />
       </div>
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="text-foreground truncate text-[14.5px] font-semibold tracking-[-0.01em]">
+        <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">
           {agency["agency_name"]}
         </span>
-        <code className="text-muted-foreground/80 truncate font-mono text-[11px]">{agency["agency_slug"]}</code>
+        <code className="text-muted-foreground/80 truncate font-mono text-xs">{agency["agency_slug"]}</code>
       </div>
       <div className="text-muted-foreground mt-auto flex items-center justify-between gap-2 pt-1 text-xs">
         <span className="inline-flex items-center gap-1.5 tabular-nums">

@@ -6,29 +6,6 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useRosetta } from "~/hooks/use-rosetta";
 
-const LOCALE_ES = {
-  group: "Tema",
-  light: "Tema claro",
-  system: "Tema del sistema",
-  dark: "Tema oscuro",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    group: "Theme",
-    light: "Light theme",
-    system: "System theme",
-    dark: "Dark theme",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    group: "Tema",
-    light: "Tema claro",
-    system: "Tema do sistema",
-    dark: "Tema escuro",
-  } satisfies typeof LOCALE_ES,
-};
-
 /**
  * Theme toggle component allowing users to switch between light, dark, and system themes.
  * Avoids hydration mismatch by only lighting up the active segment after mounting on the client.
@@ -76,3 +53,26 @@ export function ThemeToggle() {
     </div>
   );
 }
+
+const LOCALE_ES = {
+  group: "Tema",
+  light: "Tema claro",
+  system: "Tema del sistema",
+  dark: "Tema oscuro",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    group: "Theme",
+    light: "Light theme",
+    system: "System theme",
+    dark: "Dark theme",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    group: "Tema",
+    light: "Tema claro",
+    system: "Tema do sistema",
+    dark: "Tema escuro",
+  } satisfies typeof LOCALE_ES,
+};

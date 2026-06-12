@@ -71,10 +71,10 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
         <div className="flex min-w-0 items-center gap-2.5">
           <AgencyTile size={36} />
           <div className="flex min-w-0 flex-col gap-px">
-            <span className="text-foreground truncate text-[14px] font-semibold tracking-[-0.01em]">
+            <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">
               {data.agency_name}
             </span>
-            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
+            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
               <span>{t("topbar_console")}</span>
               <span className="opacity-40">·</span>
               <code className="font-mono text-tiny">{data.agency_slug}</code>
@@ -87,11 +87,9 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
           </span>
           <div className="flex min-w-0 items-center gap-2">
             <span className="hidden min-w-0 flex-col items-end gap-px @min-[768px]:flex">
-              <span className="text-foreground max-w-40 truncate text-[12.5px] font-medium leading-none">
-                {owner?.name}
-              </span>
+              <span className="text-foreground max-w-40 truncate text-xs font-medium leading-none">{owner?.name}</span>
               {owner?.email ? (
-                <span className="text-muted-foreground mt-0.5 max-w-40 truncate text-[11px] leading-none">
+                <span className="text-muted-foreground mt-0.5 max-w-40 truncate text-xs leading-none">
                   {owner.email}
                 </span>
               ) : null}
@@ -124,10 +122,8 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
 
             <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-1">
-                <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.02em]">{head.title}</h1>
-                <p className="text-muted-foreground m-0 max-w-[60ch] text-[12.5px] leading-normal text-pretty">
-                  {head.desc}
-                </p>
+                <h1 className="text-foreground m-0 text-lg font-semibold tracking-[-0.02em]">{head.title}</h1>
+                <p className="text-muted-foreground m-0 max-w-[60ch] text-xs leading-normal text-pretty">{head.desc}</p>
               </div>
               {tab === "team" ? (
                 <Button asChild size="sm" className="h-9 shrink-0">
@@ -209,10 +205,10 @@ function ConsoleStatStrip({ data, active, t }: { data: ConsoleData; active: numb
           <span className="text-muted-foreground truncate text-tiny font-semibold uppercase tracking-[0.04em]">
             {s.label}
           </span>
-          <span className="text-foreground text-[19px] font-semibold leading-tight tracking-[-0.02em] tabular-nums">
+          <span className="text-foreground text-lg font-semibold leading-tight tracking-[-0.02em] tabular-nums">
             {s.value}
           </span>
-          <span className="text-muted-foreground truncate text-[11px]">{s.sub}</span>
+          <span className="text-muted-foreground truncate text-xs">{s.sub}</span>
         </div>
       ))}
     </div>
@@ -241,7 +237,7 @@ function ConsoleTeamTab({
         </span>
         <div className="flex max-w-[42ch] flex-col gap-1">
           <span className="text-foreground text-sm font-semibold">{t("team_empty_title")}</span>
-          <span className="text-[12.5px] leading-normal text-pretty">{t("team_empty_desc")}</span>
+          <span className="text-xs leading-normal text-pretty">{t("team_empty_desc")}</span>
         </div>
         <Button asChild size="sm" className="mt-1">
           <Link href={inviteHref}>
@@ -323,7 +319,7 @@ function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: string; aff: Cons
     >
       <span
         className={cn(
-          "bg-muted text-foreground inline-flex size-8.5 shrink-0 items-center justify-center rounded-full text-[12px] font-semibold tracking-[-0.01em]",
+          "bg-muted text-foreground inline-flex size-8.5 shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-[-0.01em]",
           dim && "opacity-60",
         )}
       >
@@ -333,7 +329,7 @@ function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: string; aff: Cons
         <span className="inline-flex min-w-0 items-center gap-2">
           <span
             className={cn(
-              "overflow-hidden text-ellipsis whitespace-nowrap text-[13.5px] font-medium",
+              "overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium",
               dim ? "text-muted-foreground" : "text-foreground",
             )}
           >
@@ -346,11 +342,11 @@ function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: string; aff: Cons
           ) : null}
         </span>
         {aff.email ? (
-          <span className="text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap text-[12px]">
+          <span className="text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap text-xs">
             {error ?? aff.email}
           </span>
         ) : error ? (
-          <span className="text-destructive overflow-hidden text-ellipsis whitespace-nowrap text-[12px]">{error}</span>
+          <span className="text-destructive overflow-hidden text-ellipsis whitespace-nowrap text-xs">{error}</span>
         ) : null}
       </span>
       <AffiliationBadge state={aff.state} label={t(`state_${aff.state}`)} />
@@ -360,7 +356,7 @@ function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: string; aff: Cons
           disabled={pending}
           onClick={() => run(action.operation)}
           className={cn(
-            "inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-[12.5px] font-medium transition-colors disabled:opacity-50",
+            "inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors disabled:opacity-50",
             "bg-background border-border",
             action.tone === "danger"
               ? "text-muted-foreground hover:text-destructive hover:border-destructive/40 hover:bg-destructive/5"
@@ -388,7 +384,7 @@ function ConsoleAccessTab({ global, orgs, t }: { global: boolean; orgs: ConsoleO
         <span className="text-muted-foreground mt-px shrink-0">
           <Eye size={15} />
         </span>
-        <span className="text-muted-foreground text-[12px] leading-normal text-pretty">{t("access_banner")}</span>
+        <span className="text-muted-foreground text-xs leading-normal text-pretty">{t("access_banner")}</span>
       </div>
 
       {global ? (
@@ -402,10 +398,10 @@ function ConsoleAccessTab({ global, orgs, t }: { global: boolean; orgs: ConsoleO
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-foreground text-[13.5px] font-semibold">{t("access_global_title")}</span>
+                <span className="text-foreground text-sm font-semibold">{t("access_global_title")}</span>
                 <span className="text-muted-foreground/80 font-mono text-tiny">org = NULL</span>
               </div>
-              <span className="text-muted-foreground text-[12px] leading-[1.45] text-pretty">
+              <span className="text-muted-foreground text-xs leading-[1.45] text-pretty">
                 {t("access_global_desc")}
               </span>
               <div className="mt-0.5">
@@ -421,7 +417,7 @@ function ConsoleAccessTab({ global, orgs, t }: { global: boolean; orgs: ConsoleO
           </span>
           <div className="flex max-w-[42ch] flex-col gap-1">
             <span className="text-foreground text-sm font-semibold">{t("access_empty_title")}</span>
-            <span className="text-[12.5px] leading-normal text-pretty">{t("access_empty_desc")}</span>
+            <span className="text-xs leading-normal text-pretty">{t("access_empty_desc")}</span>
           </div>
         </div>
       ) : (
@@ -449,12 +445,12 @@ function ConsoleAccessCard({ org, accessLabel }: { org: ConsoleOrg; accessLabel:
       className="border-border bg-background grid items-start gap-3 rounded-lg border px-3.5 py-3"
       style={{ gridTemplateColumns: "36px 1fr" }}
     >
-      <span className="bg-muted text-foreground border-border inline-flex size-9 shrink-0 items-center justify-center rounded-lg border text-[12.5px] font-semibold">
+      <span className="bg-muted text-foreground border-border inline-flex size-9 shrink-0 items-center justify-center rounded-lg border text-xs font-semibold">
         {INITIALS_OF(org.organization_name)}
       </span>
       <div className="flex min-w-0 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-foreground text-[13.5px] font-medium">{org.organization_name}</span>
+          <span className="text-foreground text-sm font-medium">{org.organization_name}</span>
           {org.organization_slug ? (
             <code className="text-muted-foreground/80 font-mono text-tiny">{org.organization_slug}</code>
           ) : null}
@@ -488,10 +484,8 @@ function ConsoleProfileTab({ data, t }: { data: ConsoleData; t: Translate }) {
             className="border-border bg-background grid items-center gap-3 rounded-md border px-3.5 py-2.5"
             style={{ gridTemplateColumns: "1fr auto" }}
           >
-            <span className="text-muted-foreground text-[12px] font-medium">{row.label}</span>
-            <span className={cn("text-foreground text-sm/normal", row.mono && "font-mono text-[12px]")}>
-              {row.value}
-            </span>
+            <span className="text-muted-foreground text-xs font-medium">{row.label}</span>
+            <span className={cn("text-foreground text-sm/normal", row.mono && "font-mono text-xs")}>{row.value}</span>
           </div>
         ))}
       </div>
@@ -564,7 +558,7 @@ function AccessPill({ global, label }: { global: boolean; label: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium leading-[1.3]",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-medium leading-[1.3]",
         global
           ? "border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
           : "border-border text-foreground bg-background border",

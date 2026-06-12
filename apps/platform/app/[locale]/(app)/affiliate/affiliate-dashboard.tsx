@@ -49,10 +49,8 @@ export function AffiliateDashboard({
             <Building2 size={16} />
           </span>
           <div className="flex min-w-0 flex-col gap-px">
-            <span className="text-foreground truncate text-[13.5px] font-semibold tracking-[-0.01em]">
-              {t("portal")}
-            </span>
-            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
+            <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">{t("portal")}</span>
+            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
               <span className="text-muted-foreground bg-muted/60 border-border inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-tiny font-medium leading-[1.2] tracking-[0.02em]">
                 <Eye size={11} /> {t("read_only")}
               </span>
@@ -90,7 +88,7 @@ export function AffiliateDashboard({
               </span>
               <div className="flex max-w-[42ch] flex-col gap-1">
                 <span className="text-foreground text-sm font-semibold">{t("empty_title")}</span>
-                <span className="text-[12.5px] leading-normal text-pretty">{t("empty_desc")}</span>
+                <span className="text-xs leading-normal text-pretty">{t("empty_desc")}</span>
               </div>
             </div>
           ) : (
@@ -121,11 +119,11 @@ function InvitationRow({ invitation, t }: { invitation: AffiliateInvitation; t: 
   return (
     <div className="border-border bg-background flex flex-col gap-2.5 rounded-lg border px-3.5 py-3">
       <div className="flex items-center gap-3">
-        <span className="border-border bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-lg border text-[12.5px] font-semibold">
+        <span className="border-border bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-lg border text-xs font-semibold">
           {INITIALS_OF(invitation.agency_name)}
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-foreground truncate text-[13.5px] font-semibold tracking-[-0.01em]">
+          <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">
             {invitation.agency_name}
           </span>
           <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
@@ -172,12 +170,12 @@ function AgencySection({ agency, t }: { agency: AffiliateAgency; t: Translate })
             <Globe size={17} />
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-foreground text-[13.5px] font-semibold">{t("global_title")}</span>
-            <span className="text-muted-foreground text-[12px] leading-[1.45] text-pretty">{t("global_desc")}</span>
+            <span className="text-foreground text-sm font-semibold">{t("global_title")}</span>
+            <span className="text-muted-foreground text-xs leading-[1.45] text-pretty">{t("global_desc")}</span>
           </div>
         </div>
       ) : agency.orgs.length === 0 ? (
-        <p className="text-muted-foreground px-1 text-[12.5px]">{t("agency_no_orgs")}</p>
+        <p className="text-muted-foreground px-1 text-xs">{t("agency_no_orgs")}</p>
       ) : (
         <div className="grid grid-cols-1 gap-3 @min-[768px]:grid-cols-2">
           {agency.orgs.map((org) => (
@@ -193,7 +191,7 @@ function OrgAccessCard({ org, accessLabel }: { org: AffiliateOrg; accessLabel: s
   return (
     <div className={cn("border-border bg-background flex h-full flex-col gap-3 rounded-xl border p-4")}>
       <div className="flex items-start justify-between gap-2">
-        <span className="bg-muted text-foreground border-border inline-flex size-11 items-center justify-center rounded-lg border text-[14px] font-semibold tracking-[-0.01em]">
+        <span className="bg-muted text-foreground border-border inline-flex size-11 items-center justify-center rounded-lg border text-sm font-semibold tracking-[-0.01em]">
           {INITIALS_OF(org.organization_name)}
         </span>
         <span className="text-muted-foreground/50 mt-1">
@@ -201,7 +199,7 @@ function OrgAccessCard({ org, accessLabel }: { org: AffiliateOrg; accessLabel: s
         </span>
       </div>
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-foreground truncate text-[14.5px] font-semibold tracking-[-0.01em]">
+        <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">
           {org.organization_name}
         </span>
         {org.organization_slug ? (
@@ -209,7 +207,7 @@ function OrgAccessCard({ org, accessLabel }: { org: AffiliateOrg; accessLabel: s
         ) : null}
       </div>
       <div className="flex flex-wrap gap-1.5">
-        <span className="border-border text-foreground bg-background inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-medium leading-[1.3]">
+        <span className="border-border text-foreground bg-background inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 text-xs font-medium leading-[1.3]">
           <Eye size={10.5} /> {accessLabel}
         </span>
       </div>

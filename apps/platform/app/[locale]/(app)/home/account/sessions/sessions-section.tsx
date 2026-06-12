@@ -7,11 +7,12 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { DATETIME, RELATIVE_DATE_FORMAT } from "@packages/utils/date";
 import { Monitor, Smartphone } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { UAParser } from "ua-parser-js";
-import { useLocale } from "~/components/locale-provider";
 import { gql } from "~/generated/graphql";
+import { useIntlRelativeTimeFormat } from "~/hooks/use-intl";
 import { useRosetta } from "~/hooks/use-rosetta";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionRevokeSession, actionSignOutOtherDevices } from "../actions";
@@ -29,56 +30,6 @@ export const SessionsSectionSessionFragment = gql(`
 
 export type SessionsSectionSessionFragmentType = ResultOf<typeof SessionsSectionSessionFragment>;
 
-const LOCALE_ES = {
-  browser_unknown: "Navegador desconocido",
-  device_unknown: "Dispositivo desconocido",
-  active_prefix: "Activo",
-  activity_unknown: "Actividad reciente desconocida",
-  current_device: "Este dispositivo",
-  inactive: "Inactivo",
-  ip_unknown: "IP desconocida",
-  revoke: "Cerrar",
-  no_sessions: "No encontramos sesiones activas para esta cuenta.",
-  revoke_notice: "Cerrar una sesión impide nuevos accesos, pero el token activo puede tardar hasta 1 hora en expirar.",
-  sign_out_others: "Cerrar las otras sesiones",
-  closing_others: "Cerrando…",
-  ip_label: "IP {{ip}}",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    browser_unknown: "Unknown browser",
-    device_unknown: "Unknown device",
-    active_prefix: "Active",
-    activity_unknown: "Unknown recent activity",
-    current_device: "This device",
-    inactive: "Inactive",
-    ip_unknown: "Unknown IP",
-    revoke: "Sign out",
-    no_sessions: "We couldn't find any active sessions for this account.",
-    revoke_notice: "Signing out a session prevents new access, but the active token can take up to 1 hour to expire.",
-    sign_out_others: "Sign out other sessions",
-    closing_others: "Signing out…",
-    ip_label: "IP {{ip}}",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    browser_unknown: "Navegador desconhecido",
-    device_unknown: "Dispositivo desconhecido",
-    active_prefix: "Ativo",
-    activity_unknown: "Atividade recente desconhecida",
-    current_device: "Este dispositivo",
-    inactive: "Inativo",
-    ip_unknown: "IP desconhecido",
-    revoke: "Encerrar",
-    no_sessions: "Não encontramos sessões ativas para esta conta.",
-    revoke_notice: "Encerrar uma sessão impede novos acessos, mas o token ativo pode levar até 1 hora para expirar.",
-    sign_out_others: "Encerrar outras sessões",
-    closing_others: "Encerrando…",
-    ip_label: "IP {{ip}}",
-  } satisfies typeof LOCALE_ES,
-};
-
 type SessionsSectionProps = React.ComponentProps<"div"> & {
   currentSessionId: string | null | undefined;
   sessions: SessionsSectionSessionFragmentType[];
@@ -91,7 +42,7 @@ function SessionRow(props: {
   session: SessionsSectionSessionFragmentType;
 }) {
   const { t } = useRosetta(LOCALES);
-  const locale = useLocale();
+  const relativeTimeFormatter = useIntlRelativeTimeFormat();
   const current = props.session["id"] === props.currentSessionId;
   const parser = new UAParser(props.session["user_agent"] ?? "");
   const browser = parser.getBrowser();
@@ -101,7 +52,6 @@ function SessionRow(props: {
   const deviceLabel =
     [device["vendor"], device["model"]].filter(Boolean).join(" ") || os["name"] || t("device_unknown");
   const kind = device["type"] === "mobile" || device["type"] === "tablet" ? "mobile" : "desktop";
-  const relativeTimeFormatter = useMemo(() => new Intl.RelativeTimeFormat(locale, { numeric: "auto" }), [locale]);
   const activeDate = DATETIME(props.session["refreshed_at"] ?? props.session["created_at"]);
   const lastActive = activeDate
     ? `${t("active_prefix")} ${relativeTimeFormatter.format(...RELATIVE_DATE_FORMAT(activeDate))}`
@@ -129,7 +79,7 @@ function SessionRow(props: {
         <span className="inline-flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
           <span>{deviceLabel}</span>
           {current && (
-            <Badge className="bg-foreground text-tiny uppercase tracking-[0.04em] text-background">
+            <Badge className="bg-foreground text-tiny uppercase tracking-wider text-background">
               {t("current_device")}
             </Badge>
           )}
@@ -148,12 +98,19 @@ function SessionRow(props: {
         </span>
       </div>
       <div className="inline-flex items-center gap-1.5">
-        {!current && (
+        {current ? (
+          <Link
+            href="/[locale]/auth/logout"
+            className="inline-flex h-7.5 items-center rounded-md px-3 text-xs font-medium text-destructive hover:bg-accent"
+          >
+            {t("revoke")}
+          </Link>
+        ) : (
           <button
             type="button"
             onClick={() => props.onRevoke(props.session["id"]!)}
             disabled={props.pending}
-            className="inline-flex h-7.5 items-center rounded-md px-3 text-[12.5px] font-medium text-destructive hover:bg-accent disabled:opacity-50"
+            className="inline-flex h-7.5 items-center rounded-md px-3 text-xs font-medium text-destructive hover:bg-accent disabled:opacity-50"
           >
             {t("revoke")}
           </button>
@@ -221,7 +178,7 @@ export function SessionsSection({ className, currentSessionId, sessions, ...prop
 
       {others > 0 && (
         <div className="-mt-1 flex items-center justify-between gap-3.5">
-          <span className="max-w-[36ch] text-[12.5px] leading-relaxed text-muted-foreground text-pretty">
+          <span className="max-w-[36ch] text-xs leading-relaxed text-muted-foreground text-pretty">
             {t("revoke_notice")}
           </span>
           <Button type="button" variant="outline" onClick={onSignOutOthers} disabled={pending} className="h-9">
@@ -232,3 +189,53 @@ export function SessionsSection({ className, currentSessionId, sessions, ...prop
     </div>
   );
 }
+
+const LOCALE_ES = {
+  browser_unknown: "Navegador desconocido",
+  device_unknown: "Dispositivo desconocido",
+  active_prefix: "Activo",
+  activity_unknown: "Actividad reciente desconocida",
+  current_device: "Este dispositivo",
+  inactive: "Inactivo",
+  ip_unknown: "IP desconocida",
+  revoke: "Cerrar",
+  no_sessions: "No encontramos sesiones activas para esta cuenta.",
+  revoke_notice: "Cerrar una sesión impide nuevos accesos, pero el token activo puede tardar hasta 1 hora en expirar.",
+  sign_out_others: "Cerrar las otras sesiones",
+  closing_others: "Cerrando…",
+  ip_label: "IP {{ip}}",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    browser_unknown: "Unknown browser",
+    device_unknown: "Unknown device",
+    active_prefix: "Active",
+    activity_unknown: "Unknown recent activity",
+    current_device: "This device",
+    inactive: "Inactive",
+    ip_unknown: "Unknown IP",
+    revoke: "Sign out",
+    no_sessions: "We couldn't find any active sessions for this account.",
+    revoke_notice: "Signing out a session prevents new access, but the active token can take up to 1 hour to expire.",
+    sign_out_others: "Sign out other sessions",
+    closing_others: "Signing out…",
+    ip_label: "IP {{ip}}",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    browser_unknown: "Navegador desconhecido",
+    device_unknown: "Dispositivo desconhecido",
+    active_prefix: "Ativo",
+    activity_unknown: "Atividade recente desconhecida",
+    current_device: "Este dispositivo",
+    inactive: "Inativo",
+    ip_unknown: "IP desconhecido",
+    revoke: "Encerrar",
+    no_sessions: "Não encontramos sessões ativas para esta conta.",
+    revoke_notice: "Encerrar uma sessão impede novos acessos, mas o token ativo pode levar até 1 hora para expirar.",
+    sign_out_others: "Encerrar outras sessões",
+    closing_others: "Encerrando…",
+    ip_label: "IP {{ip}}",
+  } satisfies typeof LOCALE_ES,
+};

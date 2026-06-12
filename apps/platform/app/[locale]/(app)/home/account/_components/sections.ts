@@ -2,6 +2,9 @@
  * Catalog of /home/account sections. Each section is a URL segment and a sidebar item.
  * Sections without a real backend are marked todo:true so the page can render a placeholder
  * instead of an unwired form.
+ *
+ * `labelKey` and `groupKey` are stable i18n keys resolved in sidebar.tsx. They are not
+ * translated strings — sidebar.tsx owns all translations for this nav surface.
  */
 
 import { Bell, Globe, Key, Monitor, ShieldCheck, Trash2, User } from "lucide-react";
@@ -17,23 +20,34 @@ export type AccountSectionId =
   | "notifications"
   | "danger";
 
+export type AccountGroupKey = "account" | "security_group" | "development" | "danger_zone" | "preferences";
+
+export type AccountLabelKey =
+  | "nav_profile"
+  | "nav_security"
+  | "nav_connections"
+  | "nav_sessions"
+  | "nav_tokens"
+  | "nav_notifications"
+  | "nav_danger";
+
 export type AccountSection = {
   id: AccountSectionId;
-  label: string;
-  group: string;
+  labelKey: AccountLabelKey;
+  groupKey: AccountGroupKey;
   Icon: ComponentType<{ size?: number; className?: string }>;
   danger?: boolean;
   todo?: boolean;
 };
 
 export const ACCOUNT_SECTIONS: readonly AccountSection[] = [
-  { id: "profile", label: "Perfil", group: "Cuenta", Icon: User },
-  { id: "security", label: "Inicio de sesión", group: "Cuenta", Icon: ShieldCheck },
-  { id: "connections", label: "Conexiones", group: "Cuenta", Icon: Globe, todo: true },
-  { id: "sessions", label: "Dispositivos", group: "Seguridad", Icon: Monitor },
-  { id: "tokens", label: "Tokens de API", group: "Desarrollo", Icon: Key, todo: true },
-  { id: "notifications", label: "Notificaciones", group: "Preferencias", Icon: Bell, todo: true },
-  { id: "danger", label: "Eliminar cuenta", group: "Zona de riesgo", Icon: Trash2, danger: true, todo: true },
+  { id: "profile", labelKey: "nav_profile", groupKey: "account", Icon: User },
+  { id: "security", labelKey: "nav_security", groupKey: "account", Icon: ShieldCheck },
+  { id: "connections", labelKey: "nav_connections", groupKey: "account", Icon: Globe, todo: true },
+  { id: "sessions", labelKey: "nav_sessions", groupKey: "security_group", Icon: Monitor },
+  { id: "tokens", labelKey: "nav_tokens", groupKey: "development", Icon: Key, todo: true },
+  { id: "notifications", labelKey: "nav_notifications", groupKey: "preferences", Icon: Bell, todo: true },
+  { id: "danger", labelKey: "nav_danger", groupKey: "danger_zone", Icon: Trash2, danger: true, todo: true },
 ];
 
 const ACCOUNT_SECTION_PATHS = {

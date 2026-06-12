@@ -15,7 +15,7 @@ import { useLocaleParam } from "~/hooks/use-locale-param";
 import { useRosetta } from "~/hooks/use-rosetta";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
-import { createTenant } from "./actions";
+import { actionCreateTenant } from "./actions";
 import { type CreateTenantValues, createTenantSchema } from "./schemas";
 
 /**
@@ -62,7 +62,7 @@ export function CreateTenantForm() {
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const [data, error] = await ErrorSafeAction.unwrap(createTenant(values));
+      const [data, error] = await ErrorSafeAction.unwrap(actionCreateTenant(values));
       if (error instanceof ErrorSafeActionServer) {
         setServerError(error.serverError);
         return;
@@ -120,7 +120,7 @@ export function CreateTenantForm() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-[12.5px] font-medium text-foreground">{t("plan_label")}</span>
+        <span className="text-xs font-medium text-foreground">{t("plan_label")}</span>
         <div className="grid grid-cols-2 gap-2">
           {PLANS.map((p) => {
             const on = p.id === plan;
@@ -144,10 +144,10 @@ export function CreateTenantForm() {
                     </span>
                   )}
                 </span>
-                <span className="text-[15px] font-semibold tracking-[-0.01em] text-foreground tabular-nums">
-                  {p.price} <span className="text-[11px] font-normal text-muted-foreground">{p.per}</span>
+                <span className="text-sm font-semibold tracking-[-0.01em] text-foreground tabular-nums">
+                  {p.price} <span className="text-xs font-normal text-muted-foreground">{p.per}</span>
                 </span>
-                <span className="text-[11px] leading-snug text-muted-foreground text-pretty">{p.blurb}</span>
+                <span className="text-xs leading-snug text-muted-foreground text-pretty">{p.blurb}</span>
               </button>
             );
           })}

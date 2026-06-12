@@ -1,6 +1,7 @@
 import { getSupabaseServerSession } from "@packages/supabase/client.server";
 import { SUPABASE_JWT_DECODE_PAYLOAD } from "@packages/supabase/jwt";
 import { gql } from "~/generated/graphql";
+import { getRosetta } from "~/hooks/get-rosetta";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { SessionsSection, type SessionsSectionSessionFragmentType } from "./sessions-section";
 
@@ -17,7 +18,6 @@ const SessionsSectionPageQuery = gql(`
 `);
 
 export default async function SessionsPage(props: PageProps<"/[locale]/home/account/sessions">) {
-  const { locale } = await props.params;
   const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: SessionsSectionPageQuery });
   const serverSession = await getSupabaseServerSession();
@@ -25,18 +25,39 @@ export default async function SessionsPage(props: PageProps<"/[locale]/home/acco
   const sessions: SessionsSectionSessionFragmentType[] =
     data?.["viewer_sessions"]?.["edges"].map((edge) => edge["node"]) || [];
 
+  const { t } = await getRosetta(LOCALES);
+
   return (
     <div className="flex max-w-180 flex-col gap-4.5">
       <header className="flex flex-col gap-1">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-          Seguridad · Dispositivos
+        <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          {t("breadcrumb")}
         </span>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">Dispositivos y sesiones</h1>
-        <p className="text-pretty text-sm/normal leading-normal text-muted-foreground">
-          Todos los lugares donde tu cuenta tiene sesión abierta. Si ves algo que no reconoces, ciérralo aquí mismo.
-        </p>
+        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{t("heading")}</h1>
+        <p className="text-pretty text-sm/normal leading-normal text-muted-foreground">{t("description")}</p>
       </header>
       <SessionsSection sessions={sessions} currentSessionId={payload?.["session_id"]} />
     </div>
   );
 }
+
+const LOCALE_ES = {
+  breadcrumb: "Seguridad · Dispositivos",
+  heading: "Dispositivos y sesiones",
+  description:
+    "Todos los lugares donde tu cuenta tiene sesión abierta. Si ves algo que no reconoces, ciérralo aquí mismo.",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  breadcrumb: "Security · Devices",
+  heading: "Devices & sessions",
+  description: "Every place your account is signed in. If you see something you don't recognize, close it here.",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  breadcrumb: "Segurança · Dispositivos",
+  heading: "Dispositivos e sessões",
+  description: "Todos os lugares onde sua conta está com sessão aberta. Se ver algo que não reconhece, encerre aqui.",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

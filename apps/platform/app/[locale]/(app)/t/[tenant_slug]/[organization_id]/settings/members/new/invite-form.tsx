@@ -106,8 +106,8 @@ export function InviteMemberForm({ organization_id, countries, membersHref, loca
             <Check size={18} strokeWidth={2.25} />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <strong className="text-foreground text-[13.5px] font-semibold">{t("created_title")}</strong>
-            <span className="text-muted-foreground text-[12.5px] leading-normal text-pretty">{t("created_desc")}</span>
+            <strong className="text-foreground text-sm font-semibold">{t("created_title")}</strong>
+            <span className="text-muted-foreground text-xs leading-normal text-pretty">{t("created_desc")}</span>
           </div>
         </div>
 
@@ -116,7 +116,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, loca
             {t("share_title")}
           </span>
           <div className="border-border bg-muted/40 flex items-center gap-2 rounded-md border p-1.5 pl-3">
-            <span className="text-foreground min-w-0 flex-1 truncate font-mono text-[12px]">{documentResult.url}</span>
+            <span className="text-foreground min-w-0 flex-1 truncate font-mono text-xs">{documentResult.url}</span>
             <Button
               type="button"
               variant="outline"
@@ -137,7 +137,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, loca
           <span className="mt-px shrink-0 text-amber-600 dark:text-amber-400">
             <MessageCircle size={14} />
           </span>
-          <span className="text-[12px] leading-normal text-amber-800 text-pretty dark:text-amber-200">
+          <span className="text-xs leading-normal text-amber-800 text-pretty dark:text-amber-200">
             {t("share_warning")}
           </span>
         </div>
@@ -160,7 +160,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, loca
   return (
     <form onSubmit={onSubmit} className="border-border bg-background flex flex-col gap-5 rounded-xl border p-5">
       <div className="flex flex-col gap-2">
-        <span className="text-foreground text-[12.5px] font-medium">{t("channel_title")}</span>
+        <span className="text-foreground text-xs font-medium">{t("channel_title")}</span>
         <div role="tablist" aria-label={t("channel_title")} className="bg-muted grid grid-cols-3 gap-1 rounded-md p-1">
           {CHANNELS.map((tab) => {
             const on = tab.value === channel;
@@ -173,7 +173,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, loca
                 aria-selected={on}
                 onClick={() => form.setValue("channel", tab.value)}
                 className={cn(
-                  "inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-[5px] text-[12.5px] font-medium transition-[background,color]",
+                  "inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-[5px] text-xs font-medium transition-[background,color]",
                   on
                     ? "bg-background text-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.1)]"
                     : "text-muted-foreground hover:text-foreground",

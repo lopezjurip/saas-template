@@ -7,6 +7,7 @@ import { ArrowRight, MessageCircle, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 import { OtpField } from "../_components/otp-field";
 
@@ -27,6 +28,7 @@ function RESOLVE_TARGET(locale: string, next: string): string {
  * not offered here even when the account has one — the email path covers passkey.
  */
 export function PhoneStepForm({ phone, next, channels }: Props) {
+  const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const locale = useLocaleParam();
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
       const supabase = createBrowserClient();
       const { error: err } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
       if (err) {
-        setError("Código incorrecto o expirado.");
+        setError(t("error_otp"));
         return;
       }
       await supabase.auth.refreshSession();
@@ -67,6 +69,7 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
   }
 
   if (sentVia) {
+    const channelLabel = sentVia === "whatsapp" ? t("channel_whatsapp") : t("channel_sms");
     return (
       <form onSubmit={onVerify} className="flex flex-col gap-4">
         <OtpField
@@ -75,7 +78,7 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
           onChange={setToken}
           sentTo={
             <>
-              Enviado por {sentVia === "whatsapp" ? "WhatsApp" : "SMS"} a{" "}
+              {t("sent_to_prefix", { channel: channelLabel })}{" "}
               <strong className="font-medium text-foreground">{phone}</strong>.
             </>
           }
@@ -86,7 +89,7 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
           </Alert>
         )}
         <Button type="submit" disabled={pending || token.length !== 6} className="h-10 w-full">
-          <span>{pending ? "Verificando…" : "Verificar"}</span>
+          <span>{pending ? t("verifying") : t("verify")}</span>
           <ArrowRight size={16} />
         </Button>
         <button
@@ -94,7 +97,7 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
           onClick={() => setSentVia(null)}
           className="self-center text-xs text-muted-foreground underline hover:text-foreground"
         >
-          Probar otro método
+          {t("try_other")}
         </button>
       </form>
     );
@@ -111,7 +114,7 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
       {channels.includes("whatsapp") && (
         <Button type="button" onClick={() => onSend("whatsapp")} disabled={pending} className="h-10 w-full">
           <MessageCircle size={16} />
-          <span>{pending ? "Enviando…" : "Enviar código por WhatsApp"}</span>
+          <span>{pending ? t("sending") : t("send_whatsapp")}</span>
         </Button>
       )}
 
@@ -124,9 +127,50 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
           className="h-10 w-full"
         >
           <Smartphone size={16} />
-          <span>{pending ? "Enviando…" : "Enviar código por SMS"}</span>
+          <span>{pending ? t("sending") : t("send_sms")}</span>
         </Button>
       )}
     </div>
   );
 }
+
+const LOCALE_ES = {
+  sent_to_prefix: "Enviado por {{channel}} a",
+  channel_whatsapp: "WhatsApp",
+  channel_sms: "SMS",
+  verifying: "Verificando…",
+  verify: "Verificar",
+  try_other: "Probar otro método",
+  sending: "Enviando…",
+  send_whatsapp: "Enviar código por WhatsApp",
+  send_sms: "Enviar código por SMS",
+  error_otp: "Código incorrecto o expirado.",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  sent_to_prefix: "Sent via {{channel}} to",
+  channel_whatsapp: "WhatsApp",
+  channel_sms: "SMS",
+  verifying: "Verifying…",
+  verify: "Verify",
+  try_other: "Try another method",
+  sending: "Sending…",
+  send_whatsapp: "Send code via WhatsApp",
+  send_sms: "Send code via SMS",
+  error_otp: "Incorrect or expired code.",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  sent_to_prefix: "Enviado via {{channel}} para",
+  channel_whatsapp: "WhatsApp",
+  channel_sms: "SMS",
+  verifying: "A verificar…",
+  verify: "Verificar",
+  try_other: "Tentar outro método",
+  sending: "A enviar…",
+  send_whatsapp: "Enviar código por WhatsApp",
+  send_sms: "Enviar código por SMS",
+  error_otp: "Código incorreto ou expirado.",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

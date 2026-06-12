@@ -76,15 +76,11 @@ async function continueWithEmail(value: string, next: string): Promise<never> {
     const qs = new URLSearchParams({ value: email, exists: "0", next });
     redirect(`/[locale]/auth/email?${qs.toString()}`);
   }
-  const [passkeyRes, passwordRes] = await Promise.all([
-    supabase.rpc("email_has_passkey", { email_to_check: email }),
-    supabase.rpc("email_has_password", { email_to_check: email }),
-  ]);
+  const { data: hasPassword } = await supabase.rpc("email_has_password", { email_to_check: email });
   const qs = new URLSearchParams({
     value: email,
     exists: "1",
-    has_passkey: passkeyRes.data ? "1" : "0",
-    has_password: passwordRes.data ? "1" : "0",
+    has_password: hasPassword ? "1" : "0",
     next,
   });
   redirect(`/[locale]/auth/email?${qs.toString()}`);
@@ -112,15 +108,14 @@ async function continueWithPhone(value: string, next: string): Promise<never> {
     });
     redirect(`/[locale]/auth/phone?${qs.toString()}`);
   }
-  const [passkeyRes, passwordRes] = await Promise.all([
-    supabase.rpc("phone_has_passkey", { phone_to_check: phone, default_code: "+56" }),
-    supabase.rpc("phone_has_password", { phone_to_check: phone, default_code: "+56" }),
-  ]);
+  const { data: hasPassword } = await supabase.rpc("phone_has_password", {
+    phone_to_check: phone,
+    default_code: "+56",
+  });
   const qs = new URLSearchParams({
     value: normalized as string,
     exists: "1",
-    has_passkey: passkeyRes.data ? "1" : "0",
-    has_password: passwordRes.data ? "1" : "0",
+    has_password: hasPassword ? "1" : "0",
     channels: "sms,whatsapp",
     next,
   });

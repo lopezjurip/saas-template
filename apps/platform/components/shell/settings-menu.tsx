@@ -77,7 +77,7 @@ export function SettingsMenu({
             compact ? "absolute bottom-0 left-full z-40 ml-2 w-64" : "absolute bottom-full left-0 right-0 z-30 mb-1.5",
           )}
         >
-          <div className="text-muted-foreground px-2 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wider">
+          <div className="text-muted-foreground px-2 pb-1 pt-2 text-xs font-medium uppercase tracking-wider">
             {t("heading")}
           </div>
           <div className="px-1 pb-1">

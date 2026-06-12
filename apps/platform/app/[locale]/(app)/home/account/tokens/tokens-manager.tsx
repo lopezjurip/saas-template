@@ -26,6 +26,7 @@ import {
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Copy, KeyRound, Plus } from "lucide-react";
 import { useState } from "react";
+import { useRosetta } from "~/hooks/use-rosetta";
 
 type TokenRow = {
   id: string;
@@ -40,34 +41,6 @@ type TokenRow = {
 
 const TOKEN_SCOPES = /*#__PURE__*/ ["read", "write", "billing", "admin"];
 
-const INITIAL_TOKENS = /*#__PURE__*/ [
-  {
-    id: "t1",
-    name: "CI · deploys",
-    prefix: "hum_live_3f9c…7e2b",
-    scopes: ["read", "write"],
-    created: "12 ene 2026",
-    lastUsed: "hace 4 h",
-  },
-  {
-    id: "t2",
-    name: "Scripts locales",
-    prefix: "hum_live_88a1…1d04",
-    scopes: ["read"],
-    created: "3 mar 2026",
-    lastUsed: "hace 2 días",
-  },
-  {
-    id: "t3",
-    name: "Integración Zapier",
-    prefix: "hum_live_c512…9aff",
-    scopes: ["read", "write"],
-    created: "14 abr 2026",
-    lastUsed: "nunca",
-    stale: true,
-  },
-] satisfies TokenRow[];
-
 function RANDOM_PREFIX(): string {
   const head = Math.random().toString(16).slice(2, 6);
   const tail = Math.random().toString(16).slice(2, 6);
@@ -75,6 +48,36 @@ function RANDOM_PREFIX(): string {
 }
 
 export function TokensManager() {
+  const { t } = useRosetta(LOCALES);
+
+  const INITIAL_TOKENS = /*#__PURE__*/ [
+    {
+      id: "t1",
+      name: "CI · deploys",
+      prefix: "hum_live_3f9c…7e2b",
+      scopes: ["read", "write"],
+      created: "12 ene 2026",
+      lastUsed: "hace 4 h",
+    },
+    {
+      id: "t2",
+      name: "Scripts locales",
+      prefix: "hum_live_88a1…1d04",
+      scopes: ["read"],
+      created: "3 mar 2026",
+      lastUsed: "hace 2 días",
+    },
+    {
+      id: "t3",
+      name: "Integración Zapier",
+      prefix: "hum_live_c512…9aff",
+      scopes: ["read", "write"],
+      created: "14 abr 2026",
+      lastUsed: t("mock_never"),
+      stale: true,
+    },
+  ] satisfies TokenRow[];
+
   const [tokens, setTokens] = useState<TokenRow[]>(INITIAL_TOKENS);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -93,8 +96,8 @@ export function TokensManager() {
         name: trimmed,
         prefix: RANDOM_PREFIX(),
         scopes: [...scopes],
-        created: "hoy",
-        lastUsed: "nunca",
+        created: t("mock_today"),
+        lastUsed: t("mock_never"),
         stale: true,
       },
       ...prev,
@@ -105,39 +108,39 @@ export function TokensManager() {
   }
 
   function onRevoke(id: string) {
-    setTokens((prev) => prev.filter((t) => t.id !== id));
+    setTokens((prev) => prev.filter((tk) => tk.id !== id));
   }
 
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex min-h-7 items-center justify-between gap-2.5">
-        <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">Tokens activos</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          {t("active_tokens")}
+        </span>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button type="button" variant="outline" className="h-[30px] gap-1.5 px-3 text-[12.5px]">
-              <Plus size={13} strokeWidth={2} /> Crear token
+              <Plus size={13} strokeWidth={2} /> {t("create_token")}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Crear token personal</DialogTitle>
-              <DialogDescription>
-                Dale un nombre descriptivo y elige los permisos. El secreto solo se muestra una vez.
-              </DialogDescription>
+              <DialogTitle>{t("dialog_title")}</DialogTitle>
+              <DialogDescription>{t("dialog_description")}</DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="token-name">Nombre</Label>
+                <Label htmlFor="token-name">{t("label_name")}</Label>
                 <Input
                   id="token-name"
-                  placeholder="p. ej. CI · deploys"
+                  placeholder={t("placeholder_name")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoFocus
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <Label>Permisos</Label>
+                <Label>{t("label_permissions")}</Label>
                 <div className="flex flex-col gap-2">
                   {TOKEN_SCOPES.map((scope) => (
                     <label
@@ -159,11 +162,11 @@ export function TokensManager() {
             <DialogFooter>
               <DialogClose asChild>
                 <Button type="button" variant="outline">
-                  Cancelar
+                  {t("cancel")}
                 </Button>
               </DialogClose>
               <Button type="button" onClick={onCreate} disabled={name.trim().length === 0 || scopes.length === 0}>
-                Crear token
+                {t("create")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -176,11 +179,11 @@ export function TokensManager() {
             <KeyRound size={22} />
           </span>
           <div className="flex flex-col gap-0.5">
-            <strong className="text-sm font-medium text-foreground">Aún no tienes tokens</strong>
-            <span className="text-[12.5px] text-muted-foreground">Crea uno cuando necesites integrar con la API.</span>
+            <strong className="text-sm font-medium text-foreground">{t("empty_title")}</strong>
+            <span className="text-[12.5px] text-muted-foreground">{t("empty_desc")}</span>
           </div>
           <Button type="button" onClick={() => setOpen(true)} className="h-[30px] gap-1.5 px-3 text-[12.5px]">
-            <Plus size={13} strokeWidth={2} /> Crear mi primer token
+            <Plus size={13} strokeWidth={2} /> {t("create_first")}
           </Button>
         </div>
       ) : (
@@ -188,12 +191,12 @@ export function TokensManager() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead>Nombre</TableHead>
-                <TableHead>Prefijo</TableHead>
-                <TableHead>Permisos</TableHead>
-                <TableHead>Creado</TableHead>
-                <TableHead>Último uso</TableHead>
-                <TableHead className="text-right">Acción</TableHead>
+                <TableHead>{t("col_name")}</TableHead>
+                <TableHead>{t("col_prefix")}</TableHead>
+                <TableHead>{t("col_permissions")}</TableHead>
+                <TableHead>{t("col_created")}</TableHead>
+                <TableHead>{t("col_last_used")}</TableHead>
+                <TableHead className="text-right">{t("col_action")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -207,12 +210,12 @@ export function TokensManager() {
                       <span className="text-sm font-medium text-foreground">{tk.name}</span>
                       {tk.expired && (
                         <Badge variant="outline" className="text-tiny">
-                          Caducado
+                          {t("badge_expired")}
                         </Badge>
                       )}
                       {tk.stale && !tk.expired && (
                         <Badge variant="outline" className="text-tiny">
-                          Sin uso
+                          {t("badge_stale")}
                         </Badge>
                       )}
                     </span>
@@ -222,7 +225,7 @@ export function TokensManager() {
                       <span className="font-mono text-xs text-muted-foreground">{tk.prefix}</span>
                       <button
                         type="button"
-                        aria-label="Copiar prefijo"
+                        aria-label={t("aria_copy_prefix")}
                         onClick={() => navigator.clipboard?.writeText(tk.prefix)}
                         className="inline-flex size-[22px] items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
                       >
@@ -247,7 +250,7 @@ export function TokensManager() {
                       onClick={() => onRevoke(tk.id)}
                       className="inline-flex h-[30px] items-center rounded-md px-3 text-[12.5px] font-medium text-destructive hover:bg-accent"
                     >
-                      Revocar
+                      {t("revoke")}
                     </button>
                   </TableCell>
                 </TableRow>
@@ -259,3 +262,86 @@ export function TokensManager() {
     </div>
   );
 }
+
+const LOCALE_ES = {
+  active_tokens: "Tokens activos",
+  create_token: "Crear token",
+  dialog_title: "Crear token personal",
+  dialog_description: "Dale un nombre descriptivo y elige los permisos. El secreto solo se muestra una vez.",
+  label_name: "Nombre",
+  placeholder_name: "p. ej. CI · deploys",
+  label_permissions: "Permisos",
+  cancel: "Cancelar",
+  create: "Crear token",
+  empty_title: "Aún no tienes tokens",
+  empty_desc: "Crea uno cuando necesites integrar con la API.",
+  create_first: "Crear mi primer token",
+  col_name: "Nombre",
+  col_prefix: "Prefijo",
+  col_permissions: "Permisos",
+  col_created: "Creado",
+  col_last_used: "Último uso",
+  col_action: "Acción",
+  badge_expired: "Caducado",
+  badge_stale: "Sin uso",
+  aria_copy_prefix: "Copiar prefijo",
+  revoke: "Revocar",
+  mock_today: "hoy",
+  mock_never: "nunca",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  active_tokens: "Active tokens",
+  create_token: "Create token",
+  dialog_title: "Create personal token",
+  dialog_description: "Give it a descriptive name and choose permissions. The secret is shown only once.",
+  label_name: "Name",
+  placeholder_name: "e.g. CI · deploys",
+  label_permissions: "Permissions",
+  cancel: "Cancel",
+  create: "Create token",
+  empty_title: "No tokens yet",
+  empty_desc: "Create one when you need to integrate with the API.",
+  create_first: "Create my first token",
+  col_name: "Name",
+  col_prefix: "Prefix",
+  col_permissions: "Permissions",
+  col_created: "Created",
+  col_last_used: "Last used",
+  col_action: "Action",
+  badge_expired: "Expired",
+  badge_stale: "Unused",
+  aria_copy_prefix: "Copy prefix",
+  revoke: "Revoke",
+  mock_today: "today",
+  mock_never: "never",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  active_tokens: "Tokens ativos",
+  create_token: "Criar token",
+  dialog_title: "Criar token pessoal",
+  dialog_description: "Dê um nome descritivo e escolha as permissões. O segredo é exibido apenas uma vez.",
+  label_name: "Nome",
+  placeholder_name: "ex.: CI · deploys",
+  label_permissions: "Permissões",
+  cancel: "Cancelar",
+  create: "Criar token",
+  empty_title: "Nenhum token ainda",
+  empty_desc: "Crie um quando precisar integrar com a API.",
+  create_first: "Criar meu primeiro token",
+  col_name: "Nome",
+  col_prefix: "Prefixo",
+  col_permissions: "Permissões",
+  col_created: "Criado",
+  col_last_used: "Último uso",
+  col_action: "Ação",
+  badge_expired: "Expirado",
+  badge_stale: "Sem uso",
+  aria_copy_prefix: "Copiar prefixo",
+  revoke: "Revogar",
+  mock_today: "hoje",
+  mock_never: "nunca",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

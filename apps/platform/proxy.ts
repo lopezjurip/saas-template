@@ -6,6 +6,11 @@ import { debug } from "~/lib/debug";
 import { LOCALE_COOKIE, LOCALE_FROM_PATH, type SupportedLocale } from "~/lib/i18n";
 import { LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
 
+const PH_TOKEN = process.env["NEXT_PUBLIC_POSTHOG_KEY"] ?? "";
+const PH_HOST = process.env["NEXT_PUBLIC_POSTHOG_HOST"] ?? "https://us.i.posthog.com";
+const PH_COOKIE_KEY = `ph_${PH_TOKEN}_posthog`;
+const PH_BOOTSTRAP_COOKIE = "ph_bootstrap";
+
 const log = debug("proxy");
 
 const PUBLIC_PATH_REGEX = /^(\/|(\/(?:auth|legal|faq|pricing|opengraph-image|twitter-image|icon)(?:\/|$)))/;
@@ -129,6 +134,15 @@ export async function proxy(request: NextRequest) {
         );
       }
     }
+    // Bootstrap PostHog flags for marketing routes only (landing, pricing, etc.).
+    const isMarketingPath =
+      pathAfterLocale === "/" ||
+      pathAfterLocale.startsWith("/faq") ||
+      pathAfterLocale.startsWith("/pricing") ||
+      pathAfterLocale.startsWith("/legal");
+    if (isMarketingPath) {
+      await setPostHogBootstrap(request, sessionResponse);
+    }
     return setLocaleCookieOnResponse(sessionResponse, locale);
   }
 
@@ -159,4 +173,54 @@ function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLoca
 
 function isGlobalMetadataAssetPath(pathname: string): boolean {
   return GLOBAL_METADATA_ASSET_PATHS.has(pathname);
+}
+
+/**
+ * Bootstraps PostHog feature flags for anonymous/marketing routes to prevent UI flicker.
+ * Reads or generates a distinct_id, fetches flags from PostHog, and sets a cookie.
+ * Non-blocking — on any error the response proceeds without the bootstrap cookie.
+ */
+async function setPostHogBootstrap(request: NextRequest, response: NextResponse): Promise<void> {
+  if (!PH_TOKEN) return;
+
+  const bootstrapCookie = request.cookies.get(PH_BOOTSTRAP_COOKIE);
+  const phCookie = request.cookies.get(PH_COOKIE_KEY);
+
+  let distinctId: string;
+  if (bootstrapCookie?.value) {
+    try {
+      distinctId = (JSON.parse(bootstrapCookie.value) as { distinctId?: string })["distinctId"] ?? "";
+    } catch {
+      distinctId = "";
+    }
+  } else if (phCookie?.value) {
+    try {
+      distinctId = (JSON.parse(phCookie.value) as { distinct_id?: string })["distinct_id"] ?? "";
+    } catch {
+      distinctId = "";
+    }
+  } else {
+    distinctId = "";
+  }
+  if (!distinctId) distinctId = crypto.randomUUID();
+
+  const res = await fetch(`${PH_HOST}/flags?v=2`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ api_key: PH_TOKEN, distinct_id: distinctId }),
+    signal: AbortSignal.timeout(800),
+  });
+  if (!res.ok) return;
+
+  const payload = (await res.json()) as { featureFlags?: Record<string, string | boolean> };
+  const bootstrapValue = JSON.stringify({ distinctId, featureFlags: payload["featureFlags"] ?? {} });
+
+  const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
+  response.cookies.set(PH_BOOTSTRAP_COOKIE, bootstrapValue, {
+    path: "/",
+    maxAge: 60 * 60 * 24,
+    sameSite: "lax",
+    httpOnly: false,
+    domain: cookieDomain || undefined,
+  });
 }

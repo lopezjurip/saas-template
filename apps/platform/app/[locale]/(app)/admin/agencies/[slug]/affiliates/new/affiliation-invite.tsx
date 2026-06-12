@@ -63,11 +63,11 @@ export function AffiliationInvite({
 
       <div className="flex flex-col gap-6">
         <header className="flex flex-col gap-2">
-          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
             {t("eyebrow", { agency: agencyName })}
           </span>
-          <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-          <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
+          <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("title")}</h1>
+          <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">
             {t("subtitle", { agency: agencyName })}
           </p>
         </header>
@@ -105,7 +105,7 @@ export function AffiliationInvite({
               <span className="text-muted-foreground mt-px shrink-0">
                 <Eye size={15} />
               </span>
-              <span className="text-muted-foreground text-[12px] leading-normal text-pretty">
+              <span className="text-muted-foreground text-xs leading-normal text-pretty">
                 {t("read_only_note", { agency: agencyName })}
               </span>
             </div>
@@ -121,8 +121,8 @@ export function AffiliationInvite({
                 <Check size={22} strokeWidth={2.5} />
               </span>
               <div className="flex flex-col gap-1">
-                <span className="text-foreground text-[15px] font-semibold tracking-[-0.01em]">{t("sent_title")}</span>
-                <span className="text-muted-foreground text-[12.5px] leading-normal text-pretty">
+                <span className="text-foreground text-sm font-semibold tracking-[-0.01em]">{t("sent_title")}</span>
+                <span className="text-muted-foreground text-xs leading-normal text-pretty">
                   {t("sent_desc_prefix")} <strong className="text-foreground font-medium">{sentTo}</strong>.{" "}
                   {t("sent_desc_suffix")}
                 </span>

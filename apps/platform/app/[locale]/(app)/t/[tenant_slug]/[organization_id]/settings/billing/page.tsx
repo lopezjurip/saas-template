@@ -51,13 +51,11 @@ export default async function OrganizationBillingPage(
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-[26px] px-6 py-8">
       <header className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-[0.08em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
           {organization["organization_name"]} · {t("eyebrow")}
         </span>
-        <h1 className="text-foreground m-0 text-[22px] font-semibold tracking-[-0.02em]">{t("title")}</h1>
-        <p className="text-muted-foreground m-0 max-w-[60ch] text-[13.5px] leading-[1.55] text-pretty">
-          {t("subtitle")}
-        </p>
+        <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("title")}</h1>
+        <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">{t("subtitle")}</p>
       </header>
 
       <section className="border-border from-muted/40 to-background flex flex-col gap-4 rounded-xl border bg-linear-to-b p-5">
@@ -71,17 +69,17 @@ export default async function OrganizationBillingPage(
                 {t("period_yearly")}
               </Badge>
             </span>
-            <span className="text-foreground text-[26px] font-semibold leading-[1.1] tracking-[-0.02em]">Pro</span>
-            <span className="text-muted-foreground max-w-[44ch] text-[12.5px] text-pretty">{t("plan_blurb")}</span>
+            <span className="text-foreground text-2xl font-semibold leading-[1.1] tracking-[-0.02em]">Pro</span>
+            <span className="text-muted-foreground max-w-[44ch] text-xs text-pretty">{t("plan_blurb")}</span>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-0.5">
-            <span className="text-foreground text-[22px] font-semibold tabular-nums tracking-[-0.02em]">$24</span>
+            <span className="text-foreground text-xl font-semibold tabular-nums tracking-[-0.02em]">$24</span>
             <span className="text-muted-foreground text-xs">{t("plan_per")}</span>
           </div>
         </div>
 
         <div className="border-border flex flex-col gap-2 border-t pt-3.5">
-          <div className="flex items-center justify-between gap-2 text-[12.5px]">
+          <div className="flex items-center justify-between gap-2 text-xs">
             <span className="text-muted-foreground">{t("seats_in_use")}</span>
             <span className="text-foreground font-medium tabular-nums">
               {SEATS} / {SEATS_TOTAL}
@@ -157,8 +155,8 @@ export default async function OrganizationBillingPage(
               )}
             >
               <span className="text-muted-foreground font-mono text-xs tabular-nums">{inv.id}</span>
-              <span className="text-foreground text-[12.5px]">{inv.date}</span>
-              <span className="text-foreground text-[12.5px] font-medium tabular-nums">{inv.amount}</span>
+              <span className="text-foreground text-xs">{inv.date}</span>
+              <span className="text-foreground text-xs font-medium tabular-nums">{inv.amount}</span>
               <InvoiceStatusBadge status={inv.status} label={t(`status_${inv.status}`)} />
               <Button variant="ghost" size="icon" className="size-[30px]" aria-label={t("download_pdf")}>
                 <Download size={15} />

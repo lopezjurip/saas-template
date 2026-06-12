@@ -3,6 +3,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { INITIALS_OF } from "@packages/utils/string";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
+import { getRosetta } from "~/hooks/get-rosetta";
 import { getViewerProfileRedirect } from "~/hooks/get-viewer-profile";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
@@ -19,6 +20,8 @@ export default async function AuthLogoutPage(props: PageProps<"/[locale]/auth/lo
   const email = user["email"];
   const initials = INITIALS_OF(name_full || email || "User");
 
+  const { t } = await getRosetta(LOCALES, locale);
+
   return (
     <AuthCard className="max-w-104">
       <div className="flex flex-col gap-4.5">
@@ -27,10 +30,8 @@ export default async function AuthLogoutPage(props: PageProps<"/[locale]/auth/lo
             <LogOut size={22} />
           </span>
           <div>
-            <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">¿Cerrar sesión?</h1>
-            <p className="mt-1.5 mb-0 text-sm/normal leading-normal text-muted-foreground text-pretty">
-              Tendrás que volver a identificarte para entrar a tus organizaciones.
-            </p>
+            <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">{t("heading")}</h1>
+            <p className="mt-1.5 mb-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{t("body")}</p>
           </div>
         </div>
 
@@ -48,14 +49,37 @@ export default async function AuthLogoutPage(props: PageProps<"/[locale]/auth/lo
           <form action={signOutForm}>
             <Button type="submit" variant="destructive" className="h-10 w-full">
               <LogOut size={16} />
-              <span>Cerrar sesión</span>
+              <span>{t("sign_out")}</span>
             </Button>
           </form>
           <Button asChild variant="ghost" className="h-10 w-full text-muted-foreground">
-            <Link href={ROUTE("/[locale]/home", { locale })}>Cancelar</Link>
+            <Link href={ROUTE("/[locale]/home", { locale })}>{t("cancel")}</Link>
           </Button>
         </div>
       </div>
     </AuthCard>
   );
 }
+
+const LOCALE_ES = {
+  heading: "¿Cerrar sesión?",
+  body: "Tendrás que volver a identificarte para entrar a tus organizaciones.",
+  sign_out: "Cerrar sesión",
+  cancel: "Cancelar",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  heading: "Sign out?",
+  body: "You'll need to identify yourself again to access your organizations.",
+  sign_out: "Sign out",
+  cancel: "Cancel",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  heading: "Terminar sessão?",
+  body: "Precisará identificar-se novamente para aceder às suas organizações.",
+  sign_out: "Terminar sessão",
+  cancel: "Cancelar",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

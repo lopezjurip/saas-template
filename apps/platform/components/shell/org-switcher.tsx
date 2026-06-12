@@ -55,7 +55,7 @@ export function OrgSwitcher({
       <Avatar initials={initials} color={color} size="md" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium leading-tight">{current["organization_name"]}</div>
-        <div className="text-muted-foreground truncate text-[11px] leading-tight">{tenant["tenant_name"]}</div>
+        <div className="text-muted-foreground truncate text-xs leading-tight">{tenant["tenant_name"]}</div>
       </div>
       <ChevronsUpDown size={14} className="text-muted-foreground" />
     </button>
@@ -71,7 +71,7 @@ export function OrgSwitcher({
             compact ? "absolute left-full top-0 z-40 ml-2 w-64" : "absolute left-0 right-0 top-full z-30 mt-1.5",
           )}
         >
-          <div className="text-muted-foreground px-2 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wider">
+          <div className="text-muted-foreground px-2 pb-1 pt-2 text-xs font-medium uppercase tracking-wider">
             {t("heading")}
           </div>
           <div className="px-1 pb-1">
@@ -96,9 +96,7 @@ export function OrgSwitcher({
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm">{organization["organization_name"]}</div>
                     {organization["organization_slug"] ? (
-                      <div className="text-muted-foreground truncate text-[11px]">
-                        {organization["organization_slug"]}
-                      </div>
+                      <div className="text-muted-foreground truncate text-xs">{organization["organization_slug"]}</div>
                     ) : null}
                   </div>
                   {isCurrent ? <Check size={14} className="text-foreground" /> : null}

@@ -975,118 +975,8 @@ grant select, insert, update, delete on table public.agencies_organizations_gran
 -- Writes on agency tables: service_role only (no authenticated write policies).
 -- RLS SELECT policies for agency tables are defined after viewer_agency_ids() is created.
 
--- ============================================================
--- webauthn (passkeys)
--- ============================================================
--- Custom SimpleWebAuthn-backed implementation. Two tables:
---   profile_webauthn_challenges  : transient challenges; one per profile during registration,
---                          NULL profile_id for anonymous sign-in challenges.
---   profile_webauthn_credentials : persistent passkeys per profile.
--- The sign-in flow runs anonymously and goes through service-role; the registration
--- flow runs as the authenticated user. RLS is locked down so anon/authenticated
--- cannot touch challenges directly — only the credentials they own.
-
--- WebAuthn columns are stored as `text` (not enum) because some spec literals
--- contain hyphens (e.g. credential type `'public-key'`), which pg_graphql
--- rejects as enum value names — see CLAUDE.md "No hyphens in SQL identifiers
--- or enum values". `check` constraints preserve enum-like safety at the DB.
-
-create table if not exists public.profile_webauthn_challenges (
-  webauthn_challenge_id uuid not null primary key default internal.uuid_generate_v7(),
-  profile_id uuid references public.profiles (profile_id) on delete cascade,
-  webauthn_challenge_value text not null unique,
-  webauthn_challenge_created_at timestamptz not null default current_timestamp,
-  -- One registration challenge per profile. Postgres treats NULLs as distinct, so
-  -- many anonymous sign-in challenges can coexist while each user has at most one
-  -- pending registration challenge (upserts on profile_id).
-  unique (profile_id)
-);
-
-create index if not exists profile_webauthn_challenges_created_at_idx
-  on public.profile_webauthn_challenges (webauthn_challenge_created_at);
-
-create table if not exists public.profile_webauthn_credentials (
-  webauthn_credential_id uuid not null primary key default internal.uuid_generate_v7(),
-  profile_id uuid not null references public.profiles (profile_id) on delete cascade,
-  webauthn_credential_external_id varchar not null unique,
-  webauthn_credential_friendly_name text,
-  webauthn_credential_type text not null
-    check (webauthn_credential_type in ('public-key')),
-  webauthn_credential_aaguid varchar not null default '00000000-0000-0000-0000-000000000000',
-  webauthn_credential_sign_count integer not null,
-  webauthn_credential_transports text[] not null,
-  webauthn_credential_user_verification_status text not null
-    check (webauthn_credential_user_verification_status in ('unverified', 'verified')),
-  webauthn_credential_device_type text not null
-    check (webauthn_credential_device_type in ('single_device', 'multi_device')),
-  webauthn_credential_backup_state text not null
-    check (webauthn_credential_backup_state in ('not_backed_up', 'backed_up')),
-  webauthn_credential_public_key text not null,
-  webauthn_credential_last_used_at timestamptz,
-  webauthn_credential_created_at timestamptz not null default current_timestamp,
-  webauthn_credential_updated_at timestamptz not null default current_timestamp
-);
-
-create index if not exists profile_webauthn_credentials_profile_idx
-  on public.profile_webauthn_credentials (profile_id);
-
-drop trigger if exists handle_profile_webauthn_credentials_updated_at on public.profile_webauthn_credentials;
-create trigger handle_profile_webauthn_credentials_updated_at
-  before update on public.profile_webauthn_credentials
-  for each row execute procedure extensions.moddatetime(webauthn_credential_updated_at);
-
-alter table public.profile_webauthn_challenges enable row level security;
-alter table public.profile_webauthn_credentials enable row level security;
-
-revoke all on table public.profile_webauthn_challenges from anon, authenticated;
-grant select, insert, delete on table public.profile_webauthn_challenges to anon, authenticated;
-grant select, insert, delete on table public.profile_webauthn_challenges to service_role;
-
-revoke all on table public.profile_webauthn_credentials from anon, authenticated;
-grant select, insert, update, delete on table public.profile_webauthn_credentials to anon, authenticated;
-grant select, insert, update, delete on table public.profile_webauthn_credentials to service_role;
-
--- Challenges: 100% server-side via service-role (Server Actions in
--- apps/platform/lib/passkeys.actions.ts). No authenticated policies — clients
--- never touch this table directly. Default-deny keeps anon + authenticated out.
-
--- Credentials: clients only read their own list (/home/account/security) and delete their own
--- (passkey revocation). Inserts + updates happen exclusively via service-role
--- Server Actions, so authenticated INSERT/UPDATE policies are intentionally absent
--- — that closes the "user fabricates rows bypassing the WebAuthn ceremony" vector.
-drop policy if exists "profile_webauthn_credentials select own" on public.profile_webauthn_credentials;
-create policy "profile_webauthn_credentials select own"
-  on public.profile_webauthn_credentials for select
-  to authenticated
-  using (profile_id = (select public.viewer_profile_id()));
-
-drop policy if exists "profile_webauthn_credentials delete own" on public.profile_webauthn_credentials;
-create policy "profile_webauthn_credentials delete own"
-  on public.profile_webauthn_credentials for delete
-  to authenticated
-  using (profile_id = (select public.viewer_profile_id()));
-
--- Anonymous lookup used by /auth root to surface the passkey button only when the
--- entered email has a passkey registered. Same enumeration-leak posture as email_exists.
-create or replace function public.email_has_passkey(email_to_check text)
-  returns boolean
-  language sql
-  stable
-  security definer
-  set search_path to ''
-  as $$
-    select exists (
-      select 1
-      from auth.users u
-      join public.profile_webauthn_credentials c on c.profile_id = u.id
-      where lower(u.email) = lower(email_to_check)
-    );
-  $$;
-
-grant execute on function public.email_has_passkey(text) to anon, authenticated;
-
 -- Anonymous lookup used by /auth/email step-2 to surface the password field only when the
--- entered email has a password set. Same enumeration-leak posture as email_has_passkey.
+-- entered email has a password set.
 create or replace function public.email_has_password(email_to_check text)
   returns boolean
   language sql
@@ -1104,36 +994,6 @@ create or replace function public.email_has_password(email_to_check text)
   $$;
 
 grant execute on function public.email_has_password(text) to anon, authenticated;
-
--- Anonymous lookup used by /auth/phone step-2 to surface the passkey button only when the
--- entered phone resolves to an account with a passkey. gotrue stores phones without the
--- leading '+', so we strip it before comparing.
-create or replace function public.phone_has_passkey(phone_to_check text, default_code text default '+56')
-  returns boolean
-  language plpgsql
-  stable
-  security definer
-  set search_path to ''
-  as $$
-    declare
-      _canonical text;
-      _result boolean;
-    begin
-      _canonical := public.phone_normalize(phone_to_check, default_code);
-      if _canonical is null then
-        return false;
-      end if;
-      select exists (
-        select 1
-        from auth.users u
-        join public.profile_webauthn_credentials c on c.profile_id = u.id
-        where u.phone = ltrim(_canonical, '+')
-      ) into _result;
-      return _result;
-    end;
-  $$;
-
-grant execute on function public.phone_has_passkey(text, text) to anon, authenticated;
 
 -- Anonymous lookup used by /auth/phone step-2 to surface the password field only when the
 -- entered phone resolves to an account with a password set.
@@ -1164,24 +1024,6 @@ create or replace function public.phone_has_password(phone_to_check text, defaul
   $$;
 
 grant execute on function public.phone_has_password(text, text) to anon, authenticated;
-
--- Resolve profile_id (= auth.uid) from email. Used by the anonymous sign-in challenge
--- route to scope allowCredentials to the entered email's owner — avoids paging through
--- admin.listUsers. Service-role only; the route already runs with service-role.
-create or replace function public.profile_id_by_email(email_to_check text)
-  returns uuid
-  language sql
-  stable
-  security definer
-  set search_path to ''
-  as $$
-    select u.id
-    from auth.users u
-    where lower(u.email) = lower(email_to_check)
-    limit 1;
-  $$;
-
-grant execute on function public.profile_id_by_email(text) to service_role;
 
 -- ============================================================
 -- viewer_* helpers
@@ -2865,3 +2707,230 @@ create or replace function public.revoke_session(session_id uuid)
     where id = revoke_session.session_id
       and user_id = auth.uid();
   $$;
+
+-- ---------------------------------------------------------------------------
+-- public.create_tenant
+-- Creates a tenant + default organization + membership + wildcard permission
+-- atomically. Intended to be called from a trusted server-side context with the
+-- service-role key (bypasses RLS). Returns the new tenant_id, organization_id,
+-- organization_membership_id, and tenant_slug.
+-- ---------------------------------------------------------------------------
+create or replace function public.tenant_create(
+  tenant_slug  text,
+  tenant_name  text,
+  profile_id   uuid
+)
+  returns jsonb
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _tenant_id                    int;
+      _organization_id              int;
+      _organization_membership_id   int;
+    begin
+      insert into public.tenants (tenant_slug, tenant_name)
+        values (tenant_create.tenant_slug::extensions.citext, tenant_create.tenant_name)
+        returning tenants.tenant_id into _tenant_id;
+
+      insert into public.organizations (tenant_id, organization_slug, organization_name)
+        values (_tenant_id, tenant_create.tenant_slug::extensions.citext, tenant_create.tenant_name)
+        returning organizations.organization_id into _organization_id;
+
+      insert into public.organization_memberships (
+        organization_id,
+        profile_id,
+        organization_membership_accepted_at
+      )
+        values (_organization_id, tenant_create.profile_id, current_timestamp)
+        returning organization_memberships.organization_membership_id into _organization_membership_id;
+
+      insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+        values (_organization_membership_id, '*');
+
+      return jsonb_build_object(
+        'tenant_id',                  _tenant_id,
+        'tenant_slug',                tenant_create.tenant_slug,
+        'organization_id',            _organization_id,
+        'organization_membership_id', _organization_membership_id
+      );
+    end;
+  $$;
+
+grant execute on function public.tenant_create(text, text, uuid) to service_role;
+
+-- ============================================================
+-- agency_memberships — mutation RPCs
+-- ============================================================
+-- Errors use SQLSTATE P0001 with a stable, locale-key message so callers
+-- can match the key without parsing prose.
+
+-- Invite (upsert): called from actionInviteAffiliate after the caller resolves/creates
+-- the auth user. Validates that the caller is an active affiliate, then upserts the
+-- membership row atomically (insert on conflict → reset timestamps).
+-- Granted to service_role because the auth-user resolution step happens server-side
+-- and this RPC is always called from a trusted server action.
+create or replace function public.agency_membership_invite(
+  agency_id   uuid,
+  profile_id  uuid,
+  caller_id   uuid
+)
+  returns int
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _membership_id int;
+    begin
+      -- Caller must be an active affiliate.
+      if not exists (
+        select 1 from public.agency_memberships af
+        where af.agency_id = agency_membership_invite.agency_id
+          and af.profile_id = agency_membership_invite.caller_id
+          and af.agency_membership_accepted_at is not null
+          and af.agency_membership_revoked_at is null
+          and af.agency_membership_rejected_at is null
+      ) then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      if not exists (select 1 from public.agencies a where a.agency_id = agency_membership_invite.agency_id) then
+        raise exception 'agency_not_found' using errcode = 'P0001';
+      end if;
+
+      -- Check if already an active member (not revoked/rejected).
+      if exists (
+        select 1 from public.agency_memberships af
+        where af.agency_id = agency_membership_invite.agency_id
+          and af.profile_id = agency_membership_invite.profile_id
+          and af.agency_membership_accepted_at is not null
+          and af.agency_membership_revoked_at is null
+          and af.agency_membership_rejected_at is null
+      ) then
+        raise exception 'already_member' using errcode = 'P0001';
+      end if;
+
+      -- Upsert: insert fresh pending invite; on conflict reset any prior timestamps.
+      insert into public.agency_memberships (agency_id, profile_id)
+        values (agency_membership_invite.agency_id, agency_membership_invite.profile_id)
+        on conflict (agency_id, profile_id) do update
+          set agency_membership_accepted_at = null,
+              agency_membership_revoked_at  = null,
+              agency_membership_rejected_at = null
+        returning agency_membership_id into _membership_id;
+
+      return _membership_id;
+    end;
+  $$;
+
+grant execute on function public.agency_membership_invite(uuid, uuid, uuid) to service_role;
+
+-- Revoke or reactivate a membership. Any active affiliate may do this.
+-- Returns the updated agency_membership_id.
+create or replace function public.agency_membership_update(
+  agency_membership_id int,
+  agency_id            uuid,
+  operation            text,  -- 'revoke' | 'reactivate'
+  caller_id            uuid
+)
+  returns int
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    begin
+      if agency_membership_update.operation not in ('revoke', 'reactivate') then
+        raise exception 'invalid_operation' using errcode = 'P0001';
+      end if;
+
+      if not exists (
+        select 1 from public.agency_memberships af
+        where af.agency_id = agency_membership_update.agency_id
+          and af.profile_id = agency_membership_update.caller_id
+          and af.agency_membership_accepted_at is not null
+          and af.agency_membership_revoked_at is null
+          and af.agency_membership_rejected_at is null
+      ) then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      if agency_membership_update.operation = 'revoke' then
+        update public.agency_memberships
+          set agency_membership_revoked_at = current_timestamp
+          where public.agency_memberships.agency_membership_id = agency_membership_update.agency_membership_id
+            and public.agency_memberships.agency_id = agency_membership_update.agency_id;
+      else
+        update public.agency_memberships
+          set agency_membership_revoked_at  = null,
+              agency_membership_rejected_at = null,
+              agency_membership_accepted_at = current_timestamp
+          where public.agency_memberships.agency_membership_id = agency_membership_update.agency_membership_id
+            and public.agency_memberships.agency_id = agency_membership_update.agency_id;
+      end if;
+
+      if not found then
+        raise exception 'membership_not_found' using errcode = 'P0001';
+      end if;
+
+      return agency_membership_update.agency_membership_id;
+    end;
+  $$;
+
+grant execute on function public.agency_membership_update(int, uuid, text, uuid) to service_role;
+
+-- Respond to an invitation. The caller must own the pending membership.
+-- Returns the updated agency_membership_id.
+create or replace function public.agency_membership_respond(
+  agency_membership_id int,
+  response             text  -- 'accept' | 'reject'
+)
+  returns int
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _caller_id uuid := public.viewer_profile_id();
+      _row       public.agency_memberships;
+    begin
+      if agency_membership_respond.response not in ('accept', 'reject') then
+        raise exception 'invalid_response' using errcode = 'P0001';
+      end if;
+
+      if _caller_id is null then
+        raise exception 'not_authenticated' using errcode = 'P0001';
+      end if;
+
+      select * into _row
+        from public.agency_memberships
+        where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id
+          and profile_id = _caller_id;
+
+      if not found then
+        raise exception 'invitation_not_found' using errcode = 'P0001';
+      end if;
+
+      if _row.agency_membership_revoked_at is not null
+         or _row.agency_membership_accepted_at is not null
+         or _row.agency_membership_rejected_at is not null
+      then
+        raise exception 'invitation_not_pending' using errcode = 'P0001';
+      end if;
+
+      if agency_membership_respond.response = 'accept' then
+        update public.agency_memberships
+          set agency_membership_accepted_at = current_timestamp
+          where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id;
+      else
+        update public.agency_memberships
+          set agency_membership_rejected_at = current_timestamp
+          where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id;
+      end if;
+
+      return agency_membership_respond.agency_membership_id;
+    end;
+  $$;
+
+grant execute on function public.agency_membership_respond(int, text) to authenticated;

@@ -8,16 +8,6 @@ import { useRosetta } from "~/hooks/use-rosetta";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_LABEL, SUPPORTED_LOCALES, type SupportedLocale } from "~/lib/i18n";
 import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 
-const LOCALE_ES = {
-  group: "Idioma",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: { group: "Language" } satisfies typeof LOCALE_ES,
-  pt: { group: "Idioma" } satisfies typeof LOCALE_ES,
-};
-
 /**
  * Locale toggle component allowing users to switch between supported languages.
  * Updates both the cookie and DOM lang attribute for accessibility.
@@ -79,3 +69,13 @@ export function LocaleToggle() {
     </div>
   );
 }
+
+const LOCALE_ES = {
+  group: "Idioma",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: { group: "Language" } satisfies typeof LOCALE_ES,
+  pt: { group: "Idioma" } satisfies typeof LOCALE_ES,
+};

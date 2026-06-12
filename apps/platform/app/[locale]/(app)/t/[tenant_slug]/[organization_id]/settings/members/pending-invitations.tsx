@@ -6,9 +6,9 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { FileText, Mail, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useOptimistic, useState, useTransition } from "react";
-import { useLocale } from "~/components/locale-provider";
+import { useOptimistic, useState, useTransition } from "react";
 import { gql } from "~/generated/graphql";
+import { useIntlDateTimeFormat } from "~/hooks/use-intl";
 import { useRosetta } from "~/hooks/use-rosetta";
 import { ROUTE } from "~/lib/route";
 
@@ -30,44 +30,6 @@ const MembersPendingInvitationsCancelMutation = /*#__PURE__*/ gql(`
     }
   }
 `);
-
-const LOCALE_ES = {
-  empty: "No hay invitaciones pendientes.",
-  no_permissions: "sin permisos",
-  full_access: "Acceso completo",
-  permissions_count: "{{count}} permisos",
-  expired_badge: "expirada",
-  expires_in_days: "expira en {{days}} d",
-  cancel: "Cancelar invitación",
-  cancelling: "Cancelando…",
-  cancel_confirm: "¿Cancelar la invitación a {{email}}?",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    empty: "No pending invitations.",
-    no_permissions: "no permissions",
-    full_access: "Full access",
-    permissions_count: "{{count}} permissions",
-    expired_badge: "expired",
-    expires_in_days: "expires in {{days}}d",
-    cancel: "Cancel invitation",
-    cancelling: "Cancelling…",
-    cancel_confirm: "Cancel the invitation to {{email}}?",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    empty: "Não há convites pendentes.",
-    no_permissions: "sem permissões",
-    full_access: "Acesso completo",
-    permissions_count: "{{count}} permissões",
-    expired_badge: "expirado",
-    expires_in_days: "expira em {{days}} d",
-    cancel: "Cancelar convite",
-    cancelling: "Cancelando…",
-    cancel_confirm: "Cancelar o convite para {{email}}?",
-  } satisfies typeof LOCALE_ES,
-};
 
 interface InvitationRow {
   organization_membership_id: number;
@@ -106,7 +68,7 @@ function CHANNEL_OF(inv: InvitationRow): "email" | "phone" | "document" {
 
 export function PendingInvitations({ invitations, locale, tenantSlug, organizationId }: Props) {
   const { t } = useRosetta(LOCALES);
-  const activeLocale = useLocale();
+  const dateFormatter = useIntlDateTimeFormat({ day: "2-digit", month: "short" });
   const router = useRouter();
   const [pendingId, setPendingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -116,11 +78,6 @@ export function PendingInvitations({ invitations, locale, tenantSlug, organizati
     invitations,
     (state: InvitationRow[], organization_membership_id: number) =>
       state.filter((i) => i["organization_membership_id"] !== organization_membership_id),
-  );
-
-  const dateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(activeLocale, { day: "2-digit", month: "short" }),
-    [activeLocale],
   );
 
   function cancel(inv: InvitationRow) {
@@ -177,7 +134,7 @@ export function PendingInvitations({ invitations, locale, tenantSlug, organizati
               className="flex min-w-0 flex-col gap-0.5 outline-none focus-visible:underline"
             >
               <span className="text-foreground truncate text-sm font-medium">{INVITATION_LABEL(inv)}</span>
-              <span className="text-muted-foreground inline-flex min-w-0 items-center gap-1.5 truncate text-[12px]">
+              <span className="text-muted-foreground inline-flex min-w-0 items-center gap-1.5 truncate text-xs">
                 <span className="truncate">{dateFormatter.format(new Date(inv["invitation_created_at"]))}</span>
                 {daysLeft !== null && !isExpired ? (
                   <>
@@ -217,3 +174,41 @@ export function PendingInvitations({ invitations, locale, tenantSlug, organizati
     </div>
   );
 }
+
+const LOCALE_ES = {
+  empty: "No hay invitaciones pendientes.",
+  no_permissions: "sin permisos",
+  full_access: "Acceso completo",
+  permissions_count: "{{count}} permisos",
+  expired_badge: "expirada",
+  expires_in_days: "expira en {{days}} d",
+  cancel: "Cancelar invitación",
+  cancelling: "Cancelando…",
+  cancel_confirm: "¿Cancelar la invitación a {{email}}?",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    empty: "No pending invitations.",
+    no_permissions: "no permissions",
+    full_access: "Full access",
+    permissions_count: "{{count}} permissions",
+    expired_badge: "expired",
+    expires_in_days: "expires in {{days}}d",
+    cancel: "Cancel invitation",
+    cancelling: "Cancelling…",
+    cancel_confirm: "Cancel the invitation to {{email}}?",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    empty: "Não há convites pendentes.",
+    no_permissions: "sem permissões",
+    full_access: "Acesso completo",
+    permissions_count: "{{count}} permissões",
+    expired_badge: "expirado",
+    expires_in_days: "expira em {{days}} d",
+    cancel: "Cancelar convite",
+    cancelling: "Cancelando…",
+    cancel_confirm: "Cancelar o convite para {{email}}?",
+  } satisfies typeof LOCALE_ES,
+};

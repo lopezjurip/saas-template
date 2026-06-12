@@ -562,97 +562,6 @@ export type Database = {
           },
         ];
       };
-      profile_webauthn_challenges: {
-        Row: {
-          profile_id: string | null;
-          webauthn_challenge_created_at: string;
-          webauthn_challenge_id: string;
-          webauthn_challenge_value: string;
-        };
-        Insert: {
-          profile_id?: string | null;
-          webauthn_challenge_created_at?: string;
-          webauthn_challenge_id?: string;
-          webauthn_challenge_value: string;
-        };
-        Update: {
-          profile_id?: string | null;
-          webauthn_challenge_created_at?: string;
-          webauthn_challenge_id?: string;
-          webauthn_challenge_value?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "profile_webauthn_challenges_profile_id_fkey";
-            columns: ["profile_id"];
-            isOneToOne: true;
-            referencedRelation: "profiles";
-            referencedColumns: ["profile_id"];
-          },
-        ];
-      };
-      profile_webauthn_credentials: {
-        Row: {
-          profile_id: string;
-          webauthn_credential_aaguid: string;
-          webauthn_credential_backup_state: string;
-          webauthn_credential_created_at: string;
-          webauthn_credential_device_type: string;
-          webauthn_credential_external_id: string;
-          webauthn_credential_friendly_name: string | null;
-          webauthn_credential_id: string;
-          webauthn_credential_last_used_at: string | null;
-          webauthn_credential_public_key: string;
-          webauthn_credential_sign_count: number;
-          webauthn_credential_transports: string[];
-          webauthn_credential_type: string;
-          webauthn_credential_updated_at: string;
-          webauthn_credential_user_verification_status: string;
-        };
-        Insert: {
-          profile_id: string;
-          webauthn_credential_aaguid?: string;
-          webauthn_credential_backup_state: string;
-          webauthn_credential_created_at?: string;
-          webauthn_credential_device_type: string;
-          webauthn_credential_external_id: string;
-          webauthn_credential_friendly_name?: string | null;
-          webauthn_credential_id?: string;
-          webauthn_credential_last_used_at?: string | null;
-          webauthn_credential_public_key: string;
-          webauthn_credential_sign_count: number;
-          webauthn_credential_transports: string[];
-          webauthn_credential_type: string;
-          webauthn_credential_updated_at?: string;
-          webauthn_credential_user_verification_status: string;
-        };
-        Update: {
-          profile_id?: string;
-          webauthn_credential_aaguid?: string;
-          webauthn_credential_backup_state?: string;
-          webauthn_credential_created_at?: string;
-          webauthn_credential_device_type?: string;
-          webauthn_credential_external_id?: string;
-          webauthn_credential_friendly_name?: string | null;
-          webauthn_credential_id?: string;
-          webauthn_credential_last_used_at?: string | null;
-          webauthn_credential_public_key?: string;
-          webauthn_credential_sign_count?: number;
-          webauthn_credential_transports?: string[];
-          webauthn_credential_type?: string;
-          webauthn_credential_updated_at?: string;
-          webauthn_credential_user_verification_status?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "profile_webauthn_credentials_profile_id_fkey";
-            columns: ["profile_id"];
-            isOneToOne: false;
-            referencedRelation: "profiles";
-            referencedColumns: ["profile_id"];
-          },
-        ];
-      };
       profiles: {
         Row: {
           profile_created_at: string;
@@ -888,12 +797,58 @@ export type Database = {
           },
         ];
       };
+      user_sessions: {
+        Row: {
+          created_at: string | null;
+          id: string | null;
+          ip: string | null;
+          not_after: string | null;
+          refreshed_at: string | null;
+          user_agent: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string | null;
+          ip?: never;
+          not_after?: string | null;
+          refreshed_at?: string | null;
+          user_agent?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string | null;
+          ip?: never;
+          not_after?: string | null;
+          refreshed_at?: string | null;
+          user_agent?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
+      agency_membership_invite: {
+        Args: { agency_id: string; caller_id: string; profile_id: string };
+        Returns: number;
+      };
+      agency_membership_respond: {
+        Args: { agency_membership_id: number; response: string };
+        Returns: number;
+      };
+      agency_membership_update: {
+        Args: {
+          agency_id: string;
+          agency_membership_id: number;
+          caller_id: string;
+          operation: string;
+        };
+        Returns: number;
+      };
       cl_rut_normalize: { Args: { value: string }; Returns: string };
       cl_rut_validate: { Args: { value: string }; Returns: boolean };
       email_exists: { Args: { email_to_check: string }; Returns: boolean };
-      email_has_passkey: { Args: { email_to_check: string }; Returns: boolean };
       email_has_password: { Args: { email_to_check: string }; Returns: boolean };
       health_current_timestamp: { Args: never; Returns: string };
       org_has_other_active_admin: {
@@ -924,10 +879,6 @@ export type Database = {
         Args: { default_code?: string; phone_to_check: string };
         Returns: boolean;
       };
-      phone_has_passkey: {
-        Args: { default_code?: string; phone_to_check: string };
-        Returns: boolean;
-      };
       phone_has_password: {
         Args: { default_code?: string; phone_to_check: string };
         Returns: boolean;
@@ -936,7 +887,6 @@ export type Database = {
         Args: { default_code?: string; value: string };
         Returns: string;
       };
-      profile_id_by_email: { Args: { email_to_check: string }; Returns: string };
       profile_identity_resolve: {
         Args: {
           country: string;
@@ -946,6 +896,10 @@ export type Database = {
         Returns: string;
       };
       revoke_session: { Args: { session_id: string }; Returns: undefined };
+      tenant_create: {
+        Args: { profile_id: string; tenant_name: string; tenant_slug: string };
+        Returns: Json;
+      };
       user_auth_hook: { Args: { event: Json }; Returns: Json };
       viewer_agencies: {
         Args: never;
@@ -1170,13 +1124,20 @@ export type Database = {
       viewer_sessions: {
         Args: never;
         Returns: {
-          created_at: string;
-          id: string;
-          ip: string;
-          not_after: string;
-          refreshed_at: string;
-          user_agent: string;
+          created_at: string | null;
+          id: string | null;
+          ip: string | null;
+          not_after: string | null;
+          refreshed_at: string | null;
+          user_agent: string | null;
+          user_id: string | null;
         }[];
+        SetofOptions: {
+          from: "*";
+          to: "user_sessions";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
       };
       viewer_tenant_by_id: {
         Args: { tenant_id: number };

@@ -9,38 +9,6 @@ import type { ShellViewer } from "~/components/shell/profile-menu";
 import { BUILD_NAV, PICK_ACTIVE_NAV } from "~/components/shell/sidebar";
 import { useRosetta } from "~/hooks/use-rosetta";
 
-const LOCALE_ES = {
-  plan: "plan",
-  workspace: "Espacio de trabajo",
-  settings: "Configuración",
-  help: "Ayuda y documentación",
-  navHome: "Inicio",
-  navMembers: "Miembros",
-  navSettings: "Configuración",
-};
-
-const LOCALES = {
-  es: LOCALE_ES,
-  en: {
-    plan: "plan",
-    workspace: "Workspace",
-    settings: "Settings",
-    help: "Help & docs",
-    navHome: "Home",
-    navMembers: "Members",
-    navSettings: "Settings",
-  } satisfies typeof LOCALE_ES,
-  pt: {
-    plan: "plano",
-    workspace: "Espaço de trabalho",
-    settings: "Configurações",
-    help: "Ajuda e documentação",
-    navHome: "Início",
-    navMembers: "Membros",
-    navSettings: "Configurações",
-  } satisfies typeof LOCALE_ES,
-};
-
 export function MobileNavDrawer({
   open,
   onClose,
@@ -94,7 +62,7 @@ export function MobileNavDrawer({
             />
             <div className="min-w-0 flex-1 text-left">
               <div className="truncate text-sm font-semibold">{organization.organization_name}</div>
-              <div className="text-muted-foreground truncate text-[11px]">
+              <div className="text-muted-foreground truncate text-xs">
                 {tenant.tenant_tier ?? tenant.tenant_name} {t("plan")}
               </div>
             </div>
@@ -122,7 +90,7 @@ export function MobileNavDrawer({
                   key={item.id}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-[14px] transition-colors ${
+                  className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm transition-colors ${
                     isActive ? "bg-accent text-accent-foreground" : "text-foreground/85 active:bg-accent/60"
                   }`}
                 >
@@ -143,14 +111,14 @@ export function MobileNavDrawer({
           <button
             type="button"
             onClick={onSettings}
-            className="text-foreground/85 active:bg-accent/60 flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-[14px]"
+            className="text-foreground/85 active:bg-accent/60 flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm"
           >
             <SettingsIcon size={17} className="text-muted-foreground" />
             <span className="flex-1">{t("settings")}</span>
           </button>
           <button
             type="button"
-            className="text-foreground/85 active:bg-accent/60 flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-[14px]"
+            className="text-foreground/85 active:bg-accent/60 flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm"
           >
             <HelpCircle size={17} className="text-muted-foreground" />
             <span className="flex-1">{t("help")}</span>
@@ -166,7 +134,7 @@ export function MobileNavDrawer({
               <div className="truncate text-sm/normal font-medium leading-tight">
                 {viewer.profile_name_full || viewer.email}
               </div>
-              <div className="text-muted-foreground truncate text-[11px] leading-tight">{viewer.email}</div>
+              <div className="text-muted-foreground truncate text-xs leading-tight">{viewer.email}</div>
             </div>
           </div>
         </div>
@@ -174,3 +142,35 @@ export function MobileNavDrawer({
     </>
   );
 }
+
+const LOCALE_ES = {
+  plan: "plan",
+  workspace: "Espacio de trabajo",
+  settings: "Configuración",
+  help: "Ayuda y documentación",
+  navHome: "Inicio",
+  navMembers: "Miembros",
+  navSettings: "Configuración",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    plan: "plan",
+    workspace: "Workspace",
+    settings: "Settings",
+    help: "Help & docs",
+    navHome: "Home",
+    navMembers: "Members",
+    navSettings: "Settings",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    plan: "plano",
+    workspace: "Espaço de trabalho",
+    settings: "Configurações",
+    help: "Ajuda e documentação",
+    navHome: "Início",
+    navMembers: "Membros",
+    navSettings: "Configurações",
+  } satisfies typeof LOCALE_ES,
+};

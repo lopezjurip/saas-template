@@ -13,12 +13,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { gql } from "~/generated/graphql";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
-
-const schema = z.object({
-  profile_name_full: z.string().min(2, "Ingresa tu nombre completo").max(256),
-});
-type Values = z.infer<typeof schema>;
 
 /**
  * GraphQL mutation kept in this client island so the hub never has to re-fetch the profile
@@ -44,21 +40,26 @@ export function ProfileForm({
   defaultName: string;
   identityValue: string;
 }) {
+  const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const locale = useLocaleParam();
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [, updateName] = useGraphyMutation(OnboardingProfileFormUpdateNameMutation);
 
+  const schema = z.object({
+    profile_name_full: z.string().min(2, t("name_required")).max(256),
+  });
+  type Values = z.infer<typeof schema>;
+
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { profile_name_full: defaultName } });
-  const name = form.watch("profile_name_full");
 
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
       const { error } = await updateName({ profile_id, profile_name_full: values.profile_name_full });
       if (error) {
-        setServerError("No pudimos guardar tu nombre.");
+        setServerError(t("error_save"));
         return;
       }
       router.push(ROUTE_HREF(ROUTE("/[locale]/auth/onboarding", { locale })));
@@ -68,11 +69,11 @@ export function ProfileForm({
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="profile-name">Nombre completo</Label>
+        <Label htmlFor="profile-name">{t("label_full_name")}</Label>
         <Input
           id="profile-name"
           className="h-10"
-          placeholder="María Pérez"
+          placeholder={t("placeholder_name")}
           autoComplete="name"
           aria-invalid={!!form.formState.errors.profile_name_full}
           {...form.register("profile_name_full")}
@@ -82,7 +83,7 @@ export function ProfileForm({
         )}
         {identityValue && (
           <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-            Asociado a <strong className="font-medium text-foreground">{identityValue}</strong>
+            {t("associated_to")} <strong className="font-medium text-foreground">{identityValue}</strong>
           </p>
         )}
       </div>
@@ -94,9 +95,41 @@ export function ProfileForm({
       )}
 
       <Button type="submit" disabled={pending} className="h-10 w-full">
-        <span>{pending ? "Guardando…" : "Guardar y continuar"}</span>
+        <span>{pending ? t("saving") : t("save")}</span>
         <ArrowRight size={16} />
       </Button>
     </form>
   );
 }
+
+const LOCALE_ES = {
+  name_required: "Ingresa tu nombre completo",
+  error_save: "No pudimos guardar tu nombre.",
+  label_full_name: "Nombre completo",
+  placeholder_name: "María Pérez",
+  associated_to: "Asociado a",
+  saving: "Guardando…",
+  save: "Guardar y continuar",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    name_required: "Enter your full name",
+    error_save: "We couldn't save your name.",
+    label_full_name: "Full name",
+    placeholder_name: "Jane Smith",
+    associated_to: "Associated with",
+    saving: "Saving…",
+    save: "Save and continue",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    name_required: "Insira seu nome completo",
+    error_save: "Não conseguimos salvar seu nome.",
+    label_full_name: "Nome completo",
+    placeholder_name: "Maria Silva",
+    associated_to: "Associado a",
+    saving: "Salvando…",
+    save: "Salvar e continuar",
+  } satisfies typeof LOCALE_ES,
+};

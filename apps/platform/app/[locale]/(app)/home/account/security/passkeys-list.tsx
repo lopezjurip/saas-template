@@ -5,6 +5,8 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { gql } from "~/generated/graphql";
+import { useIntlDateTimeFormat } from "~/hooks/use-intl";
+import { useRosetta } from "~/hooks/use-rosetta";
 
 type Passkey = {
   webauthn_credential_id: string;
@@ -14,12 +16,6 @@ type Passkey = {
   webauthn_credential_created_at: string;
   webauthn_credential_last_used_at: string | null;
 };
-
-const DATE_FORMATTER = new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" });
-function FORMAT_DATE(value: string | null): string {
-  if (!value) return "—";
-  return DATE_FORMATTER.format(new Date(value));
-}
 
 const SecurityPasskeysListDeleteMutation = /*#__PURE__*/ gql(`
   mutation SecurityPasskeysListDeleteMutation($webauthn_credential_id: UUID!) {
@@ -33,15 +29,22 @@ const SecurityPasskeysListDeleteMutation = /*#__PURE__*/ gql(`
 
 export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
   const router = useRouter();
+  const { t } = useRosetta(LOCALES);
   const [error, setError] = useState<string | null>(null);
   const [deleting, startDelete] = useTransition();
   const [, deletePasskey] = useGraphyMutation(SecurityPasskeysListDeleteMutation);
+  const dateFormatter = useIntlDateTimeFormat({ day: "2-digit", month: "short", year: "numeric" });
+
+  function FORMAT_DATE(value: string | null): string {
+    if (!value) return "—";
+    return dateFormatter.format(new Date(value));
+  }
 
   function onDelete(id: string) {
     setError(null);
     startDelete(async () => {
       const { error: err } = await deletePasskey({ webauthn_credential_id: id });
-      if (err) setError("No pudimos eliminar el passkey");
+      if (err) setError(t("error_delete"));
       else router.refresh();
     });
   }
@@ -66,12 +69,12 @@ export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
               {p["webauthn_credential_friendly_name"] ?? "Passkey"}
             </span>
             <span className="text-muted-foreground inline-flex flex-wrap items-center gap-1.5 text-xs">
-              <span>Creado {FORMAT_DATE(p["webauthn_credential_created_at"])}</span>
+              <span>{t("created", { date: FORMAT_DATE(p["webauthn_credential_created_at"]) })}</span>
               <span className="opacity-50">·</span>
               <span>
                 {p["webauthn_credential_last_used_at"]
-                  ? `Usado ${FORMAT_DATE(p["webauthn_credential_last_used_at"])}`
-                  : "Nunca usado"}
+                  ? t("used", { date: FORMAT_DATE(p["webauthn_credential_last_used_at"]) })
+                  : t("never_used")}
               </span>
             </span>
           </div>
@@ -82,7 +85,7 @@ export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
               className="text-destructive hover:bg-accent inline-flex h-8 items-center gap-1.5 rounded-md border border-transparent px-3 text-[12.5px] font-medium whitespace-nowrap no-underline disabled:opacity-50"
               onClick={() => onDelete(p["webauthn_credential_id"])}
             >
-              Eliminar
+              {t("delete")}
             </button>
           </div>
         </div>
@@ -90,3 +93,29 @@ export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
     </div>
   );
 }
+
+const LOCALE_ES = {
+  created: "Creado {{date}}",
+  used: "Usado {{date}}",
+  never_used: "Nunca usado",
+  delete: "Eliminar",
+  error_delete: "No pudimos eliminar el passkey",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  created: "Created {{date}}",
+  used: "Used {{date}}",
+  never_used: "Never used",
+  delete: "Delete",
+  error_delete: "We couldn't delete the passkey",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  created: "Criado {{date}}",
+  used: "Usado {{date}}",
+  never_used: "Nunca usado",
+  delete: "Excluir",
+  error_delete: "Não conseguimos excluir o passkey",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

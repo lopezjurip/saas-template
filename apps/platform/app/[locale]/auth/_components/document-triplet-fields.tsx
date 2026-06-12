@@ -10,6 +10,7 @@ import {
 } from "@packages/ui-common/shadcn/components/ui/select";
 import { RUT_FORMAT, RUT_NORMALIZE } from "@packages/utils/rut";
 import { Controller, type FieldValues, type UseFormReturn } from "react-hook-form";
+import { useRosetta } from "~/hooks/use-rosetta";
 import { DOCUMENT_VALUE_LABEL, DOCUMENT_VALUE_PLACEHOLDER } from "./document-labels";
 
 export type DocumentTripletCountry = {
@@ -31,6 +32,7 @@ export function DocumentTripletFields<TFormValues extends FieldValues>({
   legend,
   required = false,
 }: Props<TFormValues>) {
+  const { t } = useRosetta(LOCALES);
   const { control, watch } = form;
   const country = (watch("address_level0_id" as never) as unknown as string | undefined) ?? "CL";
   const kind = ((watch("profile_identity_document_kind" as never) as unknown as string | undefined) ?? "nin") as
@@ -43,14 +45,14 @@ export function DocumentTripletFields<TFormValues extends FieldValues>({
   const fields = (
     <>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="address_level0_id">País</Label>
+        <Label htmlFor="address_level0_id">{t("label_country")}</Label>
         <Controller
           control={control}
           name={"address_level0_id" as never}
           render={({ field }) => (
             <Select value={(field.value as string) || "CL"} onValueChange={field.onChange}>
               <SelectTrigger id="address_level0_id" className="w-full">
-                <SelectValue placeholder="Selecciona…" />
+                <SelectValue placeholder={t("select_placeholder")} />
               </SelectTrigger>
               <SelectContent>
                 {countries.map((c) => (
@@ -85,7 +87,7 @@ export function DocumentTripletFields<TFormValues extends FieldValues>({
           }
           return (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="profile_identity_document_value">Documento</Label>
+              <Label htmlFor="profile_identity_document_value">{t("label_document")}</Label>
               <div className="border-input focus-within:ring-ring/50 focus-within:border-ring flex items-stretch overflow-hidden rounded-md border bg-transparent focus-within:ring-[3px]">
                 <Controller
                   control={control}
@@ -100,7 +102,7 @@ export function DocumentTripletFields<TFormValues extends FieldValues>({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="nin">{ninLabel}</SelectItem>
-                        <SelectItem value="passport">Pasaporte</SelectItem>
+                        <SelectItem value="passport">{t("passport")}</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -136,8 +138,34 @@ export function DocumentTripletFields<TFormValues extends FieldValues>({
 
   return (
     <fieldset className="border-border flex flex-col gap-3 rounded-md border p-3">
-      <legend className="text-muted-foreground px-1 text-xs">{legend ?? "Documento de identidad (opcional)"}</legend>
+      <legend className="text-muted-foreground px-1 text-xs">{legend ?? t("optional_legend")}</legend>
       {fields}
     </fieldset>
   );
 }
+
+const LOCALE_ES = {
+  label_country: "País",
+  label_document: "Documento",
+  passport: "Pasaporte",
+  select_placeholder: "Selecciona…",
+  optional_legend: "Documento de identidad (opcional)",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  label_country: "Country",
+  label_document: "Document",
+  passport: "Passport",
+  select_placeholder: "Select…",
+  optional_legend: "Identity document (optional)",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  label_country: "País",
+  label_document: "Documento",
+  passport: "Passaporte",
+  select_placeholder: "Selecione…",
+  optional_legend: "Documento de identidade (opcional)",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

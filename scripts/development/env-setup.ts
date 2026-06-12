@@ -16,6 +16,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const SUPABASE_DIR = join(ROOT, "packages/supabase");
 const TARGET_FILENAME = ".env.development.local";
 const TARGET_PATH = join(ROOT, TARGET_FILENAME);
+// apps/platform reads env via @next/env loadEnvConfig — must live in the app dir
+const PLATFORM_ENV_PATH = join(ROOT, "apps/platform", TARGET_FILENAME);
 const CLAUDE_SETTINGS_DIR = join(ROOT, ".claude");
 const CLAUDE_SETTINGS_PATH = join(CLAUDE_SETTINGS_DIR, "settings.local.json");
 
@@ -54,9 +56,6 @@ const variables: Array<{ key: string; value: string; secret: boolean }> = [
   { key: "NEXT_PUBLIC_DEV_MAILBOX_URL", value: env["INBUCKET_URL"] ?? "http://localhost:54424", secret: false },
   { key: "SUPABASE_SERVICE_ROLE_KEY", value: SUPABASE_SERVICE_ROLE_KEY, secret: true },
   { key: "DATABASE_URL", value: DATABASE_URL, secret: true },
-  { key: "WEBAUTHN_RELYING_PARTY_ID", value: "lvh.me", secret: false },
-  { key: "WEBAUTHN_RELYING_PARTY_NAME", value: "SaaS Template", secret: false },
-  { key: "WEBAUTHN_RELYING_PARTY_ORIGIN", value: `https://lvh.me:${process.env["PORT"] ?? "7003"}`, secret: false },
 ];
 
 const content = variables
@@ -69,6 +68,11 @@ const content = variables
 
 writeFileSync(TARGET_PATH, `${content}\n`);
 console.log(`wrote ${TARGET_FILENAME}`);
+
+// Mirror into apps/platform so graphql-codegen (via @next/env loadEnvConfig) picks up dynamic ports.
+// apps/platform/.env.local has default fallback values; this .env.development.local overrides them.
+writeFileSync(PLATFORM_ENV_PATH, `${content}\n`);
+console.log(`wrote apps/platform/${TARGET_FILENAME}`);
 
 /**
  * Injects DATABASE_URL into .claude/settings.local.json so Claude Code tool calls

@@ -10,21 +10,23 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useOnboardingPhoneOtp } from "~/hooks/use-onboarding";
-
-const phoneSchema = z.object({
-  phone: z
-    .string()
-    .transform((v) => v.replace(/[\s\-().]/g, ""))
-    .pipe(z.string().regex(/^\+[1-9]\d{7,14}$/, "Usa formato internacional, e.g. +56 9 12345678")),
-});
-type PhoneValues = z.infer<typeof phoneSchema>;
-
-const codeSchema = z.object({ token: z.string().regex(/^\d{6}$/, "Código de 6 dígitos") });
-type CodeValues = z.infer<typeof codeSchema>;
+import { useRosetta } from "~/hooks/use-rosetta";
 
 export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
+  const { t } = useRosetta(LOCALES);
   const { sendPhoneOtp, verifyPhoneOtp, error, pending } = useOnboardingPhoneOtp();
   const [sentTo, setSentTo] = useState<string | null>(null);
+
+  const phoneSchema = z.object({
+    phone: z
+      .string()
+      .transform((v) => v.replace(/[\s\-().]/g, ""))
+      .pipe(z.string().regex(/^\+[1-9]\d{7,14}$/, t("phone_invalid"))),
+  });
+  type PhoneValues = z.infer<typeof phoneSchema>;
+
+  const codeSchema = z.object({ token: z.string().regex(/^\d{6}$/, t("code_invalid")) });
+  type CodeValues = z.infer<typeof codeSchema>;
 
   const phoneForm = useForm<PhoneValues>({
     resolver: zodResolver(phoneSchema),
@@ -48,7 +50,7 @@ export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
     return (
       <form onSubmit={onVerifyCode} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="phone-code">Código enviado a {sentTo}</Label>
+          <Label htmlFor="phone-code">{t("code_sent_to", { phone: sentTo })}</Label>
           <Input
             id="phone-code"
             className="h-10"
@@ -68,7 +70,7 @@ export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
           </Alert>
         )}
         <Button type="submit" disabled={pending} className="h-10 w-full">
-          <span>{pending ? "Verificando…" : "Verificar"}</span>
+          <span>{pending ? t("verifying") : t("verify")}</span>
           <ArrowRight size={16} />
         </Button>
         <button
@@ -76,7 +78,7 @@ export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
           className="inline-flex items-center gap-1.5 self-start -ml-1.5 rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
           onClick={() => setSentTo(null)}
         >
-          Cambiar número
+          {t("change_phone")}
         </button>
       </form>
     );
@@ -85,7 +87,7 @@ export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
   return (
     <form onSubmit={onSendPhone} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="phone-number">Número de teléfono</Label>
+        <Label htmlFor="phone-number">{t("label_phone")}</Label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none flex">
             <Phone size={16} />
@@ -110,9 +112,47 @@ export function PhoneForm({ defaultPhone }: { defaultPhone: string }) {
         </Alert>
       )}
       <Button type="submit" disabled={pending} className="h-10 w-full">
-        <span>{pending ? "Enviando…" : "Enviar código"}</span>
+        <span>{pending ? t("sending") : t("send_code")}</span>
         <ArrowRight size={16} />
       </Button>
     </form>
   );
 }
+
+const LOCALE_ES = {
+  phone_invalid: "Usa formato internacional, e.g. +56 9 12345678",
+  code_invalid: "Código de 6 dígitos",
+  label_phone: "Número de teléfono",
+  code_sent_to: "Código enviado a {{phone}}",
+  verifying: "Verificando…",
+  verify: "Verificar",
+  change_phone: "Cambiar número",
+  sending: "Enviando…",
+  send_code: "Enviar código",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    phone_invalid: "Use international format, e.g. +1 555 1234567",
+    code_invalid: "6-digit code",
+    label_phone: "Phone number",
+    code_sent_to: "Code sent to {{phone}}",
+    verifying: "Verifying…",
+    verify: "Verify",
+    change_phone: "Change number",
+    sending: "Sending…",
+    send_code: "Send code",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    phone_invalid: "Use o formato internacional, ex: +55 11 91234-5678",
+    code_invalid: "Código de 6 dígitos",
+    label_phone: "Número de telefone",
+    code_sent_to: "Código enviado para {{phone}}",
+    verifying: "Verificando…",
+    verify: "Verificar",
+    change_phone: "Alterar número",
+    sending: "Enviando…",
+    send_code: "Enviar código",
+  } satisfies typeof LOCALE_ES,
+};

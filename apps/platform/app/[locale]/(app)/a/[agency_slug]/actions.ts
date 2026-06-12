@@ -1,6 +1,7 @@
 "use server";
 import "server-only";
 
+import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -10,44 +11,19 @@ import { debug } from "~/lib/debug";
 import { getServerLocale } from "~/lib/i18n.server";
 import { authedAction } from "~/lib/safe-action.server";
 
-const log = debug("agencies:affiliates");
-
-/**
- * Resolve the caller's ACTIVE (accepted, not revoked/rejected) membership of an
- * agency. Any active affiliate may invite or revoke others (no agency-admin
- * concept — all affiliates are equal). Returns the agency row when allowed.
- */
-async function ASSERT_ACTIVE_AFFILIATE(
-  admin: ReturnType<typeof createServiceRoleClient>,
-  agency_id: string,
-  profile_id: string,
-): Promise<boolean> {
-  const res = await admin
-    .from("agency_memberships")
-    .select("agency_membership_id")
-    .eq("agency_id", agency_id)
-    .eq("profile_id", profile_id)
-    .not("agency_membership_accepted_at", "is", null)
-    .is("agency_membership_revoked_at", null)
-    .is("agency_membership_rejected_at", null)
-    .maybeSingle();
-  return Boolean(res.data);
-}
+const log = debug("app:[locale]:(app):a:[agency_slug]:actions");
 
 const inviteAffiliateSchema = z.object({
   agency_id: z.string().uuid(),
   invitation_email: z.string().trim().email().max(254),
 });
 
-type InviteAffiliateValues = z.infer<typeof inviteAffiliateSchema>;
-
 /**
- * Invite a person to an agency by email. agency_memberships has profile_id NOT NULL
- * with no invite/token columns, so we must resolve a profile first: look up the
- * auth user by email; if absent, invite them by email (the users_handle_created
- * trigger creates the profile). The membership is inserted with accepted_at = null
- * (pending) — the invited person flips accepted_at/rejected_at from their own
- * affiliate portal.
+ * Invite a person to an agency by email.
+ *
+ * Auth-user resolution/creation must happen in TS (GoTrue calls can't be
+ * transactional). The membership upsert is an atomic RPC so there is no
+ * TOCTOU race on insert-vs-reset.
  */
 export const actionInviteAffiliate = authedAction
   .inputSchema(inviteAffiliateSchema)
@@ -55,23 +31,12 @@ export const actionInviteAffiliate = authedAction
     const { TError } = await getRosetta(LOCALES);
     const admin = createServiceRoleClient();
 
-    const allowed = await ASSERT_ACTIVE_AFFILIATE(admin, parsedInput.agency_id, user.id);
-    if (!allowed) {
-      throw new TError("no_permission");
-    }
-
-    const agencyRes = await admin
-      .from("agencies")
-      .select("agency_id, agency_slug")
-      .eq("agency_id", parsedInput.agency_id)
-      .maybeSingle();
-    if (!agencyRes.data) {
-      throw new TError("agency_not_found");
-    }
-
     const email = parsedInput.invitation_email.trim().toLowerCase();
 
-    // Resolve (or create) the auth user behind this email.
+    // Resolve the profile_id for this email from auth.users.
+    // NOTE: listUsers is paginated. This is a known limitation below 1000 users;
+    // a security-definer SQL helper (like viewer_organization_membership_pending reads
+    // auth.users) would replace this, but that requires a schema change.
     const existing = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
     let profile_id: string | null = null;
     if (!existing.error) {
@@ -97,59 +62,37 @@ export const actionInviteAffiliate = authedAction
       profile_id = invite.data.user.id;
     }
 
-    // Already a member? Surface the right error or re-activate a revoked seat.
-    const existingMembership = await admin
-      .from("agency_memberships")
-      .select(
-        "agency_membership_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at",
-      )
-      .eq("agency_id", parsedInput.agency_id)
-      .eq("profile_id", profile_id)
-      .maybeSingle();
+    // Atomic upsert: permission check + insert-or-reset in one DB round-trip.
+    const { data: agencySlug, error: rpcError } = await admin.rpc("agency_membership_invite", {
+      agency_id: parsedInput.agency_id,
+      profile_id: profile_id,
+      caller_id: user.id,
+    });
 
-    if (existingMembership.data) {
-      const m = existingMembership.data;
-      const isActive =
-        m.agency_membership_accepted_at && !m.agency_membership_revoked_at && !m.agency_membership_rejected_at;
-      if (isActive) {
-        throw new TError("already_member");
-      }
-      // Reset a revoked/rejected/pending seat back to a fresh pending invite.
-      const reset = await admin
-        .from("agency_memberships")
-        .update({
-          agency_membership_accepted_at: null,
-          agency_membership_revoked_at: null,
-          agency_membership_rejected_at: null,
-        })
-        .eq("agency_membership_id", m.agency_membership_id);
-      if (reset.error) {
-        log.error("[actionInviteAffiliate] membership reset failed", {
-          agency_id: parsedInput.agency_id,
-          profile_id,
-          error: reset.error,
-        });
-        throw new TError("invite_failed");
-      }
-    } else {
-      const insertRes = await admin
-        .from("agency_memberships")
-        .insert({ agency_id: parsedInput.agency_id, profile_id })
-        .select("agency_membership_id")
-        .single();
-      if (insertRes.error) {
-        log.error("[actionInviteAffiliate] membership insert failed", {
-          agency_id: parsedInput.agency_id,
-          profile_id,
-          error: insertRes.error,
-        });
-        throw new TError("invite_failed");
-      }
+    if (rpcError) {
+      const key = rpcError.message as keyof typeof LOCALE_ES;
+      if (key in LOCALE_ES) throw new TError(key);
+      log.error("[actionInviteAffiliate] agency_membership_invite failed", {
+        agency_id: parsedInput.agency_id,
+        profile_id,
+        error: rpcError.message,
+      });
+      throw new TError("invite_failed");
     }
 
+    // Fetch slug for cache invalidation (RPC returns membership_id, not slug).
+    const agencyRes = await admin
+      .from("agencies")
+      .select("agency_slug")
+      .eq("agency_id", parsedInput.agency_id)
+      .maybeSingle();
+
+    const slug = agencyRes.data?.["agency_slug"];
     const locale = await getServerLocale();
-    revalidatePath(`/${locale}/admin/agencies/${agencyRes.data.agency_slug}`);
-    revalidatePath(`/${locale}/a/${agencyRes.data.agency_slug}`);
+    if (slug) {
+      revalidatePath(`/${locale}/admin/agencies/${slug}`);
+      revalidatePath(`/${locale}/a/${slug}`);
+    }
     return { email };
   });
 
@@ -159,10 +102,9 @@ const membershipActionSchema = z.object({
   operation: z.enum(["revoke", "reactivate"]),
 });
 
-type MembershipActionValues = z.infer<typeof membershipActionSchema>;
-
 /**
- * Revoke or reactivate another affiliate's membership. Any active affiliate may do this.
+ * Revoke or reactivate another affiliate's membership.
+ * Permission check + update are atomic inside the RPC.
  */
 export const actionUpdateAffiliateMembership = authedAction
   .inputSchema(membershipActionSchema)
@@ -170,39 +112,31 @@ export const actionUpdateAffiliateMembership = authedAction
     const { TError } = await getRosetta(LOCALES);
     const admin = createServiceRoleClient();
 
-    const allowed = await ASSERT_ACTIVE_AFFILIATE(admin, parsedInput.agency_id, user.id);
-    if (!allowed) {
-      throw new TError("no_permission");
-    }
+    const { error: rpcError } = await admin.rpc("agency_membership_update", {
+      agency_membership_id: parsedInput.agency_membership_id,
+      agency_id: parsedInput.agency_id,
+      operation: parsedInput.operation,
+      caller_id: user.id,
+    });
 
-    const now = new Date().toISOString();
-    const patch =
-      parsedInput.operation === "revoke"
-        ? { agency_membership_revoked_at: now }
-        : {
-            agency_membership_revoked_at: null,
-            agency_membership_rejected_at: null,
-            agency_membership_accepted_at: now,
-          };
-
-    const updateRes = await admin
-      .from("agency_memberships")
-      .update(patch)
-      .eq("agency_membership_id", parsedInput.agency_membership_id)
-      .eq("agency_id", parsedInput.agency_id)
-      .select("agency_membership_id, agencies(agency_slug)")
-      .single();
-
-    if (updateRes.error || !updateRes.data) {
-      log.error("[actionUpdateAffiliateMembership] update failed", {
+    if (rpcError) {
+      const key = rpcError.message as keyof typeof LOCALE_ES;
+      if (key in LOCALE_ES) throw new TError(key);
+      log.error("[actionUpdateAffiliateMembership] agency_membership_update failed", {
         agency_id: parsedInput.agency_id,
         agency_membership_id: parsedInput.agency_membership_id,
-        error: updateRes.error,
+        error: rpcError.message,
       });
       throw new TError("update_failed");
     }
 
-    const slug = updateRes.data.agencies?.agency_slug;
+    const agencyRes = await admin
+      .from("agencies")
+      .select("agency_slug")
+      .eq("agency_id", parsedInput.agency_id)
+      .maybeSingle();
+
+    const slug = agencyRes.data?.["agency_slug"];
     const locale = await getServerLocale();
     if (slug) {
       revalidatePath(`/${locale}/admin/agencies/${slug}`);
@@ -211,54 +145,33 @@ export const actionUpdateAffiliateMembership = authedAction
     return { agency_membership_id: parsedInput.agency_membership_id };
   });
 
-/**
- * The invited person responds to their own pending invite from the affiliate portal.
- */
 const respondInvitationSchema = z.object({
   agency_membership_id: z.number().int().positive(),
   response: z.enum(["accept", "reject"]),
 });
 
-type RespondInvitationValues = z.infer<typeof respondInvitationSchema>;
-
+/**
+ * The invited person responds to their own pending invite.
+ * Uses the authenticated server client — the RPC resolves the caller via
+ * viewer_profile_id() and enforces ownership in-DB.
+ */
 export const actionRespondInvitation = authedAction
   .inputSchema(respondInvitationSchema)
-  .action(async ({ parsedInput, ctx: { user } }) => {
+  .action(async ({ parsedInput }) => {
     const { TError } = await getRosetta(LOCALES);
-    const admin = createServiceRoleClient();
+    const supabase = await createServerClient();
 
-    // The membership must belong to the caller and be pending.
-    const membershipRes = await admin
-      .from("agency_memberships")
-      .select(
-        "agency_membership_id, profile_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at",
-      )
-      .eq("agency_membership_id", parsedInput.agency_membership_id)
-      .maybeSingle();
+    const { error: rpcError } = await supabase.rpc("agency_membership_respond", {
+      agency_membership_id: parsedInput.agency_membership_id,
+      response: parsedInput.response,
+    });
 
-    if (!membershipRes.data || membershipRes.data.profile_id !== user.id) {
-      throw new TError("invitation_not_found");
-    }
-    const m = membershipRes.data;
-    if (m.agency_membership_revoked_at || m.agency_membership_accepted_at || m.agency_membership_rejected_at) {
-      throw new TError("invitation_not_pending");
-    }
-
-    const now = new Date().toISOString();
-    const patch =
-      parsedInput.response === "accept"
-        ? { agency_membership_accepted_at: now }
-        : { agency_membership_rejected_at: now };
-
-    const updateRes = await admin
-      .from("agency_memberships")
-      .update(patch)
-      .eq("agency_membership_id", parsedInput.agency_membership_id);
-
-    if (updateRes.error) {
-      log.error("[actionRespondInvitation] update failed", {
+    if (rpcError) {
+      const key = rpcError.message as keyof typeof LOCALE_ES;
+      if (key in LOCALE_ES) throw new TError(key);
+      log.error("[actionRespondInvitation] agency_membership_respond failed", {
         agency_membership_id: parsedInput.agency_membership_id,
-        error: updateRes.error,
+        error: rpcError.message,
       });
       throw new TError("respond_failed");
     }
@@ -274,8 +187,12 @@ const LOCALE_ES = {
   invite_failed: "No pudimos enviar la invitación",
   already_member: "Esa persona ya es afiliada activa de la agencia",
   update_failed: "No pudimos actualizar la afiliación",
+  membership_not_found: "Membresía no encontrada",
+  invalid_operation: "Operación inválida",
+  not_authenticated: "No autenticado",
   invitation_not_found: "Invitación no encontrada",
   invitation_not_pending: "Esta invitación ya fue respondida",
+  invalid_response: "Respuesta inválida",
   respond_failed: "No pudimos registrar tu respuesta",
 };
 
@@ -285,8 +202,12 @@ const LOCALE_EN: typeof LOCALE_ES = {
   invite_failed: "We couldn't send the invitation",
   already_member: "That person is already an active affiliate of the agency",
   update_failed: "We couldn't update the affiliation",
+  membership_not_found: "Membership not found",
+  invalid_operation: "Invalid operation",
+  not_authenticated: "Not authenticated",
   invitation_not_found: "Invitation not found",
   invitation_not_pending: "This invitation has already been answered",
+  invalid_response: "Invalid response",
   respond_failed: "We couldn't record your response",
 };
 
@@ -296,8 +217,12 @@ const LOCALE_PT: typeof LOCALE_ES = {
   invite_failed: "Não conseguimos enviar o convite",
   already_member: "Essa pessoa já é afiliada ativa da agência",
   update_failed: "Não conseguimos atualizar a afiliação",
+  membership_not_found: "Membro não encontrado",
+  invalid_operation: "Operação inválida",
+  not_authenticated: "Não autenticado",
   invitation_not_found: "Convite não encontrado",
   invitation_not_pending: "Este convite já foi respondido",
+  invalid_response: "Resposta inválida",
   respond_failed: "Não conseguimos registrar sua resposta",
 };
 

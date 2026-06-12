@@ -4,6 +4,7 @@ import { ArrowRight, Check, Fingerprint, IdCard, Lock, Mail, Phone } from "lucid
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { gql } from "~/generated/graphql";
+import { getRosetta } from "~/hooks/get-rosetta";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { UNSAFE_ROUTE } from "~/lib/route";
 import { EmailForm } from "./email-form";
@@ -49,45 +50,42 @@ export default async function SecurityPage(props: PageProps<"/[locale]/home/acco
   const hasPhone = Boolean(user["phone_confirmed_at"]);
   const hasPasskey = passkeys.length > 0;
 
+  const { t } = await getRosetta(LOCALES);
+
   return (
     <div className="flex max-w-[720px] flex-col gap-4.5">
       <header className="flex flex-col gap-1">
-        <span className="text-muted-foreground text-[11px] font-semibold tracking-[0.08em] uppercase">
-          Cuenta · Seguridad
+        <span className="text-muted-foreground text-tiny font-semibold tracking-[0.08em] uppercase">
+          {t("breadcrumb")}
         </span>
-        <h1 className="text-foreground text-[22px] font-semibold tracking-[-0.02em]">Inicio de sesión</h1>
-        <p className="text-muted-foreground text-sm/normal leading-relaxed text-pretty">
-          Cómo entras a tu cuenta y los identificadores con los que te reconocemos. Te recomendamos tener al menos dos
-          métodos activos.
-        </p>
+        <h1 className="text-foreground text-[22px] font-semibold tracking-[-0.02em]">{t("heading")}</h1>
+        <p className="text-muted-foreground text-sm/normal leading-relaxed text-pretty">{t("description")}</p>
       </header>
 
       {/* Sign-in methods */}
       <div className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2 py-1">
-          <span className="text-foreground text-sm/normal font-medium">Métodos para iniciar sesión</span>
+          <span className="text-foreground text-sm/normal font-medium">{t("sign_in_methods")}</span>
         </div>
 
         <SecurityCard
           Icon={Fingerprint}
-          title="Passkey"
+          title={t("passkey_title")}
           done={hasPasskey}
-          desc={
-            hasPasskey
-              ? `${passkeys.length} passkey${passkeys.length === 1 ? "" : "s"} registrada${passkeys.length === 1 ? "" : "s"}`
-              : "Sin passkey · agrega uno para entrar sin contraseña"
-          }
-          actionLabel={hasPasskey ? "Administrar" : "Agregar"}
+          doneLabel={t("done_label")}
+          desc={hasPasskey ? t("passkey_count", { n: passkeys.length }) : t("passkey_no")}
+          actionLabel={hasPasskey ? t("passkey_manage") : t("passkey_add")}
           actionHref={`/${locale}/auth/onboarding/passkey`}
         />
         <PasskeysList passkeys={passkeys} />
 
         <SecurityCard
           Icon={Lock}
-          title="Contraseña"
+          title={t("password_title")}
           done={hasPassword}
-          desc={hasPassword ? "Contraseña configurada" : "Sin contraseña · agrega una para respaldo"}
-          actionLabel={hasPassword ? "Cambiar" : "Crear"}
+          doneLabel={t("done_label")}
+          desc={hasPassword ? t("password_set") : t("password_no")}
+          actionLabel={hasPassword ? t("password_change") : t("password_create")}
         >
           <PasswordForm hasPassword={hasPassword} />
         </SecurityCard>
@@ -96,35 +94,38 @@ export default async function SecurityPage(props: PageProps<"/[locale]/home/acco
       {/* Identifiers */}
       <div className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2 py-1">
-          <span className="text-foreground text-sm/normal font-medium">Identificadores verificados</span>
-          <span className="text-muted-foreground text-xs">Para recuperar tu cuenta y recibir códigos</span>
+          <span className="text-foreground text-sm/normal font-medium">{t("identifiers")}</span>
+          <span className="text-muted-foreground text-xs">{t("identifiers_hint")}</span>
         </div>
 
         <SecurityCard
           Icon={Mail}
-          title="Correo"
+          title={t("email_title")}
           done={hasEmail}
-          desc={user["email"] ?? "Sin correo confirmado"}
-          actionLabel="Cambiar"
+          doneLabel={t("done_label")}
+          desc={user["email"] ?? t("email_no")}
+          actionLabel={t("email_change")}
         >
           <EmailForm currentEmail={user["email"] ?? null} />
         </SecurityCard>
 
         <SecurityCard
           Icon={Phone}
-          title="Teléfono"
+          title={t("phone_title")}
           done={hasPhone}
-          desc={user["phone"] ? `+${user["phone"]}` : "Sin teléfono confirmado"}
-          actionLabel={hasPhone ? "Cambiar" : "Agregar"}
+          doneLabel={t("done_label")}
+          desc={user["phone"] ? `+${user["phone"]}` : t("phone_no")}
+          actionLabel={hasPhone ? t("phone_change") : t("phone_add")}
         >
           <PhoneForm currentPhone={user["phone"] ? `+${user["phone"]}` : null} />
         </SecurityCard>
 
         <SecurityCard
           Icon={IdCard}
-          title="Documento"
+          title={t("document_title")}
           done={false}
-          desc="Próximamente — para firmar contratos y verificación KYC"
+          doneLabel={t("done_label")}
+          desc={t("document_desc")}
           actionLabel="—"
           disabled
         />
@@ -137,6 +138,7 @@ function SecurityCard({
   Icon,
   title,
   done,
+  doneLabel,
   desc,
   actionLabel,
   actionHref,
@@ -146,6 +148,7 @@ function SecurityCard({
   Icon: React.ComponentType<{ size?: number; className?: string }>;
   title: string;
   done: boolean;
+  doneLabel: string;
   desc: string;
   actionLabel: string;
   actionHref?: string;
@@ -175,7 +178,7 @@ function SecurityCard({
             </span>
             {done && (
               <span className="text-muted-foreground inline-flex items-center gap-1 rounded-full border px-[5px] py-px text-tiny font-semibold tracking-[0.02em] uppercase">
-                <Check size={10} /> Listo
+                <Check size={10} /> {doneLabel}
               </span>
             )}
           </span>
@@ -200,3 +203,101 @@ function SecurityCard({
     </div>
   );
 }
+
+const LOCALE_ES = {
+  breadcrumb: "Cuenta · Seguridad",
+  heading: "Inicio de sesión",
+  description:
+    "Cómo entras a tu cuenta y los identificadores con los que te reconocemos. Te recomendamos tener al menos dos métodos activos.",
+  sign_in_methods: "Métodos para iniciar sesión",
+  identifiers: "Identificadores verificados",
+  identifiers_hint: "Para recuperar tu cuenta y recibir códigos",
+  // passkey card
+  passkey_title: "Passkey",
+  passkey_no: "Sin passkey · agrega uno para entrar sin contraseña",
+  passkey_count: (p: { n: number }) => `${p.n} passkey${p.n === 1 ? "" : "s"} registrada${p.n === 1 ? "" : "s"}`,
+  passkey_manage: "Administrar",
+  passkey_add: "Agregar",
+  // done badge
+  done_label: "Listo",
+  // password card
+  password_title: "Contraseña",
+  password_set: "Contraseña configurada",
+  password_no: "Sin contraseña · agrega una para respaldo",
+  password_change: "Cambiar",
+  password_create: "Crear",
+  // email card
+  email_title: "Correo",
+  email_no: "Sin correo confirmado",
+  email_change: "Cambiar",
+  // phone card
+  phone_title: "Teléfono",
+  phone_no: "Sin teléfono confirmado",
+  phone_change: "Cambiar",
+  phone_add: "Agregar",
+  // document card
+  document_title: "Documento",
+  document_desc: "Próximamente — para firmar contratos y verificación KYC",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  breadcrumb: "Account · Security",
+  heading: "Sign in",
+  description:
+    "How you access your account and the identifiers we use to recognize you. We recommend having at least two active methods.",
+  sign_in_methods: "Sign-in methods",
+  identifiers: "Verified identifiers",
+  identifiers_hint: "To recover your account and receive codes",
+  passkey_title: "Passkey",
+  passkey_no: "No passkey · add one to sign in without a password",
+  passkey_count: (p: { n: number }) => `${p.n} passkey${p.n === 1 ? "" : "s"} registered`,
+  passkey_manage: "Manage",
+  passkey_add: "Add",
+  done_label: "Done",
+  password_title: "Password",
+  password_set: "Password set",
+  password_no: "No password · add one as a backup",
+  password_change: "Change",
+  password_create: "Create",
+  email_title: "Email",
+  email_no: "No confirmed email",
+  email_change: "Change",
+  phone_title: "Phone",
+  phone_no: "No confirmed phone",
+  phone_change: "Change",
+  phone_add: "Add",
+  document_title: "ID document",
+  document_desc: "Coming soon — for signing contracts and KYC verification",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  breadcrumb: "Conta · Segurança",
+  heading: "Entrar",
+  description:
+    "Como você acessa sua conta e os identificadores que usamos para reconhecê-lo. Recomendamos ter pelo menos dois métodos ativos.",
+  sign_in_methods: "Métodos de entrada",
+  identifiers: "Identificadores verificados",
+  identifiers_hint: "Para recuperar sua conta e receber códigos",
+  passkey_title: "Passkey",
+  passkey_no: "Sem passkey · adicione um para entrar sem senha",
+  passkey_count: (p: { n: number }) => `${p.n} passkey${p.n === 1 ? "" : "s"} registrada${p.n === 1 ? "" : "s"}`,
+  passkey_manage: "Gerenciar",
+  passkey_add: "Adicionar",
+  done_label: "Pronto",
+  password_title: "Senha",
+  password_set: "Senha configurada",
+  password_no: "Sem senha · adicione uma como backup",
+  password_change: "Alterar",
+  password_create: "Criar",
+  email_title: "E-mail",
+  email_no: "Sem e-mail confirmado",
+  email_change: "Alterar",
+  phone_title: "Telefone",
+  phone_no: "Sem telefone confirmado",
+  phone_change: "Alterar",
+  phone_add: "Adicionar",
+  document_title: "Documento",
+  document_desc: "Em breve — para assinar contratos e verificação KYC",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
