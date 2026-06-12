@@ -1,4 +1,5 @@
 "use server";
+import "server-only";
 
 import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
@@ -36,7 +37,9 @@ const RP_NAME = REQUIRE_ENV("WEBAUTHN_RELYING_PARTY_NAME");
 const RP_ID = REQUIRE_ENV("WEBAUTHN_RELYING_PARTY_ID");
 const RP_ORIGIN = REQUIRE_ENV("WEBAUTHN_RELYING_PARTY_ORIGIN");
 
-// simplewebauthn does the real cryptographic validation; zod just gates the shape.
+/**
+ * simplewebauthn does the real cryptographic validation; zod just gates the shape.
+ */
 const registrationResponseSchema = z.custom<RegistrationResponseJSON>(
   (value) => typeof value === "object" && value !== null && typeof (value as { id?: unknown })["id"] === "string",
 );
@@ -49,8 +52,10 @@ const signInChallengeSchema = z.object({
   email: z.email("Correo inválido"),
 });
 
-// Generic CRUD documents — one Collection / Insert / Update / Delete per table.
-// Action code shapes the behavior by passing different `filter` / `set` objects.
+/**
+ * Generic CRUD documents — one Collection / Insert / Update / Delete per table.
+ * Action code shapes the behavior by passing different `filter` / `set` objects.
+ */
 
 const PasskeyCredentialFragment = /*#__PURE__*/ gql(`
   fragment PasskeyCredentialFragment on profile_webauthn_credentials {
@@ -191,9 +196,11 @@ export const actionCreatePasskeyChallenge = authedAction.action(
       }),
     });
 
-    // pg_graphql doesn't support ON CONFLICT upserts, so this one call drops back to the
-    // service-role SDK. Registration uniqueness (one challenge per profile) is enforced by
-    // a unique constraint on profile_webauthn_challenges.profile_id.
+    /**
+     * pg_graphql doesn't support ON CONFLICT upserts, so this one call drops back to the
+     * service-role SDK. Registration uniqueness (one challenge per profile) is enforced by
+     * a unique constraint on profile_webauthn_challenges.profile_id.
+     */
     const admin = createServiceRoleClient();
     const { error: upsertError } = await admin
       .from("profile_webauthn_challenges")
@@ -445,7 +452,9 @@ export const actionVerifyPasskeySignIn = action
       throw new Error("Verificación fallida");
     }
 
-    // Sign-count update is non-fatal — drift doesn't block sign-in.
+    /**
+     * Sign-count update is non-fatal — drift doesn't block sign-in.
+     */
     const updateRes = await graphy.mutate({
       query: PasskeyCredentialsUpdateMutation,
       variables: {
@@ -464,9 +473,11 @@ export const actionVerifyPasskeySignIn = action
       });
     }
 
-    // Auth admin + verifyOtp stay on the SDK — pg_graphql doesn't expose Supabase auth API.
-    // admin.generateLink + verifyOtp fires user_auth_hook so the JWT carries tenants/
-    // organizations/onboarded — without it the proxy bounces the user to /onboarding.
+    /**
+     * Auth admin + verifyOtp stay on the SDK — pg_graphql doesn't expose Supabase auth API.
+     * admin.generateLink + verifyOtp fires user_auth_hook so the JWT carries tenants/
+     * organizations/onboarded — without it the proxy bounces the user to /onboarding.
+     */
     const admin = createServiceRoleClient();
     const { data: userData, error: userError } = await admin.auth.admin.getUserById(credential["profile_id"]);
     if (userError || !userData.user?.email) {

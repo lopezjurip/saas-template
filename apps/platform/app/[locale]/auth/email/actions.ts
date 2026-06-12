@@ -1,4 +1,5 @@
 "use server";
+import "server-only";
 
 import { createServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
@@ -14,8 +15,10 @@ const checkEmailSchema = z.object({
   next: z.string().default("/"),
 });
 
-// Step-1 → step-2 dispatcher. Resolves availability flags then redirects to the same
-// /auth/email route with `value=` + flags so the page renders the method picker.
+/**
+ * Step-1 → step-2 dispatcher. Resolves availability flags then redirects to the same
+ * /auth/email route with `value=` + flags so the page renders the method picker.
+ */
 const checkEmailRun = action.inputSchema(checkEmailSchema).action(async ({ parsedInput }) => {
   const supabase = await createServerClient();
   const email = parsedInput["email"];

@@ -1,11 +1,14 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { URL_NEW } from "@packages/utils/url";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import type { WebPage, WithContext } from "schema-dts";
+import { JsonLd } from "~/components/json-ld";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { APP_HOST } from "~/lib/constants";
+import { APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { ROUTE } from "~/lib/route";
 
@@ -43,20 +46,25 @@ export async function generateMetadata(props: PageProps<"/[locale]/legal/[sectio
   if (!SECTIONS.includes(section as LegalSection)) notFound();
   const legalLocale = toLegalLocale(locale);
   const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
-  const base = `https://${APP_HOST}`;
   const title = SECTION_LABELS[legalLocale][section as LegalSection];
   return {
     title,
     alternates: {
-      canonical: `${base}/${safeLocale}/legal/${section}`,
+      canonical: URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: safeLocale, section } }).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${base}/${l}/legal/${section}`])),
-        "x-default": `${base}/${DEFAULT_LOCALE}/legal/${section}`,
+        ...Object.fromEntries(
+          SUPPORTED_LOCALES.map((l) => [
+            l,
+            URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: l, section } }).href,
+          ]),
+        ),
+        "x-default": URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: DEFAULT_LOCALE, section } })
+          .href,
       },
     },
     openGraph: {
       type: "website",
-      url: `${base}/${safeLocale}/legal/${section}`,
+      url: URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale: safeLocale, section } }).href,
       locale: safeLocale,
       title,
       siteName: "SaaS Template",
@@ -71,32 +79,42 @@ export default async function LegalSectionPage(props: PageProps<"/[locale]/legal
   const legalLocale = toLegalLocale(locale);
   const content = await loadMarkdown(legalLocale, section as LegalSection);
 
-  return (
-    <article className="flex flex-col gap-6">
-      <nav aria-label="Breadcrumb">
-        <ol className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
-          <li>
-            <Link href={ROUTE("/[locale]/legal", { locale })} className="hover:text-foreground no-underline">
-              /legal
-            </Link>
-          </li>
-          <li className="opacity-50" aria-hidden="true">
-            /
-          </li>
-          <li className="text-foreground" aria-current="page">
-            {section}
-          </li>
-        </ol>
-      </nav>
+  const webPageSchema: WithContext<WebPage> = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    url: URL_NEW("/[locale]/legal/[section]", APP_URL, { replace: { locale, section } }).href,
+    inLanguage: locale,
+  };
 
-      {content ? (
-        <div className="prose prose-neutral dark:prose-invert max-w-[68ch]">
-          <ReactMarkdown>{content}</ReactMarkdown>
-        </div>
-      ) : (
-        <p className="text-muted-foreground text-sm">{t("coming_soon")}</p>
-      )}
-    </article>
+  return (
+    <>
+      <JsonLd data={webPageSchema} />
+      <article className="flex flex-col gap-6">
+        <nav aria-label="Breadcrumb">
+          <ol className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
+            <li>
+              <Link href={ROUTE("/[locale]/legal", { locale })} className="hover:text-foreground no-underline">
+                /legal
+              </Link>
+            </li>
+            <li className="opacity-50" aria-hidden="true">
+              /
+            </li>
+            <li className="text-foreground" aria-current="page">
+              {section}
+            </li>
+          </ol>
+        </nav>
+
+        {content ? (
+          <div className="prose prose-neutral dark:prose-invert max-w-[68ch]">
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm">{t("coming_soon")}</p>
+        )}
+      </article>
+    </>
   );
 }
 

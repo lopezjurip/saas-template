@@ -1,8 +1,10 @@
 import { ErrorExtendable } from "@packages/utils/errors";
 import type { FlattenedValidationErrors, SafeActionResult } from "next-safe-action";
 
-// Framework-agnostic on purpose (no server/client imports) so both Server
-// Actions and client components can unwrap action results from the same place.
+/**
+ * Framework-agnostic on purpose (no server/client imports) so both Server
+ * Actions and client components can unwrap action results from the same place.
+ */
 
 /**
  * Base class for errors produced when unwrapping a `next-safe-action` result.

@@ -1,4 +1,5 @@
 "use server";
+import "server-only";
 
 import { createServerClient } from "@packages/supabase/client.server";
 import { headers } from "next/headers";
@@ -17,11 +18,13 @@ const signInWithOAuthSchema = z.object({
   next: z.string().default("/"),
 });
 
-// NOTE (Opus analysis): signInWithOAuthRun is technically client-side compatible (pure SDK call, anon key).
-// Can be refactored to client-side hook in future. Currently kept server for logging patterns.
-// The rest of this file (continueWith*) MUST stay server because they call enumeration RPCs
-// (email_exists, phone_exists, phone_normalize, *_has_passkey, *_has_password) which expose
-// account enumeration and should only be callable by authenticated/authorized sources.
+/**
+ * NOTE: signInWithOAuthRun is technically client-side compatible (pure SDK call, anon key).
+ * Can be refactored to client-side hook in future. Currently kept server for logging patterns.
+ * The rest of this file (continueWith*) MUST stay server because they call enumeration RPCs
+ * (email_exists, phone_exists, phone_normalize, *_has_passkey, *_has_password) which expose
+ * account enumeration and should only be callable by authenticated/authorized sources.
+ */
 const signInWithOAuthRun = action
   .inputSchema(signInWithOAuthSchema)
   .action(async ({ parsedInput: { provider, next } }) => {
@@ -52,10 +55,12 @@ export async function signInWithOAuth(formData: FormData) {
   });
 }
 
-// Single entry-point dispatcher for the unified Paso 1 form (selector + smart variants).
-// Detects which field was filled and delegates to a per-method check that resolves the
-// account's available methods, then redirects to the consolidated /auth/{kind} page
-// with everything pre-populated so step-2 renders without an extra round-trip.
+/**
+ * Single entry-point dispatcher for the unified Paso 1 form (selector + smart variants).
+ * Detects which field was filled and delegates to a per-method check that resolves the
+ * account's available methods, then redirects to the consolidated /auth/{kind} page
+ * with everything pre-populated so step-2 renders without an extra round-trip.
+ */
 async function continueWithEmail(value: string, next: string): Promise<never> {
   const email = value.trim().toLowerCase();
   if (!email || !email.includes("@")) {
@@ -128,8 +133,10 @@ async function continueWithDocument(value: string, next: string): Promise<never>
   redirect(`/[locale]/auth/document?value=${encodeURIComponent(doc)}&next=${encodeURIComponent(next)}`);
 }
 
-// Form action consumed by the unified /auth entry form. The form submits with one of
-// `email | phone | document` filled; we route to the right per-method check action.
+/**
+ * Form action consumed by the unified /auth entry form. The form submits with one of
+ * `email | phone | document` filled; we route to the right per-method check action.
+ */
 export async function actionContinueAuth(formData: FormData): Promise<never> {
   const next = String(formData.get("next") ?? "/");
   const email = String(formData.get("email") ?? "").trim();

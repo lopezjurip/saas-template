@@ -1,31 +1,39 @@
 "use client";
 
+import { useGraphyQuery } from "@packages/graphy/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Monitor, Smartphone } from "lucide-react";
 import { useState, useTransition } from "react";
+import { gql } from "~/generated/graphql";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionRevokeSession, actionSignOutOtherDevices } from "../actions";
 
-export type SessionRow = {
-  id: string;
-  kind: "desktop" | "mobile";
-  device: string;
-  browser: string;
-  location: string;
-  lastActive: string;
-  current?: boolean;
-  stale?: boolean;
-};
+const UserSessions = gql(`
+  query UserSessions {
+    viewer_sessions {
+      edges {
+        node {
+          id
+          user_id
+          user_agent
+          ip
+          created_at
+          refreshed_at
+          not_after
+        }
+      }
+    }
+  }
+`);
 
-export function SessionsSection({ sessions: initialSessions }: { sessions: SessionRow[] }) {
-  const [sessions, setSessions] = useState<SessionRow[]>(initialSessions);
+export function SessionsSection(props: React.ComponentProps<"div">) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const others = sessions.filter((s) => !s.current).length;
+  const { data, mutate: refresh } = useGraphyQuery({ query: UserSessions });
 
   function onRevoke(id: string) {
     setError(null);
@@ -35,7 +43,7 @@ export function SessionsSection({ sessions: initialSessions }: { sessions: Sessi
         setError(err.serverError);
         return;
       }
-      setSessions((prev) => prev.filter((s) => s.id !== id));
+      await refresh();
     });
   }
 
@@ -47,7 +55,7 @@ export function SessionsSection({ sessions: initialSessions }: { sessions: Sessi
         setError(err.serverError);
         return;
       }
-      setSessions((prev) => prev.filter((s) => s.current));
+      await refresh();
     });
   }
 
@@ -71,7 +79,7 @@ export function SessionsSection({ sessions: initialSessions }: { sessions: Sessi
             >
               {s.kind === "mobile" ? <Smartphone size={16} /> : <Monitor size={16} />}
             </span>
-            <div className="flex min-w-0 flex-col gap-[3px]">
+            <div className="flex min-w-0 flex-col gap-0.75">
               <span className="inline-flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
                 <span>{s.device}</span>
                 {s.current && (
@@ -99,7 +107,7 @@ export function SessionsSection({ sessions: initialSessions }: { sessions: Sessi
                   type="button"
                   onClick={() => onRevoke(s.id)}
                   disabled={pending}
-                  className="inline-flex h-[30px] items-center rounded-md px-3 text-[12.5px] font-medium text-destructive hover:bg-accent disabled:opacity-50"
+                  className="inline-flex h-7.5 items-center rounded-md px-3 text-[12.5px] font-medium text-destructive hover:bg-accent disabled:opacity-50"
                 >
                   Cerrar
                 </button>

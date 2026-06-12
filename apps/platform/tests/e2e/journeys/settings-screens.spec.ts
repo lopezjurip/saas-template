@@ -1,10 +1,11 @@
 import { expect, type Page, test } from "@playwright/test";
 import { CREATE_CONFIRMED_USER, DELETE_TENANT_BY_SLUG, DELETE_USER_BY_EMAIL } from "../fixtures/supabase";
 
-// Settings screens require a real tenant + org (no mock backing).
-// The owner account gets the wildcard permission grant on creation, so every
-// settings tab is reachable without extra DB setup.
-
+/**
+ * Settings screens require a real tenant + org (no mock backing).
+ * The owner account gets the wildcard permission grant on creation, so every
+ * settings tab is reachable without extra DB setup.
+ */
 test.describe("settings screens", () => {
   const runId = Math.random().toString(36).slice(2, 8);
   const email = `settings-${runId}@humane.test`;
@@ -16,7 +17,7 @@ test.describe("settings screens", () => {
   test.beforeAll(async ({ browser }) => {
     await CREATE_CONFIRMED_USER(email, password, "Settings Owner");
 
-    // Create the tenant via the UI to get a real org_id from the redirect URL.
+    // Create tenant via UI to get real org_id from redirect URL
     const page = await browser.newPage();
     await signIn(page, email, password);
     await page.goto("/es/tenants/create");
@@ -42,16 +43,16 @@ test.describe("settings screens", () => {
   test("sidebar renders all nav links on general settings", async ({ page }) => {
     await page.goto(`/es/t/${tenantSlug}/${orgId}/settings/general`);
 
-    // Sidebar title (from settings layout.tsx — the RSC serialization bug would break this).
+    // Check sidebar title visible
     await expect(page.getByText("Configuración")).toBeVisible();
 
-    // All four sidebar nav links must be present.
+    // Check all four sidebar nav links present
     await expect(page.getByRole("link", { name: "General" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Miembros" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Facturación" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Acceso externo" })).toBeVisible();
 
-    // Page content (from general-settings.tsx).
+    // Check page content visible
     await expect(page.getByRole("heading", { name: "Ajustes de la organización" })).toBeVisible();
   });
 

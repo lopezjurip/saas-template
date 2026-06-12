@@ -1,8 +1,10 @@
 import { type RosettaDict, RosettaImpl, type RosettaOptions } from "@packages/rosetta/rosetta";
 import React, { useContext, useMemo } from "react";
 
-// Locale context — workaround for non-Next.js environments (react-email, react-pdf).
-// In Next.js apps, wrap with LocaleProvider fed by useNextJSLocale().
+/**
+ * Locale context — workaround for non-Next.js environments (react-email, react-pdf).
+ * In Next.js apps, wrap with LocaleProvider fed by useNextJSLocale().
+ */
 const LocaleContext = React.createContext<string>("es-CL");
 
 export function LocaleProvider({ locale, children }: { locale: string; children: React.ReactNode }) {
@@ -55,6 +57,8 @@ export function RosettaProvider<T>({
  * <RosettaProvider dict={LOCALES}>
  *   {items.map((item) => <LocalizedRow key={item.id} item={item} />)}
  * </RosettaProvider>
+ *
+ * @returns Rosetta instance for string translation and localization.
  */
 export function useRosetta<T>(dict?: RosettaDict<T>, options?: RosettaOptions): RosettaImpl<T> {
   const locale = useLocale();

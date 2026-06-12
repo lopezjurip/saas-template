@@ -65,7 +65,7 @@ export function useGraphyQuery<TData, TVariables>(
 
   const result = useSWR<TData, GraphyError, typeof key>(
     key,
-    async ([, _url, _access_token, _query_hash, variables]) => {
+    async ([, url, access_token, query_hash, variables]) => {
       if (variables) {
         logger.debug(
           "[useGraphyQuery#useSWR] will execute fetch for %o (%s) with variables: %o",

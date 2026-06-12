@@ -43,7 +43,7 @@ export default async function MembersAdminPage(
   } = await supabase.auth.getUser();
   const viewer_profile_id = user?.id ?? null;
 
-  // viewer_has_permission is SECURITY DEFINER and honors '*' as a match.
+  /** viewer_has_permission is SECURITY DEFINER and honors '*' as a match. */
   const { data: canManage } = await supabase.rpc("viewer_has_permission", {
     organization_id: organization_id,
     permission_id: "members_manage",
@@ -59,7 +59,9 @@ export default async function MembersAdminPage(
     );
   }
 
-  // organization_memberships now models both ACTIVE members and PENDING invites — split client-side.
+  /**
+   * organization_memberships now models both ACTIVE members and PENDING invites — split client-side.
+   */
   const [allOrganizationOrganizationMembershipsRes, organizationMembershipPermissionsRes] = await Promise.all([
     admin
       .from("organization_memberships")
@@ -84,8 +86,10 @@ export default async function MembersAdminPage(
     (m) => !m["profile_id"] && !m["organization_membership_accepted_at"],
   );
 
-  // Emails for member profiles (auth.users; not in profiles table). One paginated call
-  // instead of N round-trips — Supabase admin rate-limits `getUserById`.
+  /**
+   * Emails for member profiles (auth.users; not in profiles table). One paginated call
+   * instead of N round-trips — Supabase admin rate-limits `getUserById`.
+   */
   const memberProfileIds = new Set(activeOrganizationOrganizationMemberships.map((m) => m["profile_id"] as string));
   const profileEmailById = new Map<string, string | null>();
   if (memberProfileIds.size > 0) {

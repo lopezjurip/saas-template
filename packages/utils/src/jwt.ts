@@ -15,6 +15,7 @@ export function JWT_DECODE_PAYLOAD(token: string): unknown {
       .padEnd(Math.ceil(segment.length / 4) * 4, "=");
     return JSON.parse(atob(padded));
   } catch {
+    console.warn("[JWT_DECODE_PAYLOAD] failed to decode payload for token: %s", token);
     return null;
   }
 }

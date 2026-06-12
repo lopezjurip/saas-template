@@ -12,16 +12,15 @@ export type UseStateCookieOptions<T> = {
 };
 
 /**
- * `useState`, but every update is mirrored into a cookie via {@link useCookieStore} (native Cookie
- * Store API with a `document.cookie` polyfill).
+ * `useState`, but every update is mirrored into a cookie via {@link useCookieStore} (native Cookie Store API with a `document.cookie` polyfill).
  *
- * **Contract:** the caller MUST provide `initialValue` already read from the cookie server-side and
- * plumbed in as a prop. This hook NEVER reads the cookie itself — doing so on the client would either
- * flash the default before mount or trigger a hydration mismatch. The server read is the single
- * source of truth for the initial render; the hook only *writes* on update.
+ * Contract: the caller MUST provide `initialValue` already read from the cookie server-side and plumbed in as a prop. This hook NEVER reads the cookie itself — doing so on the client would either flash the default before mount or trigger a hydration mismatch. The server read is the single source of truth for the initial render; the hook only writes on update.
  *
- * Not `react-use`'s `useCookie`: that reads `document.cookie` on mount (SSR flash) and is backed by
- * `js-cookie`, whereas this stays on the `cookieStore` API we standardize on and is hydration-safe.
+ * Not `react-use`'s `useCookie`: that reads `document.cookie` on mount (SSR flash) and is backed by `js-cookie`, whereas this stays on the `cookieStore` API we standardize on and is hydration-safe.
+ * @param name Cookie name.
+ * @param initialValue Initial state value.
+ * @param options Configuration options.
+ * @returns Tuple of current value and setter function.
  */
 export function useStateCookie<T>(
   name: string,

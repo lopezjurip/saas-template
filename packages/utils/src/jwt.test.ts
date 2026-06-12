@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { JWT_DECODE_PAYLOAD } from "./jwt";
 
+/**
+ * Encodes payload to Base64url format without padding, matching JWT serialization.
+ */
 function ENCODE_PAYLOAD(payload: unknown): string {
-  // Base64url, no padding — matches how JWTs serialize their segments.
   return btoa(JSON.stringify(payload)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
@@ -24,15 +26,14 @@ describe("JWT_DECODE_PAYLOAD", () => {
   });
 
   it("decodes a payload encoded with base64url chars (- and _)", () => {
-    // Payloads containing bytes that map to `-`/`_` in base64url need to be
-    // translated back to `+`/`/` before atob can decode them.
+    // Payloads with `-`/`_` in base64url need translation to `+`/`/` before atob.
     const payload = { data: ">>>???" }; // base64 of this JSON contains `+` and `/`
     const token = BUILD_JWT(payload);
     expect(JWT_DECODE_PAYLOAD(token)).toEqual(payload);
   });
 
   it("decodes a payload that needs padding restored", () => {
-    // Length 1 mod 4 → needs 3 `=` padding chars added back.
+    // Length 1 mod 4 needs 3 `=` padding chars added back.
     const payload = { a: 1 };
     const token = BUILD_JWT(payload);
     const segment = token.split(".")[1]!;

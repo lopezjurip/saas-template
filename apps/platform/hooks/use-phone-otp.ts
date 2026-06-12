@@ -25,8 +25,10 @@ export function useSendPhoneOtp() {
 
     try {
       const supabase = await createBrowserClient();
-      // gotrue supports `channel: 'whatsapp'` when the provider is configured for it.
-      // Until WhatsApp BSP is wired, this falls back to SMS server-side.
+      /**
+       * gotrue supports `channel: 'whatsapp'` when the provider is configured for it.
+       * Until WhatsApp BSP is wired, this falls back to SMS server-side.
+       */
       const { error: err } = await supabase.auth.signInWithOtp({
         phone: input.phone,
         options: {

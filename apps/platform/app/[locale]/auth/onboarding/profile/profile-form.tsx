@@ -21,8 +21,10 @@ const schema = z.object({
 });
 type Values = z.infer<typeof schema>;
 
-// GraphQL mutation kept in this client island so the hub never has to re-fetch the profile
-// on every render; we revalidate the next /auth/onboarding hit via router.push().
+/**
+ * GraphQL mutation kept in this client island so the hub never has to re-fetch the profile
+ * on every render; we revalidate the next /auth/onboarding hit via router.push().
+ */
 const OnboardingProfileFormUpdateNameMutation = /*#__PURE__*/ gql(`
   mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
     updateprofilesCollection(

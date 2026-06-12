@@ -1,4 +1,5 @@
 "use server";
+import "server-only";
 
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { revalidatePath } from "next/cache";
@@ -11,9 +12,11 @@ import { authedAction } from "~/lib/safe-action.server";
 
 const log = debug("agencies:affiliates");
 
-// Resolve the caller's ACTIVE (accepted, not revoked/rejected) membership of an
-// agency. Any active affiliate may invite or revoke others (no agency-admin
-// concept — all affiliates are equal). Returns the agency row when allowed.
+/**
+ * Resolve the caller's ACTIVE (accepted, not revoked/rejected) membership of an
+ * agency. Any active affiliate may invite or revoke others (no agency-admin
+ * concept — all affiliates are equal). Returns the agency row when allowed.
+ */
 async function ASSERT_ACTIVE_AFFILIATE(
   admin: ReturnType<typeof createServiceRoleClient>,
   agency_id: string,
@@ -38,12 +41,14 @@ const inviteAffiliateSchema = z.object({
 
 type InviteAffiliateValues = z.infer<typeof inviteAffiliateSchema>;
 
-// Invite a person to an agency by email. agency_memberships has profile_id NOT NULL
-// with no invite/token columns, so we must resolve a profile first: look up the
-// auth user by email; if absent, invite them by email (the users_handle_created
-// trigger creates the profile). The membership is inserted with accepted_at = null
-// (pending) — the invited person flips accepted_at/rejected_at from their own
-// affiliate portal.
+/**
+ * Invite a person to an agency by email. agency_memberships has profile_id NOT NULL
+ * with no invite/token columns, so we must resolve a profile first: look up the
+ * auth user by email; if absent, invite them by email (the users_handle_created
+ * trigger creates the profile). The membership is inserted with accepted_at = null
+ * (pending) — the invited person flips accepted_at/rejected_at from their own
+ * affiliate portal.
+ */
 export const actionInviteAffiliate = authedAction
   .inputSchema(inviteAffiliateSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
@@ -156,7 +161,9 @@ const membershipActionSchema = z.object({
 
 type MembershipActionValues = z.infer<typeof membershipActionSchema>;
 
-// Revoke or reactivate another affiliate's membership. Any active affiliate may do this.
+/**
+ * Revoke or reactivate another affiliate's membership. Any active affiliate may do this.
+ */
 export const actionUpdateAffiliateMembership = authedAction
   .inputSchema(membershipActionSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
@@ -204,7 +211,9 @@ export const actionUpdateAffiliateMembership = authedAction
     return { agency_membership_id: parsedInput.agency_membership_id };
   });
 
-// The invited person responds to their own pending invite from the affiliate portal.
+/**
+ * The invited person responds to their own pending invite from the affiliate portal.
+ */
 const respondInvitationSchema = z.object({
   agency_membership_id: z.number().int().positive(),
   response: z.enum(["accept", "reject"]),

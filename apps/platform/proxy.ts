@@ -4,27 +4,17 @@ import { type NextRequest, NextResponse, userAgent } from "next/server";
 import { APEX_HOSTNAME, APP_HOST } from "~/lib/constants";
 import { debug } from "~/lib/debug";
 import { LOCALE_COOKIE, LOCALE_FROM_PATH, type SupportedLocale } from "~/lib/i18n";
-import { RESOLVE_LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
+import { LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
 
 const log = debug("proxy");
 
 const PUBLIC_PATH_REGEX = /^(\/|(\/(?:auth|legal|faq|pricing|opengraph-image|twitter-image|icon)(?:\/|$)))/;
 
-function isLocalizedPublicPath(pathAfterLocale: string): boolean {
-  return PUBLIC_PATH_REGEX.test(pathAfterLocale);
-}
-
-function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse {
-  const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
-  response.cookies.set(LOCALE_COOKIE, locale, {
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-    sameSite: "lax",
-    domain: cookieDomain || undefined,
-  });
-  return response;
-}
-
+/**
+ * Name required by Next.js.
+ * Proxy incoming requests to the appropriate tenant based on path and host, and handle locale detection and session updates.
+ * This runs before all other middleware and routes, so it's the ideal place to centralize logic that should apply to all requests.
+ */
 export async function proxy(request: NextRequest) {
   const hostname = request.headers.get("host") ?? "";
   const pathname = request.nextUrl.pathname;
@@ -59,7 +49,7 @@ export async function proxy(request: NextRequest) {
    */
   const sentinelMatch = /^\/(?:\[locale\]|%5[Bb]locale%5[Dd]|_)\//i.exec(pathname);
   if (sentinelMatch) {
-    const detected = RESOLVE_LOCALE_FROM_REQUEST(request);
+    const detected = LOCALE_FROM_REQUEST(request);
     const url = request.nextUrl.clone();
     url.pathname = `/${detected}/${pathname.slice(sentinelMatch[0].length)}`;
     return setLocaleCookieOnResponse(NextResponse.redirect(url), detected);
@@ -80,7 +70,7 @@ export async function proxy(request: NextRequest) {
       return response;
     }
 
-    const detected = RESOLVE_LOCALE_FROM_REQUEST(request);
+    const detected = LOCALE_FROM_REQUEST(request);
     const url = request.nextUrl.clone();
     const trailingPath = pathname === "/" ? "" : pathname;
     url.pathname = `/${detected}${trailingPath}`;
@@ -137,3 +127,18 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sitemap|llms.txt|manifest.webmanifest).*)",
   ],
 };
+
+function isLocalizedPublicPath(pathAfterLocale: string): boolean {
+  return PUBLIC_PATH_REGEX.test(pathAfterLocale);
+}
+
+function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse {
+  const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
+  response.cookies.set(LOCALE_COOKIE, locale, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+    domain: cookieDomain || undefined,
+  });
+  return response;
+}

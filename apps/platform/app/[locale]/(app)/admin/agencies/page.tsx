@@ -14,8 +14,10 @@ export default async function AdminAgenciesPage(props: PageProps<"/[locale]/admi
   const { locale } = await props.params;
   assertLocale(locale);
 
-  // The directory lists every agency. RLS scopes the authenticated client to
-  // viewer_agency_ids(), so we use the service-role admin client for a platform view.
+  /**
+   * The directory lists every agency. RLS scopes the authenticated client to
+   * viewer_agency_ids(), so we use the service-role admin client for a platform view.
+   */
   const admin = createServiceRoleClient();
 
   const [agenciesRes, membershipsRes, grantsRes] = await Promise.all([

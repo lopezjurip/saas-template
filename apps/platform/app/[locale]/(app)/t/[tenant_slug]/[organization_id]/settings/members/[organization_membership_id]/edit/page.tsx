@@ -121,7 +121,7 @@ export default async function OrganizationMembershipEditPage(
     );
   }
 
-  // Email for active members lives in auth.users (not profiles).
+  /** Email for active members lives in auth.users (not profiles). */
   let email: string | null = null;
   if (organization_membership["profile_id"]) {
     const userRes = await admin.auth.admin.getUserById(organization_membership["profile_id"]);

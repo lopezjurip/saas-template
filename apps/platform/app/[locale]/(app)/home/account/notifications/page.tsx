@@ -1,4 +1,5 @@
 import { NotificationsMatrix } from "./notifications-matrix";
+import { PushPermission } from "./push-permission";
 
 export default function NotificationsPage() {
   return (
@@ -14,6 +15,7 @@ export default function NotificationsPage() {
         </p>
       </header>
       <NotificationsMatrix />
+      <PushPermission />
     </div>
   );
 }

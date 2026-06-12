@@ -1,3 +1,5 @@
+import { URL_NEW } from "@packages/utils/url";
+
 /**
  * Same-origin redirect-target resolver shared by every auth route that honours
  * `?next=…`: callback, confirm, magic-link verify, etc.
@@ -9,10 +11,14 @@
  */
 export function RESOLVE_AUTH_NEXT(raw: string | null, origin: string): string {
   const fallback = `${origin}/[locale]/home`;
-  if (!raw) return fallback;
+  if (!raw) {
+    return fallback;
+  }
   try {
-    const candidate = new URL(raw, origin);
-    if (candidate.origin !== origin) return fallback;
+    const candidate = URL_NEW(raw, origin);
+    if (candidate.origin !== origin) {
+      return fallback;
+    }
     return candidate.toString();
   } catch {
     return fallback;

@@ -1,8 +1,15 @@
 import { Toaster } from "@packages/ui-common/shadcn/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { GraphyClientProvider } from "~/components/graphy-provider";
+import { PostHogIdentify } from "~/components/posthog-identify";
+import { PostHogProvider } from "~/components/posthog-provider";
+import { PwaInstallBanner } from "~/components/pwa-install-banner";
+import { PwaRegister } from "~/components/pwa-register";
 import { ThemeProvider } from "~/components/theme-provider";
-import { APP_HOST } from "~/lib/constants";
+import { getRosetta } from "~/hooks/get-rosetta";
+import { APP_URL } from "~/lib/constants";
 import { assertLocale } from "~/lib/i18n.server";
 import "~/styles/globals.css";
 
@@ -17,22 +24,27 @@ export const viewport: Viewport = {
   ],
 };
 
-export const metadata: Metadata = {
-  metadataBase: new URL(`https://${APP_HOST}`),
-  title: { default: "SaaS Template", template: "%s | SaaS Template" },
-  description: "Production-ready SaaS template",
-  applicationName: "SaaS Template",
-  formatDetection: { telephone: false, email: false, address: false },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "SaaS Template",
-  },
-  openGraph: {
-    type: "website",
-    siteName: "SaaS Template",
-  },
-};
+export async function generateMetadata(props: LayoutProps<"/[locale]">): Promise<Metadata> {
+  const { locale } = await props.params;
+  const { t } = await getRosetta(LOCALES);
+  return {
+    metadataBase: APP_URL,
+    title: { default: t("title"), template: t("template") },
+    description: t("description"),
+    applicationName: t("title"),
+    manifest: `/${locale}/manifest.webmanifest`,
+    formatDetection: { telephone: false, email: false, address: false },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: t("title"),
+    },
+    openGraph: {
+      type: "website",
+      siteName: t("title"),
+    },
+  };
+}
 
 export default async function RootLayout(props: LayoutProps<"/[locale]">) {
   const { children } = props;
@@ -42,11 +54,40 @@ export default async function RootLayout(props: LayoutProps<"/[locale]">) {
   return (
     <html lang={locale} suppressHydrationWarning>
       <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <GraphyClientProvider>{children}</GraphyClientProvider>
-          <Toaster richColors closeButton />
-        </ThemeProvider>
+        <PostHogProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <GraphyClientProvider>
+              <PostHogIdentify />
+              {children}
+            </GraphyClientProvider>
+            <Toaster richColors closeButton />
+            <PwaInstallBanner />
+          </ThemeProvider>
+        </PostHogProvider>
+        <PwaRegister />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
 }
+
+const LOCALE_ES = {
+  title: "SaaS Template",
+  template: "%s | SaaS Template",
+  description: "Plantilla SaaS lista para producción",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  title: "SaaS Template",
+  template: "%s | SaaS Template",
+  description: "Production-ready SaaS template",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  title: "SaaS Template",
+  template: "%s | SaaS Template",
+  description: "Template SaaS pronto para produção",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

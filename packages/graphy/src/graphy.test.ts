@@ -13,10 +13,14 @@ import {
   isGraphyResponseError,
 } from "./graphy";
 
-// Mock fetch
+/**
+ * Mock fetch
+ */
 global.fetch = vi.fn();
 
-// Mock data
+/**
+ * Mock data
+ */
 const mockQuery: DocumentTypeDecoration<{ test: string }, Record<string, unknown>> = {
   toString: () => "query { test }",
 } as DocumentTypeDecoration<{ test: string }, Record<string, unknown>>;
@@ -28,7 +32,9 @@ const mockVariables = { id: 1 };
 const mockUrl = "https://example.com/graphql";
 const mockInit = { headers: { "Content-Type": "application/json" } };
 
-// Helper function to mock fetch responses
+/**
+ * Helper function to mock fetch responses
+ */
 const mockFetchResponse = (response: any, ok = true) => {
   (fetch as any).mockResolvedValueOnce({
     ok,

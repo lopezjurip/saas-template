@@ -24,6 +24,7 @@ type Documents = {
   "\n  mutation MembersPendingInvitationsCancelMutation($organization_membership_id: Int!, $now: Datetime!) {\n    updateorganization_membershipsCollection(\n      filter: {\n        organization_membership_id: { eq: $organization_membership_id }\n        profile_id: { is: NULL }\n        organization_membership_revoked_at: { is: NULL }\n        organization_membership_rejected_at: { is: NULL }\n      }\n      set: {\n        organization_membership_revoked_at: $now\n        organization_membership_invite_token: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.MembersPendingInvitationsCancelMutationDocument;
   "\n  mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.OnboardingProfileFormUpdateNameMutationDocument;
   "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": typeof types.HealthQueryDocument;
+  "\n  query PostHogIdentify {\n    profile: viewer_profile {\n      profile_id\n      profile_name_full\n      profile_onboarded_at\n    }\n    tenants: viewer_tenants {\n      edges {\n        node {\n          tenant_id\n          tenant_slug\n        }\n      }\n    }\n    organizations: viewer_organizations {\n      edges {\n        node {\n          organization_id\n          tenant_id\n        }\n      }\n    }\n  }\n": typeof types.PostHogIdentifyDocument;
   "\n  fragment CountryGetFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n": typeof types.CountryGetFragmentFragmentDoc;
   "\n  query CountriesGet(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: addresses_level0Filter\n    $orderBy: [addresses_level0OrderBy!]\n  ) {\n    addresses_level0: addresses_level0Collection(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...CountryGetFragment\n        }\n      }\n    }\n  }\n": typeof types.CountriesGetDocument;
   "\n  fragment ViewerAgencyGetFragment on agencies {\n    agency_id\n    agency_slug\n    agency_name\n  }\n": typeof types.ViewerAgencyGetFragmentFragmentDoc;
@@ -87,6 +88,8 @@ const documents: Documents = {
   "\n  mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n":
     types.OnboardingProfileFormUpdateNameMutationDocument,
   "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": types.HealthQueryDocument,
+  "\n  query PostHogIdentify {\n    profile: viewer_profile {\n      profile_id\n      profile_name_full\n      profile_onboarded_at\n    }\n    tenants: viewer_tenants {\n      edges {\n        node {\n          tenant_id\n          tenant_slug\n        }\n      }\n    }\n    organizations: viewer_organizations {\n      edges {\n        node {\n          organization_id\n          tenant_id\n        }\n      }\n    }\n  }\n":
+    types.PostHogIdentifyDocument,
   "\n  fragment CountryGetFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n":
     types.CountryGetFragmentFragmentDoc,
   "\n  query CountriesGet(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: addresses_level0Filter\n    $orderBy: [addresses_level0OrderBy!]\n  ) {\n    addresses_level0: addresses_level0Collection(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...CountryGetFragment\n        }\n      }\n    }\n  }\n":
@@ -235,6 +238,12 @@ export function gql(
 export function gql(
   source: "\n  query HealthQuery {\n    health_current_timestamp\n  }\n",
 ): typeof import("./graphql").HealthQueryDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  query PostHogIdentify {\n    profile: viewer_profile {\n      profile_id\n      profile_name_full\n      profile_onboarded_at\n    }\n    tenants: viewer_tenants {\n      edges {\n        node {\n          tenant_id\n          tenant_slug\n        }\n      }\n    }\n    organizations: viewer_organizations {\n      edges {\n        node {\n          organization_id\n          tenant_id\n        }\n      }\n    }\n  }\n",
+): typeof import("./graphql").PostHogIdentifyDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

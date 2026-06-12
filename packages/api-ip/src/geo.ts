@@ -1,26 +1,35 @@
-type IpApiResult = { status: string; city?: string; country?: string; query: string };
+import DataLoader from "dataloader";
 
-export async function fetchGeoMap(ips: string[]): Promise<Map<string, string>> {
-  const unique = [...new Set(ips.filter(Boolean))];
-  if (!unique.length) return new Map();
-  try {
-    const res = await fetch("http://ip-api.com/batch?fields=status,city,country,query", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(unique.map((ip) => ({ query: ip }))),
-      signal: AbortSignal.timeout(3000),
-      cache: "no-store",
+export type IpApiResult = { status: string; city?: string; country?: string; query: string };
+
+export class GeoLoader extends DataLoader<string, IpApiResult | null> {
+  constructor(opts: DataLoader.Options<string, IpApiResult | null> = {}) {
+    super(GeoLoader.batch, {
+      cache: true,
+      /** Max */
+      maxBatchSize: 100,
+      ...opts,
     });
-    if (!res.ok) return new Map();
-    const rows = (await res.json()) as IpApiResult[];
-    const map = new Map<string, string>();
-    for (const r of rows) {
-      if (r.status === "success" && r.city && r.country) {
-        map.set(r.query, `${r.city}, ${r.country}`);
+  }
+
+  private static async batch(ips: readonly string[]): Promise<(IpApiResult | null)[]> {
+    try {
+      const res = await fetch("http://ip-api.com/batch?fields=status,city,country,query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ips.map((ip) => ({ query: ip }))),
+        signal: AbortSignal.timeout(3000),
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        console.error("[GeoLoader] failed to fetch geo data: %o", { status: res.status, statusText: res.statusText });
+        return ips.map(() => null);
       }
+      const rows: IpApiResult[] = await res.json();
+      const map = new Map(rows.map((r) => [r.query, r]));
+      return ips.map((ip) => map.get(ip) ?? null);
+    } catch {
+      return ips.map(() => null);
     }
-    return map;
-  } catch {
-    return new Map();
   }
 }

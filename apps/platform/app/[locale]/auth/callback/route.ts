@@ -5,7 +5,7 @@ import { debug } from "~/lib/debug";
 
 const log = debug("auth:callback");
 
-export async function GET(request: NextRequest, _ctx: RouteContext<"/[locale]/auth/callback">) {
+export async function GET(request: NextRequest, ctx: RouteContext<"/[locale]/auth/callback">) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = RESOLVE_AUTH_NEXT(searchParams.get("next"), origin);

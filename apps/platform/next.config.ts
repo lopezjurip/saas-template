@@ -6,9 +6,11 @@ import pkg from "~/package.json" with { type: "json" };
 
 const envDir = path.resolve(import.meta.dirname, "../..");
 console.log(`[next.config.ts] Loading environment variables from ${envDir}`);
-// forceReload=true: Next.js already ran loadEnvConfig(process.cwd()) before evaluating this
-// config, which cached an empty result for apps/platform/. Without forceReload the second call
-// short-circuits on that cache and silently skips the monorepo-root .env files.
+/**
+ * forceReload=true: Next.js already ran loadEnvConfig(process.cwd()) before evaluating this
+ * config, which cached an empty result for apps/platform/. Without forceReload the second call
+ * short-circuits on that cache and silently skips the monorepo-root .env files.
+ */
 loadEnvConfig(envDir, (process.env.NODE_ENV ?? "development") !== "production", console, true);
 
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -29,13 +31,23 @@ if (missing.length > 0) {
   throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
 }
 
-// Feature-scoped env vars: missing here doesn't block boot, but the feature module
-// will throw on first import. Warn loudly so misconfig is obvious in `pnpm dev` logs.
+/**
+ * Feature-scoped env vars: missing here doesn't block boot, but the feature module
+ * will throw on first import. Warn loudly so misconfig is obvious in `pnpm dev` logs.
+ */
 const featureEnvVars = ["WEBAUTHN_RELYING_PARTY_ID", "WEBAUTHN_RELYING_PARTY_NAME", "WEBAUTHN_RELYING_PARTY_ORIGIN"];
 const missingFeatures = featureEnvVars.filter((v) => !process.env[v]);
 if (missingFeatures.length > 0) {
   console.warn(
     `[next.config] Missing WebAuthn env vars: ${missingFeatures.join(", ")}. Passkey flows will fail until set — see .env.example.`,
+  );
+}
+
+const otelEnvVars = ["OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_SERVICE_NAME"];
+const missingOtel = otelEnvVars.filter((v) => !process.env[v]);
+if (missingOtel.length > 0) {
+  console.debug(
+    `[next.config] Missing OTEL env vars: ${missingOtel.join(", ")}. Traces will not be exported — see .env.example.`,
   );
 }
 
@@ -67,8 +79,10 @@ console.log("[next.config.ts] environment: %O", {
   hostname: hostname,
 });
 
-// Render QR code in the terminal to access the local server in a mobile device (same WiFi network).
-// `qrcode-terminal` is optional — skip silently if not installed.
+/**
+ * Render QR code in the terminal to access the local server in a mobile device (same WiFi network).
+ * `qrcode-terminal` is optional — skip silently if not installed.
+ */
 if (hostname) {
   import("qrcode-terminal")
     .then(({ default: qrcode }) => {

@@ -1,8 +1,10 @@
-// Onboarding is non-linear: 6 independent methods, any of which can be done now, later,
-// or skipped entirely. The hub renders one card per method showing its current status
-// (pending / done / skipped) and a "recommended" star if it matches AUTH_TWEAKS.OB_RECOMMENDED.
-// We do NOT redirect users away from /home if onboarding is incomplete — there's just a
-// banner there nudging them back. See ../actions.ts for `actionFinishOnboarding`.
+/**
+ * Onboarding is non-linear: 6 independent methods, any of which can be done now, later,
+ * or skipped entirely. The hub renders one card per method showing its current status
+ * (pending / done / skipped) and a "recommended" star if it matches AUTH_TWEAKS.OB_RECOMMENDED.
+ * We do NOT redirect users away from /home if onboarding is incomplete — there's just a
+ * banner there nudging them back. See ../actions.ts for `actionFinishOnboarding`.
+ */
 
 import { ROUTE_PATH } from "~/lib/route";
 

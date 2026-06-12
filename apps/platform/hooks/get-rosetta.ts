@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { RosettaDict } from "@packages/rosetta/rosetta";
 import { ROSETTA } from "~/lib/i18n";
 import { getServerLocale } from "~/lib/i18n.server";

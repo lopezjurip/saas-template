@@ -1,4 +1,5 @@
 "use server";
+import "server-only";
 
 import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
@@ -117,8 +118,10 @@ export const actionVerifyDocumentSignup = action.inputSchema(verifyOtpSchema).ac
 
   const profileId = verifyRes.data.user.id;
 
-  // Single-row claim: stamp profile_id + accepted_at on the existing pending organization_membership.
-  // Burn the token so the accept-link can't be replayed.
+  /**
+   * Single-row claim: stamp profile_id + accepted_at on the existing pending organization_membership.
+   * Burn the token so the accept-link can't be replayed.
+   */
   const claimRes = await admin
     .from("organization_memberships")
     .update({
@@ -136,8 +139,10 @@ export const actionVerifyDocumentSignup = action.inputSchema(verifyOtpSchema).ac
     throw new Error("No pudimos completar tu ingreso. Contacta a tu administrador.");
   }
 
-  // Ensure the document identity row exists (trigger should have created it, but be defensive
-  // for the case where the verified user already existed and the trigger only fired at first signup).
+  /**
+   * Ensure the document identity row exists (trigger should have created it, but be defensive
+   * for the case where the verified user already existed and the trigger only fired at first signup).
+   */
   if (
     invite["organization_membership_invite_address_level0_id"] &&
     invite["organization_membership_invite_document_kind"] &&

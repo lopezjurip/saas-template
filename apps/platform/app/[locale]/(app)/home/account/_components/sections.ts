@@ -1,6 +1,8 @@
-// Catalog of /home/account sections. Each section is a URL segment and a sidebar item.
-// Sections without a real backend are marked todo:true so the page can render a placeholder
-// instead of an unwired form.
+/**
+ * Catalog of /home/account sections. Each section is a URL segment and a sidebar item.
+ * Sections without a real backend are marked todo:true so the page can render a placeholder
+ * instead of an unwired form.
+ */
 
 import { Bell, Globe, Key, Monitor, ShieldCheck, Trash2, User } from "lucide-react";
 import type { ComponentType } from "react";

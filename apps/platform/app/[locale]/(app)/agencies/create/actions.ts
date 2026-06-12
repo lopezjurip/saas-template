@@ -1,4 +1,5 @@
 "use server";
+import "server-only";
 
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { SLUGIFY } from "@packages/utils/slug";
@@ -18,9 +19,13 @@ const createAgencySchema = z.object({
 
 type CreateAgencyValues = z.infer<typeof createAgencySchema>;
 
-// Any authenticated user can create an agency; the creator becomes the first
-// ACCEPTED affiliate. Agency tables are service_role-only in RLS, so we use the
-// admin client and gate authz here in the action.
+/**
+ * Creates a new agency.
+ *
+ * Any authenticated user can create an agency; the creator becomes the first
+ * ACCEPTED affiliate. Agency tables are service_role-only in RLS, so we use the
+ * admin client and gate authz here in the action.
+ */
 export const actionCreateAgency = authedAction
   .inputSchema(createAgencySchema)
   .action(async ({ parsedInput, ctx: { user } }) => {

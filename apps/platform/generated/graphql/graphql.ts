@@ -412,6 +412,14 @@ export type HealthQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type HealthQueryQuery = { health_current_timestamp: string | null };
 
+export type PostHogIdentifyQueryVariables = Exact<{ [key: string]: never }>;
+
+export type PostHogIdentifyQuery = {
+  profile: { profile_id: string; profile_name_full: string | null; profile_onboarded_at: string | null } | null;
+  tenants: { edges: Array<{ node: { tenant_id: number; tenant_slug: string } }> } | null;
+  organizations: { edges: Array<{ node: { organization_id: number; tenant_id: number } }> } | null;
+};
+
 export type CountryGetFragmentFragment = {
   address_level0_id: string;
   address_level0_name: string;
@@ -1115,6 +1123,31 @@ export const HealthQueryDocument = new TypedDocumentString(`
   health_current_timestamp
 }
     `) as unknown as TypedDocumentString<HealthQueryQuery, HealthQueryQueryVariables>;
+export const PostHogIdentifyDocument = new TypedDocumentString(`
+    query PostHogIdentify {
+  profile: viewer_profile {
+    profile_id
+    profile_name_full
+    profile_onboarded_at
+  }
+  tenants: viewer_tenants {
+    edges {
+      node {
+        tenant_id
+        tenant_slug
+      }
+    }
+  }
+  organizations: viewer_organizations {
+    edges {
+      node {
+        organization_id
+        tenant_id
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<PostHogIdentifyQuery, PostHogIdentifyQueryVariables>;
 export const CountriesGetDocument = new TypedDocumentString(`
     query CountriesGet($first: Int, $last: Int, $after: Cursor, $before: Cursor, $filter: addresses_level0Filter, $orderBy: [addresses_level0OrderBy!]) {
   addresses_level0: addresses_level0Collection(

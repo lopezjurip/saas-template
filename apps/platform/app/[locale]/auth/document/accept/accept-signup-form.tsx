@@ -49,7 +49,9 @@ export function AcceptSignupForm({ token }: { token: string }) {
     if (!sent) return;
     setError(null);
     startTransition(async () => {
-      // Verifies and redirects server-side to the org / home on success.
+      /**
+       * Verifies and redirects server-side to the org / home on success.
+       */
       const [, err] = await ErrorSafeAction.unwrap(
         actionVerifyDocumentSignup({
           invitation_token: token,

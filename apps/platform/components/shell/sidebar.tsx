@@ -105,7 +105,9 @@ export function Sidebar({
 }) {
   const { t } = useRosetta(LOCALES);
   const { modKey } = useDeviceInfo();
-  // Width is read back server-side in layout.tsx with no re-set, so persist it for a year.
+  /**
+   * Width is read back server-side in layout.tsx with no re-set, so persist it for a year.
+   */
   const [width, setWidth] = useStateCookie(SIDEBAR_WIDTH_COOKIE, initialWidth ?? SIDEBAR_DEFAULT_WIDTH, {
     maxAgeMs: SIDEBAR_WIDTH_COOKIE_MAX_AGE_MS,
   });
@@ -128,7 +130,9 @@ export function Sidebar({
     setResizing(true);
     document.body.style.cursor = "ew-resize";
     document.body.style.userSelect = "none";
-    // setWidth mirrors each update into the cookie, so no separate persist step on mouseup.
+    /**
+     * setWidth mirrors each update into the cookie, so no separate persist step on mouseup.
+     */
     function onMove(move: globalThis.MouseEvent) {
       const next = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, move.clientX - left));
       setWidth(next);
@@ -172,6 +176,9 @@ export function Sidebar({
             </button>
           </Tip>
         ) : (
+          /**
+           * Expanded search bar with keyboard shortcut hint.
+           */
           <button
             type="button"
             onClick={onOpenPalette}
@@ -193,6 +200,9 @@ export function Sidebar({
           )}
           {items.map((item) => {
             const isActive = activeId === item.id;
+            /**
+             * Collapsed view renders icon-only nav item with tooltip.
+             */
             if (collapsed) {
               return (
                 <Tip key={item.id} label={item.badge ? `${item.label} (${item.badge})` : item.label}>
@@ -213,6 +223,9 @@ export function Sidebar({
                 </Tip>
               );
             }
+            /**
+             * Expanded view renders full label nav item with optional badge.
+             */
             return (
               <Link
                 key={item.id}
@@ -273,6 +286,9 @@ export function Sidebar({
 
 export { SIDEBAR_DEFAULT_WIDTH, SIDEBAR_WIDTH_COOKIE };
 
+/**
+ * Spanish locale strings for Sidebar navigation.
+ */
 const LOCALE_ES = {
   workspace: "Espacio de trabajo",
   navHome: "Inicio",
@@ -281,6 +297,9 @@ const LOCALE_ES = {
   search: "Buscar…",
 };
 
+/**
+ * English locale strings for Sidebar navigation.
+ */
 const LOCALE_EN: typeof LOCALE_ES = {
   workspace: "Workspace",
   navHome: "Home",
@@ -289,6 +308,9 @@ const LOCALE_EN: typeof LOCALE_ES = {
   search: "Search…",
 };
 
+/**
+ * Portuguese locale strings for Sidebar navigation.
+ */
 const LOCALE_PT: typeof LOCALE_ES = {
   workspace: "Espaço de trabalho",
   navHome: "Início",
@@ -297,4 +319,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   search: "Buscar…",
 };
 
+/**
+ * Locale map for Sidebar translations.
+ */
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

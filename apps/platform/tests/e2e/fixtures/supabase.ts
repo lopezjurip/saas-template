@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 
 export const supabaseAdmin = createServiceRoleClient();

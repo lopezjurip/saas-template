@@ -29,11 +29,13 @@ const LOCALES = {
   } satisfies typeof LOCALE_ES,
 };
 
+/**
+ * Theme toggle component allowing users to switch between light, dark, and system themes.
+ * Avoids hydration mismatch by only lighting up the active segment after mounting on the client.
+ */
 export function ThemeToggle() {
   const { t } = useRosetta(LOCALES);
   const { theme, setTheme } = useTheme();
-  // Avoid hydration mismatch — server renders without knowing the theme; we only
-  // light up the active segment after mounting on the client.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 

@@ -50,8 +50,10 @@ export class PromisePool<T> {
     return results;
   }
 
+  /**
+   * Maps over an array with ordered results, unlike flush().
+   */
   public async mapArray<In>(array: In[], fn: (element: In, index: number, array: In[]) => Promise<T>): Promise<T[]> {
-    /** Ordered, unlike this.flush() */
     const orderedResults = new Array<T>(array.length);
 
     for (let i = 0; i < array.length; i++) {

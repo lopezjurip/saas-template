@@ -1,24 +1,28 @@
+import { URL_NEW } from "@packages/utils/url";
 import type { Metadata } from "next";
+import type { WebPage, WithContext } from "schema-dts";
+import { JsonLd } from "~/components/json-ld";
 import { getRosetta } from "~/hooks/get-rosetta";
-import { APP_HOST } from "~/lib/constants";
+import { APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
 
 export async function generateMetadata(props: PageProps<"/[locale]/faq">): Promise<Metadata> {
   const { t, locale } = await getRosetta(LOCALES);
-  const base = `https://${APP_HOST}`;
   const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
   return {
     title: t("heading"),
     alternates: {
-      canonical: `${base}/${safeLocale}/faq`,
+      canonical: URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: safeLocale } }).href,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${base}/${l}/faq`])),
-        "x-default": `${base}/${DEFAULT_LOCALE}/faq`,
+        ...Object.fromEntries(
+          SUPPORTED_LOCALES.map((l) => [l, URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: l } }).href]),
+        ),
+        "x-default": URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: DEFAULT_LOCALE } }).href,
       },
     },
     openGraph: {
       type: "website",
-      url: `${base}/${safeLocale}/faq`,
+      url: URL_NEW("/[locale]/faq", APP_URL, { replace: { locale: safeLocale } }).href,
       locale: safeLocale,
       title: t("heading"),
       siteName: "SaaS Template",
@@ -28,11 +32,22 @@ export async function generateMetadata(props: PageProps<"/[locale]/faq">): Promi
 
 export default async function FaqPage(props: PageProps<"/[locale]/faq">) {
   const { t, locale } = await getRosetta(LOCALES);
+
+  const webPageSchema: WithContext<WebPage> = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    url: URL_NEW("/[locale]/faq", APP_URL, { replace: { locale } }).href,
+    inLanguage: locale,
+  };
+
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-6 py-12">
-      <h1 className="text-2xl font-semibold">{t("heading")}</h1>
-      <p className="text-muted-foreground">{t("placeholder")}</p>
-    </main>
+    <>
+      <JsonLd data={webPageSchema} />
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-6 py-12">
+        <h1 className="text-2xl font-semibold">{t("heading")}</h1>
+        <p className="text-muted-foreground">{t("placeholder")}</p>
+      </main>
+    </>
   );
 }
 

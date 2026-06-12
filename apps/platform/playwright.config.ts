@@ -2,14 +2,17 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
-// Hydrate process.env from the monorepo root env files before specs evaluate.
-// Specs reach createServiceRoleClient() (via the fixture), which reads NEXT_PUBLIC_SUPABASE_URL
-// and SUPABASE_SERVICE_ROLE_KEY at module init. Playwright doesn't run our Next config, so we
-// load these ourselves. Tiny parser, no dependency on @next/env (which is ESM-only and blows
-// up Playwright's CJS transpile of this config).
-//
-// Precedence (highest first), matching Next: shell > .env.local > .env.development.local.
-// Existing entries are never overwritten, so the first source to set a key wins.
+/**
+ * Load environment variables from monorepo root `.env.*` files.
+ *
+ * Playwright runs E2E fixtures that call `createServiceRoleClient()`, which reads
+ * `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` at module init.
+ * Playwright doesn't execute Next.js config, so we hydrate `process.env` manually
+ * using a tiny parser (no dependency on `@next/env` which is ESM-only).
+ *
+ * Precedence (highest first), matching Next: shell > .env.local > .env.development.local.
+ * Existing entries are never overwritten; first source to set a key wins.
+ */
 const repoRoot = path.resolve(__dirname, "../..");
 for (const envFile of [".env.local", ".env.development.local"]) {
   const envPath = path.join(repoRoot, envFile);
@@ -25,13 +28,22 @@ for (const envFile of [".env.local", ".env.development.local"]) {
   }
 }
 
-// Match the dev script's port resolution (apps/platform/package.json `dev`):
-// `--port ${PORT:-7003}`. Conductor assigns PORT per parallel instance, so the
-// E2E suite must read the same env var.
+/**
+ * Base URL for E2E tests, resolved from environment variables.
+ * Conductor assigns `PORT` per parallel instance; E2E suite must read the same value.
+ * Matches dev script port resolution in `apps/platform/package.json` (`--port ${PORT:-7003}`).
+ */
 const PORT = process.env["PORT"] ?? "7003";
 const APEX = process.env["NEXT_PUBLIC_APEX_HOSTNAME"] ?? "lvh.me";
 const BASE_URL = `https://${APEX}:${PORT}`;
 
+/**
+ * Playwright E2E test configuration.
+ *
+ * - Disables parallel execution (`fullyParallel: false`, `workers: 1`) to avoid race conditions in tests.
+ * - Self-signed dev cert (mkcert) requires `ignoreHTTPSErrors: true` since Chromium lacks the CA.
+ * - In CI: enables `forbidOnly`, retries, and GitHub reporter for PR integration.
+ */
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
@@ -42,8 +54,6 @@ export default defineConfig({
 
   use: {
     baseURL: BASE_URL,
-    // The dev cert is self-signed (mkcert) and the cert authority isn't installed in
-    // Playwright's Chromium. Without this, every navigation fails with ERR_CERT_AUTHORITY_INVALID.
     ignoreHTTPSErrors: true,
     trace: "on-first-retry",
   },

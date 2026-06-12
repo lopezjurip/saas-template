@@ -17,7 +17,7 @@ import { OtpField } from "../_components/otp-field";
 type Props = {
   email: string;
   next: string;
-  // null = privacy mode (existence not exposed). true/false = known.
+  /** null = privacy mode (existence not exposed). true/false = known. */
   exists: boolean | null;
   hasPasskey: boolean;
   hasPassword: boolean;

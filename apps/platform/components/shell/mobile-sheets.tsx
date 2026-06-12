@@ -35,18 +35,18 @@ import { useRosetta } from "~/hooks/use-rosetta";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
 
+/**
+ * Spanish locale strings for mobile sheet components.
+ */
 const LOCALE_ES = {
-  // Org sheet
   organizations: "Organizaciones",
   switchTenant: "Cambiar de empresa",
   orgSettings: "Configuración de la organización",
-  // Profile sheet
   account: "Cuenta",
   billing: "Facturación",
   tokens: "Tokens de API",
   notifications: "Notificaciones",
   signOut: "Cerrar sesión",
-  // Settings sheet
   settingsTitle: "Configuración",
   appearance: "Apariencia",
   themeLight: "Claro",
@@ -57,7 +57,6 @@ const LOCALE_ES = {
   notif: "Notificaciones",
   privacy: "Privacidad y seguridad",
   help: "Ayuda y documentación",
-  // Search sheet
   searchPlaceholder: "Buscar proyectos, personas, comandos…",
   empty: "Sin resultados para",
   navigate: "Navegar",

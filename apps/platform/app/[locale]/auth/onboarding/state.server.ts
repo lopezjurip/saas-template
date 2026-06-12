@@ -4,9 +4,11 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { METHOD_ORDER, type OnboardingMethodStatus, type OnboardingState } from "./state";
 
-// Document doesn't have a backend yet — there's no `profile_identity_documents` row for the
-// user-supplied document, only the lookup helpers for staff invites. We treat it as always
-// "pending" so the chip stays clickable; the substep page will say "próximamente".
+/**
+ * Document doesn't have a backend yet — there's no `profile_identity_documents` row for the
+ * user-supplied document, only the lookup helpers for staff invites. We treat it as always
+ * "pending" so the chip stays clickable; the substep page will say "próximamente".
+ */
 const DOCUMENT_STATUS: OnboardingMethodStatus = "pending";
 
 export async function getViewerOnboardingState(): Promise<OnboardingState> {

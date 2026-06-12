@@ -157,8 +157,9 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
 
 type Translate = ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"];
 
-// ── Chrome ──────────────────────────────────────────────────────────────────
-
+/**
+ * Chrome component for console tabs.
+ */
 function ConsoleTabTrigger({
   value,
   icon: Icon,
@@ -218,8 +219,9 @@ function ConsoleStatStrip({ data, active, t }: { data: ConsoleData; active: numb
   );
 }
 
-// ── Team tab ────────────────────────────────────────────────────────────────
-
+/**
+ * Team tab content.
+ */
 function ConsoleTeamTab({
   data,
   active,
@@ -376,8 +378,9 @@ function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: string; aff: Cons
   );
 }
 
-// ── Access tab (read-only) ──────────────────────────────────────────────────
-
+/**
+ * Access tab - read-only display of organization access.
+ */
 function ConsoleAccessTab({ global, orgs, t }: { global: boolean; orgs: ConsoleOrg[]; t: Translate }) {
   return (
     <div className="flex flex-col gap-5">
@@ -464,8 +467,9 @@ function ConsoleAccessCard({ org, accessLabel }: { org: ConsoleOrg; accessLabel:
   );
 }
 
-// ── Profile tab (read-only — agency edit/delete are not part of this surface) ──
-
+/**
+ * Profile tab - read-only display (agency edit/delete not available here).
+ */
 function ConsoleProfileTab({ data, t }: { data: ConsoleData; t: Translate }) {
   const rows = [
     { label: t("profile_name"), value: data.agency_name },
@@ -501,8 +505,9 @@ function ConsoleProfileTab({ data, t }: { data: ConsoleData; t: Translate }) {
   );
 }
 
-// ── Inline atoms (scoped to this surface to honor the file-list constraint) ──
-
+/**
+ * Inline atoms scoped to this surface to honor the file-list constraint.
+ */
 function AgencyTile({ size = 40 }: { size?: number }) {
   return (
     <span
@@ -570,7 +575,9 @@ function AccessPill({ global, label }: { global: boolean; label: string }) {
   );
 }
 
-// TODO: NEVER PASS DICT TRANSLATIONS AS PROPS OR ARGUMENTS.
+/**
+ * TODO: NEVER PASS DICT TRANSLATIONS AS PROPS OR ARGUMENTS.
+ */
 function CONSOLE_HEAD(t: Translate): Record<ConsoleTab, { title: string; desc: string }> {
   return {
     team: { title: t("team_title"), desc: t("team_desc") },

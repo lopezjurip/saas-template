@@ -1,7 +1,9 @@
 import { RUT_NORMALIZE, RUT_VALIDATE } from "@packages/utils/rut";
 import { z } from "zod";
 
-// Submitted from the triplet form. Must always carry all three fields.
+/**
+ * Submitted from the triplet form. Must always carry all three fields.
+ */
 export const checkDocumentSchema = z
   .object({
     address_level0_id: z.string().min(2).max(2),

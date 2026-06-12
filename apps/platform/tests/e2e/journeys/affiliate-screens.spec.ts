@@ -1,11 +1,12 @@
 import { expect, type Page, test } from "@playwright/test";
 
-// Affiliate portal (/affiliate) renders the viewer's real agency memberships.
-// The seed gives iris@humane.test an ACCEPTED membership of "Demo Auditores"
-// (granted read access to the acme org) and alice@humane.test a PENDING invite.
-// iris is a dedicated affiliate user (not Alice/Bob) so the org-membership pgTAP
-// fixtures keep assuming Alice/Bob have no agency.
-
+/**
+ * Affiliate portal (/affiliate) renders the viewer's real agency memberships.
+ * The seed gives iris@humane.test an ACCEPTED membership of "Demo Auditores"
+ * (granted read access to the acme org) and alice@humane.test a PENDING invite.
+ * iris is a dedicated affiliate user (not Alice/Bob) so the org-membership pgTAP
+ * fixtures keep assuming Alice/Bob have no agency.
+ */
 test.describe("affiliate screens", () => {
   const password = "password123";
 
@@ -14,7 +15,7 @@ test.describe("affiliate screens", () => {
     await page.goto("/es/affiliate");
 
     await expect(page.getByText("Demo Auditores").first()).toBeVisible();
-    // The agency is granted read access to the acme org ("Acme SpA").
+    // Verify agency read access to acme org
     await expect(page.getByText("Acme SpA").first()).toBeVisible();
   });
 
