@@ -1,9 +1,9 @@
-import { JWT_DECODE_PAYLOAD } from "@packages/utils/jwt";
 import { type CookieOptions, createServerClient as createServerClientSsr } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
-import { type AppMetadata, AppMetadataSchema } from "./metadata";
+import { SUPABASE_JWT_DECODE_PAYLOAD, SUPABASE_JWT_METADATA } from "./jwt";
+import type { AppMetadata } from "./metadata";
 import type { Database } from "./types.ts";
 
 export { type AppMetadata, AppMetadataSchema } from "./metadata";
@@ -23,7 +23,7 @@ export const createServerClient = cache(async () => {
     process.env["NEXT_PUBLIC_SUPABASE_URL"]!,
     process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]!,
     {
-      ...(cookieDomain ? { cookieOptions: { domain: cookieDomain } } : {}),
+      cookieOptions: cookieDomain ? { domain: cookieDomain } : undefined,
       cookies: {
         getAll() {
           return cookieStore.getAll();
@@ -33,7 +33,7 @@ export const createServerClient = cache(async () => {
             for (const { name, value, options } of cookiesToSet) {
               cookieStore.set(name, value, {
                 ...options,
-                ...(cookieDomain ? { domain: cookieDomain } : {}),
+                domain: cookieDomain || undefined,
               });
             }
           } catch {
@@ -111,7 +111,6 @@ export const getSupabaseServerSession = cache(async () => {
 export const getSupabaseServerUserMetadata = cache(async (): Promise<AppMetadata | null> => {
   const session = await getSupabaseServerSession();
   if (!session) return null;
-  const payload = JWT_DECODE_PAYLOAD(session["access_token"]) as { app_metadata?: unknown } | null;
-  const result = AppMetadataSchema.safeParse(payload?.["app_metadata"]);
-  return result.success ? result.data : null;
+  const payload = SUPABASE_JWT_DECODE_PAYLOAD(session["access_token"]);
+  return payload ? SUPABASE_JWT_METADATA(payload) : null;
 });

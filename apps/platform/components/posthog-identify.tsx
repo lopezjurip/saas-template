@@ -1,38 +1,64 @@
 "use client";
-import { getSupabaseClientUserMetadata } from "@packages/supabase/client.browser";
+import { useGraphyQuery } from "@packages/graphy/react";
 import { useSupabaseUser } from "@packages/supabase/react";
 import { usePostHog } from "@posthog/next";
 import { useEffect } from "react";
-import { useViewerProfile } from "~/hooks/use-viewer-profile";
+import { gql } from "~/generated/graphql";
+
+const PostHogIdentifyQuery = /*#__PURE__*/ gql(`
+  query PostHogIdentify {
+    profile: viewer_profile {
+      profile_id
+      profile_name_full
+      profile_onboarded_at
+    }
+    tenants: viewer_tenants {
+      edges {
+        node {
+          tenant_id
+          tenant_slug
+        }
+      }
+    }
+    organizations: viewer_organizations {
+      edges {
+        node {
+          organization_id
+          tenant_id
+        }
+      }
+    }
+  }
+`);
 
 export function PostHogIdentify() {
   const posthog = usePostHog();
   const { data: user } = useSupabaseUser();
-  const { data: profileData } = useViewerProfile();
-  const profile = profileData?.profile;
+  const { data } = useGraphyQuery(user ? { query: PostHogIdentifyQuery } : null);
+  const profile = data?.profile;
 
   useEffect(() => {
     if (!user) {
-      posthog?.reset();
+      return posthog?.reset();
+    } else if (!profile) {
       return;
     }
-    if (!profile) return;
 
-    posthog?.identify(profile.profile_id, {
-      ...(user.email && { email: user.email }),
-      ...(profile.profile_name_full && { name: profile.profile_name_full }),
-      ...(profile.profile_onboarded_at && { onboarded_at: profile.profile_onboarded_at }),
+    posthog?.identify(profile["profile_id"], {
+      email: user["email"],
+      name: profile["profile_name_full"],
+      onboarded_at: profile["profile_onboarded_at"],
     });
 
-    void getSupabaseClientUserMetadata().then((metadata) => {
-      for (const tenant of metadata?.tenants ?? []) {
-        posthog?.group("tenant", String(tenant.id), { slug: tenant.slug });
-      }
-      for (const org of metadata?.organizations ?? []) {
-        posthog?.group("organization", String(org.id), { tenant_id: String(org.tenant_id) });
-      }
-    });
-  }, [user, profile, posthog]);
+    for (const edge of data?.tenants?.edges ?? []) {
+      posthog?.group("tenant", String(edge.node.tenant_id), { slug: edge.node.tenant_slug });
+    }
+    for (const edge of data?.organizations?.edges ?? []) {
+      posthog?.group("organization", String(edge.node.organization_id), {
+        tenant_id: String(edge.node.tenant_id),
+      });
+    }
+  }, [user, profile, posthog, data]);
 
   return null;
 }

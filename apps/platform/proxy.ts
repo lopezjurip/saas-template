@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse, userAgent } from "next/server";
 import { APEX_HOSTNAME, APP_HOST } from "~/lib/constants";
 import { debug } from "~/lib/debug";
 import { LOCALE_COOKIE, LOCALE_FROM_PATH, type SupportedLocale } from "~/lib/i18n";
-import { RESOLVE_LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
+import { LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
 
 const log = debug("proxy");
 
@@ -59,7 +59,7 @@ export async function proxy(request: NextRequest) {
    */
   const sentinelMatch = /^\/(?:\[locale\]|%5[Bb]locale%5[Dd]|_)\//i.exec(pathname);
   if (sentinelMatch) {
-    const detected = RESOLVE_LOCALE_FROM_REQUEST(request);
+    const detected = LOCALE_FROM_REQUEST(request);
     const url = request.nextUrl.clone();
     url.pathname = `/${detected}/${pathname.slice(sentinelMatch[0].length)}`;
     return setLocaleCookieOnResponse(NextResponse.redirect(url), detected);
@@ -80,7 +80,7 @@ export async function proxy(request: NextRequest) {
       return response;
     }
 
-    const detected = RESOLVE_LOCALE_FROM_REQUEST(request);
+    const detected = LOCALE_FROM_REQUEST(request);
     const url = request.nextUrl.clone();
     const trailingPath = pathname === "/" ? "" : pathname;
     url.pathname = `/${detected}${trailingPath}`;

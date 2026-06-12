@@ -1,6 +1,7 @@
 import "server-only";
 
 import { match } from "@formatjs/intl-localematcher";
+import type { RosettaDict } from "@packages/rosetta/rosetta";
 import Negotiator from "negotiator";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -10,6 +11,7 @@ import {
   IS_SUPPORTED_LOCALE,
   LOCALE_COOKIE,
   LOCALE_SUPPORTED_RESOLVE,
+  ROSETTA,
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "./i18n";
@@ -17,25 +19,29 @@ import {
 export async function getServerLocale(): Promise<SupportedLocale> {
   const c = await cookies();
   const value = c.get(LOCALE_COOKIE)?.value;
-  return LOCALE_SUPPORTED_RESOLVE(value) ?? DEFAULT_LOCALE;
+  return LOCALE_SUPPORTED_RESOLVE(value) || DEFAULT_LOCALE;
 }
 
 export function assertLocale(value: unknown): asserts value is SupportedLocale {
-  if (!IS_SUPPORTED_LOCALE(value)) notFound();
+  if (!IS_SUPPORTED_LOCALE(value)) {
+    notFound();
+  }
 }
 
-export function RESOLVE_LOCALE_FROM_REQUEST(request: NextRequest): SupportedLocale {
+export function LOCALE_FROM_REQUEST(request: NextRequest): SupportedLocale {
   const cookie = request.cookies.get(LOCALE_COOKIE)?.value;
   const resolvedCookie = LOCALE_SUPPORTED_RESOLVE(cookie);
-  if (resolvedCookie) return resolvedCookie;
-
-  const resolvedHeader = PARSE_ACCEPT_LANGUAGE_HEADER(request.headers.get("accept-language"));
-  if (resolvedHeader) return resolvedHeader;
-
+  if (resolvedCookie) {
+    return resolvedCookie;
+  }
+  const resolvedHeader = HEADER_ACCEPT_LANGUAGE_PARSE(request.headers.get("accept-language"));
+  if (resolvedHeader) {
+    return resolvedHeader;
+  }
   return DEFAULT_LOCALE;
 }
 
-export function PARSE_ACCEPT_LANGUAGE_HEADER(header: string | null): SupportedLocale | null {
+export function HEADER_ACCEPT_LANGUAGE_PARSE(header: string | null): SupportedLocale | null {
   if (!header) return null;
 
   const requestedLocales = new Negotiator({

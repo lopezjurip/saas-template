@@ -26,6 +26,7 @@
     "@opentelemetry/exporter-trace-otlp-http": "^0.219.0",
     "@opentelemetry/sdk-node": "^0.219.0",
     "@packages/api-ip": "workspace:*",
+    "@packages/intl": "workspace:*",
     "@packages/debug": "workspace:*",
     "@packages/graphy": "workspace:*",
     "@packages/kapso": "workspace:*",

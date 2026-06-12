@@ -5,7 +5,8 @@
   "sideEffects": false,
   "scripts": {
     "build:dry": "tsc --noEmit",
-    "format": "biome check --diagnostic-level=error ."
+    "format": "biome check --diagnostic-level=error .",
+    "test": "vitest run"
   },
   "exports": {
     "./shadcn/globals.css": "./src/shadcn/globals.css",
@@ -28,11 +29,14 @@
   "devDependencies": {
     "@packages/typescript-config": "workspace:*",
     "@tailwindcss/typography": "^0.5.20",
+    "@testing-library/react": "^16.3.0",
+    "jsdom": "^29.1.1",
     "tailwindcss": "^4.3.0",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
   },
   "peerDependencies": {
     "react": "^19.0.0",

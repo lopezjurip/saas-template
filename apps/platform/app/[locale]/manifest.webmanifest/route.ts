@@ -1,10 +1,8 @@
-import { ROSETTA } from "~/lib/i18n";
-import { assertLocale } from "~/lib/i18n.server";
+import { getRosettaAssert } from "~/lib/i18n.server";
 
 export async function GET(req: Request, props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
-  assertLocale(locale);
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t } = getRosettaAssert(LOCALES, locale);
   return Response.json({
     name: t("name"),
     short_name: t("short_name"),

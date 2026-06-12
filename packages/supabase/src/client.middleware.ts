@@ -17,7 +17,7 @@ export async function updateSession(request: NextRequest) {
     process.env["NEXT_PUBLIC_SUPABASE_URL"]!,
     process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]!,
     {
-      ...(cookieDomain ? { cookieOptions: { domain: cookieDomain } } : {}),
+      cookieOptions: cookieDomain ? { domain: cookieDomain } : undefined,
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -30,7 +30,7 @@ export async function updateSession(request: NextRequest) {
           for (const { name, value, options } of cookiesToSet) {
             response.cookies.set(name, value, {
               ...options,
-              ...(cookieDomain ? { domain: cookieDomain } : {}),
+              domain: cookieDomain || undefined,
             });
           }
         },

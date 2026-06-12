@@ -2028,11 +2028,9 @@ create policy "permission_presets write with presets_manage"
 -- ============================================================
 -- Custom access token hook
 -- ============================================================
--- Injects JWT arrays into the token when issued:
---   app_metadata.tenants       : [{id, slug}]       — distinct tenants the user has any org organization_membership in
---   app_metadata.organizations : [{id, tenant_id}]  — every organization the user is a member of
---   app_metadata.agencies      : [{id}]              — every agency the user is affiliated with
--- Plus app_metadata.onboarded (gate).
+-- Pass-through hook: only the subject (profile_id as `sub`) lives in the JWT.
+-- Tenant / organization / agency membership and onboarding state are resolved at
+-- query time via the viewer_* helpers — never embedded in the token.
 -- Permissions are deliberately NOT included in the JWT — a single user may have many
 -- per-org permissions, and putting them here can balloon cookie size past the 4KB limit.
 -- Permission checks happen at query time via viewer_has_permission / viewer_permission_org_ids,

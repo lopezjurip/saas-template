@@ -1,8 +1,12 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import type { PolymorphicProps } from "./polymorphic";
 
-export function Logo({ className, ...props }: React.ComponentProps<"span">) {
+type LogoProps<T extends React.ElementType = "span"> = PolymorphicProps<T>;
+
+export function Logo<T extends React.ElementType = "span">({ as, className, ...props }: LogoProps<T>) {
+  const Component = as || "span";
   return (
-    <span
+    <Component
       className={cn("text-foreground inline-flex items-center gap-1.5 font-semibold tracking-tight", className)}
       {...props}
     >
@@ -13,6 +17,6 @@ export function Logo({ className, ...props }: React.ComponentProps<"span">) {
         H
       </span>
       SaaS Template
-    </span>
+    </Component>
   );
 }

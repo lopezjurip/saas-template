@@ -1,6 +1,7 @@
 import { fetchGeoMap } from "@packages/api-ip/geo";
+import { IntlUniversalFormatter } from "@packages/intl/intl";
 import { createServerClient, getSupabaseServerSession } from "@packages/supabase/client.server";
-import { JWT_DECODE_PAYLOAD } from "@packages/utils/jwt";
+import { SUPABASE_JWT_DECODE_PAYLOAD } from "@packages/supabase/jwt";
 import { UAParser } from "ua-parser-js";
 import { type SessionRow, SessionsSection } from "./sessions-section";
 
@@ -16,23 +17,25 @@ function parseUserAgent(ua: string | null): { device: string; browser: string; k
   return { device: deviceName, browser: browserStr, kind: isMobile ? "mobile" : "desktop" };
 }
 
-function formatLastActive(date: Date | null): string {
+function formatLastActive(date: Date | null, intl: IntlUniversalFormatter): string {
   if (!date) return "Desconocido";
   const diffMs = Date.now() - date.getTime();
   const mins = Math.floor(diffMs / 60_000);
   if (mins < 2) return "Ahora";
-  if (mins < 60) return `Hace ${mins} min`;
+  if (mins < 60) return intl.formatRelativeTime(-mins, "minute", { numeric: "always" });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `Hace ${hours} h`;
+  if (hours < 24) return intl.formatRelativeTime(-hours, "hour", { numeric: "always" });
   const days = Math.floor(hours / 24);
-  return `Hace ${days} día${days === 1 ? "" : "s"}`;
+  return intl.formatRelativeTime(-days, "day", { numeric: "always" });
 }
 
-export default async function SessionsPage() {
+export default async function SessionsPage(props: PageProps<"/[locale]/home/account/sessions">) {
+  const { locale } = await props.params;
+  const intl = new IntlUniversalFormatter(locale);
   const [supabase, session] = await Promise.all([createServerClient(), getSupabaseServerSession()]);
 
   const currentSessionId = session
-    ? ((JWT_DECODE_PAYLOAD(session.access_token) as { session_id?: string } | null)?.session_id ?? null)
+    ? (SUPABASE_JWT_DECODE_PAYLOAD(session.access_token)?.session_id ?? null)
     : null;
 
   const { data: rawSessions } = await supabase.rpc("viewer_sessions");
@@ -55,7 +58,7 @@ export default async function SessionsPage() {
         device,
         browser,
         location,
-        lastActive: formatLastActive(lastActiveDate),
+        lastActive: formatLastActive(lastActiveDate, intl),
         current: s.id === currentSessionId,
         stale,
       });
