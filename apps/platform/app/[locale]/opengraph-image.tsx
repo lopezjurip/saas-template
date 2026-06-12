@@ -7,9 +7,9 @@ export const contentType = "image/png";
 export const alt = "SaaS Template";
 
 const LOCALES: Record<SupportedLocale, { title: string; tagline: string; tag: string }> = {
-  es: { title: "SaaS Template", tagline: "Plantilla SaaS lista para producción", tag: "Chat-first" },
-  en: { title: "SaaS Template", tagline: "Production-ready SaaS template", tag: "Chat-first" },
-  pt: { title: "SaaS Template", tagline: "Template SaaS pronto para produção", tag: "Chat-first" },
+  "es-CL": { title: "SaaS Template", tagline: "Plantilla SaaS lista para producción", tag: "Chat-first" },
+  "en-US": { title: "SaaS Template", tagline: "Production-ready SaaS template", tag: "Chat-first" },
+  "pt-BR": { title: "SaaS Template", tagline: "Template SaaS pronto para produção", tag: "Chat-first" },
 };
 
 export default async function Image({ params }: { params: Promise<{ locale: string }> }) {

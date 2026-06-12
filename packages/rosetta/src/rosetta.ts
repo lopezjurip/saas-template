@@ -46,7 +46,7 @@ export class RosettaImpl<T> {
     public readonly locale: string,
     public readonly options: RosettaOptions = {},
   ) {
-    this.locale = NORMALIZE_LOCALE(locale, Array.from(tree.keys()))!;
+    this.locale = RESOLVE_DICTIONARY_LOCALE(locale, Array.from(tree.keys()));
   }
 
   /**
@@ -84,7 +84,7 @@ export class RosettaImpl<T> {
     params?: X,
     lang?: string,
   ): P extends Key[] ? ResolvePropType<T, Join<P, ".">> : P extends Key ? ResolvePropType<T, P> : any => {
-    const activeLocale = lang || this.locale;
+    const activeLocale = lang ? RESOLVE_DICTIONARY_LOCALE(lang, Array.from(this.tree.keys())) : this.locale;
     const target = (activeLocale && this.tree.get(activeLocale)) || ({} as unknown as T);
     const defaultValue = this.options.strict ? RosettaImpl.MISSING : "";
     const val = dlv(target as any, key as any, defaultValue);
@@ -178,31 +178,31 @@ function MERGE_LOCALES(dict: Record<string, unknown>): Record<string, unknown> {
   return result;
 }
 
-function NORMALIZE_LOCALE(locale: string, keys: string[], defaultLocale?: string): string | undefined {
-  if (!locale || keys.length === 0) return defaultLocale;
+function RESOLVE_DICTIONARY_LOCALE(locale: string, keys: string[]): string {
+  if (!locale || keys.length === 0) {
+    throw new Error(`Rosetta: unsupported locale "${locale || "<unset>"}". Dictionary is empty.`);
+  }
 
-  const normalizedLocale = locale.replace(/_/g, "-").toLowerCase().trim();
+  const normalizedLocale = LOCALE_TAG_NORMALIZE(locale);
   const normalizedKeys = keys.map((key) => ({
     original: key,
-    normalized: key.replace(/_/g, "-").toLowerCase(),
+    normalized: LOCALE_TAG_NORMALIZE(key),
   }));
 
   const exactMatch = normalizedKeys.find((key) => key.normalized === normalizedLocale);
   if (exactMatch) return exactMatch.original;
 
   const languageCode = normalizedLocale.split("-")[0];
-  if (languageCode && languageCode.length >= 2) {
-    const languageMatches = normalizedKeys.filter((key) => key.normalized.split("-")[0] === languageCode);
-    if (languageMatches.length > 0) {
-      return languageMatches.sort((a, b) => a.normalized.localeCompare(b.normalized))[0]!.original;
-    }
+  if (languageCode) {
+    const baseMatch = normalizedKeys.find((key) => key.normalized === languageCode);
+    if (baseMatch) return baseMatch.original;
   }
 
-  if (defaultLocale) {
-    const normalizedDefault = defaultLocale.replace(/_/g, "-").toLowerCase();
-    const defaultMatch = normalizedKeys.find((key) => key.normalized === normalizedDefault);
-    if (defaultMatch) return defaultMatch.original;
-  }
+  throw new Error(
+    `Rosetta: unsupported locale "${locale}". Available dictionary locales: ${keys.join(", ") || "<none>"}.`,
+  );
+}
 
-  return undefined;
+function LOCALE_TAG_NORMALIZE(locale: string): string {
+  return locale.replace(/_/g, "-").trim().toLowerCase();
 }

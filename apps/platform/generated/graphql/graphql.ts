@@ -311,13 +311,6 @@ export type TenantsOrderBy = {
   tenant_updated_at?: OrderByDirection | null | undefined;
 };
 
-export type OnboardingProfileFormUpdateNameMutationMutationVariables = Exact<{
-  profile_id: string;
-  profile_name_full: string;
-}>;
-
-export type OnboardingProfileFormUpdateNameMutationMutation = { updateprofilesCollection: { affectedCount: number } };
-
 export type ProfileSectionPageQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type ProfileSectionPageQueryQuery = { profile: { profile_id: string; profile_name_full: string | null } | null };
@@ -407,6 +400,13 @@ export type MembersPendingInvitationsCancelMutationMutationVariables = Exact<{
 export type MembersPendingInvitationsCancelMutationMutation = {
   updateorganization_membershipsCollection: { affectedCount: number };
 };
+
+export type OnboardingProfileFormUpdateNameMutationMutationVariables = Exact<{
+  profile_id: string;
+  profile_name_full: string;
+}>;
+
+export type OnboardingProfileFormUpdateNameMutationMutation = { updateprofilesCollection: { affectedCount: number } };
 
 export type HealthQueryQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -972,19 +972,6 @@ export const PasskeyCredentialFragmentFragmentDoc = new TypedDocumentString(
     `,
   { fragmentName: "PasskeyCredentialFragment" },
 ) as unknown as TypedDocumentString<PasskeyCredentialFragmentFragment, unknown>;
-export const OnboardingProfileFormUpdateNameMutationDocument = new TypedDocumentString(`
-    mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
-  updateprofilesCollection(
-    filter: {profile_id: {eq: $profile_id}}
-    set: {profile_name_full: $profile_name_full}
-  ) {
-    affectedCount
-  }
-}
-    `) as unknown as TypedDocumentString<
-  OnboardingProfileFormUpdateNameMutationMutation,
-  OnboardingProfileFormUpdateNameMutationMutationVariables
->;
 export const ProfileSectionPageQueryDocument = new TypedDocumentString(`
     query ProfileSectionPageQuery {
   profile: viewer_profile {
@@ -1109,6 +1096,19 @@ export const MembersPendingInvitationsCancelMutationDocument = new TypedDocument
     `) as unknown as TypedDocumentString<
   MembersPendingInvitationsCancelMutationMutation,
   MembersPendingInvitationsCancelMutationMutationVariables
+>;
+export const OnboardingProfileFormUpdateNameMutationDocument = new TypedDocumentString(`
+    mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
+  updateprofilesCollection(
+    filter: {profile_id: {eq: $profile_id}}
+    set: {profile_name_full: $profile_name_full}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<
+  OnboardingProfileFormUpdateNameMutationMutation,
+  OnboardingProfileFormUpdateNameMutationMutationVariables
 >;
 export const HealthQueryDocument = new TypedDocumentString(`
     query HealthQuery {

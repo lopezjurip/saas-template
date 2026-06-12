@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { APP_HOST } from "~/lib/constants";
-import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, ROSETTA, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, ROSETTA, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { PricingClient } from "./pricing-client";
 
 export async function generateMetadata(props: PageProps<"/[locale]/pricing">): Promise<Metadata> {
@@ -14,14 +14,14 @@ export async function generateMetadata(props: PageProps<"/[locale]/pricing">): P
     alternates: {
       canonical: `${base}/${safeLocale}/pricing`,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [LOCALE_TO_BCP47[l], `${base}/${l}/pricing`])),
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${base}/${l}/pricing`])),
         "x-default": `${base}/${DEFAULT_LOCALE}/pricing`,
       },
     },
     openGraph: {
       type: "website",
       url: `${base}/${safeLocale}/pricing`,
-      locale: LOCALE_TO_BCP47[safeLocale],
+      locale: safeLocale,
       title: t("title"),
       siteName: "SaaS Template",
     },

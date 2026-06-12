@@ -15,7 +15,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_URL } from "~/lib/constants";
-import { DEFAULT_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { ROUTE } from "~/lib/route";
 import { ContactBooking } from "./contact-booking";
 
@@ -27,7 +27,7 @@ export async function generateMetadata(props: PageProps<"/[locale]">): Promise<M
     alternates: {
       canonical: `${APP_URL.origin}/${locale}`,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [LOCALE_TO_BCP47[l], `${APP_URL.origin}/${l}`])),
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${APP_URL.origin}/${l}`])),
         "x-default": `${APP_URL.origin}/${DEFAULT_LOCALE}`,
       },
     },
