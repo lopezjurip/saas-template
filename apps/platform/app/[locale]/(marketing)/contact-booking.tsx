@@ -5,6 +5,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Mail } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { ROUTE } from "~/lib/route";
 
 const DATES = ["02", "03", "04", "05", "06"];
 const TIMESLOTS = ["09:30", "11:00", "13:30", "15:00", "16:30"];
@@ -22,7 +23,7 @@ export function ContactBooking({ locale, labels, days }: ContactBookingProps) {
   return (
     <div className="flex min-w-0 flex-col gap-4 rounded-lg border border-border bg-background p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[13px] font-medium">{labels.week}</span>
+        <span className="text-sm/normal font-medium">{labels.week}</span>
         <span className="font-mono text-[11px] text-muted-foreground">{labels.timezone}</span>
       </div>
       <div className="grid grid-cols-5 gap-1.5">
@@ -40,7 +41,7 @@ export function ContactBooking({ locale, labels, days }: ContactBookingProps) {
                 active ? "border-foreground bg-foreground text-background" : "bg-background",
               )}
             >
-              <span className="text-[10.5px] font-medium uppercase tracking-[0.04em] opacity-80">{day}</span>
+              <span className="text-tiny font-medium uppercase tracking-[0.04em] opacity-80">{day}</span>
               <span className="text-[15px] font-semibold tabular-nums">{DATES[index]}</span>
             </button>
           );
@@ -56,7 +57,7 @@ export function ContactBooking({ locale, labels, days }: ContactBookingProps) {
               aria-pressed={active}
               onClick={() => setSelectedSlot(slot)}
               className={cn(
-                "h-9 cursor-pointer rounded-md border border-border font-mono text-[13px] font-medium tabular-nums transition-colors",
+                "h-9 cursor-pointer rounded-md border border-border font-mono text-sm/normal font-medium tabular-nums transition-colors",
                 "hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 active ? "border-foreground bg-foreground text-background" : "bg-background",
               )}
@@ -68,7 +69,7 @@ export function ContactBooking({ locale, labels, days }: ContactBookingProps) {
       </div>
       <div className="mt-1 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
         <Button asChild className="cursor-pointer sm:flex-1">
-          <Link href={`/${locale}/auth`}>
+          <Link href={ROUTE("/[locale]/auth", { locale })}>
             {labels.book}
             <ArrowRight aria-hidden="true" className="h-4 w-4" />
           </Link>

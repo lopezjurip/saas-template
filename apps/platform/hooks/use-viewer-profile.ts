@@ -6,8 +6,8 @@ import { useSupabaseUser } from "@packages/supabase/react";
 import type { SWRConfiguration } from "swr";
 import { gql } from "~/generated/graphql";
 
-export const ViewerProfileHookFragment = /*#__PURE__*/ gql(`
-  fragment ViewerProfileHookFragment on profiles {
+export const ViewerProfileUseFragment = /*#__PURE__*/ gql(`
+  fragment ViewerProfileUseFragment on profiles {
     profile_id
     profile_name_full
     profile_onboarded_at
@@ -17,24 +17,24 @@ export const ViewerProfileHookFragment = /*#__PURE__*/ gql(`
   }
 `);
 
-export type ViewerProfileHookFragmentType = ResultOf<typeof ViewerProfileHookFragment>;
+export type ViewerProfileUseFragmentType = ResultOf<typeof ViewerProfileUseFragment>;
 
-export const ViewerProfileHookQuery = /*#__PURE__*/ gql(`
-  query ViewerProfileHookQuery {
+export const ViewerProfileUse = /*#__PURE__*/ gql(`
+  query ViewerProfileUse {
     profile: viewer_profile {
-      ...ViewerProfileHookFragment
+      ...ViewerProfileUseFragment
     }
   }
 `);
 
-type ViewerProfileHookQueryData = ResultOf<typeof ViewerProfileHookQuery>;
+type ViewerProfileUseData = ResultOf<typeof ViewerProfileUse>;
 
 /**
- * Returns the authenticated viewer's profile via GraphQL (client-side hook).
+ * Returns the authenticated viewer's profile via GraphQL (client-side ).
  * @example
  * const { data: { profile } = { ["profile"]: null } } = useViewerProfile();
  */
-export function useViewerProfile(config?: SWRConfiguration<ViewerProfileHookQueryData>) {
+export function useViewerProfile(config?: SWRConfiguration<ViewerProfileUseData>) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(user ? { query: ViewerProfileHookQuery } : null, config);
+  return useGraphyQuery(user ? { query: ViewerProfileUse } : null, config);
 }

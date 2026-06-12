@@ -38,7 +38,7 @@ export function DeleteAccountDialog() {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-[30px] items-center gap-1.5 rounded-md border border-destructive/45 bg-background px-3 text-[12.5px] font-medium text-destructive hover:bg-destructive/[0.06] dark:border-[hsl(0_70%_50%/0.5)] dark:text-[hsl(0_70%_70%)]"
+          className="inline-flex h-[30px] items-center gap-1.5 rounded-md border border-destructive/45 bg-background px-3 text-[12.5px] font-medium text-destructive hover:bg-destructive/6 dark:border-[hsl(0_70%_50%/0.5)] dark:text-[hsl(0_70%_70%)]"
         >
           <Trash2 size={14} /> Eliminar mi cuenta…
         </button>
@@ -53,10 +53,8 @@ export function DeleteAccountDialog() {
               <DialogTitle className="text-[15px]">Confirma que eres tú.</DialogTitle>
               <DialogDescription className="text-[12.5px]">
                 Escribe{" "}
-                <code className="rounded bg-muted px-1 py-px font-mono text-[11.5px] text-foreground">
-                  {CONFIRM_WORD}
-                </code>{" "}
-                y tu contraseña actual para borrar la cuenta.
+                <code className="rounded bg-muted px-1 py-px font-mono text-xs text-foreground">{CONFIRM_WORD}</code> y
+                tu contraseña actual para borrar la cuenta.
               </DialogDescription>
             </div>
           </div>

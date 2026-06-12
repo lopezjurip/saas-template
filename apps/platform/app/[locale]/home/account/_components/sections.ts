@@ -4,6 +4,7 @@
 
 import { Bell, Globe, Key, Monitor, ShieldCheck, Trash2, User } from "lucide-react";
 import type { ComponentType } from "react";
+import { ROUTE_PATH } from "~/lib/route";
 
 export type AccountSectionId =
   | "profile"
@@ -32,3 +33,17 @@ export const ACCOUNT_SECTIONS: readonly AccountSection[] = [
   { id: "notifications", label: "Notificaciones", group: "Preferencias", Icon: Bell, todo: true },
   { id: "danger", label: "Eliminar cuenta", group: "Zona de riesgo", Icon: Trash2, danger: true, todo: true },
 ];
+
+const ACCOUNT_SECTION_PATHS = {
+  profile: ROUTE_PATH("/[locale]/home/account/profile"),
+  security: ROUTE_PATH("/[locale]/home/account/security"),
+  connections: ROUTE_PATH("/[locale]/home/account/connections"),
+  sessions: ROUTE_PATH("/[locale]/home/account/sessions"),
+  tokens: ROUTE_PATH("/[locale]/home/account/tokens"),
+  notifications: ROUTE_PATH("/[locale]/home/account/notifications"),
+  danger: ROUTE_PATH("/[locale]/home/account/danger"),
+} as const satisfies Record<AccountSectionId, string>;
+
+export function ACCOUNT_SECTION_PATH(id: AccountSectionId): (typeof ACCOUNT_SECTION_PATHS)[AccountSectionId] {
+  return ACCOUNT_SECTION_PATHS[id];
+}

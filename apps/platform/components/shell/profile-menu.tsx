@@ -6,9 +6,10 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { Avatar, INITIALS_FROM_NAME, Tip, useClickOutside } from "~/components/shell/atoms";
 import { useRosetta } from "~/hooks/use-rosetta";
-import type { ViewerProfileHookFragmentType } from "~/hooks/use-viewer-profile";
+import type { ViewerProfileUseFragmentType } from "~/hooks/use-viewer-profile";
+import { ROUTE } from "~/lib/route";
 
-export type ShellViewer = ViewerProfileHookFragmentType & { email: string };
+export type ShellViewer = ViewerProfileUseFragmentType & { email: string };
 
 export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewer: ShellViewer; compact?: boolean }) {
   const { t } = useRosetta(LOCALES);
@@ -16,12 +17,12 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false), open);
 
-  const display_name = viewer.profile_name_full || viewer.email;
+  const display_name = viewer["profile_name_full"] || viewer["email"];
   const initials = INITIALS_FROM_NAME(display_name);
   const color = "bg-fuchsia-600 text-white";
 
   const trigger = compact ? (
-    <Tip label={`${display_name} · ${viewer.email}`} disabled={open}>
+    <Tip label={`${display_name} · ${viewer["email"]}`} disabled={open}>
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -41,17 +42,17 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
       <Avatar initials={initials} color={color} size="md" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium leading-tight">{display_name}</div>
-        <div className="text-muted-foreground truncate text-[11px] leading-tight">{viewer.email}</div>
+        <div className="text-muted-foreground truncate text-[11px] leading-tight">{viewer["email"]}</div>
       </div>
       <ChevronsUpDown size={14} className="text-muted-foreground" />
     </button>
   );
 
   const items = [
-    { Icon: User, label: t("account"), href: `/${locale}/home/account/profile` },
-    { Icon: CreditCard, label: t("billing"), href: `/${locale}/home/account/profile` },
-    { Icon: KeyRound, label: t("tokens"), href: `/${locale}/home/account/tokens` },
-    { Icon: Bell, label: t("notifications"), href: `/${locale}/home/account/notifications` },
+    { Icon: User, label: t("account"), href: ROUTE("/[locale]/home/account/profile", { locale }) },
+    { Icon: CreditCard, label: t("billing"), href: ROUTE("/[locale]/home/account/profile", { locale }) },
+    { Icon: KeyRound, label: t("tokens"), href: ROUTE("/[locale]/home/account/tokens", { locale }) },
+    { Icon: Bell, label: t("notifications"), href: ROUTE("/[locale]/home/account/notifications", { locale }) },
   ];
 
   return (
@@ -68,7 +69,7 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
             <Avatar initials={initials} color={color} size="md" />
             <div className="min-w-0">
               <div className="truncate text-sm font-medium">{display_name}</div>
-              <div className="text-muted-foreground truncate text-[11px]">{viewer.email}</div>
+              <div className="text-muted-foreground truncate text-[11px]">{viewer["email"]}</div>
             </div>
           </div>
           <div className="px-1 py-1">
@@ -86,7 +87,7 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
           </div>
           <div className="border-border border-t px-1 py-1">
             <Link
-              href={`/${locale}/auth/logout`}
+              href={ROUTE("/[locale]/auth/logout", { locale })}
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
             >

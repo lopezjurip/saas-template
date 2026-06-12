@@ -7,6 +7,7 @@ import { ArrowRight, MessageCircle, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
+import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 import { OtpField } from "../_components/otp-field";
 
 type Channel = "sms" | "whatsapp";
@@ -60,7 +61,7 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
         return;
       }
       await supabase.auth.refreshSession();
-      router.push(RESOLVE_TARGET(locale, next));
+      router.push(ROUTE_HREF(UNSAFE_ROUTE(RESOLVE_TARGET(locale, next))));
       router.refresh();
     });
   }

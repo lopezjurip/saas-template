@@ -7,9 +7,9 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Monitor, Smartphone } from "lucide-react";
 import { useState, useTransition } from "react";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
-import { actionSignOutOtherDevices } from "../actions";
+import { actionRevokeSession, actionSignOutOtherDevices } from "../actions";
 
-type SessionRow = {
+export type SessionRow = {
   id: string;
   kind: "desktop" | "mobile";
   device: string;
@@ -20,61 +20,31 @@ type SessionRow = {
   stale?: boolean;
 };
 
-const SESSIONS = /*#__PURE__*/ [
-  {
-    id: "this",
-    kind: "desktop",
-    device: "MacBook Pro",
-    browser: "Chrome 122",
-    location: "Santiago, Chile",
-    lastActive: "Ahora",
-    current: true,
-  },
-  {
-    id: "iphone",
-    kind: "mobile",
-    device: "iPhone 15",
-    browser: "Safari · iOS",
-    location: "Santiago, Chile",
-    lastActive: "Hace 12 min",
-  },
-  {
-    id: "linux",
-    kind: "desktop",
-    device: "Workstation",
-    browser: "Firefox · Ubuntu",
-    location: "Buenos Aires, Argentina",
-    lastActive: "Hace 9 días",
-  },
-  {
-    id: "old",
-    kind: "desktop",
-    device: "PC personal",
-    browser: "Edge · Windows",
-    location: "Madrid, España",
-    lastActive: "Hace 32 días",
-    stale: true,
-  },
-] satisfies SessionRow[];
-
-export function SessionsSection() {
-  const [sessions, setSessions] = useState<SessionRow[]>(SESSIONS);
+export function SessionsSection({ sessions: initialSessions }: { sessions: SessionRow[] }) {
+  const [sessions, setSessions] = useState<SessionRow[]>(initialSessions);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const others = sessions.filter((s) => !s.current).length;
 
   function onRevoke(id: string) {
-    setSessions((prev) => prev.filter((s) => s.id !== id));
+    setError(null);
+    startTransition(async () => {
+      const [, err] = await ErrorSafeAction.unwrap(actionRevokeSession({ sessionId: id }));
+      if (err instanceof ErrorSafeActionServer) {
+        setError(err.serverError);
+        return;
+      }
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+    });
   }
 
   function onSignOutOthers() {
     setError(null);
     startTransition(async () => {
-      // void action → no data on success → ErrorSafeActionEmpty is the success shape.
-      const [, error] = await ErrorSafeAction.unwrap(actionSignOutOtherDevices());
-      if (error instanceof ErrorSafeActionServer) {
-        setError(error.serverError);
+      const [, err] = await ErrorSafeAction.unwrap(actionSignOutOtherDevices());
+      if (err instanceof ErrorSafeActionServer) {
+        setError(err.serverError);
         return;
       }
       setSessions((prev) => prev.filter((s) => s.current));
@@ -105,12 +75,12 @@ export function SessionsSection() {
               <span className="inline-flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
                 <span>{s.device}</span>
                 {s.current && (
-                  <Badge className="bg-foreground text-[10px] uppercase tracking-[0.04em] text-background">
+                  <Badge className="bg-foreground text-tiny uppercase tracking-[0.04em] text-background">
                     Este dispositivo
                   </Badge>
                 )}
                 {s.stale && (
-                  <Badge variant="outline" className="text-[10.5px]">
+                  <Badge variant="outline" className="text-tiny">
                     Inactivo
                   </Badge>
                 )}
@@ -128,7 +98,8 @@ export function SessionsSection() {
                 <button
                   type="button"
                   onClick={() => onRevoke(s.id)}
-                  className="inline-flex h-[30px] items-center rounded-md px-3 text-[12.5px] font-medium text-destructive hover:bg-accent"
+                  disabled={pending}
+                  className="inline-flex h-[30px] items-center rounded-md px-3 text-[12.5px] font-medium text-destructive hover:bg-accent disabled:opacity-50"
                 >
                   Cerrar
                 </button>
@@ -147,7 +118,7 @@ export function SessionsSection() {
       {others > 0 && (
         <div className="-mt-1 flex items-center justify-between gap-3.5">
           <span className="max-w-[36ch] text-[12.5px] leading-relaxed text-muted-foreground text-pretty">
-            Si pierdes un dispositivo, cerrarlo desde aquí invalida su sesión al instante.
+            Cerrar una sesión impide nuevos accesos, pero el token activo puede tardar hasta 1 hora en expirar.
           </span>
           <Button type="button" variant="outline" onClick={onSignOutOthers} disabled={pending} className="h-9">
             {pending ? "Cerrando…" : `Cerrar las otras ${others} sesion${others === 1 ? "" : "es"}`}

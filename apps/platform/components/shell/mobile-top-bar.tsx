@@ -25,7 +25,7 @@ export function MobileTopBar({
   onProfile: () => void;
 }) {
   return (
-    <div className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 flex shrink-0 flex-col border-b pt-safe backdrop-blur">
+    <div className="border-border bg-background/95 supports-backdrop-filter:bg-background/80 flex shrink-0 flex-col border-b pt-safe backdrop-blur">
       <div className="flex h-12 items-center gap-1 px-1.5">
         <button
           type="button"
@@ -48,10 +48,12 @@ export function MobileTopBar({
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1">
-              <span className="truncate text-[13px] font-semibold leading-none">{organization.organization_name}</span>
+              <span className="truncate text-sm/normal font-semibold leading-none">
+                {organization.organization_name}
+              </span>
               <ChevronDown size={12} className="text-muted-foreground shrink-0" />
             </div>
-            <div className="text-muted-foreground mt-0.5 truncate text-[10px] leading-none">
+            <div className="text-muted-foreground mt-0.5 truncate text-tiny leading-none">
               {title || tenant.tenant_name}
             </div>
           </div>

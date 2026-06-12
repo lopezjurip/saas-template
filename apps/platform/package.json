@@ -8,6 +8,7 @@
   "scripts": {
     "postinstall": "NODE_ENV=development next typegen || true",
     "dev": "next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003}",
+    "dev:debug": "next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003} --inspect",
     "build": "next build",
     "build:dry": "tsc --noEmit",
     "start": "next start",
@@ -19,6 +20,7 @@
     "@hookform/resolvers": "^5.2.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@next/env": "^16.2.9",
+    "@packages/api-ip": "workspace:*",
     "@packages/debug": "workspace:*",
     "@packages/graphy": "workspace:*",
     "@packages/kapso": "workspace:*",
@@ -33,9 +35,11 @@
     "@simplewebauthn/server": "^13.3.1",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.1",
+    "@types/ua-parser-js": "^0.7.39",
+    "clsx": "^2.1.1",
     "lucide-react": "^1.17.0",
     "next": "16.2.9",
-    "next-safe-action": "^8.5.3",
+    "next-safe-action": "^8.5.4",
     "next-themes": "^0.4.6",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -43,6 +47,7 @@
     "react-markdown": "^10.1.0",
     "sonner": "^2.0.7",
     "swr": "^2.4.1",
+    "ua-parser-js": "^2.0.10",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -12,6 +12,7 @@ import { OrgSwitcher, type ShellOrganization, type ShellTenant } from "~/compone
 import { ProfileMenu, type ShellViewer } from "~/components/shell/profile-menu";
 import { SettingsMenu } from "~/components/shell/settings-menu";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
 
 const SIDEBAR_COMPACT_THRESHOLD = 140;
 const SIDEBAR_COMPACT_WIDTH = 60;
@@ -24,7 +25,8 @@ const SIDEBAR_WIDTH_COOKIE_MAX_AGE_MS = 60 * 60 * 24 * 365 * 1000;
 export type ShellNavItem = {
   id: string;
   label: string;
-  href: string;
+  href: AppRoute;
+  path: string;
   Icon: LucideIcon;
   badge?: number;
 };
@@ -35,31 +37,47 @@ export type ShellNavLabels = {
   navSettings: string;
 };
 
-export function BUILD_NAV(base: string, labels: ShellNavLabels): ShellNavItem[] {
+export function BUILD_NAV(
+  locale: string,
+  tenant_slug: string,
+  organization_id: number,
+  labels: ShellNavLabels,
+): ShellNavItem[] {
+  const home = ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", { locale, tenant_slug, organization_id });
+  const members = ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
+    locale,
+    tenant_slug,
+    organization_id,
+  });
+  const settings = ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
+    locale,
+    tenant_slug,
+    organization_id,
+  });
   return [
-    { id: "home", label: labels.navHome, href: base, Icon: Home },
-    { id: "members", label: labels.navMembers, href: `${base}/settings/members`, Icon: Users },
-    { id: "settings", label: labels.navSettings, href: `${base}/settings`, Icon: Settings },
+    { id: "home", label: labels.navHome, href: home, path: ROUTE_HREF(home), Icon: Home },
+    { id: "members", label: labels.navMembers, href: members, path: ROUTE_HREF(members), Icon: Users },
+    { id: "settings", label: labels.navSettings, href: settings, path: ROUTE_HREF(settings), Icon: Settings },
   ];
 }
 
-export function PICK_ACTIVE_NAV(items: ShellNavItem[], path: string, base: string): string | null {
+export function PICK_ACTIVE_NAV(items: ShellNavItem[], path: string): string | null {
   let bestId: string | null = null;
   let bestLength = -1;
   for (const item of items) {
     if (item.id === "home") {
-      if (path === base || path === `${base}/`) {
-        if (base.length > bestLength) {
+      if (path === item.path || path === `${item.path}/`) {
+        if (item.path.length > bestLength) {
           bestId = item.id;
-          bestLength = base.length;
+          bestLength = item.path.length;
         }
       }
       continue;
     }
-    if (path === item.href || path.startsWith(`${item.href}/`)) {
-      if (item.href.length > bestLength) {
+    if (path === item.path || path.startsWith(`${item.path}/`)) {
+      if (item.path.length > bestLength) {
         bestId = item.id;
-        bestLength = item.href.length;
+        bestLength = item.path.length;
       }
     }
   }
@@ -97,13 +115,12 @@ export function Sidebar({
   const collapsed = width < SIDEBAR_COMPACT_THRESHOLD;
   const visualWidth = collapsed ? SIDEBAR_COMPACT_WIDTH : width;
 
-  const base = `/${locale}/${tenant.tenant_slug}/${current.organization_id}`;
-  const items = BUILD_NAV(base, {
+  const items = BUILD_NAV(locale, tenant["tenant_slug"], current["organization_id"], {
     navHome: t("navHome"),
     navMembers: t("navMembers"),
     navSettings: t("navSettings"),
   });
-  const activeId = PICK_ACTIVE_NAV(items, activePath, base);
+  const activeId = PICK_ACTIVE_NAV(items, activePath);
 
   function startResize(event: MouseEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -210,7 +227,7 @@ export function Sidebar({
                 <item.Icon size={15} className={isActive ? "text-foreground" : "text-muted-foreground"} />
                 <span className="flex-1">{item.label}</span>
                 {item.badge ? (
-                  <span className="bg-foreground/85 text-background rounded px-1.5 py-0.5 font-mono text-[10px] font-medium">
+                  <span className="bg-foreground/85 text-background rounded px-1.5 py-0.5 font-mono text-tiny font-medium">
                     {item.badge}
                   </span>
                 ) : null}
@@ -221,7 +238,15 @@ export function Sidebar({
       </nav>
 
       <div className={cn("border-border border-t", collapsed ? "flex flex-col items-center gap-1 py-2" : "px-2 py-2")}>
-        <SettingsMenu locale={locale} settingsHref={`${base}/settings`} compact={collapsed} />
+        <SettingsMenu
+          locale={locale}
+          settingsHref={ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
+            locale,
+            tenant_slug: tenant["tenant_slug"],
+            organization_id: current["organization_id"],
+          })}
+          compact={collapsed}
+        />
       </div>
 
       <div className={cn("border-border border-t", collapsed ? "flex justify-center py-2" : "px-2 py-2")}>

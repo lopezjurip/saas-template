@@ -17,6 +17,7 @@ import { MobileTopBar } from "~/components/shell/mobile-top-bar";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
 import { Sidebar } from "~/components/shell/sidebar";
+import { ROUTE_HREF } from "~/lib/route";
 
 type MobileSheet = null | "search" | "org" | "profile" | "settings";
 
@@ -44,8 +45,6 @@ export function Shell({
   const [mobileSheet, setMobileSheet] = useState<MobileSheet>(null);
 
   useKeyboardShortcut("k", () => setPaletteOpen((value) => !value), { mod: true });
-
-  const base = `/${locale}/${tenant.tenant_slug}/${current.organization_id}`;
 
   return (
     <div className="bg-background text-foreground relative flex h-svh w-screen overflow-hidden">
@@ -75,9 +74,11 @@ export function Shell({
         </div>
         <div className="flex-1 overflow-y-auto">{children}</div>
         <MobileBottomTabs
-          base={base}
+          locale={locale}
+          tenantSlug={tenant["tenant_slug"]}
+          organizationId={current["organization_id"]}
           activePath={pathname}
-          onNavigate={(href) => router.push(href)}
+          onNavigate={(href) => router.push(ROUTE_HREF(href))}
           onMore={() => setDrawerOpen(true)}
         />
       </div>

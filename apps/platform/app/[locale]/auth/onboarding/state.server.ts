@@ -24,7 +24,7 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
     .maybeSingle();
 
   const { count: passkeyCount } = await supabase
-    .from("webauthn_credentials")
+    .from("profile_webauthn_credentials")
     .select("webauthn_credential_id", { head: true, count: "exact" })
     .eq("profile_id", user.id);
 

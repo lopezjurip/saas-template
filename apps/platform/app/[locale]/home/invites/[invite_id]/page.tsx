@@ -4,8 +4,9 @@ import { SINGLE } from "@packages/utils/array";
 import { ArrowRight, Check, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { IS_SUPPORTED_LOCALE, ROSETTA } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
+import { assertLocale } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
 
 type AcceptState = "valid" | "loggedout" | "expired" | "claimed" | "rejected";
 
@@ -17,20 +18,19 @@ const VIEWER = { name: "Nora Bravo", initials: "NB" };
 const SLUGS = /*#__PURE__*/ ["content_edit", "content_publish", "reports_view"];
 
 export async function generateMetadata(props: PageProps<"/[locale]/home/invites/[invite_id]">): Promise<Metadata> {
-  const { locale } = await props.params;
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t, locale } = await getRosetta(LOCALES);
   return { title: t("page_title") };
 }
 
 export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/invites/[invite_id]">) {
   const { locale } = await props.params;
-  if (!IS_SUPPORTED_LOCALE(locale)) notFound();
-  const { t } = ROSETTA(LOCALES, locale);
+  assertLocale(locale);
+  const { t } = await getRosetta(LOCALES, locale);
   const sp = await props.searchParams;
   const state = (SINGLE(sp["state"]) ?? "valid") as AcceptState;
 
   const firstName = INVITED_BY.split(" ")[0];
-  const homeHref = `/${locale}/home`;
+  const homeHref = ROUTE("/[locale]/home", { locale });
 
   return (
     <div
@@ -50,7 +50,7 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
             <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em]">
               {state === "rejected" ? t("rejected_title") : t("expired_title")}
             </h1>
-            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] text-pretty">
               {state === "rejected"
                 ? t("rejected_desc", { name: firstName, org: ORG })
                 : t("expired_desc", { org: ORG })}
@@ -69,7 +69,7 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
             <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em]">
               {t("claimed_title", { org: ORG })}
             </h1>
-            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] [text-wrap:pretty]">
+            <p className="text-muted-foreground m-0 text-[13.5px] leading-[1.55] text-pretty">
               {t("claimed_desc")}
             </p>
           </div>
@@ -94,21 +94,21 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
           </div>
 
           <div className="flex flex-col gap-1">
-            <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em] [text-wrap:balance]">
+            <h1 className="text-foreground m-0 text-[19px] font-semibold tracking-[-0.01em] text-balance">
               {t("invited_title", { name: firstName })}
             </h1>
-            <p className="text-muted-foreground m-0 text-[13px] leading-[1.5] [text-wrap:pretty]">
+            <p className="text-muted-foreground m-0 text-sm/normal leading-normal text-pretty">
               {t("invited_desc", { name: INVITED_BY, org: ORG })}
             </p>
           </div>
 
           <div className="border-border bg-muted/35 flex flex-col gap-2 rounded-lg border px-3.5 py-3">
-            <span className="text-muted-foreground text-[10.5px] font-semibold uppercase tracking-[0.07em]">
+            <span className="text-muted-foreground text-tiny font-semibold uppercase tracking-[0.07em]">
               {t("perms_title")}
             </span>
             <ul className="m-0 flex list-none flex-col gap-1 p-0">
               {SLUGS.map((slug) => (
-                <li key={slug} className="text-foreground inline-flex items-center gap-2 text-[13px]">
+                <li key={slug} className="text-foreground inline-flex items-center gap-2 text-sm/normal">
                   <span className="shrink-0 text-emerald-700 dark:text-emerald-300">
                     <Check size={14} strokeWidth={2.5} />
                   </span>
@@ -120,15 +120,15 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
 
           {state === "loggedout" ? (
             <div className="flex flex-col gap-2.5">
-              <p className="text-muted-foreground text-[12.5px] leading-[1.5] [text-wrap:pretty]">
+              <p className="text-muted-foreground text-[12.5px] leading-normal text-pretty">
                 {t("loggedout_desc", { dest: DESTINATION })}
               </p>
               <Button asChild className="w-full">
-                <Link href={`/${locale}/auth`}>
+                <Link href={ROUTE("/[locale]/auth", { locale })}>
                   {t("continue_accept")} <ArrowRight size={16} />
                 </Link>
               </Button>
-              <span className="text-muted-foreground text-center text-[11.5px]">
+              <span className="text-muted-foreground text-center text-xs">
                 {t("not_you")} <span className="text-foreground underline underline-offset-[3px]">{t("reject")}</span>
               </span>
             </div>
@@ -136,11 +136,11 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
             <div className="flex flex-col gap-2.5">
               <div className="border-border bg-muted/45 flex items-center gap-2.5 rounded-md border px-3 py-2">
                 <span className="bg-primary text-primary-foreground inline-flex size-7 items-center justify-center rounded-full text-[11px] font-semibold">
-                  {VIEWER.initials}
+                  {VIEWER["initials"]}
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col leading-[1.2]">
-                  <span className="text-foreground truncate text-[12.5px] font-medium">{VIEWER.name}</span>
-                  <span className="text-muted-foreground truncate text-[11.5px]">{DESTINATION}</span>
+                  <span className="text-foreground truncate text-[12.5px] font-medium">{VIEWER["name"]}</span>
+                  <span className="text-muted-foreground truncate text-xs">{DESTINATION}</span>
                 </div>
                 <span className="text-muted-foreground shrink-0 text-[11px]">{t("your_session")}</span>
               </div>

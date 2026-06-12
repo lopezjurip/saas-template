@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, COLOR_FROM_ID, INITIALS_FROM_NAME, Kbd } from "~/components/shell/atoms";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
 type PaletteItem = {
   id: string;
@@ -55,7 +56,6 @@ export function CommandPalette({
   }, [open]);
 
   const groups = useMemo<PaletteGroup[]>(() => {
-    const base = `/${locale}/${tenant.tenant_slug}/${current.organization_id}`;
     const navigate: PaletteGroup = {
       heading: t("navigate"),
       items: [
@@ -63,31 +63,68 @@ export function CommandPalette({
           id: "nav-home",
           label: t("goHome"),
           Icon: Home,
-          onSelect: () => router.push(base),
+          onSelect: () =>
+            router.push(
+              ROUTE_HREF(
+                ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+                  locale,
+                  tenant_slug: tenant["tenant_slug"],
+                  organization_id: current["organization_id"],
+                }),
+              ),
+            ),
         },
         {
           id: "nav-members",
           label: t("goMembers"),
           Icon: Users,
-          onSelect: () => router.push(`${base}/settings/members`),
+          onSelect: () =>
+            router.push(
+              ROUTE_HREF(
+                ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
+                  locale,
+                  tenant_slug: tenant["tenant_slug"],
+                  organization_id: current["organization_id"],
+                }),
+              ),
+            ),
         },
         {
           id: "nav-settings",
           label: t("goSettings"),
           Icon: Settings,
-          onSelect: () => router.push(`${base}/settings`),
+          onSelect: () =>
+            router.push(
+              ROUTE_HREF(
+                ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
+                  locale,
+                  tenant_slug: tenant["tenant_slug"],
+                  organization_id: current["organization_id"],
+                }),
+              ),
+            ),
         },
       ],
     };
     const switchOrg: PaletteGroup = {
       heading: t("switchOrg"),
       items: organizations.map((organization) => ({
-        id: `org-${organization.organization_id}`,
-        label: organization.organization_name,
-        hint: organization.organization_id === current.organization_id ? t("current") : (tenant.tenant_tier ?? ""),
-        orgInitials: INITIALS_FROM_NAME(organization.organization_name),
-        orgColor: COLOR_FROM_ID(organization.organization_id),
-        onSelect: () => router.push(`/${locale}/${tenant.tenant_slug}/${organization.organization_id}`),
+        id: `org-${organization["organization_id"]}`,
+        label: organization["organization_name"],
+        hint:
+          organization["organization_id"] === current["organization_id"] ? t("current") : (tenant["tenant_tier"] ?? ""),
+        orgInitials: INITIALS_FROM_NAME(organization["organization_name"]),
+        orgColor: COLOR_FROM_ID(organization["organization_id"]),
+        onSelect: () =>
+          router.push(
+            ROUTE_HREF(
+              ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+                locale,
+                tenant_slug: tenant["tenant_slug"],
+                organization_id: organization["organization_id"],
+              }),
+            ),
+          ),
       })),
     };
     return [navigate, switchOrg];

@@ -67,6 +67,7 @@ export function PhoneForm({ currentPhone }: { currentPhone: string | null }) {
             inputMode="numeric"
             maxLength={6}
             autoComplete="one-time-code"
+            placeholder="123456"
             aria-invalid={!!codeForm.formState.errors.token}
             {...codeForm.register("token")}
           />

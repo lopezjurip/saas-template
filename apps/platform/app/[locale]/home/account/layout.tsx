@@ -1,21 +1,11 @@
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { Logo } from "@packages/ui-common/logo";
+import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ROUTE } from "~/lib/route";
 import { AccountMobileNav, AccountSidebar } from "./_components/sidebar";
-
-function INITIALS_OF(name: string | null | undefined): string {
-  if (!name) return "?";
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((s) => s[0])
-      .join("")
-      .toUpperCase() || "?"
-  );
-}
 
 export default async function AccountLayout(props: LayoutProps<"/[locale]/home/account">) {
   const { locale } = await props.params;
@@ -25,21 +15,29 @@ export default async function AccountLayout(props: LayoutProps<"/[locale]/home/a
 
   return (
     <div className="bg-background relative flex min-h-svh w-full flex-col">
-      <div className="bg-background flex shrink-0 items-center gap-2.5 border-b px-[18px] py-2.5">
+      <div className="bg-background flex shrink-0 items-center gap-2.5 border-b px-4.5 py-2.5">
         <Link
-          href={`/${locale}/home`}
+          href={ROUTE("/[locale]", { locale })}
+          aria-label="SaaS Template"
+          className="inline-flex shrink-0 transition-opacity hover:opacity-80"
+        >
+          <Logo />
+        </Link>
+        <span className="text-muted-foreground text-sm/normal opacity-30">|</span>
+        <Link
+          href={ROUTE("/[locale]/home", { locale })}
           className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex items-center gap-1.5 rounded-md py-1 pr-2 pl-1.5 text-[12.5px] font-medium no-underline"
         >
           <ArrowLeft size={14} /> <span>Inicio</span>
         </Link>
-        <span className="text-muted-foreground text-[13px] opacity-50">/</span>
-        <span className="text-foreground text-[13px] font-medium">Mi cuenta</span>
+        <span className="text-muted-foreground text-sm/normal opacity-50">/</span>
+        <span className="text-foreground text-sm/normal font-medium">Mi cuenta</span>
         <div className="flex-1" />
         <Link
-          href={`/${locale}/home/account/profile`}
+          href={ROUTE("/[locale]/home/account/profile", { locale })}
           className="text-foreground bg-background hover:bg-accent inline-flex cursor-pointer items-center gap-2 rounded-full border py-1 pr-2 pl-1 text-xs"
         >
-          <span className="bg-primary text-primary-foreground inline-flex size-[26px] items-center justify-center rounded-full text-[11px] font-semibold">
+          <span className="bg-primary text-primary-foreground inline-flex size-6.5 items-center justify-center rounded-full text-[11px] font-semibold">
             {INITIALS_OF(email)}
           </span>
           <span>{email}</span>

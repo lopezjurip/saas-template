@@ -53,7 +53,7 @@ const signInChallengeSchema = z.object({
 // Action code shapes the behavior by passing different `filter` / `set` objects.
 
 const PasskeyCredentialFragment = /*#__PURE__*/ gql(`
-  fragment PasskeyCredentialFragment on webauthn_credentials {
+  fragment PasskeyCredentialFragment on profile_webauthn_credentials {
     profile_id
     webauthn_credential_external_id
     webauthn_credential_type
@@ -66,10 +66,10 @@ const PasskeyCredentialFragment = /*#__PURE__*/ gql(`
 const PasskeyCredentialsCollectionQuery = /*#__PURE__*/ gql(`
   query PasskeyCredentialsCollectionQuery(
     $first: Int
-    $filter: webauthn_credentialsFilter
-    $orderBy: [webauthn_credentialsOrderBy!]
+    $filter: profile_webauthn_credentialsFilter
+    $orderBy: [profile_webauthn_credentialsOrderBy!]
   ) {
-    webauthn_credentialsCollection(first: $first, filter: $filter, orderBy: $orderBy) {
+    profile_webauthn_credentialsCollection(first: $first, filter: $filter, orderBy: $orderBy) {
       edges {
         node {
           ...PasskeyCredentialFragment
@@ -80,8 +80,8 @@ const PasskeyCredentialsCollectionQuery = /*#__PURE__*/ gql(`
 `);
 
 const PasskeyCredentialsInsertMutation = /*#__PURE__*/ gql(`
-  mutation PasskeyCredentialsInsertMutation($objects: [webauthn_credentialsInsertInput!]!) {
-    insertIntowebauthn_credentialsCollection(objects: $objects) {
+  mutation PasskeyCredentialsInsertMutation($objects: [profile_webauthn_credentialsInsertInput!]!) {
+    insertIntoprofile_webauthn_credentialsCollection(objects: $objects) {
       records {
         webauthn_credential_id
         webauthn_credential_friendly_name
@@ -96,10 +96,10 @@ const PasskeyCredentialsInsertMutation = /*#__PURE__*/ gql(`
 const PasskeyCredentialsUpdateMutation = /*#__PURE__*/ gql(`
   mutation PasskeyCredentialsUpdateMutation(
     $atMost: Int! = 1
-    $filter: webauthn_credentialsFilter
-    $set: webauthn_credentialsUpdateInput!
+    $filter: profile_webauthn_credentialsFilter
+    $set: profile_webauthn_credentialsUpdateInput!
   ) {
-    updatewebauthn_credentialsCollection(atMost: $atMost, filter: $filter, set: $set) {
+    updateprofile_webauthn_credentialsCollection(atMost: $atMost, filter: $filter, set: $set) {
       affectedCount
     }
   }
@@ -108,10 +108,10 @@ const PasskeyCredentialsUpdateMutation = /*#__PURE__*/ gql(`
 const PasskeyChallengesCollectionQuery = /*#__PURE__*/ gql(`
   query PasskeyChallengesCollectionQuery(
     $first: Int
-    $filter: webauthn_challengesFilter
-    $orderBy: [webauthn_challengesOrderBy!]
+    $filter: profile_webauthn_challengesFilter
+    $orderBy: [profile_webauthn_challengesOrderBy!]
   ) {
-    webauthn_challengesCollection(first: $first, filter: $filter, orderBy: $orderBy) {
+    profile_webauthn_challengesCollection(first: $first, filter: $filter, orderBy: $orderBy) {
       edges {
         node {
           webauthn_challenge_id
@@ -123,8 +123,8 @@ const PasskeyChallengesCollectionQuery = /*#__PURE__*/ gql(`
 `);
 
 const PasskeyChallengesInsertMutation = /*#__PURE__*/ gql(`
-  mutation PasskeyChallengesInsertMutation($objects: [webauthn_challengesInsertInput!]!) {
-    insertIntowebauthn_challengesCollection(objects: $objects) {
+  mutation PasskeyChallengesInsertMutation($objects: [profile_webauthn_challengesInsertInput!]!) {
+    insertIntoprofile_webauthn_challengesCollection(objects: $objects) {
       records {
         webauthn_challenge_id
         webauthn_challenge_value
@@ -136,9 +136,9 @@ const PasskeyChallengesInsertMutation = /*#__PURE__*/ gql(`
 const PasskeyChallengesDeleteMutation = /*#__PURE__*/ gql(`
   mutation PasskeyChallengesDeleteMutation(
     $atMost: Int! = 1
-    $filter: webauthn_challengesFilter
+    $filter: profile_webauthn_challengesFilter
   ) {
-    deleteFromwebauthn_challengesCollection(atMost: $atMost, filter: $filter) {
+    deleteFromprofile_webauthn_challengesCollection(atMost: $atMost, filter: $filter) {
       affectedCount
     }
   }
@@ -162,7 +162,7 @@ export const actionCreatePasskeyChallenge = authedAction.action(
       log.error("list credentials failed", { profile_id: user.id, error: list.error });
       throw new Error("No pudimos iniciar el registro");
     }
-    const credentials = list.data["webauthn_credentialsCollection"]?.["edges"] ?? [];
+    const credentials = list.data["profile_webauthn_credentialsCollection"]?.["edges"] ?? [];
 
     const userName = user["email"] ?? user["phone"] ?? user["id"];
     const displayName = (user["user_metadata"]?.["full_name"] as string | undefined) ?? userName;
@@ -193,10 +193,10 @@ export const actionCreatePasskeyChallenge = authedAction.action(
 
     // pg_graphql doesn't support ON CONFLICT upserts, so this one call drops back to the
     // service-role SDK. Registration uniqueness (one challenge per profile) is enforced by
-    // a unique constraint on webauthn_challenges.profile_id.
+    // a unique constraint on profile_webauthn_challenges.profile_id.
     const admin = createServiceRoleClient();
     const { error: upsertError } = await admin
-      .from("webauthn_challenges")
+      .from("profile_webauthn_challenges")
       .upsert([{ profile_id: user.id, webauthn_challenge_value: options.challenge }], { onConflict: "profile_id" });
     if (upsertError) {
       log.error("challenge upsert failed", { profile_id: user.id, error: upsertError });
@@ -221,7 +221,7 @@ export const actionVerifyPasskeyRegistration = authedAction
       log.error("challenge fetch failed", { profile_id: user.id, error: challengeRes.error });
       throw new Error("Desafío no encontrado");
     }
-    const challenge = challengeRes.data["webauthn_challengesCollection"]?.["edges"]?.[0]?.["node"];
+    const challenge = challengeRes.data["profile_webauthn_challengesCollection"]?.["edges"]?.[0]?.["node"];
     if (!challenge) {
       log.warn("verify requested but no pending challenge", { profile_id: user.id });
       throw new Error("Desafío no encontrado");
@@ -277,7 +277,7 @@ export const actionVerifyPasskeyRegistration = authedAction
       throw new Error("No pudimos guardar el passkey");
     }
 
-    const saved = insertRes.data["insertIntowebauthn_credentialsCollection"]?.["records"]?.[0];
+    const saved = insertRes.data["insertIntoprofile_webauthn_credentialsCollection"]?.["records"]?.[0];
     log.info("passkey registered", { profile_id: user.id, webauthn_credential_id: saved?.["webauthn_credential_id"] });
     return {
       webauthn_credential_id: saved?.["webauthn_credential_id"],
@@ -316,7 +316,7 @@ export const actionCreatePasskeySignInChallenge = action
       log.error("list credentials failed", { profile_id, error: credsRes.error });
       throw new Error("Error al buscar credenciales");
     }
-    const edges = credsRes.data["webauthn_credentialsCollection"]?.["edges"] ?? [];
+    const edges = credsRes.data["profile_webauthn_credentialsCollection"]?.["edges"] ?? [];
     if (edges.length === 0) {
       log.info("sign-in challenge for user with no passkeys", { email, profile_id });
       throw new Error("Usuario sin passkey");
@@ -345,7 +345,7 @@ export const actionCreatePasskeySignInChallenge = action
       log.error("anonymous challenge insert failed", { email, profile_id, error: insertRes.error });
       throw new Error("No se pudo crear el desafío");
     }
-    const challenge = insertRes.data["insertIntowebauthn_challengesCollection"]?.["records"]?.[0];
+    const challenge = insertRes.data["insertIntoprofile_webauthn_challengesCollection"]?.["records"]?.[0];
     if (!challenge?.["webauthn_challenge_id"]) {
       log.error("anonymous challenge insert returned no row", { email, profile_id });
       throw new Error("No se pudo crear el desafío");
@@ -385,7 +385,7 @@ export const actionVerifyPasskeySignIn = action
       log.error("challenge fetch failed", { webauthn_challenge_id, error: challengeRes.error });
       throw new Error("Desafío no encontrado");
     }
-    const challenge = challengeRes.data["webauthn_challengesCollection"]?.["edges"]?.[0]?.["node"];
+    const challenge = challengeRes.data["profile_webauthn_challengesCollection"]?.["edges"]?.[0]?.["node"];
 
     await graphy.mutate({
       query: PasskeyChallengesDeleteMutation,
@@ -405,7 +405,7 @@ export const actionVerifyPasskeySignIn = action
       log.error("credential fetch failed", { external_id: response["id"], error: credRes.error });
       throw new Error("Credencial no encontrada");
     }
-    const credential = credRes.data["webauthn_credentialsCollection"]?.["edges"]?.[0]?.["node"];
+    const credential = credRes.data["profile_webauthn_credentialsCollection"]?.["edges"]?.[0]?.["node"];
     if (!credential) {
       log.warn("verify hit with unknown credential id", { external_id: response["id"] });
       throw new Error("Credencial no encontrada");

@@ -1,5 +1,6 @@
 import { IdCard, Mail, Phone } from "lucide-react";
 import Link from "next/link";
+import type { AppRoute } from "~/lib/route";
 
 export function IdentityChip({
   kind,
@@ -8,18 +9,18 @@ export function IdentityChip({
 }: {
   kind: "email" | "phone" | "document";
   value: string;
-  href: string;
+  href: AppRoute;
 }) {
   const Icon = kind === "email" ? Mail : kind === "phone" ? Phone : IdCard;
   const metaLabel = kind === "email" ? "Correo" : kind === "phone" ? "Teléfono" : "Documento";
   return (
     <div className="flex items-center gap-2.5 rounded-md border bg-muted/45 px-3 py-2.5">
-      <div className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-[13px] font-semibold text-muted-foreground">
+      <div className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm/normal font-semibold text-muted-foreground">
         <Icon size={15} />
       </div>
       <div className="min-w-0 flex-1 leading-tight">
         <div className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium">{value}</div>
-        <div className="mt-px text-[11.5px] text-muted-foreground">{metaLabel}</div>
+        <div className="mt-px text-xs text-muted-foreground">{metaLabel}</div>
       </div>
       <Link
         href={href}

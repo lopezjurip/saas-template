@@ -13,6 +13,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { useLocaleParam } from "~/hooks/use-locale-param";
 import { useRosetta } from "~/hooks/use-rosetta";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { createTenant } from "./actions";
 import { type CreateTenantValues, createTenantSchema } from "./schemas";
@@ -68,7 +69,7 @@ export function CreateTenantForm() {
       }
       if (error) return;
       // Hard navigate so the browser picks up the refreshed JWT (new tenant claim) on the next request.
-      window.location.assign(`/${locale}/${data.slug}`);
+      window.location.assign(ROUTE_HREF(ROUTE("/[locale]/t/[tenant_slug]", { locale, tenant_slug: data["slug"] })));
     });
   });
 
@@ -132,7 +133,7 @@ export function CreateTenantForm() {
                 )}
               >
                 <span className="inline-flex items-center justify-between">
-                  <span className="text-[13px] font-semibold text-foreground">{p.name}</span>
+                  <span className="text-sm/normal font-semibold text-foreground">{p.name}</span>
                   {on && (
                     <span className="text-foreground">
                       <Check size={14} strokeWidth={2.5} />
@@ -161,7 +162,7 @@ export function CreateTenantForm() {
           {!pending && <ArrowRight size={16} />}
         </Button>
         <Button asChild type="button" variant="ghost" className="h-10 w-full text-muted-foreground">
-          <Link href={`/${locale}/home`}>{t("cancel")}</Link>
+          <Link href={ROUTE("/[locale]/home", { locale })}>{t("cancel")}</Link>
         </Button>
       </div>
     </form>

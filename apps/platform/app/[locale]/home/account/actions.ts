@@ -7,6 +7,7 @@ import { z } from "zod";
 import { isOAuthProvider, OAUTH_PROVIDER_IDS } from "~/app/[locale]/auth/providers";
 import { debug } from "~/lib/debug";
 import { getServerLocale } from "~/lib/i18n.server";
+import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 import { authedAction, formAction } from "~/lib/safe-action.server";
 
 const log = debug("account");
@@ -18,6 +19,18 @@ export const actionSignOutOtherDevices = authedAction.action(async ({ ctx: { sup
     throw new Error("No pudimos cerrar las otras sesiones");
   }
 });
+
+const revokeSessionSchema = z.object({ sessionId: z.string().uuid() });
+
+export const actionRevokeSession = authedAction
+  .inputSchema(revokeSessionSchema)
+  .action(async ({ parsedInput, ctx: { supabase, user } }) => {
+    const { error } = await supabase.rpc("revoke_session", { session_id: parsedInput.sessionId });
+    if (error) {
+      log.error("revoke session failed", { profile_id: user.id, sessionId: parsedInput.sessionId, error });
+      throw new Error("No pudimos cerrar esa sesión");
+    }
+  });
 
 const updateEmailSchema = z.object({
   email: z
@@ -126,7 +139,7 @@ const linkProviderRun = authedAction
       log.error("linkIdentity failed", { profile_id: user.id, provider, error });
       redirect(`/[locale]/home/account/connections?error=${encodeURIComponent(error?.message ?? "link_failed")}`);
     }
-    redirect(data.url);
+    redirect(ROUTE_HREF(UNSAFE_ROUTE(data["url"])));
   });
 
 export const actionLinkProvider = formAction(linkProviderRun, (fd) => {

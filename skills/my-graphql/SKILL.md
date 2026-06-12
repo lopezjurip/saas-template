@@ -39,13 +39,57 @@ const HomePickerPageQuery = gql(`
 Reusable server query lives in `hooks/get-*.ts`; reusable client query in `hooks/use-*.ts`.
 Do not create generic query barrels.
 
+## Reusable hook pattern (`get-*` / `use-*`)
+
+All `viewer_*` collection hooks expose full pagination variables. Server hooks use
+`VariablesOf` for the options type; client hooks pass them straight through to `useGraphyQuery`.
+Defaults (e.g. `first: 250`, default filter/orderBy) live inside the function, spread before
+`...options` so callers can override any field:
+
+```ts
+// Server (hooks/get-viewer-organizations.ts)
+export const ViewerOrganizationsGet = /*#__PURE__*/ gql(`
+  query ViewerOrganizationsGet(
+    $first: Int
+    $last: Int
+    $after: Cursor
+    $before: Cursor
+    $filter: organizationsFilter
+    $orderBy: [organizationsOrderBy!]
+  ) {
+    organizations: viewer_organizations(
+      first: $first  last: $last  after: $after  before: $before
+      filter: $filter  orderBy: $orderBy
+    ) { edges { node { ...Fragment } } }
+  }
+`);
+
+type Vars = VariablesOf<typeof ViewerOrganizationsGet>;
+
+export const getViewerOrganizations = cache(async (options?: Vars) => {
+  const graphy = await getGraphySession();
+  return await graphy.query({ query: ViewerOrganizationsGet, variables: options ?? {} });
+});
+
+// Client (hooks/use-viewer-organizations.ts)
+export function useViewerOrganizations(options?: Vars, config?: SWRConfiguration<Data>) {
+  const { data: user } = useSupabaseUser();
+  return useGraphyQuery(user ? { query: ViewerOrganizationsUse, variables: options ?? {} } : null, config);
+}
+```
+
+For by-id / by-slug singular lookups expose `getViewerXByIdAssert` / `getViewerXBySlugAssert`
+variants that call `notFound()` when the record is missing.
+
+`agency_id` is UUID (`string`), not `int` — do not copy `int` signatures from tenant/org hooks.
+
 ## Naming
 
 Operation names globally unique. Current suffixes:
 
 - Page: `HomePickerPageQuery`
-- Server helper: `ViewerOrganizationsGetQuery`
-- Client hook: `ViewerOrganizationsHookQuery`
+- Server helper: `ViewerOrganizationsGet`
+- Client hook: `ViewerOrganizationsUse`
 - Component mutation: `ProfileSectionUpdateNameMutation`
 
 Fragments follow consumer namespace:

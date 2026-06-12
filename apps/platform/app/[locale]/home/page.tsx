@@ -1,9 +1,12 @@
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { Logo } from "@packages/ui-common/logo";
 import { ArrowRight, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { FloatingChrome } from "~/components/floating-chrome";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { ROUTE } from "~/lib/route";
 import { COUNT_DONE, METHOD_ORDER } from "../auth/onboarding/state";
 import { getViewerOnboardingState } from "../auth/onboarding/state.server";
 import { UserMenu } from "./_components/user-menu";
@@ -31,7 +34,7 @@ const HomePickerPageQuery = gql(`
 `);
 
 // /home is always the picker now (no single-org auto-redirect). The picker shows
-// every membership as a big tile plus a "nueva organización" tile pointing at
+// every organization_membership as a big tile plus a "nueva organización" tile pointing at
 // /tenants/create. A banner nudges back to onboarding if any method is pending.
 export default async function HomePage(props: PageProps<"/[locale]/home">) {
   const { locale } = await props.params;
@@ -53,6 +56,13 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
 
   return (
     <div className="relative flex min-h-svh w-full flex-col overflow-hidden bg-background">
+      <Link
+        href={ROUTE("/[locale]", { locale })}
+        aria-label="SaaS Template"
+        className="absolute top-4 left-4 z-10 inline-block transition-opacity hover:opacity-80"
+      >
+        <Logo />
+      </Link>
       <div className="flex flex-1 items-center justify-center px-6 pt-6 pb-24">
         <div className="flex w-full max-w-[1040px] flex-col items-center gap-7 text-center">
           <div className="flex flex-col gap-1.5 text-center">
@@ -75,7 +85,7 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                 </span>
               </span>
               <Link
-                href={`/${locale}/auth/onboarding`}
+                href={ROUTE("/[locale]/auth/onboarding", { locale })}
                 className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md border bg-background px-3 text-[12.5px] font-medium text-foreground hover:bg-accent"
               >
                 Continuar
@@ -103,8 +113,8 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
               return (
                 <Link
                   key={organization["organization_id"]}
-                  href={`/${locale}/${tenant_slug}`}
-                  className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:-translate-y-[3px] hover:bg-muted/50"
+                  href={ROUTE("/[locale]/t/[tenant_slug]", { locale, tenant_slug })}
+                  className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
                 >
                   <span
                     className="inline-flex size-28 items-center justify-center rounded-[18px] border text-4xl font-semibold tracking-[-0.02em] transition-shadow duration-150 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)]"
@@ -117,24 +127,25 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                     {initials}
                   </span>
                   <span className="text-center text-[13.5px] font-medium text-balance">{name}</span>
-                  <span className="-mt-1 text-[11.5px] text-muted-foreground">{tenant?.["tenant_name"] ?? "—"}</span>
+                  <span className="-mt-1 text-xs text-muted-foreground">{tenant?.["tenant_name"] ?? "—"}</span>
                 </Link>
               );
             })}
             <Link
-              href={`/${locale}/tenants/create`}
-              className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:-translate-y-[3px] hover:bg-muted/50"
+              href={ROUTE("/[locale]/tenants/create", { locale })}
+              className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
             >
               <span className="inline-flex size-28 items-center justify-center rounded-[18px] border border-dashed bg-background text-muted-foreground transition-colors duration-150 group-hover:bg-muted/40 group-hover:text-foreground">
                 <Plus size={36} />
               </span>
               <span className="text-center text-[13.5px] font-medium text-balance">Nueva organización</span>
-              <span className="-mt-1 text-[11.5px] text-muted-foreground">Empieza desde cero</span>
+              <span className="-mt-1 text-xs text-muted-foreground">Empieza desde cero</span>
             </Link>
           </div>
         </div>
       </div>
 
+      <FloatingChrome />
       <UserMenu locale={locale} name={state.profile_name_full} email={state.email ?? user["email"] ?? ""} />
     </div>
   );

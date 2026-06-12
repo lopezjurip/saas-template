@@ -29,13 +29,13 @@ organizations(
   organization_name text
 )
 
-memberships(
-  membership_id serial,
+organization_memberships(
+  organization_membership_id serial,
   organization_id int,
   profile_id uuid,
-  membership_accepted_at timestamptz,
-  membership_rejected_at timestamptz,
-  membership_revoked_at timestamptz,
+  organization_membership_accepted_at timestamptz,
+  organization_membership_rejected_at timestamptz,
+  organization_membership_revoked_at timestamptz,
   ...
 )
 ```

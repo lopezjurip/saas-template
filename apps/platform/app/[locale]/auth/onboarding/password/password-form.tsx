@@ -87,9 +87,7 @@ export function PasswordForm() {
               />
             ))}
           </div>
-          <span className="shrink-0 text-[11.5px] text-muted-foreground">
-            {pw ? strength.label : "Mínimo 8 caracteres"}
-          </span>
+          <span className="shrink-0 text-xs text-muted-foreground">{pw ? strength.label : "Mínimo 8 caracteres"}</span>
         </div>
       </div>
 

@@ -1,9 +1,8 @@
 -- Tests for permission-based viewer_* helpers, including wildcard `*` behavior.
 -- Seed:
 --   Alice (org 1 acme): wildcard `*` — admin of everything in org 1.
---   Alice (org 2 globex): payroll_run, payroll_view, previred_export, lre_export,
---                         banco_export, terminations_create — NO wildcard, NO members_manage.
---   Bob   (org 1 acme): vacations_request only.
+--   Alice (org 2 globex): presets_manage only — NO wildcard, NO members_manage.
+--   Bob   (org 1 acme): presets_manage only.
 
 begin;
 
@@ -50,8 +49,8 @@ select ok(
 -- ============================================================
 
 select ok(
-  public.viewer_has_permission(2, 'payroll_run'),
-  'Alice has explicit payroll_run in org 2'
+  public.viewer_has_permission(2, 'presets_manage'),
+  'Alice has explicit presets_manage in org 2'
 );
 
 select ok(
@@ -64,9 +63,9 @@ select ok(
 -- ============================================================
 
 select set_eq(
-  $$ select * from public.viewer_permission_org_ids('payroll_run') order by 1 $$,
+  $$ select * from public.viewer_permission_org_ids('presets_manage') order by 1 $$,
   $$ values (1), (2) $$,
-  'payroll_run is granted to Alice in orgs 1 (via *) and 2 (explicit)'
+  'presets_manage is granted to Alice in orgs 1 (via *) and 2 (explicit)'
 );
 
 select set_eq(
@@ -91,13 +90,13 @@ set local request.jwt.claims to '{
 }';
 
 select ok(
-  public.viewer_has_permission(1, 'vacations_request'),
-  'Bob has vacations_request in org 1'
+  public.viewer_has_permission(1, 'presets_manage'),
+  'Bob has presets_manage in org 1'
 );
 
 select ok(
-  not public.viewer_has_permission(1, 'payroll_run'),
-  'Bob does NOT have payroll_run in org 1'
+  not public.viewer_has_permission(1, 'members_manage'),
+  'Bob does NOT have members_manage in org 1'
 );
 
 select ok(
@@ -106,9 +105,9 @@ select ok(
 );
 
 select is(
-  (select count(*) from public.viewer_permission_org_ids('payroll_run')),
+  (select count(*) from public.viewer_permission_org_ids('members_manage')),
   0::bigint,
-  'Bob is in no orgs that grant him payroll_run'
+  'Bob is in no orgs that grant him members_manage'
 );
 
 reset role;
@@ -118,9 +117,11 @@ reset role;
 -- ============================================================
 
 set local role anon;
+-- Clear any inherited claims so viewer_profile_id() resolves to NULL (a true anon caller).
+set local request.jwt.claims to '';
 
 select is(
-  (select count(*) from public.viewer_permission_org_ids('payroll_run')),
+  (select count(*) from public.viewer_permission_org_ids('presets_manage')),
   0::bigint,
   'anon caller has no permission grants'
 );

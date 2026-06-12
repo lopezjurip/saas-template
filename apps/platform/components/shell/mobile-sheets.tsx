@@ -33,6 +33,7 @@ import type { ShellViewer } from "~/components/shell/profile-menu";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
 import { useRosetta } from "~/hooks/use-rosetta";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
 
 const LOCALE_ES = {
   // Org sheet
@@ -148,29 +149,33 @@ export function MobileOrgSheet({
       <div className="px-2 pb-2">
         {organizations.map((organization) => (
           <Link
-            key={organization.organization_id}
-            href={`/${locale}/${tenant.tenant_slug}/${organization.organization_id}`}
+            key={organization["organization_id"]}
+            href={ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+              locale,
+              tenant_slug: tenant["tenant_slug"],
+              organization_id: organization["organization_id"],
+            })}
             onClick={onClose}
             className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left"
           >
             <Avatar
-              initials={INITIALS_FROM_NAME(organization.organization_name)}
-              color={COLOR_FROM_ID(organization.organization_id)}
+              initials={INITIALS_FROM_NAME(organization["organization_name"])}
+              color={COLOR_FROM_ID(organization["organization_id"])}
               size="md"
             />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[14px] font-medium">{organization.organization_name}</div>
-              {organization.organization_slug ? (
-                <div className="text-muted-foreground truncate text-[11px]">{organization.organization_slug}</div>
+              <div className="truncate text-[14px] font-medium">{organization["organization_name"]}</div>
+              {organization["organization_slug"] ? (
+                <div className="text-muted-foreground truncate text-[11px]">{organization["organization_slug"]}</div>
               ) : null}
             </div>
-            {organization.organization_id === current.organization_id ? <Check size={16} /> : null}
+            {organization["organization_id"] === current["organization_id"] ? <Check size={16} /> : null}
           </Link>
         ))}
       </div>
       <div className="border-border border-t px-2 py-2">
         <Link
-          href={`/${locale}/home`}
+          href={ROUTE("/[locale]/home", { locale })}
           onClick={onClose}
           className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-[14px]"
         >
@@ -178,7 +183,11 @@ export function MobileOrgSheet({
           <span>{t("switchTenant")}</span>
         </Link>
         <Link
-          href={`/${locale}/${tenant.tenant_slug}/${current.organization_id}/settings`}
+          href={ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
+            locale,
+            tenant_slug: tenant["tenant_slug"],
+            organization_id: current["organization_id"],
+          })}
           onClick={onClose}
           className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-[14px]"
         >
@@ -203,23 +212,23 @@ export function MobileProfileSheet({
 }) {
   const { t } = useRosetta(LOCALES);
   const items = [
-    { Icon: User, label: t("account"), href: `/${locale}/home/account/profile` },
-    { Icon: CreditCard, label: t("billing"), href: `/${locale}/home/account/profile` },
-    { Icon: KeyRound, label: t("tokens"), href: `/${locale}/home/account/tokens` },
-    { Icon: Bell, label: t("notifications"), href: `/${locale}/home/account/notifications` },
+    { Icon: User, label: t("account"), href: ROUTE("/[locale]/home/account/profile", { locale }) },
+    { Icon: CreditCard, label: t("billing"), href: ROUTE("/[locale]/home/account/profile", { locale }) },
+    { Icon: KeyRound, label: t("tokens"), href: ROUTE("/[locale]/home/account/tokens", { locale }) },
+    { Icon: Bell, label: t("notifications"), href: ROUTE("/[locale]/home/account/notifications", { locale }) },
   ];
 
   return (
     <Sheet open={open} onClose={onClose}>
       <div className="border-border flex items-center gap-3 border-b px-4 pb-3">
         <Avatar
-          initials={INITIALS_FROM_NAME(viewer.profile_name_full || viewer.email)}
+          initials={INITIALS_FROM_NAME(viewer["profile_name_full"] || viewer["email"])}
           color="bg-fuchsia-600 text-white"
           size="lg"
         />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-semibold">{viewer.profile_name_full || viewer.email}</div>
-          <div className="text-muted-foreground truncate text-[12px]">{viewer.email}</div>
+          <div className="truncate text-[15px] font-semibold">{viewer["profile_name_full"] || viewer["email"]}</div>
+          <div className="text-muted-foreground truncate text-[12px]">{viewer["email"]}</div>
         </div>
       </div>
       <div className="px-2 py-1.5">
@@ -238,7 +247,7 @@ export function MobileProfileSheet({
       </div>
       <div className="border-border border-t px-2 py-2">
         <Link
-          href={`/${locale}/auth/logout`}
+          href={ROUTE("/[locale]/auth/logout", { locale })}
           onClick={onClose}
           className="flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-[14px] text-rose-600 active:bg-rose-50 dark:active:bg-rose-950/30"
         >
@@ -269,7 +278,7 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
   return (
     <Sheet open={open} onClose={onClose} title={t("settingsTitle")}>
       <div className="px-4 pb-2" aria-busy={pending}>
-        <div className="text-muted-foreground pb-1.5 pt-2 text-[10px] font-medium uppercase tracking-wider">
+        <div className="text-muted-foreground pb-1.5 pt-2 text-tiny font-medium uppercase tracking-wider">
           {t("appearance")}
         </div>
         <div className="border-border bg-background grid grid-cols-3 gap-1.5 rounded-md border p-1">
@@ -291,7 +300,7 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
           })}
         </div>
 
-        <div className="text-muted-foreground pb-1.5 pt-4 text-[10px] font-medium uppercase tracking-wider">
+        <div className="text-muted-foreground pb-1.5 pt-4 text-tiny font-medium uppercase tracking-wider">
           {t("language")}
         </div>
         <div className="border-border bg-background overflow-hidden rounded-md border">
@@ -314,7 +323,7 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
           })}
         </div>
 
-        <div className="text-muted-foreground pb-1.5 pt-4 text-[10px] font-medium uppercase tracking-wider">
+        <div className="text-muted-foreground pb-1.5 pt-4 text-tiny font-medium uppercase tracking-wider">
           {t("more")}
         </div>
         <div className="border-border bg-background overflow-hidden rounded-md border">
@@ -351,7 +360,7 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
 type SearchItem = {
   id: string;
   label: string;
-  href?: string;
+  href?: AppRoute;
   onTap?: () => void;
   hint?: string;
   Icon?: React.ComponentType<{ size?: number; className?: string }>;
@@ -391,30 +400,63 @@ export function MobileSearchSheet({
     return () => clearTimeout(timeout);
   }, [open]);
 
-  const base = `/${locale}/${tenant.tenant_slug}/${current.organization_id}`;
   const groups = useMemo<SearchGroup[]>(
     () => [
       {
         heading: t("navigate"),
         items: [
-          { id: "go-home", label: t("navHome"), Icon: Home, href: base },
-          { id: "go-members", label: t("navMembers"), Icon: Users, href: `${base}/settings/members` },
-          { id: "go-settings", label: t("navSettings"), Icon: SettingsIcon, href: `${base}/settings` },
+          {
+            id: "go-home",
+            label: t("navHome"),
+            Icon: Home,
+            href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+              locale,
+              tenant_slug: tenant["tenant_slug"],
+              organization_id: current["organization_id"],
+            }),
+          },
+          {
+            id: "go-members",
+            label: t("navMembers"),
+            Icon: Users,
+            href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
+              locale,
+              tenant_slug: tenant["tenant_slug"],
+              organization_id: current["organization_id"],
+            }),
+          },
+          {
+            id: "go-settings",
+            label: t("navSettings"),
+            Icon: SettingsIcon,
+            href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
+              locale,
+              tenant_slug: tenant["tenant_slug"],
+              organization_id: current["organization_id"],
+            }),
+          },
         ],
       },
       {
         heading: t("switchOrg"),
         items: organizations.map((organization) => ({
-          id: `org-${organization.organization_id}`,
-          label: organization.organization_name,
-          hint: organization.organization_id === current.organization_id ? t("current") : (tenant.tenant_tier ?? ""),
-          orgInitials: INITIALS_FROM_NAME(organization.organization_name),
-          orgColor: COLOR_FROM_ID(organization.organization_id),
-          href: `/${locale}/${tenant.tenant_slug}/${organization.organization_id}`,
+          id: `org-${organization["organization_id"]}`,
+          label: organization["organization_name"],
+          hint:
+            organization["organization_id"] === current["organization_id"]
+              ? t("current")
+              : (tenant["tenant_tier"] ?? ""),
+          orgInitials: INITIALS_FROM_NAME(organization["organization_name"]),
+          orgColor: COLOR_FROM_ID(organization["organization_id"]),
+          href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+            locale,
+            tenant_slug: tenant["tenant_slug"],
+            organization_id: organization["organization_id"],
+          }),
         })),
       },
     ],
-    [base, locale, tenant, organizations, current, t],
+    [locale, tenant, organizations, current, t],
   );
 
   const filtered = useMemo<SearchGroup[]>(() => {
@@ -431,7 +473,7 @@ export function MobileSearchSheet({
   function goTo(item: SearchItem) {
     onClose();
     if (item.onTap) item.onTap();
-    else if (item.href) router.push(item.href);
+    else if (item.href) router.push(ROUTE_HREF(item.href));
   }
 
   return (
@@ -469,7 +511,7 @@ export function MobileSearchSheet({
         ) : null}
         {filtered.map((group) => (
           <div key={group.heading} className="mb-2">
-            <div className="text-muted-foreground px-2 pb-1 pt-2 text-[10px] font-medium uppercase tracking-wider">
+            <div className="text-muted-foreground px-2 pb-1 pt-2 text-tiny font-medium uppercase tracking-wider">
               {group.heading}
             </div>
             {group.items.map((item) => {

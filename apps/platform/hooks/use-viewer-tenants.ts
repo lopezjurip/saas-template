@@ -1,13 +1,13 @@
 "use client";
 
-import type { ResultOf } from "@graphql-typed-document-node/core";
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { useGraphyQuery } from "@packages/graphy/react";
 import { useSupabaseUser } from "@packages/supabase/react";
 import type { SWRConfiguration } from "swr";
 import { gql } from "~/generated/graphql";
 
-export const ViewerTenantHookFragment = /*#__PURE__*/ gql(`
-  fragment ViewerTenantHookFragment on tenants {
+export const ViewerTenantUseFragment = /*#__PURE__*/ gql(`
+  fragment ViewerTenantUseFragment on tenants {
     tenant_id
     tenant_slug
     tenant_name
@@ -15,39 +15,66 @@ export const ViewerTenantHookFragment = /*#__PURE__*/ gql(`
   }
 `);
 
-export type ViewerTenantHookFragmentType = ResultOf<typeof ViewerTenantHookFragment>;
+export type ViewerTenantUseFragmentType = ResultOf<typeof ViewerTenantUseFragment>;
 
-export const ViewerTenantsHookQuery = /*#__PURE__*/ gql(`
-  query ViewerTenantsHookQuery {
-    viewer_tenants(
-      orderBy: [{ tenant_name: AscNullsLast }]
+export const ViewerTenantsUse = /*#__PURE__*/ gql(`
+  query ViewerTenantsUse(
+    $first: Int
+    $last: Int
+    $after: Cursor
+    $before: Cursor
+    $filter: tenantsFilter
+    $orderBy: [tenantsOrderBy!]
+  ) {
+    tenants: viewer_tenants(
+      first: $first
+      last: $last
+      after: $after
+      before: $before
+      filter: $filter
+      orderBy: $orderBy
     ) {
       edges {
         node {
-          ...ViewerTenantHookFragment
+          ...ViewerTenantUseFragment
         }
       }
     }
   }
 `);
 
-export const ViewerTenantBySlugHookQuery = /*#__PURE__*/ gql(`
-  query ViewerTenantBySlugHookQuery($tenant_slug: String!) {
-    viewer_tenant_by_slug(target_tenant_slug: $tenant_slug) {
-      ...ViewerTenantHookFragment
+export const ViewerTenantByIdUse = /*#__PURE__*/ gql(`
+  query ViewerTenantByIdUse($tenant_id: Int!) {
+    tenant: viewer_tenant_by_id(tenant_id: $tenant_id) {
+      ...ViewerTenantUseFragment
     }
   }
 `);
 
-type ViewerTenantsHookQueryData = ResultOf<typeof ViewerTenantsHookQuery>;
-type ViewerTenantBySlugHookQueryData = ResultOf<typeof ViewerTenantBySlugHookQuery>;
+export const ViewerTenantBySlugUse = /*#__PURE__*/ gql(`
+  query ViewerTenantBySlugUse($tenant_slug: String!) {
+    tenant: viewer_tenant_by_slug(tenant_slug: $tenant_slug) {
+      ...ViewerTenantUseFragment
+    }
+  }
+`);
 
-export function useViewerTenants(config?: SWRConfiguration<ViewerTenantsHookQueryData>) {
+type ViewerTenantsUseData = ResultOf<typeof ViewerTenantsUse>;
+type ViewerTenantsUseVars = VariablesOf<typeof ViewerTenantsUse>;
+type ViewerTenantByIdUseData = ResultOf<typeof ViewerTenantByIdUse>;
+type ViewerTenantBySlugUseData = ResultOf<typeof ViewerTenantBySlugUse>;
+
+export function useViewerTenants(options?: ViewerTenantsUseVars, config?: SWRConfiguration<ViewerTenantsUseData>) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(user ? { query: ViewerTenantsHookQuery } : null, config);
+  return useGraphyQuery(user ? { query: ViewerTenantsUse, variables: options ?? {} } : null, config);
 }
 
-export function useViewerTenantBySlug(tenant_slug: string, config?: SWRConfiguration<ViewerTenantBySlugHookQueryData>) {
+export function useViewerTenantById(tenant_id: number, config?: SWRConfiguration<ViewerTenantByIdUseData>) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(user ? { query: ViewerTenantBySlugHookQuery, variables: { tenant_slug } } : null, config);
+  return useGraphyQuery(user ? { query: ViewerTenantByIdUse, variables: { tenant_id } } : null, config);
+}
+
+export function useViewerTenantBySlug(tenant_slug: string, config?: SWRConfiguration<ViewerTenantBySlugUseData>) {
+  const { data: user } = useSupabaseUser();
+  return useGraphyQuery(user ? { query: ViewerTenantBySlugUse, variables: { tenant_slug } } : null, config);
 }

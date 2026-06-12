@@ -4,6 +4,7 @@ import { useStateCookie } from "@packages/react-hooks/use-state-cookie";
 import { usePathname, useRouter } from "next/navigation";
 import { startTransition } from "react";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, LOCALE_TO_BCP47, type SUPPORTED_LOCALES } from "~/lib/i18n";
+import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 
 export function useLocaleCookie() {
   const pathname = usePathname();
@@ -18,7 +19,7 @@ export function useLocaleCookie() {
     // so update the live DOM here so screen readers / spellcheck pick up the new language immediately.
     document.documentElement["lang"] = LOCALE_TO_BCP47[next];
     const nextPath = pathname.replace(/^\/[^/]+/, `/${next}`);
-    startTransition(() => router.replace(nextPath));
+    startTransition(() => router.replace(ROUTE_HREF(UNSAFE_ROUTE(nextPath))));
   }
 
   return [current, selectLocale] as const;

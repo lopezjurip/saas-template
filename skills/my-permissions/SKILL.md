@@ -9,10 +9,12 @@ Capability-based. No role column.
 
 ## Schema
 
-- `permissions(permission_id citext, ...)`: catalog; `*` wildcard.
-- `memberships(membership_id, organization_id, profile_id, invite fields, lifecycle timestamps)`.
-- `membership_permissions(membership_id, permission_id)`: grant. Org/profile derive through membership.
-- `permission_presets(organization_id?, permission_preset_name, permission_preset_slugs[])`: UX bundle only.
+- `permissions(permission_id citext, ...)`: catalog; `*` wildcard. Trimmed to English admin
+  capabilities only: `*`, `organization_manage`, `members_manage`, `presets_manage`. There is no
+  generic non-admin capability anymore (`presets_manage` is the closest stand-in).
+- `organization_memberships(organization_membership_id, organization_id, profile_id, invite fields, lifecycle timestamps)`.
+- `organization_membership_permissions(organization_membership_id, permission_id)`: grant. Org/profile derive through membership.
+- `permission_presets(organization_id?, permission_preset_name, permission_preset_slugs[])`: UX bundle only. Seeded presets are Owner / Administrator / Member manager.
 
 Do not use stale `(organization_id, profile_id, permission_id)` grant shape.
 
@@ -20,9 +22,9 @@ Active membership requires:
 
 ```sql
 m.profile_id = viewer
-and m.membership_accepted_at is not null
-and m.membership_revoked_at is null
-and m.membership_rejected_at is null
+and m.organization_membership_accepted_at is not null
+and m.organization_membership_revoked_at is null
+and m.organization_membership_rejected_at is null
 ```
 
 ## Helpers
@@ -48,7 +50,7 @@ organization_id in (
 Use set helper in policies; evaluated as InitPlan. `viewer_has_permission` suits one app-side
 check. Both honor `*`.
 
-UI listing: `viewer_membership_permissions()`.
+UI listing: `viewer_organization_membership_permissions()`.
 
 ## RLS
 
@@ -56,9 +58,9 @@ Permission table write policy:
 
 ```sql
 using (
-  membership_id in (
-    select m.membership_id
-    from public.memberships m
+  organization_membership_id in (
+    select m.organization_membership_id
+    from public.organization_memberships m
     where m.organization_id in (
       select public.viewer_permission_org_ids('members_manage')
     )
@@ -72,18 +74,18 @@ DB remains trust boundary.
 ## Grant/revoke
 
 ```ts
-await admin.from("membership_permissions").insert({
-  membership_id,
+await admin.from("organization_membership_permissions").insert({
+  organization_membership_id,
   permission_id: "*",
 });
 ```
 
-GraphQL client mutations use `membership_id` + `permission_id` filters. Presets only supply
-slug arrays; applying one means explicit grant mutations.
+GraphQL client mutations use `organization_membership_id` + `permission_id` filters. Presets only
+supply slug arrays; applying one means explicit grant mutations.
 
-After membership acceptance/revocation or tenant/org membership change, refresh JWT because
-membership IDs affect tenant/org claims. Permission-only changes are DB-backed and do not need
-JWT refresh for enforcement.
+The JWT carries only `profile_id` (the `sub`/`auth.uid`); it no longer injects tenant/org/agency
+claims. Membership and permission changes are resolved from the DB on each check, so they take
+effect without a JWT refresh.
 
 ## Safety invariants
 
@@ -102,7 +104,8 @@ Do not bypass these with service role unless operation intentionally implements 
 Separate helpers:
 
 - `viewer_agency_ids()`
-- `viewer_agency_permission_org_ids(permission)`
+- `viewer_agency_permission_org_ids(permission)` — covers explicit per-org grants and global
+  (`organization_id is null`) grants only. There are no implicit organization grants.
 - `viewer_has_agency_permission(org, permission)`
 - `viewer_agency_tenant_ids()`
 
@@ -117,7 +120,7 @@ Add pgTAP under `packages/supabase/supabase/tests/`:
 begin;
 select plan(1);
 set local role authenticated;
-set local request.jwt.claims to '{"sub":"...","app_metadata":{...}}';
+set local request.jwt.claims to '{"sub":"..."}';
 select ok(public.viewer_has_permission(1, 'members_manage'), '...');
 select * from finish();
 rollback;

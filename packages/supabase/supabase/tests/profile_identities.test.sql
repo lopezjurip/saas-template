@@ -1,7 +1,7 @@
 -- Schema tests for public.profile_identities, internal.profile_identity_value_normalize,
 -- the normalize trigger, UNIQUE constraints (per-profile + global partial), RLS, the
 -- profile_identity_resolve RPC, and the document-aware columns + RPCs on
--- public.memberships (which subsumes the old public.invitations table).
+-- public.organization_memberships (which subsumes the old public.invitations table).
 
 begin;
 
@@ -191,64 +191,64 @@ select is(
 reset role;
 
 -- ============================================================
--- 6. memberships (pending invites): identifier columns + check constraints
+-- 6. organization_memberships (pending invites): identifier columns + check constraints
 -- ============================================================
 
 select lives_ok(
-  $$ insert into public.memberships (
+  $$ insert into public.organization_memberships (
        organization_id,
-       membership_invite_address_level0_id, membership_invite_document_kind, membership_invite_document_value,
-       membership_invite_token, membership_invite_expires_at
+       organization_membership_invite_address_level0_id, organization_membership_invite_document_kind, organization_membership_invite_document_value,
+       organization_membership_invite_token, organization_membership_invite_expires_at
      ) values (
        1, 'CL', 'nin', '13.123.456-2',
        'tok-doc-1', current_timestamp + interval '7 days'
      ) $$,
-  'membership pending document-only insert OK'
+  'organization_membership pending document-only insert OK'
 );
 
 select is(
-  (select membership_invite_document_value from public.memberships where membership_invite_token = 'tok-doc-1'),
+  (select organization_membership_invite_document_value from public.organization_memberships where organization_membership_invite_token = 'tok-doc-1'),
   '131234562',
-  'membership invite normalize trigger fires on document'
+  'organization_membership invite normalize trigger fires on document'
 );
 
 select lives_ok(
-  $$ insert into public.memberships (
-       organization_id, membership_invite_email,
-       membership_invite_token, membership_invite_expires_at
+  $$ insert into public.organization_memberships (
+       organization_id, organization_membership_invite_email,
+       organization_membership_invite_token, organization_membership_invite_expires_at
      ) values (
        1, 'newbie@example.com',
        'tok-email-1', current_timestamp + interval '7 days'
      ) $$,
-  'membership pending email-only insert OK'
+  'organization_membership pending email-only insert OK'
 );
 
 prepare insert_no_identifier as
-  insert into public.memberships (organization_id, membership_invite_token, membership_invite_expires_at)
+  insert into public.organization_memberships (organization_id, organization_membership_invite_token, organization_membership_invite_expires_at)
   values (1, 'tok-noid-1', current_timestamp + interval '7 days');
 
 select throws_ok(
   'execute insert_no_identifier',
   '23514',
   null,
-  'pending membership without any identifier fails check (memberships_pending_has_identifier)'
+  'pending organization_membership without any identifier fails check (organization_memberships_pending_has_identifier)'
 );
 deallocate insert_no_identifier;
 
 prepare insert_partial_doc as
-  insert into public.memberships (organization_id, membership_invite_address_level0_id, membership_invite_token, membership_invite_expires_at)
+  insert into public.organization_memberships (organization_id, organization_membership_invite_address_level0_id, organization_membership_invite_token, organization_membership_invite_expires_at)
   values (1, 'CL', 'tok-partial-1', current_timestamp + interval '7 days');
 
 select throws_ok(
   'execute insert_partial_doc',
   '23514',
   null,
-  'membership with partial document triplet fails check (memberships_doc_triplet_complete)'
+  'organization_membership with partial document triplet fails check (organization_memberships_doc_triplet_complete)'
 );
 deallocate insert_partial_doc;
 
 -- ============================================================
--- 7. viewer_membership_pending RPC
+-- 7. viewer_organization_membership_pending RPC
 -- ============================================================
 -- Carol is an auth.users + profile created via the users_handle_created trigger.
 -- She owns CL/nin/5126663-3 (normalized: 51266633).
@@ -271,17 +271,17 @@ insert into auth.users (
 );
 
 -- Pending invite that matches Carol via email.
-insert into public.memberships (
-  organization_id, membership_invite_email,
-  membership_invite_token, membership_invite_expires_at
+insert into public.organization_memberships (
+  organization_id, organization_membership_invite_email,
+  organization_membership_invite_token, organization_membership_invite_expires_at
 ) values (
   2, 'carol@humane.test', 'tok-carol-email', current_timestamp + interval '7 days'
 );
 -- Pending invite that matches Carol via document.
-insert into public.memberships (
+insert into public.organization_memberships (
   organization_id,
-  membership_invite_address_level0_id, membership_invite_document_kind, membership_invite_document_value,
-  membership_invite_token, membership_invite_expires_at
+  organization_membership_invite_address_level0_id, organization_membership_invite_document_kind, organization_membership_invite_document_value,
+  organization_membership_invite_token, organization_membership_invite_expires_at
 ) values (
   1, 'CL', 'nin', '5126663-3', 'tok-carol-doc', current_timestamp + interval '7 days'
 );
@@ -293,17 +293,17 @@ set local request.jwt.claims to '{
 }';
 
 select is(
-  (select count(*) from public.viewer_membership_pending()),
+  (select count(*) from public.viewer_organization_membership_pending()),
   2::bigint,
-  'viewer_membership_pending returns both matches (email + document)'
+  'viewer_organization_membership_pending returns both matches (email + document)'
 );
 
 reset role;
 
 -- Revoke the email-matching one; Carol should now see only the document-matching invite.
-update public.memberships
-  set membership_revoked_at = current_timestamp
-  where membership_invite_token = 'tok-carol-email';
+update public.organization_memberships
+  set organization_membership_revoked_at = current_timestamp
+  where organization_membership_invite_token = 'tok-carol-email';
 
 set local role authenticated;
 set local request.jwt.claims to '{
@@ -312,9 +312,9 @@ set local request.jwt.claims to '{
 }';
 
 select is(
-  (select count(*) from public.viewer_membership_pending()),
+  (select count(*) from public.viewer_organization_membership_pending()),
   1::bigint,
-  'viewer_membership_pending excludes revoked invites'
+  'viewer_organization_membership_pending excludes revoked invites'
 );
 
 reset role;

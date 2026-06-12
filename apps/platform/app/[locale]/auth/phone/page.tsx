@@ -19,7 +19,7 @@ export default async function AuthPhonePage(props: PageProps<"/[locale]/auth/pho
 
   const channels = (SINGLE(sp["channels"]) ?? "sms,whatsapp")
     .split(",")
-    .filter((c): c is Channel => c === "sms" || c === "whatsapp");
+    .filter((c: string): c is Channel => c === "sms" || c === "whatsapp");
   const existsParam = SINGLE(sp["exists"]);
   const exists = existsParam === "1" ? true : existsParam === "0" ? false : null;
 
@@ -37,8 +37,8 @@ export default async function AuthPhonePage(props: PageProps<"/[locale]/auth/pho
         <div className="flex flex-col gap-4.5">
           <AuthBackLink />
           <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-[20px] font-semibold tracking-[-0.02em] text-foreground">{title}</h1>
-            <p className="m-0 text-[13px] leading-normal text-muted-foreground text-pretty">{subtitle}</p>
+            <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">{title}</h1>
+            <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{subtitle}</p>
           </div>
           <PhoneStepForm phone={phone} next={next} channels={channels.length > 0 ? channels : ["sms"]} />
         </div>

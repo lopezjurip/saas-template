@@ -23,7 +23,7 @@ function FORMAT_DATE(value: string | null): string {
 
 const SecurityPasskeysListDeleteMutation = /*#__PURE__*/ gql(`
   mutation SecurityPasskeysListDeleteMutation($webauthn_credential_id: UUID!) {
-    deleteFromwebauthn_credentialsCollection(
+    deleteFromprofile_webauthn_credentialsCollection(
       filter: { webauthn_credential_id: { eq: $webauthn_credential_id } }
     ) {
       affectedCount

@@ -1,8 +1,8 @@
-@import "tailwindcss-safe-area";
-
-@custom-variant dark (&:is(.dark *));
+@import 'tailwindcss-safe-area';
 
 @plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
@@ -28,6 +28,14 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+}
+
+@utility h-safe-top {
+  height: env(safe-area-inset-top);
+}
+
+@utility h-safe-bottom {
+  height: env(safe-area-inset-bottom);
 }
 
 :root {
@@ -88,12 +96,4 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
-}
-
-@utility h-safe-top {
-  height: env(safe-area-inset-top);
-}
-
-@utility h-safe-bottom {
-  height: env(safe-area-inset-bottom);
 }

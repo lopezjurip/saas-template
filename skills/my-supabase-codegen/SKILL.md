@@ -60,15 +60,33 @@ unless project leaves prototype phase.
 import type { Database } from "@packages/supabase/types";
 
 type Membership =
-  Database["public"]["Tables"]["memberships"]["Row"];
+  Database["public"]["Tables"]["organization_memberships"]["Row"];
 type MembershipInsert =
-  Database["public"]["Tables"]["memberships"]["Insert"];
+  Database["public"]["Tables"]["organization_memberships"]["Insert"];
 type ViewerHasPermissionArgs =
   Database["public"]["Functions"]["viewer_has_permission"]["Args"];
 ```
 
 Client factories already bind `Database`; normal query result inference needs no manual row
 type.
+
+## pg_graphql visibility
+
+A table, view, or function only appears in the GraphQL schema if the `anon` role has at
+least `SELECT` grant. `authenticated`-only grants are NOT enough — pg_graphql introspects as
+`anon`.
+
+```sql
+-- Minimum to appear in GraphQL (queries):
+grant select on table public.my_table to anon, authenticated;
+
+-- To expose mutations, add the relevant verbs:
+grant select, insert, update, delete on table public.my_table to anon, authenticated;
+```
+
+RLS policies still gate which rows are actually returned — grants only control schema
+visibility. A table with RLS enabled but no anon `SELECT` grant will be invisible to
+GraphQL entirely.
 
 ## Rules
 
@@ -79,6 +97,7 @@ type.
 - If generated type lacks new object, verify reset succeeded against local DB.
 - Type generation covers `public` schema only.
 - SQL enum/value naming must remain pg_graphql-compatible.
+- If a table vanishes from the GraphQL schema after `db:reset`, check its `grant to anon`.
 
 ## Verification
 

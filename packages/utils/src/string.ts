@@ -237,6 +237,15 @@ export function SUGGESTIONS_FIND(path: string, candidates: string[], { limit = 3
     .map(({ c }) => c);
 }
 
+export function INITIALS_OF(name: string): string {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 /** Like Math.min but for strings. Useful on ISO string dates. Returns null if input is empty. */
 export function STRING_MIN(...args: [string, ...string[]]): string; // Doesn't return null if at least one argument
 export function STRING_MIN(...args: string[]): string | null;

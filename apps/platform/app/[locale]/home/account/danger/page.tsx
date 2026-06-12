@@ -9,19 +9,19 @@ const DELETE_IMPACT = /*#__PURE__*/ [
 
 export default function DangerPage() {
   return (
-    <div className="flex max-w-[720px] flex-col gap-[18px]">
+    <div className="flex max-w-[720px] flex-col gap-4.5">
       <header className="flex flex-col gap-1">
         <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           Zona de riesgo
         </span>
         <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">Eliminar tu cuenta</h1>
-        <p className="text-pretty text-[13px] leading-normal text-muted-foreground">
+        <p className="text-pretty text-sm/normal leading-normal text-muted-foreground">
           Al eliminar tu cuenta borramos tus datos personales, sesiones y tokens. Lo que hayas creado dentro de una
           organización sigue siendo de esa organización — habla con su admin si quieres bajarlo antes.
         </p>
       </header>
 
-      <div className="flex flex-col gap-3.5 rounded-xl border border-destructive/50 bg-destructive/[0.04] px-5 py-4 dark:border-[hsl(0_70%_50%/0.45)] dark:bg-[hsl(0_70%_30%/0.1)]">
+      <div className="flex flex-col gap-3.5 rounded-xl border border-destructive/50 bg-destructive/4 px-5 py-4 dark:border-[hsl(0_70%_50%/0.45)] dark:bg-[hsl(0_70%_30%/0.1)]">
         <div className="flex flex-col gap-1">
           <span className="text-sm font-semibold text-destructive dark:text-[hsl(0_70%_70%)]">
             Esto no se puede deshacer.

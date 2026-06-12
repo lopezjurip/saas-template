@@ -1,4 +1,4 @@
-import { createServerClient } from "@packages/supabase/client.server";
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import {
   Accordion,
   AccordionContent,
@@ -9,33 +9,32 @@ import { Avatar, AvatarFallback } from "@packages/ui-common/shadcn/components/ui
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Card, CardContent } from "@packages/ui-common/shadcn/components/ui/card";
+import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { APP_HOST } from "~/lib/constants";
-import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, ROSETTA, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { getRosetta } from "~/hooks/get-rosetta";
+import { APP_URL } from "~/lib/constants";
+import { DEFAULT_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { ROUTE } from "~/lib/route";
 import { ContactBooking } from "./contact-booking";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  const { locale } = await params;
-  const { t } = ROSETTA(LOCALES, locale);
-  const base = `https://${APP_HOST}`;
-  const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
-
+export async function generateMetadata(props: PageProps<"/[locale]">): Promise<Metadata> {
+  const { t, locale } = await getRosetta(LOCALES);
   return {
     title: t("title"),
     description: t("description"),
     alternates: {
-      canonical: `${base}/${safeLocale}`,
+      canonical: `${APP_URL.origin}/${locale}`,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [LOCALE_TO_BCP47[l], `${base}/${l}`])),
-        "x-default": `${base}/${DEFAULT_LOCALE}`,
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [LOCALE_TO_BCP47[l], `${APP_URL.origin}/${l}`])),
+        "x-default": `${APP_URL.origin}/${DEFAULT_LOCALE}`,
       },
     },
     openGraph: {
       type: "website",
-      url: `${base}/${safeLocale}`,
-      locale: LOCALE_TO_BCP47[safeLocale],
+      url: `${APP_URL.origin}/${locale}`,
+      locale: locale,
       title: t("title"),
       description: t("description"),
       siteName: "SaaS Template",
@@ -50,25 +49,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 const LOGOS = ["Northwind", "Helia", "Vega Labs", "Quanta", "Lumens", "Brightside"];
 
-function INITIALS_OF(name: string): string {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 export default async function HomePage(props: PageProps<"/[locale]">) {
-  const { locale } = await props.params;
-  const { t } = ROSETTA(LOCALES, locale);
+  const { t, locale } = await getRosetta(LOCALES);
 
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSupabaseServerUser();
 
-  const ctaHref = user ? `/${locale}/home` : `/${locale}/auth`;
+  const ctaHref = user ? ROUTE("/[locale]/home", { locale }) : ROUTE("/[locale]/auth", { locale });
   const ctaLabel = user ? t("cta.dashboard") : t("cta.signin");
 
   const mockSteps = [t("mock.step.1"), t("mock.step.2"), t("mock.step.3"), t("mock.step.4")];
@@ -116,13 +102,13 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
           </p>
           <div className="flex w-full max-w-xs flex-col items-stretch justify-center gap-2 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
             <Button asChild size="lg" className="cursor-pointer">
-              <a href={ctaHref}>
+              <Link href={ctaHref}>
                 {ctaLabel}
                 <ArrowRight aria-hidden="true" className="h-4 w-4" />
-              </a>
+              </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="cursor-pointer">
-              <Link href={`/${locale}#contact`}>{t("hero.secondary")}</Link>
+              <Link href={ROUTE("/[locale]", { locale }, "contact")}>{t("hero.secondary")}</Link>
             </Button>
           </div>
           <p className="font-mono text-xs text-muted-foreground">{t("hero.trust")}</p>
@@ -136,18 +122,18 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
                       <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
                       <span className="truncate text-xs font-medium">{t("mock.agent")}</span>
                     </span>
-                    <span className="hidden font-mono text-[10.5px] text-muted-foreground sm:inline">
+                    <span className="hidden font-mono text-tiny text-muted-foreground sm:inline">
                       saas-template/app
                     </span>
                   </div>
                   <div className="flex flex-col gap-1 rounded-md border border-border bg-muted/40 px-3 py-2.5">
-                    <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                    <span className="text-tiny font-semibold uppercase tracking-[0.06em] text-muted-foreground">
                       {t("mock.taskLabel")}
                     </span>
-                    <span className="text-[13px] leading-snug">{t("mock.task")}</span>
+                    <span className="text-sm/normal leading-snug">{t("mock.task")}</span>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <span className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                    <span className="text-tiny font-semibold uppercase tracking-[0.06em] text-muted-foreground">
                       {t("mock.stepsLabel")}
                     </span>
                     <ol className="flex flex-col gap-1.5">
@@ -174,8 +160,8 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
                 </div>
                 <div className="flex flex-col rounded-md border border-border bg-background">
                   <div className="flex items-center justify-between border-b border-border px-3 py-2">
-                    <span className="text-[11.5px] font-medium">{t("mock.replyLabel")}</span>
-                    <span className="font-mono text-[10.5px] text-muted-foreground">draft · v2</span>
+                    <span className="text-xs font-medium">{t("mock.replyLabel")}</span>
+                    <span className="font-mono text-tiny text-muted-foreground">draft · v2</span>
                   </div>
                   <p className="flex-1 px-3 py-2.5 text-[12.5px] leading-relaxed">{t("mock.reply")}</p>
                   <div className="flex flex-wrap items-center gap-1.5 border-t border-border bg-muted/30 px-3 py-2">
@@ -186,7 +172,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
                     <Button size="sm" variant="outline" className="h-7 cursor-pointer px-2.5 text-[12px]">
                       {t("mock.edit")}
                     </Button>
-                    <span className="ml-auto font-mono text-[10.5px] text-muted-foreground">320 ms · $0.0021</span>
+                    <span className="ml-auto font-mono text-tiny text-muted-foreground">320 ms · $0.0021</span>
                   </div>
                 </div>
               </CardContent>
@@ -197,7 +183,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
 
       <section id="customers" className="border-y border-border bg-muted/25">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10 sm:py-12">
-          <p className="text-center text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             {t("social.title")}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:gap-x-10">
@@ -214,13 +200,13 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
       <section className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div className="flex max-w-[44ch] flex-col gap-1.5">
-            <span className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               {t("stats.caption")}
             </span>
             <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("stats.title")}</h2>
             <p className="text-pretty text-sm text-muted-foreground">{t("stats.subtitle")}</p>
           </div>
-          <span className="inline-flex shrink-0 items-center gap-2 font-mono text-[11.5px] text-muted-foreground">
+          <span className="inline-flex shrink-0 items-center gap-2 font-mono text-xs text-muted-foreground">
             <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
             live
           </span>
@@ -241,7 +227,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
 
       <section className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
         <div className="mb-8 flex max-w-[44ch] flex-col gap-2 sm:mb-10">
-          <span className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             {t("testimonials.tag")}
           </span>
           <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("testimonials.title")}</h2>
@@ -253,7 +239,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
                 <blockquote className="text-pretty text-[15px] leading-snug">{`"${item.quote}"`}</blockquote>
                 <figcaption className="mt-auto flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="text-[13px] font-semibold">{INITIALS_OF(item.name)}</AvatarFallback>
+                    <AvatarFallback className="text-sm/normal font-semibold">{INITIALS_OF(item.name)}</AvatarFallback>
                   </Avatar>
                   <span className="flex flex-col leading-tight">
                     <span className="text-[13.5px] font-medium">{item.name}</span>
@@ -269,7 +255,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
       <section id="faq" className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
         <div className="grid gap-6 lg:grid-cols-[0.85fr_1.4fr] lg:gap-10">
           <div className="flex flex-col gap-2.5">
-            <span className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               {t("faq.tag")}
             </span>
             <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("faq.title")}</h2>
@@ -277,14 +263,16 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
           </div>
           <div className="rounded-xl border border-border bg-card px-4 sm:px-5">
             <Accordion type="single" collapsible defaultValue="a">
-              {faqs.map((faq) => (
-                <AccordionItem key={faq.value} value={faq.value}>
-                  <AccordionTrigger className="text-[14.5px]">{faq.q}</AccordionTrigger>
-                  <AccordionContent className="max-w-[68ch] text-[13.5px] leading-relaxed text-muted-foreground">
-                    {faq.a}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
+              {faqs.map((faq) => {
+                return (
+                  <AccordionItem key={faq.value} value={faq.value}>
+                    <AccordionTrigger className="text-[14.5px]">{faq.q}</AccordionTrigger>
+                    <AccordionContent className="max-w-[68ch] text-[13.5px] leading-relaxed text-muted-foreground">
+                      {faq.a}
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
             </Accordion>
           </div>
         </div>
@@ -294,7 +282,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
         <Card>
           <CardContent className="grid items-start gap-8 p-6 sm:p-8 md:grid-cols-[1fr_1.05fr] md:gap-10 lg:p-10">
             <div className="flex min-w-0 flex-col gap-5">
-              <span className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 {t("contact.tag")}
               </span>
               <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("contact.title")}</h2>
@@ -336,17 +324,17 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
 
 const LOCALE_ES = {
   title: "SaaS Template",
-  description: "RR. HH. y nómina para empresas chilenas",
+  description: "Plantilla SaaS lista para producción",
   "cta.signin": "Ingresar",
   "cta.dashboard": "Ir al panel",
-  "hero.tag": "Plataforma de RR. HH. y nómina",
+  "hero.tag": "Plataforma SaaS multi-tenant",
   "hero.title1": "Lorem ipsum dolor sit amet,",
   "hero.title2": "consectetur adipiscing elit sed do.",
   "hero.subtitle":
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   "hero.secondary": "Agendar demo",
   "hero.trust": "Sin tarjeta · 14 días de prueba",
-  "mock.agent": "Asistente · Nómina",
+  "mock.agent": "Asistente · SaaS Template",
   "mock.taskLabel": "Tarea actual",
   "mock.task": "Lorem ipsum dolor sit amet consectetur.",
   "mock.stepsLabel": "Pasos",
@@ -426,17 +414,17 @@ const LOCALE_ES = {
 
 const LOCALE_EN: typeof LOCALE_ES = {
   title: "SaaS Template",
-  description: "HR & Payroll for Chilean companies",
+  description: "Production-ready SaaS template",
   "cta.signin": "Sign in",
   "cta.dashboard": "Go to dashboard",
-  "hero.tag": "HR & payroll platform",
+  "hero.tag": "Multi-tenant SaaS platform",
   "hero.title1": "Lorem ipsum dolor sit amet,",
   "hero.title2": "consectetur adipiscing elit sed do.",
   "hero.subtitle":
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   "hero.secondary": "Book a demo",
   "hero.trust": "No card · 14-day trial",
-  "mock.agent": "Assistant · Payroll",
+  "mock.agent": "Assistant · SaaS Template",
   "mock.taskLabel": "Current task",
   "mock.task": "Lorem ipsum dolor sit amet consectetur.",
   "mock.stepsLabel": "Steps",
@@ -516,17 +504,17 @@ const LOCALE_EN: typeof LOCALE_ES = {
 
 const LOCALE_PT: typeof LOCALE_ES = {
   title: "SaaS Template",
-  description: "RH e folha de pagamento para empresas chilenas",
+  description: "Template SaaS pronto para produção",
   "cta.signin": "Entrar",
   "cta.dashboard": "Ir para o painel",
-  "hero.tag": "Plataforma de RH e folha",
+  "hero.tag": "Plataforma SaaS multi-tenant",
   "hero.title1": "Lorem ipsum dolor sit amet,",
   "hero.title2": "consectetur adipiscing elit sed do.",
   "hero.subtitle":
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   "hero.secondary": "Agendar demo",
   "hero.trust": "Sem cartão · 14 dias de teste",
-  "mock.agent": "Assistente · Folha",
+  "mock.agent": "Assistente · SaaS Template",
   "mock.taskLabel": "Tarefa atual",
   "mock.task": "Lorem ipsum dolor sit amet consectetur.",
   "mock.stepsLabel": "Passos",

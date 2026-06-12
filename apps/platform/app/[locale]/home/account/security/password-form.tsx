@@ -49,6 +49,7 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
           id="pw_new"
           type="password"
           autoComplete="new-password"
+          placeholder="••••••••"
           aria-invalid={!!form.formState.errors.password}
           {...form.register("password")}
         />
@@ -62,6 +63,7 @@ export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
           id="pw_confirm"
           type="password"
           autoComplete="new-password"
+          placeholder="••••••••"
           aria-invalid={!!form.formState.errors.confirm}
           {...form.register("confirm")}
         />

@@ -16,8 +16,8 @@ export default async function AuthDocumentPage(props: PageProps<"/[locale]/auth/
         <div className="flex flex-col gap-4.5">
           <AuthBackLink />
           <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-[20px] font-semibold tracking-[-0.02em] text-foreground">Identifícate</h1>
-            <p className="m-0 text-[13px] leading-normal text-muted-foreground text-pretty">
+            <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">Identifícate</h1>
+            <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">
               Usaremos tu documento para encontrar tu cuenta o invitación. Te enviaremos un código a tu canal de
               contacto.
             </p>

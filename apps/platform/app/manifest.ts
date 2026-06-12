@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "SaaS Template",
     short_name: "SaaS Template",
-    description: "HR y Nómina para empresas chilenas",
+    description: "Production-ready SaaS template",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

@@ -102,10 +102,9 @@ enabled = true
 site_url = "env(SUPABASE_AUTH_SITE_URL)"
 # The allow-list uses wildcards. `*` matches any sequence of non-separator chars (separators
 # are `.` and `/` only — see https://supabase.com/docs/guides/auth/redirect-urls), so `:55000`
-# is covered. Apex + tenant subdomain on any dev port.
+# is covered. Apex on any dev port (tenant routing is path-based, no subdomains needed).
 additional_redirect_urls = [
   "https://lvh.me:*/**",
-  "https://*.lvh.me:*/**",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
@@ -224,7 +223,7 @@ template = "Your code is {{ .Code }}"
 max_frequency = "5s"
 
 # Passkeys are not implemented via Supabase MFA — they're a custom SimpleWebAuthn-backed
-# flow with its own public.webauthn_credentials / webauthn_challenges tables. See
+# flow with its own public.profile_webauthn_credentials / profile_webauthn_challenges tables. See
 # apps/platform/lib/passkeys.* (server actions, no dedicated routes).
 
 # Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,

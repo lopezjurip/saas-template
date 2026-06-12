@@ -1,16 +1,16 @@
 -- Journey: pending-invite lifecycle (accept / reject) + identity-mismatch attacks.
 --
 -- Covers the surface exposed by:
---   public.viewer_membership_pending()          -- "what invites match my identity?"
---   public.viewer_membership_accept(int)        -- "claim invite N"
---   public.viewer_membership_reject(int)        -- "decline invite N"
+--   public.viewer_organization_membership_pending()          -- "what invites match my identity?"
+--   public.viewer_organization_membership_accept(int)        -- "claim invite N"
+--   public.viewer_organization_membership_reject(int)        -- "decline invite N"
 --
 -- Threat model in scope:
 --   * Invitee accepts an invite that wasn't meant for them (impersonation).
 --   * Invitee accepts the same invite twice (double-claim).
 --   * Invitee accepts a revoked / rejected / expired invite.
 --   * Unauthenticated session (no JWT sub) cannot drive these RPCs.
---   * Pending row gates: lifecycle stamps actually drive `viewer_membership_pending`.
+--   * Pending row gates: lifecycle stamps actually drive `viewer_organization_membership_pending`.
 
 begin;
 
@@ -55,22 +55,22 @@ insert into auth.users (
 
 -- Setup invites. service_role bypasses RLS and the lifecycle trigger so the seed
 -- can stamp revoked_at directly. RLS gating on who-can-create-invites is covered by
--- rls_memberships.test.sql; this journey starts at "invite exists, what now?".
+-- rls_organization_memberships.test.sql; this journey starts at "invite exists, what now?".
 --
 -- The partial unique indexes on (org, identifier) for PENDING rows exclude:
---   - revoked rows (where membership_revoked_at is null)  -> revoked Carol invite can coexist
---   - rejected rows (where membership_rejected_at is null)
+--   - revoked rows (where organization_membership_revoked_at is null)  -> revoked Carol invite can coexist
+--   - rejected rows (where organization_membership_rejected_at is null)
 -- but DO NOT exclude expired rows. To keep one active + one expired for Carol's email
 -- without colliding, the expired/revoked ones live in org 2 (globex).
 set local role service_role;
 
 create temporary table _invites on commit drop as
   with rows as (
-    insert into public.memberships (
+    insert into public.organization_memberships (
       organization_id,
-      membership_invite_email, membership_invite_address_level0_id,
-      membership_invite_document_kind, membership_invite_document_value,
-      membership_invite_token, membership_invite_expires_at, membership_revoked_at
+      organization_membership_invite_email, organization_membership_invite_address_level0_id,
+      organization_membership_invite_document_kind, organization_membership_invite_document_value,
+      organization_membership_invite_token, organization_membership_invite_expires_at, organization_membership_revoked_at
     ) values
       -- (a) Active email invite to Carol in org 1.
       (1, 'carol-journey@humane.test', null, null, null,
@@ -89,14 +89,14 @@ create temporary table _invites on commit drop as
       -- (e) Active email invite addressed to Dave (NOT Carol) in org 1.
       (1, 'dave-journey@humane.test', null, null, null,
        'tok-dave-email', current_timestamp + interval '7 days', null)
-    returning membership_id, membership_invite_token
+    returning organization_membership_id, organization_membership_invite_token
   )
   select
-    (select membership_id from rows where membership_invite_token = 'tok-carol-email')    as carol_email,
-    (select membership_id from rows where membership_invite_token = 'tok-carol-doc')      as carol_doc,
-    (select membership_id from rows where membership_invite_token = 'tok-carol-expired')  as carol_expired,
-    (select membership_id from rows where membership_invite_token = 'tok-carol-revoked')  as carol_revoked,
-    (select membership_id from rows where membership_invite_token = 'tok-dave-email')     as dave_email;
+    (select organization_membership_id from rows where organization_membership_invite_token = 'tok-carol-email')    as carol_email,
+    (select organization_membership_id from rows where organization_membership_invite_token = 'tok-carol-doc')      as carol_doc,
+    (select organization_membership_id from rows where organization_membership_invite_token = 'tok-carol-expired')  as carol_expired,
+    (select organization_membership_id from rows where organization_membership_invite_token = 'tok-carol-revoked')  as carol_revoked,
+    (select organization_membership_id from rows where organization_membership_invite_token = 'tok-dave-email')     as dave_email;
 
 grant select on _invites to authenticated, anon;
 
@@ -112,12 +112,12 @@ set local role anon;
 set local request.jwt.claims to '';
 
 select is(
-  (select count(*) from public.viewer_membership_pending()),
+  (select count(*) from public.viewer_organization_membership_pending()),
   0::bigint,
   'anon caller gets zero pending invites (auth.uid is null short-circuits)'
 );
 
-prepare anon_accept as select public.viewer_membership_accept(1);
+prepare anon_accept as select public.viewer_organization_membership_accept(1);
 select throws_ok(
   'execute anon_accept',
   'P0001',
@@ -132,7 +132,7 @@ reset role;
 set local role authenticated;
 set local request.jwt.claims to '{}';
 
-prepare nosub_accept as select public.viewer_membership_accept((select carol_email from _invites));
+prepare nosub_accept as select public.viewer_organization_membership_accept((select carol_email from _invites));
 select throws_ok(
   'execute nosub_accept',
   'P0001',
@@ -144,7 +144,7 @@ deallocate nosub_accept;
 reset role;
 
 -- ============================================================
--- 2. Carol authenticates. viewer_membership_pending returns only the matches that
+-- 2. Carol authenticates. viewer_organization_membership_pending returns only the matches that
 --    match her identity AND are still genuinely pending.
 --
 --    Of the five seeded rows, only the two ACTIVE ones for Carol must surface;
@@ -158,7 +158,7 @@ set local request.jwt.claims to '{
 }';
 
 select set_eq(
-  $$ select membership_invite_token from public.viewer_membership_pending() order by 1 $$,
+  $$ select organization_membership_invite_token from public.viewer_organization_membership_pending() order by 1 $$,
   $$ values ('tok-carol-doc'::text), ('tok-carol-email'::text) $$,
   'Carol sees exactly her two live invites (expired + revoked + Dave excluded)'
 );
@@ -168,7 +168,7 @@ select set_eq(
 -- ============================================================
 
 -- Carol tries to grab Dave's invite (different email). Must fail with the identity-mismatch error.
-prepare carol_steal_dave as select public.viewer_membership_accept((select dave_email from _invites));
+prepare carol_steal_dave as select public.viewer_organization_membership_accept((select dave_email from _invites));
 select throws_ok(
   'execute carol_steal_dave',
   'P0001',
@@ -178,7 +178,7 @@ select throws_ok(
 deallocate carol_steal_dave;
 
 -- Carol tries to accept an expired one.
-prepare carol_accept_expired as select public.viewer_membership_accept((select carol_expired from _invites));
+prepare carol_accept_expired as select public.viewer_organization_membership_accept((select carol_expired from _invites));
 select throws_ok(
   'execute carol_accept_expired',
   'P0001',
@@ -188,7 +188,7 @@ select throws_ok(
 deallocate carol_accept_expired;
 
 -- Carol tries to accept a revoked one.
-prepare carol_accept_revoked as select public.viewer_membership_accept((select carol_revoked from _invites));
+prepare carol_accept_revoked as select public.viewer_organization_membership_accept((select carol_revoked from _invites));
 select throws_ok(
   'execute carol_accept_revoked',
   'P0001',
@@ -197,14 +197,14 @@ select throws_ok(
 );
 deallocate carol_accept_revoked;
 
--- Random membership_id that doesn't exist — must fail with the same opaque error
+-- Random organization_membership_id that doesn't exist — must fail with the same opaque error
 -- (no enumeration-oracle: caller cannot distinguish "doesn't exist" from "not mine").
-prepare carol_accept_phantom as select public.viewer_membership_accept(999999);
+prepare carol_accept_phantom as select public.viewer_organization_membership_accept(999999);
 select throws_ok(
   'execute carol_accept_phantom',
   'P0001',
   'invitation not found or does not match your account',
-  'Carol cannot accept a phantom membership id'
+  'Carol cannot accept a phantom organization_membership id'
 );
 deallocate carol_accept_phantom;
 
@@ -214,30 +214,30 @@ deallocate carol_accept_phantom;
 -- ============================================================
 
 select lives_ok(
-  format($$ select public.viewer_membership_accept(%s) $$, (select carol_email from _invites)),
+  format($$ select public.viewer_organization_membership_accept(%s) $$, (select carol_email from _invites)),
   'Carol accepts her email invite'
 );
 
 -- Read the post-accept row as service_role. Carol's test JWT carries
--- app_metadata.organizations:[] so SELECT-RLS on memberships hides her own row;
+-- app_metadata.organizations:[] so SELECT-RLS on organization_memberships hides her own row;
 -- we want to inspect the SIDE EFFECTS on the DB, not Carol's read visibility.
 reset role;
 set local role service_role;
 
 select is(
-  (select profile_id from public.memberships where membership_id = (select carol_email from _invites)),
+  (select profile_id from public.organization_memberships where organization_membership_id = (select carol_email from _invites)),
   '00000000-0000-0000-0000-00000000ca01'::uuid,
   'accepted invite is now bound to Carol''s profile_id'
 );
 
 select isnt(
-  (select membership_accepted_at from public.memberships where membership_id = (select carol_email from _invites)),
+  (select organization_membership_accepted_at from public.organization_memberships where organization_membership_id = (select carol_email from _invites)),
   null,
-  'accepted invite has membership_accepted_at stamped'
+  'accepted invite has organization_membership_accepted_at stamped'
 );
 
 select is(
-  (select membership_invite_token from public.memberships where membership_id = (select carol_email from _invites)),
+  (select organization_membership_invite_token from public.organization_memberships where organization_membership_id = (select carol_email from _invites)),
   null,
   'accepted invite token is burned (set to null)'
 );
@@ -253,7 +253,7 @@ set local request.jwt.claims to '{
 -- 5. Double-claim prevention. Carol cannot re-accept her own accepted invite.
 -- ============================================================
 
-prepare carol_accept_twice as select public.viewer_membership_accept((select carol_email from _invites));
+prepare carol_accept_twice as select public.viewer_organization_membership_accept((select carol_email from _invites));
 select throws_ok(
   'execute carol_accept_twice',
   'P0001',
@@ -262,16 +262,16 @@ select throws_ok(
 );
 deallocate carol_accept_twice;
 
--- The accepted invite is also no longer returned by viewer_membership_pending.
+-- The accepted invite is also no longer returned by viewer_organization_membership_pending.
 select is(
-  (select count(*) from public.viewer_membership_pending() where membership_id = (select carol_email from _invites)),
+  (select count(*) from public.viewer_organization_membership_pending() where organization_membership_id = (select carol_email from _invites)),
   0::bigint,
-  'accepted invite is excluded from viewer_membership_pending'
+  'accepted invite is excluded from viewer_organization_membership_pending'
 );
 
 -- The document-matched invite is still pending and visible.
 select is(
-  (select count(*) from public.viewer_membership_pending() where membership_id = (select carol_doc from _invites)),
+  (select count(*) from public.viewer_organization_membership_pending() where organization_membership_id = (select carol_doc from _invites)),
   1::bigint,
   'Carol''s doc invite is still pending after accepting the email one'
 );
@@ -281,7 +281,7 @@ select is(
 -- ============================================================
 
 select lives_ok(
-  format($$ select public.viewer_membership_reject(%s) $$, (select carol_doc from _invites)),
+  format($$ select public.viewer_organization_membership_reject(%s) $$, (select carol_doc from _invites)),
   'Carol rejects her doc invite'
 );
 
@@ -289,9 +289,9 @@ reset role;
 set local role service_role;
 
 select isnt(
-  (select membership_rejected_at from public.memberships where membership_id = (select carol_doc from _invites)),
+  (select organization_membership_rejected_at from public.organization_memberships where organization_membership_id = (select carol_doc from _invites)),
   null,
-  'rejected invite has membership_rejected_at stamped'
+  'rejected invite has organization_membership_rejected_at stamped'
 );
 
 reset role;
@@ -302,7 +302,7 @@ set local request.jwt.claims to '{
 }';
 
 -- After reject, the same invite cannot be accepted (still not in pending list).
-prepare carol_accept_rejected as select public.viewer_membership_accept((select carol_doc from _invites));
+prepare carol_accept_rejected as select public.viewer_organization_membership_accept((select carol_doc from _invites));
 select throws_ok(
   'execute carol_accept_rejected',
   'P0001',

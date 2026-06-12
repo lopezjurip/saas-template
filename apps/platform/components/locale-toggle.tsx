@@ -1,11 +1,13 @@
 "use client";
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { clsx } from "clsx";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
 import { useRosetta } from "~/hooks/use-rosetta";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_LABEL, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 
 const LOCALE_ES = {
   group: "Idioma",
@@ -35,7 +37,7 @@ export function LocaleToggle() {
     // the live DOM here so screen readers / spellcheck pick up the new language immediately.
     document.documentElement.lang = LOCALE_TO_BCP47[next];
     const nextPath = pathname.replace(/^\/[^/]+/, `/${next}`);
-    startTransition(() => router.replace(nextPath));
+    startTransition(() => router.replace(ROUTE_HREF(UNSAFE_ROUTE(nextPath))));
   }
 
   return (
@@ -44,6 +46,7 @@ export function LocaleToggle() {
       aria-label={t("group")}
       aria-busy={pending}
       className="bg-card text-card-foreground border-border inline-flex items-center gap-0.5 rounded-full border p-0.5 shadow-sm"
+      data-component="LocaleToggle"
     >
       {SUPPORTED_LOCALES.map((locale) => {
         const active = locale === current;
@@ -57,7 +60,7 @@ export function LocaleToggle() {
             title={LOCALE_LABEL[locale]}
             onClick={() => selectLocale(locale)}
             className={cn(
-              "flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-[10px] font-semibold uppercase tracking-wide transition-colors",
+              "flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-tiny font-semibold uppercase tracking-wide transition-colors",
               "hover:bg-accent hover:text-accent-foreground",
               "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
               active ? "bg-accent text-accent-foreground" : "text-muted-foreground",

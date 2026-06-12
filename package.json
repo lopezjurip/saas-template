@@ -11,6 +11,7 @@
     "postinstall": "node scripts/skills-setup.js",
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:debug": "turbo run dev:debug",
     "build:dry": "turbo run build:dry",
     "generate": "turbo run generate",
     "test": "turbo run test",
@@ -39,7 +40,7 @@
     "graphql": "^16.14.2",
     "graphql-config": "^5.1.6",
     "qrcode-terminal": "^0.12.0",
-    "turbo": "^2.9.17",
+    "turbo": "^2.9.18",
     "typescript": "^6.0.3"
   }
 }

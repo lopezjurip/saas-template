@@ -1,119 +1,100 @@
 "use client";
 
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import {
-  ArrowUpRight,
-  Briefcase,
-  Building2,
-  Clock,
-  Eye,
-  Globe,
-  Landmark,
-  LayoutGrid,
-  LifeBuoy,
-  List,
-  type LucideIcon,
-} from "lucide-react";
-import { useState } from "react";
+import { INITIALS_OF } from "@packages/utils/string";
+import { ArrowUpRight, Building2, Check, Eye, Globe, Hourglass, X } from "lucide-react";
+import { useState, useTransition } from "react";
+import { actionRespondInvitation } from "~/app/[locale]/a/[agency_slug]/actions";
 import { useRosetta } from "~/hooks/use-rosetta";
-import {
-  ACTIVE_AFFILIATES,
-  type AccessibleOrg,
-  AFFILIATE_ORGS,
-  AGENCY_WILDCARD,
-  type Agency,
-  type AgencyKind,
-  INITIALS_OF,
-  IS_GLOBAL_AGENCY,
-} from "~/lib/agencies-mock";
+import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 
-type DashLayout = "cards" | "list";
-
-// Sample "last seen" strings — mock content, kept literal like the design.
-const LAST_SEEN = /*#__PURE__*/ ["hace 2 h", "ayer", "hace 3 días", "hace 1 semana", "hace 2 semanas"];
-
-const KIND_ICON: Record<AgencyKind, LucideIcon> = /*#__PURE__*/ {
-  audit: Briefcase,
-  government: Landmark,
-  internal: LifeBuoy,
-  accounting: Building2,
+export type AffiliateOrg = {
+  organization_id: number;
+  organization_name: string;
+  organization_slug: string | null;
 };
 
-export function AffiliateDashboard({ agency }: { agency: Agency }) {
-  const { t } = useRosetta(LOCALES);
-  const [layout, setLayout] = useState<DashLayout>("cards");
+export type AffiliateAgency = {
+  agency_id: string;
+  agency_name: string;
+  agency_slug: string | null;
+  is_global: boolean;
+  orgs: AffiliateOrg[];
+};
 
-  const items = AFFILIATE_ORGS(agency);
-  const global = IS_GLOBAL_AGENCY(agency);
+export type AffiliateInvitation = {
+  agency_membership_id: number;
+  agency_name: string;
+  agency_slug: string | null;
+};
+
+export function AffiliateDashboard({
+  agencies,
+  invitations,
+}: {
+  agencies: AffiliateAgency[];
+  invitations: AffiliateInvitation[];
+}) {
+  const { t } = useRosetta(LOCALES);
+
+  const empty = agencies.length === 0 && invitations.length === 0;
 
   return (
     <div className="@container bg-background relative flex min-h-svh w-full flex-col overflow-hidden">
-      <PortalTopBar agency={agency} portalLabel={t("portal")} readOnlyLabel={t("read_only")} />
+      <header className="border-border bg-background flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 @min-[768px]:px-6">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="border-border bg-muted text-foreground inline-flex size-[34px] shrink-0 items-center justify-center rounded-lg border">
+            <Building2 size={16} />
+          </span>
+          <div className="flex min-w-0 flex-col gap-px">
+            <span className="text-foreground truncate text-[13.5px] font-semibold tracking-[-0.01em]">
+              {t("portal")}
+            </span>
+            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
+              <span className="text-muted-foreground bg-muted/60 border-border inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-tiny font-medium leading-[1.2] tracking-[0.02em]">
+                <Eye size={11} /> {t("read_only")}
+              </span>
+            </span>
+          </div>
+        </div>
+      </header>
 
       <main className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-8 @min-[768px]:px-6 @min-[768px]:py-7 @min-[768px]:pb-10">
-        <div className="mx-auto flex w-full max-w-[860px] flex-col gap-6">
+        <div className="mx-auto flex w-full max-w-[860px] flex-col gap-7">
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-foreground m-0 text-[20px] font-semibold tracking-[-0.02em]">
-              {global ? t("title_global") : t("title")}
-            </h1>
-            <p className="text-muted-foreground m-0 max-w-[58ch] text-[13px] leading-[1.55] [text-wrap:pretty]">
-              {global ? t("subtitle_global") : t("subtitle", { agency: agency.name })}
+            <h1 className="text-foreground m-0 text-xl/normal font-semibold tracking-[-0.02em]">{t("title")}</h1>
+            <p className="text-muted-foreground m-0 max-w-[58ch] text-sm/normal leading-[1.55] text-pretty">
+              {t("subtitle")}
             </p>
           </div>
 
-          {items.length === 0 ? (
+          {invitations.length > 0 ? (
+            <section className="flex flex-col gap-2.5">
+              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+                {t("invitations")}
+              </span>
+              <div className="flex flex-col gap-2">
+                {invitations.map((inv) => (
+                  <InvitationRow key={inv.agency_membership_id} invitation={inv} t={t} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {empty ? (
             <div className="border-border text-muted-foreground flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-12 text-center">
               <span className="bg-muted text-muted-foreground inline-flex size-11 items-center justify-center rounded-full">
                 <Building2 size={22} />
               </span>
               <div className="flex max-w-[42ch] flex-col gap-1">
                 <span className="text-foreground text-sm font-semibold">{t("empty_title")}</span>
-                <span className="text-[12.5px] leading-[1.5] [text-wrap:pretty]">{t("empty_desc")}</span>
+                <span className="text-[12.5px] leading-normal text-pretty">{t("empty_desc")}</span>
               </div>
             </div>
           ) : (
-            <section className="flex flex-col gap-2.5">
-              <div className="flex min-h-7 items-center justify-between gap-2.5">
-                <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
-                  {t("with_access")}
-                </span>
-                <div className="flex items-center gap-2.5">
-                  <span className="text-muted-foreground text-[11.5px] tabular-nums">{items.length}</span>
-                  <LayoutToggle
-                    value={layout}
-                    onChange={setLayout}
-                    cardsLabel={t("layout_cards")}
-                    listLabel={t("layout_list")}
-                  />
-                </div>
-              </div>
-
-              {layout === "cards" ? (
-                <div className="grid grid-cols-1 gap-3 @min-[768px]:grid-cols-2">
-                  {items.map((item) => (
-                    <OrgAccessCard
-                      key={item.org.id}
-                      item={item}
-                      membersLabel={t("members", { count: item.org.members })}
-                      seenLabel={t("seen", { when: SEEN_FOR(item) })}
-                      permLabel={(slug) => PERM_LABEL(slug, t)}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {items.map((item) => (
-                    <OrgAccessRow
-                      key={item.org.id}
-                      item={item}
-                      metaLabel={t("row_meta", { count: item.org.members, when: SEEN_FOR(item) })}
-                      openLabel={t("open")}
-                      permLabel={(slug) => PERM_LABEL(slug, t)}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
+            agencies.map((agency) => <AgencySection key={agency.agency_id} agency={agency} t={t} />)
           )}
         </div>
       </main>
@@ -121,323 +102,181 @@ export function AffiliateDashboard({ agency }: { agency: Agency }) {
   );
 }
 
-// ── Inline atoms (scoped to this surface to honor the file-list constraint) ──
+type Translate = ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"];
 
-function PortalTopBar({
-  agency,
-  portalLabel,
-  readOnlyLabel,
-}: {
-  agency: Agency;
-  portalLabel: string;
-  readOnlyLabel: string;
-}) {
-  const me = ACTIVE_AFFILIATES(agency)[0];
-  const Icon = KIND_ICON[agency.kind];
-  const internal = agency.kind === "internal";
+function InvitationRow({ invitation, t }: { invitation: AffiliateInvitation; t: Translate }) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function respond(response: "accept" | "reject") {
+    setError(null);
+    startTransition(async () => {
+      const [, err] = await ErrorSafeAction.unwrap(
+        actionRespondInvitation({ agency_membership_id: invitation.agency_membership_id, response }),
+      );
+      if (err instanceof ErrorSafeActionServer) setError(err.serverError);
+    });
+  }
+
   return (
-    <header className="border-border bg-background flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 @min-[768px]:px-6">
-      <div className="flex min-w-0 items-center gap-2.5">
-        <span
-          style={{ width: 34, height: 34 }}
-          className={cn(
-            "inline-flex shrink-0 items-center justify-center rounded-lg border",
-            internal
-              ? "border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-              : "border-border bg-muted text-foreground",
-          )}
-        >
-          <Icon size={16} />
+    <div className="border-border bg-background flex flex-col gap-2.5 rounded-lg border px-3.5 py-3">
+      <div className="flex items-center gap-3">
+        <span className="border-border bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-lg border text-[12.5px] font-semibold">
+          {INITIALS_OF(invitation.agency_name)}
         </span>
-        <div className="flex min-w-0 flex-col gap-[1px]">
-          <span className="text-foreground truncate text-[13.5px] font-semibold tracking-[-0.01em]">{agency.name}</span>
-          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11px]">
-            <span className="hidden @min-[768px]:inline">{portalLabel}</span>
-            <span className="hidden opacity-40 @min-[768px]:inline">·</span>
-            <ReadOnlyBadge label={readOnlyLabel} />
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="text-foreground truncate text-[13.5px] font-semibold tracking-[-0.01em]">
+            {invitation.agency_name}
+          </span>
+          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
+            <Hourglass size={11} /> {t("invitation_pending")}
           </span>
         </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button variant="outline" size="sm" disabled={pending} onClick={() => respond("reject")}>
+            <X size={14} /> <span className="hidden @min-[520px]:inline">{t("reject")}</span>
+          </Button>
+          <Button size="sm" disabled={pending} onClick={() => respond("accept")}>
+            <Check size={14} /> <span className="hidden @min-[520px]:inline">{t("accept")}</span>
+          </Button>
+        </div>
       </div>
-      <div className="flex shrink-0 items-center gap-2.5">
-        <span className="hidden flex-col items-end gap-[1px] @min-[768px]:flex">
-          <span className="text-foreground text-[12.5px] font-medium leading-none">{me?.name}</span>
-          <span className="text-muted-foreground mt-0.5 text-[11px] leading-none">{me?.role}</span>
-        </span>
-        <span className="bg-muted text-foreground inline-flex h-8 w-8 items-center justify-center rounded-full text-[11.5px] font-semibold">
-          {INITIALS_OF(me?.name ?? "?")}
-        </span>
-      </div>
-    </header>
-  );
-}
-
-function ReadOnlyBadge({ label }: { label: string }) {
-  return (
-    <span className="text-muted-foreground bg-muted/60 border-border inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[10.5px] font-medium leading-[1.2] tracking-[0.02em]">
-      <Eye size={11} /> {label}
-    </span>
-  );
-}
-
-function GrantPill({ slug, implicit, label }: { slug: string; implicit: boolean; label: string }) {
-  const isWild = slug === AGENCY_WILDCARD;
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-medium leading-[1.3]",
-        isWild
-          ? "border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-          : implicit
-            ? "border-border text-muted-foreground bg-muted/30 border border-dashed"
-            : "border-border text-foreground bg-background border",
-      )}
-    >
-      {isWild ? <Globe size={10.5} /> : null}
-      {label}
-    </span>
-  );
-}
-
-function OrgAccessCard({
-  item,
-  membersLabel,
-  seenLabel,
-  permLabel,
-}: {
-  item: AccessibleOrg;
-  membersLabel: string;
-  seenLabel: string;
-  permLabel: (slug: string) => string;
-}) {
-  const { org, slugs, implicit } = item;
-  const isWild = slugs.includes(AGENCY_WILDCARD);
-  return (
-    <button
-      type="button"
-      className={cn(
-        "group flex h-full flex-col gap-3 text-left",
-        "border-border bg-background rounded-xl border p-4",
-        "cursor-pointer transition-[background,border-color,box-shadow] duration-100",
-        "hover:border-foreground/25 hover:shadow-[0_1px_3px_hsl(0_0%_0%/0.04),0_8px_24px_hsl(0_0%_0%/0.06)]",
-        "focus-visible:border-ring focus-visible:ring-ring/40 outline-none focus-visible:ring-[3px]",
-      )}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <span className="bg-muted text-foreground border-border inline-flex h-11 w-11 items-center justify-center rounded-lg border text-[14px] font-semibold tracking-[-0.01em]">
-          {INITIALS_OF(org.name)}
-        </span>
-        <span className="text-muted-foreground/50 group-hover:text-foreground mt-1 transition-colors">
-          <ArrowUpRight size={16} />
-        </span>
-      </div>
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-foreground truncate text-[14.5px] font-semibold tracking-[-0.01em]">{org.name}</span>
-        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-[11.5px]">
-          <code className="font-mono">{org.slug}</code>
-          <span className="opacity-40">·</span>
-          <span className="tabular-nums">{membersLabel}</span>
-        </span>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {isWild ? (
-          <GrantPill slug={AGENCY_WILDCARD} implicit={false} label={permLabel(AGENCY_WILDCARD)} />
-        ) : (
-          slugs.map((s) => <GrantPill key={s} slug={s} implicit={implicit} label={permLabel(s)} />)
-        )}
-      </div>
-      <div className="text-muted-foreground mt-auto flex items-center gap-1.5 pt-1 text-[11px]">
-        <Clock size={12} /> {seenLabel}
-      </div>
-    </button>
-  );
-}
-
-function OrgAccessRow({
-  item,
-  metaLabel,
-  openLabel,
-  permLabel,
-}: {
-  item: AccessibleOrg;
-  metaLabel: string;
-  openLabel: string;
-  permLabel: (slug: string) => string;
-}) {
-  const { org, slugs, implicit } = item;
-  const isWild = slugs.includes(AGENCY_WILDCARD);
-  return (
-    <button
-      type="button"
-      className={cn(
-        "group grid w-full items-center gap-3.5 text-left",
-        "border-border bg-background rounded-md border px-3.5 py-3",
-        "cursor-pointer transition-[background,border-color] duration-100",
-        "hover:bg-accent/60 hover:border-foreground/25",
-        "focus-visible:border-ring focus-visible:ring-ring/40 outline-none focus-visible:ring-[3px]",
-      )}
-      style={{ gridTemplateColumns: "40px 1fr auto" }}
-    >
-      <span className="bg-muted text-foreground border-border inline-flex h-10 w-10 items-center justify-center rounded-lg border text-[12.5px] font-semibold tracking-[-0.01em]">
-        {INITIALS_OF(org.name)}
-      </span>
-      <span className="flex min-w-0 flex-col gap-1">
-        <span className="inline-flex min-w-0 items-center gap-2">
-          <span className="text-foreground truncate text-sm font-medium">{org.name}</span>
-          <span className="text-muted-foreground hidden whitespace-nowrap text-[11px] tabular-nums @min-[768px]:inline">
-            {metaLabel}
-          </span>
-        </span>
-        <span className="flex flex-wrap gap-1.5">
-          {isWild ? (
-            <GrantPill slug={AGENCY_WILDCARD} implicit={false} label={permLabel(AGENCY_WILDCARD)} />
-          ) : (
-            slugs.map((s) => <GrantPill key={s} slug={s} implicit={implicit} label={permLabel(s)} />)
-          )}
-        </span>
-      </span>
-      <span className="text-muted-foreground/60 group-hover:text-foreground inline-flex shrink-0 items-center gap-1 text-[12px] transition-colors">
-        <span className="hidden @min-[768px]:inline">{openLabel}</span> <ArrowUpRight size={15} />
-      </span>
-    </button>
-  );
-}
-
-function LayoutToggle({
-  value,
-  onChange,
-  cardsLabel,
-  listLabel,
-}: {
-  value: DashLayout;
-  onChange: (value: DashLayout) => void;
-  cardsLabel: string;
-  listLabel: string;
-}) {
-  return (
-    <div className="border-border bg-muted/40 inline-flex items-center gap-0.5 rounded-lg border p-0.5">
-      <button
-        type="button"
-        aria-pressed={value === "cards"}
-        aria-label={cardsLabel}
-        onClick={() => onChange("cards")}
-        className={cn(
-          "inline-flex h-7 cursor-pointer items-center justify-center rounded-md px-2 transition-colors",
-          value === "cards" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-        )}
-      >
-        <LayoutGrid size={15} />
-      </button>
-      <button
-        type="button"
-        aria-pressed={value === "list"}
-        aria-label={listLabel}
-        onClick={() => onChange("list")}
-        className={cn(
-          "inline-flex h-7 cursor-pointer items-center justify-center rounded-md px-2 transition-colors",
-          value === "list" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-        )}
-      >
-        <List size={15} />
-      </button>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
     </div>
   );
 }
 
-function SEEN_FOR(item: AccessibleOrg): string {
-  return LAST_SEEN[item.org.members % LAST_SEEN.length] ?? LAST_SEEN[0] ?? "";
+function AgencySection({ agency, t }: { agency: AffiliateAgency; t: Translate }) {
+  return (
+    <section className="flex flex-col gap-2.5">
+      <div className="flex min-h-7 items-center justify-between gap-2.5">
+        <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.06em]">
+          {agency.agency_name}
+        </span>
+        {agency.is_global ? (
+          <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-600/30 bg-emerald-500/15 px-2 py-0.5 text-tiny font-semibold leading-[1.2] tracking-[0.01em] text-emerald-700 dark:text-emerald-300">
+            <Globe size={11} strokeWidth={2.25} /> {t("scope_global")}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-xs tabular-nums">{agency.orgs.length}</span>
+        )}
+      </div>
+
+      {agency.is_global ? (
+        <div className="flex items-start gap-3 rounded-lg border border-emerald-600/30 bg-emerald-500/6 px-3.5 py-3">
+          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+            <Globe size={17} />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="text-foreground text-[13.5px] font-semibold">{t("global_title")}</span>
+            <span className="text-muted-foreground text-[12px] leading-[1.45] text-pretty">
+              {t("global_desc")}
+            </span>
+          </div>
+        </div>
+      ) : agency.orgs.length === 0 ? (
+        <p className="text-muted-foreground px-1 text-[12.5px]">{t("agency_no_orgs")}</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 @min-[768px]:grid-cols-2">
+          {agency.orgs.map((org) => (
+            <OrgAccessCard key={org.organization_id} org={org} accessLabel={t("read_access")} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }
 
-function PERM_LABEL(slug: string, t: ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"]): string {
-  if (slug === AGENCY_WILDCARD) return t("perm_wildcard");
-  if (slug === "payroll_view") return t("perm_payroll_view");
-  if (slug === "reports_view") return t("perm_reports_view");
-  if (slug === "documents_view") return t("perm_documents_view");
-  if (slug === "members_view") return t("perm_members_view");
-  if (slug === "compliance_view") return t("perm_compliance_view");
-  if (slug === "audit_export") return t("perm_audit_export");
-  return slug;
+function OrgAccessCard({ org, accessLabel }: { org: AffiliateOrg; accessLabel: string }) {
+  return (
+    <div className={cn("border-border bg-background flex h-full flex-col gap-3 rounded-xl border p-4")}>
+      <div className="flex items-start justify-between gap-2">
+        <span className="bg-muted text-foreground border-border inline-flex size-11 items-center justify-center rounded-lg border text-[14px] font-semibold tracking-[-0.01em]">
+          {INITIALS_OF(org.organization_name)}
+        </span>
+        <span className="text-muted-foreground/50 mt-1">
+          <ArrowUpRight size={16} />
+        </span>
+      </div>
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-foreground truncate text-[14.5px] font-semibold tracking-[-0.01em]">
+          {org.organization_name}
+        </span>
+        {org.organization_slug ? (
+          <code className="text-muted-foreground/80 truncate font-mono text-xs">{org.organization_slug}</code>
+        ) : null}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <span className="border-border text-foreground bg-background inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-medium leading-[1.3]">
+          <Eye size={10.5} /> {accessLabel}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 const LOCALE_ES = {
   portal: "Portal de afiliados",
   read_only: "Solo lectura",
-  title: "Tus organizaciones",
-  title_global: "Todas las organizaciones",
+  title: "Tus agencias y organizaciones",
   subtitle:
-    "Estas son las organizaciones que te dieron acceso a través de {{agency}}. Entra a cada una para revisar sus datos — recuerda que tu acceso es de solo lectura.",
-  subtitle_global:
-    "Como equipo interno, tienes acceso global de solo lectura a cualquier organización de la plataforma.",
-  with_access: "Con acceso",
-  layout_cards: "Ver como tarjetas",
-  layout_list: "Ver como lista",
-  members: "{{count}} miembros",
-  seen: "Visto {{when}}",
-  row_meta: "{{count}} miembros · visto {{when}}",
-  open: "Abrir",
-  empty_title: "Sin organizaciones asignadas",
+    "Las agencias en las que participas y las organizaciones que te dieron acceso a través de ellas. Tu acceso es siempre de solo lectura.",
+  invitations: "Invitaciones pendientes",
+  invitation_pending: "Te invitaron a esta agencia",
+  accept: "Aceptar",
+  reject: "Rechazar",
+  scope_global: "Acceso global",
+  read_access: "Acceso de lectura",
+  global_title: "Todas las organizaciones",
+  global_desc: "Acceso global de solo lectura a cualquier organización de la plataforma — actuales y futuras.",
+  agency_no_orgs: "Ninguna organización le ha dado acceso a esta agencia todavía.",
+  empty_title: "Sin agencias ni accesos",
   empty_desc:
-    "Todavía ninguna organización te ha dado acceso. Cuando un administrador habilite a tu agencia, sus datos aparecerán aquí.",
-  perm_wildcard: "Acceso global",
-  perm_payroll_view: "Ver remuneraciones",
-  perm_reports_view: "Ver reportes",
-  perm_documents_view: "Ver documentos",
-  perm_members_view: "Ver miembros",
-  perm_compliance_view: "Ver cumplimiento",
-  perm_audit_export: "Exportar auditoría",
+    "Todavía no participas en ninguna agencia activa. Cuando aceptes una invitación, tus agencias y sus accesos aparecerán aquí.",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
   portal: "Affiliate portal",
   read_only: "Read only",
-  title: "Your organizations",
-  title_global: "All organizations",
+  title: "Your agencies and organizations",
   subtitle:
-    "These are the organizations that gave you access through {{agency}}. Open each one to review its data — remember your access is read-only.",
-  subtitle_global: "As an internal team, you have global read-only access to any organization on the platform.",
-  with_access: "With access",
-  layout_cards: "View as cards",
-  layout_list: "View as list",
-  members: "{{count}} members",
-  seen: "Seen {{when}}",
-  row_meta: "{{count}} members · seen {{when}}",
-  open: "Open",
-  empty_title: "No organizations assigned",
+    "The agencies you take part in and the organizations that gave you access through them. Your access is always read-only.",
+  invitations: "Pending invitations",
+  invitation_pending: "You were invited to this agency",
+  accept: "Accept",
+  reject: "Reject",
+  scope_global: "Global access",
+  read_access: "Read access",
+  global_title: "All organizations",
+  global_desc: "Global read-only access to any organization on the platform — current and future.",
+  agency_no_orgs: "No organization has given this agency access yet.",
+  empty_title: "No agencies or access",
   empty_desc:
-    "No organization has given you access yet. When an admin enables your agency, its data will show up here.",
-  perm_wildcard: "Global access",
-  perm_payroll_view: "View payroll",
-  perm_reports_view: "View reports",
-  perm_documents_view: "View documents",
-  perm_members_view: "View members",
-  perm_compliance_view: "View compliance",
-  perm_audit_export: "Export audit",
+    "You don't take part in any active agency yet. When you accept an invitation, your agencies and their access will appear here.",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
   portal: "Portal de afiliados",
   read_only: "Somente leitura",
-  title: "Suas organizações",
-  title_global: "Todas as organizações",
+  title: "Suas agências e organizações",
   subtitle:
-    "Estas são as organizações que lhe deram acesso através da {{agency}}. Entre em cada uma para revisar seus dados — lembre-se de que seu acesso é somente leitura.",
-  subtitle_global: "Como equipe interna, você tem acesso global somente leitura a qualquer organização da plataforma.",
-  with_access: "Com acesso",
-  layout_cards: "Ver como cartões",
-  layout_list: "Ver como lista",
-  members: "{{count}} membros",
-  seen: "Visto {{when}}",
-  row_meta: "{{count}} membros · visto {{when}}",
-  open: "Abrir",
-  empty_title: "Sem organizações atribuídas",
+    "As agências das quais você participa e as organizações que lhe deram acesso por meio delas. Seu acesso é sempre somente leitura.",
+  invitations: "Convites pendentes",
+  invitation_pending: "Você foi convidado para esta agência",
+  accept: "Aceitar",
+  reject: "Recusar",
+  scope_global: "Acesso global",
+  read_access: "Acesso de leitura",
+  global_title: "Todas as organizações",
+  global_desc: "Acesso global somente leitura a qualquer organização da plataforma — atuais e futuras.",
+  agency_no_orgs: "Nenhuma organização deu acesso a esta agência ainda.",
+  empty_title: "Sem agências ou acessos",
   empty_desc:
-    "Nenhuma organização lhe deu acesso ainda. Quando um administrador habilitar sua agência, os dados aparecerão aqui.",
-  perm_wildcard: "Acesso global",
-  perm_payroll_view: "Ver remunerações",
-  perm_reports_view: "Ver relatórios",
-  perm_documents_view: "Ver documentos",
-  perm_members_view: "Ver membros",
-  perm_compliance_view: "Ver conformidade",
-  perm_audit_export: "Exportar auditoria",
+    "Você ainda não participa de nenhuma agência ativa. Quando aceitar um convite, suas agências e seus acessos aparecerão aqui.",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

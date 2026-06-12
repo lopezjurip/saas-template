@@ -22,7 +22,7 @@ After SQL changes:
 pnpm db:reset
 pnpm generate:types
 pnpm generate:graphql:schema
-pnpm generate:graphql:platform
+pnpm --filter @apps/platform run generate:graphql
 ```
 
 Schema-only local regeneration from checked-in JSON:
@@ -31,13 +31,16 @@ Schema-only local regeneration from checked-in JSON:
 pnpm generate:graphql:schema:local
 ```
 
-Operation-only changes:
+Operation-only changes (no SQL touched):
 
 ```bash
-pnpm generate:graphql:platform
+pnpm --filter @apps/platform run generate:graphql
 ```
 
 Do not use npm, ad hoc output paths, or redirect generated output manually.
+
+> **Note:** `pnpm generate:graphql:platform` is NOT a valid root command — always use the
+> `--filter @apps/platform` form above.
 
 ## Stage 1: schema
 
@@ -49,6 +52,11 @@ const href_graphql = `${NEXT_PUBLIC_SUPABASE_URL}/graphql/v1`;
 
 with anon `apiKey`. It writes introspection JSON + sorted SDL. `--local` reads existing JSON;
 it does not introspect DB.
+
+**Prerequisite:** `apps/platform/.env.local` must exist with `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`. The config loads env from that path via `@next/env`. If
+missing, URL resolves as `undefined` and introspection silently fails with "Unable to find any
+GraphQL type definitions for `undefined/graphql/v1`".
 
 If introspection suddenly returns empty/broken schema, inspect SQL names first. pg_graphql
 requires names matching `[_a-zA-Z0-9]`; hyphenated enum value can break entire schema.

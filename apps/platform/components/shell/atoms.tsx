@@ -61,7 +61,7 @@ export function Avatar({
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
-  const sizing = size === "sm" ? "h-6 w-6 text-[10px]" : size === "lg" ? "h-10 w-10 text-xs" : "h-8 w-8 text-[11px]";
+  const sizing = size === "sm" ? "h-6 w-6 text-tiny" : size === "lg" ? "h-10 w-10 text-xs" : "h-8 w-8 text-[11px]";
   return (
     <span
       className={cn(
@@ -80,7 +80,7 @@ export function Kbd({ children, className }: { children: ReactNode; className?: 
   return (
     <kbd
       className={cn(
-        "border-border bg-muted/60 text-muted-foreground pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded border px-1.5 font-mono text-[10px] font-medium",
+        "border-border bg-muted/60 text-muted-foreground pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded border px-1.5 font-mono text-tiny font-medium",
         className,
       )}
     >

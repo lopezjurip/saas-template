@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
+import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_HOST } from "~/lib/constants";
-import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, ROSETTA, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  const { locale } = await params;
-  const { t } = ROSETTA(LOCALES, locale);
+export async function generateMetadata(props: PageProps<"/[locale]/faq">): Promise<Metadata> {
+  const { t, locale } = await getRosetta(LOCALES);
   const base = `https://${APP_HOST}`;
   const safeLocale = IS_SUPPORTED_LOCALE(locale) ? locale : DEFAULT_LOCALE;
   return {
@@ -26,9 +26,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export default async function FaqPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params;
-  const { t } = ROSETTA(LOCALES, locale);
+export default async function FaqPage(props: PageProps<"/[locale]/faq">) {
+  const { t, locale } = await getRosetta(LOCALES);
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 px-6 py-12">
       <h1 className="text-2xl font-semibold">{t("heading")}</h1>

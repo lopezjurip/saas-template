@@ -1,5 +1,7 @@
--- Tests for viewer_* helpers that read claims out of the JWT (no DB lookup).
--- Seed: alice (org 1 acme + org 2 globex), bob (org 1 acme only).
+-- Tests for the viewer_* helpers. These resolve the caller from the JWT `sub` claim
+-- (auth.uid) and then read membership/agency state straight from the DB — they do NOT
+-- trust app_metadata arrays in the token. Seed: alice (org 1 acme + org 2 globex),
+-- bob (org 1 acme only).
 
 begin;
 
@@ -103,49 +105,51 @@ select ok(
 reset role;
 
 -- ============================================================
--- viewer_agency_ids / viewer_is_agency_member with agency claim
+-- viewer_agency_ids / viewer_is_agency_member resolve from the DB (agency_memberships),
+-- not from any JWT claim.
 -- ============================================================
 
+set local role service_role;
+insert into public.agencies (agency_id, agency_name, agency_slug)
+  values ('a0000000-0000-0000-0000-000000000001', 'Test Agency', 'test-agency');
+insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
+  values ('a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000a11c', now());
+reset role;
+
 set local role authenticated;
-set local request.jwt.claims to '{
-  "sub": "00000000-0000-0000-0000-00000000a11c",
-  "app_metadata": {
-    "tenants": [],
-    "organizations": [],
-    "agencies": [{"id": "a0000000-0000-0000-0000-000000000001"}]
-  }
-}';
+set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-00000000a11c"}';
 
 select ok(
   public.viewer_is_agency_member(),
-  'viewer_is_agency_member() is true when agencies array has entries'
+  'viewer_is_agency_member() is true when the caller has an accepted agency_membership'
 );
 
 select set_eq(
   $$ select * from public.viewer_agency_ids() $$,
   $$ values ('a0000000-0000-0000-0000-000000000001'::uuid) $$,
-  'viewer_agency_ids() returns the UUID from agencies claim'
+  'viewer_agency_ids() returns the agency UUID from the DB'
 );
 
 reset role;
 
 -- ============================================================
--- Empty / missing app_metadata arrays
+-- DB-driven: viewer_tenant_ids / viewer_organization_ids reflect actual membership and
+-- ignore (now-absent) app_metadata arrays in the JWT.
 -- ============================================================
 
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-00000000a11c", "app_metadata": {}}';
 
-select is(
-  (select count(*) from public.viewer_tenant_ids()),
-  0::bigint,
-  'viewer_tenant_ids() yields nothing when app_metadata.tenants is missing'
+select set_eq(
+  $$ select * from public.viewer_tenant_ids() order by 1 $$,
+  $$ values (1), (2) $$,
+  'viewer_tenant_ids() reflects DB membership even with empty app_metadata'
 );
 
-select is(
-  (select count(*) from public.viewer_organization_ids()),
-  0::bigint,
-  'viewer_organization_ids() yields nothing when app_metadata.organizations is missing'
+select set_eq(
+  $$ select * from public.viewer_organization_ids() order by 1 $$,
+  $$ values (1), (2) $$,
+  'viewer_organization_ids() reflects DB membership even with empty app_metadata'
 );
 
 reset role;

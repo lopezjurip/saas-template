@@ -1,3 +1,8 @@
 @import "tailwindcss";
 @import "@packages/ui-common/shadcn/globals.css";
 @source "../../../packages/ui-common/src";
+
+@theme {
+  /* https://tailwindcss.com/docs/font-size */
+  --text-tiny: 0.625rem;
+}

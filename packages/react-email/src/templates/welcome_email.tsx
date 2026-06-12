@@ -24,9 +24,9 @@ export interface WelcomeEmailProps {
 const LOCALE_ES = {
   preview: "Bienvenido/a a {{empresaNombre}} — tu acceso a SaaS Template está listo",
   heading: "Bienvenido/a, {{empleadoNombre}}",
-  body: "{{empresaNombre}} está usando SaaS Template para gestionar liquidaciones, vacaciones y documentos laborales. A partir de ahora, tienes acceso a toda esa información en un solo lugar.",
+  body: "{{empresaNombre}} está usando SaaS Template. A partir de ahora, tienes acceso a toda tu información en un solo lugar.",
   cta: "Ingresar a SaaS Template",
-  support: "Si tienes dudas, puedes escribirle directamente a tu área de RRHH o contactarnos desde la plataforma.",
+  support: "Si tienes dudas, puedes escribirle directamente a tu equipo o contactarnos desde la plataforma.",
   footer:
     "Este correo fue enviado porque fuiste registrado/a en SaaS Template por {{empresaNombre}}. Si crees que es un error, ignora este mensaje.",
 };
@@ -36,18 +36,18 @@ const LOCALES = {
   en: {
     preview: "Welcome to {{empresaNombre}} — your SaaS Template access is ready",
     heading: "Welcome, {{empleadoNombre}}",
-    body: "{{empresaNombre}} is using SaaS Template to manage payslips, vacation, and employment documents. From now on, you can access all that information in one place.",
+    body: "{{empresaNombre}} is using SaaS Template. From now on, you can access all your information in one place.",
     cta: "Sign in to SaaS Template",
-    support: "If you have any questions, reach out to your HR team or contact us from the platform.",
+    support: "If you have any questions, reach out to your team or contact us from the platform.",
     footer:
       "This email was sent because you were registered in SaaS Template by {{empresaNombre}}. If you think this is a mistake, you can ignore this message.",
   } satisfies typeof LOCALE_ES,
   pt: {
     preview: "Bem-vindo/a à {{empresaNombre}} — seu acesso ao SaaS Template está pronto",
     heading: "Bem-vindo/a, {{empleadoNombre}}",
-    body: "{{empresaNombre}} usa o SaaS Template para gerenciar contracheques, férias e documentos trabalhistas. A partir de agora, você tem acesso a todas essas informações em um só lugar.",
+    body: "{{empresaNombre}} usa o SaaS Template. A partir de agora, você tem acesso a todas as suas informações em um só lugar.",
     cta: "Entrar no SaaS Template",
-    support: "Se tiver dúvidas, entre em contato com o seu RH ou fale conosco pela plataforma.",
+    support: "Se tiver dúvidas, entre em contato com o seu time ou fale conosco pela plataforma.",
     footer:
       "Este e-mail foi enviado porque você foi registrado/a no SaaS Template por {{empresaNombre}}. Se achar que é um engano, ignore esta mensagem.",
   } satisfies typeof LOCALE_ES,

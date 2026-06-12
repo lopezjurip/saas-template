@@ -9,14 +9,14 @@ Use current code. Do not invent generic Supabase wrappers.
 
 ## Source map
 
-- Clients/claims: `packages/supabase/src/client.{browser,server,middleware}.ts`, `metadata.ts`
+- Clients: `packages/supabase/src/client.{browser,server,middleware}.ts`, `metadata.ts`
 - Routes/actions: `apps/platform/app/[locale]/auth/**`
 - Passkeys: `apps/platform/lib/passkeys.{actions,client}.ts`
 - Hook/schema: `packages/supabase/supabase/migrations/00000000000000_schema.sql`
 - Config/templates: `packages/supabase/supabase/config.toml`, `supabase/templates/*`
 - Gate: `apps/platform/proxy.ts`
 
-## Identity vs claims
+## Identity
 
 Validated identity:
 
@@ -30,22 +30,15 @@ Cookie session/raw token:
 const session = await getSupabaseServerSession();
 ```
 
-Hook claims:
-
-```ts
-const metadata = await getSupabaseServerUserMetadata();
-const tenant = metadata?.["tenants"]?.find((item) => item["slug"] === tenant_slug);
-```
-
-Never read hook claims from `auth.getUser()`. Claims exist only in access token. Current
-`AppMetadataSchema`: `tenants: [{id, slug}]`, `organizations: [{id, tenant_id}]`,
-`agencies: [{id}]`, `onboarded`.
+The JWT carries only `profile_id` (the `sub`/`auth.uid`). It no longer injects
+`app_metadata.{tenants,organizations,agencies,onboarded}`. Resolve tenant/org/agency membership
+from the DB, not from claims.
 
 ## Token hook
 
-`public.user_auth_hook(event jsonb)` reads `event->'claims'` and `event->>'user_id'`.
-It includes only active/accepted memberships, active agencies, onboarding state. Permissions
-stay DB-backed, not JWT-backed.
+`public.user_auth_hook(event jsonb)` is now a pass-through: it returns the `event` unchanged and
+injects no custom claims. Tenant/org/agency membership and onboarding state are resolved from the
+DB on demand, and permissions stay DB-backed, not JWT-backed.
 
 Hook config:
 
@@ -55,12 +48,11 @@ enabled = true
 uri = "pg-functions://postgres/public/user_auth_hook"
 ```
 
-After tenant/membership/onboarding changes:
-
-```ts
-const refresh = await supabase.auth.refreshSession();
-if (refresh.error) log.warn("session refresh failed", { error: refresh.error });
-```
+Because membership lives in the DB rather than the token, membership/onboarding changes take
+effect without a JWT refresh. The viewer helpers
+(`viewer_tenant_ids` / `viewer_tenant_validate` / `viewer_organization_ids` /
+`viewer_organization_validate` / `viewer_agency_ids`) resolve membership directly from the DB and
+are `security definer` to avoid RLS recursion — they are not JWT/claims-based.
 
 ## OAuth
 
@@ -105,11 +97,14 @@ calls `verifyOtp({ token_hash, type })`, then uses safe `next`.
 
 Not Supabase WebAuthn API. Uses `@simplewebauthn/browser` + server package.
 
+Tables: `public.profile_webauthn_challenges` and `public.profile_webauthn_credentials`. The
+`webauthn_challenge_*` / `webauthn_credential_*` column prefixes are unchanged.
+
 Flow:
 
-1. `actionCreatePasskeyChallenge`: authenticated, generate options, upsert challenge.
+1. `actionCreatePasskeyChallenge`: authenticated, generate options, upsert into `profile_webauthn_challenges`.
 2. Browser `startRegistration({ optionsJSON })`.
-3. `actionVerifyPasskeyRegistration`: consume challenge, cryptographically verify, insert credential.
+3. `actionVerifyPasskeyRegistration`: consume challenge, cryptographically verify, insert into `profile_webauthn_credentials`.
 4. Sign-in resolves profile by email, generates challenge, browser `startAuthentication`, verifies, then creates Supabase session through admin link + OTP verification.
 
 Required:
@@ -122,6 +117,13 @@ WEBAUTHN_RELYING_PARTY_ORIGIN=https://lvh.me:7003
 
 Dev must use mkcert HTTPS. Credential spec literals such as `"public-key"` use `text` +
 checks, never SQL enums containing hyphens.
+
+## Identity validators
+
+- `public.cl_rut_normalize` / `public.cl_rut_validate`: normalize and validate Chilean RUT.
+- `internal.email_validate` / `internal.phone_validate`: back the `invite_email` / `invite_phone`
+  CHECK constraints on `public.organization_memberships`.
+- `internal.slug_reserved_validate`: rejects reserved slugs.
 
 ## Rules
 

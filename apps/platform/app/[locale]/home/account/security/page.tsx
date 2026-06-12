@@ -5,6 +5,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { UNSAFE_ROUTE } from "~/lib/route";
 import { EmailForm } from "./email-form";
 import { PasskeysList } from "./passkeys-list";
 import { PasswordForm } from "./password-form";
@@ -14,7 +15,7 @@ const SecuritySectionPageQuery = gql(`
   query SecuritySectionPageQuery {
     profile: viewer_profile {
       profile_id
-      webauthn_credentialsCollection(
+      profile_webauthn_credentialsCollection(
         orderBy: [{ webauthn_credential_created_at: DescNullsLast }]
       ) {
         edges {
@@ -39,7 +40,8 @@ export default async function SecurityPage(props: PageProps<"/[locale]/home/acco
 
   const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: SecuritySectionPageQuery });
-  const passkeys = data?.["profile"]?.["webauthn_credentialsCollection"]?.["edges"]?.map((e) => e["node"]) ?? [];
+  const passkeys =
+    data?.["profile"]?.["profile_webauthn_credentialsCollection"]?.["edges"]?.map((e) => e["node"]) ?? [];
 
   const identities = user["identities"] ?? [];
   const hasPassword = identities.some((i) => i["provider"] === "email");
@@ -48,13 +50,13 @@ export default async function SecurityPage(props: PageProps<"/[locale]/home/acco
   const hasPasskey = passkeys.length > 0;
 
   return (
-    <div className="flex max-w-[720px] flex-col gap-[18px]">
+    <div className="flex max-w-[720px] flex-col gap-4.5">
       <header className="flex flex-col gap-1">
         <span className="text-muted-foreground text-[11px] font-semibold tracking-[0.08em] uppercase">
           Cuenta · Seguridad
         </span>
         <h1 className="text-foreground text-[22px] font-semibold tracking-[-0.02em]">Inicio de sesión</h1>
-        <p className="text-muted-foreground text-[13px] leading-relaxed text-pretty">
+        <p className="text-muted-foreground text-sm/normal leading-relaxed text-pretty">
           Cómo entras a tu cuenta y los identificadores con los que te reconocemos. Te recomendamos tener al menos dos
           métodos activos.
         </p>
@@ -63,7 +65,7 @@ export default async function SecurityPage(props: PageProps<"/[locale]/home/acco
       {/* Sign-in methods */}
       <div className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2 py-1">
-          <span className="text-foreground text-[13px] font-medium">Métodos para iniciar sesión</span>
+          <span className="text-foreground text-sm/normal font-medium">Métodos para iniciar sesión</span>
         </div>
 
         <SecurityCard
@@ -94,7 +96,7 @@ export default async function SecurityPage(props: PageProps<"/[locale]/home/acco
       {/* Identifiers */}
       <div className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2 py-1">
-          <span className="text-foreground text-[13px] font-medium">Identificadores verificados</span>
+          <span className="text-foreground text-sm/normal font-medium">Identificadores verificados</span>
           <span className="text-muted-foreground text-xs">Para recuperar tu cuenta y recibir códigos</span>
         </div>
 
@@ -172,7 +174,7 @@ function SecurityCard({
               {title}
             </span>
             {done && (
-              <span className="text-muted-foreground inline-flex items-center gap-1 rounded-full border px-[5px] py-px text-[10px] font-semibold tracking-[0.02em] uppercase">
+              <span className="text-muted-foreground inline-flex items-center gap-1 rounded-full border px-[5px] py-px text-tiny font-semibold tracking-[0.02em] uppercase">
                 <Check size={10} /> Listo
               </span>
             )}
@@ -182,7 +184,7 @@ function SecurityCard({
         <span className="inline-flex items-center justify-end self-center">
           {actionHref ? (
             <Link
-              href={actionHref}
+              href={UNSAFE_ROUTE(actionHref)}
               className="bg-muted text-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[12.5px] font-medium whitespace-nowrap"
             >
               {actionLabel} <ArrowRight size={13} />

@@ -63,20 +63,19 @@ export function MobileNavDrawer({
   onSettings: () => void;
 }) {
   const { t } = useRosetta(LOCALES);
-  const base = `/${locale}/${tenant.tenant_slug}/${organization.organization_id}`;
-  const items = BUILD_NAV(base, {
+  const items = BUILD_NAV(locale, tenant["tenant_slug"], organization["organization_id"], {
     navHome: t("navHome"),
     navMembers: t("navMembers"),
     navSettings: t("navSettings"),
   });
-  const activeId = PICK_ACTIVE_NAV(items, activePath, base);
+  const activeId = PICK_ACTIVE_NAV(items, activePath);
 
   return (
     <>
       <Scrim show={open} onClick={onClose} />
       <aside
         aria-hidden={!open}
-        className="border-border bg-muted/30 absolute inset-y-0 left-0 z-[70] flex w-[78%] flex-col border-r"
+        className="border-border bg-muted/30 absolute inset-y-0 left-0 z-70 flex w-[78%] flex-col border-r"
         style={{
           transform: open ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 280ms cubic-bezier(0.32, 0.72, 0, 1)",
@@ -113,7 +112,7 @@ export function MobileNavDrawer({
 
         <nav className="flex-1 overflow-y-auto px-2 py-2">
           <div className="mb-3">
-            <div className="text-muted-foreground px-2 pb-1 pt-1 text-[10px] font-medium uppercase tracking-wider">
+            <div className="text-muted-foreground px-2 pb-1 pt-1 text-tiny font-medium uppercase tracking-wider">
               {t("workspace")}
             </div>
             {items.map((item) => {
@@ -130,7 +129,7 @@ export function MobileNavDrawer({
                   <item.Icon size={17} className={isActive ? "text-foreground" : "text-muted-foreground"} />
                   <span className="flex-1">{item.label}</span>
                   {item.badge ? (
-                    <span className="bg-foreground/85 text-background rounded px-1.5 py-0.5 font-mono text-[10px] font-medium">
+                    <span className="bg-foreground/85 text-background rounded px-1.5 py-0.5 font-mono text-tiny font-medium">
                       {item.badge}
                     </span>
                   ) : null}
@@ -164,7 +163,7 @@ export function MobileNavDrawer({
               size="md"
             />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[13px] font-medium leading-tight">
+              <div className="truncate text-sm/normal font-medium leading-tight">
                 {viewer.profile_name_full || viewer.email}
               </div>
               <div className="text-muted-foreground truncate text-[11px] leading-tight">{viewer.email}</div>

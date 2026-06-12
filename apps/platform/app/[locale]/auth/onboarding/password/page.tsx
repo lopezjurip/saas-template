@@ -5,7 +5,7 @@ import { getViewerOnboardingState } from "../state.server";
 import { PasswordEmailChip } from "./password-email-chip";
 import { PasswordForm } from "./password-form";
 
-export default async function OnboardingPasswordPage(_props: PageProps<"/[locale]/auth/onboarding/password">) {
+export default async function OnboardingPasswordPage(props: PageProps<"/[locale]/auth/onboarding/password">) {
   const state = await getViewerOnboardingState();
 
   return (

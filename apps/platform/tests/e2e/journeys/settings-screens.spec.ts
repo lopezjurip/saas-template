@@ -20,10 +20,10 @@ test.describe("settings screens", () => {
     const page = await browser.newPage();
     await signIn(page, email, password);
     await page.goto("/es/tenants/create");
-    await page.getByLabel("Nombre de la empresa").fill(tenantName);
+    await page.getByLabel("Nombre", { exact: true }).fill(tenantName);
     await page.getByLabel("Identificador").fill(tenantSlug);
     await page.getByRole("button", { name: /crear empresa/i }).click();
-    await page.waitForURL(new RegExp(`/es/${tenantSlug}/\\d+`));
+    await page.waitForURL(new RegExp(`/es/t/${tenantSlug}/\\d+`));
     const match = page.url().match(/\/(\d+)(?:\/|$)/);
     if (!match?.[1]) throw new Error(`org_id not found in URL: ${page.url()}`);
     orgId = match[1];
@@ -40,7 +40,7 @@ test.describe("settings screens", () => {
   });
 
   test("sidebar renders all nav links on general settings", async ({ page }) => {
-    await page.goto(`/es/${tenantSlug}/${orgId}/settings/general`);
+    await page.goto(`/es/t/${tenantSlug}/${orgId}/settings/general`);
 
     // Sidebar title (from settings layout.tsx — the RSC serialization bug would break this).
     await expect(page.getByText("Configuración")).toBeVisible();
@@ -56,27 +56,27 @@ test.describe("settings screens", () => {
   });
 
   test("members page renders without error", async ({ page }) => {
-    await page.goto(`/es/${tenantSlug}/${orgId}/settings/members`);
+    await page.goto(`/es/t/${tenantSlug}/${orgId}/settings/members`);
     await expect(page.getByText("Configuración")).toBeVisible();
   });
 
   test("billing page renders without error", async ({ page }) => {
-    await page.goto(`/es/${tenantSlug}/${orgId}/settings/billing`);
+    await page.goto(`/es/t/${tenantSlug}/${orgId}/settings/billing`);
     await expect(page.getByText("Configuración")).toBeVisible();
   });
 
   test("external-access page renders without error", async ({ page }) => {
-    await page.goto(`/es/${tenantSlug}/${orgId}/settings/external-access`);
+    await page.goto(`/es/t/${tenantSlug}/${orgId}/settings/external-access`);
     await expect(page.getByText("Configuración")).toBeVisible();
   });
 });
 
 async function signIn(page: Page, email: string, password: string) {
-  await page.goto("/es/auth/email");
-  await page.getByLabel("Correo electrónico").fill(email);
+  await page.goto("/es/auth");
+  await page.getByLabel("Cuenta").fill(email);
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
   await page.waitForURL(/\/auth\/email\?/);
   await page.getByLabel("Contraseña").fill(password);
-  await page.getByRole("button", { name: "Iniciar sesión" }).click();
+  await page.getByRole("button", { name: "Ingresar con contraseña" }).click();
   await page.waitForURL((url) => !url.pathname.includes("/auth/"));
 }

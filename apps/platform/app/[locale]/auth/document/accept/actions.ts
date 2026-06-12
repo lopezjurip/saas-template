@@ -4,6 +4,7 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { action } from "~/lib/safe-action.server";
 import { sendOtpSchema, verifyOtpSchema } from "./schemas";
 
@@ -12,25 +13,29 @@ const log = debug("auth:document:accept");
 export const actionStartDocumentSignup = action.inputSchema(sendOtpSchema).action(async ({ parsedInput }) => {
   const admin = createServiceRoleClient();
   const { data: inviteRow, error: inviteError } = await admin
-    .from("memberships")
+    .from("organization_memberships")
     .select(
-      "membership_id, profile_id, membership_invite_address_level0_id, membership_invite_document_kind, membership_invite_document_value, membership_invite_expires_at, membership_accepted_at, membership_rejected_at, membership_revoked_at",
+      "organization_membership_id, profile_id, organization_membership_invite_address_level0_id, organization_membership_invite_document_kind, organization_membership_invite_document_value, organization_membership_invite_expires_at, organization_membership_accepted_at, organization_membership_rejected_at, organization_membership_revoked_at",
     )
-    .eq("membership_invite_token", parsedInput["invitation_token"])
+    .eq("organization_membership_invite_token", parsedInput["invitation_token"])
     .maybeSingle();
   if (inviteError) log.error("invitation lookup failed", { error: inviteError });
   if (!inviteRow) throw new Error("Invitación no encontrada");
   const invite = inviteRow;
-  if (invite["membership_revoked_at"]) throw new Error("Esta invitación fue cancelada");
-  if (invite["membership_rejected_at"]) throw new Error("Esta invitación fue rechazada");
-  if (invite["membership_accepted_at"] || invite["profile_id"]) throw new Error("Esta invitación ya fue aceptada");
-  if (invite["membership_invite_expires_at"] && new Date(invite["membership_invite_expires_at"]) <= new Date()) {
+  if (invite["organization_membership_revoked_at"]) throw new Error("Esta invitación fue cancelada");
+  if (invite["organization_membership_rejected_at"]) throw new Error("Esta invitación fue rechazada");
+  if (invite["organization_membership_accepted_at"] || invite["profile_id"])
+    throw new Error("Esta invitación ya fue aceptada");
+  if (
+    invite["organization_membership_invite_expires_at"] &&
+    new Date(invite["organization_membership_invite_expires_at"]) <= new Date()
+  ) {
     throw new Error("Esta invitación expiró");
   }
 
-  const country = invite["membership_invite_address_level0_id"];
-  const kind = invite["membership_invite_document_kind"];
-  const value = invite["membership_invite_document_value"];
+  const country = invite["organization_membership_invite_address_level0_id"];
+  const kind = invite["organization_membership_invite_document_kind"];
+  const value = invite["organization_membership_invite_document_value"];
   if (!country || !kind || !value) {
     throw new Error("Esta invitación no tiene documento asociado");
   }
@@ -56,7 +61,7 @@ export const actionStartDocumentSignup = action.inputSchema(sendOtpSchema).actio
       }
       throw new Error("No pudimos enviar el código. Intenta de nuevo.");
     }
-    log.info("accept OTP sent (sms)", { membership_id: invite["membership_id"] });
+    log.info("accept OTP sent (sms)", { organization_membership_id: invite["organization_membership_id"] });
     return { channel, contact: phone };
   }
   const email = parsedInput["email"] || "";
@@ -68,26 +73,30 @@ export const actionStartDocumentSignup = action.inputSchema(sendOtpSchema).actio
     log.error("accept OTP send failed (email)", { error });
     throw new Error("No pudimos enviar el código. Intenta de nuevo.");
   }
-  log.info("accept OTP sent (email)", { membership_id: invite["membership_id"] });
+  log.info("accept OTP sent (email)", { organization_membership_id: invite["organization_membership_id"] });
   return { channel, contact: email };
 });
 
 export const actionVerifyDocumentSignup = action.inputSchema(verifyOtpSchema).action(async ({ parsedInput }) => {
   const admin = createServiceRoleClient();
   const { data: inviteRow, error: inviteError } = await admin
-    .from("memberships")
+    .from("organization_memberships")
     .select(
-      "membership_id, profile_id, membership_invite_address_level0_id, membership_invite_document_kind, membership_invite_document_value, membership_invite_expires_at, membership_accepted_at, membership_rejected_at, membership_revoked_at, organizations(tenants(tenant_slug))",
+      "organization_membership_id, profile_id, organization_membership_invite_address_level0_id, organization_membership_invite_document_kind, organization_membership_invite_document_value, organization_membership_invite_expires_at, organization_membership_accepted_at, organization_membership_rejected_at, organization_membership_revoked_at, organizations(tenants(tenant_slug))",
     )
-    .eq("membership_invite_token", parsedInput["invitation_token"])
+    .eq("organization_membership_invite_token", parsedInput["invitation_token"])
     .maybeSingle();
   if (inviteError) log.error("invitation lookup failed", { error: inviteError });
   if (!inviteRow) throw new Error("Invitación no encontrada");
   const invite = inviteRow;
-  if (invite["membership_revoked_at"]) throw new Error("Esta invitación fue cancelada");
-  if (invite["membership_rejected_at"]) throw new Error("Esta invitación fue rechazada");
-  if (invite["membership_accepted_at"] || invite["profile_id"]) throw new Error("Esta invitación ya fue aceptada");
-  if (invite["membership_invite_expires_at"] && new Date(invite["membership_invite_expires_at"]) <= new Date()) {
+  if (invite["organization_membership_revoked_at"]) throw new Error("Esta invitación fue cancelada");
+  if (invite["organization_membership_rejected_at"]) throw new Error("Esta invitación fue rechazada");
+  if (invite["organization_membership_accepted_at"] || invite["profile_id"])
+    throw new Error("Esta invitación ya fue aceptada");
+  if (
+    invite["organization_membership_invite_expires_at"] &&
+    new Date(invite["organization_membership_invite_expires_at"]) <= new Date()
+  ) {
     throw new Error("Esta invitación expiró");
   }
 
@@ -108,38 +117,38 @@ export const actionVerifyDocumentSignup = action.inputSchema(verifyOtpSchema).ac
 
   const profileId = verifyRes.data.user.id;
 
-  // Single-row claim: stamp profile_id + accepted_at on the existing pending membership.
+  // Single-row claim: stamp profile_id + accepted_at on the existing pending organization_membership.
   // Burn the token so the accept-link can't be replayed.
   const claimRes = await admin
-    .from("memberships")
+    .from("organization_memberships")
     .update({
       profile_id: profileId,
-      membership_accepted_at: new Date().toISOString(),
-      membership_invite_token: null,
+      organization_membership_accepted_at: new Date().toISOString(),
+      organization_membership_invite_token: null,
     })
-    .eq("membership_id", invite["membership_id"])
+    .eq("organization_membership_id", invite["organization_membership_id"])
     .is("profile_id", null)
-    .is("membership_accepted_at", null)
-    .is("membership_rejected_at", null)
-    .is("membership_revoked_at", null);
+    .is("organization_membership_accepted_at", null)
+    .is("organization_membership_rejected_at", null)
+    .is("organization_membership_revoked_at", null);
   if (claimRes.error) {
-    log.error("membership claim failed", { error: claimRes.error, profileId });
+    log.error("organization_membership claim failed", { error: claimRes.error, profileId });
     throw new Error("No pudimos completar tu ingreso. Contacta a tu administrador.");
   }
 
   // Ensure the document identity row exists (trigger should have created it, but be defensive
   // for the case where the verified user already existed and the trigger only fired at first signup).
   if (
-    invite["membership_invite_address_level0_id"] &&
-    invite["membership_invite_document_kind"] &&
-    invite["membership_invite_document_value"]
+    invite["organization_membership_invite_address_level0_id"] &&
+    invite["organization_membership_invite_document_kind"] &&
+    invite["organization_membership_invite_document_value"]
   ) {
     const idRes = await admin.from("profile_identities").upsert(
       {
         profile_id: profileId,
-        address_level0_id: invite["membership_invite_address_level0_id"],
-        profile_identity_document_kind: invite["membership_invite_document_kind"],
-        profile_identity_document_value: invite["membership_invite_document_value"],
+        address_level0_id: invite["organization_membership_invite_address_level0_id"],
+        profile_identity_document_kind: invite["organization_membership_invite_document_kind"],
+        profile_identity_document_value: invite["organization_membership_invite_document_value"],
       },
       { onConflict: "profile_id,address_level0_id,profile_identity_document_kind", ignoreDuplicates: true },
     );
@@ -152,7 +161,7 @@ export const actionVerifyDocumentSignup = action.inputSchema(verifyOtpSchema).ac
 
   const tenant_slug = invite["organizations"]?.["tenants"]?.["tenant_slug"];
   if (tenant_slug) {
-    redirect(`/[locale]/${tenant_slug}`);
+    redirect(ROUTE_HREF(ROUTE("/[locale]/t/[tenant_slug]", { tenant_slug })));
   }
   redirect("/[locale]/home");
 });

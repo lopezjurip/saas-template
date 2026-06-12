@@ -3,7 +3,8 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ACCOUNT_SECTIONS, type AccountSectionId } from "./sections";
+import { ROUTE } from "~/lib/route";
+import { ACCOUNT_SECTION_PATH, ACCOUNT_SECTIONS, type AccountSectionId } from "./sections";
 
 function ACTIVE_SECTION(pathname: string): AccountSectionId {
   const segments = pathname.split("/").filter(Boolean);
@@ -27,19 +28,19 @@ export function AccountSidebar({ locale }: { locale: string }) {
   }
 
   return (
-    <nav className="bg-muted/22 flex h-full flex-col gap-px border-r px-2.5 py-3.5">
+    <nav className="bg-muted/22 flex h-full flex-col gap-1 border-r px-2.5 py-4">
       {groups.map((g) => (
         <div key={g.name}>
-          <div className="text-muted-foreground px-2.5 pt-3 pb-1.5 text-[10.5px] font-semibold tracking-[0.08em] uppercase first:pt-1">
+          <div className="text-muted-foreground px-2.5 pt-4 pb-1.5 text-tiny font-semibold tracking-[0.08em] uppercase first:pt-1">
             {g.name}
           </div>
           {g.items.map((s) => (
             <Link
               key={s.id}
-              href={`/${locale}/home/account/${s.id}`}
+              href={ROUTE(ACCOUNT_SECTION_PATH(s.id), { locale })}
               data-active={s.id === active ? "true" : "false"}
               className={cn(
-                "text-muted-foreground hover:bg-accent hover:text-foreground flex w-full items-center gap-2.5 rounded-md border border-transparent px-2.5 py-[7px] text-left text-[13px] font-medium no-underline",
+                "text-muted-foreground hover:bg-accent hover:text-foreground flex w-full items-center gap-2.5 rounded-md border border-transparent px-2.5 py-2 text-left text-sm/normal font-medium no-underline",
                 "data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:border-border data-[active=true]:shadow-sm",
                 s.danger && "text-destructive",
               )}
@@ -60,11 +61,11 @@ export function AccountMobileNav({ locale }: { locale: string }) {
   const pathname = usePathname();
   const active = ACTIVE_SECTION(pathname);
   return (
-    <div className="flex gap-1 overflow-x-auto border-b px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex gap-1 overflow-x-auto border-b px-3 py-2 scrollbar-none [&::-webkit-scrollbar]:hidden">
       {ACCOUNT_SECTIONS.map((s) => (
         <Link
           key={s.id}
-          href={`/${locale}/home/account/${s.id}`}
+          href={ROUTE(ACCOUNT_SECTION_PATH(s.id), { locale })}
           data-active={s.id === active ? "true" : "false"}
           className={cn(
             "text-muted-foreground inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium whitespace-nowrap no-underline",

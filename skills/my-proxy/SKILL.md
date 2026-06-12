@@ -1,6 +1,6 @@
 ---
 name: my-proxy
-description: Repository-specific Next.js proxy routing for locale, apex and tenant subdomains, Supabase session refresh, public paths, auth gates, tenant membership, rewrites, cookies, and custom-domain staging.
+description: Repository-specific Next.js proxy routing for locale, apex, tenant path gate, Supabase session refresh, public paths, auth gates, tenant membership, and cookies.
 ---
 
 # Platform Proxy
@@ -11,18 +11,15 @@ File: `apps/platform/proxy.ts`. This skill means Next.js request proxy, not netw
 
 Preserve gate order:
 
-1. Classify apex, tenant subdomain, Vercel preview, unknown host.
+1. Classify apex, Vercel preview, unknown host (bounce unknown to apex).
 2. Handle canonical `/health`.
 3. Resolve `/[locale]/` sentinel.
 4. Add missing locale from cookie/header/default.
 5. Set locale on request before `updateSession`.
 6. Refresh Supabase session.
-7. Move tenant-subdomain `/auth/*` to apex.
-8. Public path handling.
-9. Auth gate with same request URL in `next`.
-10. Decode JWT tenant claims.
-11. Subdomain reserved-slug, tenant, membership checks.
-12. Rewrite to `/{locale}/{tenant_slug}{path}`.
+7. Public path handling.
+8. Auth gate with same request URL in `next`.
+9. Tenant path gate for `/{locale}/t/{slug}/...` — resolve tenant, check access via session-scoped DB read.
 
 Reordering can break cookie/session visibility.
 
@@ -34,7 +31,6 @@ From `apps/platform/lib/constants.ts`:
 APEX_HOSTNAME
 APP_PORT
 APP_HOST
-SUBDOMAIN_MODE
 ```
 
 `NEXT_PUBLIC_APEX_HOSTNAME` is hostname only. Port comes from `PORT`. Do not hardcode `7003`
@@ -80,19 +76,19 @@ const authUrl = new URL(`/${locale}/auth`, `${proto}://${APP_HOST}`);
 authUrl.searchParams.set("next", next);
 ```
 
-Do not use `request.url` alone; Next dev can lose original subdomain.
+## Tenant path gate
 
-## Tenant subdomain
+Tenant routes live at `/{locale}/t/{slug}/...`. The proxy is the access-control boundary:
 
-- Reject reserved slug from request-cached DB list.
-- Resolve active tenant with service role.
-- Decode `session.access_token`; `auth.getUser()` lacks hook claims.
-- Require tenant ID in `app_metadata.tenants`.
-- Rewrite, do not redirect, to locale + slug route.
-- Avoid duplicate slug when browser path already includes it.
+- Resolve active tenant from slug via service-role DB query (catches disabled tenants).
+- Verify access with a session-scoped DB read: query `tenants` through the user's session client.
+  RLS returns the row only if the caller is a member or has agency access (`viewer_tenant_ids` /
+  `viewer_agency_tenant_ids` resolve it server-side). The JWT carries only `profile_id` (`sub`);
+  tenant membership is never in the JWT.
+- Return 404 for unknown/disabled tenant, 403 for non-member.
+- No rewrite needed — path already maps to `app/[locale]/t/[tenant_slug]/...`.
 
-Path-form tenant access on apex remains supported. Page/layout validates viewer tenant/org via
-GraphQL helpers.
+A logged-in non-member hitting `/es/t/acme/123` must receive a 403 here.
 
 ## Locale sentinel
 
@@ -101,11 +97,11 @@ locale cookie/header. Handle raw and percent-encoded brackets.
 
 ## Custom domains
 
-`tenant_domains` schema exists, but proxy does not resolve custom apex domains. Unknown hosts
-currently redirect to configured apex. Do not claim custom-domain support without SSO/cookie
-exchange design.
+`tenant_domains` schema exists, but proxy does not resolve custom domains. Unknown hosts
+redirect to configured apex. Custom domain support (phase 2) would add a DB lookup here:
+hostname → tenant slug → rewrite to `/t/{slug}/...`.
 
 ## Tests
 
-Routing/auth changes need Playwright journeys. Cover apex, tenant subdomain, unauthenticated
+Routing/auth changes need Playwright journeys. Cover apex, tenant path, unauthenticated
 `next`, forbidden tenant, locale sentinel, public path, and cookie preservation.

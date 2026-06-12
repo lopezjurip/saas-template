@@ -15,10 +15,8 @@ export async function GET(request: NextRequest) {
   const base = `https://${APP_HOST}`;
   const body = `# SaaS Template
 
-> Chat-first HR and payroll platform for Chilean companies (50–250 employees).
-> Built around Chilean labor law (Código del Trabajo, Previred, LRE) with a
-> WhatsApp-native experience for employees and an opinionated web surface
-> for HR/payroll administrators.
+> Production-ready SaaS template with multi-tenant support, chat-first UX,
+> and an opinionated web surface for teams that move fast.
 
 The marketing site has two locales (Spanish / English). The product itself
 (/home, /auth/onboarding, tenant subdomains) is auth-gated and not exposed
