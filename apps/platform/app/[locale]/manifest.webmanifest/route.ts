@@ -1,12 +1,14 @@
+import { ROSETTA } from "~/lib/i18n";
 import { assertLocale } from "~/lib/i18n.server";
 
-export async function GET(_req: Request, props: { params: Promise<{ locale: string }> }) {
+export async function GET(req: Request, props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
   assertLocale(locale);
+  const { t } = ROSETTA(LOCALES, locale);
   return Response.json({
-    name: "SaaS Template",
-    short_name: "SaaS Template",
-    description: "Production-ready SaaS template",
+    name: t("name"),
+    short_name: t("short_name"),
+    description: t("description"),
     start_url: `/${locale}`,
     display: "standalone",
     lang: locale,
@@ -18,3 +20,23 @@ export async function GET(_req: Request, props: { params: Promise<{ locale: stri
     ],
   });
 }
+
+const LOCALE_ES = {
+  name: "SaaS Template",
+  short_name: "SaaS Template",
+  description: "Plantilla SaaS lista para producción",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  name: "SaaS Template",
+  short_name: "SaaS Template",
+  description: "Production-ready SaaS template",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  name: "SaaS Template",
+  short_name: "SaaS Template",
+  description: "Template SaaS pronto para produção",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
