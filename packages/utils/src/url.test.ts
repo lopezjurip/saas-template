@@ -69,6 +69,15 @@ describe("NEW_URL", () => {
       const url = URL_NEW(input, undefined, { replace: { locale: "es-CL" } });
       expect(url.pathname).toBe("/es-CL/home");
     });
+
+    it("infers replace keys from string literal — type-level (compile-time check)", () => {
+      // TypeScript should accept known keys and reject unknown ones.
+      // If this compiles, the generic inference is working.
+      const url = URL_NEW("/[locale]/t/[tenant_slug]", "https://example.com", {
+        replace: { locale: "es-CL", tenant_slug: "acme" },
+      });
+      expect(url.pathname).toBe("/es-CL/t/acme");
+    });
   });
 });
 

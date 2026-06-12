@@ -34,17 +34,29 @@ const URL_FIELDS = /*#__PURE__*/ [
 ] as const;
 export type URLParts = Pick<URL, (typeof URL_FIELDS)[number]>;
 
+/** Extracts `[key]` segment names from a URL template string literal. */
+export type ExtractURLSegments<S extends string> = S extends `${string}[${infer K}]${infer Rest}`
+  ? K | ExtractURLSegments<Rest>
+  : never;
+
+type ReplaceRecord<TUrl extends string | URL> = TUrl extends string
+  ? [ExtractURLSegments<TUrl>] extends [never]
+    ? Record<string, string | number>
+    : Partial<Record<ExtractURLSegments<TUrl>, string | number>>
+  : Record<string, string | number>;
+
 /**
  * Throws detailed error.
  * To remove querystring set `search` to `""`.
  * `replace` substitutes `[key]` placeholders in pathname after URL construction.
+ * When `url` is a string literal, `replace` keys are inferred from `[segment]` patterns.
  * @example
  * URL_NEW("/[locale]/t/[tenant_slug]", base, { replace: { locale: "es-CL", tenant_slug: "acme" } })
  */
-export function URL_NEW(
-  url: string | URL,
+export function URL_NEW<const TUrl extends string | URL>(
+  url: TUrl,
   base?: string | URL,
-  overwrite?: Partial<URLParts> & { params?: Record<string | number, any>; replace?: Record<string, string | number> },
+  overwrite?: Partial<URLParts> & { params?: Record<string | number, any>; replace?: ReplaceRecord<TUrl> },
 ) {
   try {
     const result = new URL(url, base);
