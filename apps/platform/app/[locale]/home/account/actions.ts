@@ -20,6 +20,18 @@ export const actionSignOutOtherDevices = authedAction.action(async ({ ctx: { sup
   }
 });
 
+const revokeSessionSchema = z.object({ sessionId: z.string().uuid() });
+
+export const actionRevokeSession = authedAction
+  .inputSchema(revokeSessionSchema)
+  .action(async ({ parsedInput, ctx: { supabase, user } }) => {
+    const { error } = await supabase.rpc("revoke_session", { session_id: parsedInput.sessionId });
+    if (error) {
+      log.error("revoke session failed", { profile_id: user.id, sessionId: parsedInput.sessionId, error });
+      throw new Error("No pudimos cerrar esa sesión");
+    }
+  });
+
 const updateEmailSchema = z.object({
   email: z
     .string()

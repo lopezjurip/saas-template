@@ -4,17 +4,12 @@
 
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
-import { FloatingChrome } from "~/components/floating-chrome";
 
 export default async function HomeLayout(props: LayoutProps<"/[locale]/home">) {
+  const { locale } = await props.params;
   const user = await getSupabaseServerUser();
   if (!user) {
     redirect(`/[locale]/auth?next=${encodeURIComponent("/[locale]/home")}`);
   }
-  return (
-    <>
-      <FloatingChrome />
-      {props.children}
-    </>
-  );
+  return <>{props.children}</>;
 }

@@ -88,6 +88,7 @@ export function ProfileForm({
         <Input
           id="profile-name"
           className="h-10"
+          placeholder="María Pérez"
           autoComplete="name"
           aria-invalid={!!form.formState.errors.profile_name_full}
           {...form.register("profile_name_full")}

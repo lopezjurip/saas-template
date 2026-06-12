@@ -1,10 +1,12 @@
 import { createServerClient } from "@packages/supabase/client.server";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { createSafeActionClient } from "next-safe-action";
 
 export const action = createSafeActionClient({
   defaultValidationErrorsShape: "flattened",
   handleServerError(e) {
+    if (isRedirectError(e)) throw e;
     console.error("[safe-action]", e);
     return e instanceof Error ? e.message : "Error inesperado";
   },

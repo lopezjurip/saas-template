@@ -1,5 +1,6 @@
 import { updateSession } from "@packages/supabase/client.middleware";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { URL_NEW } from "@packages/utils/url";
 import { type NextRequest, NextResponse, userAgent } from "next/server";
 import { APEX_HOSTNAME, APP_HOST } from "~/lib/constants";
 import { debug } from "~/lib/debug";
@@ -25,18 +26,13 @@ function isLocalizedPublicPath(pathAfterLocale: string): boolean {
   return PUBLIC_PATH_REGEX.test(pathAfterLocale);
 }
 
-function copyCookies(from: NextResponse, to: NextResponse): NextResponse {
-  for (const cookie of from.cookies.getAll()) to.cookies.set(cookie);
-  return to;
-}
-
 function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse {
   const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
   response.cookies.set(LOCALE_COOKIE, locale, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
-    ...(cookieDomain ? { domain: cookieDomain } : {}),
+    domain: cookieDomain || undefined,
   });
   return response;
 }
@@ -47,29 +43,32 @@ export async function proxy(request: NextRequest) {
   const proto = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
 
   const { isBot, device } = userAgent(request);
-  log.debug("request", { hostname, pathname, isBot, deviceType: device.type ?? "desktop" });
+  log.debug("[proxy] request", { hostname, pathname, isBot, deviceType: device.type ?? "desktop" });
 
-  // Host classification: apex, Vercel preview (treat as apex), or unknown (bounce to apex).
-  // All tenant routing is path-based (/t/{slug}/...) — no subdomain extraction needed.
+  /**
+   * Host classification: apex, Vercel preview (treat as apex), or unknown (bounce to apex).
+   * All tenant routing is path-based (/t/{slug}/...) — no subdomain extraction needed.
+   */
   const hostnameBase = hostname.split(":")[0] ?? "";
   const isApex = hostnameBase === APEX_HOSTNAME || hostnameBase === `www.${APEX_HOSTNAME}`;
   const vercelEnv = process.env["VERCEL_ENV"];
   const isVercelNonProd = vercelEnv === "preview" || vercelEnv === "development";
   if (!isApex && !isVercelNonProd) {
-    // Unknown host (localhost/127.0.0.1/custom domain — phase 2).
-    // Bounce to apex so session and cookies land on the right origin.
-    const apexUrl = new URL(`${pathname}${request.nextUrl.search}`, `${proto}://${APP_HOST}`);
+    /** Unknown host (localhost/127.0.0.1/custom domain — phase 2). Bounce to apex so session and cookies land on the right origin. */
+    const apexUrl = URL_NEW(`${pathname}${request.nextUrl.search}`, `${proto}://${APP_HOST}`);
     return NextResponse.redirect(apexUrl);
   }
 
-  // /health — no auth, no locale.
+  /** /health — no auth, no locale. */
   if (pathname === "/health") {
     const { response } = await updateSession(request);
     return response;
   }
 
-  // Locale sentinel: /[locale]/path → /${locale}/path
-  // Handles both raw brackets and percent-encoded form (%5Blocale%5D) browsers send after redirects.
+  /**
+   * Locale sentinel: /[locale]/path → /${locale}/path
+   * Handles both raw brackets and percent-encoded form (%5Blocale%5D) browsers send after redirects.
+   */
   const sentinelMatch = /^\/(?:\[locale\]|%5[Bb]locale%5[Dd]|_)\//i.exec(pathname);
   if (sentinelMatch) {
     const detected = RESOLVE_LOCALE_FROM_REQUEST(request);
@@ -78,7 +77,7 @@ export async function proxy(request: NextRequest) {
     return setLocaleCookieOnResponse(NextResponse.redirect(url), detected);
   }
 
-  // Detect locale from URL first segment; if missing, resolve from cookie/header and redirect.
+  /** Detect locale from URL first segment; if missing, resolve from cookie/header and redirect. */
   const { locale: localeFromPath, pathAfterLocale } = EXTRACT_LOCALE_FROM_PATH(pathname);
   if (!localeFromPath) {
     const detected = RESOLVE_LOCALE_FROM_REQUEST(request);
@@ -89,22 +88,26 @@ export async function proxy(request: NextRequest) {
   }
   const locale = localeFromPath;
 
-  // Mutate the incoming request's cookie BEFORE updateSession creates its NextResponse.next({request}).
-  // Downstream server components (root layout, server actions) read cookies via next/headers `cookies()`,
-  // which reflects the request snapshot — so if we only set on the response, server-rendered output
-  // (notably <html lang>) reads the previous request's cookie and falls out of sync with the URL.
+  /**
+   * Mutate the incoming request's cookie BEFORE updateSession creates its NextResponse.next({request}).
+   * Downstream server components (root layout, server actions) read cookies via next/headers `cookies()`,
+   * which reflects the request snapshot — so if we only set on the response, server-rendered output
+   * (notably <html lang>) reads the previous request's cookie and falls out of sync with the URL.
+   */
   request.cookies.set(LOCALE_COOKIE, locale);
 
   const { response: sessionResponse, supabase } = await updateSession(request);
 
-  // Bots get public content without session overhead.
+  /** Bots get public content without session overhead. */
   if (isBot && isLocalizedPublicPath(pathAfterLocale)) {
     return setLocaleCookieOnResponse(NextResponse.next(), locale);
   }
 
-  // Public routes — no auth required, but logged-in users shouldn't see auth entry pages.
-  // (The form's server action gets bound to the wrong route after a client transition from /home
-  // and posts to the previous URL, producing "unexpected response from server".)
+  /**
+   * Public routes — no auth required, but logged-in users shouldn't see auth entry pages.
+   * (The form's server action gets bound to the wrong route after a client transition from /home
+   * and posts to the previous URL, producing "unexpected response from server".)
+   */
   if (isLocalizedPublicPath(pathAfterLocale)) {
     const isAuthEntryPath =
       pathAfterLocale === "/auth" ||
@@ -117,7 +120,7 @@ export async function proxy(request: NextRequest) {
       } = await supabase.auth.getSession();
       if (session) {
         return setLocaleCookieOnResponse(
-          NextResponse.redirect(new URL(`/${locale}/home`, `${proto}://${APP_HOST}`)),
+          NextResponse.redirect(URL_NEW(`/${locale}/home`, `${proto}://${APP_HOST}`)),
           locale,
         );
       }
@@ -125,21 +128,23 @@ export async function proxy(request: NextRequest) {
     return setLocaleCookieOnResponse(sessionResponse, locale);
   }
 
-  // Auth gate.
+  /** Auth gate. */
   const {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session) {
     const next = `${proto}://${hostname}${pathname}${request.nextUrl.search}`;
-    const authUrl = new URL(`/${locale}/auth`, `${proto}://${APP_HOST}`);
+    const authUrl = URL_NEW(`/${locale}/auth`, `${proto}://${APP_HOST}`);
     authUrl.searchParams.set("next", next);
     return setLocaleCookieOnResponse(NextResponse.redirect(authUrl), locale);
   }
 
-  // Tenant path gate: /{locale}/t/{slug}/... — verify tenant exists and the caller can access it.
-  // This is the access-control boundary: a logged-in non-member hitting /t/{slug} is blocked here.
-  // Membership lives in the DB only (never in the JWT): the session-scoped client sees the tenant
-  // row iff RLS allows it (viewer_tenant_ids / viewer_agency_tenant_ids resolve it server-side).
+  /**
+   * Tenant path gate: /{locale}/t/{slug}/... — verify tenant exists and the caller can access it.
+   * This is the access-control boundary: a logged-in non-member hitting /t/{slug} is blocked here.
+   * Membership lives in the DB only (never in the JWT): the session-scoped client sees the tenant
+   * row iff RLS allows it (viewer_tenant_ids / viewer_agency_tenant_ids resolve it server-side).
+   */
   if (pathAfterLocale.startsWith("/t/")) {
     const segments = pathAfterLocale.split("/"); // ["", "t", "{slug}", ...]
     const tenantSlug = segments[2];
@@ -162,10 +167,12 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Protected paths — session verified above, tenant gate applied for /t/ routes.
+  /** Protected paths — session verified above, tenant gate applied for /t/ routes. */
   return setLocaleCookieOnResponse(sessionResponse, locale);
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|llms.txt).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sitemap|llms.txt|manifest.webmanifest).*)",
+  ],
 };

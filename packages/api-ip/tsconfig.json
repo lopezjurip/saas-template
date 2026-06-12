@@ -1,0 +1,9 @@
+{
+  "extends": "@packages/typescript-config/base.json",
+  "compilerOptions": {
+    "module": "preserve",
+    "moduleResolution": "bundler"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+}

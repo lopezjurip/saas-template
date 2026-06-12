@@ -16,13 +16,13 @@ export async function createPasskey() {
   const [challenge, challengeError] = await ErrorSafeAction.unwrap(actionCreatePasskeyChallenge());
   if (challengeError) {
     log.error("[createPasskey] Failed to create passkey challenge", challengeError);
-    throw new Error("Failed to create passkey challenge.");
+    throw challengeError;
   }
   const credential = await startRegistration({ optionsJSON: challenge });
   const [result, verifyError] = await ErrorSafeAction.unwrap(actionVerifyPasskeyRegistration(credential));
   if (verifyError) {
     log.error("[createPasskey] Failed to verify passkey registration", verifyError);
-    throw new Error("Verification failed.");
+    throw verifyError;
   }
   return result;
 }

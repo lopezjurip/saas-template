@@ -58,6 +58,7 @@ export function ProfileForm({ profile_id, defaultValue }: { profile_id: string; 
         <Input
           id="full_name"
           autoComplete="name"
+          placeholder="Juan Pérez"
           aria-invalid={!!form.formState.errors.profile_name_full}
           {...form.register("profile_name_full")}
         />

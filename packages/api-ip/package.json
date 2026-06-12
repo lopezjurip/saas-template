@@ -1,0 +1,18 @@
+{
+  "name": "@packages/api-ip",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build:dry": "tsc --noEmit",
+    "format": "biome check --diagnostic-level=error ."
+  },
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "devDependencies": {
+    "@packages/typescript-config": "workspace:*",
+    "@types/node": "^24.12.4",
+    "typescript": "^6.0.3"
+  }
+}

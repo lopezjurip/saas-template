@@ -1556,6 +1556,43 @@ create view public.tenants_organizations_profiles as
 revoke all on public.tenants_organizations_profiles from anon, authenticated;
 grant select on public.tenants_organizations_profiles to authenticated;
 
+create or replace function public.viewer_sessions()
+  returns table (
+    id uuid,
+    user_agent text,
+    ip text,
+    created_at timestamptz,
+    refreshed_at timestamptz,
+    not_after timestamptz
+  )
+  stable
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select
+      s.id,
+      s.user_agent,
+      s.ip::text,
+      s.created_at,
+      s.refreshed_at,
+      s.not_after
+    from auth.sessions s
+    where s.user_id = auth.uid()
+    order by s.refreshed_at desc nulls last;
+  $$;
+
+create or replace function public.revoke_session(session_id uuid)
+  returns void
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    delete from auth.sessions s
+    where s.id = revoke_session.session_id
+      and s.user_id = auth.uid();
+  $$;
+
 create or replace function public.viewer_tenants()
   returns setof public.tenants
   stable
@@ -2785,3 +2822,44 @@ create or replace view public.storage_organizations
 grant select on public.storage_organizations to authenticated, anon;
 
 comment on view public.storage_organizations is e'@graphql({"primary_key_columns": ["storage_organization_id"], "foreign_keys": [{"local_name": "storage_organizations", "local_columns": ["organization_id"], "foreign_name": "organization", "foreign_schema": "public", "foreign_table": "organizations", "foreign_columns": ["organization_id"]}]})';
+
+-- Sessions: list and revoke the viewer's own auth sessions.
+-- Uses security definer to read auth.sessions (not exposed to anon/authenticated).
+
+create or replace function public.viewer_sessions()
+  returns table (
+    id          uuid,
+    user_agent  text,
+    ip          text,
+    created_at  timestamptz,
+    refreshed_at timestamptz,
+    not_after   timestamptz
+  )
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select
+      s.id,
+      s.user_agent,
+      s.ip::text,
+      s.created_at,
+      s.refreshed_at,
+      s.not_after
+    from auth.sessions s
+    where s.user_id = auth.uid()
+    order by coalesce(s.refreshed_at, s.created_at) desc nulls last;
+  $$;
+
+create or replace function public.revoke_session(session_id uuid)
+  returns void
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    delete from auth.sessions
+    where id = revoke_session.session_id
+      and user_id = auth.uid();
+  $$;

@@ -28,10 +28,10 @@ export function AccountSidebar({ locale }: { locale: string }) {
   }
 
   return (
-    <nav className="bg-muted/22 flex h-full flex-col gap-px border-r px-2.5 py-3.5">
+    <nav className="bg-muted/22 flex h-full flex-col gap-1 border-r px-2.5 py-4">
       {groups.map((g) => (
         <div key={g.name}>
-          <div className="text-muted-foreground px-2.5 pt-3 pb-1.5 text-tiny font-semibold tracking-[0.08em] uppercase first:pt-1">
+          <div className="text-muted-foreground px-2.5 pt-4 pb-1.5 text-tiny font-semibold tracking-[0.08em] uppercase first:pt-1">
             {g.name}
           </div>
           {g.items.map((s) => (
@@ -40,7 +40,7 @@ export function AccountSidebar({ locale }: { locale: string }) {
               href={ROUTE(ACCOUNT_SECTION_PATH(s.id), { locale })}
               data-active={s.id === active ? "true" : "false"}
               className={cn(
-                "text-muted-foreground hover:bg-accent hover:text-foreground flex w-full items-center gap-2.5 rounded-md border border-transparent px-2.5 py-[7px] text-left text-sm/normal font-medium no-underline",
+                "text-muted-foreground hover:bg-accent hover:text-foreground flex w-full items-center gap-2.5 rounded-md border border-transparent px-2.5 py-2 text-left text-sm/normal font-medium no-underline",
                 "data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:border-border data-[active=true]:shadow-sm",
                 s.danger && "text-destructive",
               )}

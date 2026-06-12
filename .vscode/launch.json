@@ -1,9 +1,21 @@
 {
   "version": "0.2.0",
   "configurations": [
-    // ── Server-side: lanza el dev server con el inspector activo ───────────
+    // ── Attach: conecta al inspector de Next.js ya corriendo (puerto 9229) ──
+    // Requiere que el servidor esté corriendo con dev:debug (--inspect flag)
     {
-      "name": "Next.js: debug server-side",
+      "name": "Next.js: attach server (debug mode)",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "skipFiles": ["<node_internals>/**"],
+      "restart": true
+    },
+
+    // ── Server-side: lanza el dev server con el inspector activo ───────────
+    // Usar solo si NO está corriendo via Conductor (conflicto de puertos HTTP)
+    {
+      "name": "Next.js: launch server-side (standalone)",
       "type": "node-terminal",
       "request": "launch",
       "command": "NODE_OPTIONS='--inspect' pnpm dev",
@@ -13,16 +25,6 @@
         "uriFormat": "%s",
         "action": "openExternally"
       }
-    },
-
-    // ── Attach: conecta a un proceso Node.js ya corriendo (puerto 9229) ────
-    {
-      "name": "Next.js: attach to server",
-      "type": "node",
-      "request": "attach",
-      "port": 9229,
-      "skipFiles": ["<node_internals>/**"],
-      "restart": true
     },
 
     // ── Client-side: abre Chrome con el debugger conectado ─────────────────
@@ -36,8 +38,9 @@
     },
 
     // ── Full-stack: dev server + Chrome debugger juntos ────────────────────
+    // Usar solo si NO está corriendo via Conductor
     {
-      "name": "Next.js: debug full stack",
+      "name": "Next.js: debug full stack (standalone)",
       "type": "node-terminal",
       "request": "launch",
       "command": "NODE_OPTIONS='--inspect' pnpm dev",
@@ -53,8 +56,19 @@
 
   "compounds": [
     {
-      "name": "Next.js: server + client (compound)",
-      "configurations": ["Next.js: debug server-side", "Next.js: debug client-side"],
+      "name": "Next.js: server + client (compound, standalone)",
+      "configurations": [
+        "Next.js: launch server-side (standalone)",
+        "Next.js: debug client-side"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "Next.js: attach + client (Conductor)",
+      "configurations": [
+        "Next.js: attach server (debug mode)",
+        "Next.js: debug client-side"
+      ],
       "stopAll": true
     }
   ]

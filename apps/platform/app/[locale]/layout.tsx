@@ -1,14 +1,52 @@
-import { LocaleProvider } from "~/components/locale-provider";
-import { SUPPORTED_LOCALES } from "~/lib/i18n";
-import { assertLocale } from "~/lib/i18n.server";
+import { Toaster } from "@packages/ui-common/shadcn/components/ui/sonner";
+import type { Metadata, Viewport } from "next";
+import { GraphyClientProvider } from "~/components/graphy-provider";
+import { ThemeProvider } from "~/components/theme-provider";
+import { APP_HOST } from "~/lib/constants";
+import { LOCALE_TO_BCP47 } from "~/lib/i18n";
+import { getServerLocale } from "~/lib/i18n.server";
+import "~/styles/globals.css";
 
-export function generateStaticParams() {
-  return SUPPORTED_LOCALES.map((locale) => ({ locale }));
-}
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  colorScheme: "dark light",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#24232b" },
+  ],
+};
 
-export default async function LocaleLayout({ children, params }: LayoutProps<"/[locale]">) {
-  const { locale } = await params;
-  assertLocale(locale);
+export const metadata: Metadata = {
+  metadataBase: new URL(`https://${APP_HOST}`),
+  title: { default: "SaaS Template", template: "%s | SaaS Template" },
+  description: "Production-ready SaaS template",
+  applicationName: "SaaS Template",
+  formatDetection: { telephone: false, email: false, address: false },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "SaaS Template",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "SaaS Template",
+  },
+};
 
-  return <LocaleProvider locale={locale}>{children}</LocaleProvider>;
+export default async function RootLayout(props: LayoutProps<"/[locale]">) {
+  const { children } = props;
+  const locale = await getServerLocale();
+
+  return (
+    <html lang={LOCALE_TO_BCP47[locale]} suppressHydrationWarning>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <GraphyClientProvider>{children}</GraphyClientProvider>
+          <Toaster richColors closeButton />
+        </ThemeProvider>
+      </body>
+    </html>
+  );
 }

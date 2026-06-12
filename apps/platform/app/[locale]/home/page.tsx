@@ -1,7 +1,9 @@
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { Logo } from "@packages/ui-common/logo";
 import { ArrowRight, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { FloatingChrome } from "~/components/floating-chrome";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { ROUTE } from "~/lib/route";
@@ -54,6 +56,13 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
 
   return (
     <div className="relative flex min-h-svh w-full flex-col overflow-hidden bg-background">
+      <Link
+        href={ROUTE("/[locale]", { locale })}
+        aria-label="SaaS Template"
+        className="absolute top-4 left-4 z-10 inline-block transition-opacity hover:opacity-80"
+      >
+        <Logo />
+      </Link>
       <div className="flex flex-1 items-center justify-center px-6 pt-6 pb-24">
         <div className="flex w-full max-w-[1040px] flex-col items-center gap-7 text-center">
           <div className="flex flex-col gap-1.5 text-center">
@@ -136,6 +145,7 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
         </div>
       </div>
 
+      <FloatingChrome />
       <UserMenu locale={locale} name={state.profile_name_full} email={state.email ?? user["email"] ?? ""} />
     </div>
   );

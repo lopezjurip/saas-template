@@ -107,10 +107,10 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-2">
+            <LocaleToggle />
             <div className="hidden sm:block">
-              <LocaleToggle />
+              <ThemeToggle />
             </div>
-            <ThemeToggle />
             <Button asChild size="sm" className="cursor-pointer">
               <Link href={user ? ROUTE("/[locale]/home", { locale }) : ROUTE("/[locale]/auth", { locale })}>
                 {user ? t("cta.dashboard") : t("cta.signin")}
@@ -160,6 +160,10 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
               ·
             </span>
             <span className="font-mono">{t("footer.compliance")}</span>
+            <div className="ml-auto flex items-center gap-2">
+              <LocaleToggle />
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </footer>

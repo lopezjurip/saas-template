@@ -11,6 +11,7 @@
     "postinstall": "node scripts/skills-setup.js",
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:debug": "turbo run dev:debug",
     "build:dry": "turbo run build:dry",
     "generate": "turbo run generate",
     "test": "turbo run test",

@@ -47,6 +47,9 @@ importers:
       '@next/env':
         specifier: ^16.2.9
         version: 16.2.9
+      '@packages/api-ip':
+        specifier: workspace:*
+        version: link:../../packages/api-ip
       '@packages/debug':
         specifier: workspace:*
         version: link:../../packages/debug
@@ -89,6 +92,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.108.1
         version: 2.108.1
+      '@types/ua-parser-js':
+        specifier: ^0.7.39
+        version: 0.7.39
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -122,6 +128,9 @@ importers:
       swr:
         specifier: ^2.4.1
         version: 2.4.1(react@19.2.7)
+      ua-parser-js:
+        specifier: ^2.0.10
+        version: 2.0.10
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -162,6 +171,18 @@ importers:
       tailwindcss:
         specifier: ^4.3.0
         version: 4.3.0
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/api-ip:
+    devDependencies:
+      '@packages/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^24.12.4
+        version: 24.12.4
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -3855,6 +3876,9 @@ packages:
   '@types/sockjs@0.3.36':
     resolution: {integrity: sha512-MK9V6NzAS1+Ud7JV9lJLFqW85VbC9dq3LmwZCuBe4wBDgKC0Kj/jd8Xl+nSviU+Qc3+m7umHHyHg//2KSa0a0Q==}
 
+  '@types/ua-parser-js@0.7.39':
+    resolution: {integrity: sha512-P/oDfpofrdtF5xw433SPALpdSchtJmY7nsJItf8h3KXqOslkbySh8zq4dSWXH2oTjRvJ5PczVEoCZPow6GicLg==}
+
   '@types/unist@2.0.11':
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}
 
@@ -4539,6 +4563,9 @@ packages:
   destroy@1.2.0:
     resolution: {integrity: sha512-2sJGJTaXIIaR1w4iJSNoN0hnMY7Gpc/n8D4qSCJw8QqFWXf7cuAgnEHxBpweaVcPevC2l3KpjYCx3NypQQgaJg==}
     engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
+
+  detect-europe-js@0.1.2:
+    resolution: {integrity: sha512-lgdERlL3u0aUdHocoouzT10d9I89VVhk0qNRmll7mXdGfJT1/wqZ2ZLA4oJAjeACPY5fT1wsbq2AT+GkuInsow==}
 
   detect-indent@7.0.2:
     resolution: {integrity: sha512-y+8xyqdGLL+6sh0tVeHcfP/QDd8gUgbasolJJpY7NgeQGSZ739bDtSiaiDgtoicy+mtYB81dKLxO9xRhCyIB3A==}
@@ -5230,6 +5257,9 @@ packages:
   is-relative@1.0.0:
     resolution: {integrity: sha512-Kw/ReK0iqwKeu0MITLFuj0jbPAmEiOsIwyIXvvbfa6QfmN9pkD1M+8pdk7Rl/dTKbH34/XBFMbgD4iMJhLQbGA==}
     engines: {node: '>=0.10.0'}
+
+  is-standalone-pwa@0.1.1:
+    resolution: {integrity: sha512-9Cbovsa52vNQCjdXOzeQq5CnCbAcRk05aU62K20WO372NrTv0NxibLFCK6lQ4/iZEFdEA3p3t2VNOn8AJ53F5g==}
 
   is-unc-path@1.0.0:
     resolution: {integrity: sha512-mrGpVd0fs7WWLfVsStvgF6iEJnbjDFZh9/emhRDcGWTduTfNHd9CHeUwH3gYIjdbwo4On6hunkztwOaAw0yllQ==}
@@ -6775,6 +6805,13 @@ packages:
   typescript@6.0.3:
     resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
     engines: {node: '>=14.17'}
+    hasBin: true
+
+  ua-is-frozen@0.1.2:
+    resolution: {integrity: sha512-RwKDW2p3iyWn4UbaxpP2+VxwqXh0jpvdxsYpZ5j/MLLiQOfbsV5shpgQiw93+KMYQPcteeMQ289MaAFzs3G9pw==}
+
+  ua-parser-js@2.0.10:
+    resolution: {integrity: sha512-t+3Ktbq0Ies2vaSezfOaWiolH4OigQIO1dk+1xDpOydB1COVPocVYOrEV5rqZ0kFY9XYG1v9LutCyMgYBpABcw==}
     hasBin: true
 
   uint8array-extras@1.5.0:
@@ -10600,6 +10637,8 @@ snapshots:
     dependencies:
       '@types/node': 24.12.4
 
+  '@types/ua-parser-js@0.7.39': {}
+
   '@types/unist@2.0.11': {}
 
   '@types/unist@3.0.3': {}
@@ -11277,6 +11316,8 @@ snapshots:
   dequal@2.0.3: {}
 
   destroy@1.2.0: {}
+
+  detect-europe-js@0.1.2: {}
 
   detect-indent@7.0.2: {}
 
@@ -12062,6 +12103,8 @@ snapshots:
   is-relative@1.0.0:
     dependencies:
       is-unc-path: 1.0.0
+
+  is-standalone-pwa@0.1.1: {}
 
   is-unc-path@1.0.0:
     dependencies:
@@ -13833,6 +13876,14 @@ snapshots:
       mime-types: 3.0.2
 
   typescript@6.0.3: {}
+
+  ua-is-frozen@0.1.2: {}
+
+  ua-parser-js@2.0.10:
+    dependencies:
+      detect-europe-js: 0.1.2
+      is-standalone-pwa: 0.1.1
+      ua-is-frozen: 0.1.2
 
   uint8array-extras@1.5.0: {}
 
