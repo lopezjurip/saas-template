@@ -1,7 +1,7 @@
 "use client";
 import { getSupabaseClientUserMetadata } from "@packages/supabase/client.browser";
 import { useSupabaseUser } from "@packages/supabase/react";
-import { usePostHog } from "posthog-js/react";
+import { usePostHog } from "@posthog/next";
 import { useEffect } from "react";
 
 export function PostHogIdentify() {
@@ -13,10 +13,10 @@ export function PostHogIdentify() {
       posthog?.reset();
       return;
     }
-    posthog?.identify(user.id, { email: user.email });
+    posthog?.identify(user.id, { ...(user.email && { email: user.email }) });
     void getSupabaseClientUserMetadata().then((metadata) => {
       if (metadata?.tenants?.length) {
-        posthog?.group("tenant", String(metadata.tenants[0].id));
+        posthog?.group("tenant", String(metadata.tenants[0]!.id));
       }
     });
   }, [user, posthog]);
