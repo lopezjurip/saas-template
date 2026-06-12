@@ -2,10 +2,16 @@
 set -e
 
 WS=$(echo "${WORKTREE_NAME:-local}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
-PROJECT=${WORKTREE_PROJECT:-}
+PROJECT=$(printf '%s' "${WORKTREE_PROJECT:-}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+PROJECT_PREFIX=$(printf '%s' "${PROJECT}" | cut -c1-20 | sed 's/-$//')
+WS_HASH=$(printf '%s' "${PROJECT}:${WS}" | shasum -a 256 | cut -c1-12)
+
+if [ -z "$PROJECT_PREFIX" ]; then
+  PROJECT_PREFIX="workspace"
+fi
 
 # --- Deregister this worktree from the shared Supabase instance ---
-INSTANCE_KEY="${PROJECT}-${WS}"
+INSTANCE_KEY="${PROJECT_PREFIX}-${WS_HASH}"
 REF_DIR="$HOME/.worktree-refs/${INSTANCE_KEY}"
 REF_FILE="$REF_DIR/$(pwd | tr '/' '_')"
 rm -f "$REF_FILE"

@@ -1,5 +1,6 @@
 import "server-only";
 import { GraphyClientSupabase } from "@packages/graphy/graphy";
+import { ENV } from "@packages/utils/env";
 import { URL_NEW } from "@packages/utils/url";
 import { cache } from "react";
 
@@ -11,8 +12,7 @@ import { cache } from "react";
  */
 export const getGraphyServiceRole = cache(() => {
   return new GraphyClientSupabase(
-    URL_NEW("/graphql/v1", process.env["NEXT_PUBLIC_SUPABASE_URL"]),
-    process.env["SUPABASE_SERVICE_ROLE_KEY"]!,
-    process.env["SUPABASE_SERVICE_ROLE_KEY"],
+    URL_NEW("/graphql/v1", ENV("NEXT_PUBLIC_SUPABASE_URL")),
+    ENV("SUPABASE_SERVICE_ROLE_KEY"),
   );
 });

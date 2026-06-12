@@ -41,7 +41,7 @@ export function PasskeyForm({ email }: { email: string }) {
   return (
     <>
       <div className="grid grid-cols-[48px_1fr] items-center gap-3.5 rounded-md border bg-muted/35 p-3.5">
-        <div className="inline-flex size-12 items-center justify-center rounded-xl bg-foreground text-background">
+        <div className="inline-flex size-12 items-center justify-center rounded-xl border-2 border-dashed border-muted-foreground/30 bg-transparent text-muted-foreground/40">
           <Fingerprint size={28} />
         </div>
         <div className="flex flex-col gap-1">
@@ -72,7 +72,7 @@ export function PasskeyForm({ email }: { email: string }) {
       </Button>
 
       <p className="mt-1 text-center text-xs leading-relaxed text-muted-foreground">
-        Podrás agregar más passkeys (otro celular, una llave física) desde tu cuenta.
+        Podrás agregar llaves de acceso desde tu cuenta más adelante.
       </p>
     </>
   );

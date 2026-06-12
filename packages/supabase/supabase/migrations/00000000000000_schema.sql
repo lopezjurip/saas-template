@@ -1040,9 +1040,11 @@ alter table public.profile_webauthn_credentials enable row level security;
 
 revoke all on table public.profile_webauthn_challenges from anon, authenticated;
 grant select, insert, delete on table public.profile_webauthn_challenges to anon, authenticated;
+grant select, insert, delete on table public.profile_webauthn_challenges to service_role;
 
 revoke all on table public.profile_webauthn_credentials from anon, authenticated;
 grant select, insert, update, delete on table public.profile_webauthn_credentials to anon, authenticated;
+grant select, insert, update, delete on table public.profile_webauthn_credentials to service_role;
 
 -- Challenges: 100% server-side via service-role (Server Actions in
 -- apps/platform/lib/passkeys.actions.ts). No authenticated policies — clients
@@ -1572,6 +1574,8 @@ create view public.user_sessions with (security_invoker = true, security_barrier
 
 revoke all on public.user_sessions from anon, authenticated;
 grant select on public.user_sessions to anon, authenticated;
+
+comment on view public.user_sessions is e'@graphql({"primary_key_columns": ["id"]})';
 
 create or replace function public.viewer_sessions()
   returns setof public.user_sessions
@@ -2828,15 +2832,10 @@ comment on view public.storage_organizations is e'@graphql({"primary_key_columns
 -- Sessions: list and revoke the viewer's own auth sessions.
 -- Uses security definer to read auth.sessions (not exposed to anon/authenticated).
 
+drop function if exists public.viewer_sessions();
+
 create or replace function public.viewer_sessions()
-  returns table (
-    id          uuid,
-    user_agent  text,
-    ip          text,
-    created_at  timestamptz,
-    refreshed_at timestamptz,
-    not_after   timestamptz
-  )
+  returns setof public.user_sessions
   stable
   security definer
   parallel safe
@@ -2845,12 +2844,13 @@ create or replace function public.viewer_sessions()
   as $$
     select
       s.id,
+      s.user_id,
       s.user_agent,
-      s.ip::text,
+      s.ip,
       s.created_at,
       s.refreshed_at,
       s.not_after
-    from auth.sessions s
+    from public.user_sessions s
     where s.user_id = auth.uid()
     order by coalesce(s.refreshed_at, s.created_at) desc nulls last;
   $$;

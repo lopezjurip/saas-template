@@ -3,6 +3,7 @@ import "server-only";
 
 import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { ENV } from "@packages/utils/env";
 import {
   type AuthenticationResponseJSON,
   type AuthenticatorTransportFuture,
@@ -27,15 +28,9 @@ const log = debug("passkeys");
 
 const WEBAUTHN_STATE_COOKIE = "webauthn_state";
 
-function REQUIRE_ENV(key: string): string {
-  const value = process.env[key];
-  if (!value) throw new Error(`Missing required env var: ${key}`);
-  return value;
-}
-
-const RP_NAME = REQUIRE_ENV("WEBAUTHN_RELYING_PARTY_NAME");
-const RP_ID = REQUIRE_ENV("WEBAUTHN_RELYING_PARTY_ID");
-const RP_ORIGIN = REQUIRE_ENV("WEBAUTHN_RELYING_PARTY_ORIGIN");
+const RP_NAME = ENV("WEBAUTHN_RELYING_PARTY_NAME");
+const RP_ID = ENV("WEBAUTHN_RELYING_PARTY_ID");
+const RP_ORIGIN = ENV("WEBAUTHN_RELYING_PARTY_ORIGIN");
 
 /**
  * simplewebauthn does the real cryptographic validation; zod just gates the shape.
@@ -74,7 +69,7 @@ const PasskeyCredentialsCollectionQuery = /*#__PURE__*/ gql(`
     $filter: profile_webauthn_credentialsFilter
     $orderBy: [profile_webauthn_credentialsOrderBy!]
   ) {
-    profile_webauthn_credentialsCollection(first: $first, filter: $filter, orderBy: $orderBy) {
+    profile_webauthn_credentials: profile_webauthn_credentialsCollection(first: $first, filter: $filter, orderBy: $orderBy) {
       edges {
         node {
           ...PasskeyCredentialFragment
@@ -86,7 +81,7 @@ const PasskeyCredentialsCollectionQuery = /*#__PURE__*/ gql(`
 
 const PasskeyCredentialsInsertMutation = /*#__PURE__*/ gql(`
   mutation PasskeyCredentialsInsertMutation($objects: [profile_webauthn_credentialsInsertInput!]!) {
-    insertIntoprofile_webauthn_credentialsCollection(objects: $objects) {
+    inserted: insertIntoprofile_webauthn_credentialsCollection(objects: $objects) {
       records {
         webauthn_credential_id
         webauthn_credential_friendly_name
@@ -104,7 +99,7 @@ const PasskeyCredentialsUpdateMutation = /*#__PURE__*/ gql(`
     $filter: profile_webauthn_credentialsFilter
     $set: profile_webauthn_credentialsUpdateInput!
   ) {
-    updateprofile_webauthn_credentialsCollection(atMost: $atMost, filter: $filter, set: $set) {
+    updated: updateprofile_webauthn_credentialsCollection(atMost: $atMost, filter: $filter, set: $set) {
       affectedCount
     }
   }
@@ -116,7 +111,7 @@ const PasskeyChallengesCollectionQuery = /*#__PURE__*/ gql(`
     $filter: profile_webauthn_challengesFilter
     $orderBy: [profile_webauthn_challengesOrderBy!]
   ) {
-    profile_webauthn_challengesCollection(first: $first, filter: $filter, orderBy: $orderBy) {
+    profile_webauthn_challenges: profile_webauthn_challengesCollection(first: $first, filter: $filter, orderBy: $orderBy) {
       edges {
         node {
           webauthn_challenge_id
@@ -129,7 +124,7 @@ const PasskeyChallengesCollectionQuery = /*#__PURE__*/ gql(`
 
 const PasskeyChallengesInsertMutation = /*#__PURE__*/ gql(`
   mutation PasskeyChallengesInsertMutation($objects: [profile_webauthn_challengesInsertInput!]!) {
-    insertIntoprofile_webauthn_challengesCollection(objects: $objects) {
+    inserted: insertIntoprofile_webauthn_challengesCollection(objects: $objects) {
       records {
         webauthn_challenge_id
         webauthn_challenge_value
@@ -143,7 +138,7 @@ const PasskeyChallengesDeleteMutation = /*#__PURE__*/ gql(`
     $atMost: Int! = 1
     $filter: profile_webauthn_challengesFilter
   ) {
-    deleteFromprofile_webauthn_challengesCollection(atMost: $atMost, filter: $filter) {
+    deleted: deleteFromprofile_webauthn_challengesCollection(atMost: $atMost, filter: $filter) {
       affectedCount
     }
   }
@@ -167,7 +162,7 @@ export const actionCreatePasskeyChallenge = authedAction.action(
       log.error("list credentials failed", { profile_id: user.id, error: list.error });
       throw new Error("No pudimos iniciar el registro");
     }
-    const credentials = list.data["profile_webauthn_credentialsCollection"]?.["edges"] ?? [];
+    const credentials = list.data["profile_webauthn_credentials"]?.["edges"] ?? [];
 
     const userName = user["email"] ?? user["phone"] ?? user["id"];
     const displayName = (user["user_metadata"]?.["full_name"] as string | undefined) ?? userName;
@@ -189,9 +184,7 @@ export const actionCreatePasskeyChallenge = authedAction.action(
         return {
           id: node["webauthn_credential_external_id"],
           type: node["webauthn_credential_type"] as "public-key",
-          transports: (node["webauthn_credential_transports"] ?? undefined) as
-            | AuthenticatorTransportFuture[]
-            | undefined,
+          transports: node["webauthn_credential_transports"] as AuthenticatorTransportFuture[],
         };
       }),
     });
@@ -228,7 +221,7 @@ export const actionVerifyPasskeyRegistration = authedAction
       log.error("challenge fetch failed", { profile_id: user.id, error: challengeRes.error });
       throw new Error("Desafío no encontrado");
     }
-    const challenge = challengeRes.data["profile_webauthn_challengesCollection"]?.["edges"]?.[0]?.["node"];
+    const challenge = challengeRes.data["profile_webauthn_challenges"]?.["edges"]?.[0]?.["node"];
     if (!challenge) {
       log.warn("verify requested but no pending challenge", { profile_id: user.id });
       throw new Error("Desafío no encontrado");
@@ -284,7 +277,7 @@ export const actionVerifyPasskeyRegistration = authedAction
       throw new Error("No pudimos guardar el passkey");
     }
 
-    const saved = insertRes.data["insertIntoprofile_webauthn_credentialsCollection"]?.["records"]?.[0];
+    const saved = insertRes.data["inserted"]?.["records"]?.[0];
     log.info("passkey registered", { profile_id: user.id, webauthn_credential_id: saved?.["webauthn_credential_id"] });
     return {
       webauthn_credential_id: saved?.["webauthn_credential_id"],
@@ -323,7 +316,7 @@ export const actionCreatePasskeySignInChallenge = action
       log.error("list credentials failed", { profile_id, error: credsRes.error });
       throw new Error("Error al buscar credenciales");
     }
-    const edges = credsRes.data["profile_webauthn_credentialsCollection"]?.["edges"] ?? [];
+    const edges = credsRes.data["profile_webauthn_credentials"]?.["edges"] ?? [];
     if (edges.length === 0) {
       log.info("sign-in challenge for user with no passkeys", { email, profile_id });
       throw new Error("Usuario sin passkey");
@@ -352,7 +345,7 @@ export const actionCreatePasskeySignInChallenge = action
       log.error("anonymous challenge insert failed", { email, profile_id, error: insertRes.error });
       throw new Error("No se pudo crear el desafío");
     }
-    const challenge = insertRes.data["insertIntoprofile_webauthn_challengesCollection"]?.["records"]?.[0];
+    const challenge = insertRes.data["inserted"]?.["records"]?.[0];
     if (!challenge?.["webauthn_challenge_id"]) {
       log.error("anonymous challenge insert returned no row", { email, profile_id });
       throw new Error("No se pudo crear el desafío");
@@ -392,7 +385,7 @@ export const actionVerifyPasskeySignIn = action
       log.error("challenge fetch failed", { webauthn_challenge_id, error: challengeRes.error });
       throw new Error("Desafío no encontrado");
     }
-    const challenge = challengeRes.data["profile_webauthn_challengesCollection"]?.["edges"]?.[0]?.["node"];
+    const challenge = challengeRes.data["profile_webauthn_challenges"]?.["edges"]?.[0]?.["node"];
 
     await graphy.mutate({
       query: PasskeyChallengesDeleteMutation,
@@ -412,7 +405,7 @@ export const actionVerifyPasskeySignIn = action
       log.error("credential fetch failed", { external_id: response["id"], error: credRes.error });
       throw new Error("Credencial no encontrada");
     }
-    const credential = credRes.data["profile_webauthn_credentialsCollection"]?.["edges"]?.[0]?.["node"];
+    const credential = credRes.data["profile_webauthn_credentials"]?.["edges"]?.[0]?.["node"];
     if (!credential) {
       log.warn("verify hit with unknown credential id", { external_id: response["id"] });
       throw new Error("Credencial no encontrada");

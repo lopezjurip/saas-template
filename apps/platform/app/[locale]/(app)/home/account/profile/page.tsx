@@ -1,26 +1,29 @@
-import { getSupabaseServerUser } from "@packages/supabase/client.server";
-import { INITIALS_OF } from "@packages/utils/string";
+import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
-import { gql } from "~/generated/graphql";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { ProfileAvatarControls } from "~/components/profile-avatar-controls";
 import { ProfileForm } from "./profile-form";
-
-const ProfileSectionPageQuery = gql(`
-  query ProfileSectionPageQuery {
-    profile: viewer_profile {
-      profile_id
-      profile_name_full
-    }
-  }
-`);
 
 export default async function AccountProfilePage(props: PageProps<"/[locale]/home/account/profile">) {
   const user = await getSupabaseServerUser();
   if (!user) redirect("/[locale]/auth");
 
-  const graphy = await getGraphySession();
-  const { data } = await graphy.query({ query: ProfileSectionPageQuery });
-  const name = data?.["profile"]?.["profile_name_full"] ?? "";
+  const supabase = await createServerClient();
+  const [profileResult, avatarResult] = await Promise.all([
+    supabase.from("profiles").select("profile_name_full").eq("profile_id", user.id).maybeSingle(),
+    supabase
+      .from("storage_profiles")
+      .select("src")
+      .eq("profile_id", user.id)
+      .eq("folder", "avatar")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const name = profileResult.data?.["profile_name_full"] ?? "";
+  const avatarSrc = avatarResult.data?.["src"]
+    ? new URL(avatarResult.data["src"], process.env["NEXT_PUBLIC_SUPABASE_URL"]!).toString()
+    : null;
 
   return (
     <div className="flex max-w-180 flex-col gap-4.5">
@@ -35,30 +38,7 @@ export default async function AccountProfilePage(props: PageProps<"/[locale]/hom
       </header>
 
       <div className="flex flex-col gap-3.5">
-        <div className="flex items-center gap-4">
-          <div className="bg-muted text-muted-foreground inline-flex size-22 shrink-0 items-center justify-center overflow-hidden rounded-full border text-[30px] font-semibold tracking-[-0.02em]">
-            {INITIALS_OF(name)}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <button
-              type="button"
-              disabled
-              className="bg-background text-foreground hover:bg-accent inline-flex h-8.5 items-center rounded-md border px-3 text-sm/normal disabled:opacity-50"
-            >
-              Subir foto
-            </button>
-            <button
-              type="button"
-              disabled
-              className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex h-7 items-center self-start rounded-md px-2 text-[12.5px] disabled:opacity-50"
-            >
-              Quitar
-            </button>
-          </div>
-        </div>
-        <p className="text-muted-foreground text-xs leading-snug">
-          Próximamente — por ahora usamos tus iniciales como avatar.
-        </p>
+        <ProfileAvatarControls profileId={user.id} name={name} avatarSrc={avatarSrc} />
 
         <ProfileForm profile_id={user.id} defaultValue={name} />
       </div>

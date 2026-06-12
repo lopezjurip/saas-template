@@ -6,7 +6,6 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -68,23 +67,6 @@ export function ProfileForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <div className="flex items-center gap-4">
-        <div className="inline-flex size-22 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted text-[30px] font-semibold tracking-[-0.02em] text-muted-foreground">
-          {INITIALS_OF(name)}
-        </div>
-        <div className="flex flex-col items-start gap-1.5">
-          <Button type="button" variant="outline" size="sm" disabled>
-            Subir foto
-          </Button>
-          <Button type="button" variant="ghost" size="sm" disabled className="text-muted-foreground">
-            Quitar
-          </Button>
-        </div>
-      </div>
-      <p className="text-xs leading-snug text-muted-foreground">
-        Próximamente — por ahora usamos tus iniciales como avatar.
-      </p>
-
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="profile-name">Nombre completo</Label>
         <Input
