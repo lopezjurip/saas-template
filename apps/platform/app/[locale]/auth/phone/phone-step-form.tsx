@@ -3,7 +3,7 @@
 import { createBrowserClient } from "@packages/supabase/client.browser";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { ArrowRight, MessageCircle, Smartphone } from "lucide-react";
+import { ArrowRight, Fingerprint, MessageCircle, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
@@ -22,10 +22,6 @@ function RESOLVE_TARGET(locale: string, next: string): string {
   return next.startsWith("/") && next !== "/" ? next : `/${locale}/home`;
 }
 
-/**
- * Phone path is OTP-only. Passkey sign-in is keyed by email in this system, so it is
- * not offered here even when the account has one — the email path covers passkey.
- */
 export function PhoneStepForm({ phone, next, channels }: Props) {
   const router = useRouter();
   const locale = useLocaleParam();
@@ -66,6 +62,30 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
     });
   }
 
+  function onPasskey() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        if (typeof window === "undefined" || !window.PublicKeyCredential) {
+          setError("Tu navegador no soporta passkeys.");
+          return;
+        }
+        const supabase = createBrowserClient();
+        const { error: err } = await supabase.auth.signInWithPasskey();
+        if (err) throw err;
+        await supabase.auth.refreshSession();
+        router.push(ROUTE_HREF(UNSAFE_ROUTE(RESOLVE_TARGET(locale, next))));
+        router.refresh();
+      } catch (err) {
+        if (err instanceof Error && err.name === "NotAllowedError") {
+          setError("Cancelaste el inicio con passkey.");
+        } else {
+          setError(err instanceof Error ? err.message : "No pudimos verificar tu passkey.");
+        }
+      }
+    });
+  }
+
   if (sentVia) {
     return (
       <form onSubmit={onVerify} className="flex flex-col gap-4">
@@ -102,6 +122,15 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
+      <Button type="button" onClick={onPasskey} disabled={pending} className="h-10 w-full">
+        <Fingerprint size={16} />
+        <span>{pending ? "Verificando…" : "Continuar con passkey"}</span>
+      </Button>
+
+      <div className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />o<span className="h-px flex-1 bg-border" />
+      </div>
+
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -109,7 +138,7 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
       )}
 
       {channels.includes("whatsapp") && (
-        <Button type="button" onClick={() => onSend("whatsapp")} disabled={pending} className="h-10 w-full">
+        <Button type="button" onClick={() => onSend("whatsapp")} disabled={pending} variant="outline" className="h-10 w-full">
           <MessageCircle size={16} />
           <span>{pending ? "Enviando…" : "Enviar código por WhatsApp"}</span>
         </Button>
@@ -120,7 +149,7 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
           type="button"
           onClick={() => onSend("sms")}
           disabled={pending}
-          variant={channels.includes("whatsapp") ? "outline" : "default"}
+          variant={channels.includes("whatsapp") ? "outline" : "outline"}
           className="h-10 w-full"
         >
           <Smartphone size={16} />

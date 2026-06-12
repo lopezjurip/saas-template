@@ -54,9 +54,6 @@ const variables: Array<{ key: string; value: string; secret: boolean }> = [
   { key: "NEXT_PUBLIC_DEV_MAILBOX_URL", value: env["INBUCKET_URL"] ?? "http://localhost:54424", secret: false },
   { key: "SUPABASE_SERVICE_ROLE_KEY", value: SUPABASE_SERVICE_ROLE_KEY, secret: true },
   { key: "DATABASE_URL", value: DATABASE_URL, secret: true },
-  { key: "WEBAUTHN_RELYING_PARTY_ID", value: "lvh.me", secret: false },
-  { key: "WEBAUTHN_RELYING_PARTY_NAME", value: "SaaS Template", secret: false },
-  { key: "WEBAUTHN_RELYING_PARTY_ORIGIN", value: `https://lvh.me:${process.env["PORT"] ?? "7003"}`, secret: false },
 ];
 
 const content = variables

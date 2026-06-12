@@ -31,18 +31,6 @@ if (missing.length > 0) {
   throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
 }
 
-/**
- * Feature-scoped env vars: missing here doesn't block boot, but the feature module
- * will throw on first import. Warn loudly so misconfig is obvious in `pnpm dev` logs.
- */
-const featureEnvVars = ["WEBAUTHN_RELYING_PARTY_ID", "WEBAUTHN_RELYING_PARTY_NAME", "WEBAUTHN_RELYING_PARTY_ORIGIN"];
-const missingFeatures = featureEnvVars.filter((v) => !process.env[v]);
-if (missingFeatures.length > 0) {
-  console.warn(
-    `[next.config] Missing WebAuthn env vars: ${missingFeatures.join(", ")}. Passkey flows will fail until set — see .env.example.`,
-  );
-}
-
 const otelEnvVars = ["OTEL_EXPORTER_OTLP_ENDPOINT", "OTEL_SERVICE_NAME"];
 const missingOtel = otelEnvVars.filter((v) => !process.env[v]);
 if (missingOtel.length > 0) {

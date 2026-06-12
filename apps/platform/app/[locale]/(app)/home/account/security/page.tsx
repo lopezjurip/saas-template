@@ -1,53 +1,28 @@
-import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Check, Fingerprint, IdCard, Lock, Mail, Phone } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { gql } from "~/generated/graphql";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { UNSAFE_ROUTE } from "~/lib/route";
 import { EmailForm } from "./email-form";
 import { PasskeysList } from "./passkeys-list";
 import { PasswordForm } from "./password-form";
 import { PhoneForm } from "./phone-form";
 
-const SecuritySectionPageQuery = gql(`
-  query SecuritySectionPageQuery {
-    profile: viewer_profile {
-      profile_id
-      profile_webauthn_credentialsCollection(
-        orderBy: [{ webauthn_credential_created_at: DescNullsLast }]
-      ) {
-        edges {
-          node {
-            webauthn_credential_id
-            webauthn_credential_friendly_name
-            webauthn_credential_device_type
-            webauthn_credential_backup_state
-            webauthn_credential_created_at
-            webauthn_credential_last_used_at
-          }
-        }
-      }
-    }
-  }
-`);
-
 export default async function SecurityPage(props: PageProps<"/[locale]/home/account/security">) {
   const { locale } = await props.params;
   const user = await getSupabaseServerUser();
   if (!user) redirect("/[locale]/auth");
 
-  const graphy = await getGraphySession();
-  const { data } = await graphy.query({ query: SecuritySectionPageQuery });
-  const passkeys =
-    data?.["profile"]?.["profile_webauthn_credentialsCollection"]?.["edges"]?.map((e) => e["node"]) ?? [];
+  const supabase = await createServerClient();
+  const { data: passkeys } = await supabase.auth.passkey.list();
+  const passkeyList = passkeys ?? [];
 
   const identities = user["identities"] ?? [];
   const hasPassword = identities.some((i) => i["provider"] === "email");
   const hasEmail = Boolean(user["email_confirmed_at"]);
   const hasPhone = Boolean(user["phone_confirmed_at"]);
-  const hasPasskey = passkeys.length > 0;
+  const hasPasskey = passkeyList.length > 0;
 
   return (
     <div className="flex max-w-[720px] flex-col gap-4.5">
@@ -74,13 +49,13 @@ export default async function SecurityPage(props: PageProps<"/[locale]/home/acco
           done={hasPasskey}
           desc={
             hasPasskey
-              ? `${passkeys.length} passkey${passkeys.length === 1 ? "" : "s"} registrada${passkeys.length === 1 ? "" : "s"}`
+              ? `${passkeyList.length} passkey${passkeyList.length === 1 ? "" : "s"} registrada${passkeyList.length === 1 ? "" : "s"}`
               : "Sin passkey · agrega uno para entrar sin contraseña"
           }
           actionLabel={hasPasskey ? "Administrar" : "Agregar"}
           actionHref={`/${locale}/auth/onboarding/passkey`}
         />
-        <PasskeysList passkeys={passkeys} />
+        <PasskeysList passkeys={passkeyList} />
 
         <SecurityCard
           Icon={Lock}

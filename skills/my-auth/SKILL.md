@@ -1,6 +1,6 @@
 ---
 name: my-auth
-description: Repository-specific Supabase Auth, JWT claim, OAuth, OTP, onboarding, and SimpleWebAuthn passkey patterns. Use for auth code in apps/platform or auth schema/config in packages/supabase.
+description: Repository-specific Supabase Auth, JWT claim, OAuth, OTP, onboarding, and native Supabase passkey patterns. Use for auth code in apps/platform or auth schema/config in packages/supabase.
 ---
 
 # Auth
@@ -11,7 +11,7 @@ Use current code. Do not invent generic Supabase wrappers.
 
 - Clients: `packages/supabase/src/client.{browser,server,middleware}.ts`, `metadata.ts`
 - Routes/actions: `apps/platform/app/[locale]/auth/**`
-- Passkeys: `apps/platform/lib/passkeys.{actions,client}.ts`
+- Passkeys: `apps/platform/lib/passkeys.client.ts`
 - Hook/schema: `packages/supabase/supabase/migrations/00000000000000_schema.sql`
 - Config/templates: `packages/supabase/supabase/config.toml`, `supabase/templates/*`
 - Gate: `apps/platform/proxy.ts`
@@ -95,28 +95,31 @@ calls `verifyOtp({ token_hash, type })`, then uses safe `next`.
 
 ## Passkeys
 
-Not Supabase WebAuthn API. Uses `@simplewebauthn/browser` + server package.
+Native Supabase WebAuthn API (supabase-js ≥ 2.105). No custom tables — Supabase manages storage internally.
 
-Tables: `public.profile_webauthn_challenges` and `public.profile_webauthn_credentials`. The
-`webauthn_challenge_*` / `webauthn_credential_*` column prefixes are unchanged.
+Config in `packages/supabase/supabase/config.toml`:
+
+```toml
+[auth.passkey]
+enabled = true
+
+[auth.webauthn]
+rp_display_name = "SaaS Template"
+rp_id = "lvh.me"
+rp_origins = ["https://lvh.me:7003"]
+```
 
 Flow:
 
-1. `actionCreatePasskeyChallenge`: authenticated, generate options, upsert into `profile_webauthn_challenges`.
-2. Browser `startRegistration({ optionsJSON })`.
-3. `actionVerifyPasskeyRegistration`: consume challenge, cryptographically verify, insert into `profile_webauthn_credentials`.
-4. Sign-in resolves profile by email, generates challenge, browser `startAuthentication`, verifies, then creates Supabase session through admin link + OTP verification.
+- **Register** (authenticated): `supabase.auth.registerPasskey()` — browser only.
+- **Sign in** (discoverable, no email needed): `supabase.auth.signInWithPasskey()` — browser only.
+- **List**: `supabase.auth.passkey.list()` — works server-side and client-side.
+- **Delete**: `supabase.auth.passkey.delete({ passkeyId })` — browser, authenticated.
+- **Rename**: `supabase.auth.passkey.update({ passkeyId, friendlyName })`.
 
-Required:
+Sign-in button appears at: auth root (`/auth`), email step, and phone step — always visible (discoverable credentials; no `has_passkey` check needed).
 
-```env
-WEBAUTHN_RELYING_PARTY_ID=lvh.me
-WEBAUTHN_RELYING_PARTY_NAME=SaaS Template
-WEBAUTHN_RELYING_PARTY_ORIGIN=https://lvh.me:7003
-```
-
-Dev must use mkcert HTTPS. Credential spec literals such as `"public-key"` use `text` +
-checks, never SQL enums containing hyphens.
+Dev must use mkcert HTTPS (same requirement as before — WebAuthn requires secure context).
 
 ## Identity validators
 

@@ -1,13 +1,12 @@
 "use client";
 
-import { createBrowserClient } from "@packages/supabase/client.browser";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { createBrowserClient } from "@packages/supabase/client.browser";
 import { Fingerprint } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
-import { createPasskey } from "~/lib/passkeys.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
 export function PasskeyForm({ email }: { email: string }) {
@@ -24,8 +23,9 @@ export function PasskeyForm({ email }: { email: string }) {
           setError("Tu navegador no soporta passkeys.");
           return;
         }
-        await createPasskey();
         const supabase = createBrowserClient();
+        const { error: err } = await supabase.auth.registerPasskey();
+        if (err) throw err;
         await supabase.auth.refreshSession();
         router.push(ROUTE_HREF(ROUTE("/[locale]/auth/onboarding", { locale })));
       } catch (e) {

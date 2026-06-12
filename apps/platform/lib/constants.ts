@@ -29,10 +29,10 @@ export const APP_URL: URL = /*#__PURE__*/ NODE_ENV === "development" ? APP_URL_D
 export const DEBUG = process.env["DEBUG"];
 
 /**
- * When false (default), account existence and method availability (exists, has_passkey,
- * has_password) are NOT included in redirect URLs after step-1 auth. Pages show generic
- * "Ingresar" text and only offer magic link / OTP. Set AUTH_EXPOSE_ACCOUNT_EXISTENCE=true
- * to restore the explicit "Crear cuenta" / "Ingresar" split and passkey/password buttons.
+ * When false (default), account existence and method availability (exists, has_password)
+ * are NOT included in redirect URLs after step-1 auth. Pages show generic "Ingresar" text
+ * and only offer magic link / OTP. Set AUTH_EXPOSE_ACCOUNT_EXISTENCE=true to restore the
+ * explicit "Crear cuenta" / "Ingresar" split and password button.
  * Trade-off: false = privacy (no enumeration via URL), true = better UX for power users.
  */
 export const AUTH_EXPOSE_ACCOUNT_EXISTENCE = true; // process.env["AUTH_EXPOSE_ACCOUNT_EXISTENCE"] === "true";

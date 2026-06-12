@@ -18,7 +18,6 @@ export default async function AuthEmailPage(props: PageProps<"/[locale]/auth/ema
 
   const existsParam = SINGLE(sp["exists"]);
   const exists = existsParam === "1" ? true : existsParam === "0" ? false : null;
-  const hasPasskey = SINGLE(sp["has_passkey"]) === "1";
   const hasPassword = SINGLE(sp["has_password"]) === "1";
 
   const { title, subtitle } =
@@ -38,7 +37,7 @@ export default async function AuthEmailPage(props: PageProps<"/[locale]/auth/ema
             <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">{title}</h1>
             <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{subtitle}</p>
           </div>
-          <EmailStepForm email={email} next={next} exists={exists} hasPasskey={hasPasskey} hasPassword={hasPassword} />
+          <EmailStepForm email={email} next={next} exists={exists} hasPassword={hasPassword} />
         </div>
       </div>
     </AuthCard>

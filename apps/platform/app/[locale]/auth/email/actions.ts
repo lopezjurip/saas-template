@@ -39,16 +39,12 @@ const checkEmailRun = action.inputSchema(checkEmailSchema).action(async ({ parse
     redirect(`/[locale]/auth/email?${qs.toString()}`);
   }
 
-  const [passkeyRes, passwordRes] = await Promise.all([
-    supabase.rpc("email_has_passkey", { email_to_check: email }),
-    supabase.rpc("email_has_password", { email_to_check: email }),
-  ]);
+  const { data: hasPassword } = await supabase.rpc("email_has_password", { email_to_check: email });
 
   const qs = new URLSearchParams({
     value: email,
     exists: "1",
-    has_passkey: passkeyRes.data ? "1" : "0",
-    has_password: passwordRes.data ? "1" : "0",
+    has_password: hasPassword ? "1" : "0",
     next,
   });
   redirect(`/[locale]/auth/email?${qs.toString()}`);

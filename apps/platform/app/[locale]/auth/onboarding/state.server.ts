@@ -25,10 +25,7 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
     .eq("profile_id", user.id)
     .maybeSingle();
 
-  const { count: passkeyCount } = await supabase
-    .from("profile_webauthn_credentials")
-    .select("webauthn_credential_id", { head: true, count: "exact" })
-    .eq("profile_id", user.id);
+  const { data: passkeyList } = await supabase.auth.passkey.list();
 
   const { data: avatar } = await supabase
     .from("storage_profiles")
@@ -45,7 +42,7 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
     : null;
   const identities = user["identities"] ?? [];
   const hasPassword = identities.some((i) => i["provider"] === "email");
-  const hasPasskey = (passkeyCount ?? 0) > 0;
+  const hasPasskey = (passkeyList?.length ?? 0) > 0;
   const hasEmail = Boolean(user["email_confirmed_at"]);
   const hasPhone = Boolean(user["phone_confirmed_at"]);
   const hasName = profile_name_full.trim().length >= 2;

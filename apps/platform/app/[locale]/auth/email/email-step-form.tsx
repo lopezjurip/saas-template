@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
 import { notifyDevMailbox } from "~/lib/dev-mailbox-toast.client";
-import { signInWithPasskey } from "~/lib/passkeys.client";
 import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 import { OtpField } from "../_components/otp-field";
 
@@ -19,7 +18,6 @@ type Props = {
   next: string;
   /** null = privacy mode (existence not exposed). true/false = known. */
   exists: boolean | null;
-  hasPasskey: boolean;
   hasPassword: boolean;
 };
 
@@ -27,7 +25,7 @@ function RESOLVE_TARGET(locale: string, next: string): string {
   return next.startsWith("/") && next !== "/" ? next : `/${locale}/home`;
 }
 
-export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: Props) {
+export function EmailStepForm({ email, next, exists, hasPassword }: Props) {
   const router = useRouter();
   const locale = useLocaleParam();
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +37,6 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
   const [password, setPassword] = useState("");
 
   const isNew = exists === false;
-  const showPasskey = exists === true && hasPasskey;
   const showPasswordOption = exists === true && hasPassword;
 
   function onMagicLink() {
@@ -102,7 +99,12 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
           setError("Tu navegador no soporta passkeys.");
           return;
         }
-        await signInWithPasskey(email);
+        const supabase = createBrowserClient();
+        const { error: err } = await supabase.auth.signInWithPasskey();
+        if (err) throw err;
+        await supabase.auth.refreshSession();
+        router.push(ROUTE_HREF(UNSAFE_ROUTE(RESOLVE_TARGET(locale, next))));
+        router.refresh();
       } catch (err) {
         if (err instanceof Error && err.name === "NotAllowedError") {
           setError("Cancelaste el inicio con passkey.");
@@ -150,12 +152,10 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
   // Step 2a: pick a method.
   return (
     <div className="flex flex-col gap-3">
-      {showPasskey && (
-        <Button type="button" onClick={onPasskey} disabled={pending} className="h-10 w-full">
-          <Fingerprint size={16} />
-          <span>{pending ? "Verificando…" : "Continuar con passkey"}</span>
-        </Button>
-      )}
+      <Button type="button" onClick={onPasskey} disabled={pending} className="h-10 w-full">
+        <Fingerprint size={16} />
+        <span>{pending ? "Verificando…" : "Continuar con passkey"}</span>
+      </Button>
 
       {showPasswordOption && (
         <form onSubmit={onPassword} className="flex flex-col gap-2">
@@ -185,7 +185,7 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
           <Button
             type="submit"
             disabled={pending || password.length < 8}
-            variant={showPasskey ? "outline" : "default"}
+            variant="outline"
             className="h-10 w-full"
           >
             <span>{pending ? "Ingresando…" : "Ingresar con contraseña"}</span>
@@ -194,11 +194,9 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
         </form>
       )}
 
-      {(showPasskey || showPasswordOption) && (
-        <div className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-          <span className="h-px flex-1 bg-border" />o<span className="h-px flex-1 bg-border" />
-        </div>
-      )}
+      <div className="flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />o<span className="h-px flex-1 bg-border" />
+      </div>
 
       {error && (
         <Alert variant="destructive">
@@ -210,7 +208,7 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
         type="button"
         onClick={onMagicLink}
         disabled={pending}
-        variant={showPasskey || showPasswordOption ? "outline" : "default"}
+        variant="outline"
         className="h-10 w-full"
       >
         {isNew ? <KeyRound size={16} /> : <Mail size={16} />}
