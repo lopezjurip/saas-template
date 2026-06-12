@@ -4,7 +4,7 @@ import { URL_NEW } from "@packages/utils/url";
 import { type NextRequest, NextResponse, userAgent } from "next/server";
 import { APEX_HOSTNAME, APP_HOST } from "~/lib/constants";
 import { debug } from "~/lib/debug";
-import { EXTRACT_LOCALE_FROM_PATH, LOCALE_COOKIE, type SupportedLocale } from "~/lib/i18n";
+import { LOCALE_FROM_PATH, LOCALE_COOKIE, type SupportedLocale } from "~/lib/i18n";
 import { RESOLVE_LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
 
 const log = debug("proxy");
@@ -78,8 +78,25 @@ export async function proxy(request: NextRequest) {
   }
 
   /** Detect locale from URL first segment; if missing, resolve from cookie/header and redirect. */
-  const { locale: localeFromPath, pathAfterLocale } = EXTRACT_LOCALE_FROM_PATH(pathname);
+  const {
+    locale: localeFromPath,
+    canonicalLocale,
+    localeCandidate,
+    pathAfterLocale,
+  } = LOCALE_FROM_PATH(pathname);
   if (!localeFromPath) {
+    if (localeCandidate) {
+      if (canonicalLocale) {
+        const url = request.nextUrl.clone();
+        const trailingPath = pathAfterLocale === "/" ? "" : pathAfterLocale;
+        url.pathname = `/${canonicalLocale}${trailingPath}`;
+        return setLocaleCookieOnResponse(NextResponse.redirect(url, 308), canonicalLocale);
+      }
+
+      const { response } = await updateSession(request);
+      return response;
+    }
+
     const detected = RESOLVE_LOCALE_FROM_REQUEST(request);
     const url = request.nextUrl.clone();
     const trailingPath = pathname === "/" ? "" : pathname;

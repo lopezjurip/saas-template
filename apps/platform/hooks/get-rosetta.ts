@@ -11,9 +11,11 @@ import { getServerLocale } from "~/lib/i18n.server";
  * throw new TError("hello", {}, cause);
  */
 export async function getRosetta<T>(dict: RosettaDict<T>, locale?: string) {
-  if (!locale) {
-    locale = await getServerLocale();
-  }
-  const rosetta = ROSETTA(dict, locale);
-  return rosetta;
+  const requestedLocale = locale ?? (await getServerLocale());
+  const rosetta = ROSETTA(dict, requestedLocale);
+  return {
+    locale: requestedLocale,
+    t: rosetta.t,
+    TError: rosetta.TError,
+  };
 }

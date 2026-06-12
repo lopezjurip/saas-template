@@ -18,7 +18,7 @@ const DEFS: Record<SystemKind, SystemDef> = /*#__PURE__*/ {
 export function SystemMessage({ kind = "notFound", reset }: { kind?: SystemKind; reset?: () => void }) {
   const locale = useLocaleParam();
   const { code, Icon } = DEFS[kind];
-  const copy = (LOCALES[locale] ?? LOCALE_ES)[kind];
+  const copy = RESOLVE_COPY(locale)[kind];
   const homeHref = `/${locale}`;
 
   return (
@@ -144,4 +144,8 @@ const LOCALE_PT = {
   },
 } satisfies typeof LOCALE_ES;
 
-const LOCALES: Record<string, Record<SystemKind, Copy>> = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
+function RESOLVE_COPY(locale: string): Record<SystemKind, Copy> {
+  if (locale.startsWith("en")) return LOCALE_EN;
+  if (locale.startsWith("pt")) return LOCALE_PT;
+  return LOCALE_ES;
+}

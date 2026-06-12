@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_HOST } from "~/lib/constants";
-import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_TO_BCP47, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { ROUTE } from "~/lib/route";
 
 type LegalLocale = "es" | "en" | "pt";
@@ -50,14 +50,14 @@ export async function generateMetadata(props: PageProps<"/[locale]/legal/[sectio
     alternates: {
       canonical: `${base}/${safeLocale}/legal/${section}`,
       languages: {
-        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [LOCALE_TO_BCP47[l], `${base}/${l}/legal/${section}`])),
+        ...Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${base}/${l}/legal/${section}`])),
         "x-default": `${base}/${DEFAULT_LOCALE}/legal/${section}`,
       },
     },
     openGraph: {
       type: "website",
       url: `${base}/${safeLocale}/legal/${section}`,
-      locale: LOCALE_TO_BCP47[safeLocale],
+      locale: safeLocale,
       title,
       siteName: "SaaS Template",
     },

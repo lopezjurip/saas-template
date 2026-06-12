@@ -3,8 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { GraphyClientProvider } from "~/components/graphy-provider";
 import { ThemeProvider } from "~/components/theme-provider";
 import { APP_HOST } from "~/lib/constants";
-import { LOCALE_TO_BCP47 } from "~/lib/i18n";
-import { getServerLocale } from "~/lib/i18n.server";
+import { assertLocale } from "~/lib/i18n.server";
 import "~/styles/globals.css";
 
 export const viewport: Viewport = {
@@ -37,10 +36,11 @@ export const metadata: Metadata = {
 
 export default async function RootLayout(props: LayoutProps<"/[locale]">) {
   const { children } = props;
-  const locale = await getServerLocale();
+  const { locale } = await props.params;
+  assertLocale(locale);
 
   return (
-    <html lang={LOCALE_TO_BCP47[locale]} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <GraphyClientProvider>{children}</GraphyClientProvider>

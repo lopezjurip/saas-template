@@ -38,6 +38,9 @@ importers:
 
   apps/platform:
     dependencies:
+      '@formatjs/intl-localematcher':
+        specifier: ^0.8.10
+        version: 0.8.10
       '@hookform/resolvers':
         specifier: ^5.2.0
         version: 5.4.0(react-hook-form@7.78.0(react@19.2.7))
@@ -101,12 +104,15 @@ importers:
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.7)
+      negotiator:
+        specifier: ^1.0.0
+        version: 1.0.0
       next:
         specifier: 16.2.9
         version: 16.2.9(@babel/core@7.29.7)(@playwright/test@1.60.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       next-safe-action:
         specifier: ^8.5.4
-        version: 8.5.4(next@16.2.9(@babel/core@7.29.7)(@playwright/test@1.60.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: 8.5.4(next@16.2.9(@playwright/test@1.60.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -153,6 +159,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.3.0
         version: 4.3.0
+      '@types/negotiator':
+        specifier: ^0.6.4
+        version: 0.6.4
       '@types/node':
         specifier: ^24.12.4
         version: 24.12.4
@@ -174,6 +183,9 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+      vitest:
+        specifier: ^4.1.8
+        version: 4.1.8(@types/node@24.12.4)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@7.3.3(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(yaml@2.9.0))
 
   packages/api-ip:
     devDependencies:
@@ -438,6 +450,9 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+      vitest:
+        specifier: ^4.1.8
+        version: 4.1.8(@types/node@24.12.4)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@7.3.3(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(yaml@2.9.0))
 
   packages/supabase:
     dependencies:
@@ -1633,6 +1648,12 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@formatjs/fast-memoize@3.1.6':
+    resolution: {integrity: sha512-H5aexk1Le7T9TPmscacZ+1pR6CTa2n1wq+HDVGXhH8TzUlQQpeXzZs91dRtmFHrbeNbjPFPfQujUqm7MHgVoXQ==}
+
+  '@formatjs/intl-localematcher@0.8.10':
+    resolution: {integrity: sha512-P/IC3qws3jH+1fEs+o0RIFgXKRaQlFehjS5W0FPAqdo6hgzawLl+eD0q0JjheQ3XtoOe5n8WSYfX06KQZI/QJA==}
 
   '@graphql-codegen/add@7.0.1':
     resolution: {integrity: sha512-kWw6RMu9ysBw1wcgcgf9mOnswc5M3ekOApDTiaJC/UZNTEYins01srZHYTP7z3P/WlGGC844BRtjwh3U2kNd/A==}
@@ -3837,6 +3858,9 @@ packages:
 
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
+
+  '@types/negotiator@0.6.4':
+    resolution: {integrity: sha512-elf6BsTq+AkyNsb2h5cGNst2Mc7dPliVoAPm1fXglC/BM3f2pFA40BaSSv3E5lyHteEawVKLP+8TwiY1DMNb3A==}
 
   '@types/node@24.12.4':
     resolution: {integrity: sha512-GUUEShf+PBCGW2KaXwcIt3Yk+e3pkKwWKb9GSyM9WQVE+ep2jzmHdGsHzu4wgcZy5fN9FBdVzjpBQsYlpfpgLA==}
@@ -8262,6 +8286,12 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
+  '@formatjs/fast-memoize@3.1.6': {}
+
+  '@formatjs/intl-localematcher@0.8.10':
+    dependencies:
+      '@formatjs/fast-memoize': 3.1.6
+
   '@graphql-codegen/add@7.0.1(graphql@16.14.2)':
     dependencies:
       '@graphql-codegen/plugin-helpers': 7.0.1(graphql@16.14.2)
@@ -10594,6 +10624,8 @@ snapshots:
 
   '@types/ms@2.1.0': {}
 
+  '@types/negotiator@0.6.4': {}
+
   '@types/node@24.12.4':
     dependencies:
       undici-types: 7.16.0
@@ -12650,7 +12682,7 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  next-safe-action@8.5.4(next@16.2.9(@babel/core@7.29.7)(@playwright/test@1.60.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  next-safe-action@8.5.4(next@16.2.9(@playwright/test@1.60.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
       next: 16.2.9(@babel/core@7.29.7)(@playwright/test@1.60.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react: 19.2.7
