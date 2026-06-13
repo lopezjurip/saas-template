@@ -105,7 +105,7 @@ export async function proxy(request: NextRequest) {
    */
   request.cookies.set(LOCALE_COOKIE, locale);
 
-  const { response: sessionResponse, supabase } = await updateSession(request);
+  const { response: sessionResponse, supabase, user: sessionUser } = await updateSession(request);
 
   /** Bots get public content without session overhead. */
   if (isBot && isLocalizedPublicPath(pathAfterLocale)) {
@@ -124,10 +124,7 @@ export async function proxy(request: NextRequest) {
       pathAfterLocale.startsWith("/auth/phone") ||
       pathAfterLocale.startsWith("/auth/document");
     if (isAuthEntryPath) {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
+      if (sessionUser) {
         return setLocaleCookieOnResponse(
           NextResponse.redirect(URL_NEW(`/${locale}/home`, `${proto}://${APP_HOST}`)),
           locale,
