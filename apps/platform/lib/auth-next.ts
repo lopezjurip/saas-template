@@ -6,11 +6,11 @@ import { URL_NEW } from "@packages/utils/url";
  *
  * The contract: only accept paths that resolve to the same origin as the incoming
  * request. Anything else (open redirect attempt, malformed value, missing param) falls
- * back to `${origin}/[locale]/home`. We deliberately do this in one place so every route
+ * back to `${origin}/home`. We deliberately do this in one place so every route
  * stays locked down and the fallback target can be changed in one edit.
  */
 export function RESOLVE_AUTH_NEXT(raw: string | null, origin: string): string {
-  const fallback = `${origin}/[locale]/home`;
+  const fallback = `${origin}/home`;
   if (!raw) {
     return fallback;
   }

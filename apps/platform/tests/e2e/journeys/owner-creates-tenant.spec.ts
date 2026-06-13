@@ -27,7 +27,7 @@ test.describe("owner creates first tenant", () => {
    * renders the password form for an account that has a password.
    */
   test("login → /tenants/create → land on tenant path", async ({ page }) => {
-    await page.goto("/es/auth");
+    await page.goto("/auth");
     await page.getByLabel("Cuenta").fill(email);
     await page.getByRole("button", { name: "Continuar", exact: true }).click();
     await page.waitForURL(/\/auth\/email\?/);
@@ -36,16 +36,16 @@ test.describe("owner creates first tenant", () => {
 
     // Wait until we leave auth flow, then navigate to tenant creator
     await page.waitForURL((url) => !url.pathname.includes("/auth/"));
-    await page.goto("/es/tenants/create");
+    await page.goto("/tenants/create");
 
     // Create tenant
     await page.getByLabel("Nombre", { exact: true }).fill(tenantName);
     await page.getByLabel("Identificador").fill(tenantSlug);
     await page.getByRole("button", { name: /crear empresa/i }).click();
 
-    // Verify hard-redirect to /es/t/[slug]/[organization_id]
-    await page.waitForURL(new RegExp(`/es/t/${tenantSlug}/\\d+`));
-    expect(page.url()).toMatch(new RegExp(`/es/t/${tenantSlug}/\\d+`));
+    // Verify hard-redirect to /t/[slug]/[organization_id]
+    await page.waitForURL(new RegExp(`/t/${tenantSlug}/\\d+`));
+    expect(page.url()).toMatch(new RegExp(`/t/${tenantSlug}/\\d+`));
 
     // Verify proxy organization_membership gate blocks non-members
     await expect(page.getByText(tenantName).first()).toBeVisible();

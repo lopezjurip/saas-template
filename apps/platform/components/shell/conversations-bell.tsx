@@ -98,7 +98,7 @@ export function ConversationsBell({ locale, compact }: { locale: string; compact
     await refresh(supabase);
   }
 
-  const inboxHref = ROUTE("/[locale]/home/inbox", { locale });
+  const inboxHref = ROUTE("/home/inbox", { locale });
 
   const trigger = compact ? (
     <Tip label={t("inbox")} disabled={open}>
@@ -171,7 +171,7 @@ export function ConversationsBell({ locale, compact }: { locale: string; compact
                 return (
                   <Link
                     key={conv["conversation_id"]}
-                    href={ROUTE("/[locale]/home/inbox/[conversation_id]", {
+                    href={ROUTE("/home/inbox/[conversation_id]", {
                       locale,
                       conversation_id: conv["conversation_id"],
                     })}

@@ -26,7 +26,7 @@ export const authedAction = action.use(async ({ next }) => {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    redirect("/[locale]/auth");
+    redirect("/auth");
   }
   return next({ ctx: { user, supabase } });
 });

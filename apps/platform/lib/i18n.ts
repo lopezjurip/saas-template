@@ -2,7 +2,8 @@ import { LocaleConfig } from "@packages/rosetta/locale-config";
 import { type RosettaDict, RosettaImpl } from "@packages/rosetta/rosetta";
 
 export const LOCALE_CONFIG = new LocaleConfig({
-  defaultLocale: "es-CL",
+  // Final fallback when neither the NEXT_LOCALE cookie nor Accept-Language resolves: English.
+  defaultLocale: "en-US",
   languages: [
     { tag: "es-CL", label: "Español" },
     { tag: "en-US", label: "English" },
@@ -15,8 +16,6 @@ const LOCALE_BY_LANGUAGE = {
   es: "es-CL",
   pt: "pt-BR",
 } as const satisfies Record<string, (typeof LOCALE_CONFIG.supported)[number]>;
-
-const LOCALE_CANDIDATE_REGEX = /^(?:[a-zA-Z]{2}|[a-zA-Z]{2,3}(?:[-_][a-zA-Z0-9]{2,8})+)$/;
 
 /**
  * Creates a typed translation accessor from a locale dictionary.
@@ -57,50 +56,6 @@ export function LOCALE_SUPPORTED_RESOLVE(value: unknown): SupportedLocale | null
   }
 
   return null;
-}
-
-export function LOCALE_FROM_PATH(pathname: string): {
-  locale: SupportedLocale | null;
-  canonicalLocale: SupportedLocale | null;
-  localeCandidate: string | null;
-  localeIsCanonical: boolean;
-  pathAfterLocale: string;
-} {
-  const { locale, pathAfterLocale } = LOCALE_CONFIG.extractFromPath(pathname);
-  if (locale) {
-    return {
-      locale,
-      canonicalLocale: locale,
-      localeCandidate: locale,
-      localeIsCanonical: true,
-      pathAfterLocale,
-    };
-  }
-
-  const segments = pathname.split("/").filter(Boolean);
-  const first = segments[0];
-  if (!first || !IS_LOCALE_CANDIDATE(first)) {
-    return {
-      locale: null,
-      canonicalLocale: null,
-      localeCandidate: null,
-      localeIsCanonical: false,
-      pathAfterLocale: pathname,
-    };
-  }
-
-  const rest = segments.slice(1).join("/");
-  return {
-    locale: null,
-    canonicalLocale: LOCALE_SUPPORTED_RESOLVE(first),
-    localeCandidate: first,
-    localeIsCanonical: false,
-    pathAfterLocale: rest ? `/${rest}` : "/",
-  };
-}
-
-function IS_LOCALE_CANDIDATE(value: string): boolean {
-  return LOCALE_CANDIDATE_REGEX.test(value.trim());
 }
 
 function LOCALE_TAG_NORMALIZE(locale: string): string {

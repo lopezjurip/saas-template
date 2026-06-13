@@ -26,7 +26,7 @@ export function SystemMessage({
   const locale = useLocaleParam();
   const { code, Icon } = DEFS[kind];
   const copy = RESOLVE_COPY(locale)[kind];
-  const homeHref = "/[locale]";
+  const homeHref = "/";
 
   return (
     <div

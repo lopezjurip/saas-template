@@ -3,7 +3,7 @@ import { URL_NEW } from "@packages/utils/url";
 import { type NextRequest, NextResponse, userAgent } from "next/server";
 import { APEX_HOSTNAME, APP_HOST, PROXY_LOG_ENABLED } from "~/lib/constants";
 import { debug } from "~/lib/debug";
-import { LOCALE_COOKIE, LOCALE_FROM_PATH, type SupportedLocale } from "~/lib/i18n";
+import { LOCALE_COOKIE, LOCALE_SUPPORTED_RESOLVE, type SupportedLocale } from "~/lib/i18n";
 import { LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
 
 const PH_TOKEN = process.env["NEXT_PUBLIC_POSTHOG_KEY"] ?? "";
@@ -48,71 +48,41 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(apexUrl);
   }
 
+  /**
+   * Locale resolution — cookie-if-absent. Locale lives in the NEXT_LOCALE cookie, never the URL.
+   * Keep an existing valid cookie untouched (so an explicit user toggle survives reloads); only
+   * when it is missing/invalid do we detect from Accept-Language and persist it.
+   */
+  const cookieLocale = LOCALE_SUPPORTED_RESOLVE(request.cookies.get(LOCALE_COOKIE)?.value);
+  const locale = cookieLocale ?? LOCALE_FROM_REQUEST(request);
+  if (!cookieLocale) {
+    /**
+     * Mirror onto the incoming request BEFORE updateSession snapshots it, so same-render server
+     * components (notably <html lang> in the root layout) read the freshly-detected locale.
+     */
+    request.cookies.set(LOCALE_COOKIE, locale);
+  }
+  /** Persist on the response only when it was absent — re-deriving every request would clobber the toggle. */
+  function withLocale(response: NextResponse): NextResponse {
+    return cookieLocale ? response : setLocaleCookieOnResponse(response, locale);
+  }
+
   if (isGlobalMetadataAssetPath(pathname)) {
     const { response } = await updateSession(request);
-    return response;
+    return withLocale(response);
   }
 
-  /** /health — no auth, no locale. */
+  /** /health — no auth. */
   if (pathname === "/health") {
     const { response } = await updateSession(request);
-    return response;
+    return withLocale(response);
   }
 
-  /**
-   * Locale sentinel: /[locale]/path → /${locale}/path
-   * Handles both raw brackets and percent-encoded form (%5Blocale%5D) browsers send after redirects.
-   */
-  const sentinelMatch = /^\/(?:\[locale\]|%5[Bb]locale%5[Dd]|_)\//i.exec(pathname);
-  if (sentinelMatch) {
-    const detected = LOCALE_FROM_REQUEST(request);
-    const url = request.nextUrl.clone();
-    url.pathname = `/${detected}/${pathname.slice(sentinelMatch[0].length)}`;
-    return setLocaleCookieOnResponse(NextResponse.redirect(url), detected);
-  }
-
-  /** Detect locale from URL first segment; if missing, resolve from cookie/header and redirect. */
-  const { locale: localeFromPath, canonicalLocale, localeCandidate, pathAfterLocale } = LOCALE_FROM_PATH(pathname);
-  if (!localeFromPath) {
-    if (localeCandidate) {
-      if (canonicalLocale) {
-        const url = request.nextUrl.clone();
-        const trailingPath = pathAfterLocale === "/" ? "" : pathAfterLocale;
-        url.pathname = `/${canonicalLocale}${trailingPath}`;
-        return setLocaleCookieOnResponse(NextResponse.redirect(url, 308), canonicalLocale);
-      }
-
-      const { response } = await updateSession(request);
-      return response;
-    }
-
-    const detected = LOCALE_FROM_REQUEST(request);
-    const url = request.nextUrl.clone();
-    const trailingPath = pathname === "/" ? "" : pathname;
-    url.pathname = `/${detected}${trailingPath}`;
-    return setLocaleCookieOnResponse(NextResponse.redirect(url), detected);
-  }
-  const locale = localeFromPath;
-
-  if (isGlobalMetadataAssetPath(pathAfterLocale)) {
-    const url = request.nextUrl.clone();
-    url.pathname = pathAfterLocale;
-    return setLocaleCookieOnResponse(NextResponse.rewrite(url), locale);
-  }
-
-  /**
-   * Mutate the incoming request's cookie BEFORE updateSession creates its NextResponse.next({request}).
-   * Downstream server components (root layout, server actions) read cookies via next/headers `cookies()`,
-   * which reflects the request snapshot — so if we only set on the response, server-rendered output
-   * (notably <html lang>) reads the previous request's cookie and falls out of sync with the URL.
-   */
-  request.cookies.set(LOCALE_COOKIE, locale);
-
-  const { response: sessionResponse, supabase, user: sessionUser } = await updateSession(request);
+  const { response: sessionResponse, user: sessionUser } = await updateSession(request);
 
   /** Bots get public content without session overhead. */
-  if (isBot && isLocalizedPublicPath(pathAfterLocale)) {
-    return setLocaleCookieOnResponse(NextResponse.next(), locale);
+  if (isBot && isPublicPath(pathname)) {
+    return withLocale(NextResponse.next());
   }
 
   /**
@@ -120,34 +90,29 @@ export async function proxy(request: NextRequest) {
    * (The form's server action gets bound to the wrong route after a client transition from /home
    * and posts to the previous URL, producing "unexpected response from server".)
    */
-  if (isLocalizedPublicPath(pathAfterLocale)) {
+  if (isPublicPath(pathname)) {
     const isAuthEntryPath =
-      pathAfterLocale === "/auth" ||
-      pathAfterLocale.startsWith("/auth/email") ||
-      pathAfterLocale.startsWith("/auth/phone") ||
-      pathAfterLocale.startsWith("/auth/document");
-    if (isAuthEntryPath) {
-      if (sessionUser) {
-        return setLocaleCookieOnResponse(
-          NextResponse.redirect(URL_NEW(`/${locale}/home`, `${proto}://${APP_HOST}`)),
-          locale,
-        );
-      }
+      pathname === "/auth" ||
+      pathname.startsWith("/auth/email") ||
+      pathname.startsWith("/auth/phone") ||
+      pathname.startsWith("/auth/document");
+    if (isAuthEntryPath && sessionUser) {
+      return withLocale(NextResponse.redirect(URL_NEW("/home", `${proto}://${APP_HOST}`)));
     }
     // Bootstrap PostHog flags for marketing routes only (landing, pricing, etc.).
     const isMarketingPath =
-      pathAfterLocale === "/" ||
-      pathAfterLocale.startsWith("/faq") ||
-      pathAfterLocale.startsWith("/pricing") ||
-      pathAfterLocale.startsWith("/legal");
+      pathname === "/" ||
+      pathname.startsWith("/faq") ||
+      pathname.startsWith("/pricing") ||
+      pathname.startsWith("/legal");
     if (isMarketingPath) {
       await setPostHogBootstrap(request, sessionResponse);
     }
-    return setLocaleCookieOnResponse(sessionResponse, locale);
+    return withLocale(sessionResponse);
   }
 
   /** Protected paths — auth and tenant gates handled by layout. */
-  return setLocaleCookieOnResponse(sessionResponse, locale);
+  return withLocale(sessionResponse);
 }
 
 export const config = {
@@ -156,8 +121,8 @@ export const config = {
   ],
 };
 
-function isLocalizedPublicPath(pathAfterLocale: string): boolean {
-  return PUBLIC_PATH_REGEX.test(pathAfterLocale);
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATH_REGEX.test(pathname);
 }
 
 function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse {

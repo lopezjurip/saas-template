@@ -17,7 +17,7 @@ test.describe("agency screens", () => {
   });
 
   test("console renders agency chrome and switches tabs", async ({ page }) => {
-    await page.goto("/es/a/demo-auditores");
+    await page.goto("/a/demo-auditores");
 
     // Check top bar carries the agency identity; the team tab is the default.
     await expect(page.getByText("Demo Auditores").first()).toBeVisible();
@@ -35,13 +35,13 @@ test.describe("agency screens", () => {
   });
 
   test("console 404s for an unknown agency slug", async ({ page }) => {
-    const response = await page.goto("/es/a/does-not-exist");
+    const response = await page.goto("/a/does-not-exist");
     expect(response?.status()).toBe(404);
   });
 
   test("create flow derives the slug and creates the agency", async ({ page }) => {
     const runId = Math.random().toString(36).slice(2, 8);
-    await page.goto("/es/agencies/create");
+    await page.goto("/agencies/create");
 
     await page.getByLabel("Nombre de la agencia").fill(`Estudio Andrade ${runId}`);
     // Slug auto-derives via SLUGIFY
@@ -60,7 +60,7 @@ test.describe("agency screens", () => {
  * Sign in through the consolidated two-step /auth/email flow (mirrors owner-creates-tenant).
  */
 async function signIn(page: Page, email: string, password: string) {
-  await page.goto("/es/auth");
+  await page.goto("/auth");
   await page.getByLabel("Cuenta").fill(email);
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
   await page.waitForURL(/\/auth\/email\?/);

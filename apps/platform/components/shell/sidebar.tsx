@@ -44,13 +44,13 @@ export function BUILD_NAV(
   organization_id: number,
   labels: ShellNavLabels,
 ): ShellNavItem[] {
-  const home = ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", { locale, tenant_slug, organization_id });
-  const members = ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
+  const home = ROUTE("/t/[tenant_slug]/[organization_id]", { locale, tenant_slug, organization_id });
+  const members = ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
     locale,
     tenant_slug,
     organization_id,
   });
-  const settings = ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
+  const settings = ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
     locale,
     tenant_slug,
     organization_id,
@@ -265,7 +265,7 @@ export function Sidebar({
       <div className={cn("border-border border-t", collapsed ? "flex flex-col items-center gap-1 py-2" : "px-2 py-2")}>
         <SettingsMenu
           locale={locale}
-          settingsHref={ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
+          settingsHref={ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
             locale,
             tenant_slug: tenant["tenant_slug"],
             organization_id: current["organization_id"],
