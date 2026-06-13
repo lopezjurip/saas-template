@@ -2,7 +2,7 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AFFILIATION_STATE, IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
+import { AFFILIATION_STATE } from "~/lib/agencies";
 import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AgencyConsole, type ConsoleData } from "./agency-console";
@@ -20,19 +20,15 @@ export default async function AgencyConsolePage(props: PageProps<"/[locale]/a/[a
   assertLocale(locale);
 
   const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const admin = createServiceRoleClient();
 
-  const agencyRes = await admin
-    .from("agencies")
-    .select("agency_id, agency_name, agency_slug, agency_disabled_at")
-    .eq("agency_slug", agency_slug)
-    .maybeSingle();
+  const [agencyRes, userRes] = await Promise.all([
+    supabase.rpc("viewer_agency_by_slug", { agency_slug }).maybeSingle(),
+    supabase.auth.getUser(),
+  ]);
   if (!agencyRes.data) notFound();
   const agency = agencyRes.data;
+  const user = userRes.data.user;
 
   const [membershipsRes, grantsRes, usersRes] = await Promise.all([
     admin
@@ -50,10 +46,6 @@ export default async function AgencyConsolePage(props: PageProps<"/[locale]/a/[a
   ]);
 
   const memberships = membershipsRes.data ?? [];
-
-  // Only an ACTIVE affiliate of this agency may open its console.
-  const viewerIsActive = memberships.some((m) => user && m.profile_id === user.id && IS_ACTIVE_MEMBERSHIP(m));
-  if (!viewerIsActive) notFound();
 
   const emailByProfileId = new Map<string, string | null>();
   if (!usersRes.error) {

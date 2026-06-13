@@ -74,6 +74,30 @@ const { data, error } = await mutate(
 State: `data`, `variables`, `error`, `isValidating`. Graphy does not auto-invalidate related
 SWR queries. Call router refresh or SWR mutation deliberately.
 
+Viewer-scoped create RPCs should return the created row from SQL:
+
+```ts
+const CreateTenantMutation = gql(`
+  mutation CreateTenantMutation($tenant_name: String!, $tenant_slug: String!) {
+    tenant: viewer_tenant_create(
+      tenant_name: $tenant_name
+      tenant_slug: $tenant_slug
+    ) {
+      tenant_id
+    }
+  }
+`);
+
+const [, createTenant] = useGraphyMutation(CreateTenantMutation);
+const { data, error } = await createTenant({ tenant_name, tenant_slug });
+const tenant_id = data?.["tenant"]?.["tenant_id"];
+```
+
+Use this direct client path when the RPC derives identity from the authenticated JWT and all
+work is transactional SQL. Do not add a Server Action merely to proxy the same GraphQL
+mutation. A Server Action remains appropriate for auth admin calls, secrets, service-role
+workflows, email delivery, or other server-only/external effects.
+
 ## Client methods
 
 - `fetch(...)`: returns data, throws Graphy errors.

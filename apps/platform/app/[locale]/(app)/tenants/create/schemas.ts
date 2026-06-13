@@ -4,7 +4,7 @@ import { z } from "zod";
 /**
  * Slug-shape validation runs client-side (UX); the reserved-slug check is enforced
  * by the DB via `internal.slug_reserved_validate()` (see schema.sql + seed.sql).
- * The INSERT raises a check_violation if the slug is reserved — `actionCreateTenant`
+ * The INSERT raises a check_violation if the slug is reserved — `viewer_tenant_create`
  * maps that to "Ese identificador está reservado".
  */
 export const createTenantSchema = z.object({

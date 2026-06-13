@@ -30,7 +30,7 @@ $$;
 -- ============================================================
 -- private   : sensitive data, no API access, not callable from public schemas
 -- internal  : utilities callable by other schemas (via security definer), no API access
--- protected : admin data, API access requires service_role key, not callable from public schemas
+-- protected : admin primitives, not exposed through APIs; public wrappers may delegate explicitly
 -- public    : standard user-facing data, full API access
 
 create schema if not exists private;
@@ -2769,6 +2769,7 @@ create or replace function public.viewer_sessions()
 
 create or replace function public.revoke_session(session_id uuid)
   returns void
+  volatile
   security definer
   language sql
   set search_path to ''
@@ -2778,57 +2779,224 @@ create or replace function public.revoke_session(session_id uuid)
       and user_id = auth.uid();
   $$;
 
--- ---------------------------------------------------------------------------
--- public.create_tenant
--- Creates a tenant + default organization + membership + wildcard permission
--- atomically. Intended to be called from a trusted server-side context with the
--- service-role key (bypasses RLS). Returns the new tenant_id, organization_id,
--- organization_membership_id, and tenant_slug.
--- ---------------------------------------------------------------------------
-create or replace function public.tenant_create(
+-- ============================================================
+-- Tenant / organization / agency creation
+-- ============================================================
+-- protected.* owns each transactional workflow. Public viewer wrappers only
+-- derive the current profile from the JWT and delegate to that implementation.
+
+create or replace function protected.tenant_create(
+  profile_id   uuid,
   tenant_slug  text,
-  tenant_name  text,
-  profile_id   uuid
+  tenant_name  text
 )
-  returns jsonb
+  returns setof public.tenants rows 1
+  volatile
   security definer
   language plpgsql
   set search_path to ''
   as $$
     declare
-      _tenant_id                    int;
-      _organization_id              int;
-      _organization_membership_id   int;
+      _tenant                      public.tenants;
+      _organization_id            int;
+      _organization_membership_id int;
     begin
       insert into public.tenants (tenant_slug, tenant_name)
-        values (tenant_create.tenant_slug::extensions.citext, tenant_create.tenant_name)
-        returning tenants.tenant_id into _tenant_id;
+        values (
+          $2::extensions.citext,
+          $3
+        )
+        returning * into _tenant;
 
       insert into public.organizations (tenant_id, organization_slug, organization_name)
-        values (_tenant_id, tenant_create.tenant_slug::extensions.citext, tenant_create.tenant_name)
-        returning organizations.organization_id into _organization_id;
+        values (
+          _tenant.tenant_id,
+          $2::extensions.citext,
+          $3
+        )
+        returning organization_id into _organization_id;
 
       insert into public.organization_memberships (
         organization_id,
         profile_id,
         organization_membership_accepted_at
       )
-        values (_organization_id, tenant_create.profile_id, current_timestamp)
-        returning organization_memberships.organization_membership_id into _organization_membership_id;
+        values (_organization_id, $1, current_timestamp)
+        returning organization_membership_id into _organization_membership_id;
 
       insert into public.organization_membership_permissions (organization_membership_id, permission_id)
         values (_organization_membership_id, '*');
 
-      return jsonb_build_object(
-        'tenant_id',                  _tenant_id,
-        'tenant_slug',                tenant_create.tenant_slug,
-        'organization_id',            _organization_id,
-        'organization_membership_id', _organization_membership_id
-      );
+      return next _tenant;
     end;
   $$;
 
-grant execute on function public.tenant_create(text, text, uuid) to service_role;
+revoke execute on function protected.tenant_create(uuid, text, text) from public;
+grant execute on function protected.tenant_create(uuid, text, text) to service_role;
+
+create or replace function public.viewer_tenant_create(
+  tenant_slug  text,
+  tenant_name  text
+)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select t.*
+    from protected.tenant_create(
+      public.viewer_profile_id(true),
+      $1,
+      $2
+    ) t;
+  $$;
+
+revoke execute on function public.viewer_tenant_create(text, text) from public;
+grant execute on function public.viewer_tenant_create(text, text) to anon, authenticated;
+
+create or replace function protected.organization_create(
+  profile_id         uuid,
+  tenant_id          int,
+  organization_slug  text,
+  organization_name  text
+)
+  returns setof public.organizations rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _organization                public.organizations;
+      _organization_membership_id  int;
+    begin
+      if not exists (
+        select 1
+        from public.organization_memberships m
+        join public.organizations o using (organization_id)
+        join public.organization_membership_permissions p using (organization_membership_id)
+        where o.tenant_id = $2
+          and m.profile_id = $1
+          and m.organization_membership_accepted_at is not null
+          and m.organization_membership_revoked_at is null
+          and m.organization_membership_rejected_at is null
+          and p.permission_id in ('organization_manage', '*')
+      ) then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      insert into public.organizations (tenant_id, organization_slug, organization_name)
+        values (
+          $2,
+          $3::extensions.citext,
+          $4
+        )
+        returning * into _organization;
+
+      insert into public.organization_memberships (
+        organization_id,
+        profile_id,
+        organization_membership_accepted_at
+      )
+        values (_organization.organization_id, $1, current_timestamp)
+        returning organization_membership_id into _organization_membership_id;
+
+      insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+        values (_organization_membership_id, '*');
+
+      return next _organization;
+    end;
+  $$;
+
+revoke execute on function protected.organization_create(uuid, int, text, text) from public;
+grant execute on function protected.organization_create(uuid, int, text, text) to service_role;
+
+create or replace function public.viewer_organization_create(
+  tenant_id          int,
+  organization_slug  text,
+  organization_name  text
+)
+  returns setof public.organizations rows 1
+  volatile
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select o.*
+    from protected.organization_create(
+      public.viewer_profile_id(true),
+      $1,
+      $2,
+      $3
+    ) o;
+  $$;
+
+revoke execute on function public.viewer_organization_create(int, text, text) from public;
+grant execute on function public.viewer_organization_create(int, text, text) to anon, authenticated;
+
+create or replace function protected.agency_create(
+  profile_id   uuid,
+  agency_name  text,
+  agency_slug  text
+)
+  returns setof public.agencies rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _agency                 public.agencies;
+      _agency_membership_id   int;
+    begin
+      begin
+        insert into public.agencies (agency_name, agency_slug)
+          values (
+            $2,
+            $3::extensions.citext
+          )
+          returning * into _agency;
+      exception
+        when unique_violation then
+          raise exception 'slug_taken' using errcode = 'P0001';
+      end;
+
+      insert into public.agency_memberships (
+        agency_id,
+        profile_id,
+        agency_membership_accepted_at
+      )
+        values (_agency.agency_id, $1, current_timestamp)
+        returning agency_membership_id into _agency_membership_id;
+
+      return next _agency;
+    end;
+  $$;
+
+revoke execute on function protected.agency_create(uuid, text, text) from public;
+grant execute on function protected.agency_create(uuid, text, text) to service_role;
+
+create or replace function public.viewer_agency_create(
+  agency_name  text,
+  agency_slug  text
+)
+  returns setof public.agencies rows 1
+  volatile
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select a.*
+    from protected.agency_create(
+      public.viewer_profile_id(true),
+      $1,
+      $2
+    ) a;
+  $$;
+
+revoke execute on function public.viewer_agency_create(text, text) from public;
+grant execute on function public.viewer_agency_create(text, text) to anon, authenticated;
 
 -- ============================================================
 -- agency_memberships — mutation RPCs
@@ -2847,6 +3015,7 @@ create or replace function public.agency_membership_invite(
   caller_id   uuid
 )
   returns int
+  volatile
   security definer
   language plpgsql
   set search_path to ''
@@ -2906,6 +3075,7 @@ create or replace function public.agency_membership_update(
   caller_id            uuid
 )
   returns int
+  volatile
   security definer
   language plpgsql
   set search_path to ''
@@ -2957,6 +3127,7 @@ create or replace function public.agency_membership_respond(
   response             text  -- 'accept' | 'reject'
 )
   returns int
+  volatile
   security definer
   language plpgsql
   set search_path to ''

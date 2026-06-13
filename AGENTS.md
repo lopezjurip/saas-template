@@ -19,7 +19,7 @@ Always use **pnpm**. Never npm or yarn.
 | Monorepo | Turborepo + pnpm workspaces |
 | Frontend | Next.js 16 (App Router), React 19, TypeScript 6 |
 | Styling | Tailwind CSS 4.x + shadcn/ui (new-york, in `packages/ui-common/src/shadcn`) |
-| API | Server Actions + typed `pg_graphql` operations |
+| API | Typed `pg_graphql` operations + Server Actions for server-only effects |
 | Database + Auth | Supabase (Postgres + Auth + Storage + Realtime + RLS) |
 | ORM | Supabase (generated types via CLI, no Drizzle) |
 | GraphQL | `pg_graphql` + a typed client (`@packages/graphy`) |
@@ -380,6 +380,8 @@ Action matches `rpcError.message` against LOCALES keys — never parse prose.
 **Client choice:**
 - **Service-role client** for RPCs requiring `caller_id` passed explicitly (service role has no JWT `sub`).
 - **Authenticated server client** for RPCs calling `viewer_profile_id()` internally (e.g., `actionRespondInvitation`).
+- **`useGraphyMutation` directly from client components** for viewer-scoped RPCs whose entire workflow is transactional SQL and which need no server-only API or secret. Do not add a pass-through Server Action.
+- **Creation RPC return shape:** `protected.*_create(profile_id, ...)` and `public.viewer_*_create(...)` return `setof public.<table> rows 1`, explicitly `volatile`. pg_graphql exposes the viewer function as a singular table object on `Mutation`, allowing callers to select the created row fields.
 
 ### SQL / PL/pgSQL style
 

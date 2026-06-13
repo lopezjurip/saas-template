@@ -92,6 +92,16 @@ export const actionSave = authedAction
 
 Exported server action name starts `action`.
 
+Do not use a Server Action as a pass-through for a viewer-scoped GraphQL mutation. In a client
+component, call `useGraphyMutation` directly when:
+
+- the SQL RPC calls `viewer_profile_id()` and therefore uses the browser session;
+- the complete mutation is transactional inside PostgreSQL;
+- no server-only secret, Auth Admin API, service-role client, or external side effect is needed.
+
+Keep Server Actions for operations requiring trusted server execution, external effects, or
+non-browser entry points.
+
 ## Service role
 
 ```ts
