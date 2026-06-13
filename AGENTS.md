@@ -2,16 +2,9 @@
 
 ## What This Is
 
-A production-grade starter for building a multi-tenant SaaS. It ships with the hard parts
-already wired together: authentication (email/password, OAuth, phone OTP, WebAuthn passkeys),
-two-level multi-tenancy with Postgres RLS, capability-based permissions, an agency/affiliate
-surface for cross-tenant partner access, i18n, React Email/PDF template packages, and a
-shadcn-based design system — all in a Turborepo monorepo.
+Production-grade multi-tenant SaaS starter. Hard parts pre-wired: authentication (email/password, OAuth, phone OTP, WebAuthn passkeys), two-level multi-tenancy with Postgres RLS, capability-based permissions, agency/affiliate surface for cross-tenant partner access, i18n, React Email/PDF template packages, shadcn-based design system — all in Turborepo monorepo.
 
-Reusable infrastructure (`packages/*`, auth, tenancy, routing, permissions, and the
-**agency/affiliate** surface — a generic B2B pattern for partners/resellers/firms that work
-across multiple customer tenants) is meant to be kept. The **HR/payroll-style tenant surface**
-is just an example product implementation of these patterns — replace it with your own.
+Keep reusable infrastructure (`packages/*`, auth, tenancy, routing, permissions, **agency/affiliate** surface — generic B2B pattern for partners/resellers/firms working across multiple customer tenants). **HR/payroll-style tenant surface** is example product implementation — replace with your own.
 
 ## Package Manager
 
@@ -36,13 +29,11 @@ Always use **pnpm**. Never npm or yarn.
 | Linting/Formatting | Biome.js 2.x |
 | Hosting | Vercel |
 
-> Optional integrations included as examples: `@packages/kapso` (WhatsApp BSP). Remove the
-> ones you don't need.
+> Optional integrations included as examples: `@packages/kapso` (WhatsApp BSP). Remove ones you don't need.
 
 ## Architecture
 
-One Next.js app — `apps/platform` — that hosts marketing, auth, dashboard, and tenant surfaces,
-routed by hostname and URL path. Shared logic lives in `@packages/*`.
+One Next.js app — `apps/platform` — hosts marketing, auth, dashboard, and tenant surfaces, routed by hostname and URL path. Shared logic in `@packages/*`.
 
 ```
 <repo>/
@@ -81,24 +72,24 @@ routed by hostname and URL path. Shared logic lives in `@packages/*`.
 
 ### Routing
 
-Hostname determines whether a request enters tenant context:
+Hostname determines whether request enters tenant context:
 
-- `<apex>/...` and `www.<apex>/...` → main site. Proxy adds the locale segment when missing.
-- `{slug}.<apex>/...` → proxy rewrites to `/{locale}/{slug}{path}` so the same `[tenant_slug]` route renders. `/auth/*` and `/health` on a subdomain redirect to the apex.
-- Custom apex domains — phase 2; unknown hosts currently redirect to the configured apex. Cookies can't span apexes without an SSO redirect/exchange flow.
+- `<apex>/...` and `www.<apex>/...` → main site. Proxy adds locale segment when missing.
+- `{slug}.<apex>/...` → proxy rewrites to `/{locale}/{slug}{path}` so same `[tenant_slug]` route renders. `/auth/*` and `/health` on subdomain redirect to apex.
+- Custom apex domains — phase 2; unknown hosts redirect to configured apex. Cookies can't span apexes without SSO redirect/exchange flow.
 
-Where `<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.PORT` (assigned per instance). `lvh.me` + `7003` in dev (Conductor reassigns `PORT` for parallel instances), `example.com` + implicit `443` in prod.
+`<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.PORT` (assigned per instance). `lvh.me` + `7003` in dev (Conductor reassigns `PORT` for parallel instances), `example.com` + implicit `443` in prod.
 
 ### Auth + onboarding
 
-- `proxy.ts` calls `updateSession` (`@packages/supabase/client.middleware`) to refresh the JWT cookie, then reads the `sub` claim (the `profile_id`) — the only claim the hook carries. The JWT no longer holds tenant/organization/agency/onboarding metadata; resolve those from the DB via the `viewer_*` helpers (or `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server`).
-- Gates, in order: public path bypass → auth (redirect to `/auth?next=…`, `next` derived from the `Host` header since `request.url` drops the subdomain in Next dev) → for tenant subdomains, membership check resolved from the DB (`viewer_tenant_validate`). Onboarding completion is **not** a hard gate — it's surfaced via the /home banner.
-- Reserved slugs (`auth`, `home`, `tenants`, `health`, `api`, `_next`, `www`, …) are rejected at tenant creation (`apps/platform/app/[locale]/tenants/create/schemas.ts`, enforced by `internal.slug_reserved_validate()` in the DB) so they never collide with first-party routes.
-- **Public paths in proxy:** when adding new marketing pages (e.g., `/faq`, `/pricing`), update `PUBLIC_PATH_REGEX` in `apps/platform/proxy.ts` to avoid auth gate. Regex matches root + any route under `/auth`, `/legal`, plus exact matches.
+- `proxy.ts` calls `updateSession` (`@packages/supabase/client.middleware`) to refresh JWT cookie, then reads `sub` claim (the `profile_id`) — only claim hook carries. JWT no longer holds tenant/organization/agency/onboarding metadata; resolve from DB via `viewer_*` helpers (or `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server`).
+- Gates, in order: public path bypass → auth (redirect to `/auth?next=…`, `next` derived from `Host` header since `request.url` drops subdomain in Next dev) → for tenant subdomains, membership check from DB (`viewer_tenant_validate`). Onboarding completion is **not** hard gate — surfaced via /home banner.
+- Reserved slugs (`auth`, `home`, `tenants`, `health`, `api`, `_next`, `www`, …) rejected at tenant creation (`apps/platform/app/[locale]/tenants/create/schemas.ts`, enforced by `internal.slug_reserved_validate()` in DB) — never collide with first-party routes.
+- **Public paths in proxy:** adding new marketing pages (e.g., `/faq`, `/pricing`) → update `PUBLIC_PATH_REGEX` in `apps/platform/proxy.ts` to avoid auth gate. Regex matches root + any route under `/auth`, `/legal`, plus exact matches.
 
 ### Reserved Slugs
 
-Reserved slugs are seeded in `packages/supabase/supabase/seed.sql` and cached per-request in `apps/platform/lib/get-tenant-reserved-slugs.ts` using React's `cache()`. The cache deduplicates queries within a single request; new/changed slugs are picked up on the next request automatically.
+Reserved slugs seeded in `packages/supabase/supabase/seed.sql` and cached per-request in `apps/platform/lib/get-tenant-reserved-slugs.ts` using React's `cache()`. Cache deduplicates queries within single request; new/changed slugs picked up on next request automatically.
 
 ### Local Dev Ports
 
@@ -110,69 +101,99 @@ Reserved slugs are seeded in `packages/supabase/supabase/seed.sql` and cached pe
 | `packages/react-email` | 7101 | http://localhost:7101 |
 | `packages/react-pdf` | 7102 | http://localhost:7102 |
 
-`lvh.me` is a public wildcard DNS that resolves every name (apex + subdomain) to `127.0.0.1` — no `/etc/hosts` entries needed. Cookies are scoped to `.lvh.me` so the session crosses `lvh.me:7003` ↔ `{slug}.lvh.me:7003`.
+`lvh.me` is public wildcard DNS resolving every name (apex + subdomain) to `127.0.0.1` — no `/etc/hosts` entries needed. Cookies scoped to `.lvh.me` so session crosses `lvh.me:7003` ↔ `{slug}.lvh.me:7003`.
 
 ### Local HTTPS
 
-`apps/platform` runs over HTTPS in dev (`next dev --experimental-https`) because WebAuthn requires a secure context, and the browser's secure-context allowlist hardcodes the literal strings `localhost` / `127.0.0.1` / `[::1]` — DNS aliases like `lvh.me` that resolve to 127.0.0.1 are NOT on the allowlist, so plain HTTP makes `window.PublicKeyCredential` undefined.
+`apps/platform` runs over HTTPS in dev (`next dev --experimental-https`) — WebAuthn requires secure context, and browser's secure-context allowlist hardcodes `localhost` / `127.0.0.1` / `[::1]` — DNS aliases like `lvh.me` resolving to 127.0.0.1 are NOT on allowlist, so plain HTTP makes `window.PublicKeyCredential` undefined.
 
-The TLS cert comes from [mkcert](https://github.com/FiloSottile/mkcert). One-time setup:
+TLS cert from [mkcert](https://github.com/FiloSottile/mkcert). One-time setup:
 
 ```bash
 bash scripts/development/https-setup.sh
 ```
 
-That runs `mkcert -install` and emits `apps/platform/certs/lvh.me-{cert,key}.pem` covering `lvh.me`, `*.lvh.me`, `localhost`, and `127.0.0.1`. The dev script in `apps/platform/package.json` references those file paths. `apps/platform/certs/` is gitignored (`**/certs/` in root `.gitignore`).
+Runs `mkcert -install` and emits `apps/platform/certs/lvh.me-{cert,key}.pem` covering `lvh.me`, `*.lvh.me`, `localhost`, `127.0.0.1`. Dev script in `apps/platform/package.json` references those paths. `apps/platform/certs/` is gitignored (`**/certs/` in root `.gitignore`).
 
-Keep these aligned with the HTTPS dev origin — flipping any to `http://` will break OAuth callbacks and passkey verification:
+Keep these aligned with HTTPS dev origin — flipping any to `http://` breaks OAuth callbacks and passkey verification:
 
 - `WEBAUTHN_RELYING_PARTY_ORIGIN` (in `.env.example` + `apps/platform/.env.local`): `https://lvh.me:7003`
 - `supabase/config.toml` `[auth].site_url`: `https://lvh.me:7003`
 - `supabase/config.toml` `[auth].additional_redirect_urls`: `https://lvh.me:7003/**` + `https://*.lvh.me:7003/**`
 
-`WEBAUTHN_RELYING_PARTY_ID` stays `lvh.me` (host only, no protocol/port). `NEXT_PUBLIC_APEX_HOSTNAME` is `lvh.me` (hostname only); port comes from `process.env.PORT` (Conductor assigns per parallel instance, dev script falls back to 7003); `proxy.ts` derives the protocol from `request.nextUrl.protocol` / `x-forwarded-proto` and builds the full host via `APP_HOST` in `apps/platform/lib/constants.ts`.
+`WEBAUTHN_RELYING_PARTY_ID` stays `lvh.me` (host only, no protocol/port). `NEXT_PUBLIC_APEX_HOSTNAME` is `lvh.me` (hostname only); port from `process.env.PORT` (Conductor assigns per parallel instance, dev script falls back to 7003); `proxy.ts` derives protocol from `request.nextUrl.protocol` / `x-forwarded-proto` and builds full host via `APP_HOST` in `apps/platform/lib/constants.ts`.
 
-After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) so the changes take effect — `pnpm db:reset` also picks them up but wipes data.
+After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) — `pnpm db:reset` also picks them up but wipes data.
 
 ## Skills
 
-Agent skill sources live in `skills/my-*`. `pnpm install` runs `scripts/skills-setup.js`, which
-symlinks them into `.agents/skills/` and `.claude/skills/`. Read the relevant skill before
-working in that subsystem.
+Skill sources in `skills/my-*`. `pnpm install` runs `scripts/skills-setup.js`, symlinking into `.agents/skills/` and `.claude/skills/`. Read relevant skill before working in that subsystem.
 
-To install a third-party skill:
+Install third-party skill:
 
 ```bash
 pnpm dlx skills add <registry-url> --skill <skill-name>
 ```
 
-Skills run with full agent permissions — review a skill's source before using it in production.
+Skills run with full agent permissions — review skill source before using in production.
+
+## Documentation
+
+Fetch current docs before writing code — training data goes stale.
+
+1. **Context7 MCP** — `mcp__context7__resolve-library-id` → `mcp__context7__query-docs`. Any stack package (Next.js, Supabase, Tailwind, shadcn/ui, React, etc.).
+2. **Repository skills** — `skills/my-*` for repo-specific subsystems (auth, graphql, i18n, supabase, etc.). Read skill before touching that subsystem.
+3. **`context7-mcp` skill** — `/context7-mcp` shorthand; wraps both MCP calls above.
 
 ## `@packages/ui-common`
 
-Shared UI lives in `packages/ui-common`. It has two layers:
+Shared UI in `packages/ui-common`. Two layers:
 
-- **`src/shadcn/**`** — shadcn/ui primitives + `cn` utility. Managed by the shadcn CLI.
+- **`src/shadcn/**`** — shadcn/ui primitives + `cn` utility. Managed by shadcn CLI.
 - **`src/**`** — hand-written shared components (e.g. `logo.tsx`, brand-specific UI). One file per component, no barrels.
 
 Conventions:
 
-- Run `pnpm dlx shadcn add <component>` from `packages/ui-common/` to add primitives — they land in `src/shadcn/components/ui/`.
+- Add primitives: `pnpm dlx shadcn add <component>` from `packages/ui-common/` — land in `src/shadcn/components/ui/`.
 - Import primitives: `import { Button } from "@packages/ui-common/shadcn/components/ui/button"`
 - Import `cn`: `import { cn } from "@packages/ui-common/shadcn/lib/utils"`
-- Import hand-written components: `import { Logo } from "@packages/ui-common/logo"`
+- Import hand-written: `import { Logo } from "@packages/ui-common/logo"`
 - Each app's `globals.css` imports `../../packages/ui-common/src/shadcn/globals.css` for CSS variables and `@source "../../packages/ui-common/src"` for Tailwind scanning.
 - Each app's `next.config.ts` includes `@packages/ui-common` in `transpilePackages`.
 
+### Switching visual style
+
+Current style: **`radix-rhea`** (set in `packages/ui-common/components.json`).
+
+Available styles (all keep `radix-ui` as primitive — no `@base-ui/react`):
+`radix-vega` · `radix-nova` · `radix-maia` · `radix-lyra` · `radix-mira` · `radix-luma` · `radix-rhea` · `radix-sera`
+
+To switch (e.g. to `radix-luma`):
+
+```bash
+# 1. Change one field in components.json
+#    "style": "radix-rhea"  →  "style": "radix-luma"
+
+# 2. Re-generate all components (overwrites src/shadcn/components/ui/)
+pnpm dlx shadcn@latest add --overwrite --cwd packages/ui-common \
+  accordion alert avatar badge button card checkbox dialog \
+  input input-otp label select separator switch table tabs textarea sonner
+
+# 3. Run Biome + type-check
+pnpm format:apply-unsafe && pnpm build:dry
+
+# 4. Visual QA: auth, dashboard, dark mode
+```
+
+**Critical rule:** never hand-edit files in `src/shadcn/components/ui/` — they are generated and will be overwritten on the next style switch. Customizations go in `src/` wrappers that compose the primitives.
+
 ## MCP Status
 
-`@modelcontextprotocol/sdk` is installed in `apps/platform`, but no MCP route is currently
-implemented. Do not document or expose an endpoint until a tenant-scoped route and auth model
-exist.
+`@modelcontextprotocol/sdk` installed in `apps/platform`, but no MCP route implemented. Do not document or expose endpoint until tenant-scoped route and auth model exist.
 
 ## Database Workflow (Prototype Phase)
 
-No incremental migrations yet. All schema lives in a single file: `packages/supabase/supabase/migrations/00000000000000_schema.sql`. To change the schema, edit that file directly and run `pnpm db:reset && pnpm generate:types`. Migrations will be introduced before the first production launch.
+No incremental migrations. All schema in single file: `packages/supabase/supabase/migrations/00000000000000_schema.sql`. To change schema: edit that file directly, run `pnpm db:reset && pnpm generate:types`. Migrations introduced before first production launch.
 
 - `pnpm db:start` / `pnpm db:stop` — start/stop local Supabase (Docker)
 - `pnpm db:reset` — drop everything, replay schema, run seed
@@ -183,55 +204,55 @@ No incremental migrations yet. All schema lives in a single file: `packages/supa
 
 Two-level model:
 
-- `public.tenants` (int4 serial PK) — the billing / customer relationship. Subdomain `{tenant_slug}.example.com` routes to a tenant.
-- `public.organizations` (int4 serial PK, FK to tenants) — the actual operating unit. Most tenants have exactly one organization that mirrors the tenant; large companies have several (e.g. one per country / branch).
+- `public.tenants` (int4 serial PK) — billing / customer relationship. Subdomain `{tenant_slug}.example.com` routes to tenant.
+- `public.organizations` (int4 serial PK, FK to tenants) — actual operating unit. Most tenants have one organization mirroring the tenant; large companies have several (e.g. one per country / branch).
 - `public.organization_memberships(organization_membership_id, organization_id, profile_id, lifecycle timestamps, invite fields)` — users belong to organizations, not directly to tenants. No `role` column — access is permission-based. Pending invitations and active memberships share this table.
 
-Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to filter, cheap in indexes) and, when data is org-scoped, also `organization_id int`. Supabase RLS enforces isolation at the DB layer — never rely on application-level filtering alone.
+Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to filter, cheap in indexes) and, when data is org-scoped, also `organization_id int`. Supabase RLS enforces isolation at DB layer — never rely on application-level filtering alone.
 
-**Active tenant comes from the subdomain or locale-prefixed path segment.** `apps/platform/proxy.ts` resolves `{tenant_slug}.<apex>` via the service-role client, validates membership against the DB (`viewer_tenant_validate`), and **rewrites** the URL to `/{locale}/{tenant_slug}/...` — every tenant route lives under `app/[locale]/[tenant_slug]/...`. Path access (`<apex>/{locale}/{tenant_slug}/...`) works without a host rewrite. Pages use viewer-scoped GraphQL helpers or resolve `tenant_id` from the DB via the `viewer_*` helpers; no `x-tenant-*` headers. Direct table queries must explicitly filter `tenant_id`.
+**Active tenant from subdomain or locale-prefixed path segment.** `apps/platform/proxy.ts` resolves `{tenant_slug}.<apex>` via service-role client, validates membership against DB (`viewer_tenant_validate`), **rewrites** URL to `/{locale}/{tenant_slug}/...` — every tenant route under `app/[locale]/[tenant_slug]/...`. Path access (`<apex>/{locale}/{tenant_slug}/...`) works without host rewrite. Pages use viewer-scoped GraphQL helpers or resolve `tenant_id` from DB via `viewer_*` helpers; no `x-tenant-*` headers. Direct table queries must explicitly filter `tenant_id`.
 
-**Custom domain mapping (`public.tenant_domains`, many domains per tenant)** is staged in the schema but not yet wired into the proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates advanced features once billing exists.
+**Custom domain mapping (`public.tenant_domains`, many domains per tenant)** staged in schema, not yet wired into proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates advanced features once billing exists.
 
 **Permissions (capability-based, not role-based):**
-- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs. It ships English admin capabilities only: `*`, `organization_manage`, `members_manage`, `presets_manage`. The reserved slug `*` is the wildcard — a membership holding `*` passes every permission check inside its organization. Used for the tenant creator and other "full admin" grants without enumerating every slug.
-- `public.organization_membership_permissions(organization_membership_id, permission_id)` — explicit grants. Organization/profile derive through the membership row. The composite PK prevents duplicate grants and deletion cascades from memberships.
-- `public.permission_presets(permission_preset_id, organization_id?, permission_preset_name, permission_preset_slugs[])` — UX-only named bundles; carries no enforcement. `organization_id IS NULL` = global preset. The seeded global presets are `Owner` / `Administrator` / `Member manager`. A trigger validates every slug.
+- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs. Ships English admin capabilities only: `*`, `organization_manage`, `members_manage`, `presets_manage`. Reserved slug `*` is wildcard — membership holding `*` passes every permission check inside its organization. Used for tenant creator and other "full admin" grants without enumerating every slug.
+- `public.organization_membership_permissions(organization_membership_id, permission_id)` — explicit grants. Organization/profile derive through membership row. Composite PK prevents duplicate grants; deletion cascades from memberships.
+- `public.permission_presets(permission_preset_id, organization_id?, permission_preset_name, permission_preset_slugs[])` — UX-only named bundles; carries no enforcement. `organization_id IS NULL` = global preset. Seeded global presets: `Owner` / `Administrator` / `Member manager`. Trigger validates every slug.
 
-Permissions are deliberately NOT in the JWT (size, and they change at runtime). All enforcement reads `public.organization_membership_permissions` at query time via the security-definer helpers below.
+Permissions deliberately NOT in JWT (size, and they change at runtime). All enforcement reads `public.organization_membership_permissions` at query time via security-definer helpers below.
 
-**The JWT carries only `profile_id` (the `sub` claim).** `public.user_auth_hook` is now a pass-through — it injects nothing. Tenant / organization / agency / onboarding state is no longer embedded in the token; it is resolved from the DB at query time via the `viewer_*` helpers. Onboarding is a UX nudge, not a proxy hard gate.
+**JWT carries only `profile_id` (the `sub` claim).** `public.user_auth_hook` is pass-through — injects nothing. Tenant / organization / agency / onboarding state not embedded in token; resolved from DB at query time via `viewer_*` helpers. Onboarding is UX nudge, not proxy hard gate.
 
-Because tenant/organization/agency/onboarding state is read from the DB, there is no `refreshSession()` dance after those mutations — they take effect immediately. Permission changes are likewise DB-backed.
+Tenant/organization/agency/onboarding state read from DB → no `refreshSession()` dance after those mutations — take effect immediately. Permission changes likewise DB-backed.
 
-**Use the `viewer_*` SQL helpers in RLS policies, not raw JWT parsing:**
+**Use `viewer_*` SQL helpers in RLS policies, not raw JWT parsing:**
 
-DB-resolved (SECURITY DEFINER; these query the DB directly, not the JWT):
-- `public.viewer_profile_id()` / `public.viewer_profile()` — current user from the `sub` claim (with optional `strict => true`)
-- `public.viewer_tenant_ids()` — set of tenant_ids the caller belongs to, resolved from the DB
+DB-resolved (SECURITY DEFINER; query DB directly, not JWT):
+- `public.viewer_profile_id()` / `public.viewer_profile()` — current user from `sub` claim (with optional `strict => true`)
+- `public.viewer_tenant_ids()` — set of tenant_ids caller belongs to, resolved from DB
 - `public.viewer_tenant_validate(tenant_id)` — true iff caller belongs to any org in this tenant
-- `public.viewer_organization_ids()` — set of organization_ids the caller belongs to, resolved from the DB
-- `public.viewer_organization_validate(organization_id)` — true iff caller is a member of this org
-- `public.viewer_agency_ids()` / `public.viewer_is_agency_member()` — agency memberships, resolved from the DB
+- `public.viewer_organization_ids()` — set of organization_ids caller belongs to, resolved from DB
+- `public.viewer_organization_validate(organization_id)` — true iff caller is member of this org
+- `public.viewer_agency_ids()` / `public.viewer_is_agency_member()` — agency memberships, resolved from DB
 
-Permission-backed (DB lookup, security definer; wildcard `*` is honored):
-- `public.viewer_permission_org_ids(permission_id)` — orgs where the caller has the perm (or `*`). Use this in RLS `IN`-subqueries.
-- `public.viewer_has_permission(organization_id, permission_id)` — boolean shortcut for a single (org, perm) check.
+Permission-backed (DB lookup, security definer; wildcard `*` honored):
+- `public.viewer_permission_org_ids(permission_id)` — orgs where caller has perm (or `*`). Use in RLS `IN`-subqueries.
+- `public.viewer_has_permission(organization_id, permission_id)` — boolean shortcut for single (org, perm) check.
 - `public.viewer_organization_membership_permissions()` — setof `(organization_id, permission_id)` for UI listing.
 
 ## Critical Rules
 
 ### No barrel index files
-Never create an `index.ts` (or `index.tsx`) whose sole purpose is re-exporting from other files. Import directly from the source file instead.
+Never create `index.ts` (or `index.tsx`) whose sole purpose is re-exporting. Import directly from source file.
 
 ### Never Use `DROP ... CASCADE`
 Critical safety rule for SQL. Always explicit.
 
 ### No hyphens in SQL identifiers or enum values
-Never use `-` in Postgres identifiers (tables, views, functions, columns, schemas, types) **or in enum values**. Use `snake_case` only — pg_graphql rejects names that don't match `[_a-zA-Z0-9]`, which silently breaks the entire GraphQL schema introspection (not just the offending object). If an external spec defines values that won't pass that constraint (e.g. WebAuthn's `"public-key"`), store the column as `text` with a `check` constraint instead of an enum — that keeps the spec literal in the DB without breaking pg_graphql.
+Never use `-` in Postgres identifiers (tables, views, functions, columns, schemas, types) **or in enum values**. Use `snake_case` only — pg_graphql rejects names not matching `[_a-zA-Z0-9]`, which silently breaks entire GraphQL schema introspection. If external spec defines values that won't pass (e.g. WebAuthn's `"public-key"`), store column as `text` with `check` constraint instead of enum — keeps spec literal in DB without breaking pg_graphql.
 
 ### plpgsql naming: `_` prefix for DECLARE locals only, not parameters
-Inside `declare` blocks in plpgsql functions/triggers, prefix **local variables** with a leading underscore (`_user_id`, `_claims`, `_canonical`). It visually disambiguates them from column names and avoids ambiguous-reference errors when a variable shares a name with a column. **Function parameters do NOT get the `_` prefix** — write `agency_id`, `profile_id`, `caller_id`, not `_agency_id`, `_profile_id`, `_caller_id`. Follow the existing `viewer_*` / `user_auth_hook` style.
+Inside `declare` blocks, prefix **local variables** with leading underscore (`_user_id`, `_claims`, `_canonical`). Visually disambiguates from column names, avoids ambiguous-reference errors. **Function parameters do NOT get `_` prefix** — write `agency_id`, `profile_id`, `caller_id`, not `_agency_id`, `_profile_id`, `_caller_id`. Follow existing `viewer_*` / `user_auth_hook` style.
 
 ### Type Generation
 - After Supabase schema changes: `pnpm generate:types` (runs against `@packages/supabase`)
@@ -240,11 +261,11 @@ Inside `declare` blocks in plpgsql functions/triggers, prefix **local variables*
 ### Imports
 - Use `~/` alias for imports within `apps/platform/` (e.g., `~/lib/...`, `~/hooks/...`).
 - Workspace packages: `@packages/ui-common`, `@packages/supabase`, `@packages/react-email`, `@packages/react-pdf`, etc.
-- App code lives in `apps/platform/`; reusable logic belongs in `@packages/*`.
+- App code in `apps/platform/`; reusable logic in `@packages/*`.
 
 ### Typed route helpers (Next.js 16) — REQUIRED
 
-**Always use `PageProps<"route">` for `page.tsx`, `LayoutProps<"route">` for `layout.tsx`, and `RouteContext<"route">` for `route.ts`.** With `typedRoutes: true` in `next.config.ts`, Next.js generates these as global types under `.next/dev/types/`. Use them instead of hand-rolling `{ params: Promise<...> }` — they stay in sync with the actual file path, so renaming a folder fails the type-check the next time we run `pnpm build:dry`.
+**Always use `PageProps<"route">` for `page.tsx`, `LayoutProps<"route">` for `layout.tsx`, `RouteContext<"route">` for `route.ts`.** With `typedRoutes: true` in `next.config.ts`, Next.js generates these as global types under `.next/dev/types/`. Use instead of hand-rolling `{ params: Promise<...> }` — stay in sync with actual file path, so renaming folder fails type-check on next `pnpm build:dry`.
 
 ```ts
 // page.tsx
@@ -268,12 +289,12 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/[locale]/aut
 }
 ```
 
-`searchParams` is typed as `Record<string, string | string[] | undefined>` because URL params can repeat. Narrow with `SINGLE(sp["foo"])` from `@packages/utils/array` to get the first value as a plain `string | undefined`.
+`searchParams` typed as `Record<string, string | string[] | undefined>` because URL params can repeat. Narrow with `SINGLE(sp["foo"])` from `@packages/utils/array` to get first value as `string | undefined`.
 
-**Exception:** If a `page.tsx` or `layout.tsx` is not `async` and doesn't access `params` or `searchParams`, you don't need typed props — but always make them `async` if you need any server-side capability.
+**Exception:** `page.tsx` or `layout.tsx` not `async` and not accessing `params` or `searchParams` — no typed props needed. But always make `async` if needing any server-side capability.
 
 ### Bracket notation for external data
-When reading properties off objects that originated outside the program (GraphQL/REST responses, parsed JSON, file contents, webhook payloads, MCP tool results), use bracket notation — not dot access.
+Reading properties off objects from outside program (GraphQL/REST responses, parsed JSON, file contents, webhook payloads, MCP tool results) → use bracket notation, not dot access.
 
 ```ts
 // External data → brackets
@@ -288,12 +309,12 @@ const { data, error } = await supabase.auth.getUser();
 const session = await graphy.query({ query: DashboardPageQuery });
 ```
 
-This is a deliberate visual cue: brackets mark "this shape is contractual with another system" so a reader can distinguish it from class properties/methods owned by the program. TypeScript narrowing still works through brackets, so there's no type-safety cost. Don't introduce intermediate `.map()`/`.filter()` arrays just to extract a key — iterate the original collection and bracket from there.
+Brackets mark "this shape is contractual with another system" — distinguishes from class properties/methods owned by program. TypeScript narrowing works through brackets; no type-safety cost. Don't introduce intermediate `.map()`/`.filter()` arrays to extract key — iterate original collection and bracket from there.
 
-**Mock/fixture data counts as external.** Objects from `~/lib/*-mock.ts` (and any fixture standing in for DB rows / API responses) are contractual with a future backend — read them with brackets too (`agency["name"]`, `aff["email"]`, `org["slug"]`), even though they're typed in-program consts today. When the mock becomes a real query, the access sites already match. (Destructuring the top-level object is still fine — `const { org } = item` — then bracket the leaf reads: `org["name"]`.)
+**Mock/fixture data counts as external.** Objects from `~/lib/*-mock.ts` (and any fixture standing in for DB rows / API responses) are contractual with future backend — read with brackets too (`agency["name"]`, `aff["email"]`, `org["slug"]`). Destructuring top-level is fine — `const { org } = item` — then bracket leaf reads: `org["name"]`.
 
 ### Locale-prefixed links — use the `/[locale]/…` sentinel
-Client-side hrefs that need the active locale must use the **literal** `/[locale]/…` sentinel. `proxy.ts` rewrites `/[locale]/…` to the real locale on the way through (the same mechanism the server-side `redirect("/[locale]/auth")` calls rely on). Do **not** thread `locale` / `localePrefix` / a pre-built `base` string from a server `page.tsx` into a client component just to build links — build the href inside the component with the sentinel:
+Client-side hrefs needing active locale must use **literal** `/[locale]/…` sentinel. `proxy.ts` rewrites `/[locale]/…` to real locale on the way through. Do **not** thread `locale` / `localePrefix` / pre-built `base` string from server `page.tsx` into client component — build href inside component with sentinel:
 
 ```tsx
 // ✅ client component — no locale prop threaded in
@@ -304,13 +325,13 @@ const inviteHref = `/[locale]/admin/agencies/${agency["slug"]}/affiliates/new`;
 
 ### i18n dictionaries — each file owns its own copy
 
-Never pass a dictionary object as props, and never import or export `LOCALES` between files. Each file is the sole owner of its strings.
+Never pass dictionary object as props; never import or export `LOCALES` between files. Each file is sole owner of its strings.
 
-- **Server page** (`page.tsx`): define its own minimal `LOCALES` with only what `generateMetadata` needs (e.g. `title`, `subtitle`). Use `ROSETTA(LOCALES, locale)` from `~/lib/i18n`.
-- **Client component**: define its own full `LOCALES` at the top of the file. Use `useRosetta(LOCALES)` from `@packages/rosetta/use-rosetta` inside the component — no `dict` prop.
-- Sub-components in the same file can also call `useRosetta(LOCALES)` directly — `LOCALES` is module-scoped.
-- If two files need the same key (e.g. `title`), each duplicates it. No sharing.
-- **`LOCALE_ES` and `LOCALES` always go at the bottom of the file**, after all component/function definitions. They are data constants — placing them last keeps imports and logic at the top where readers expect them.
+- **Server page** (`page.tsx`): define minimal `LOCALES` with only what `generateMetadata` needs (e.g. `title`, `subtitle`). Use `ROSETTA(LOCALES, locale)` from `~/lib/i18n`.
+- **Client component**: define full `LOCALES` at top of file. Use `useRosetta(LOCALES)` from `@packages/rosetta/use-rosetta` inside component — no `dict` prop.
+- Sub-components in same file can also call `useRosetta(LOCALES)` directly — `LOCALES` is module-scoped.
+- Two files needing same key (e.g. `title`) → each duplicates it. No sharing.
+- **`LOCALE_ES` and `LOCALES` always at bottom of file**, after all component/function definitions. Data constants — keep imports and logic at top.
 
 ```tsx
 // ❌ Never — passing dict as props
@@ -331,7 +352,7 @@ export function MyClient() {
 
 ### Multi-step DB writes must be a single SQL RPC
 
-**Never sequence multiple `.from().insert()` / `.from().update()` calls for a single logical operation.** Each call is its own round-trip and transaction — a crash or race between them leaves the DB in a partial state. Instead, write a `security definer` plpgsql function that performs the read-check + write atomically, and call it via `.rpc()`.
+**Never sequence multiple `.from().insert()` / `.from().update()` calls for single logical operation.** Each call is own round-trip and transaction — crash or race between them leaves DB in partial state. Write `security definer` plpgsql function performing read-check + write atomically, call via `.rpc()`.
 
 ```ts
 // ❌ Race condition: check → insert are separate transactions
@@ -348,21 +369,21 @@ const { error } = await admin.rpc("agency_membership_invite", {
 
 **What moves to SQL vs. stays in TS:**
 - DB mutations (insert, update, upsert, permission checks) → SQL RPC, `security definer`
-- External side effects (`auth.admin.*`, GoTrue user creation, email send) → stay in the action; they can't be transactional
+- External side effects (`auth.admin.*`, GoTrue user creation, email send) → stay in action; can't be transactional
 
-**Error convention:** RPCs raise with a stable locale key as the message:
+**Error convention:** RPCs raise with stable locale key as message:
 ```sql
 raise exception 'already_member' using errcode = 'P0001';
 ```
-The action matches `rpcError.message` against the LOCALES keys — never parse prose.
+Action matches `rpcError.message` against LOCALES keys — never parse prose.
 
 **Client choice:**
-- Use the **service-role client** for RPCs that require `caller_id` passed explicitly (the service role has no JWT `sub`).
-- Use the **authenticated server client** for RPCs that call `viewer_profile_id()` internally (e.g., `actionRespondInvitation`).
+- **Service-role client** for RPCs requiring `caller_id` passed explicitly (service role has no JWT `sub`).
+- **Authenticated server client** for RPCs calling `viewer_profile_id()` internally (e.g., `actionRespondInvitation`).
 
 ### SQL / PL/pgSQL style
 
-**Prefer `if / elsif` over consecutive `if … end if; if … end if;` blocks.** Consecutive guards with separate `end if; if` pairs waste lines and force the reader to scan more `end if`s. Use `elsif` to chain them, or combine with `or` when the body is identical:
+**Prefer `if / elsif` over consecutive `if … end if; if … end if;` blocks.** Consecutive guards waste lines and force reader to scan more `end if`s. Use `elsif` to chain, or combine with `or` when body is identical:
 
 ```sql
 -- ❌ Two separate blocks
@@ -388,14 +409,14 @@ end if;
 
 ### Code Style
 - Biome.js handles formatting/linting — don't fight it
-- Follow existing patterns in the codebase
-- English for code/comments; keep user-facing strings in your product's locale files (i18n)
-- **Pure functions → `UPPER_CASE`**. A pure function is deterministic on its inputs and has no observable side effects (no I/O, no DB/network/filesystem calls, no `redirect()`, no mutations of arguments, no `Date.now()`/`Math.random()`). Side-effectful or async-with-I/O functions stay `camelCase`. Constants stay `UPPER_CASE` as before. The visual cue is the same idea as bracket notation: at a glance, a caller can tell whether the function is safe to call repeatedly with no observable effect (`SLUGIFY(name)`, `RESOLVE_STEP(state, step)`) vs. one that touches the world (`loadOnboardingState()`, `createTenant(...)`). React components stay PascalCase regardless.
-- **Server Actions → `action*` prefix**. Every exported function from a `"use server"` file gets the `action` prefix (e.g. `actionSetPassword`, `actionUpdateEmail`, `actionDeletePasskey`). Same visual-cue motivation as bracket notation and `UPPER_CASE`: a caller seeing `actionSetPassword(...)` immediately knows it crosses the network into a server roundtrip, without having to chase imports or re-read `"use server"` directives. The prefix replaces verbs like `set`/`update`/`save`/`do` — write `actionSetPassword`, not `actionDoSetPassword`. Applies to both `next-safe-action` actions and `formAction()` adapters (e.g. `actionSignOutForm`).
-- **Named functions, never arrow functions**. Use `function myFn() {}` or `export function myFn() {}`, never `const myFn = () => {}`. Named functions are hoisted (can call before declaration), show up clearly in stack traces, and are clearer to read. The only exception: short inline callbacks in `.map()` / `.filter()` where clarity is obvious from context.
-- **Tailwind: prefer native scale sizes over arbitrary px.** For width/height/size/gap/padding use the scale (`size-5`, `h-9`, `gap-2`) — including v4 fractional steps like `size-4.5` (18px) — instead of arbitrary `h-[18px]` / `w-[18px]`. This applies to typography too: use the font-size scale (`text-xs`, `text-sm`, `text-2xl`) over arbitrary `text-[13px]` / `text-[22px]`. When a recurring type size genuinely falls off the scale, add a named `@theme` token in `apps/platform/styles/globals.css` (follow the existing `--text-tiny: 0.6875rem` precedent) and use it as `text-tiny` — never inline `text-[*px]`. Arbitrary bracket values are reserved for things the scale and tokens genuinely can't express.
-- **Map a discriminant to values with a keyed lookup, not `let` + `if/else`.** When several values vary together by one key (a tab, a status, a kind), return them from a `Record`-typed helper indexed by the key — `const head = CONSOLE_HEAD(t)[tab]` — rather than declaring mutable `let`s and reassigning them in an `if/else if` chain.
-- **JSDoc + `@example` for new exports.** Write a small JSDoc comment with at least one `@example` block on new functions, components, classes, and constants. Skip `page.tsx` and `layout.tsx` files — they are framework entry points, not reusable exports.
+- Follow existing patterns in codebase
+- English for code/comments; user-facing strings in locale files (i18n)
+- **Pure functions → `UPPER_CASE`**. Pure = deterministic on inputs, no observable side effects (no I/O, no DB/network/filesystem calls, no `redirect()`, no argument mutations, no `Date.now()`/`Math.random()`). Side-effectful or async-with-I/O functions stay `camelCase`. Constants stay `UPPER_CASE`. React components stay PascalCase regardless.
+- **Server Actions → `action*` prefix**. Every exported function from `"use server"` file gets `action` prefix (e.g. `actionSetPassword`, `actionUpdateEmail`, `actionDeletePasskey`). Prefix replaces verbs like `set`/`update`/`save`/`do` — write `actionSetPassword`, not `actionDoSetPassword`. Applies to both `next-safe-action` actions and `formAction()` adapters (e.g. `actionSignOutForm`).
+- **Named functions, never arrow functions**. Use `function myFn() {}` or `export function myFn() {}`, never `const myFn = () => {}`. Named functions are hoisted, show up in stack traces. Exception: short inline callbacks in `.map()` / `.filter()`.
+- **Tailwind: prefer native scale sizes over arbitrary px.** Width/height/size/gap/padding → use scale (`size-5`, `h-9`, `gap-2`) including v4 fractional steps like `size-4.5` (18px) — not arbitrary `h-[18px]`. Typography too: font-size scale (`text-xs`, `text-sm`, `text-2xl`) over `text-[13px]`. Recurring size off scale → add named `@theme` token in `apps/platform/styles/globals.css` (follow `--text-tiny: 0.6875rem` precedent) and use as `text-tiny`. Arbitrary bracket values reserved for things scale and tokens genuinely can't express.
+- **Map discriminant to values with keyed lookup, not `let` + `if/else`.** Several values varying together by one key → return from `Record`-typed helper indexed by key — `const head = CONSOLE_HEAD(t)[tab]` — not mutable `let`s reassigned in `if/else if` chain.
+- **JSDoc + `@example` for new exports.** Small JSDoc with at least one `@example` on new functions, components, classes, constants. Skip `page.tsx` and `layout.tsx` — framework entry points, not reusable exports.
   ```ts
   /**
    * Builds the full apex URL for the given path.
@@ -403,18 +424,18 @@ end if;
    */
   export function APEX_URL(path: string): string { … }
   ```
-- **Logging pattern.** At the top of each file declare a namespaced logger whose name mirrors the file's route path:
+- **Logging pattern.** Top of each file declare namespaced logger mirroring file's route path:
   ```ts
   const log = debug("app:[locale]:t:[tenant_slug]:[organization_id]:settings:members:actions")
   ```
-  Always call a method — `log.error(…)`, `log.warn(…)`, `log.info(…)` — never bare `log(…)`. Always prefix the message with `[functionName]` or `[handlerName]`:
+  Always call method — `log.error(…)`, `log.warn(…)`, `log.info(…)` — never bare `log(…)`. Always prefix message with `[functionName]` or `[handlerName]`:
   ```ts
   log.error("[actionInviteMember] permission check failed: %o", { organization_id, error })
   ```
 
 ### Hooks & Abstractions
 
-**Avoid thin wrappers.** A hook that just wraps a single SDK call or state setter adds noise without clarity. Prefer direct code:
+**Avoid thin wrappers.** Hook wrapping single SDK call adds noise without clarity. Prefer direct code:
 
 ```ts
 // ❌ Thin wrapper — unnecessary indirection
@@ -440,30 +461,28 @@ async function onSubmit(email: string) {
 }
 ```
 
-**Encapsulate only when genuinely reusable.** Create a hook when:
-- The same logic + state pattern repeats across 2+ components
-- It reduces boilerplate significantly (e.g., OTP send/verify pair with error/pending state)
-- It's a "headless" hook that owns behavior but returns primitives for the caller to render
+**Encapsulate only when genuinely reusable.** Create hook when:
+- Same logic + state pattern repeats across 2+ components
+- Reduces boilerplate significantly (e.g., OTP send/verify pair with error/pending state)
+- "Headless" hook owning behavior but returning primitives for caller to render
 
-If a package already does it (react-use, usehooks-ts, etc.), prefer the package. Don't invent.
+If package already does it (react-use, usehooks-ts, etc.), prefer package. Don't invent.
 
 ### Components used only once stay in the same file
 
-Don't extract a component to its own file unless it's reused in 2+ places. Single-use components belong inline in the page/layout that owns them.
+Don't extract component to own file unless reused in 2+ places. Single-use components belong inline in page/layout that owns them.
 
-**Why:** File proliferation = cognitive overhead (which file is it in? is it truly unreused?), needless indirection, and permission bloat in imports.
-
-**Exception:** If a component is long enough to hurt readability of its parent (>80 lines), move it to a separate file as an implementation detail. Comment why: `// Local component — used only in /auth/page.tsx`.
+**Exception:** Component long enough to hurt readability of parent (>80 lines) → move to separate file as implementation detail. Comment why: `// Local component — used only in /auth/page.tsx`.
 
 ### Lint + Build (run in parallel)
-After making changes, run these two commands concurrently — they are independent and safe to parallelize:
+After changes, run these concurrently — independent, safe to parallelize:
 
 ```bash
 pnpm format:apply-unsafe  # Biome auto-fix including unsafe transforms
 pnpm build:dry            # Turbo type-check / build without emitting output
 ```
 
-**`build:dry` false positives — `PageProps` / `LayoutProps` / `RouteContext` not found:** These globals are generated by `next dev` into `.next/dev/types/`. Without a running dev server, `build:dry` emits ~40 `Cannot find name 'PageProps'` (and related) errors. Expected — not real failures. To get clean output, run `pnpm dev` first (writes the type files), then `build:dry`.
+**`build:dry` false positives — `PageProps` / `LayoutProps` / `RouteContext` not found:** Globals generated by `next dev` into `.next/dev/types/`. Without running dev server, `build:dry` emits ~40 `Cannot find name 'PageProps'` errors. Expected — not real failures. For clean output, run `pnpm dev` first (writes type files), then `build:dry`.
 
 ### File & Script Naming
 Use `noun-verb` order, not `verb-noun`: `skills-setup`, `alert-create`, `user-import`. Domain first, action second.
@@ -480,7 +499,7 @@ Stage normally in git. Ignore when writing commit messages:
 
 ## Testing Strategy
 
-Three layers, each owned by a different runner:
+Three layers, each owned by different runner:
 
 | Layer | Runner | Command | Lives in |
 |---|---|---|---|
@@ -488,15 +507,15 @@ Three layers, each owned by a different runner:
 | SQL (RLS, viewer_*, triggers, hook) | pgTAP via `supabase test db` | `pnpm test:db` | `packages/supabase/supabase/tests/**/*.test.sql` |
 | End-to-end UI journeys | Playwright + Chromium | `pnpm test:e2e` | `apps/platform/tests/e2e/**/*.spec.ts` |
 
-`pnpm test:db` and `pnpm test:e2e` both run against the same local Supabase as `pnpm dev`. The pgTAP tests wrap themselves in `begin … rollback` so they leave no trace; Playwright provisions/cleans up its own users via `auth.admin`. Playwright assumes a dev server is already running (`pnpm dev`).
+`pnpm test:db` and `pnpm test:e2e` both run against same local Supabase as `pnpm dev`. pgTAP tests wrap in `begin … rollback` — leave no trace; Playwright provisions/cleans up own users via `auth.admin`. Playwright assumes dev server already running (`pnpm dev`).
 
 Guidelines:
-- RLS policies: add a pgTAP file under `packages/supabase/supabase/tests/`; mock the caller with `set local role authenticated; set local request.jwt.claims to '…';`. Without `set local role`, RLS is bypassed silently.
-- UI journeys: add a Playwright spec under `tests/e2e/journeys/...`. Pre-create users with `CREATE_CONFIRMED_USER` from the supabase fixture; clean up in `afterAll`. Don't fight onboarding — it's not a hard gate (see `proxy.ts`); skip it via `page.goto` unless you're testing onboarding itself.
+- RLS policies: add pgTAP file under `packages/supabase/supabase/tests/`; mock caller with `set local role authenticated; set local request.jwt.claims to '…';`. Without `set local role`, RLS bypassed silently.
+- UI journeys: add Playwright spec under `tests/e2e/journeys/...`. Pre-create users with `CREATE_CONFIRMED_USER` from supabase fixture; clean up in `afterAll`. Don't fight onboarding — not hard gate (see `proxy.ts`); skip via `page.goto` unless testing onboarding itself.
 
 ## What NOT to Do
 
-- Don't add new technology without strong justification — the stack is intentionally familiar
-- Don't use a tenant slug from the reserved-route list (auth, home, tenants, health, …) — the schema check in `apps/platform/app/[locale]/tenants/create/schemas.ts` + `internal.reserved_slugs` is the source of truth
-- Don't expect tenant / organization / agency / onboarding state in the JWT — the hook is a pass-through and only `profile_id` (the `sub` claim) is carried. Resolve those from the DB via the `viewer_*` helpers or `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server`
+- Don't add new technology without strong justification — stack intentionally familiar
+- Don't use tenant slug from reserved-route list (auth, home, tenants, health, …) — schema check in `apps/platform/app/[locale]/tenants/create/schemas.ts` + `internal.reserved_slugs` is source of truth
+- Don't expect tenant / organization / agency / onboarding state in JWT — hook is pass-through, only `profile_id` (the `sub` claim) carried. Resolve from DB via `viewer_*` helpers or `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server`
 - Don't put shadcn components in `apps/platform/` — they belong in `packages/ui-common/src/shadcn`
