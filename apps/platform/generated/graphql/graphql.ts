@@ -196,6 +196,13 @@ export type TenantsOrderBy = {
   tenant_updated_at?: OrderByDirection | null | undefined;
 };
 
+export type AgencyCreateMutationMutationVariables = Exact<{
+  agency_name: string;
+  agency_slug: string;
+}>;
+
+export type AgencyCreateMutationMutation = { agency: { agency_id: string } | null };
+
 export type ProfileSectionUpdateNameMutationMutationVariables = Exact<{
   profile_id: string;
   profile_name_full: string;
@@ -279,6 +286,13 @@ export type MembersPendingInvitationsCancelMutationMutationVariables = Exact<{
 export type MembersPendingInvitationsCancelMutationMutation = {
   updateorganization_membershipsCollection: { affectedCount: number };
 };
+
+export type CreateTenantFormMutationMutationVariables = Exact<{
+  tenant_name: string;
+  tenant_slug: string;
+}>;
+
+export type CreateTenantFormMutationMutation = { tenant: { tenant_id: number } | null };
 
 export type OnboardingProfileFormUpdateNameMutationMutationVariables = Exact<{
   profile_id: string;
@@ -777,6 +791,16 @@ export const ViewerTenantUseFragmentFragmentDoc = new TypedDocumentString(
     `,
   { fragmentName: "ViewerTenantUseFragment" },
 ) as unknown as TypedDocumentString<ViewerTenantUseFragmentFragment, unknown>;
+export const AgencyCreateMutationDocument = new TypedDocumentString(`
+    mutation AgencyCreateMutation($agency_name: String!, $agency_slug: String!) {
+  agency: viewer_agency_create(
+    agency_name: $agency_name
+    agency_slug: $agency_slug
+  ) {
+    agency_id
+  }
+}
+    `) as unknown as TypedDocumentString<AgencyCreateMutationMutation, AgencyCreateMutationMutationVariables>;
 export const ProfileSectionUpdateNameMutationDocument = new TypedDocumentString(`
     mutation ProfileSectionUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
   updateprofilesCollection(
@@ -879,6 +903,16 @@ export const MembersPendingInvitationsCancelMutationDocument = new TypedDocument
   MembersPendingInvitationsCancelMutationMutation,
   MembersPendingInvitationsCancelMutationMutationVariables
 >;
+export const CreateTenantFormMutationDocument = new TypedDocumentString(`
+    mutation CreateTenantFormMutation($tenant_name: String!, $tenant_slug: String!) {
+  tenant: viewer_tenant_create(
+    tenant_name: $tenant_name
+    tenant_slug: $tenant_slug
+  ) {
+    tenant_id
+  }
+}
+    `) as unknown as TypedDocumentString<CreateTenantFormMutationMutation, CreateTenantFormMutationMutationVariables>;
 export const OnboardingProfileFormUpdateNameMutationDocument = new TypedDocumentString(`
     mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
   updateprofilesCollection(
