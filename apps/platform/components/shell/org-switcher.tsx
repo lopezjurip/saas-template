@@ -1,10 +1,13 @@
 "use client";
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
+import { INITIALS_OF } from "@packages/utils/string";
 import { Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { Avatar, COLOR_FROM_ID, INITIALS_OF, Tip, useClickOutside } from "~/components/shell/atoms";
+
+import { Tip, useClickOutside } from "~/components/shell/atoms";
 import type { ViewerOrganizationUseFragmentType } from "~/hooks/use-viewer-organizations";
 import type { ViewerTenantUseFragmentType } from "~/hooks/use-viewer-tenants";
 import { useRosetta } from "~/lib/i18n.client";
@@ -31,8 +34,8 @@ export function OrgSwitcher({
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false), open);
 
-  const color = COLOR_FROM_ID(current["organization_id"]);
   const initials = INITIALS_OF(current["organization_name"]);
+  const colorStyle = COLOR_HSL_FROM_STRING(current["organization_name"]);
 
   const trigger = compact ? (
     <Tip label={`${current["organization_name"]} · ${tenant["tenant_name"]}`} disabled={open}>
@@ -42,7 +45,16 @@ export function OrgSwitcher({
         data-open={open}
         className="hover:bg-accent/70 data-[open=true]:bg-accent data-[open=true]:border-border flex h-9 w-9 items-center justify-center rounded-md border border-transparent transition-colors"
       >
-        <Avatar initials={initials} color={color} size="md" />
+        <span
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md font-mono text-xs font-medium tracking-tight"
+          style={{
+            backgroundColor: colorStyle.background,
+            color: colorStyle.color,
+            borderColor: colorStyle.borderColor,
+          }}
+        >
+          {initials}
+        </span>
       </button>
     </Tip>
   ) : (
@@ -52,7 +64,12 @@ export function OrgSwitcher({
       data-open={open}
       className="hover:bg-accent/70 data-[open=true]:bg-accent data-[open=true]:border-border flex w-full items-center gap-2 rounded-md border border-transparent px-2 py-1.5 text-left transition-colors"
     >
-      <Avatar initials={initials} color={color} size="md" />
+      <span
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md font-mono text-xs font-medium tracking-tight"
+        style={{ backgroundColor: colorStyle.background, color: colorStyle.color, borderColor: colorStyle.borderColor }}
+      >
+        {initials}
+      </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium leading-tight">{current["organization_name"]}</div>
         <div className="text-muted-foreground truncate text-xs leading-tight">{tenant["tenant_name"]}</div>
@@ -77,6 +94,7 @@ export function OrgSwitcher({
           <div className="px-1 pb-1">
             {organizations.map((organization) => {
               const isCurrent = organization["organization_id"] === current["organization_id"];
+              const orgColorStyle = COLOR_HSL_FROM_STRING(organization["organization_name"]);
               return (
                 <Link
                   key={organization["organization_id"]}
@@ -88,11 +106,16 @@ export function OrgSwitcher({
                   onClick={() => setOpen(false)}
                   className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
                 >
-                  <Avatar
-                    initials={INITIALS_OF(organization["organization_name"])}
-                    color={COLOR_FROM_ID(organization["organization_id"])}
-                    size="sm"
-                  />
+                  <span
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md font-mono text-tiny font-medium tracking-tight"
+                    style={{
+                      backgroundColor: orgColorStyle.background,
+                      color: orgColorStyle.color,
+                      borderColor: orgColorStyle.borderColor,
+                    }}
+                  >
+                    {INITIALS_OF(organization["organization_name"])}
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm">{organization["organization_name"]}</div>
                     {organization["organization_slug"] ? (

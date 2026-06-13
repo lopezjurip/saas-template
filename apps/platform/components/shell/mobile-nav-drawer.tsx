@@ -1,8 +1,11 @@
 "use client";
 
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
+import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowUpRight, ChevronsUpDown, HelpCircle, Settings as SettingsIcon, X } from "lucide-react";
 import Link from "next/link";
-import { Avatar, COLOR_FROM_ID, INITIALS_OF } from "~/components/shell/atoms";
+
+import { Avatar } from "~/components/shell/atoms";
 import { Scrim } from "~/components/shell/mobile-sheet";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
@@ -57,7 +60,7 @@ export function MobileNavDrawer({
           >
             <Avatar
               initials={INITIALS_OF(organization.organization_name)}
-              color={COLOR_FROM_ID(organization.organization_id)}
+              style={COLOR_HSL_FROM_STRING(organization.organization_name)}
               size="lg"
             />
             <div className="min-w-0 flex-1 text-left">

@@ -1,5 +1,8 @@
 "use client";
 
+import { useMounted } from "@packages/react-hooks/use-mounted";
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
+import { INITIALS_OF } from "@packages/utils/string";
 import {
   ArrowLeft,
   Bell,
@@ -26,12 +29,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Avatar, COLOR_FROM_ID, INITIALS_OF } from "~/components/shell/atoms";
+
+import { Avatar } from "~/components/shell/atoms";
 import { Sheet } from "~/components/shell/mobile-sheet";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
-import { useMounted } from "~/hooks/use-mounted";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { useRosetta } from "~/lib/i18n.client";
 import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
@@ -68,7 +71,7 @@ export function MobileOrgSheet({
           >
             <Avatar
               initials={INITIALS_OF(organization["organization_name"])}
-              color={COLOR_FROM_ID(organization["organization_id"])}
+              style={COLOR_HSL_FROM_STRING(organization["organization_name"])}
               size="md"
             />
             <div className="min-w-0 flex-1">
@@ -349,7 +352,7 @@ export function MobileSearchSheet({
         hint:
           organization["organization_id"] === current["organization_id"] ? t("current") : (tenant["tenant_tier"] ?? ""),
         orgInitials: INITIALS_OF(organization["organization_name"]),
-        orgColor: COLOR_FROM_ID(organization["organization_id"]),
+        orgColor: COLOR_HSL_FROM_STRING(organization["organization_name"]),
         href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
           locale,
           tenant_slug: tenant["tenant_slug"],

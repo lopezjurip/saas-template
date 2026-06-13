@@ -7,6 +7,23 @@ create extension if not exists "citext" schema extensions;
 -- pgTAP powers `supabase test db` (see packages/supabase/supabase/tests/). The extension
 -- only ships SQL helpers (plan/ok/is/throws_ok/…); it doesn't alter runtime behavior.
 create extension if not exists "pgtap" schema extensions;
+-- Async queue (pgmq), scheduled jobs (pg_cron), and HTTP calls (pg_net) power the
+-- notification dispatch pipeline. pgmq/pg_cron live in their default schemas;
+-- pg_net is installed in `extensions` but exposes its functions under the `net` schema
+-- (e.g. net.http_post) — that is pg_net's own schema, always named `net`.
+create extension if not exists "pgmq";
+create extension if not exists "pg_cron";
+create extension if not exists "pg_net" schema extensions;
+
+-- Provision the outbound delivery queue (idempotent: pgmq.create is safe to re-run on schema replay).
+do $$
+begin
+  perform pgmq.create('conversation_outbound');
+exception when others then
+  -- Queue may already exist on a partial replay; swallow and continue.
+  null;
+end;
+$$;
 
 -- ============================================================
 -- Schemas
@@ -378,11 +395,10 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
     allowed_mime_types = excluded.allowed_mime_types;
 
 -- ============================================================
--- notifications
+-- conversation_topics (notification catalog)
 -- ============================================================
--- `notifications` is the catalog of notification types.
--- `profile_notifications` stores per-profile preferences for the UI today and
--- gives us a clean place to hang delivery state later if we add an outbox.
+-- `conversation_topics` is the catalog of notification/topic types.
+-- Per-profile channel preferences live in `profile_topic_channels` (see conversations section).
 
 do $$ begin
   create type public.notification_priority as enum ('low', 'medium', 'high', 'critical');
@@ -392,125 +408,43 @@ do $$ begin
   create type public.notification_kind as enum ('info', 'warn', 'fatal', 'error', 'debug', 'log');
 exception when duplicate_object then null; end $$;
 
-create table if not exists public.notifications (
-  notification_slug extensions.citext not null primary key
-    check (internal.slug_validate(notification_slug::text)),
-  notification_name text not null check (char_length(notification_name) between 1 and 120),
-  notification_description text not null check (char_length(notification_description) between 1 and 500),
-  notification_priority public.notification_priority not null default 'medium',
-  notification_kind public.notification_kind not null default 'log',
-  notification_disabled_at timestamptz,
-  notification_created_at timestamptz not null default current_timestamp,
-  notification_updated_at timestamptz not null default current_timestamp
+create table if not exists public.conversation_topics (
+  conversation_topic_slug extensions.citext not null primary key
+    check (internal.slug_validate(conversation_topic_slug::text)),
+  conversation_topic_name text not null check (char_length(conversation_topic_name) between 1 and 120),
+  conversation_topic_description text not null check (char_length(conversation_topic_description) between 1 and 500),
+  conversation_topic_priority public.notification_priority not null default 'medium',
+  conversation_topic_kind public.notification_kind not null default 'log',
+  conversation_topic_disabled_at timestamptz,
+  conversation_topic_created_at timestamptz not null default current_timestamp,
+  conversation_topic_updated_at timestamptz not null default current_timestamp
 );
 
-create index if not exists notifications_priority_idx
-  on public.notifications (notification_priority desc)
-  where notification_disabled_at is null;
+create index if not exists conversation_topics_priority_idx
+  on public.conversation_topics (conversation_topic_priority desc)
+  where conversation_topic_disabled_at is null;
 
-drop trigger if exists handle_notifications_updated_at on public.notifications;
-create trigger handle_notifications_updated_at
-  before update on public.notifications
-  for each row execute procedure extensions.moddatetime(notification_updated_at);
+drop trigger if exists handle_conversation_topics_updated_at on public.conversation_topics;
+create trigger handle_conversation_topics_updated_at
+  before update on public.conversation_topics
+  for each row execute procedure extensions.moddatetime(conversation_topic_updated_at);
 
-drop trigger if exists notifications_trigger_normalize_text on public.notifications;
-create trigger notifications_trigger_normalize_text
-  before insert or update of notification_name, notification_description on public.notifications
-  for each row execute procedure internal.column_normalize_text(notification_name, notification_description);
+drop trigger if exists conversation_topics_trigger_normalize_text on public.conversation_topics;
+create trigger conversation_topics_trigger_normalize_text
+  before insert or update of conversation_topic_name, conversation_topic_description on public.conversation_topics
+  for each row execute procedure internal.column_normalize_text(conversation_topic_name, conversation_topic_description);
 
-alter table public.notifications enable row level security;
+alter table public.conversation_topics enable row level security;
 
-revoke all on table public.notifications from anon, authenticated;
-grant select on table public.notifications to anon, authenticated;
-grant select, insert, update, delete on table public.notifications to service_role;
+revoke all on table public.conversation_topics from anon, authenticated;
+grant select on table public.conversation_topics to anon, authenticated;
+grant select, insert, update, delete on table public.conversation_topics to service_role;
 
-drop policy if exists "notifications select active catalog" on public.notifications;
-create policy "notifications select active catalog"
-  on public.notifications for select
+drop policy if exists "conversation_topics select active catalog" on public.conversation_topics;
+create policy "conversation_topics select active catalog"
+  on public.conversation_topics for select
   to anon, authenticated
-  using (notification_disabled_at is null);
-
-create table if not exists public.profile_notifications (
-  profile_id uuid not null references public.profiles (profile_id) on delete cascade,
-  notification_slug extensions.citext not null references public.notifications (notification_slug) on delete restrict,
-  profile_notification_priority public.notification_priority not null,
-  profile_notification_kind public.notification_kind not null,
-  profile_notification_enabled boolean not null default true,
-  profile_notification_created_at timestamptz not null default current_timestamp,
-  profile_notification_updated_at timestamptz not null default current_timestamp,
-  primary key (profile_id, notification_slug)
-);
-
-create index if not exists profile_notifications_notification_idx
-  on public.profile_notifications (notification_slug);
-
-drop trigger if exists handle_profile_notifications_updated_at on public.profile_notifications;
-create trigger handle_profile_notifications_updated_at
-  before update on public.profile_notifications
-  for each row execute procedure extensions.moddatetime(profile_notification_updated_at);
-
-create or replace function internal.profile_notifications_default_priority()
-  returns trigger
-  language plpgsql
-  set search_path to ''
-  as $$
-    begin
-      if NEW.profile_notification_priority is null or NEW.profile_notification_kind is null then
-        select n.notification_priority, n.notification_kind
-          into NEW.profile_notification_priority, NEW.profile_notification_kind
-          from public.notifications n
-          where n.notification_slug = NEW.notification_slug
-            and n.notification_disabled_at is null;
-      end if;
-
-      if NEW.profile_notification_priority is null or NEW.profile_notification_kind is null then
-        raise exception 'notification_not_found' using errcode = 'P0001';
-      end if;
-
-      return NEW;
-    end;
-  $$;
-
-drop trigger if exists profile_notifications_trigger_default_priority on public.profile_notifications;
-create trigger profile_notifications_trigger_default_priority
-  before insert or update of notification_slug, profile_notification_priority on public.profile_notifications
-  for each row execute procedure internal.profile_notifications_default_priority();
-
-alter table public.profile_notifications enable row level security;
-
-revoke all on table public.profile_notifications from anon, authenticated;
-grant select, insert, update, delete on table public.profile_notifications to anon, authenticated;
-grant select, insert, update, delete on table public.profile_notifications to service_role;
-
-drop policy if exists "profile_notifications select own" on public.profile_notifications;
-create policy "profile_notifications select own"
-  on public.profile_notifications for select
-  to authenticated
-  using (profile_id = (select public.viewer_profile_id()));
-
-drop policy if exists "profile_notifications write own" on public.profile_notifications;
-create policy "profile_notifications write own"
-  on public.profile_notifications for all
-  to authenticated
-  using (profile_id = (select public.viewer_profile_id()))
-  with check (profile_id = (select public.viewer_profile_id()));
-
-create or replace function public.viewer_profile_notifications()
-  returns setof public.profile_notifications
-  stable
-  security invoker
-  parallel safe
-  language sql
-  set search_path to ''
-  as $$
-    select pn.*
-    from public.profile_notifications pn
-    join public.notifications n on n.notification_slug = pn.notification_slug
-    where pn.profile_id = (select public.viewer_profile_id())
-      and n.notification_disabled_at is null;
-  $$;
-
-grant execute on function public.viewer_profile_notifications() to authenticated;
+  using (conversation_topic_disabled_at is null);
 
 -- ============================================================
 -- tenants + organizations + organization_memberships + permissions
@@ -1019,7 +953,8 @@ insert into public.permissions (permission_id, permission_description) values
   ('*',                    'Wildcard: grants every permission within the organization (typical use: founder).'),
   ('organization_manage',  'Edit the name, settings, and domains of the tenant/organization.'),
   ('members_manage',       'Invite, remove, and reassign permissions to members.'),
-  ('presets_manage',       'Create and edit the organization''s permission presets.')
+  ('presets_manage',       'Create and edit the organization''s permission presets.'),
+  ('tickets_manage',       'View, claim, and resolve support tickets on behalf of the organization.')
 on conflict (permission_id) do nothing;
 
 -- Seed global presets (organization_id IS NULL → visibles para cualquier tenant).
@@ -3069,3 +3004,1337 @@ create or replace function public.agency_membership_respond(
   $$;
 
 grant execute on function public.agency_membership_respond(int, text) to authenticated;
+
+-- ============================================================
+-- conversations + messaging + tickets
+-- ============================================================
+-- Every notification, reply, and support thread is a `conversation`.
+-- Messages in the thread are `conversation_messages`.
+-- Outbound delivery attempts are tracked in `conversation_message_deliveries`.
+-- Per-profile channel preferences live in `profile_topic_channels`.
+-- Contact addresses (email, phone, push endpoint) in `profile_contacts` /
+-- `profile_push_subscriptions`.
+-- Idempotent AI agent side-effects are guarded by `agent_action_log`.
+-- Escalated threads become `tickets` for agency-side support.
+
+-- ============================================================
+-- Enums
+-- ============================================================
+
+do $$ begin
+  create type public.message_channel as enum ('in_app', 'email', 'web_push', 'whatsapp', 'sms');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type public.ticket_status as enum ('open', 'claimed', 'in_progress', 'resolved', 'closed');
+exception when duplicate_object then null; end $$;
+
+-- ============================================================
+-- conversations
+-- ============================================================
+
+create table if not exists public.conversations (
+  conversation_id   uuid primary key default internal.uuid_generate_v7(),
+  profile_id        uuid not null references public.profiles (profile_id) on delete cascade,
+  tenant_id         int  references public.tenants (tenant_id) on delete cascade,
+  organization_id   int  references public.organizations (organization_id) on delete cascade,
+  agency_id         uuid references public.agencies (agency_id) on delete cascade,
+  conversation_subject text check (char_length(conversation_subject) <= 200),
+  conversation_kind   text not null default 'notification'
+                        check (conversation_kind in ('notification', 'agent', 'support', 'system')),
+  conversation_status text not null default 'open'
+                        check (conversation_status in ('open', 'resolved', 'archived')),
+  conversation_resolved_at      timestamptz,
+  conversation_resolved_channel public.message_channel,
+  conversation_resolution       jsonb,
+  conversation_last_message_at  timestamptz not null default current_timestamp,
+  conversation_created_at timestamptz not null default current_timestamp,
+  conversation_updated_at timestamptz not null default current_timestamp
+);
+
+create index if not exists conversations_inbox_idx
+  on public.conversations (profile_id, conversation_last_message_at desc)
+  where conversation_status <> 'archived';
+
+create index if not exists conversations_org_idx
+  on public.conversations (organization_id)
+  where organization_id is not null;
+
+drop trigger if exists handle_conversations_updated_at on public.conversations;
+create trigger handle_conversations_updated_at
+  before update on public.conversations
+  for each row execute procedure extensions.moddatetime(conversation_updated_at);
+
+-- ============================================================
+-- conversation_messages
+-- ============================================================
+
+create table if not exists public.conversation_messages (
+  conversation_message_id uuid primary key default internal.uuid_generate_v7(),
+  conversation_id   uuid not null references public.conversations (conversation_id) on delete cascade,
+  message_author    text not null check (message_author in ('system', 'agent', 'user')),
+  message_direction text not null check (message_direction in ('outbound', 'inbound')),
+  conversation_topic_slug extensions.citext references public.conversation_topics (conversation_topic_slug) on delete restrict,
+  message_channel   public.message_channel,
+  message_body      text,
+  message_payload   jsonb not null default '{}',
+  message_priority  public.notification_priority,
+  message_read_at   timestamptz,
+  message_signature_verified boolean not null default false,
+  message_idempotency_key     text unique,
+  message_created_at timestamptz not null default current_timestamp
+);
+
+create index if not exists conversation_messages_thread_idx
+  on public.conversation_messages (conversation_id, message_created_at);
+
+create index if not exists conversation_messages_unread_idx
+  on public.conversation_messages (conversation_id)
+  where message_read_at is null and message_direction = 'outbound';
+
+-- Trigger: bump conversation_last_message_at + update conversation_status on new message
+create or replace function internal.conversation_messages_bump_last_message()
+  returns trigger
+  language plpgsql
+  set search_path to ''
+  as $$
+    begin
+      -- Use greatest(new_ts, clock_timestamp()) so both explicit future timestamps and
+      -- same-transaction inserts produce a strictly increasing last_message_at.
+      update public.conversations
+        set conversation_last_message_at = greatest(conversation_last_message_at, NEW.message_created_at, clock_timestamp()),
+            conversation_status = case
+              when conversation_status = 'resolved' and NEW.message_direction = 'inbound'
+                then 'open'
+              else conversation_status
+            end
+        where conversation_id = NEW.conversation_id;
+      return NEW;
+    end;
+  $$;
+
+drop trigger if exists conversation_messages_trigger_bump_last_message on public.conversation_messages;
+create trigger conversation_messages_trigger_bump_last_message
+  after insert on public.conversation_messages
+  for each row execute procedure internal.conversation_messages_bump_last_message();
+
+-- ============================================================
+-- conversation_message_deliveries
+-- ============================================================
+
+create table if not exists public.conversation_message_deliveries (
+  conversation_message_delivery_id uuid primary key default internal.uuid_generate_v7(),
+  conversation_message_id uuid not null references public.conversation_messages (conversation_message_id) on delete cascade,
+  message_channel public.message_channel not null,
+  delivery_status text not null default 'queued'
+    check (delivery_status in ('queued', 'sent', 'delivered', 'failed', 'skipped')),
+  provider_message_id text,
+  reply_token text unique,
+  delivery_error text,
+  delivery_created_at timestamptz not null default current_timestamp,
+  delivery_sent_at timestamptz,
+  unique (conversation_message_id, message_channel)
+);
+
+-- ============================================================
+-- profile_topic_channels  (per-profile channel preferences)
+-- ============================================================
+
+create table if not exists public.profile_topic_channels (
+  profile_id uuid not null references public.profiles (profile_id) on delete cascade,
+  conversation_topic_slug extensions.citext not null references public.conversation_topics (conversation_topic_slug) on delete restrict,
+  message_channel public.message_channel not null,
+  enabled boolean not null default true,
+  profile_topic_channel_created_at timestamptz not null default current_timestamp,
+  profile_topic_channel_updated_at timestamptz not null default current_timestamp,
+  primary key (profile_id, conversation_topic_slug, message_channel)
+);
+
+drop trigger if exists handle_profile_topic_channels_updated_at on public.profile_topic_channels;
+create trigger handle_profile_topic_channels_updated_at
+  before update on public.profile_topic_channels
+  for each row execute procedure extensions.moddatetime(profile_topic_channel_updated_at);
+
+-- ============================================================
+-- profile_contacts  (per-profile contact addresses for delivery)
+-- ============================================================
+
+create table if not exists public.profile_contacts (
+  profile_contact_id uuid primary key default internal.uuid_generate_v7(),
+  profile_id uuid not null references public.profiles (profile_id) on delete cascade,
+  message_channel public.message_channel not null,
+  contact_value extensions.citext not null,
+  contact_verified_at timestamptz,
+  profile_contact_created_at timestamptz not null default current_timestamp,
+  profile_contact_updated_at timestamptz not null default current_timestamp,
+  unique (message_channel, contact_value)
+);
+
+drop trigger if exists handle_profile_contacts_updated_at on public.profile_contacts;
+create trigger handle_profile_contacts_updated_at
+  before update on public.profile_contacts
+  for each row execute procedure extensions.moddatetime(profile_contact_updated_at);
+
+-- ============================================================
+-- profile_push_subscriptions
+-- ============================================================
+
+create table if not exists public.profile_push_subscriptions (
+  profile_push_subscription_id uuid primary key default internal.uuid_generate_v7(),
+  profile_id uuid not null references public.profiles (profile_id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  profile_push_subscription_created_at timestamptz not null default current_timestamp,
+  profile_push_subscription_updated_at timestamptz not null default current_timestamp
+);
+
+drop trigger if exists handle_profile_push_subscriptions_updated_at on public.profile_push_subscriptions;
+create trigger handle_profile_push_subscriptions_updated_at
+  before update on public.profile_push_subscriptions
+  for each row execute procedure extensions.moddatetime(profile_push_subscription_updated_at);
+
+-- ============================================================
+-- agent_action_log  (idempotency guard for AI agent side-effects)
+-- ============================================================
+
+create table if not exists public.agent_action_log (
+  agent_action_log_id uuid primary key default internal.uuid_generate_v7(),
+  conversation_message_id uuid not null references public.conversation_messages (conversation_message_id) on delete cascade,
+  profile_id uuid not null references public.profiles (profile_id),
+  organization_id int references public.organizations (organization_id),
+  agency_id uuid references public.agencies (agency_id),
+  tool_name text not null,
+  tool_input jsonb not null default '{}',
+  tool_output jsonb,
+  action_status text not null check (action_status in ('claiming', 'executed', 'rejected', 'clarify', 'error')),
+  action_idempotency_key text unique,
+  agent_action_created_at timestamptz not null default current_timestamp
+);
+
+-- ============================================================
+-- tickets
+-- ============================================================
+
+create table if not exists public.tickets (
+  ticket_id uuid primary key default internal.uuid_generate_v7(),
+  conversation_id uuid not null unique references public.conversations (conversation_id) on delete cascade,
+  tenant_id int not null references public.tenants (tenant_id) on delete cascade,
+  organization_id int references public.organizations (organization_id) on delete cascade,
+  ticket_subject  text not null check (char_length(ticket_subject) between 1 and 200),
+  ticket_status   public.ticket_status not null default 'open',
+  ticket_priority public.notification_priority not null default 'medium',
+  assigned_agency_id  uuid references public.agencies (agency_id) on delete set null,
+  assigned_profile_id uuid references public.profiles (profile_id) on delete set null,
+  ticket_claimed_at  timestamptz,
+  ticket_resolved_at timestamptz,
+  ticket_created_at timestamptz not null default current_timestamp,
+  ticket_updated_at timestamptz not null default current_timestamp
+);
+
+create index if not exists tickets_pool_idx on public.tickets (organization_id, ticket_status)
+  where ticket_status in ('open', 'claimed', 'in_progress');
+
+drop trigger if exists handle_tickets_updated_at on public.tickets;
+create trigger handle_tickets_updated_at
+  before update on public.tickets
+  for each row execute procedure extensions.moddatetime(ticket_updated_at);
+
+-- ============================================================
+-- RLS: conversations + messages + deliveries
+-- ============================================================
+-- Owner-only for direct table access; writes go through security-definer RPCs.
+
+alter table public.conversations enable row level security;
+
+revoke all on table public.conversations from anon, authenticated;
+grant select on table public.conversations to authenticated;
+grant select, insert, update, delete on table public.conversations to service_role;
+
+drop policy if exists "conversations select own" on public.conversations;
+create policy "conversations select own"
+  on public.conversations for select
+  to authenticated
+  using (profile_id = (select public.viewer_profile_id()));
+
+-- -------
+
+alter table public.conversation_messages enable row level security;
+
+revoke all on table public.conversation_messages from anon, authenticated;
+grant select on table public.conversation_messages to authenticated;
+grant select, insert, update, delete on table public.conversation_messages to service_role;
+
+drop policy if exists "conversation_messages select own" on public.conversation_messages;
+create policy "conversation_messages select own"
+  on public.conversation_messages for select
+  to authenticated
+  using (
+    conversation_id in (
+      select conversation_id from public.conversations
+      where profile_id = (select public.viewer_profile_id())
+    )
+  );
+
+-- Stream inbox updates to the in-app bell via Supabase Realtime. RLS above
+-- still applies to the change stream for authenticated clients, so each viewer
+-- only receives inserts for their own conversations.
+do $$ begin
+  alter publication supabase_realtime add table public.conversation_messages;
+exception
+  when duplicate_object then null;  -- already in the publication
+  when undefined_object then null;  -- publication not present (non-Supabase env)
+end $$;
+
+-- -------
+
+alter table public.conversation_message_deliveries enable row level security;
+
+revoke all on table public.conversation_message_deliveries from anon, authenticated;
+grant select on table public.conversation_message_deliveries to authenticated;
+grant select, insert, update, delete on table public.conversation_message_deliveries to service_role;
+
+drop policy if exists "conversation_message_deliveries select own" on public.conversation_message_deliveries;
+create policy "conversation_message_deliveries select own"
+  on public.conversation_message_deliveries for select
+  to authenticated
+  using (
+    conversation_message_id in (
+      select cm.conversation_message_id
+      from public.conversation_messages cm
+      join public.conversations c using (conversation_id)
+      where c.profile_id = (select public.viewer_profile_id())
+    )
+  );
+
+-- ============================================================
+-- RLS: profile_topic_channels, profile_contacts, profile_push_subscriptions
+-- ============================================================
+
+alter table public.profile_topic_channels enable row level security;
+
+revoke all on table public.profile_topic_channels from anon, authenticated;
+grant select, insert, update, delete on table public.profile_topic_channels to authenticated;
+grant select, insert, update, delete on table public.profile_topic_channels to service_role;
+
+drop policy if exists "profile_topic_channels own" on public.profile_topic_channels;
+create policy "profile_topic_channels own"
+  on public.profile_topic_channels for all
+  to authenticated
+  using (profile_id = (select public.viewer_profile_id()))
+  with check (profile_id = (select public.viewer_profile_id()));
+
+-- -------
+
+alter table public.profile_contacts enable row level security;
+
+revoke all on table public.profile_contacts from anon, authenticated;
+grant select, insert, update, delete on table public.profile_contacts to authenticated;
+grant select, insert, update, delete on table public.profile_contacts to service_role;
+
+drop policy if exists "profile_contacts own" on public.profile_contacts;
+create policy "profile_contacts own"
+  on public.profile_contacts for all
+  to authenticated
+  using (profile_id = (select public.viewer_profile_id()))
+  with check (profile_id = (select public.viewer_profile_id()));
+
+-- -------
+
+alter table public.profile_push_subscriptions enable row level security;
+
+revoke all on table public.profile_push_subscriptions from anon, authenticated;
+grant select, insert, update, delete on table public.profile_push_subscriptions to authenticated;
+grant select, insert, update, delete on table public.profile_push_subscriptions to service_role;
+
+drop policy if exists "profile_push_subscriptions own" on public.profile_push_subscriptions;
+create policy "profile_push_subscriptions own"
+  on public.profile_push_subscriptions for all
+  to authenticated
+  using (profile_id = (select public.viewer_profile_id()))
+  with check (profile_id = (select public.viewer_profile_id()));
+
+-- ============================================================
+-- RLS: agent_action_log
+-- ============================================================
+-- No authenticated write policy: inserts happen via security-definer RPC only.
+
+alter table public.agent_action_log enable row level security;
+
+revoke all on table public.agent_action_log from anon, authenticated;
+grant select on table public.agent_action_log to authenticated;
+grant select, insert, update, delete on table public.agent_action_log to service_role;
+
+drop policy if exists "agent_action_log select own" on public.agent_action_log;
+create policy "agent_action_log select own"
+  on public.agent_action_log for select
+  to authenticated
+  using (profile_id = (select public.viewer_profile_id()));
+
+-- ============================================================
+-- RLS: tickets
+-- ============================================================
+-- Owner sees own tickets; agency members with tickets_manage see org tickets.
+-- Writes (escalate/claim/resolve) go through security-definer RPCs.
+
+alter table public.tickets enable row level security;
+
+revoke all on table public.tickets from anon, authenticated;
+grant select on table public.tickets to authenticated;
+grant select, insert, update, delete on table public.tickets to service_role;
+
+drop policy if exists "tickets select own or agency" on public.tickets;
+create policy "tickets select own or agency"
+  on public.tickets for select
+  to authenticated
+  using (
+    exists (
+      select 1 from public.conversations c
+      where c.conversation_id = public.tickets.conversation_id
+        and c.profile_id = (select public.viewer_profile_id())
+    )
+    or organization_id in (select public.viewer_agency_permission_org_ids('tickets_manage'))
+  );
+
+-- ============================================================
+-- RPCs: conversation_emit, conversation_post_user_message,
+--        conversation_mark_read, conversation_archive
+-- ============================================================
+
+-- conversation_emit: system/agent emits an outbound notification to a profile.
+-- Creates (or appends to an existing) conversation, inserts a message row, and
+-- inserts queued delivery rows for each enabled channel.
+-- Returns the (conversation_id, conversation_message_id) pair.
+create or replace function public.conversation_emit(
+  recipient_profile_id uuid,
+  slug                 extensions.citext,
+  body                 text    default null,
+  payload              jsonb   default '{}',
+  subject              text    default null,
+  organization_id      int     default null,
+  agency_id            uuid    default null,
+  conversation_id      uuid    default null
+)
+  returns table (out_conversation_id uuid, out_conversation_message_id uuid)
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _tenant_id          int;
+      _conv_id            uuid;
+      _msg_id             uuid;
+      _topic_priority     public.notification_priority;
+      _topic_kind         public.notification_kind;
+      _delivery_id        uuid;
+      _ch                 public.message_channel;
+    begin
+      -- Resolve tenant from organization when provided.
+      if conversation_emit.organization_id is not null then
+        select o.tenant_id into _tenant_id
+          from public.organizations o
+          where o.organization_id = conversation_emit.organization_id;
+      end if;
+
+      -- Look up topic defaults.
+      select ct.conversation_topic_priority, ct.conversation_topic_kind
+        into _topic_priority, _topic_kind
+        from public.conversation_topics ct
+        where ct.conversation_topic_slug = conversation_emit.slug
+          and ct.conversation_topic_disabled_at is null;
+
+      if not found then
+        raise exception 'conversation_topic_not_found' using errcode = 'P0001';
+      end if;
+
+      -- Upsert conversation: use provided id to append, else create new.
+      if conversation_emit.conversation_id is not null then
+        _conv_id := conversation_emit.conversation_id;
+
+        -- Validate conversation belongs to the recipient.
+        if not exists (
+          select 1 from public.conversations c
+          where c.conversation_id = _conv_id
+            and c.profile_id = conversation_emit.recipient_profile_id
+        ) then
+          raise exception 'conversation_not_found' using errcode = 'P0001';
+        end if;
+      else
+        insert into public.conversations (
+          profile_id, tenant_id, organization_id, agency_id,
+          conversation_subject, conversation_kind
+        )
+        values (
+          conversation_emit.recipient_profile_id, _tenant_id,
+          conversation_emit.organization_id, conversation_emit.agency_id,
+          conversation_emit.subject, 'notification'
+        )
+        returning conversations.conversation_id into _conv_id;
+      end if;
+
+      -- Insert message.
+      insert into public.conversation_messages (
+        conversation_id, message_author, message_direction,
+        conversation_topic_slug, message_body, message_payload, message_priority
+      )
+      values (
+        _conv_id, 'system', 'outbound',
+        conversation_emit.slug, conversation_emit.body,
+        coalesce(conversation_emit.payload, '{}'), _topic_priority
+      )
+      returning conversation_messages.conversation_message_id into _msg_id;
+
+      -- Always insert in_app delivery (no reply_token, not enqueued — inbox is the surface).
+      insert into public.conversation_message_deliveries (
+        conversation_message_id, message_channel, delivery_status
+      )
+      values (_msg_id, 'in_app', 'queued')
+      on conflict (conversation_message_id, message_channel) do nothing;
+
+      -- Fan out to each external channel that is enabled for this (recipient, topic) and has a
+      -- usable destination. Absence of a preference row = enabled by default.
+      foreach _ch in array array['email', 'whatsapp', 'sms']::public.message_channel[] loop
+        -- Skip if the recipient has explicitly disabled this channel for this topic.
+        if exists (
+          select 1 from public.profile_topic_channels ptc
+          where ptc.profile_id = conversation_emit.recipient_profile_id
+            and ptc.conversation_topic_slug = conversation_emit.slug
+            and ptc.message_channel = _ch
+            and ptc.enabled = false
+        ) then
+          continue;
+        end if;
+
+        -- Skip if no verified contact exists for this channel.
+        if not exists (
+          select 1 from public.profile_contacts pc
+          where pc.profile_id = conversation_emit.recipient_profile_id
+            and pc.message_channel = _ch
+            and pc.contact_verified_at is not null
+        ) then
+          continue;
+        end if;
+
+        -- Insert delivery row with a cryptographically random reply_token.
+        insert into public.conversation_message_deliveries (
+          conversation_message_id, message_channel, delivery_status, reply_token
+        )
+        values (
+          _msg_id, _ch, 'queued',
+          encode(extensions.gen_random_bytes(24), 'hex')
+        )
+        on conflict (conversation_message_id, message_channel) do nothing
+        returning conversation_message_delivery_id into _delivery_id;
+
+        -- Enqueue outbound job only when a new row was inserted.
+        if _delivery_id is not null then
+          perform pgmq.send(
+            'conversation_outbound',
+            jsonb_build_object(
+              'delivery_id', _delivery_id,
+              'message_id',  _msg_id,
+              'channel',     _ch
+            )
+          );
+        end if;
+      end loop;
+
+      -- Fan out web_push if enabled for this (recipient, topic) and a subscription exists.
+      if not exists (
+        select 1 from public.profile_topic_channels ptc
+        where ptc.profile_id = conversation_emit.recipient_profile_id
+          and ptc.conversation_topic_slug = conversation_emit.slug
+          and ptc.message_channel = 'web_push'
+          and ptc.enabled = false
+      ) and exists (
+        select 1 from public.profile_push_subscriptions pps
+        where pps.profile_id = conversation_emit.recipient_profile_id
+      ) then
+        insert into public.conversation_message_deliveries (
+          conversation_message_id, message_channel, delivery_status, reply_token
+        )
+        values (
+          _msg_id, 'web_push', 'queued',
+          encode(extensions.gen_random_bytes(24), 'hex')
+        )
+        on conflict (conversation_message_id, message_channel) do nothing
+        returning conversation_message_delivery_id into _delivery_id;
+
+        if _delivery_id is not null then
+          perform pgmq.send(
+            'conversation_outbound',
+            jsonb_build_object(
+              'delivery_id', _delivery_id,
+              'message_id',  _msg_id,
+              'channel',     'web_push'
+            )
+          );
+        end if;
+      end if;
+
+      return query select _conv_id, _msg_id;
+    end;
+  $$;
+
+grant execute on function public.conversation_emit(uuid, extensions.citext, text, jsonb, text, int, uuid, uuid) to service_role;
+
+-- conversation_post_user_message: a profile replies to a conversation.
+create or replace function public.conversation_post_user_message(
+  conversation_id uuid,
+  body            text,
+  payload         jsonb default '{}'
+)
+  returns uuid
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _caller_id uuid := public.viewer_profile_id();
+      _msg_id    uuid;
+    begin
+      if _caller_id is null then
+        raise exception 'not_authenticated' using errcode = 'P0001';
+      end if;
+
+      -- Verify ownership.
+      if not exists (
+        select 1 from public.conversations c
+        where c.conversation_id = conversation_post_user_message.conversation_id
+          and c.profile_id = _caller_id
+      ) then
+        raise exception 'conversation_not_found' using errcode = 'P0001';
+      end if;
+
+      insert into public.conversation_messages (
+        conversation_id, message_author, message_direction, message_body, message_payload
+      )
+      values (
+        conversation_post_user_message.conversation_id,
+        'user', 'inbound',
+        conversation_post_user_message.body,
+        coalesce(conversation_post_user_message.payload, '{}')
+      )
+      returning conversation_messages.conversation_message_id into _msg_id;
+
+      return _msg_id;
+    end;
+  $$;
+
+grant execute on function public.conversation_post_user_message(uuid, text, jsonb) to authenticated;
+
+-- conversation_mark_read: mark a set of messages as read (owner only).
+create or replace function public.conversation_mark_read(message_ids uuid[])
+  returns int
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _caller_id uuid := public.viewer_profile_id();
+      _count     int;
+    begin
+      if _caller_id is null then
+        raise exception 'not_authenticated' using errcode = 'P0001';
+      end if;
+
+      update public.conversation_messages cm
+        set message_read_at = current_timestamp
+        from public.conversations c
+        where cm.conversation_id = c.conversation_id
+          and c.profile_id = _caller_id
+          and cm.conversation_message_id = any(conversation_mark_read.message_ids)
+          and cm.message_read_at is null
+          and cm.message_direction = 'outbound';
+
+      get diagnostics _count = row_count;
+      return _count;
+    end;
+  $$;
+
+grant execute on function public.conversation_mark_read(uuid[]) to authenticated;
+
+-- conversation_archive: soft-archive a conversation (owner only).
+create or replace function public.conversation_archive(p_conversation_id uuid)
+  returns void
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _caller_id uuid := public.viewer_profile_id();
+    begin
+      if _caller_id is null then
+        raise exception 'not_authenticated' using errcode = 'P0001';
+      end if;
+
+      update public.conversations
+        set conversation_status = 'archived'
+        where conversation_id = conversation_archive.p_conversation_id
+          and profile_id = _caller_id;
+
+      if not found then
+        raise exception 'conversation_not_found' using errcode = 'P0001';
+      end if;
+    end;
+  $$;
+
+grant execute on function public.conversation_archive(uuid) to authenticated;
+
+-- ============================================================
+-- RPCs: viewer helpers
+-- ============================================================
+
+-- viewer_conversations: list the caller's conversations (excludes archived by default).
+create or replace function public.viewer_conversations(include_archived boolean default false)
+  returns setof public.conversations
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select c.*
+    from public.conversations c
+    where c.profile_id = (select public.viewer_profile_id())
+      and (viewer_conversations.include_archived or c.conversation_status <> 'archived')
+    order by c.conversation_last_message_at desc;
+  $$;
+
+grant execute on function public.viewer_conversations(boolean) to authenticated;
+
+-- viewer_conversation_messages: thread messages for a conversation owned by caller.
+create or replace function public.viewer_conversation_messages(p_conversation_id uuid)
+  returns setof public.conversation_messages
+  stable
+  security definer
+  parallel safe
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _caller_id uuid := public.viewer_profile_id();
+    begin
+      if _caller_id is null then
+        return;
+      end if;
+
+      if not exists (
+        select 1 from public.conversations c
+        where c.conversation_id = viewer_conversation_messages.p_conversation_id
+          and c.profile_id = _caller_id
+      ) then
+        return;
+      end if;
+
+      return query
+        select cm.*
+        from public.conversation_messages cm
+        where cm.conversation_id = viewer_conversation_messages.p_conversation_id
+        order by cm.message_created_at;
+    end;
+  $$;
+
+grant execute on function public.viewer_conversation_messages(uuid) to authenticated;
+
+-- viewer_unread_count: count of unread outbound messages across all non-archived conversations.
+create or replace function public.viewer_unread_count()
+  returns int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select count(*)::int
+    from public.conversation_messages cm
+    join public.conversations c using (conversation_id)
+    where c.profile_id = (select public.viewer_profile_id())
+      and c.conversation_status <> 'archived'
+      and cm.message_direction = 'outbound'
+      and cm.message_read_at is null;
+  $$;
+
+grant execute on function public.viewer_unread_count() to authenticated;
+
+-- ============================================================
+-- RPC: agent_action_claim  (mutex before AI agent side-effects)
+-- ============================================================
+
+create or replace function public.agent_action_claim(
+  idempotency_key         text,
+  conversation_message_id uuid,
+  profile_id              uuid,
+  tool_name               text,
+  tool_input              jsonb,
+  organization_id         int    default null
+)
+  returns table (claimed boolean, prior_status text, prior_output jsonb)
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _prior public.agent_action_log%rowtype;
+    begin
+      -- Try to find an existing record for this idempotency key (fast path for duplicates).
+      select * into _prior
+        from public.agent_action_log
+        where action_idempotency_key = agent_action_claim.idempotency_key;
+
+      if found then
+        return query select false, _prior.action_status, _prior.tool_output;
+        return;
+      end if;
+
+      -- Insert the claim row. The unique constraint on action_idempotency_key is the mutex:
+      -- exactly one concurrent caller wins the insert; the rest hit unique_violation.
+      begin
+        insert into public.agent_action_log (
+          conversation_message_id, profile_id, organization_id,
+          tool_name, tool_input, action_status, action_idempotency_key
+        )
+        values (
+          agent_action_claim.conversation_message_id,
+          agent_action_claim.profile_id,
+          agent_action_claim.organization_id,
+          agent_action_claim.tool_name,
+          agent_action_claim.tool_input,
+          'claiming',
+          agent_action_claim.idempotency_key
+        );
+      exception when unique_violation then
+        select * into _prior
+          from public.agent_action_log
+          where action_idempotency_key = agent_action_claim.idempotency_key;
+
+        return query select false, _prior.action_status, _prior.tool_output;
+        return;
+      end;
+
+      return query select true, null::text, null::jsonb;
+    end;
+  $$;
+
+grant execute on function public.agent_action_claim(text, uuid, uuid, text, jsonb, int) to service_role;
+
+-- ============================================================
+-- RPCs: ticket_escalate, ticket_claim, ticket_resolve
+-- ============================================================
+
+-- ticket_escalate: escalate an existing conversation to a support ticket.
+create or replace function public.ticket_escalate(
+  p_conversation_id uuid,
+  subject           text,
+  priority          public.notification_priority default 'medium'
+)
+  returns uuid
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _caller_id uuid := public.viewer_profile_id();
+      _conv      public.conversations%rowtype;
+      _ticket_id uuid;
+    begin
+      if _caller_id is null then
+        raise exception 'not_authenticated' using errcode = 'P0001';
+      end if;
+
+      select * into _conv
+        from public.conversations
+        where conversation_id = ticket_escalate.p_conversation_id
+          and profile_id = _caller_id;
+
+      if not found then
+        raise exception 'conversation_not_found' using errcode = 'P0001';
+      end if;
+
+      -- Idempotent: return existing ticket if already escalated.
+      select ticket_id into _ticket_id
+        from public.tickets
+        where conversation_id = ticket_escalate.p_conversation_id;
+
+      if found then
+        return _ticket_id;
+      end if;
+
+      insert into public.tickets (
+        conversation_id, tenant_id, organization_id,
+        ticket_subject, ticket_priority
+      )
+      values (
+        ticket_escalate.p_conversation_id,
+        _conv.tenant_id, _conv.organization_id,
+        ticket_escalate.subject, ticket_escalate.priority
+      )
+      returning tickets.ticket_id into _ticket_id;
+
+      -- Update conversation kind to support.
+      update public.conversations
+        set conversation_kind = 'support'
+        where conversation_id = ticket_escalate.p_conversation_id;
+
+      return _ticket_id;
+    end;
+  $$;
+
+grant execute on function public.ticket_escalate(uuid, text, public.notification_priority) to authenticated;
+
+-- ticket_escalate_as: service-role variant of ticket_escalate with explicit caller_id.
+-- Used by the AI agent loop which runs under service-role (no JWT/viewer_profile_id).
+create or replace function public.ticket_escalate_as(
+  caller_id         uuid,
+  p_conversation_id uuid,
+  subject           text,
+  priority          public.notification_priority default 'medium'
+)
+  returns uuid
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _conv      public.conversations%rowtype;
+      _ticket_id uuid;
+    begin
+      if caller_id is null then
+        raise exception 'not_authenticated' using errcode = 'P0001';
+      end if;
+
+      select * into _conv
+        from public.conversations
+        where conversation_id = ticket_escalate_as.p_conversation_id
+          and profile_id = ticket_escalate_as.caller_id;
+
+      if not found then
+        raise exception 'conversation_not_found' using errcode = 'P0001';
+      end if;
+
+      -- Idempotent: return existing ticket if already escalated.
+      select ticket_id into _ticket_id
+        from public.tickets
+        where conversation_id = ticket_escalate_as.p_conversation_id;
+
+      if found then
+        return _ticket_id;
+      end if;
+
+      insert into public.tickets (
+        conversation_id, tenant_id, organization_id,
+        ticket_subject, ticket_priority
+      )
+      values (
+        ticket_escalate_as.p_conversation_id,
+        _conv.tenant_id, _conv.organization_id,
+        ticket_escalate_as.subject, ticket_escalate_as.priority
+      )
+      returning tickets.ticket_id into _ticket_id;
+
+      -- Update conversation kind to support.
+      update public.conversations
+        set conversation_kind = 'support'
+        where conversation_id = ticket_escalate_as.p_conversation_id;
+
+      return _ticket_id;
+    end;
+  $$;
+
+grant execute on function public.ticket_escalate_as(uuid, uuid, text, public.notification_priority) to service_role;
+
+-- ticket_claim: agency member claims an open/unclaimed ticket.
+create or replace function public.ticket_claim(p_ticket_id uuid)
+  returns void
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _caller_id uuid := public.viewer_profile_id();
+      _ticket    public.tickets%rowtype;
+      _agency_id uuid;
+    begin
+      if _caller_id is null then
+        raise exception 'not_authenticated' using errcode = 'P0001';
+      end if;
+
+      select * into _ticket
+        from public.tickets
+        where ticket_id = ticket_claim.p_ticket_id;
+
+      if not found then
+        raise exception 'ticket_not_found' using errcode = 'P0001';
+      end if;
+
+      -- Permission: caller must have tickets_manage via agency for the ticket's org.
+      if not public.viewer_has_agency_permission(_ticket.organization_id, 'tickets_manage') then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      -- Resolve the specific agency that grants the caller tickets_manage over this org.
+      -- Picks deterministically (lowest agency_id) when multiple grants exist.
+      select aog.agency_id into _agency_id
+        from public.agencies_organizations_grants aog
+        where aog.agency_id in (select public.viewer_agency_ids())
+          and (aog.organization_id = _ticket.organization_id or aog.organization_id is null)
+          and (aog.permission_id = 'tickets_manage' or aog.permission_id = '*')
+        order by aog.agency_id
+        limit 1;
+
+      -- Mutex: conditional update that fails if already claimed.
+      update public.tickets
+        set ticket_status       = 'claimed',
+            assigned_agency_id  = _agency_id,
+            assigned_profile_id = _caller_id,
+            ticket_claimed_at   = current_timestamp
+        where ticket_id = ticket_claim.p_ticket_id
+          and ticket_status = 'open';
+
+      if not found then
+        raise exception 'ticket_already_claimed' using errcode = 'P0001';
+      end if;
+    end;
+  $$;
+
+grant execute on function public.ticket_claim(uuid) to authenticated;
+
+-- ticket_resolve: agency member resolves ticket AND conversation atomically.
+create or replace function public.ticket_resolve(
+  p_ticket_id uuid,
+  resolution  jsonb default '{}'
+)
+  returns void
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _caller_id uuid := public.viewer_profile_id();
+      _ticket    public.tickets%rowtype;
+    begin
+      if _caller_id is null then
+        raise exception 'not_authenticated' using errcode = 'P0001';
+      end if;
+
+      select * into _ticket
+        from public.tickets
+        where ticket_id = ticket_resolve.p_ticket_id;
+
+      if not found then
+        raise exception 'ticket_not_found' using errcode = 'P0001';
+      end if;
+
+      if not public.viewer_has_agency_permission(_ticket.organization_id, 'tickets_manage') then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      if _ticket.ticket_status = 'resolved' or _ticket.ticket_status = 'closed' then
+        raise exception 'ticket_already_resolved' using errcode = 'P0001';
+      end if;
+
+      -- Resolve ticket.
+      update public.tickets
+        set ticket_status     = 'resolved',
+            ticket_resolved_at = current_timestamp
+        where ticket_id = ticket_resolve.p_ticket_id;
+
+      -- Resolve conversation atomically.
+      update public.conversations
+        set conversation_status          = 'resolved',
+            conversation_resolved_at     = current_timestamp,
+            conversation_resolution      = coalesce(ticket_resolve.resolution, '{}')
+        where conversation_id = _ticket.conversation_id;
+    end;
+  $$;
+
+grant execute on function public.ticket_resolve(uuid, jsonb) to authenticated;
+
+-- ============================================================
+-- pgmq queue helpers (Agent D — dispatch worker)
+-- ============================================================
+-- The `pgmq` schema is not exposed through the Data API / PostgREST by default.
+-- These SECURITY DEFINER wrappers in `public` make pgmq operations callable via
+-- `supabase.rpc()` from the service-role client in the drain route without granting
+-- broad access to the pgmq schema.
+-- ============================================================
+
+-- Read up to `qty` messages from the conversation_outbound queue with a visibility
+-- timeout of `vt` seconds (messages are invisible to other readers until vt elapses).
+-- Returns the raw pgmq message rows: (msg_id bigint, read_ct int, enqueued_at, vt, message jsonb).
+create or replace function public.conversation_outbound_read(vt int, qty int)
+  returns setof pgmq.message_record
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select * from pgmq.read('conversation_outbound', vt, qty);
+  $$;
+
+grant execute on function public.conversation_outbound_read(int, int) to service_role;
+
+-- Permanently delete a message from the queue after successful processing.
+-- Returns true when the message was found and deleted.
+create or replace function public.conversation_outbound_delete(msg_id bigint)
+  returns boolean
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select pgmq.delete('conversation_outbound', msg_id);
+  $$;
+
+grant execute on function public.conversation_outbound_delete(bigint) to service_role;
+
+-- Archive a message (move to pgmq archive table) instead of deleting.
+-- Useful for inspecting processed messages for debugging.
+create or replace function public.conversation_outbound_archive(msg_id bigint)
+  returns boolean
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select pgmq.archive('conversation_outbound', msg_id);
+  $$;
+
+grant execute on function public.conversation_outbound_archive(bigint) to service_role;
+
+-- ============================================================
+-- pg_cron + pg_net drain scheduling (Agent D)
+-- ============================================================
+-- Schedules a POST to the drain route every minute.  In production, set the real URL
+-- and secret in the environment.  Locally, Docker→host networking may prevent this from
+-- working — use the manual trigger (curl) documented in apps/platform/app/api/internal/conversations/drain/route.ts.
+--
+-- The pg_cron + pg_net calls are intentionally wrapped in a DO block with an exception
+-- handler so that replay on `pnpm db:reset` is safe even when the env vars are unset.
+-- Set APP_DRAIN_URL and CONVERSATIONS_DRAIN_SECRET in the Supabase service env to
+-- activate the schedule.
+-- ============================================================
+
+-- ============================================================
+-- RPCs: P4 inbound + agentic layer (Agent E)
+-- ============================================================
+
+-- caller_has_permission: explicit caller_id variant of viewer_has_permission.
+-- Used by webhook/service-role paths where there is no authenticated JWT session.
+-- Mirrors viewer_has_permission wildcard (`*`) logic exactly.
+create or replace function public.caller_has_permission(
+  caller_profile_id uuid,
+  organization_id   int,
+  permission_id     extensions.citext
+)
+  returns boolean
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select exists (
+      select 1
+      from public.organization_membership_permissions mp
+      join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
+      where m.organization_id = caller_has_permission.organization_id
+        and m.profile_id = caller_has_permission.caller_profile_id
+        and m.organization_membership_accepted_at is not null
+        and m.organization_membership_revoked_at is null
+        and m.organization_membership_rejected_at is null
+        and (mp.permission_id = caller_has_permission.permission_id or mp.permission_id = '*')
+    );
+  $$;
+
+grant execute on function public.caller_has_permission(uuid, int, extensions.citext) to service_role;
+
+-- conversation_ingest_inbound: atomically insert an inbound user message.
+-- Deduplicates on provider_message_id (message_idempotency_key).
+-- Returns the resolved conversation/scope so the agent loop can work without extra queries.
+-- Used only via service-role (webhook handlers have no JWT).
+create or replace function public.conversation_ingest_inbound(
+  conversation_id         uuid,
+  profile_id              uuid,
+  channel                 public.message_channel,
+  body                    text,
+  payload                 jsonb,
+  provider_message_id     text,
+  signature_verified      boolean default false
+)
+  returns table (
+    out_conversation_message_id uuid,
+    out_conversation_id         uuid,
+    out_profile_id              uuid,
+    out_organization_id         int,
+    out_agency_id               uuid,
+    out_tenant_id               int,
+    out_already_resolved        boolean
+  )
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _conv public.conversations%rowtype;
+      _msg_id uuid;
+      _idempotency_key text;
+    begin
+      -- Build a non-null idempotency key (channel-namespaced).
+      _idempotency_key := channel::text || ':' || provider_message_id;
+
+      -- Dedupe: if we already processed this provider message, return the existing row.
+      select cm.conversation_message_id
+        into _msg_id
+        from public.conversation_messages cm
+        where cm.message_idempotency_key = _idempotency_key;
+
+      if found then
+        select c.* into _conv
+          from public.conversations c
+          where c.conversation_id = conversation_ingest_inbound.conversation_id;
+
+        return query
+          select _msg_id,
+                 _conv.conversation_id,
+                 _conv.profile_id,
+                 _conv.organization_id,
+                 _conv.agency_id,
+                 _conv.tenant_id,
+                 (_conv.conversation_resolved_at is not null);
+        return;
+      end if;
+
+      -- Fetch conversation (validates it exists).
+      select c.* into _conv
+        from public.conversations c
+        where c.conversation_id = conversation_ingest_inbound.conversation_id
+          and c.profile_id = conversation_ingest_inbound.profile_id;
+
+      if not found then
+        raise exception 'conversation_not_found' using errcode = 'P0001';
+      end if;
+
+      -- Insert inbound user message.
+      insert into public.conversation_messages (
+        conversation_id,
+        message_author,
+        message_direction,
+        message_channel,
+        message_body,
+        message_payload,
+        message_signature_verified,
+        message_idempotency_key
+      )
+      values (
+        conversation_ingest_inbound.conversation_id,
+        'user',
+        'inbound',
+        conversation_ingest_inbound.channel,
+        conversation_ingest_inbound.body,
+        coalesce(conversation_ingest_inbound.payload, '{}'),
+        conversation_ingest_inbound.signature_verified,
+        _idempotency_key
+      )
+      returning conversation_messages.conversation_message_id into _msg_id;
+
+      return query
+        select _msg_id,
+               _conv.conversation_id,
+               _conv.profile_id,
+               _conv.organization_id,
+               _conv.agency_id,
+               _conv.tenant_id,
+               (_conv.conversation_resolved_at is not null);
+    end;
+  $$;
+
+grant execute on function public.conversation_ingest_inbound(uuid, uuid, public.message_channel, text, jsonb, text, boolean) to service_role;
+
+-- conversation_resolve: mark a conversation resolved from an agent action.
+-- Idempotent: if already resolved, does nothing.
+create or replace function public.conversation_resolve(
+  p_conversation_id uuid,
+  channel           public.message_channel,
+  resolution        jsonb default '{}'
+)
+  returns void
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    begin
+      update public.conversations
+        set conversation_status           = 'resolved',
+            conversation_resolved_at      = current_timestamp,
+            conversation_resolved_channel = conversation_resolve.channel,
+            conversation_resolution       = coalesce(conversation_resolve.resolution, '{}')
+        where conversation_id = conversation_resolve.p_conversation_id
+          and conversation_resolved_at is null;
+    end;
+  $$;
+
+grant execute on function public.conversation_resolve(uuid, public.message_channel, jsonb) to service_role;
+
+-- agent_action_complete: finalize a claimed agent action row.
+-- Call after the side-effect succeeds or fails, with the resulting status + output.
+create or replace function public.agent_action_complete(
+  idempotency_key text,
+  status          text,
+  tool_output     jsonb default null
+)
+  returns void
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    begin
+      if status not in ('executed', 'error', 'rejected', 'clarify') then
+        raise exception 'invalid_status' using errcode = 'P0001';
+      end if;
+
+      update public.agent_action_log
+        set action_status = status,
+            tool_output   = agent_action_complete.tool_output
+        where action_idempotency_key = agent_action_complete.idempotency_key;
+    end;
+  $$;
+
+grant execute on function public.agent_action_complete(text, text, jsonb) to service_role;
+
+-- ============================================================
+-- pg_cron + pg_net drain scheduling (Agent D)
+-- ============================================================
+
+do $$
+  declare
+    _drain_url text := coalesce(current_setting('app.drain_url', true), '');
+    _drain_secret text := coalesce(current_setting('app.drain_secret', true), '');
+  begin
+    -- Remove any previous schedule to keep this idempotent on re-run.
+    perform cron.unschedule('conversation_outbound_drain')
+      where exists (
+        select 1 from cron.job where jobname = 'conversation_outbound_drain'
+      );
+
+    if _drain_url <> '' and _drain_secret <> '' then
+      -- Schedule: every minute, POST to the drain endpoint with shared-secret header.
+      perform cron.schedule(
+        'conversation_outbound_drain',
+        '* * * * *',
+        format(
+          $cron$
+            select net.http_post(
+              url     := %L,
+              headers := jsonb_build_object('x-drain-secret', %L, 'content-type', 'application/json'),
+              body    := '{}'::jsonb
+            );
+          $cron$,
+          _drain_url,
+          _drain_secret
+        )
+      );
+    end if;
+  exception
+    when others then
+      -- pg_cron/pg_net may not be available in all environments; log and continue.
+      raise notice 'conversation_outbound_drain schedule skipped: %', sqlerrm;
+  end;
+$$;

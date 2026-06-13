@@ -1,10 +1,12 @@
 "use client";
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { INITIALS_OF } from "@packages/utils/string";
 import { Bell, ChevronsUpDown, CreditCard, KeyRound, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { Avatar, INITIALS_OF, Tip, useClickOutside } from "~/components/shell/atoms";
+
+import { Avatar, Tip, useClickOutside } from "~/components/shell/atoms";
 import type { ViewerProfileUseFragmentType } from "~/hooks/use-viewer-profile";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";

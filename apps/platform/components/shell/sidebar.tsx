@@ -8,6 +8,7 @@ import Link from "next/link";
 import type { ComponentProps, MouseEvent } from "react";
 import { useRef, useState } from "react";
 import { Kbd, Tip } from "~/components/shell/atoms";
+import { ConversationsBell } from "~/components/shell/conversations-bell";
 import { OrgSwitcher, type ShellOrganization, type ShellTenant } from "~/components/shell/org-switcher";
 import { ProfileMenu, type ShellViewer } from "~/components/shell/profile-menu";
 import { SettingsMenu } from "~/components/shell/settings-menu";
@@ -106,7 +107,7 @@ export function Sidebar({
   initialWidth?: number;
 } & ComponentProps<"aside">) {
   const { t } = useRosetta(LOCALES);
-  const { modKey } = useDeviceInfo();
+  const device = useDeviceInfo();
   /**
    * Width is read back server-side in layout.tsx with no re-set, so persist it for a year.
    */
@@ -169,7 +170,7 @@ export function Sidebar({
 
       <div className={collapsed ? "flex justify-center pt-2" : "px-2 pt-2"}>
         {collapsed ? (
-          <Tip label={`${t("search")} ${modKey}K`}>
+          <Tip label={device?.modKey ? `${t("search")} ${device.modKey}K` : t("search")}>
             <button
               type="button"
               onClick={onOpenPalette}
@@ -187,9 +188,14 @@ export function Sidebar({
             onClick={onOpenPalette}
             className="border-border bg-background text-muted-foreground hover:border-foreground/20 hover:text-foreground flex h-9 w-full items-center gap-2 rounded-md border px-2.5 text-left text-sm transition-colors"
           >
-            <Search size={14} />
-            <span className="flex-1">{t("search")}</span>
-            <Kbd>{modKey}K</Kbd>
+            <Search size={14} className="shrink-0" />
+            <span className="flex-1 truncate">{t("search")}</span>
+            <Kbd
+              className={cn("shrink-0 transition-opacity duration-200", device ? "opacity-100" : "opacity-0")}
+              aria-hidden={!device}
+            >
+              {device?.modKey ?? " "}K
+            </Kbd>
           </button>
         )}
       </div>
@@ -197,7 +203,7 @@ export function Sidebar({
       <nav className="mt-3 flex-1 overflow-y-auto px-2">
         <div className="mb-3">
           {collapsed ? null : (
-            <div className="text-muted-foreground px-2 pb-1 pt-1 text-xs font-medium uppercase tracking-wider">
+            <div className="text-muted-foreground px-2 pb-1 pt-1 text-xs font-medium uppercase tracking-wider truncate">
               {t("workspace")}
             </div>
           )}
@@ -218,7 +224,7 @@ export function Sidebar({
                         : "text-foreground/80 hover:bg-accent/60 hover:text-foreground",
                     )}
                   >
-                    <item.Icon size={16} />
+                    <item.Icon size={16} className="shrink-0" />
                     {item.badge ? (
                       <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-rose-500" />
                     ) : null}
@@ -240,10 +246,13 @@ export function Sidebar({
                     : "text-foreground/80 hover:bg-accent/60 hover:text-foreground",
                 )}
               >
-                <item.Icon size={15} className={isActive ? "text-foreground" : "text-muted-foreground"} />
-                <span className="flex-1">{item.label}</span>
+                <item.Icon
+                  size={15}
+                  className={cn("shrink-0", isActive ? "text-foreground" : "text-muted-foreground")}
+                />
+                <span className="flex-1 truncate">{item.label}</span>
                 {item.badge ? (
-                  <span className="bg-foreground/85 text-background rounded px-1.5 py-0.5 font-mono text-tiny font-medium">
+                  <span className="shrink-0 bg-foreground/85 text-background rounded px-1.5 py-0.5 font-mono text-tiny font-medium">
                     {item.badge}
                   </span>
                 ) : null}
@@ -263,6 +272,7 @@ export function Sidebar({
           })}
           compact={collapsed}
         />
+        <ConversationsBell locale={locale} compact={collapsed} />
       </div>
 
       <div className={cn("border-border border-t", collapsed ? "flex justify-center py-2" : "px-2 py-2")}>
