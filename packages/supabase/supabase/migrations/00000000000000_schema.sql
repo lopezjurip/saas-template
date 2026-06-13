@@ -4058,13 +4058,13 @@ do $$
         'conversation_outbound_drain',
         '* * * * *',
         format(
-          $$
+          $cron$
             select net.http_post(
               url     := %L,
               headers := jsonb_build_object('x-drain-secret', %L, 'content-type', 'application/json'),
               body    := '{}'::jsonb
             );
-          $$,
+          $cron$,
           _drain_url,
           _drain_secret
         )
