@@ -1,5 +1,6 @@
 "use client";
 
+import { useGraphyMutation } from "@packages/graphy/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
@@ -7,13 +8,20 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { SLUGIFY } from "@packages/utils/slug";
 import { ArrowRight, Briefcase, Building2, Check, Eye, Plus, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
-import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
-import { actionCreateAgency } from "./actions";
 
 type Stage = "form" | "created";
+
+const AgencyCreateMutation = /*#__PURE__*/ gql(`
+  mutation AgencyCreateMutation($agency_name: String!, $agency_slug: String!) {
+    agency: viewer_agency_create(agency_name: $agency_name, agency_slug: $agency_slug) {
+      agency_id
+    }
+  }
+`);
 
 export function AgencyCreate() {
   const { t } = useRosetta(LOCALES);
@@ -23,7 +31,7 @@ export function AgencyCreate() {
   const [slug, setSlug] = useState("");
   const [createdSlug, setCreatedSlug] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [createState, createAgency] = useGraphyMutation(AgencyCreateMutation);
 
   // Shared slug rule from @packages/utils, capped at 40 like the tenant-create flow.
   const autoSlug = SLUGIFY(name).slice(0, 40);
@@ -31,7 +39,7 @@ export function AgencyCreate() {
   const consoleUrl = `app.example.com/a/${createdSlug}`;
   const backHref = ROUTE("/admin/agencies");
 
-  function submit() {
+  async function submit() {
     setServerError(null);
     const finalSlug = (touchedSlug ? slug : autoSlug).trim();
     if (!name.trim()) {
@@ -42,22 +50,16 @@ export function AgencyCreate() {
       setServerError(t("slug_invalid"));
       return;
     }
-    startTransition(async () => {
-      const [data, error] = await ErrorSafeAction.unwrap(
-        actionCreateAgency({ agency_name: name.trim(), agency_slug: finalSlug }),
-      );
-      if (error instanceof ErrorSafeActionServer) {
-        setServerError(error.serverError);
-        return;
-      }
-      if (error instanceof ErrorSafeActionValidation) {
-        setServerError(t("slug_invalid"));
-        return;
-      }
-      if (error) return;
-      setCreatedSlug(data["agency_slug"]);
-      setStage("created");
+    const { data, error } = await createAgency({
+      agency_name: name.trim(),
+      agency_slug: finalSlug,
     });
+    if (error || !data?.["agency"]?.["agency_id"]) {
+      setServerError(error?.message.includes("slug_taken") ? t("slug_taken") : t("create_failed"));
+      return;
+    }
+    setCreatedSlug(finalSlug);
+    setStage("created");
   }
 
   const consoleHref = ROUTE("/a/[agency_slug]", { agency_slug: createdSlug });
@@ -134,8 +136,8 @@ export function AgencyCreate() {
               </span>
             </div>
 
-            <Button className="h-9 w-full" onClick={submit} disabled={pending}>
-              <Plus size={16} strokeWidth={2} /> {pending ? t("creating") : t("create")}
+            <Button className="h-9 w-full" onClick={submit} disabled={createState.isValidating}>
+              <Plus size={16} strokeWidth={2} /> {createState.isValidating ? t("creating") : t("create")}
             </Button>
           </>
         ) : (
@@ -210,6 +212,8 @@ const LOCALE_ES = {
   slug_fallback: "tu-agencia",
   slug_hint: "Es la dirección de la consola de la agencia. Se genera del nombre; puedes ajustarla.",
   slug_invalid: "El identificador debe tener al menos 3 caracteres",
+  slug_taken: "Ya existe una agencia con ese identificador",
+  create_failed: "No pudimos crear la agencia",
   read_only_prefix: "Las agencias",
   read_only_strong: "nunca",
   read_only_suffix:
@@ -239,6 +243,8 @@ const LOCALE_EN: typeof LOCALE_ES = {
   slug_fallback: "your-agency",
   slug_hint: "It's the address of the agency console. Generated from the name; you can adjust it.",
   slug_invalid: "The identifier must be at least 3 characters long",
+  slug_taken: "An agency with that identifier already exists",
+  create_failed: "We couldn't create the agency",
   read_only_prefix: "Agencies can",
   read_only_strong: "never",
   read_only_suffix: "write. Their access is read-only, regardless of the permissions each organization grants them.",
@@ -267,6 +273,8 @@ const LOCALE_PT: typeof LOCALE_ES = {
   slug_fallback: "sua-agencia",
   slug_hint: "É o endereço da console da agência. Gerado a partir do nome; você pode ajustá-lo.",
   slug_invalid: "O identificador deve ter pelo menos 3 caracteres",
+  slug_taken: "Já existe uma agência com esse identificador",
+  create_failed: "Não foi possível criar a agência",
   read_only_prefix: "As agências",
   read_only_strong: "nunca",
   read_only_suffix:

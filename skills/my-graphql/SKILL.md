@@ -140,12 +140,30 @@ const [, updateName] = useGraphyMutation(ProfileSectionUpdateNameMutation);
 const { error } = await updateName({ profile_id, profile_name_full });
 ```
 
+For a viewer-scoped SQL mutation that creates one row, select fields from the returned object:
+
+```graphql
+mutation CreateTenant($tenant_name: String!, $tenant_slug: String!) {
+  tenant: viewer_tenant_create(
+    tenant_name: $tenant_name
+    tenant_slug: $tenant_slug
+  ) {
+    tenant_id
+    tenant_slug
+  }
+}
+```
+
 ## pg_graphql shapes
 
 - Tables: `tableCollection`, Relay `edges/node/pageInfo`.
 - Insert: `insertIntotableCollection(objects: ...)`.
 - Update/delete: pass `atMost`, `filter`, and `set` where required.
 - SQL functions become root fields, e.g. `viewer_organization_by_id(...)`.
+- An explicitly `volatile` function is exposed on `Mutation`.
+- `volatile returns setof public.<table> rows 1` is exposed as a singular nullable
+  `<table>` object, not a connection. Preserve this SQL signature for create RPCs instead of
+  returning only the primary-key scalar.
 - Relationships follow DB foreign keys.
 
 ## SQL compatibility
@@ -154,6 +172,9 @@ const { error } = await updateName({ profile_id, profile_name_full });
 - External literals containing hyphens: `text` + `check`.
 - Grant table privileges to `anon` when GraphQL requires schema visibility; RLS still gates rows.
 - Prefer `viewer_*` functions/views for viewer-scoped reads.
+- Prefer `useGraphyMutation` for authenticated browser mutations fully contained in one SQL
+  transaction. Use a Server Action only for server-only APIs, secrets, trusted service-role
+  orchestration, or external side effects.
 - GraphQL lacks `ON CONFLICT`; use typed Supabase SDK for required upserts. Passkey challenge upsert is canonical example.
 - Supabase Auth Admin APIs are not GraphQL; use service-role SDK.
 

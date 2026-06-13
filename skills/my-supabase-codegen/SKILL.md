@@ -48,7 +48,7 @@ If change affects pg_graphql:
 
 ```bash
 pnpm generate:graphql:schema
-pnpm generate:graphql:platform
+pnpm --filter @apps/platform run generate:graphql
 ```
 
 `db:reset` destroys local data, replays schema, then seed. Do not create incremental migration
@@ -87,6 +87,22 @@ grant select, insert, update, delete on table public.my_table to anon, authentic
 RLS policies still gate which rows are actually returned — grants only control schema
 visibility. A table with RLS enabled but no anon `SELECT` grant will be invisible to
 GraphQL entirely.
+
+For an RPC declared as:
+
+```sql
+returns setof public.tenants rows 1
+volatile
+```
+
+expected generated shapes are:
+
+- Supabase TypeScript: full tenant `Returns` plus `isSetofReturn: true` and `isOneToOne: true`.
+- pg_graphql Mutation: `viewer_tenant_create(...): tenants`, a singular object rather than a
+  connection.
+
+If codegen emits a scalar ID, inspect the SQL return type. Do not work around stale or incorrect
+schema generation by changing the client operation.
 
 ## Rules
 

@@ -95,6 +95,50 @@ $$;
 
 Grant execute narrowly. Review privilege escalation and recursive RLS.
 
+For a mutation that creates one table row, return the complete composite row:
+
+```sql
+create or replace function protected.tenant_create(
+  profile_id uuid,
+  tenant_slug text,
+  tenant_name text
+)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    -- Perform the complete transactional workflow.
+  $$;
+
+create or replace function public.viewer_tenant_create(
+  tenant_slug text,
+  tenant_name text
+)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select tenant.*
+    from protected.tenant_create(
+      public.viewer_profile_id(true),
+      $1,
+      $2
+    ) tenant;
+  $$;
+```
+
+- `protected.*_create(profile_id, ...)` owns the transaction and is the single source of truth.
+- `public.viewer_*_create(...)` only resolves the current profile and delegates.
+- Declare mutation functions explicitly `volatile`.
+- Use `returns setof public.<table> rows 1`, not a scalar ID. Supabase types preserve the
+  complete row and mark the result one-to-one.
+- Revoke protected execution from `public`; grant it only to trusted server roles.
+- Grant the viewer wrapper to `anon, authenticated` when pg_graphql needs anon visibility.
+
 ## Lifecycle/invariants
 
 Use constraints/triggers for facts that must survive every caller. Current schema protects
@@ -139,6 +183,6 @@ Without authenticated role, postgres bypasses RLS.
 pnpm db:reset
 pnpm generate:types
 pnpm generate:graphql:schema
-pnpm generate:graphql:platform
+pnpm --filter @apps/platform run generate:graphql
 pnpm test:db
 ```

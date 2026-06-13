@@ -206,6 +206,15 @@ scalar JSON
 
 """The root type for creating and mutating data"""
 type Mutation {
+  agency_membership_invite(agency_id: UUID!, caller_id: UUID!, profile_id: UUID!): Int
+  agency_membership_respond(agency_membership_id: Int!, response: String!): Int
+  agency_membership_update(agency_id: UUID!, agency_membership_id: Int!, caller_id: UUID!, operation: String!): Int
+  agent_action_complete(idempotency_key: String!, status: String!, tool_output: JSON): Opaque
+  conversation_archive(p_conversation_id: UUID!): Opaque
+  conversation_mark_read(message_ids: [UUID]!): Int
+  conversation_outbound_archive(msg_id: BigInt!): Boolean
+  conversation_outbound_delete(msg_id: BigInt!): Boolean
+  conversation_post_user_message(body: String!, conversation_id: UUID!, payload: JSON): UUID
   """
   Deletes zero or more records from the `organization_membership_permissions` collection
   """
@@ -259,6 +268,8 @@ type Mutation {
   """Adds one or more `tenant_domains` records to the collection"""
   insertIntotenant_domainsCollection(objects: [tenant_domainsInsertInput!]!): tenant_domainsInsertResponse
   revoke_session(session_id: UUID!): Opaque
+  ticket_claim(p_ticket_id: UUID!): Opaque
+  ticket_resolve(p_ticket_id: UUID!, resolution: JSON): Opaque
   """
   Updates zero or more records in the `organization_membership_permissions` collection
   """
@@ -367,8 +378,11 @@ type Mutation {
     """
     set: tenantsUpdateInput!
   ): tenantsUpdateResponse!
+  viewer_agency_create(agency_name: String!, agency_slug: String!): agencies
+  viewer_organization_create(organization_name: String!, organization_slug: String!, tenant_id: Int!): organizations
   viewer_organization_membership_accept(organization_membership_id: Int!): organization_memberships
   viewer_organization_membership_reject(organization_membership_id: Int!): organization_memberships
+  viewer_tenant_create(tenant_name: String!, tenant_slug: String!): tenants
 }
 
 interface Node {
@@ -541,8 +555,28 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [agency_membershipsOrderBy!]
   ): agency_membershipsConnection
+  caller_has_permission(caller_profile_id: UUID!, organization_id: Int!, permission_id: String!): Boolean
   cl_rut_normalize(value: String!): String
   cl_rut_validate(value: String!): Boolean
+  """A pagable collection of type `conversation_topics`"""
+  conversation_topicsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: conversation_topicsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [conversation_topicsOrderBy!]
+  ): conversation_topicsConnection
   email_exists(email_to_check: String!): Boolean
   email_has_password(email_to_check: String!): Boolean
   health_current_timestamp: Datetime
@@ -884,6 +918,7 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [tenantsOrderBy!]
   ): tenantsConnection
+  viewer_unread_count: Int
 }
 
 """
@@ -1474,6 +1509,116 @@ input agency_membershipsOrderBy {
   agency_membership_revoked_at: OrderByDirection
   agency_membership_updated_at: OrderByDirection
   profile_id: OrderByDirection
+}
+
+type conversation_topics implements Node {
+  conversation_topic_created_at: Datetime!
+  conversation_topic_description: String!
+  conversation_topic_disabled_at: Datetime
+  conversation_topic_kind: notification_kind!
+  conversation_topic_name: String!
+  conversation_topic_priority: notification_priority!
+  conversation_topic_slug: String!
+  conversation_topic_updated_at: Datetime!
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+}
+
+type conversation_topicsConnection {
+  edges: [conversation_topicsEdge!]!
+  pageInfo: PageInfo!
+}
+
+type conversation_topicsEdge {
+  cursor: String!
+  node: conversation_topics!
+}
+
+input conversation_topicsFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [conversation_topicsFilter!]
+  conversation_topic_created_at: DatetimeFilter
+  conversation_topic_description: StringFilter
+  conversation_topic_disabled_at: DatetimeFilter
+  conversation_topic_kind: notification_kindFilter
+  conversation_topic_name: StringFilter
+  conversation_topic_priority: notification_priorityFilter
+  conversation_topic_slug: StringFilter
+  conversation_topic_updated_at: DatetimeFilter
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: conversation_topicsFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [conversation_topicsFilter!]
+}
+
+input conversation_topicsOrderBy {
+  conversation_topic_created_at: OrderByDirection
+  conversation_topic_description: OrderByDirection
+  conversation_topic_disabled_at: OrderByDirection
+  conversation_topic_kind: OrderByDirection
+  conversation_topic_name: OrderByDirection
+  conversation_topic_priority: OrderByDirection
+  conversation_topic_slug: OrderByDirection
+  conversation_topic_updated_at: OrderByDirection
+}
+
+enum message_channel {
+  email
+  in_app
+  sms
+  web_push
+  whatsapp
+}
+
+"""
+Boolean expression comparing fields on type "message_channel"
+"""
+input message_channelFilter {
+  eq: message_channel
+  in: [message_channel!]
+  is: FilterIs
+  neq: message_channel
+}
+
+enum notification_kind {
+  debug
+  error
+  fatal
+  info
+  log
+  warn
+}
+
+"""
+Boolean expression comparing fields on type "notification_kind"
+"""
+input notification_kindFilter {
+  eq: notification_kind
+  in: [notification_kind!]
+  is: FilterIs
+  neq: notification_kind
+}
+
+enum notification_priority {
+  critical
+  high
+  low
+  medium
+}
+
+"""
+Boolean expression comparing fields on type "notification_priority"
+"""
+input notification_priorityFilter {
+  eq: notification_priority
+  in: [notification_priority!]
+  is: FilterIs
+  neq: notification_priority
 }
 
 type organization_membership_permissions implements Node {
@@ -2593,6 +2738,24 @@ type tenantsUpdateResponse {
   affectedCount: Int!
   """Array of records impacted by the mutation"""
   records: [tenants!]!
+}
+
+enum ticket_status {
+  claimed
+  closed
+  in_progress
+  open
+  resolved
+}
+
+"""
+Boolean expression comparing fields on type "ticket_status"
+"""
+input ticket_statusFilter {
+  eq: ticket_status
+  in: [ticket_status!]
+  is: FilterIs
+  neq: ticket_status
 }
 
 type user_sessions implements Node {

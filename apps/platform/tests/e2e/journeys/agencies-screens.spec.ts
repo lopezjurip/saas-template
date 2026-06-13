@@ -52,7 +52,9 @@ test.describe("agency screens", () => {
     // Verify confirmation + console address built from slug
     await expect(page.getByText("Agencia creada")).toBeVisible();
     await expect(page.getByText(`app.example.com/a/estudio-andrade-${runId}`)).toBeVisible();
-    await expect(page.getByRole("link", { name: /Abrir consola/i })).toBeVisible();
+    await page.getByRole("link", { name: /Abrir consola/i }).click();
+    await expect(page).toHaveURL(new RegExp(`/es(?:-CL)?/a/estudio-andrade-${runId}$`));
+    await expect(page.getByRole("heading", { name: "Equipo de la agencia" })).toBeVisible();
   });
 });
 

@@ -1525,10 +1525,6 @@ export type Database = {
         Returns: string;
       };
       revoke_session: { Args: { session_id: string }; Returns: undefined };
-      tenant_create: {
-        Args: { profile_id: string; tenant_name: string; tenant_slug: string };
-        Returns: Json;
-      };
       ticket_claim: { Args: { p_ticket_id: string }; Returns: undefined };
       ticket_escalate: {
         Args: {
@@ -1588,6 +1584,23 @@ export type Database = {
       };
       viewer_agency_by_slug: {
         Args: { agency_slug: string };
+        Returns: {
+          agency_created_at: string;
+          agency_disabled_at: string | null;
+          agency_id: string;
+          agency_name: string;
+          agency_slug: string;
+          agency_updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "agencies";
+          isOneToOne: true;
+          isSetofReturn: true;
+        };
+      };
+      viewer_agency_create: {
+        Args: { agency_name: string; agency_slug: string };
         Returns: {
           agency_created_at: string;
           agency_disabled_at: string | null;
@@ -1669,6 +1682,28 @@ export type Database = {
       viewer_is_agency_member: { Args: never; Returns: boolean };
       viewer_organization_by_id: {
         Args: { organization_id: number };
+        Returns: {
+          organization_created_at: string;
+          organization_disabled_at: string | null;
+          organization_id: number;
+          organization_name: string;
+          organization_slug: string;
+          organization_updated_at: string;
+          tenant_id: number;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "organizations";
+          isOneToOne: true;
+          isSetofReturn: true;
+        };
+      };
+      viewer_organization_create: {
+        Args: {
+          organization_name: string;
+          organization_slug: string;
+          tenant_id: number;
+        };
         Returns: {
           organization_created_at: string;
           organization_disabled_at: string | null;
@@ -1859,6 +1894,24 @@ export type Database = {
       };
       viewer_tenant_by_slug: {
         Args: { tenant_slug: string };
+        Returns: {
+          tenant_created_at: string;
+          tenant_disabled_at: string | null;
+          tenant_id: number;
+          tenant_name: string;
+          tenant_slug: string;
+          tenant_tier: Database["public"]["Enums"]["tenant_tier"];
+          tenant_updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "tenants";
+          isOneToOne: true;
+          isSetofReturn: true;
+        };
+      };
+      viewer_tenant_create: {
+        Args: { tenant_name: string; tenant_slug: string };
         Returns: {
           tenant_created_at: string;
           tenant_disabled_at: string | null;
