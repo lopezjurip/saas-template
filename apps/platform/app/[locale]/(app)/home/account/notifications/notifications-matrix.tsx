@@ -1,213 +1,335 @@
 "use client";
 
+import { createBrowserClient } from "@packages/supabase/client.browser";
+import type { Database } from "@packages/supabase/types";
 import { Switch } from "@packages/ui-common/shadcn/components/ui/switch";
-import { useState } from "react";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { debug } from "~/lib/debug";
 import { useRosetta } from "~/lib/i18n.client";
 
-type RowKey =
-  | "sysSecurity"
-  | "sysActivity"
-  | "sysBilling"
-  | "sysInvites"
-  | "mktProduct"
-  | "mktTips"
-  | "mktSurveys"
-  | "chanEmail"
-  | "chanPush"
-  | "chanSms";
+const log = debug("app:[locale]:home:account:notifications:matrix");
 
-type LocaleKey = keyof typeof LOCALE_ES;
+type PrefChannel = "email" | "web_push" | "whatsapp" | "sms";
+type TopicRow = Database["public"]["Tables"]["conversation_topics"]["Row"];
 
-type NotifRowDef = {
-  key: RowKey;
-  titleKey: LocaleKey;
-  descKey: LocaleKey;
-  locked?: boolean;
-};
+/** Channels shown in the grid. in_app is always-on, not in this list. */
+const PREF_CHANNELS: PrefChannel[] = ["email", "web_push", "whatsapp", "sms"];
 
-type NotifGroupDef = {
-  titleKey: LocaleKey;
-  metaKey?: LocaleKey;
-  rows: NotifRowDef[];
-};
+/** Per-topic per-channel preference. Absence = enabled (default). */
+type PrefMap = Map<string, Map<PrefChannel, boolean>>;
 
-const NOTIF_GROUPS: NotifGroupDef[] = /*#__PURE__*/ [
-  {
-    titleKey: "group_system",
-    rows: [
-      { key: "sysSecurity", titleKey: "sysSecurity_title", descKey: "sysSecurity_desc", locked: true },
-      { key: "sysActivity", titleKey: "sysActivity_title", descKey: "sysActivity_desc" },
-      { key: "sysBilling", titleKey: "sysBilling_title", descKey: "sysBilling_desc" },
-      { key: "sysInvites", titleKey: "sysInvites_title", descKey: "sysInvites_desc" },
-    ],
-  },
-  {
-    titleKey: "group_marketing",
-    rows: [
-      { key: "mktProduct", titleKey: "mktProduct_title", descKey: "mktProduct_desc" },
-      { key: "mktTips", titleKey: "mktTips_title", descKey: "mktTips_desc" },
-      { key: "mktSurveys", titleKey: "mktSurveys_title", descKey: "mktSurveys_desc" },
-    ],
-  },
-  {
-    titleKey: "group_channels",
-    metaKey: "group_channels_meta",
-    rows: [
-      { key: "chanEmail", titleKey: "chanEmail_title", descKey: "chanEmail_desc" },
-      { key: "chanPush", titleKey: "chanPush_title", descKey: "chanPush_desc" },
-      { key: "chanSms", titleKey: "chanSms_title", descKey: "chanSms_desc" },
-    ],
-  },
-];
+/** Build a lookup key for the pref map. */
+function PREF_KEY(slug: string, channel: PrefChannel): string {
+  return `${slug}:${channel}`;
+}
 
-const INITIAL_VALUES = /*#__PURE__*/ {
-  sysSecurity: true,
-  sysActivity: true,
-  sysBilling: true,
-  sysInvites: true,
-  mktProduct: true,
-  mktTips: false,
-  mktSurveys: false,
-  chanEmail: true,
-  chanPush: true,
-  chanSms: false,
-} satisfies Record<RowKey, boolean>;
+/**
+ * Whether the topic+channel combination is effectively enabled.
+ * Absence of a row defaults to true per DB convention.
+ */
+function IS_ENABLED(prefs: PrefMap, slug: string, channel: PrefChannel): boolean {
+  return prefs.get(slug)?.get(channel) ?? true;
+}
 
+/**
+ * Per-channel preferences grid for notification topics.
+ *
+ * Loads topics from conversation_topics and viewer's profile_topic_channels rows.
+ * Persists changes via debounced direct upsert (owner-RLS, single-table, single-row write).
+ * in_app channel is always-on (locked). Outbound channels: email, web_push, whatsapp, sms.
+ * "Silent" quick action = disable all outbound channels for a topic (in_app only).
+ */
 export function NotificationsMatrix() {
   const { t } = useRosetta(LOCALES);
-  const [values, setValues] = useState<Record<string, boolean>>(INITIAL_VALUES);
+  const [topics, setTopics] = useState<TopicRow[]>([]);
+  const [prefs, setPrefs] = useState<PrefMap>(new Map());
+  const [loading, setLoading] = useState(true);
+  const pendingRef = useRef<Map<string, { slug: string; channel: PrefChannel; enabled: boolean }>>(new Map());
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function onChange(key: string, next: boolean) {
-    setValues((prev) => ({ ...prev, [key]: next }));
+  // Load topics + existing prefs
+  useEffect(function loadData() {
+    let cancelled = false;
+    const supabase = createBrowserClient();
+
+    async function fetch() {
+      const [topicsRes, prefsRes] = await Promise.all([
+        supabase
+          .from("conversation_topics")
+          .select("*")
+          .is("conversation_topic_disabled_at", null)
+          .order("conversation_topic_priority"),
+        supabase.from("profile_topic_channels").select("*"),
+      ]);
+
+      if (cancelled) return;
+
+      if (topicsRes.error) {
+        log.error("[loadData] topics fetch failed", { error: topicsRes.error });
+      }
+      if (prefsRes.error) {
+        log.error("[loadData] prefs fetch failed", { error: prefsRes.error });
+      }
+
+      const topicRows = topicsRes.data ?? [];
+      const prefRows = prefsRes.data ?? [];
+
+      const prefChannelSet = new Set<string>(PREF_CHANNELS);
+      const map: PrefMap = new Map();
+      for (const row of prefRows) {
+        const slug = row["conversation_topic_slug"];
+        const channel = row["message_channel"];
+        // Only track outbound channels; in_app and web_push (managed via PushPermission) are skipped
+        if (!prefChannelSet.has(channel)) continue;
+        if (!map.has(slug)) map.set(slug, new Map());
+        map.get(slug)!.set(channel as PrefChannel, row["enabled"]);
+      }
+
+      setTopics(topicRows);
+      setPrefs(map);
+      setLoading(false);
+    }
+
+    void fetch();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Flush pending upserts to DB
+  const flushPending = useCallback(async function flushPending() {
+    const supabase = createBrowserClient();
+    const batch = Array.from(pendingRef.current.values());
+    if (batch.length === 0) return;
+    pendingRef.current.clear();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const rows = batch.map((item) => ({
+      profile_id: user.id,
+      conversation_topic_slug: item.slug,
+      message_channel: item.channel,
+      enabled: item.enabled,
+    }));
+
+    const { error } = await supabase
+      .from("profile_topic_channels")
+      .upsert(rows, { onConflict: "profile_id,conversation_topic_slug,message_channel" });
+
+    if (error) {
+      log.error("[flushPending] upsert failed", { error, rows });
+    }
+  }, []);
+
+  function scheduleFlush() {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(flushPending, 600);
   }
 
-  return (
-    <div className="flex flex-col gap-[22px]">
-      {NOTIF_GROUPS.map((group) => (
-        <div key={group.titleKey} className="flex flex-col gap-2.5">
-          <div className="flex min-h-7 items-center justify-between gap-2.5">
-            <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-              {t(group.titleKey)}
-            </span>
-            {group.metaKey && <span className="text-xs text-muted-foreground">{t(group.metaKey)}</span>}
-          </div>
-          <div className="flex flex-col overflow-hidden rounded-md border bg-background">
-            {group.rows.map((row) => (
-              <div
-                key={row.key}
-                className="grid grid-cols-[1fr_auto] items-start gap-3.5 border-b px-4 py-3.5 last:border-b-0"
-              >
-                <div className="flex min-w-0 flex-col gap-[3px]">
-                  <span className="text-sm font-medium text-foreground">{t(row.titleKey)}</span>
-                  <span className="text-pretty text-xs leading-relaxed text-muted-foreground">{t(row.descKey)}</span>
-                  {row.locked && (
-                    <span className="mt-0.5 text-tiny tracking-[0.03em] text-muted-foreground">
-                      {t("locked_always_on")}
-                    </span>
-                  )}
-                </div>
-                <Switch
-                  checked={values[row.key]}
-                  disabled={row.locked}
-                  onCheckedChange={(next) => onChange(row.key, next)}
-                  aria-label={t(row.titleKey)}
-                />
-              </div>
-            ))}
-          </div>
+  function onChannelToggle(slug: string, channel: PrefChannel, next: boolean) {
+    // Optimistic local update
+    setPrefs((prev) => {
+      const map = new Map(prev);
+      const inner = new Map(map.get(slug) ?? new Map<PrefChannel, boolean>());
+      inner.set(channel, next);
+      map.set(slug, inner);
+      return map;
+    });
+
+    // Accumulate into pending batch
+    const key = PREF_KEY(slug, channel);
+    pendingRef.current.set(key, { slug, channel, enabled: next });
+    scheduleFlush();
+  }
+
+  function onSilence(slug: string) {
+    // Disable all outbound channels for this topic
+    setPrefs((prev) => {
+      const map = new Map(prev);
+      const inner = new Map(map.get(slug) ?? new Map<PrefChannel, boolean>());
+      for (const ch of PREF_CHANNELS) {
+        inner.set(ch, false);
+      }
+      map.set(slug, inner);
+      return map;
+    });
+
+    for (const ch of PREF_CHANNELS) {
+      const key = PREF_KEY(slug, ch);
+      pendingRef.current.set(key, { slug, channel: ch, enabled: false });
+    }
+    scheduleFlush();
+  }
+
+  function isSilent(slug: string): boolean {
+    return PREF_CHANNELS.every((ch) => !IS_ENABLED(prefs, slug, ch));
+  }
+
+  const channelLabels = useMemo(
+    () => ({
+      email: t("channel_email"),
+      web_push: t("channel_web_push"),
+      whatsapp: t("channel_whatsapp"),
+      sms: t("channel_sms"),
+    }),
+    [t],
+  );
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-2.5">
+        <div className="flex min-h-7 items-center gap-2.5">
+          <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            {t("section_title")}
+          </span>
         </div>
-      ))}
+        <div className="flex flex-col overflow-hidden rounded-md border bg-background">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-start gap-3.5 border-b px-4 py-3.5 last:border-b-0">
+              <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (topics.length === 0) return null;
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="flex min-h-7 items-center justify-between gap-2.5">
+        <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          {t("section_title")}
+        </span>
+        {/* Channel header row */}
+        <div className="hidden items-center gap-4 sm:flex">
+          <span className="w-[34px] text-center text-tiny text-muted-foreground">{t("in_app_header")}</span>
+          {PREF_CHANNELS.map((ch) => (
+            <span key={ch} className="w-[34px] text-center text-tiny text-muted-foreground">
+              {channelLabels[ch]}
+            </span>
+          ))}
+          <span className="w-[34px] text-center text-tiny text-muted-foreground">{t("silent_header")}</span>
+        </div>
+      </div>
+
+      <div className="flex flex-col overflow-hidden rounded-md border bg-background">
+        {topics.map((topic) => {
+          const slug = topic["conversation_topic_slug"];
+          const silent = isSilent(slug);
+
+          return (
+            <div
+              key={slug}
+              className="grid grid-cols-[1fr] items-start gap-3.5 border-b px-4 py-3.5 last:border-b-0 sm:grid-cols-[1fr_auto]"
+            >
+              {/* Topic info */}
+              <div className="flex min-w-0 flex-col gap-[3px]">
+                <span className="text-sm font-medium text-foreground">{topic["conversation_topic_name"]}</span>
+                <span className="text-pretty text-xs leading-relaxed text-muted-foreground">
+                  {topic["conversation_topic_description"]}
+                </span>
+              </div>
+
+              {/* Channel toggles */}
+              <div className="flex items-center gap-4">
+                {/* in_app — always on, locked */}
+                <div className="flex w-[34px] flex-col items-center gap-1">
+                  <Switch checked disabled aria-label={t("in_app_always_on")} className="sm:hidden" />
+                  <Switch checked disabled aria-label={t("in_app_always_on")} className="hidden sm:flex" />
+                  <span className="block text-tiny text-muted-foreground sm:hidden">{t("in_app_header")}</span>
+                </div>
+
+                {/* Outbound channels */}
+                {PREF_CHANNELS.map((ch) => {
+                  const enabled = IS_ENABLED(prefs, slug, ch);
+                  return (
+                    <div key={ch} className="flex w-[34px] flex-col items-center gap-1">
+                      <Switch
+                        checked={enabled}
+                        onCheckedChange={(next) => onChannelToggle(slug, ch, next)}
+                        aria-label={`${topic["conversation_topic_name"]} — ${channelLabels[ch]}`}
+                      />
+                      <span className="block text-tiny text-muted-foreground sm:hidden">{channelLabels[ch]}</span>
+                    </div>
+                  );
+                })}
+
+                {/* Silent quick toggle */}
+                <div className="flex w-[34px] flex-col items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onSilence(slug)}
+                    disabled={silent}
+                    title={t("silence_tooltip")}
+                    className={cn(
+                      "size-8 rounded-md text-tiny font-medium transition-colors",
+                      silent
+                        ? "bg-muted text-muted-foreground cursor-default"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                    aria-label={t("silence_tooltip")}
+                  >
+                    {t("silent_icon")}
+                  </button>
+                  <span className="block text-tiny text-muted-foreground sm:hidden">{t("silent_header")}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-muted-foreground">{t("in_app_note")}</p>
     </div>
   );
 }
 
 const LOCALE_ES = {
-  // group titles
-  group_system: "Sistema y seguridad",
-  group_marketing: "Producto y marketing",
-  group_channels: "Canales",
-  group_channels_meta: "Dónde te llegan las que activaste",
-  // system rows
-  sysSecurity_title: "Alertas de seguridad",
-  sysSecurity_desc: "Inicio de sesión desde un dispositivo nuevo, cambio de contraseña, agregación de un método.",
-  sysActivity_title: "Actividad semanal",
-  sysActivity_desc: "Resumen de tus sesiones activas y dispositivos.",
-  sysBilling_title: "Cambios en facturación",
-  sysBilling_desc: "Cobros, fallos de pago y cambios de plan en tus organizaciones.",
-  sysInvites_title: "Invitaciones a organizaciones",
-  sysInvites_desc: "Cuando alguien te invita a unirte a su organización.",
-  // marketing rows
-  mktProduct_title: "Novedades del producto",
-  mktProduct_desc: "Funciones nuevas, betas abiertas, mejoras importantes. Una vez al mes.",
-  mktTips_title: "Tips y guías",
-  mktTips_desc: "Trucos cortos para aprovechar mejor la herramienta.",
-  mktSurveys_title: "Encuestas y entrevistas",
-  mktSurveys_desc: "Ayúdanos a mejorar. A veces hay incentivo.",
-  // channel rows
-  chanEmail_title: "Correo electrónico",
-  chanEmail_desc: "juan@empresa.com",
-  chanPush_title: "Push en el navegador",
-  chanPush_desc: "Activo en este Mac · Chrome",
-  chanSms_title: "SMS",
-  chanSms_desc: "+56 9 1234 5678 · solo alertas críticas",
-  // locked label
-  locked_always_on: "Siempre activa por seguridad",
+  section_title: "Temas",
+  channel_email: "Email",
+  channel_web_push: "Push",
+  channel_whatsapp: "WA",
+  channel_sms: "SMS",
+  in_app_header: "App",
+  silent_header: "Silencio",
+  silent_icon: "🔕",
+  in_app_always_on: "In-app siempre activo",
+  silence_tooltip: "Silenciar — solo in-app",
+  in_app_note: "Las notificaciones in-app llegan siempre. Los canales externos respetan tus preferencias.",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
-  group_system: "System & security",
-  group_marketing: "Product & marketing",
-  group_channels: "Channels",
-  group_channels_meta: "Where your active notifications arrive",
-  sysSecurity_title: "Security alerts",
-  sysSecurity_desc: "Sign-in from a new device, password change, new method added.",
-  sysActivity_title: "Weekly activity",
-  sysActivity_desc: "Summary of your active sessions and devices.",
-  sysBilling_title: "Billing changes",
-  sysBilling_desc: "Charges, payment failures, and plan changes in your organizations.",
-  sysInvites_title: "Organization invitations",
-  sysInvites_desc: "When someone invites you to join their organization.",
-  mktProduct_title: "Product updates",
-  mktProduct_desc: "New features, open betas, important improvements. Once a month.",
-  mktTips_title: "Tips & guides",
-  mktTips_desc: "Short tricks to get more out of the tool.",
-  mktSurveys_title: "Surveys & interviews",
-  mktSurveys_desc: "Help us improve. Sometimes there is an incentive.",
-  chanEmail_title: "Email",
-  chanEmail_desc: "juan@empresa.com",
-  chanPush_title: "Browser push",
-  chanPush_desc: "Active on this Mac · Chrome",
-  chanSms_title: "SMS",
-  chanSms_desc: "+56 9 1234 5678 · critical alerts only",
-  locked_always_on: "Always on for security",
+  section_title: "Topics",
+  channel_email: "Email",
+  channel_web_push: "Push",
+  channel_whatsapp: "WA",
+  channel_sms: "SMS",
+  in_app_header: "App",
+  silent_header: "Silent",
+  silent_icon: "🔕",
+  in_app_always_on: "In-app always on",
+  silence_tooltip: "Silence — in-app only",
+  in_app_note: "In-app notifications always come through. External channels respect your preferences.",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
-  group_system: "Sistema e segurança",
-  group_marketing: "Produto e marketing",
-  group_channels: "Canais",
-  group_channels_meta: "Onde chegam as que você ativou",
-  sysSecurity_title: "Alertas de segurança",
-  sysSecurity_desc: "Entrada de um novo dispositivo, alteração de senha, adição de um método.",
-  sysActivity_title: "Atividade semanal",
-  sysActivity_desc: "Resumo das suas sessões ativas e dispositivos.",
-  sysBilling_title: "Alterações de cobrança",
-  sysBilling_desc: "Cobranças, falhas de pagamento e mudanças de plano nas suas organizações.",
-  sysInvites_title: "Convites para organizações",
-  sysInvites_desc: "Quando alguém te convida para entrar na organização.",
-  mktProduct_title: "Novidades do produto",
-  mktProduct_desc: "Novas funcionalidades, betas abertos, melhorias importantes. Uma vez por mês.",
-  mktTips_title: "Dicas e guias",
-  mktTips_desc: "Truques rápidos para aproveitar melhor a ferramenta.",
-  mktSurveys_title: "Pesquisas e entrevistas",
-  mktSurveys_desc: "Ajude-nos a melhorar. Às vezes há incentivo.",
-  chanEmail_title: "E-mail",
-  chanEmail_desc: "juan@empresa.com",
-  chanPush_title: "Push no navegador",
-  chanPush_desc: "Ativo neste Mac · Chrome",
-  chanSms_title: "SMS",
-  chanSms_desc: "+56 9 1234 5678 · somente alertas críticos",
-  locked_always_on: "Sempre ativo por segurança",
+  section_title: "Tópicos",
+  channel_email: "Email",
+  channel_web_push: "Push",
+  channel_whatsapp: "WA",
+  channel_sms: "SMS",
+  in_app_header: "App",
+  silent_header: "Silêncio",
+  silent_icon: "🔕",
+  in_app_always_on: "In-app sempre ativo",
+  silence_tooltip: "Silenciar — apenas in-app",
+  in_app_note: "As notificações in-app chegam sempre. Os canais externos respeitam suas preferências.",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
