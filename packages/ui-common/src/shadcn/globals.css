@@ -1,4 +1,6 @@
 @import "tailwindcss-safe-area";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @plugin "@tailwindcss/typography";
 
