@@ -305,6 +305,22 @@ export type HealthQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type HealthQueryQuery = { health_current_timestamp: string | null };
 
+export type ScopeSelectorOrgsQueryQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ScopeSelectorOrgsQueryQuery = {
+  viewer_organizations: {
+    edges: Array<{
+      node: { organization_id: number; organization_name: string; tenants: { tenant_slug: string } | null };
+    }>;
+  } | null;
+};
+
+export type ScopeSelectorAgenciesQueryQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ScopeSelectorAgenciesQueryQuery = {
+  agencies: { edges: Array<{ node: { agency_id: string; agency_slug: string; agency_name: string } }> } | null;
+};
+
 export type PostHogIdentifyQueryVariables = Exact<{ [key: string]: never }>;
 
 export type PostHogIdentifyQuery = {
@@ -931,6 +947,37 @@ export const HealthQueryDocument = new TypedDocumentString(`
   health_current_timestamp
 }
     `) as unknown as TypedDocumentString<HealthQueryQuery, HealthQueryQueryVariables>;
+export const ScopeSelectorOrgsQueryDocument = new TypedDocumentString(`
+    query ScopeSelectorOrgsQuery {
+  viewer_organizations(
+    filter: {organization_disabled_at: {is: NULL}}
+    orderBy: [{organization_name: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        organization_id
+        organization_name
+        tenants {
+          tenant_slug
+        }
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<ScopeSelectorOrgsQueryQuery, ScopeSelectorOrgsQueryQueryVariables>;
+export const ScopeSelectorAgenciesQueryDocument = new TypedDocumentString(`
+    query ScopeSelectorAgenciesQuery {
+  agencies: viewer_agencies(orderBy: [{agency_name: AscNullsLast}]) {
+    edges {
+      node {
+        agency_id
+        agency_slug
+        agency_name
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<ScopeSelectorAgenciesQueryQuery, ScopeSelectorAgenciesQueryQueryVariables>;
 export const PostHogIdentifyDocument = new TypedDocumentString(`
     query PostHogIdentify {
   profile: viewer_profile {

@@ -2,7 +2,6 @@ import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { Shell } from "~/components/shell/shell";
-import { SIDEBAR_DEFAULT_WIDTH, SIDEBAR_WIDTH_COOKIE } from "~/components/shell/sidebar";
 import { getViewerOrganizationById, getViewerOrganizations } from "~/hooks/get-viewer-organizations";
 import { getViewerProfile } from "~/hooks/get-viewer-profile";
 import { getViewerTenantBySlug } from "~/hooks/get-viewer-tenants";
@@ -39,10 +38,9 @@ export default async function OrganizationLayout({
 
   const viewer = { ...profile, email: user?.email ?? "" };
 
+  // shadcn SidebarProvider persists expanded/collapsed in the `sidebar_state` cookie; default open.
   const cookieStore = await cookies();
-  const widthCookie = cookieStore.get(SIDEBAR_WIDTH_COOKIE)?.value;
-  const parsedWidth = widthCookie ? Number.parseInt(widthCookie, 10) : Number.NaN;
-  const initialSidebarWidth = Number.isFinite(parsedWidth) ? parsedWidth : SIDEBAR_DEFAULT_WIDTH;
+  const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
 
   return (
     <Shell
@@ -51,7 +49,7 @@ export default async function OrganizationLayout({
       organizations={organizations}
       current={current}
       viewer={viewer}
-      initialSidebarWidth={initialSidebarWidth}
+      defaultOpen={defaultOpen}
     >
       {children}
     </Shell>

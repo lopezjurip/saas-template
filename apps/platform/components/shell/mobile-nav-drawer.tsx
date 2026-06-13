@@ -7,9 +7,9 @@ import Link from "next/link";
 
 import { Avatar } from "~/components/shell/atoms";
 import { Scrim } from "~/components/shell/mobile-sheet";
+import { BUILD_NAV_TREE, IS_NAV_GROUP, type NavLeaf, PICK_ACTIVE_LEAF_ID } from "~/components/shell/nav-tree";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
-import { BUILD_NAV, PICK_ACTIVE_NAV } from "~/components/shell/sidebar";
 import { useRosetta } from "~/lib/i18n.client";
 
 export function MobileNavDrawer({
@@ -34,12 +34,15 @@ export function MobileNavDrawer({
   onSettings: () => void;
 }) {
   const { t } = useRosetta(LOCALES);
-  const items = BUILD_NAV(locale, tenant["tenant_slug"], organization["organization_id"], {
+  const items = BUILD_NAV_TREE(tenant["tenant_slug"], organization["organization_id"], {
     navHome: t("navHome"),
-    navMembers: t("navMembers"),
     navSettings: t("navSettings"),
+    navGeneral: t("navGeneral"),
+    navMembers: t("navMembers"),
+    navBilling: t("navBilling"),
+    navExternalAccess: t("navExternalAccess"),
   });
-  const activeId = PICK_ACTIVE_NAV(items, activePath);
+  const activeId = PICK_ACTIVE_LEAF_ID(items, activePath);
 
   return (
     <>
@@ -86,27 +89,21 @@ export function MobileNavDrawer({
             <div className="text-muted-foreground px-2 pb-1 pt-1 text-tiny font-medium uppercase tracking-wider">
               {t("workspace")}
             </div>
-            {items.map((item) => {
-              const isActive = activeId === item.id;
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm transition-colors ${
-                    isActive ? "bg-accent text-accent-foreground" : "text-foreground/85 active:bg-accent/60"
-                  }`}
-                >
-                  <item.Icon size={17} className={isActive ? "text-foreground" : "text-muted-foreground"} />
-                  <span className="flex-1">{item.label}</span>
-                  {item.badge ? (
-                    <span className="bg-foreground/85 text-background rounded px-1.5 py-0.5 font-mono text-tiny font-medium">
-                      {item.badge}
-                    </span>
-                  ) : null}
-                </Link>
-              );
-            })}
+            {items.map((item) =>
+              IS_NAV_GROUP(item) ? (
+                <div key={item.id} className="mt-2">
+                  <div className="text-muted-foreground flex items-center gap-2 px-2.5 pb-0.5 pt-1 text-tiny font-medium uppercase tracking-wider">
+                    <item.Icon size={13} />
+                    <span>{item.label}</span>
+                  </div>
+                  {item.children.map((leaf) => (
+                    <DrawerNavLink key={leaf.id} leaf={leaf} active={activeId === leaf.id} onClose={onClose} />
+                  ))}
+                </div>
+              ) : (
+                <DrawerNavLink key={item.id} leaf={item} active={activeId === item.id} onClose={onClose} />
+              ),
+            )}
           </div>
         </nav>
 
@@ -146,14 +143,38 @@ export function MobileNavDrawer({
   );
 }
 
+/** Local — a single nav leaf row in the mobile drawer. Used only by MobileNavDrawer. */
+function DrawerNavLink({ leaf, active, onClose }: { leaf: NavLeaf; active: boolean; onClose: () => void }) {
+  return (
+    <Link
+      href={leaf.href}
+      onClick={onClose}
+      className={`flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left text-sm transition-colors ${
+        active ? "bg-accent text-accent-foreground" : "text-foreground/85 active:bg-accent/60"
+      }`}
+    >
+      <leaf.Icon size={17} className={active ? "text-foreground" : "text-muted-foreground"} />
+      <span className="flex-1">{leaf.label}</span>
+      {leaf.badge ? (
+        <span className="bg-foreground/85 text-background rounded px-1.5 py-0.5 font-mono text-tiny font-medium">
+          {leaf.badge}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
 const LOCALE_ES = {
   plan: "plan",
   workspace: "Espacio de trabajo",
   settings: "Configuración",
   help: "Ayuda y documentación",
   navHome: "Inicio",
-  navMembers: "Miembros",
   navSettings: "Configuración",
+  navGeneral: "General",
+  navMembers: "Miembros",
+  navBilling: "Facturación",
+  navExternalAccess: "Acceso externo",
 };
 
 const LOCALES = {
@@ -164,8 +185,11 @@ const LOCALES = {
     settings: "Settings",
     help: "Help & docs",
     navHome: "Home",
-    navMembers: "Members",
     navSettings: "Settings",
+    navGeneral: "General",
+    navMembers: "Members",
+    navBilling: "Billing",
+    navExternalAccess: "External access",
   } satisfies typeof LOCALE_ES,
   pt: {
     plan: "plano",
@@ -173,7 +197,10 @@ const LOCALES = {
     settings: "Configurações",
     help: "Ajuda e documentação",
     navHome: "Início",
-    navMembers: "Membros",
     navSettings: "Configurações",
+    navGeneral: "General",
+    navMembers: "Membros",
+    navBilling: "Cobrança",
+    navExternalAccess: "Acesso externo",
   } satisfies typeof LOCALE_ES,
 };

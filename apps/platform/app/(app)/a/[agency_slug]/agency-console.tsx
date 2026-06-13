@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { ConversationsBell } from "~/components/shell/conversations-bell";
 import type { AffiliationState } from "~/lib/agencies";
 import { useRosetta } from "~/lib/i18n.client";
 import type { AppRoute } from "~/lib/route";
@@ -94,6 +95,11 @@ export function AgencyConsole({
           <span className="border-border text-muted-foreground bg-muted/50 hidden items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-tiny font-medium leading-none tracking-[0.02em] @min-[768px]:flex">
             <ShieldCheck size={11} /> {t("topbar_affiliate")}
           </span>
+          <ConversationsBell
+            scope={{ kind: "agency", agency_slug: data.agency_slug, agency_id: data.agency_id }}
+            compact={true}
+            placement="down"
+          />
           <div className="flex min-w-0 items-center gap-2">
             <span className="hidden min-w-0 flex-col items-end gap-px @min-[768px]:flex">
               <span className="text-foreground max-w-40 truncate text-xs font-medium leading-none">{owner?.name}</span>

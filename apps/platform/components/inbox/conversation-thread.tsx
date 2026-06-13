@@ -7,7 +7,8 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Archive, ArrowLeft, MessageSquare, Send } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { ROUTE } from "~/lib/route";
+import { useRosetta } from "~/lib/i18n.client";
+import type { AppRoute } from "~/lib/route";
 import { actionArchive, actionPostMessage } from "./actions";
 
 type Message = {
@@ -21,53 +22,24 @@ type Message = {
   message_read_at: string | null;
 };
 
-type TStrings = {
-  noSubject: string;
-  scopeOrg: string;
-  scopeAgency: string;
-  scopePersonal: string;
-  statusOpen: string;
-  statusArchived: string;
-  archive: string;
-  archived: string;
-  archiveError: string;
-  replyPlaceholder: string;
-  send: string;
-  sending: string;
-  sendError: string;
-  inbound: string;
-  outbound: string;
-  system: string;
-  emptyThread: string;
-  backToInbox: string;
-  channelEmail: string;
-  channelInApp: string;
-  channelWhatsapp: string;
-  channelSms: string;
-  priorityLow: string;
-  priorityNormal: string;
-  priorityHigh: string;
-  priorityUrgent: string;
-};
-
-function CHANNEL_LABEL(channel: string | null, t: TStrings): string {
+function CHANNEL_LABEL(channel: string | null, t: ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"]): string {
   const map: Record<string, string> = {
-    email: t.channelEmail,
-    in_app: t.channelInApp,
-    whatsapp: t.channelWhatsapp,
-    sms: t.channelSms,
+    email: t("channelEmail"),
+    in_app: t("channelInApp"),
+    whatsapp: t("channelWhatsapp"),
+    sms: t("channelSms"),
   };
-  return (channel && map[channel]) || channel || t.channelInApp;
+  return (channel && map[channel]) || channel || t("channelInApp");
 }
 
-function PRIORITY_LABEL(priority: string | null, t: TStrings): string {
+function PRIORITY_LABEL(priority: string | null, t: ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"]): string {
   const map: Record<string, string> = {
-    low: t.priorityLow,
-    normal: t.priorityNormal,
-    high: t.priorityHigh,
-    urgent: t.priorityUrgent,
+    low: t("priorityLow"),
+    normal: t("priorityNormal"),
+    high: t("priorityHigh"),
+    urgent: t("priorityUrgent"),
   };
-  return (priority && map[priority]) || priority || t.priorityNormal;
+  return (priority && map[priority]) || priority || t("priorityNormal");
 }
 
 function PRIORITY_VARIANT(priority: string | null): "default" | "secondary" | "destructive" | "outline" {
@@ -78,23 +50,31 @@ function PRIORITY_VARIANT(priority: string | null): "default" | "secondary" | "d
 
 /**
  * Client-side conversation thread view with optimistic reply append and archive action.
+ * Owns its own localization — no `t` prop threading.
  *
  * @example
- * <ConversationThread locale="es" conversation={conv} initialMessages={msgs} viewerId={user.id} t={t} />
+ * <ConversationThread
+ *   conversation={conv}
+ *   initialMessages={msgs}
+ *   viewerId={user.id}
+ *   backHref={SCOPE_INBOX_HREF(scope)}
+ * />
  */
 export function ConversationThread({
   locale,
   conversation,
   initialMessages,
   viewerId,
-  t,
+  backHref,
 }: {
   locale: string;
   conversation: Record<string, unknown>;
   initialMessages: Array<Record<string, unknown>>;
   viewerId: string;
-  t: TStrings;
+  backHref: AppRoute | string;
 }) {
+  const { t } = useRosetta(LOCALES);
+
   const [messages, setMessages] = useState<Message[]>(
     initialMessages.map((m) => ({
       conversation_message_id: m["conversation_message_id"] as string,
@@ -116,10 +96,10 @@ export function ConversationThread({
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const conversationId = conversation["conversation_id"] as string;
-  const subject = (conversation["conversation_subject"] as string | null) || t.noSubject;
+  const subject = (conversation["conversation_subject"] as string | null) || t("noSubject");
   const orgId = conversation["organization_id"] as number | null;
   const agencyId = conversation["agency_id"] as string | null;
-  const scopeLabel = orgId ? t.scopeOrg : agencyId ? t.scopeAgency : t.scopePersonal;
+  const scopeLabel = orgId ? t("scopeOrg") : agencyId ? t("scopeAgency") : t("scopePersonal");
 
   async function handleSend() {
     const body = replyBody.trim();
@@ -127,12 +107,13 @@ export function ConversationThread({
     setSending(true);
     setSendError(null);
 
-    // Optimistic append
     const optimisticId = `optimistic-${Date.now()}`;
     const optimisticMsg: Message = {
       conversation_message_id: optimisticId,
       message_body: body,
-      message_direction: "outbound",
+      // The viewer's own reply persists as `inbound` (user → system); match it here so the
+      // bubble doesn't flip sides on reload.
+      message_direction: "inbound",
       message_author: viewerId,
       message_channel: "in_app",
       message_priority: null,
@@ -149,8 +130,7 @@ export function ConversationThread({
         prev.map((m) => (m.conversation_message_id === optimisticId ? { ...m, conversation_message_id: realId } : m)),
       );
     } catch {
-      setSendError(t.sendError);
-      // Remove optimistic message on failure
+      setSendError(t("sendError"));
       setMessages((prev) => prev.filter((m) => m.conversation_message_id !== optimisticId));
       setReplyBody(body);
     } finally {
@@ -166,7 +146,7 @@ export function ConversationThread({
       await actionArchive(conversationId);
       setIsArchived(true);
     } catch {
-      setArchiveError(t.archiveError);
+      setArchiveError(t("archiveError"));
     } finally {
       setArchiving(false);
     }
@@ -184,9 +164,9 @@ export function ConversationThread({
       {/* Header */}
       <div className="border-border flex shrink-0 items-center gap-3 border-b px-6 py-3">
         <Link
-          href={ROUTE("/home/inbox", { locale })}
+          href={backHref as string}
           className="text-muted-foreground hover:text-foreground"
-          aria-label={t.backToInbox}
+          aria-label={t("backToInbox")}
         >
           <ArrowLeft size={16} />
         </Link>
@@ -197,14 +177,14 @@ export function ConversationThread({
               {scopeLabel}
             </Badge>
             <Badge variant={isArchived ? "secondary" : "outline"} className="shrink-0 text-tiny">
-              {isArchived ? t.statusArchived : t.statusOpen}
+              {isArchived ? t("statusArchived") : t("statusOpen")}
             </Badge>
           </div>
         </div>
         {!isArchived && (
           <Button variant="outline" size="sm" onClick={handleArchive} disabled={archiving} className="shrink-0 gap-1.5">
             <Archive size={13} />
-            {archiving ? "…" : t.archive}
+            {archiving ? "…" : t("archive")}
           </Button>
         )}
       </div>
@@ -218,12 +198,14 @@ export function ConversationThread({
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <MessageSquare size={32} className="text-muted-foreground/40" />
-            <p className="text-muted-foreground text-sm">{t.emptyThread}</p>
+            <p className="text-muted-foreground text-sm">{t("emptyThread")}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
             {messages.map((msg) => {
-              const isOutbound = msg["message_direction"] === "outbound";
+              // Viewer-relative: `inbound` is the viewer's own message (right/primary, "me");
+              // `outbound` is a notification sent to the viewer (left/muted, "them").
+              const isFromViewer = msg["message_direction"] === "inbound";
               const isSystem = msg["message_direction"] === "system";
               const timeStr = new Date(msg["message_created_at"]).toLocaleTimeString(locale, {
                 hour: "2-digit",
@@ -247,13 +229,13 @@ export function ConversationThread({
               return (
                 <div
                   key={msg["conversation_message_id"]}
-                  className={cn("flex", isOutbound ? "justify-end" : "justify-start")}
+                  className={cn("flex", isFromViewer ? "justify-end" : "justify-start")}
                 >
-                  <div className={cn("max-w-[70%]", isOutbound ? "items-end" : "items-start", "flex flex-col gap-1")}>
+                  <div className={cn("max-w-[70%]", isFromViewer ? "items-end" : "items-start", "flex flex-col gap-1")}>
                     <div
                       className={cn(
                         "rounded-xl px-3.5 py-2.5 text-sm",
-                        isOutbound ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+                        isFromViewer ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
                       )}
                     >
                       {msg["message_body"]}
@@ -261,7 +243,7 @@ export function ConversationThread({
                     <div
                       className={cn(
                         "flex items-center gap-1.5 text-tiny",
-                        isOutbound ? "flex-row-reverse" : "flex-row",
+                        isFromViewer ? "flex-row-reverse" : "flex-row",
                         "text-muted-foreground",
                       )}
                     >
@@ -297,7 +279,7 @@ export function ConversationThread({
               value={replyBody}
               onChange={(e) => setReplyBody(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={t.replyPlaceholder}
+              placeholder={t("replyPlaceholder")}
               rows={3}
               disabled={sending}
               className="min-h-0 resize-none text-sm"
@@ -310,7 +292,7 @@ export function ConversationThread({
               className="shrink-0 gap-1.5"
             >
               <Send size={13} />
-              {sending ? t.sending : t.send}
+              {sending ? t("sending") : t("send")}
             </Button>
           </div>
         </div>
@@ -318,3 +300,80 @@ export function ConversationThread({
     </div>
   );
 }
+
+const LOCALE_ES = {
+  noSubject: "(Sin asunto)",
+  scopeOrg: "Org",
+  scopeAgency: "Agencia",
+  scopePersonal: "Personal",
+  statusOpen: "Abierta",
+  statusArchived: "Archivada",
+  archive: "Archivar",
+  archiveError: "Error al archivar la conversación",
+  replyPlaceholder: "Escribe tu respuesta…",
+  send: "Enviar",
+  sending: "Enviando…",
+  sendError: "Error al enviar el mensaje",
+  emptyThread: "No hay mensajes aún",
+  backToInbox: "Bandeja de entrada",
+  channelEmail: "Email",
+  channelInApp: "En app",
+  channelWhatsapp: "WhatsApp",
+  channelSms: "SMS",
+  priorityLow: "Baja",
+  priorityNormal: "Normal",
+  priorityHigh: "Alta",
+  priorityUrgent: "Urgente",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  noSubject: "(No subject)",
+  scopeOrg: "Org",
+  scopeAgency: "Agency",
+  scopePersonal: "Personal",
+  statusOpen: "Open",
+  statusArchived: "Archived",
+  archive: "Archive",
+  archiveError: "Error archiving conversation",
+  replyPlaceholder: "Write your reply…",
+  send: "Send",
+  sending: "Sending…",
+  sendError: "Error sending message",
+  emptyThread: "No messages yet",
+  backToInbox: "Inbox",
+  channelEmail: "Email",
+  channelInApp: "In-app",
+  channelWhatsapp: "WhatsApp",
+  channelSms: "SMS",
+  priorityLow: "Low",
+  priorityNormal: "Normal",
+  priorityHigh: "High",
+  priorityUrgent: "Urgent",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  noSubject: "(Sem assunto)",
+  scopeOrg: "Org",
+  scopeAgency: "Agência",
+  scopePersonal: "Pessoal",
+  statusOpen: "Aberta",
+  statusArchived: "Arquivada",
+  archive: "Arquivar",
+  archiveError: "Erro ao arquivar a conversa",
+  replyPlaceholder: "Escreva sua resposta…",
+  send: "Enviar",
+  sending: "Enviando…",
+  sendError: "Erro ao enviar a mensagem",
+  emptyThread: "Sem mensagens ainda",
+  backToInbox: "Caixa de entrada",
+  channelEmail: "Email",
+  channelInApp: "No app",
+  channelWhatsapp: "WhatsApp",
+  channelSms: "SMS",
+  priorityLow: "Baixa",
+  priorityNormal: "Normal",
+  priorityHigh: "Alta",
+  priorityUrgent: "Urgente",
+};
+
+const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
