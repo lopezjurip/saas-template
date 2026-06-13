@@ -33,7 +33,6 @@ select ok(
       'idem-key-001',
       (select conversation_message_id from _ac_ids),
       '00000000-0000-0000-0000-00000000a11c'::uuid,
-      null::int,
       'send_welcome_email',
       '{"template": "welcome"}'::jsonb
     )
@@ -66,7 +65,6 @@ select ok(
       'idem-key-001',
       (select conversation_message_id from _ac_ids),
       '00000000-0000-0000-0000-00000000a11c'::uuid,
-      null::int,
       'send_welcome_email',
       '{"template": "welcome"}'::jsonb
     )
@@ -81,7 +79,6 @@ select is(
       'idem-key-001',
       (select conversation_message_id from _ac_ids),
       '00000000-0000-0000-0000-00000000a11c'::uuid,
-      null::int,
       'send_welcome_email',
       '{"template": "welcome"}'::jsonb
     )
@@ -101,7 +98,6 @@ select ok(
       'idem-key-002',
       (select conversation_message_id from _ac_ids),
       '00000000-0000-0000-0000-00000000a11c'::uuid,
-      null::int,
       'generate_report',
       '{}'::jsonb
     )

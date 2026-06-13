@@ -3755,9 +3755,9 @@ create or replace function public.agent_action_claim(
   idempotency_key         text,
   conversation_message_id uuid,
   profile_id              uuid,
-  organization_id         int,
   tool_name               text,
-  tool_input              jsonb
+  tool_input              jsonb,
+  organization_id         int    default null
 )
   returns table (claimed boolean, prior_status text, prior_output jsonb)
   security definer
@@ -3806,7 +3806,7 @@ create or replace function public.agent_action_claim(
     end;
   $$;
 
-grant execute on function public.agent_action_claim(text, uuid, uuid, int, text, jsonb) to service_role;
+grant execute on function public.agent_action_claim(text, uuid, uuid, text, jsonb, int) to service_role;
 
 -- ============================================================
 -- RPCs: ticket_escalate, ticket_claim, ticket_resolve
@@ -3871,6 +3871,67 @@ create or replace function public.ticket_escalate(
   $$;
 
 grant execute on function public.ticket_escalate(uuid, text, public.notification_priority) to authenticated;
+
+-- ticket_escalate_as: service-role variant of ticket_escalate with explicit caller_id.
+-- Used by the AI agent loop which runs under service-role (no JWT/viewer_profile_id).
+create or replace function public.ticket_escalate_as(
+  caller_id         uuid,
+  p_conversation_id uuid,
+  subject           text,
+  priority          public.notification_priority default 'medium'
+)
+  returns uuid
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _conv      public.conversations%rowtype;
+      _ticket_id uuid;
+    begin
+      if caller_id is null then
+        raise exception 'not_authenticated' using errcode = 'P0001';
+      end if;
+
+      select * into _conv
+        from public.conversations
+        where conversation_id = ticket_escalate_as.p_conversation_id
+          and profile_id = ticket_escalate_as.caller_id;
+
+      if not found then
+        raise exception 'conversation_not_found' using errcode = 'P0001';
+      end if;
+
+      -- Idempotent: return existing ticket if already escalated.
+      select ticket_id into _ticket_id
+        from public.tickets
+        where conversation_id = ticket_escalate_as.p_conversation_id;
+
+      if found then
+        return _ticket_id;
+      end if;
+
+      insert into public.tickets (
+        conversation_id, tenant_id, organization_id,
+        ticket_subject, ticket_priority
+      )
+      values (
+        ticket_escalate_as.p_conversation_id,
+        _conv.tenant_id, _conv.organization_id,
+        ticket_escalate_as.subject, ticket_escalate_as.priority
+      )
+      returning tickets.ticket_id into _ticket_id;
+
+      -- Update conversation kind to support.
+      update public.conversations
+        set conversation_kind = 'support'
+        where conversation_id = ticket_escalate_as.p_conversation_id;
+
+      return _ticket_id;
+    end;
+  $$;
+
+grant execute on function public.ticket_escalate_as(uuid, uuid, text, public.notification_priority) to service_role;
 
 -- ticket_claim: agency member claims an open/unclaimed ticket.
 create or replace function public.ticket_claim(p_ticket_id uuid)
@@ -4039,6 +4100,197 @@ grant execute on function public.conversation_outbound_archive(bigint) to servic
 -- handler so that replay on `pnpm db:reset` is safe even when the env vars are unset.
 -- Set APP_DRAIN_URL and CONVERSATIONS_DRAIN_SECRET in the Supabase service env to
 -- activate the schedule.
+-- ============================================================
+
+-- ============================================================
+-- RPCs: P4 inbound + agentic layer (Agent E)
+-- ============================================================
+
+-- caller_has_permission: explicit caller_id variant of viewer_has_permission.
+-- Used by webhook/service-role paths where there is no authenticated JWT session.
+-- Mirrors viewer_has_permission wildcard (`*`) logic exactly.
+create or replace function public.caller_has_permission(
+  caller_profile_id uuid,
+  organization_id   int,
+  permission_id     extensions.citext
+)
+  returns boolean
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select exists (
+      select 1
+      from public.organization_membership_permissions mp
+      join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
+      where m.organization_id = caller_has_permission.organization_id
+        and m.profile_id = caller_has_permission.caller_profile_id
+        and m.organization_membership_accepted_at is not null
+        and m.organization_membership_revoked_at is null
+        and m.organization_membership_rejected_at is null
+        and (mp.permission_id = caller_has_permission.permission_id or mp.permission_id = '*')
+    );
+  $$;
+
+grant execute on function public.caller_has_permission(uuid, int, extensions.citext) to service_role;
+
+-- conversation_ingest_inbound: atomically insert an inbound user message.
+-- Deduplicates on provider_message_id (message_idempotency_key).
+-- Returns the resolved conversation/scope so the agent loop can work without extra queries.
+-- Used only via service-role (webhook handlers have no JWT).
+create or replace function public.conversation_ingest_inbound(
+  conversation_id         uuid,
+  profile_id              uuid,
+  channel                 public.message_channel,
+  body                    text,
+  payload                 jsonb,
+  provider_message_id     text,
+  signature_verified      boolean default false
+)
+  returns table (
+    out_conversation_message_id uuid,
+    out_conversation_id         uuid,
+    out_profile_id              uuid,
+    out_organization_id         int,
+    out_agency_id               uuid,
+    out_tenant_id               int,
+    out_already_resolved        boolean
+  )
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _conv public.conversations%rowtype;
+      _msg_id uuid;
+      _idempotency_key text;
+    begin
+      -- Build a non-null idempotency key (channel-namespaced).
+      _idempotency_key := channel::text || ':' || provider_message_id;
+
+      -- Dedupe: if we already processed this provider message, return the existing row.
+      select cm.conversation_message_id
+        into _msg_id
+        from public.conversation_messages cm
+        where cm.message_idempotency_key = _idempotency_key;
+
+      if found then
+        select c.* into _conv
+          from public.conversations c
+          where c.conversation_id = conversation_ingest_inbound.conversation_id;
+
+        return query
+          select _msg_id,
+                 _conv.conversation_id,
+                 _conv.profile_id,
+                 _conv.organization_id,
+                 _conv.agency_id,
+                 _conv.tenant_id,
+                 (_conv.conversation_resolved_at is not null);
+        return;
+      end if;
+
+      -- Fetch conversation (validates it exists).
+      select c.* into _conv
+        from public.conversations c
+        where c.conversation_id = conversation_ingest_inbound.conversation_id
+          and c.profile_id = conversation_ingest_inbound.profile_id;
+
+      if not found then
+        raise exception 'conversation_not_found' using errcode = 'P0001';
+      end if;
+
+      -- Insert inbound user message.
+      insert into public.conversation_messages (
+        conversation_id,
+        message_author,
+        message_direction,
+        message_channel,
+        message_body,
+        message_payload,
+        message_signature_verified,
+        message_idempotency_key
+      )
+      values (
+        conversation_ingest_inbound.conversation_id,
+        'user',
+        'inbound',
+        conversation_ingest_inbound.channel,
+        conversation_ingest_inbound.body,
+        coalesce(conversation_ingest_inbound.payload, '{}'),
+        conversation_ingest_inbound.signature_verified,
+        _idempotency_key
+      )
+      returning conversation_messages.conversation_message_id into _msg_id;
+
+      return query
+        select _msg_id,
+               _conv.conversation_id,
+               _conv.profile_id,
+               _conv.organization_id,
+               _conv.agency_id,
+               _conv.tenant_id,
+               (_conv.conversation_resolved_at is not null);
+    end;
+  $$;
+
+grant execute on function public.conversation_ingest_inbound(uuid, uuid, public.message_channel, text, jsonb, text, boolean) to service_role;
+
+-- conversation_resolve: mark a conversation resolved from an agent action.
+-- Idempotent: if already resolved, does nothing.
+create or replace function public.conversation_resolve(
+  p_conversation_id uuid,
+  channel           public.message_channel,
+  resolution        jsonb default '{}'
+)
+  returns void
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    begin
+      update public.conversations
+        set conversation_status           = 'resolved',
+            conversation_resolved_at      = current_timestamp,
+            conversation_resolved_channel = conversation_resolve.channel,
+            conversation_resolution       = coalesce(conversation_resolve.resolution, '{}')
+        where conversation_id = conversation_resolve.p_conversation_id
+          and conversation_resolved_at is null;
+    end;
+  $$;
+
+grant execute on function public.conversation_resolve(uuid, public.message_channel, jsonb) to service_role;
+
+-- agent_action_complete: finalize a claimed agent action row.
+-- Call after the side-effect succeeds or fails, with the resulting status + output.
+create or replace function public.agent_action_complete(
+  idempotency_key text,
+  status          text,
+  tool_output     jsonb default null
+)
+  returns void
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    begin
+      if status not in ('executed', 'error', 'rejected', 'clarify') then
+        raise exception 'invalid_status' using errcode = 'P0001';
+      end if;
+
+      update public.agent_action_log
+        set action_status = status,
+            tool_output   = agent_action_complete.tool_output
+        where action_idempotency_key = agent_action_complete.idempotency_key;
+    end;
+  $$;
+
+grant execute on function public.agent_action_complete(text, text, jsonb) to service_role;
+
+-- ============================================================
+-- pg_cron + pg_net drain scheduling (Agent D)
 -- ============================================================
 
 do $$
