@@ -298,38 +298,333 @@ export type Database = {
           },
         ]
       }
-      notifications: {
+      agent_action_log: {
         Row: {
-          notification_created_at: string
-          notification_description: string
-          notification_disabled_at: string | null
-          notification_kind: Database["public"]["Enums"]["notification_kind"]
-          notification_name: string
-          notification_priority: Database["public"]["Enums"]["notification_priority"]
-          notification_slug: string
-          notification_updated_at: string
+          action_idempotency_key: string | null
+          action_status: string
+          agency_id: string | null
+          agent_action_created_at: string
+          agent_action_log_id: string
+          conversation_message_id: string
+          organization_id: number | null
+          profile_id: string
+          tool_input: Json
+          tool_name: string
+          tool_output: Json | null
         }
         Insert: {
-          notification_created_at?: string
-          notification_description: string
-          notification_disabled_at?: string | null
-          notification_kind?: Database["public"]["Enums"]["notification_kind"]
-          notification_name: string
-          notification_priority?: Database["public"]["Enums"]["notification_priority"]
-          notification_slug: string
-          notification_updated_at?: string
+          action_idempotency_key?: string | null
+          action_status: string
+          agency_id?: string | null
+          agent_action_created_at?: string
+          agent_action_log_id?: string
+          conversation_message_id: string
+          organization_id?: number | null
+          profile_id: string
+          tool_input?: Json
+          tool_name: string
+          tool_output?: Json | null
         }
         Update: {
-          notification_created_at?: string
-          notification_description?: string
-          notification_disabled_at?: string | null
-          notification_kind?: Database["public"]["Enums"]["notification_kind"]
-          notification_name?: string
-          notification_priority?: Database["public"]["Enums"]["notification_priority"]
-          notification_slug?: string
-          notification_updated_at?: string
+          action_idempotency_key?: string | null
+          action_status?: string
+          agency_id?: string | null
+          agent_action_created_at?: string
+          agent_action_log_id?: string
+          conversation_message_id?: string
+          organization_id?: number | null
+          profile_id?: string
+          tool_input?: Json
+          tool_name?: string
+          tool_output?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_action_log_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "agent_action_log_conversation_message_id_fkey"
+            columns: ["conversation_message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages"
+            referencedColumns: ["conversation_message_id"]
+          },
+          {
+            foreignKeyName: "agent_action_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "agent_action_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_organizations_profiles"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "agent_action_log_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
+      conversation_message_deliveries: {
+        Row: {
+          conversation_message_delivery_id: string
+          conversation_message_id: string
+          delivery_created_at: string
+          delivery_error: string | null
+          delivery_sent_at: string | null
+          delivery_status: string
+          message_channel: Database["public"]["Enums"]["message_channel"]
+          provider_message_id: string | null
+          reply_token: string | null
+        }
+        Insert: {
+          conversation_message_delivery_id?: string
+          conversation_message_id: string
+          delivery_created_at?: string
+          delivery_error?: string | null
+          delivery_sent_at?: string | null
+          delivery_status?: string
+          message_channel: Database["public"]["Enums"]["message_channel"]
+          provider_message_id?: string | null
+          reply_token?: string | null
+        }
+        Update: {
+          conversation_message_delivery_id?: string
+          conversation_message_id?: string
+          delivery_created_at?: string
+          delivery_error?: string | null
+          delivery_sent_at?: string | null
+          delivery_status?: string
+          message_channel?: Database["public"]["Enums"]["message_channel"]
+          provider_message_id?: string | null
+          reply_token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_message_deliveries_conversation_message_id_fkey"
+            columns: ["conversation_message_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_messages"
+            referencedColumns: ["conversation_message_id"]
+          },
+        ]
+      }
+      conversation_messages: {
+        Row: {
+          conversation_id: string
+          conversation_message_id: string
+          conversation_topic_slug: string | null
+          message_author: string
+          message_body: string | null
+          message_channel: Database["public"]["Enums"]["message_channel"] | null
+          message_created_at: string
+          message_direction: string
+          message_idempotency_key: string | null
+          message_payload: Json
+          message_priority:
+            | Database["public"]["Enums"]["notification_priority"]
+            | null
+          message_read_at: string | null
+          message_signature_verified: boolean
+        }
+        Insert: {
+          conversation_id: string
+          conversation_message_id?: string
+          conversation_topic_slug?: string | null
+          message_author: string
+          message_body?: string | null
+          message_channel?:
+            | Database["public"]["Enums"]["message_channel"]
+            | null
+          message_created_at?: string
+          message_direction: string
+          message_idempotency_key?: string | null
+          message_payload?: Json
+          message_priority?:
+            | Database["public"]["Enums"]["notification_priority"]
+            | null
+          message_read_at?: string | null
+          message_signature_verified?: boolean
+        }
+        Update: {
+          conversation_id?: string
+          conversation_message_id?: string
+          conversation_topic_slug?: string | null
+          message_author?: string
+          message_body?: string | null
+          message_channel?:
+            | Database["public"]["Enums"]["message_channel"]
+            | null
+          message_created_at?: string
+          message_direction?: string
+          message_idempotency_key?: string | null
+          message_payload?: Json
+          message_priority?:
+            | Database["public"]["Enums"]["notification_priority"]
+            | null
+          message_read_at?: string | null
+          message_signature_verified?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["conversation_id"]
+          },
+          {
+            foreignKeyName: "conversation_messages_conversation_topic_slug_fkey"
+            columns: ["conversation_topic_slug"]
+            isOneToOne: false
+            referencedRelation: "conversation_topics"
+            referencedColumns: ["conversation_topic_slug"]
+          },
+        ]
+      }
+      conversation_topics: {
+        Row: {
+          conversation_topic_created_at: string
+          conversation_topic_description: string
+          conversation_topic_disabled_at: string | null
+          conversation_topic_kind: Database["public"]["Enums"]["notification_kind"]
+          conversation_topic_name: string
+          conversation_topic_priority: Database["public"]["Enums"]["notification_priority"]
+          conversation_topic_slug: string
+          conversation_topic_updated_at: string
+        }
+        Insert: {
+          conversation_topic_created_at?: string
+          conversation_topic_description: string
+          conversation_topic_disabled_at?: string | null
+          conversation_topic_kind?: Database["public"]["Enums"]["notification_kind"]
+          conversation_topic_name: string
+          conversation_topic_priority?: Database["public"]["Enums"]["notification_priority"]
+          conversation_topic_slug: string
+          conversation_topic_updated_at?: string
+        }
+        Update: {
+          conversation_topic_created_at?: string
+          conversation_topic_description?: string
+          conversation_topic_disabled_at?: string | null
+          conversation_topic_kind?: Database["public"]["Enums"]["notification_kind"]
+          conversation_topic_name?: string
+          conversation_topic_priority?: Database["public"]["Enums"]["notification_priority"]
+          conversation_topic_slug?: string
+          conversation_topic_updated_at?: string
         }
         Relationships: []
+      }
+      conversations: {
+        Row: {
+          agency_id: string | null
+          conversation_created_at: string
+          conversation_id: string
+          conversation_kind: string
+          conversation_last_message_at: string
+          conversation_resolution: Json | null
+          conversation_resolved_at: string | null
+          conversation_resolved_channel:
+            | Database["public"]["Enums"]["message_channel"]
+            | null
+          conversation_status: string
+          conversation_subject: string | null
+          conversation_updated_at: string
+          organization_id: number | null
+          profile_id: string
+          tenant_id: number | null
+        }
+        Insert: {
+          agency_id?: string | null
+          conversation_created_at?: string
+          conversation_id?: string
+          conversation_kind?: string
+          conversation_last_message_at?: string
+          conversation_resolution?: Json | null
+          conversation_resolved_at?: string | null
+          conversation_resolved_channel?:
+            | Database["public"]["Enums"]["message_channel"]
+            | null
+          conversation_status?: string
+          conversation_subject?: string | null
+          conversation_updated_at?: string
+          organization_id?: number | null
+          profile_id: string
+          tenant_id?: number | null
+        }
+        Update: {
+          agency_id?: string | null
+          conversation_created_at?: string
+          conversation_id?: string
+          conversation_kind?: string
+          conversation_last_message_at?: string
+          conversation_resolution?: Json | null
+          conversation_resolved_at?: string | null
+          conversation_resolved_channel?:
+            | Database["public"]["Enums"]["message_channel"]
+            | null
+          conversation_status?: string
+          conversation_subject?: string | null
+          conversation_updated_at?: string
+          organization_id?: number | null
+          profile_id?: string
+          tenant_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "conversations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "conversations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_organizations_profiles"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "conversations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "conversations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "conversations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_organizations_profiles"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       organization_membership_permissions: {
         Row: {
@@ -561,6 +856,44 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_contacts: {
+        Row: {
+          contact_value: string
+          contact_verified_at: string | null
+          message_channel: Database["public"]["Enums"]["message_channel"]
+          profile_contact_created_at: string
+          profile_contact_id: string
+          profile_contact_updated_at: string
+          profile_id: string
+        }
+        Insert: {
+          contact_value: string
+          contact_verified_at?: string | null
+          message_channel: Database["public"]["Enums"]["message_channel"]
+          profile_contact_created_at?: string
+          profile_contact_id?: string
+          profile_contact_updated_at?: string
+          profile_id: string
+        }
+        Update: {
+          contact_value?: string
+          contact_verified_at?: string | null
+          message_channel?: Database["public"]["Enums"]["message_channel"]
+          profile_contact_created_at?: string
+          profile_contact_id?: string
+          profile_contact_updated_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_contacts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
       profile_identities: {
         Row: {
           address_level0_id: string
@@ -609,44 +942,79 @@ export type Database = {
           },
         ]
       }
-      profile_notifications: {
+      profile_push_subscriptions: {
         Row: {
-          notification_slug: string
+          auth: string
+          endpoint: string
+          p256dh: string
           profile_id: string
-          profile_notification_created_at: string
-          profile_notification_enabled: boolean
-          profile_notification_kind: Database["public"]["Enums"]["notification_kind"]
-          profile_notification_priority: Database["public"]["Enums"]["notification_priority"]
-          profile_notification_updated_at: string
+          profile_push_subscription_created_at: string
+          profile_push_subscription_id: string
+          profile_push_subscription_updated_at: string
         }
         Insert: {
-          notification_slug: string
+          auth: string
+          endpoint: string
+          p256dh: string
           profile_id: string
-          profile_notification_created_at?: string
-          profile_notification_enabled?: boolean
-          profile_notification_kind: Database["public"]["Enums"]["notification_kind"]
-          profile_notification_priority: Database["public"]["Enums"]["notification_priority"]
-          profile_notification_updated_at?: string
+          profile_push_subscription_created_at?: string
+          profile_push_subscription_id?: string
+          profile_push_subscription_updated_at?: string
         }
         Update: {
-          notification_slug?: string
+          auth?: string
+          endpoint?: string
+          p256dh?: string
           profile_id?: string
-          profile_notification_created_at?: string
-          profile_notification_enabled?: boolean
-          profile_notification_kind?: Database["public"]["Enums"]["notification_kind"]
-          profile_notification_priority?: Database["public"]["Enums"]["notification_priority"]
-          profile_notification_updated_at?: string
+          profile_push_subscription_created_at?: string
+          profile_push_subscription_id?: string
+          profile_push_subscription_updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "profile_notifications_notification_slug_fkey"
-            columns: ["notification_slug"]
+            foreignKeyName: "profile_push_subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
-            referencedRelation: "notifications"
-            referencedColumns: ["notification_slug"]
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
+      profile_topic_channels: {
+        Row: {
+          conversation_topic_slug: string
+          enabled: boolean
+          message_channel: Database["public"]["Enums"]["message_channel"]
+          profile_id: string
+          profile_topic_channel_created_at: string
+          profile_topic_channel_updated_at: string
+        }
+        Insert: {
+          conversation_topic_slug: string
+          enabled?: boolean
+          message_channel: Database["public"]["Enums"]["message_channel"]
+          profile_id: string
+          profile_topic_channel_created_at?: string
+          profile_topic_channel_updated_at?: string
+        }
+        Update: {
+          conversation_topic_slug?: string
+          enabled?: boolean
+          message_channel?: Database["public"]["Enums"]["message_channel"]
+          profile_id?: string
+          profile_topic_channel_created_at?: string
+          profile_topic_channel_updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_topic_channels_conversation_topic_slug_fkey"
+            columns: ["conversation_topic_slug"]
+            isOneToOne: false
+            referencedRelation: "conversation_topics"
+            referencedColumns: ["conversation_topic_slug"]
           },
           {
-            foreignKeyName: "profile_notifications_profile_id_fkey"
+            foreignKeyName: "profile_topic_channels_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -761,6 +1129,104 @@ export type Database = {
           tenant_updated_at?: string
         }
         Relationships: []
+      }
+      tickets: {
+        Row: {
+          assigned_agency_id: string | null
+          assigned_profile_id: string | null
+          conversation_id: string
+          organization_id: number | null
+          tenant_id: number
+          ticket_claimed_at: string | null
+          ticket_created_at: string
+          ticket_id: string
+          ticket_priority: Database["public"]["Enums"]["notification_priority"]
+          ticket_resolved_at: string | null
+          ticket_status: Database["public"]["Enums"]["ticket_status"]
+          ticket_subject: string
+          ticket_updated_at: string
+        }
+        Insert: {
+          assigned_agency_id?: string | null
+          assigned_profile_id?: string | null
+          conversation_id: string
+          organization_id?: number | null
+          tenant_id: number
+          ticket_claimed_at?: string | null
+          ticket_created_at?: string
+          ticket_id?: string
+          ticket_priority?: Database["public"]["Enums"]["notification_priority"]
+          ticket_resolved_at?: string | null
+          ticket_status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_subject: string
+          ticket_updated_at?: string
+        }
+        Update: {
+          assigned_agency_id?: string | null
+          assigned_profile_id?: string | null
+          conversation_id?: string
+          organization_id?: number | null
+          tenant_id?: number
+          ticket_claimed_at?: string | null
+          ticket_created_at?: string
+          ticket_id?: string
+          ticket_priority?: Database["public"]["Enums"]["notification_priority"]
+          ticket_resolved_at?: string | null
+          ticket_status?: Database["public"]["Enums"]["ticket_status"]
+          ticket_subject?: string
+          ticket_updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_assigned_agency_id_fkey"
+            columns: ["assigned_agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "tickets_assigned_profile_id_fkey"
+            columns: ["assigned_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "tickets_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: true
+            referencedRelation: "conversations"
+            referencedColumns: ["conversation_id"]
+          },
+          {
+            foreignKeyName: "tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_organizations_profiles"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "tickets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tickets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_organizations_profiles"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
     }
     Views: {
@@ -938,8 +1404,51 @@ export type Database = {
         }
         Returns: number
       }
+      agent_action_claim: {
+        Args: {
+          conversation_message_id: string
+          idempotency_key: string
+          organization_id: number
+          profile_id: string
+          tool_input: Json
+          tool_name: string
+        }
+        Returns: {
+          claimed: boolean
+          prior_output: Json
+          prior_status: string
+        }[]
+      }
       cl_rut_normalize: { Args: { value: string }; Returns: string }
       cl_rut_validate: { Args: { value: string }; Returns: boolean }
+      conversation_archive: {
+        Args: { p_conversation_id: string }
+        Returns: undefined
+      }
+      conversation_emit: {
+        Args: {
+          agency_id?: string
+          body?: string
+          conversation_id?: string
+          organization_id?: number
+          payload?: Json
+          recipient_profile_id: string
+          slug: string
+          subject?: string
+        }
+        Returns: {
+          out_conversation_id: string
+          out_conversation_message_id: string
+        }[]
+      }
+      conversation_mark_read: {
+        Args: { message_ids: string[] }
+        Returns: number
+      }
+      conversation_post_user_message: {
+        Args: { body: string; conversation_id: string; payload?: Json }
+        Returns: string
+      }
       email_exists: { Args: { email_to_check: string }; Returns: boolean }
       email_has_password: { Args: { email_to_check: string }; Returns: boolean }
       health_current_timestamp: { Args: never; Returns: string }
@@ -991,6 +1500,19 @@ export type Database = {
       tenant_create: {
         Args: { profile_id: string; tenant_name: string; tenant_slug: string }
         Returns: Json
+      }
+      ticket_claim: { Args: { p_ticket_id: string }; Returns: undefined }
+      ticket_escalate: {
+        Args: {
+          p_conversation_id: string
+          priority?: Database["public"]["Enums"]["notification_priority"]
+          subject: string
+        }
+        Returns: string
+      }
+      ticket_resolve: {
+        Args: { p_ticket_id: string; resolution?: Json }
+        Returns: undefined
       }
       user_auth_hook: { Args: { event: Json }; Returns: Json }
       viewer_agencies: {
@@ -1050,6 +1572,59 @@ export type Database = {
         Returns: number[]
       }
       viewer_agency_tenant_ids: { Args: never; Returns: number[] }
+      viewer_conversation_messages: {
+        Args: { p_conversation_id: string }
+        Returns: {
+          conversation_id: string
+          conversation_message_id: string
+          conversation_topic_slug: string | null
+          message_author: string
+          message_body: string | null
+          message_channel: Database["public"]["Enums"]["message_channel"] | null
+          message_created_at: string
+          message_direction: string
+          message_idempotency_key: string | null
+          message_payload: Json
+          message_priority:
+            | Database["public"]["Enums"]["notification_priority"]
+            | null
+          message_read_at: string | null
+          message_signature_verified: boolean
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "conversation_messages"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      viewer_conversations: {
+        Args: { include_archived?: boolean }
+        Returns: {
+          agency_id: string | null
+          conversation_created_at: string
+          conversation_id: string
+          conversation_kind: string
+          conversation_last_message_at: string
+          conversation_resolution: Json | null
+          conversation_resolved_at: string | null
+          conversation_resolved_channel:
+            | Database["public"]["Enums"]["message_channel"]
+            | null
+          conversation_status: string
+          conversation_subject: string | null
+          conversation_updated_at: string
+          organization_id: number | null
+          profile_id: string
+          tenant_id: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "conversations"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       viewer_has_agency_permission: {
         Args: { organization_id: number; permission_id: string }
         Returns: boolean
@@ -1213,24 +1788,6 @@ export type Database = {
         }
       }
       viewer_profile_id: { Args: { strict?: boolean }; Returns: string }
-      viewer_profile_notifications: {
-        Args: never
-        Returns: {
-          notification_slug: string
-          profile_id: string
-          profile_notification_created_at: string
-          profile_notification_enabled: boolean
-          profile_notification_kind: Database["public"]["Enums"]["notification_kind"]
-          profile_notification_priority: Database["public"]["Enums"]["notification_priority"]
-          profile_notification_updated_at: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "profile_notifications"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       viewer_sessions: {
         Args: never
         Returns: {
@@ -1305,12 +1862,15 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      viewer_unread_count: { Args: never; Returns: number }
     }
     Enums: {
+      message_channel: "in_app" | "email" | "web_push" | "whatsapp" | "sms"
       notification_kind: "info" | "warn" | "fatal" | "error" | "debug" | "log"
       notification_priority: "low" | "medium" | "high" | "critical"
       profile_identity_document_kind: "nin" | "passport"
       tenant_tier: "free" | "pro" | "enterprise"
+      ticket_status: "open" | "claimed" | "in_progress" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1438,10 +1998,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      message_channel: ["in_app", "email", "web_push", "whatsapp", "sms"],
       notification_kind: ["info", "warn", "fatal", "error", "debug", "log"],
       notification_priority: ["low", "medium", "high", "critical"],
       profile_identity_document_kind: ["nin", "passport"],
       tenant_tier: ["free", "pro", "enterprise"],
+      ticket_status: ["open", "claimed", "in_progress", "resolved", "closed"],
     },
   },
 } as const
