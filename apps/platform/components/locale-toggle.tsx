@@ -1,40 +1,27 @@
 "use client";
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { useParams, usePathname, useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
 import { useTransition } from "react";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
-import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_LABEL, SUPPORTED_LOCALES, type SupportedLocale } from "~/lib/i18n";
+import { LOCALE_LABEL, SUPPORTED_LOCALES, type SupportedLocale } from "~/lib/i18n";
 import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 
 /**
  * Locale toggle component allowing users to switch between supported languages.
- * Updates both the cookie and DOM lang attribute for accessibility.
+ * Writes the NEXT_LOCALE cookie and refreshes the tree; locale is not part of the URL.
  */
 export function LocaleToggle({ className, ...props }: ComponentProps<"div">) {
   const { t } = useRosetta(LOCALES);
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useParams<{ locale?: string }>();
   const [pending, startTransition] = useTransition();
-  const [_, setLocale] = useLocaleCookie();
-
-  const current = IS_SUPPORTED_LOCALE(params?.locale) ? params.locale : DEFAULT_LOCALE;
+  const [current, setLocale] = useLocaleCookie();
 
   /**
-   * Changes the locale and updates the DOM to reflect the new language.
+   * Changes the locale: persists the cookie and re-renders (handled inside useLocaleCookie).
    */
   function selectLocale(next: SupportedLocale) {
     if (next === current) return;
-    // Fire-and-forget: the proxy re-sets this cookie (1yr) on the next request, so the bare write is enough.
-    setLocale(next);
-    // <html lang> is rendered by the root layout; soft navigation doesn't re-render it, so update
-    // the live DOM here so screen readers / spellcheck pick up the new language immediately.
-    document.documentElement.lang = next;
-    const nextPath = pathname.replace(/^\/[^/]+/, `/${next}`);
-    startTransition(() => router.replace(ROUTE_HREF(UNSAFE_ROUTE(nextPath))));
+    startTransition(() => setLocale(next));
   }
 
   return (

@@ -7,9 +7,9 @@ import type { ComponentProps } from "react";
 type IdentityKind = "email" | "phone" | "document";
 
 const IDENTITY_HREF: Record<IdentityKind, Route> = {
-  email: "/[locale]/auth/onboarding/email" as Route,
-  phone: "/[locale]/auth/onboarding/phone" as Route,
-  document: "/[locale]/auth/onboarding/document" as Route,
+  email: "/auth/onboarding/email" as Route,
+  phone: "/auth/onboarding/phone" as Route,
+  document: "/auth/onboarding/document" as Route,
 };
 
 export function IdentityChip({

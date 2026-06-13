@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_FROM_PATH, LOCALE_SUPPORTED_RESOLVE } from "./i18n";
+import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_SUPPORTED_RESOLVE } from "./i18n";
 
 describe("i18n locale resolution", () => {
   it("treats only canonical locales as supported", () => {
@@ -18,45 +18,7 @@ describe("i18n locale resolution", () => {
     expect(LOCALE_SUPPORTED_RESOLVE("fr")).toBeNull();
   });
 
-  it("extracts canonical locales directly from the path", () => {
-    expect(LOCALE_FROM_PATH("/es-CL/faq")).toEqual({
-      locale: "es-CL",
-      canonicalLocale: "es-CL",
-      localeCandidate: "es-CL",
-      localeIsCanonical: true,
-      pathAfterLocale: "/faq",
-    });
-  });
-
-  it("flags resolvable legacy locales for canonical redirect handling", () => {
-    expect(LOCALE_FROM_PATH("/en/pricing")).toEqual({
-      locale: null,
-      canonicalLocale: "en-US",
-      localeCandidate: "en",
-      localeIsCanonical: false,
-      pathAfterLocale: "/pricing",
-    });
-
-    expect(LOCALE_FROM_PATH("/es-AR/faq")).toEqual({
-      locale: null,
-      canonicalLocale: "es-CL",
-      localeCandidate: "es-AR",
-      localeIsCanonical: false,
-      pathAfterLocale: "/faq",
-    });
-  });
-
-  it("leaves non-locale paths to the missing-locale redirect flow", () => {
-    expect(LOCALE_FROM_PATH("/faq")).toEqual({
-      locale: null,
-      canonicalLocale: null,
-      localeCandidate: null,
-      localeIsCanonical: false,
-      pathAfterLocale: "/faq",
-    });
-  });
-
-  it("treats the configured default as canonical", () => {
-    expect(DEFAULT_LOCALE).toBe("es-CL");
+  it("falls back to English when nothing resolves", () => {
+    expect(DEFAULT_LOCALE).toBe("en-US");
   });
 });
