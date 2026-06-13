@@ -40,7 +40,21 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Required: refreshes the access token cookie if it's about to expire.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return { response, supabase };
+  // Stale cookie guard: JWT may be cryptographically valid (local instances share the same
+  // secret) but the user row no longer exists (e.g. DB reset in a worktree). getUser() returns
+  // null while the session cookie is still present. Clear it locally so the browser stops
+  // sending the dead token on every request. Only applies in development — production Supabase
+  // is never reset, so the extra getSession() round-trip would add unnecessary latency.
+  if (!user && process.env.NODE_ENV === "development") {
+    const { data: staleSession } = await supabase.auth.getSession();
+    if (staleSession.session) {
+      await supabase.auth.signOut({ scope: "local" });
+    }
+  }
+
+  return { response, supabase, user };
 }
