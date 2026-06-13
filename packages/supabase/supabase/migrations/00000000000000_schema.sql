@@ -9,7 +9,8 @@ create extension if not exists "citext" schema extensions;
 create extension if not exists "pgtap" schema extensions;
 -- Async queue (pgmq), scheduled jobs (pg_cron), and HTTP calls (pg_net) power the
 -- notification dispatch pipeline. pgmq/pg_cron live in their default schemas;
--- pg_net is placed in `extensions` alongside other Supabase-bundled extensions.
+-- pg_net is installed in `extensions` but exposes its functions under the `net` schema
+-- (e.g. net.http_post) — that is pg_net's own schema, always named `net`.
 create extension if not exists "pgmq";
 create extension if not exists "pg_cron";
 create extension if not exists "pg_net" schema extensions;
@@ -3977,3 +3978,101 @@ create or replace function public.ticket_resolve(
   $$;
 
 grant execute on function public.ticket_resolve(uuid, jsonb) to authenticated;
+
+-- ============================================================
+-- pgmq queue helpers (Agent D — dispatch worker)
+-- ============================================================
+-- The `pgmq` schema is not exposed through the Data API / PostgREST by default.
+-- These SECURITY DEFINER wrappers in `public` make pgmq operations callable via
+-- `supabase.rpc()` from the service-role client in the drain route without granting
+-- broad access to the pgmq schema.
+-- ============================================================
+
+-- Read up to `qty` messages from the conversation_outbound queue with a visibility
+-- timeout of `vt` seconds (messages are invisible to other readers until vt elapses).
+-- Returns the raw pgmq message rows: (msg_id bigint, read_ct int, enqueued_at, vt, message jsonb).
+create or replace function public.conversation_outbound_read(vt int, qty int)
+  returns setof pgmq.message_record
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select * from pgmq.read('conversation_outbound', vt, qty);
+  $$;
+
+grant execute on function public.conversation_outbound_read(int, int) to service_role;
+
+-- Permanently delete a message from the queue after successful processing.
+-- Returns true when the message was found and deleted.
+create or replace function public.conversation_outbound_delete(msg_id bigint)
+  returns boolean
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select pgmq.delete('conversation_outbound', msg_id);
+  $$;
+
+grant execute on function public.conversation_outbound_delete(bigint) to service_role;
+
+-- Archive a message (move to pgmq archive table) instead of deleting.
+-- Useful for inspecting processed messages for debugging.
+create or replace function public.conversation_outbound_archive(msg_id bigint)
+  returns boolean
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select pgmq.archive('conversation_outbound', msg_id);
+  $$;
+
+grant execute on function public.conversation_outbound_archive(bigint) to service_role;
+
+-- ============================================================
+-- pg_cron + pg_net drain scheduling (Agent D)
+-- ============================================================
+-- Schedules a POST to the drain route every minute.  In production, set the real URL
+-- and secret in the environment.  Locally, Docker→host networking may prevent this from
+-- working — use the manual trigger (curl) documented in apps/platform/app/api/internal/conversations/drain/route.ts.
+--
+-- The pg_cron + pg_net calls are intentionally wrapped in a DO block with an exception
+-- handler so that replay on `pnpm db:reset` is safe even when the env vars are unset.
+-- Set APP_DRAIN_URL and CONVERSATIONS_DRAIN_SECRET in the Supabase service env to
+-- activate the schedule.
+-- ============================================================
+
+do $$
+  declare
+    _drain_url text := coalesce(current_setting('app.drain_url', true), '');
+    _drain_secret text := coalesce(current_setting('app.drain_secret', true), '');
+  begin
+    -- Remove any previous schedule to keep this idempotent on re-run.
+    perform cron.unschedule('conversation_outbound_drain')
+      where exists (
+        select 1 from cron.job where jobname = 'conversation_outbound_drain'
+      );
+
+    if _drain_url <> '' and _drain_secret <> '' then
+      -- Schedule: every minute, POST to the drain endpoint with shared-secret header.
+      perform cron.schedule(
+        'conversation_outbound_drain',
+        '* * * * *',
+        format(
+          $$
+            select net.http_post(
+              url     := %L,
+              headers := jsonb_build_object('x-drain-secret', %L, 'content-type', 'application/json'),
+              body    := '{}'::jsonb
+            );
+          $$,
+          _drain_url,
+          _drain_secret
+        )
+      );
+    end if;
+  exception
+    when others then
+      -- pg_cron/pg_net may not be available in all environments; log and continue.
+      raise notice 'conversation_outbound_drain schedule skipped: %', sqlerrm;
+  end;
+$$;

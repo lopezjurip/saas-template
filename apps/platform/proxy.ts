@@ -14,6 +14,9 @@ const PH_BOOTSTRAP_COOKIE = "ph_bootstrap";
 const log = debug("proxy");
 
 const PUBLIC_PATH_REGEX = /^(\/|(\/(?:auth|legal|faq|pricing|opengraph-image|twitter-image|icon)(?:\/|$)))/;
+// NOTE: /api/* routes (including /api/internal/conversations/* and /api/inbound/*) are
+// already excluded from the proxy middleware by the `matcher` config above — they never
+// reach this regex. The auth gate for the drain route is the shared-secret header.
 const GLOBAL_METADATA_ASSET_PATHS = new Set(["/apple-icon", "/icon", "/opengraph-image", "/twitter-image"]);
 
 /**
