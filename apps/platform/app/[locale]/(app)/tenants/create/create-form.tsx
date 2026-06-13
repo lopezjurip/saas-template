@@ -11,7 +11,6 @@ import { ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { useLocaleParam } from "~/hooks/use-locale-param";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
@@ -26,7 +25,6 @@ type PlanId = "free" | "pro";
 
 export function CreateTenantForm() {
   const { t } = useRosetta(LOCALES);
-  const locale = useLocaleParam();
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [plan, setPlan] = useState<PlanId>("free");
@@ -73,7 +71,7 @@ export function CreateTenantForm() {
       }
       if (error) return;
       // Hard navigate so browser picks up refreshed JWT.
-      window.location.assign(ROUTE_HREF(ROUTE("/[locale]/t/[tenant_slug]", { locale, tenant_slug: data["slug"] })));
+      window.location.assign(ROUTE_HREF(ROUTE("/[locale]/t/[tenant_slug]", { tenant_slug: data["slug"] })));
     });
   });
 
@@ -166,7 +164,7 @@ export function CreateTenantForm() {
           {!pending && <ArrowRight size={16} />}
         </Button>
         <Button asChild type="button" variant="ghost" className="h-10 w-full text-muted-foreground">
-          <Link href={ROUTE("/[locale]/home", { locale })}>{t("cancel")}</Link>
+          <Link href={ROUTE("/[locale]/home")}>{t("cancel")}</Link>
         </Button>
       </div>
     </form>

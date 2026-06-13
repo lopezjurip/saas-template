@@ -27,7 +27,7 @@ export async function AuthHeader({ small = false }: { small?: boolean }) {
         <Logo className="text-lg" />
       </Link>
       <div>
-        <h1 className={cn("m-0 text-[22px] font-semibold tracking-[-0.02em]")}>{t("welcome")}</h1>
+        <h1 className={cn("m-0 text-2xl font-semibold tracking-tight")}>{t("welcome")}</h1>
         <p className="mt-1 mb-0 text-sm/normal text-muted-foreground">{t("tagline")}</p>
       </div>
     </div>

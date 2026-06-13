@@ -42,6 +42,7 @@
     "noopener",
     "noreferrer",
     "posthog",
+    "qrcode",
     "rosetta",
     "simplewebauthn",
     "supabase",

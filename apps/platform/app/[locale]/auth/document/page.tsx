@@ -19,7 +19,7 @@ export default async function AuthDocumentPage(props: PageProps<"/[locale]/auth/
         <div className="flex flex-col gap-4.5">
           <AuthBackLink />
           <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">{t("heading")}</h1>
+            <h1 className="m-0 text-xl/normal font-semibold tracking-tight text-foreground">{t("heading")}</h1>
             <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{t("body")}</p>
           </div>
           <DocumentStepForm value={value} next={next} />

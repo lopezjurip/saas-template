@@ -26,7 +26,7 @@ export function SystemMessage({
   const locale = useLocaleParam();
   const { code, Icon } = DEFS[kind];
   const copy = RESOLVE_COPY(locale)[kind];
-  const homeHref = `/${locale}`;
+  const homeHref = "/[locale]";
 
   return (
     <div
@@ -45,14 +45,14 @@ export function SystemMessage({
             {code}
           </span>
           <span className="absolute inset-0 inline-flex items-center justify-center">
-            <span className="bg-background border-border text-foreground inline-flex size-12 items-center justify-center rounded-2xl border shadow-[0_1px_3px_hsl(0_0%_0%/0.06)]">
+            <span className="bg-background border-border text-foreground inline-flex size-12 items-center justify-center rounded-2xl border shadow-subtle">
               <Icon size={22} />
             </span>
           </span>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em] text-balance">{copy.title}</h1>
+          <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight text-balance">{copy.title}</h1>
           <p className="text-muted-foreground m-0 text-sm leading-[1.55] text-pretty">{copy.desc}</p>
         </div>
 

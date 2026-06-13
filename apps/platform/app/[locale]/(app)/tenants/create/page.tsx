@@ -28,7 +28,7 @@ export default async function CreateTenantPage(props: PageProps<"/[locale]/tenan
         <Logo />
       </Link>
 
-      <div className="flex w-full max-w-110 flex-col gap-5 rounded-2xl border bg-card p-6 text-card-foreground shadow-[0_1px_3px_hsl(0_0%_0%/0.04),0_18px_48px_hsl(0_0%_0%/0.1)]">
+      <div className="flex w-full max-w-110 flex-col gap-5 rounded-2xl border bg-card p-6 text-card-foreground shadow-card">
         <div className="flex flex-col gap-1.5">
           <span className="inline-flex size-11 items-center justify-center rounded-xl bg-muted text-foreground">
             <Building2 size={20} strokeWidth={2.25} />

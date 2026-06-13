@@ -51,7 +51,7 @@ export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
           key={p["id"]}
           className="bg-muted/30 grid grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border px-3.5 py-3"
         >
-          <span className="bg-muted text-foreground inline-flex size-9 items-center justify-center rounded-[9px]" />
+          <span className="bg-muted text-foreground inline-flex size-9 items-center justify-center rounded-lg" />
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="text-foreground text-sm font-medium">{p["friendly_name"] ?? "Passkey"}</span>
             <span className="text-muted-foreground inline-flex flex-wrap items-center gap-1.5 text-xs">
@@ -64,7 +64,7 @@ export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
             <button
               type="button"
               disabled={deleting}
-              className="text-destructive hover:bg-accent inline-flex h-8 items-center gap-1.5 rounded-md border border-transparent px-3 text-[12.5px] font-medium whitespace-nowrap no-underline disabled:opacity-50"
+              className="text-destructive hover:bg-accent inline-flex h-8 items-center gap-1.5 rounded-md border border-transparent px-3 text-xs font-medium whitespace-nowrap no-underline disabled:opacity-50"
               onClick={() => onDelete(p["id"])}
             >
               {t("delete")}

@@ -53,7 +53,7 @@ export default async function OrganizationBillingPage(
         <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
           {organization["organization_name"]} · {t("eyebrow")}
         </span>
-        <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("title")}</h1>
+        <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">{t("subtitle")}</p>
       </header>
 
@@ -68,11 +68,11 @@ export default async function OrganizationBillingPage(
                 {t("period_yearly")}
               </Badge>
             </span>
-            <span className="text-foreground text-2xl font-semibold leading-[1.1] tracking-[-0.02em]">Pro</span>
+            <span className="text-foreground text-2xl font-semibold leading-[1.1] tracking-tight">Pro</span>
             <span className="text-muted-foreground max-w-[44ch] text-xs text-pretty">{t("plan_blurb")}</span>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-0.5">
-            <span className="text-foreground text-xl font-semibold tabular-nums tracking-[-0.02em]">$24</span>
+            <span className="text-foreground text-xl font-semibold tabular-nums tracking-tight">$24</span>
             <span className="text-muted-foreground text-xs">{t("plan_per")}</span>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default async function OrganizationBillingPage(
         </span>
         <div className="flex flex-col gap-2">
           <div className="border-border bg-background grid grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border px-3.5 py-3">
-            <span className="bg-foreground text-background inline-flex size-9 shrink-0 items-center justify-center rounded-[9px] text-tiny font-bold tracking-wider">
+            <span className="bg-foreground text-background inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-tiny font-bold tracking-wider">
               VISA
             </span>
             <div className="flex min-w-0 flex-col gap-[3px]">
@@ -121,7 +121,7 @@ export default async function OrganizationBillingPage(
             </Button>
           </div>
           <div className="border-border bg-background grid grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border px-3.5 py-3">
-            <span className="bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-[9px]">
+            <span className="bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-lg">
               <Mail size={16} />
             </span>
             <div className="flex min-w-0 flex-col gap-[3px]">

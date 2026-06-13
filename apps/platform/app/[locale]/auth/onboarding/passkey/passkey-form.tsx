@@ -6,7 +6,6 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Fingerprint } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { useLocaleParam } from "~/hooks/use-locale-param";
 import { useRosetta } from "~/lib/i18n.client";
 import { createPasskey } from "~/lib/passkeys.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
@@ -14,7 +13,6 @@ import { ROUTE, ROUTE_HREF } from "~/lib/route";
 export function PasskeyForm({ email }: { email: string }) {
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
-  const locale = useLocaleParam();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -29,7 +27,7 @@ export function PasskeyForm({ email }: { email: string }) {
         await createPasskey();
         const supabase = createBrowserClient();
         await supabase.auth.refreshSession();
-        router.push(ROUTE_HREF(ROUTE("/[locale]/auth/onboarding", { locale })));
+        router.push(ROUTE_HREF(ROUTE("/[locale]/auth/onboarding")));
       } catch (e) {
         if (e instanceof Error && e.name === "NotAllowedError") {
           setError(t("error_cancelled"));

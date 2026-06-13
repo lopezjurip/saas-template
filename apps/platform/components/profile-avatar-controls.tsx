@@ -158,9 +158,9 @@ export function ProfileAvatarControls({
   return (
     <div {...props} className={cn("flex flex-col gap-3.5", className)}>
       <div className="flex items-center gap-4">
-        <Avatar className="inline-flex size-22 shrink-0 overflow-hidden rounded-full border bg-muted text-3xl font-semibold tracking-[-0.02em] text-muted-foreground">
+        <Avatar className="inline-flex size-22 shrink-0 overflow-hidden rounded-full border bg-muted text-3xl font-semibold tracking-tight text-muted-foreground">
           {avatarSrc ? <AvatarImage src={avatarSrc} alt={name || "Avatar"} className="object-cover" /> : null}
-          <AvatarFallback className="bg-muted text-3xl font-semibold tracking-[-0.02em] text-muted-foreground">
+          <AvatarFallback className="bg-muted text-3xl font-semibold tracking-tight text-muted-foreground">
             {INITIALS_OF(name)}
           </AvatarFallback>
         </Avatar>

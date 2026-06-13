@@ -10,7 +10,6 @@ import {
   type DocumentTripletCountry,
   DocumentTripletFields,
 } from "~/app/[locale]/auth/_components/document-triplet-fields";
-import { useLocaleParam } from "~/hooks/use-locale-param";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { type CheckDocumentValues, checkDocumentSchema } from "../../document/schemas";
@@ -25,7 +24,6 @@ type Props = {
  */
 export function DocumentForm({ countries }: Props) {
   const { t } = useRosetta(LOCALES);
-  const locale = useLocaleParam();
   const router = useRouter();
   const [done, setDone] = useState(false);
 
@@ -41,7 +39,7 @@ export function DocumentForm({ countries }: Props) {
   function onSubmit(values: CheckDocumentValues) {
     void values;
     setDone(true);
-    setTimeout(() => router.push(ROUTE_HREF(ROUTE("/[locale]/auth/onboarding", { locale }))), 700);
+    setTimeout(() => router.push(ROUTE_HREF(ROUTE("/[locale]/auth/onboarding"))), 700);
   }
 
   if (done) {
@@ -51,7 +49,7 @@ export function DocumentForm({ countries }: Props) {
           <Check size={18} />
         </span>
         <strong className="text-sm font-medium text-foreground">{t("saved")}</strong>
-        <span className="text-[12.5px] text-muted-foreground">{t("redirecting")}</span>
+        <span className="text-xs text-muted-foreground">{t("redirecting")}</span>
       </div>
     );
   }

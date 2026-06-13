@@ -5,4 +5,11 @@
 @theme {
   /* https://tailwindcss.com/docs/font-size */
   --text-tiny: 0.6875rem;
+
+  /* Bespoke depth shadows — custom tints/multi-layer, off the default scale. */
+  --shadow-hairline: 0 1px 2px hsl(0 0% 0% / 0.04);
+  --shadow-subtle: 0 1px 3px hsl(0 0% 0% / 0.06);
+  --shadow-float: 0 8px 24px hsl(0 0% 0% / 0.12);
+  --shadow-card-soft: 0 1px 3px hsl(0 0% 0% / 0.04), 0 8px 24px hsl(0 0% 0% / 0.06);
+  --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.04), 0 18px 48px hsl(0 0% 0% / 0.1);
 }

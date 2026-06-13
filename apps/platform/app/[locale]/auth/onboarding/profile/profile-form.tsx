@@ -12,7 +12,6 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { gql } from "~/generated/graphql";
-import { useLocaleParam } from "~/hooks/use-locale-param";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
@@ -42,7 +41,6 @@ export function ProfileForm({
 }) {
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
-  const locale = useLocaleParam();
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [, updateName] = useGraphyMutation(OnboardingProfileFormUpdateNameMutation);
@@ -62,7 +60,7 @@ export function ProfileForm({
         setServerError(t("error_save"));
         return;
       }
-      router.push(ROUTE_HREF(ROUTE("/[locale]/auth/onboarding", { locale })));
+      router.push(ROUTE_HREF(ROUTE("/[locale]/auth/onboarding")));
     });
   });
 

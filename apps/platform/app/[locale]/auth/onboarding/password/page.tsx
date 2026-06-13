@@ -1,9 +1,9 @@
+import { IdentityChip } from "~/components/identity/chips";
 import { getRosetta } from "~/lib/i18n.server";
 import { AuthCard } from "../../_components/auth-card";
 import { AuthHeader } from "../../_components/auth-header";
 import { StepShell } from "../_components/step-shell";
 import { getViewerOnboardingState } from "../state.server";
-import { PasswordEmailChip } from "./password-email-chip";
 import { PasswordForm } from "./password-form";
 
 export default async function OnboardingPasswordPage(props: PageProps<"/[locale]/auth/onboarding/password">) {
@@ -16,7 +16,7 @@ export default async function OnboardingPasswordPage(props: PageProps<"/[locale]
       <div className="flex flex-col gap-5">
         <AuthHeader small />
         <StepShell methods={state.methods} current="password" title={t("title")} subtitle={t("subtitle")}>
-          {state.email && <PasswordEmailChip email={state.email} />}
+          {state.email && <IdentityChip kind="email" value={state.email} />}
           <PasswordForm />
         </StepShell>
       </div>

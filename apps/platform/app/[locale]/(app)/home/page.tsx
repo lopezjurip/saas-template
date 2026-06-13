@@ -72,8 +72,8 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
             <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               {t("badge")}
             </span>
-            <h1 className="text-[32px] font-semibold tracking-[-0.02em] text-foreground">{greeting}</h1>
-            <p className="text-[13.5px] leading-normal text-muted-foreground text-pretty">{t("subtitle")}</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">{greeting}</h1>
+            <p className="text-sm leading-normal text-muted-foreground text-pretty">{t("subtitle")}</p>
           </div>
 
           {obIncomplete && (
@@ -82,14 +82,14 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                 <Sparkles size={13} />
               </span>
               <span className="flex min-w-0 flex-col gap-px text-left">
-                <span className="text-[13.5px] font-medium text-foreground">{t("onboardingTitle")}</span>
+                <span className="text-sm font-medium text-foreground">{t("onboardingTitle")}</span>
                 <span className="text-xs text-muted-foreground">
                   {t("onboardingProgress", { done: obDone, total: obTotal })}
                 </span>
               </span>
               <Link
                 href={ROUTE("/[locale]/auth/onboarding", { locale })}
-                className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md border bg-background px-3 text-[12.5px] font-medium text-foreground hover:bg-accent"
+                className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md border bg-background px-3 text-xs font-medium text-foreground hover:bg-accent"
               >
                 {t("onboardingCta")}
                 <ArrowRight size={13} />
@@ -117,10 +117,10 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                 <Link
                   key={organization["organization_id"]}
                   href={ROUTE("/[locale]/t/[tenant_slug]", { locale, tenant_slug })}
-                  className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
+                  className="group flex w-[140px] flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
                 >
                   <span
-                    className="inline-flex size-28 items-center justify-center rounded-[18px] border text-4xl font-semibold tracking-[-0.02em] transition-shadow duration-150 group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)]"
+                    className="inline-flex size-28 items-center justify-center rounded-2xl border text-4xl font-semibold tracking-tight transition-shadow duration-150 group-hover:shadow-float"
                     style={{
                       background: `hsl(${hue} 60% 92%)`,
                       color: `hsl(${hue} 55% 28%)`,
@@ -129,19 +129,19 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                   >
                     {initials}
                   </span>
-                  <span className="text-center text-[13.5px] font-medium text-balance">{name}</span>
+                  <span className="text-center text-sm font-medium text-balance">{name}</span>
                   <span className="-mt-1 text-xs text-muted-foreground">{tenant?.["tenant_name"] ?? "—"}</span>
                 </Link>
               );
             })}
             <Link
               href={ROUTE("/[locale]/tenants/create", { locale })}
-              className="group flex w-[140px] flex-col items-center gap-2.5 rounded-[14px] px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
+              className="group flex w-[140px] flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
             >
-              <span className="inline-flex size-28 items-center justify-center rounded-[18px] border border-dashed bg-background text-muted-foreground transition-colors duration-150 group-hover:bg-muted/40 group-hover:text-foreground">
+              <span className="inline-flex size-28 items-center justify-center rounded-2xl border border-dashed bg-background text-muted-foreground transition-colors duration-150 group-hover:bg-muted/40 group-hover:text-foreground">
                 <Plus size={36} />
               </span>
-              <span className="text-center text-[13.5px] font-medium text-balance">{t("newOrg")}</span>
+              <span className="text-center text-sm font-medium text-balance">{t("newOrg")}</span>
               <span className="-mt-1 text-xs text-muted-foreground">{t("newOrgSub")}</span>
             </Link>
           </div>

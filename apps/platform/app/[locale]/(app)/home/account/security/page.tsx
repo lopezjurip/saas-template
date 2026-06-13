@@ -33,7 +33,7 @@ export default async function SecurityPage(props: PageProps<"/[locale]/home/acco
         <span className="text-muted-foreground text-tiny font-semibold tracking-[0.08em] uppercase">
           {t("breadcrumb")}
         </span>
-        <h1 className="text-foreground text-[22px] font-semibold tracking-[-0.02em]">{t("heading")}</h1>
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight">{t("heading")}</h1>
         <p className="text-muted-foreground text-sm/normal leading-relaxed text-pretty">{t("description")}</p>
       </header>
 
@@ -140,7 +140,7 @@ function SecurityCard({
       <div className="grid w-full grid-cols-[36px_1fr_auto] items-center gap-3">
         <span
           className={cn(
-            "inline-flex size-9 items-center justify-center rounded-[9px]",
+            "inline-flex size-9 items-center justify-center rounded-lg",
             done ? "bg-foreground text-background" : "bg-muted text-foreground",
           )}
         >
@@ -157,18 +157,18 @@ function SecurityCard({
               </span>
             )}
           </span>
-          <span className="text-muted-foreground text-[12.5px] leading-snug text-pretty">{desc}</span>
+          <span className="text-muted-foreground text-xs leading-snug text-pretty">{desc}</span>
         </span>
         <span className="inline-flex items-center justify-end self-center">
           {actionHref ? (
             <Link
               href={UNSAFE_ROUTE(actionHref)}
-              className="bg-muted text-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[12.5px] font-medium whitespace-nowrap"
+              className="bg-muted text-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium whitespace-nowrap"
             >
               {actionLabel} <ArrowRight size={13} />
             </Link>
           ) : disabled ? (
-            <span className="bg-muted text-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[12.5px] font-medium whitespace-nowrap opacity-50">
+            <span className="bg-muted text-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium whitespace-nowrap opacity-50">
               {actionLabel}
             </span>
           ) : null}

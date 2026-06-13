@@ -18,13 +18,13 @@ export default async function AuthRecoverPage(props: PageProps<"/[locale]/auth/r
 
   return (
     <AuthCard>
-      <div className="flex flex-col gap-[22px]">
+      <div className="flex flex-col gap-5.5">
         <div className="flex flex-col items-center gap-3 text-center">
-          <span className="inline-flex size-10 items-center justify-center rounded-[10px] bg-muted text-foreground">
+          <span className="inline-flex size-10 items-center justify-center rounded-xl bg-muted text-foreground">
             <KeyRound size={20} />
           </span>
           <div>
-            <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] text-foreground">{t("heading")}</h1>
+            <h1 className="m-0 text-2xl font-semibold tracking-tight text-foreground">{t("heading")}</h1>
             <p className="mt-1 mb-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{t("body")}</p>
           </div>
         </div>
@@ -37,7 +37,7 @@ export default async function AuthRecoverPage(props: PageProps<"/[locale]/auth/r
         </Button>
 
         <div className="flex flex-col items-center gap-3">
-          <p className="m-0 text-center text-[12px] leading-normal text-muted-foreground text-pretty">
+          <p className="m-0 text-center text-xs leading-normal text-muted-foreground text-pretty">
             {t("no_access_prefix")}{" "}
             <a
               className="underline decoration-border underline-offset-2 hover:decoration-foreground"

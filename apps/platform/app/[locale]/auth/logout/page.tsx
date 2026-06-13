@@ -30,7 +30,7 @@ export default async function AuthLogoutPage(props: PageProps<"/[locale]/auth/lo
             <LogOut size={22} />
           </span>
           <div>
-            <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">{t("heading")}</h1>
+            <h1 className="m-0 text-xl/normal font-semibold tracking-tight text-foreground">{t("heading")}</h1>
             <p className="mt-1.5 mb-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{t("body")}</p>
           </div>
         </div>

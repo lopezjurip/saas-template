@@ -98,7 +98,7 @@ export function NotificationsMatrix() {
                 className="grid grid-cols-[1fr_auto] items-start gap-3.5 border-b px-4 py-3.5 last:border-b-0"
               >
                 <div className="flex min-w-0 flex-col gap-[3px]">
-                  <span className="text-[13.5px] font-medium text-foreground">{t(row.titleKey)}</span>
+                  <span className="text-sm font-medium text-foreground">{t(row.titleKey)}</span>
                   <span className="text-pretty text-xs leading-relaxed text-muted-foreground">{t(row.descKey)}</span>
                   {row.locked && (
                     <span className="mt-0.5 text-tiny tracking-[0.03em] text-muted-foreground">

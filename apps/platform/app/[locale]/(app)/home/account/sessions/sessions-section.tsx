@@ -69,7 +69,7 @@ function SessionRow(props: {
     >
       <span
         className={cn(
-          "inline-flex size-9 items-center justify-center rounded-[9px] bg-muted text-foreground",
+          "inline-flex size-9 items-center justify-center rounded-lg bg-muted text-foreground",
           current && "bg-foreground text-background",
         )}
       >

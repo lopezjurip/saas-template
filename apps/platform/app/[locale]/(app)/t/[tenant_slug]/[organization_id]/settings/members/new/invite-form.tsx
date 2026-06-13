@@ -102,7 +102,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, loca
     return (
       <div className="flex flex-col gap-4">
         <div className="flex items-start gap-3 rounded-xl border border-emerald-600/30 bg-emerald-500/6 p-4">
-          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
             <Check size={18} strokeWidth={2.25} />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
@@ -173,7 +173,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, loca
                 aria-selected={on}
                 onClick={() => form.setValue("channel", tab.value)}
                 className={cn(
-                  "inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-[5px] text-xs font-medium transition-[background,color]",
+                  "inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-[background,color]",
                   on
                     ? "bg-background text-foreground shadow-[0_1px_2px_hsl(var(--foreground)/0.1)]"
                     : "text-muted-foreground hover:text-foreground",
