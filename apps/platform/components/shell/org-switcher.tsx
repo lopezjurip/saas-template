@@ -1,10 +1,13 @@
 "use client";
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
+import { INITIALS_OF } from "@packages/utils/string";
 import { Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { COLOR_HSL_FROM_NAME, INITIALS_OF, Tip, useClickOutside } from "~/components/shell/atoms";
+
+import { Tip, useClickOutside } from "~/components/shell/atoms";
 import type { ViewerOrganizationUseFragmentType } from "~/hooks/use-viewer-organizations";
 import type { ViewerTenantUseFragmentType } from "~/hooks/use-viewer-tenants";
 import { useRosetta } from "~/lib/i18n.client";
@@ -32,7 +35,7 @@ export function OrgSwitcher({
   useClickOutside(ref, () => setOpen(false), open);
 
   const initials = INITIALS_OF(current["organization_name"]);
-  const colorStyle = COLOR_HSL_FROM_NAME(current["organization_name"]);
+  const colorStyle = COLOR_HSL_FROM_STRING(current["organization_name"]);
 
   const trigger = compact ? (
     <Tip label={`${current["organization_name"]} · ${tenant["tenant_name"]}`} disabled={open}>
@@ -91,7 +94,7 @@ export function OrgSwitcher({
           <div className="px-1 pb-1">
             {organizations.map((organization) => {
               const isCurrent = organization["organization_id"] === current["organization_id"];
-              const orgColorStyle = COLOR_HSL_FROM_NAME(organization["organization_name"]);
+              const orgColorStyle = COLOR_HSL_FROM_STRING(organization["organization_name"]);
               return (
                 <Link
                   key={organization["organization_id"]}

@@ -1,13 +1,14 @@
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Logo } from "@packages/ui-common/logo";
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
 import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowRight, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LocaleToggle } from "~/components/locale-toggle";
-import { COLOR_HSL_FROM_NAME } from "~/components/shell/atoms";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { gql } from "~/generated/graphql";
+import { getViewerAgencies } from "~/hooks/get-viewer-agencies";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
@@ -50,8 +51,12 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
   const { t } = await getRosetta(LOCALES);
 
   const graphy = await getGraphySession();
-  const { data } = await graphy.query({ query: HomePickerPageQuery });
+  const [{ data }, agenciesRes] = await Promise.all([
+    graphy.query({ query: HomePickerPageQuery }),
+    getViewerAgencies({ orderBy: [{ agency_name: "AscNullsLast" }] }),
+  ]);
   const edges = data?.["viewer_organizations"]?.["edges"] ?? [];
+  const agencyEdges = agenciesRes.data?.["agencies"]?.["edges"] ?? [];
 
   const state = await getViewerOnboardingState();
   const obDone = COUNT_DONE(state.methods);
@@ -118,7 +123,7 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
               if (!tenant_slug) return null;
               const name = organization["organization_name"];
               const initials = INITIALS_OF(name) || "·";
-              const colorStyle = COLOR_HSL_FROM_NAME(name);
+              const colorStyle = COLOR_HSL_FROM_STRING(name);
               return (
                 <Link
                   key={organization["organization_id"]}
@@ -151,6 +156,49 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
               <span className="-mt-1 text-xs text-muted-foreground">{t("newOrgSub")}</span>
             </Link>
           </div>
+
+          {agencyEdges.length > 0 && (
+            <div className="flex w-full max-w-260 flex-col items-center gap-4">
+              <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground/60">
+                {t("agenciesLabel")}
+              </span>
+              <div className="flex flex-wrap justify-center gap-[22px]">
+                {agencyEdges.map((edge) => {
+                  const agency = edge["node"];
+                  const agency_slug = agency["agency_slug"];
+                  const name = agency["agency_name"];
+                  const initials = INITIALS_OF(name) || "·";
+                  const colorStyle = COLOR_HSL_FROM_STRING(name);
+                  return (
+                    <Link
+                      key={agency["agency_id"]}
+                      href={ROUTE("/[locale]/a/[agency_slug]", { locale, agency_slug })}
+                      className="group flex w-28 flex-col items-center gap-2 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
+                    >
+                      <span
+                        className="inline-flex size-20 items-center justify-center rounded-xl border text-2xl font-semibold tracking-tight opacity-80 transition-shadow duration-150 group-hover:opacity-100 group-hover:shadow-float"
+                        style={{
+                          backgroundColor: colorStyle.background,
+                          color: colorStyle.color,
+                          borderColor: colorStyle.borderColor,
+                        }}
+                      >
+                        {initials}
+                      </span>
+                      <span className="text-center text-xs font-medium text-balance">{name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <Link
+            href={ROUTE("/[locale]/agencies/create", { locale })}
+            className="text-tiny text-muted-foreground/50 underline-offset-2 transition-colors hover:text-muted-foreground hover:underline"
+          >
+            {t("newAgency")}
+          </Link>
         </div>
       </div>
 
@@ -169,6 +217,8 @@ const LOCALE_ES = {
   onboardingCta: "Continuar",
   newOrg: "Nueva organización",
   newOrgSub: "Empieza desde cero",
+  agenciesLabel: "Mis agencias",
+  newAgency: "Crear agencia",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
@@ -181,6 +231,8 @@ const LOCALE_EN: typeof LOCALE_ES = {
   onboardingCta: "Continue",
   newOrg: "New organization",
   newOrgSub: "Start from scratch",
+  agenciesLabel: "My agencies",
+  newAgency: "Create agency",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
@@ -193,6 +245,8 @@ const LOCALE_PT: typeof LOCALE_ES = {
   onboardingCta: "Continuar",
   newOrg: "Nova organização",
   newOrgSub: "Comece do zero",
+  agenciesLabel: "Minhas agências",
+  newAgency: "Criar agência",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

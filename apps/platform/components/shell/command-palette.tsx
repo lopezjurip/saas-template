@@ -2,10 +2,13 @@
 
 import { useKeyboardShortcut } from "@packages/react-hooks/use-keyboard-shortcut";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
+import { INITIALS_OF } from "@packages/utils/string";
 import { Building2, Circle, Home, type LucideIcon, Search, Settings, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Avatar, COLOR_FROM_ID, INITIALS_OF, Kbd } from "~/components/shell/atoms";
+
+import { Avatar, Kbd } from "~/components/shell/atoms";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
@@ -114,7 +117,7 @@ export function CommandPalette({
         hint:
           organization["organization_id"] === current["organization_id"] ? t("current") : (tenant["tenant_tier"] ?? ""),
         orgInitials: INITIALS_OF(organization["organization_name"]),
-        orgColor: COLOR_FROM_ID(organization["organization_id"]),
+        orgColor: COLOR_HSL_FROM_STRING(organization["organization_name"]),
         onSelect: () =>
           router.push(
             ROUTE_HREF(

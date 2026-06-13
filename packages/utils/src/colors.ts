@@ -41,3 +41,16 @@ export function DATAURL_FROM_RGB(r: number, g: number, b: number) {
   const str = RGB_TRIPLET(0, r, g) + RGB_TRIPLET(b, 255, 255);
   return `data:image/gif;base64,R0lGODlhAQABAPAA${str}/yH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==`;
 }
+
+/**
+ * Returns inline style object for HSL color from string name.
+ * @example COLOR_HSL_FROM_STRING("Acme Corp") // { background: "hsl(...)", color: "hsl(...)", borderColor: "hsl(...)" }
+ */
+export function COLOR_HSL_FROM_STRING(name: string): Record<string, string> {
+  const hue = Math.abs(name.split("").reduce((a, c) => a + c.charCodeAt(0), 0)) % 360;
+  return {
+    background: `hsl(${hue} 60% 92%)`,
+    color: `hsl(${hue} 55% 28%)`,
+    borderColor: `hsl(${hue} 30% 80%)`,
+  };
+}

@@ -1,9 +1,12 @@
 "use client";
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
+import { INITIALS_OF } from "@packages/utils/string";
 import { ChevronDown, Menu, Search } from "lucide-react";
 import type { ComponentProps } from "react";
-import { Avatar, COLOR_FROM_ID, INITIALS_OF } from "~/components/shell/atoms";
+
+import { Avatar } from "~/components/shell/atoms";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
 
@@ -53,7 +56,7 @@ export function MobileTopBar({
         >
           <Avatar
             initials={INITIALS_OF(organization.organization_name)}
-            color={COLOR_FROM_ID(organization.organization_id)}
+            style={COLOR_HSL_FROM_STRING(organization.organization_name)}
             size="sm"
           />
           <div className="min-w-0 flex-1">
