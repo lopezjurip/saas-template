@@ -111,7 +111,9 @@ export function ConversationThread({
     const optimisticMsg: Message = {
       conversation_message_id: optimisticId,
       message_body: body,
-      message_direction: "outbound",
+      // The viewer's own reply persists as `inbound` (user → system); match it here so the
+      // bubble doesn't flip sides on reload.
+      message_direction: "inbound",
       message_author: viewerId,
       message_channel: "in_app",
       message_priority: null,
@@ -201,7 +203,9 @@ export function ConversationThread({
         ) : (
           <div className="flex flex-col gap-4">
             {messages.map((msg) => {
-              const isOutbound = msg["message_direction"] === "outbound";
+              // Viewer-relative: `inbound` is the viewer's own message (right/primary, "me");
+              // `outbound` is a notification sent to the viewer (left/muted, "them").
+              const isFromViewer = msg["message_direction"] === "inbound";
               const isSystem = msg["message_direction"] === "system";
               const timeStr = new Date(msg["message_created_at"]).toLocaleTimeString(locale, {
                 hour: "2-digit",
@@ -225,13 +229,13 @@ export function ConversationThread({
               return (
                 <div
                   key={msg["conversation_message_id"]}
-                  className={cn("flex", isOutbound ? "justify-end" : "justify-start")}
+                  className={cn("flex", isFromViewer ? "justify-end" : "justify-start")}
                 >
-                  <div className={cn("max-w-[70%]", isOutbound ? "items-end" : "items-start", "flex flex-col gap-1")}>
+                  <div className={cn("max-w-[70%]", isFromViewer ? "items-end" : "items-start", "flex flex-col gap-1")}>
                     <div
                       className={cn(
                         "rounded-xl px-3.5 py-2.5 text-sm",
-                        isOutbound ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+                        isFromViewer ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
                       )}
                     >
                       {msg["message_body"]}
@@ -239,7 +243,7 @@ export function ConversationThread({
                     <div
                       className={cn(
                         "flex items-center gap-1.5 text-tiny",
-                        isOutbound ? "flex-row-reverse" : "flex-row",
+                        isFromViewer ? "flex-row-reverse" : "flex-row",
                         "text-muted-foreground",
                       )}
                     >
