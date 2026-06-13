@@ -1,4 +1,5 @@
 import { Toaster } from "@packages/ui-common/shadcn/components/ui/sonner";
+import { TooltipProvider } from "@packages/ui-common/shadcn/components/ui/tooltip";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
@@ -54,11 +55,13 @@ export default async function RootLayout(props: LayoutProps<"/">) {
         <LocaleProvider locale={locale}>
           <PostHogProvider>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-              <GraphyClientProvider>
-                <PostHogIdentify />
-                {children}
-              </GraphyClientProvider>
-              <Toaster richColors closeButton />
+              <TooltipProvider delayDuration={0}>
+                <GraphyClientProvider>
+                  <PostHogIdentify />
+                  {children}
+                </GraphyClientProvider>
+                <Toaster richColors closeButton />
+              </TooltipProvider>
             </ThemeProvider>
           </PostHogProvider>
         </LocaleProvider>
