@@ -8,6 +8,7 @@ import Link from "next/link";
 import type { ComponentProps, MouseEvent } from "react";
 import { useRef, useState } from "react";
 import { Kbd, Tip } from "~/components/shell/atoms";
+import { ConversationsBell } from "~/components/shell/conversations-bell";
 import { OrgSwitcher, type ShellOrganization, type ShellTenant } from "~/components/shell/org-switcher";
 import { ProfileMenu, type ShellViewer } from "~/components/shell/profile-menu";
 import { SettingsMenu } from "~/components/shell/settings-menu";
@@ -263,6 +264,7 @@ export function Sidebar({
           })}
           compact={collapsed}
         />
+        <ConversationsBell locale={locale} compact={collapsed} />
       </div>
 
       <div className={cn("border-border border-t", collapsed ? "flex justify-center py-2" : "px-2 py-2")}>
