@@ -2,7 +2,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { SINGLE } from "@packages/utils/array";
 import { ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 
@@ -16,10 +16,10 @@ export default async function AuthSuccessPage(props: PageProps<"/[locale]/auth/s
   return (
     <AuthCard className="max-w-115">
       <div className="flex flex-col items-center gap-4.5 text-center">
-        <span className="inline-flex size-[76px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_8px_hsl(var(--primary)/0.08)]">
+        <span className="inline-flex size-19 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_8px_hsl(var(--primary)/0.08)]">
           <Check size={36} strokeWidth={2.8} />
         </span>
-        <h1 className="m-0 text-[28px] font-semibold tracking-[-0.02em] text-foreground">
+        <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
           {name ? t("heading_name", { name }) : t("heading")}
         </h1>
         <p className="m-0 max-w-90 text-sm leading-normal text-muted-foreground text-pretty">{t("body")}</p>
@@ -30,7 +30,7 @@ export default async function AuthSuccessPage(props: PageProps<"/[locale]/auth/s
               <ArrowRight size={16} />
             </Link>
           </Button>
-          <Button asChild variant="ghost" className="h-10 w-full text-[12.5px] text-muted-foreground">
+          <Button asChild variant="ghost" className="h-10 w-full text-xs text-muted-foreground">
             <Link href={ROUTE("/[locale]/home/account/security", { locale })}>{t("review_account")}</Link>
           </Button>
         </div>

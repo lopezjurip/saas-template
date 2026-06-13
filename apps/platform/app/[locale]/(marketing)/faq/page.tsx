@@ -2,9 +2,9 @@ import { URL_NEW } from "@packages/utils/url";
 import type { Metadata } from "next";
 import type { WebPage, WithContext } from "schema-dts";
 import { JsonLd } from "~/components/json-ld";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { getRosetta } from "~/lib/i18n.server";
 
 export async function generateMetadata(props: PageProps<"/[locale]/faq">): Promise<Metadata> {
   const { t, locale } = await getRosetta(LOCALES);

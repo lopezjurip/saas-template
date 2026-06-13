@@ -13,7 +13,7 @@ import { useState, useTransition } from "react";
 import { UAParser } from "ua-parser-js";
 import { gql } from "~/generated/graphql";
 import { useIntlRelativeTimeFormat } from "~/hooks/use-intl";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionRevokeSession, actionSignOutOtherDevices } from "../actions";
 
@@ -69,7 +69,7 @@ function SessionRow(props: {
     >
       <span
         className={cn(
-          "inline-flex size-9 items-center justify-center rounded-[9px] bg-muted text-foreground",
+          "inline-flex size-9 items-center justify-center rounded-lg bg-muted text-foreground",
           current && "bg-foreground text-background",
         )}
       >

@@ -1,8 +1,8 @@
 import { getSupabaseServerSession } from "@packages/supabase/client.server";
 import { SUPABASE_JWT_DECODE_PAYLOAD } from "@packages/supabase/jwt";
 import { gql } from "~/generated/graphql";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { SessionsSection, type SessionsSectionSessionFragmentType } from "./sessions-section";
 
 const SessionsSectionPageQuery = gql(`
@@ -33,7 +33,7 @@ export default async function SessionsPage(props: PageProps<"/[locale]/home/acco
         <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {t("breadcrumb")}
         </span>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{t("heading")}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("heading")}</h1>
         <p className="text-pretty text-sm/normal leading-normal text-muted-foreground">{t("description")}</p>
       </header>
       <SessionsSection sessions={sessions} currentSessionId={payload?.["session_id"]} />

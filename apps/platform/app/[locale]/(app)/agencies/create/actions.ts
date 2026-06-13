@@ -5,9 +5,8 @@ import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { SLUGIFY } from "@packages/utils/slug";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { debug } from "~/lib/debug";
-import { getServerLocale } from "~/lib/i18n.server";
+import { getRosetta, getServerLocale } from "~/lib/i18n.server";
 import { authedAction } from "~/lib/safe-action.server";
 
 const log = debug("agencies:create");

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, COLOR_FROM_ID, INITIALS_FROM_NAME, Kbd } from "~/components/shell/atoms";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
 type PaletteItem = {

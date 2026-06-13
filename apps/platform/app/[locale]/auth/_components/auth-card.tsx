@@ -11,7 +11,7 @@ export function AuthCard({ className, children }: { className?: string; children
       <div
         className={cn(
           "w-full max-w-100 rounded-xl border bg-card p-6 text-card-foreground sm:p-8",
-          "shadow-[0_1px_3px_hsl(0_0%_0%/0.04),0_8px_28px_hsl(0_0%_0%/0.06)]",
+          "shadow-card-soft",
           className,
         )}
       >

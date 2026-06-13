@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { getRosetta } from "~/hooks/get-rosetta";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import { AgencyCreate } from "./agency-create";
 
 export async function generateMetadata(props: PageProps<"/[locale]/agencies/create">): Promise<Metadata> {

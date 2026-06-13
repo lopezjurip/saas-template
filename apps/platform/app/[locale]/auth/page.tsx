@@ -1,5 +1,5 @@
 import { SINGLE } from "@packages/utils/array";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { AuthCard } from "./_components/auth-card";
 import { AuthDivider } from "./_components/auth-divider";
 import { AuthEntryForm } from "./_components/auth-entry-form";

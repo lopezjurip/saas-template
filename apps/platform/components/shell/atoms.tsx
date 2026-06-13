@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import type { ReactNode, RefObject } from "react";
+import type { ComponentProps, RefObject } from "react";
 import { useEffect } from "react";
 
 export function useClickOutside<T extends HTMLElement>(
@@ -55,15 +55,16 @@ export function Avatar({
   color,
   size = "md",
   className,
+  ...props
 }: {
   initials: string;
   color: string;
   size?: "sm" | "md" | "lg";
-  className?: string;
-}) {
+} & ComponentProps<"span">) {
   const sizing = size === "sm" ? "h-6 w-6 text-tiny" : size === "lg" ? "h-10 w-10 text-xs" : "h-8 w-8 text-xs";
   return (
     <span
+      {...props}
       className={cn(
         "flex shrink-0 items-center justify-center rounded-md font-mono font-medium tracking-tight",
         sizing,
@@ -76,9 +77,10 @@ export function Avatar({
   );
 }
 
-export function Kbd({ children, className }: { children: ReactNode; className?: string }) {
+export function Kbd({ children, className, ...props }: ComponentProps<"kbd">) {
   return (
     <kbd
+      {...props}
       className={cn(
         "border-border bg-muted/60 text-muted-foreground pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded border px-1.5 font-mono text-tiny font-medium",
         className,
@@ -95,13 +97,12 @@ export function Tip({
   side = "right",
   disabled,
   className,
+  ...props
 }: {
   label: string;
-  children: ReactNode;
   side?: "top" | "right" | "bottom";
   disabled?: boolean;
-  className?: string;
-}) {
+} & ComponentProps<"span">) {
   if (disabled || !label) return <>{children}</>;
   const pos =
     side === "top"
@@ -110,7 +111,7 @@ export function Tip({
         ? "top-[calc(100%+6px)] left-1/2 -translate-x-1/2"
         : "left-[calc(100%+8px)] top-1/2 -translate-y-1/2";
   return (
-    <span className={cn("group/tip relative inline-flex", className)}>
+    <span {...props} className={cn("group/tip relative inline-flex", className)}>
       {children}
       <span
         className={cn(

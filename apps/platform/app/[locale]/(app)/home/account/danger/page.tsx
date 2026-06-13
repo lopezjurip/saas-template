@@ -1,4 +1,4 @@
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { DeleteAccountDialog } from "./delete-account-dialog";
 
 export default async function DangerPage() {
@@ -17,7 +17,7 @@ export default async function DangerPage() {
         <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {t("breadcrumb")}
         </span>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{t("heading")}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("heading")}</h1>
         <p className="text-pretty text-sm/normal leading-normal text-muted-foreground">{t("description")}</p>
       </header>
 
@@ -26,9 +26,9 @@ export default async function DangerPage() {
           <span className="text-sm font-semibold text-destructive dark:text-[hsl(0_70%_70%)]">
             {t("warning_title")}
           </span>
-          <span className="text-[12.5px] leading-relaxed text-muted-foreground">{t("warning_preamble")}</span>
+          <span className="text-xs leading-relaxed text-muted-foreground">{t("warning_preamble")}</span>
         </div>
-        <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-[12.5px] leading-relaxed text-muted-foreground">
+        <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-xs leading-relaxed text-muted-foreground">
           {DELETE_IMPACT.map((item) => (
             <li key={item.strong}>
               {item.text} <strong className="font-medium text-foreground">{item.strong}</strong> {item.tail}
@@ -36,7 +36,7 @@ export default async function DangerPage() {
           ))}
         </ul>
         <div className="mt-1 flex items-center justify-between gap-3.5 border-t border-destructive/25 pt-3 dark:border-[hsl(0_70%_50%/0.25)]">
-          <span className="max-w-[40ch] text-[12.5px] leading-relaxed text-muted-foreground text-pretty">
+          <span className="max-w-[40ch] text-xs leading-relaxed text-muted-foreground text-pretty">
             {t("deactivate_hint")}
           </span>
           <DeleteAccountDialog />

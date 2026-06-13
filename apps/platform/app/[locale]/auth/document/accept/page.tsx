@@ -1,6 +1,6 @@
 import { SINGLE } from "@packages/utils/array";
 import { redirect } from "next/navigation";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { AuthBackLink } from "../../_components/auth-back-link";
 import { AuthCard } from "../../_components/auth-card";
 import { AuthHeader } from "../../_components/auth-header";
@@ -23,7 +23,7 @@ export default async function AuthDocumentAcceptPage(props: PageProps<"/[locale]
         <div className="flex flex-col gap-4.5">
           <AuthBackLink />
           <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">{t("heading")}</h1>
+            <h1 className="m-0 text-xl/normal font-semibold tracking-tight text-foreground">{t("heading")}</h1>
             <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{t("body")}</p>
           </div>
           <AcceptSignupForm token={token} />

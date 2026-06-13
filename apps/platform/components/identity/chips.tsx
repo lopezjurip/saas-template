@@ -1,20 +1,31 @@
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { IdCard, Mail, Phone } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
-import type { AppRoute } from "~/lib/route";
+import type { ComponentProps } from "react";
+
+type IdentityKind = "email" | "phone" | "document";
+
+const IDENTITY_HREF: Record<IdentityKind, Route> = {
+  email: "/[locale]/auth/onboarding/email" as Route,
+  phone: "/[locale]/auth/onboarding/phone" as Route,
+  document: "/[locale]/auth/onboarding/document" as Route,
+};
 
 export function IdentityChip({
   kind,
   value,
-  href,
+  className,
+  ...props
 }: {
-  kind: "email" | "phone" | "document";
+  kind: IdentityKind;
   value: string;
-  href: AppRoute;
-}) {
+} & ComponentProps<"div">) {
   const Icon = kind === "email" ? Mail : kind === "phone" ? Phone : IdCard;
   const metaLabel = kind === "email" ? "Correo" : kind === "phone" ? "Teléfono" : "Documento";
+  const href = IDENTITY_HREF[kind];
   return (
-    <div className="flex items-center gap-2.5 rounded-md border bg-muted/45 px-3 py-2.5">
+    <div {...props} className={cn("flex items-center gap-2.5 rounded-md border bg-muted/45 px-3 py-2.5", className)}>
       <div className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm/normal font-semibold text-muted-foreground">
         <Icon size={15} />
       </div>

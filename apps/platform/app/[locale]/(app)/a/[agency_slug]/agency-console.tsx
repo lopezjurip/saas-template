@@ -21,8 +21,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
 import type { AffiliationState } from "~/lib/agencies";
+import { useRosetta } from "~/lib/i18n.client";
 import type { AppRoute } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionUpdateAffiliateMembership } from "./actions";
@@ -122,7 +122,7 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
 
             <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-1">
-                <h1 className="text-foreground m-0 text-lg font-semibold tracking-[-0.02em]">{head.title}</h1>
+                <h1 className="text-foreground m-0 text-lg font-semibold tracking-tight">{head.title}</h1>
                 <p className="text-muted-foreground m-0 max-w-[60ch] text-xs leading-normal text-pretty">{head.desc}</p>
               </div>
               {tab === "team" ? (
@@ -205,7 +205,7 @@ function ConsoleStatStrip({ data, active, t }: { data: ConsoleData; active: numb
           <span className="text-muted-foreground truncate text-tiny font-semibold uppercase tracking-[0.04em]">
             {s.label}
           </span>
-          <span className="text-foreground text-lg font-semibold leading-tight tracking-[-0.02em] tabular-nums">
+          <span className="text-foreground text-lg font-semibold leading-tight tracking-tight tabular-nums">
             {s.value}
           </span>
           <span className="text-muted-foreground truncate text-xs">{s.sub}</span>

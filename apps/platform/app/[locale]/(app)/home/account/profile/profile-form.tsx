@@ -11,7 +11,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { gql } from "~/generated/graphql";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 const ProfileSectionUpdateNameMutation = /*#__PURE__*/ gql(`
   mutation ProfileSectionUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {

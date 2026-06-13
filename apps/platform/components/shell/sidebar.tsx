@@ -5,13 +5,13 @@ import { useStateCookie } from "@packages/react-hooks/use-state-cookie";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Home, type LucideIcon, Search, Settings, Users } from "lucide-react";
 import Link from "next/link";
-import type { MouseEvent } from "react";
+import type { ComponentProps, MouseEvent } from "react";
 import { useRef, useState } from "react";
 import { Kbd, Tip } from "~/components/shell/atoms";
 import { OrgSwitcher, type ShellOrganization, type ShellTenant } from "~/components/shell/org-switcher";
 import { ProfileMenu, type ShellViewer } from "~/components/shell/profile-menu";
 import { SettingsMenu } from "~/components/shell/settings-menu";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
 
 const SIDEBAR_COMPACT_THRESHOLD = 140;
@@ -93,6 +93,8 @@ export function Sidebar({
   activePath,
   onOpenPalette,
   initialWidth,
+  className,
+  ...props
 }: {
   locale: string;
   tenant: ShellTenant;
@@ -102,7 +104,7 @@ export function Sidebar({
   activePath: string;
   onOpenPalette: () => void;
   initialWidth?: number;
-}) {
+} & ComponentProps<"aside">) {
   const { t } = useRosetta(LOCALES);
   const { modKey } = useDeviceInfo();
   /**
@@ -150,9 +152,10 @@ export function Sidebar({
 
   return (
     <aside
+      {...props}
       ref={asideRef}
       style={{ width: visualWidth }}
-      className="border-border bg-muted/30 relative hidden h-full shrink-0 flex-col border-r md:flex"
+      className={cn("border-border bg-muted/30 relative hidden h-full shrink-0 flex-col border-r md:flex", className)}
     >
       <div className={collapsed ? "flex justify-center pt-2" : "px-2 pt-2"}>
         <OrgSwitcher

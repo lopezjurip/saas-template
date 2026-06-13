@@ -6,9 +6,8 @@ import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { debug } from "~/lib/debug";
-import { getServerLocale } from "~/lib/i18n.server";
+import { getRosetta, getServerLocale } from "~/lib/i18n.server";
 import { authedAction } from "~/lib/safe-action.server";
 
 const log = debug("app:[locale]:(app):a:[agency_slug]:actions");

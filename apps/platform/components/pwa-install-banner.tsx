@@ -1,5 +1,7 @@
 "use client";
 import { useRosetta } from "@packages/rosetta/use-rosetta";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import type { ComponentProps } from "react";
 import { useEffect, useState } from "react";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -40,14 +42,20 @@ export function usePwaInstall() {
 }
 
 /** Fixed bottom-right banner that prompts the user to install the PWA. */
-export function PwaInstallBanner() {
+export function PwaInstallBanner({ className, ...props }: ComponentProps<"div">) {
   const { prompt, install, dismiss } = usePwaInstall();
   const { t } = useRosetta(LOCALES);
 
   if (!prompt) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 shadow-lg">
+    <div
+      {...props}
+      className={cn(
+        "fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 shadow-lg",
+        className,
+      )}
+    >
       <span className="text-sm">{t("install_app")}</span>
       <button
         className="rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background"

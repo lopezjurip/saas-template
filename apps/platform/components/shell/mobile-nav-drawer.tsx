@@ -7,7 +7,7 @@ import { Scrim } from "~/components/shell/mobile-sheet";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
 import { BUILD_NAV, PICK_ACTIVE_NAV } from "~/components/shell/sidebar";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 export function MobileNavDrawer({
   open,

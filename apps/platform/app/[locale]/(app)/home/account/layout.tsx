@@ -4,7 +4,7 @@ import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AccountMobileNav, AccountSidebar } from "./_components/sidebar";
 
@@ -28,7 +28,7 @@ export default async function AccountLayout(props: LayoutProps<"/[locale]/home/a
         <span className="text-muted-foreground text-sm/normal opacity-30">|</span>
         <Link
           href={ROUTE("/[locale]/home", { locale })}
-          className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex items-center gap-1.5 rounded-md py-1 pr-2 pl-1.5 text-[12.5px] font-medium no-underline"
+          className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex items-center gap-1.5 rounded-md py-1 pr-2 pl-1.5 text-xs font-medium no-underline"
         >
           <ArrowLeft size={14} /> <span>{t("home")}</span>
         </Link>

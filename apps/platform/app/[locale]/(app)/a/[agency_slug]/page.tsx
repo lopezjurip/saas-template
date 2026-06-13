@@ -2,9 +2,8 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { AFFILIATION_STATE, IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AgencyConsole, type ConsoleData } from "./agency-console";
 

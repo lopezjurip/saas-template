@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { gql } from "~/generated/graphql";
 import { useIntlDateTimeFormat } from "~/hooks/use-intl";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 
 const MembersPendingInvitationsCancelMutation = /*#__PURE__*/ gql(`

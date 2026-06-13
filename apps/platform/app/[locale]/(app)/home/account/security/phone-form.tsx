@@ -8,7 +8,7 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { actionSendPhoneOtp, actionVerifyPhoneOtp } from "../actions";
 

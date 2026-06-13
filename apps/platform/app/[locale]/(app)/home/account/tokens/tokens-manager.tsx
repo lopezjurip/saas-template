@@ -26,7 +26,7 @@ import {
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Copy, KeyRound, Plus } from "lucide-react";
 import { useState } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 type TokenRow = {
   id: string;
@@ -119,7 +119,7 @@ export function TokensManager() {
         </span>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button type="button" variant="outline" className="h-[30px] gap-1.5 px-3 text-[12.5px]">
+            <Button type="button" variant="outline" className="h-[30px] gap-1.5 px-3 text-xs">
               <Plus size={13} strokeWidth={2} /> {t("create_token")}
             </Button>
           </DialogTrigger>
@@ -153,7 +153,7 @@ export function TokensManager() {
                         checked={scopes.includes(scope)}
                         onCheckedChange={(checked) => onToggleScope(scope, checked === true)}
                       />
-                      <span className="font-mono text-[12.5px]">{scope}</span>
+                      <span className="font-mono text-xs">{scope}</span>
                     </label>
                   ))}
                 </div>
@@ -180,9 +180,9 @@ export function TokensManager() {
           </span>
           <div className="flex flex-col gap-0.5">
             <strong className="text-sm font-medium text-foreground">{t("empty_title")}</strong>
-            <span className="text-[12.5px] text-muted-foreground">{t("empty_desc")}</span>
+            <span className="text-xs text-muted-foreground">{t("empty_desc")}</span>
           </div>
-          <Button type="button" onClick={() => setOpen(true)} className="h-[30px] gap-1.5 px-3 text-[12.5px]">
+          <Button type="button" onClick={() => setOpen(true)} className="h-[30px] gap-1.5 px-3 text-xs">
             <Plus size={13} strokeWidth={2} /> {t("create_first")}
           </Button>
         </div>
@@ -204,7 +204,7 @@ export function TokensManager() {
                 <TableRow key={tk.id} className={cn(tk.expired && "opacity-65")}>
                   <TableCell>
                     <span className="inline-flex flex-wrap items-center gap-2">
-                      <span className="inline-flex size-7 items-center justify-center rounded-[7px] bg-muted text-foreground">
+                      <span className="inline-flex size-7 items-center justify-center rounded-lg bg-muted text-foreground">
                         <KeyRound size={14} />
                       </span>
                       <span className="text-sm font-medium text-foreground">{tk.name}</span>
@@ -242,13 +242,13 @@ export function TokensManager() {
                       ))}
                     </span>
                   </TableCell>
-                  <TableCell className="text-[12.5px] text-muted-foreground">{tk.created}</TableCell>
-                  <TableCell className="text-[12.5px] text-muted-foreground">{tk.lastUsed}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{tk.created}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{tk.lastUsed}</TableCell>
                   <TableCell className="text-right">
                     <button
                       type="button"
                       onClick={() => onRevoke(tk.id)}
-                      className="inline-flex h-[30px] items-center rounded-md px-3 text-[12.5px] font-medium text-destructive hover:bg-accent"
+                      className="inline-flex h-[30px] items-center rounded-md px-3 text-xs font-medium text-destructive hover:bg-accent"
                     >
                       {t("revoke")}
                     </button>

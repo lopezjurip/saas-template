@@ -1,6 +1,5 @@
 import { SubSidebar, type SubSidebarItem } from "~/components/shell/sidebar-sub";
-import { getRosetta } from "~/hooks/get-rosetta";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 
 export default async function SettingsLayout({

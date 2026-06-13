@@ -11,7 +11,7 @@ import { ArrowRight, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { gql } from "~/generated/graphql";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { type AppRoute, ROUTE_HREF } from "~/lib/route";
 import { PERMISSION_SLUG_WILDCARD } from "../../schemas";
 

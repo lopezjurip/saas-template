@@ -4,8 +4,7 @@ import { SINGLE } from "@packages/utils/array";
 import { ArrowRight, Check, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getRosetta } from "~/hooks/get-rosetta";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 
 type AcceptState = "valid" | "loggedout" | "expired" | "claimed" | "rejected";
@@ -80,7 +79,7 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
       ) : (
         <div className={CARD}>
           <div className="flex items-center gap-3.5">
-            <span className="bg-foreground text-background inline-flex size-[52px] shrink-0 items-center justify-center rounded-[14px] text-lg font-semibold tracking-[-0.02em]">
+            <span className="bg-foreground text-background inline-flex size-13 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold tracking-tight">
               {ORG.slice(0, 2).toUpperCase()}
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
@@ -161,7 +160,7 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
 }
 
 const CARD =
-  "w-full max-w-[400px] bg-card text-card-foreground border border-border rounded-2xl shadow-[0_1px_3px_hsl(0_0%_0%/0.04),0_18px_48px_hsl(0_0%_0%/0.1)] p-6 flex flex-col gap-5";
+  "w-full max-w-[400px] bg-card text-card-foreground border border-border rounded-2xl shadow-card p-6 flex flex-col gap-5";
 
 const LOCALE_ES = {
   page_title: "Aceptar invitación",

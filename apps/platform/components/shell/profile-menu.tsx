@@ -5,8 +5,8 @@ import { Bell, ChevronsUpDown, CreditCard, KeyRound, LogOut, User } from "lucide
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Avatar, INITIALS_FROM_NAME, Tip, useClickOutside } from "~/components/shell/atoms";
-import { useRosetta } from "~/hooks/use-rosetta";
 import type { ViewerProfileUseFragmentType } from "~/hooks/use-viewer-profile";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 
 export type ShellViewer = ViewerProfileUseFragmentType & { email: string };

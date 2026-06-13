@@ -1,4 +1,4 @@
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { AuthCard } from "../../_components/auth-card";
 import { AuthHeader } from "../../_components/auth-header";
 import { StepShell } from "../_components/step-shell";

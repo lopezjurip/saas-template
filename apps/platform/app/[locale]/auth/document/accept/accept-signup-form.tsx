@@ -7,7 +7,7 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight } from "lucide-react";
 import { useState, useTransition } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ErrorSafeAction } from "~/lib/safe-action.client";
 import { OtpField } from "../../_components/otp-field";
 import { actionStartDocumentSignup, actionVerifyDocumentSignup } from "./actions";

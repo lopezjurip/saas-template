@@ -6,7 +6,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { LocaleToggle } from "~/components/locale-toggle";
 import { ThemeToggle } from "~/components/theme-toggle";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 
 export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {

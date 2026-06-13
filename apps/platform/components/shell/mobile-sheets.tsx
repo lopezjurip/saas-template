@@ -23,7 +23,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Avatar, COLOR_FROM_ID, INITIALS_FROM_NAME } from "~/components/shell/atoms";
@@ -31,8 +31,9 @@ import { Sheet } from "~/components/shell/mobile-sheet";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useMounted } from "~/hooks/use-mounted";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { useRosetta } from "~/lib/i18n.client";
 import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
 
 export function MobileOrgSheet({
@@ -169,11 +170,8 @@ export function MobileProfileSheet({
 export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; onClose: () => void; locale: string }) {
   const { t } = useRosetta(LOCALES);
   const { theme, setTheme } = useTheme();
-  const router = useRouter();
-  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
   const [_, setLocale] = useLocaleCookie();
 
   const themes = [

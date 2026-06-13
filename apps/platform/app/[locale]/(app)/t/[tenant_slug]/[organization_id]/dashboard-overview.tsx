@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import type { AppRoute } from "~/lib/route";
 
 type Period = "today" | "week" | "month";
@@ -238,7 +238,7 @@ function OverviewStatCard({ stat, label, sub }: { stat: Stat; label: string; sub
         ) : null}
       </div>
       <div>
-        <div className="text-foreground text-2xl font-semibold leading-none tracking-[-0.02em] tabular-nums">
+        <div className="text-foreground text-2xl font-semibold leading-none tracking-tight tabular-nums">
           {stat.value}
         </div>
         <div className="text-muted-foreground mt-1.5 text-xs">

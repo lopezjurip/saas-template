@@ -16,9 +16,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { Organization, WebSite, WithContext } from "schema-dts";
 import { JsonLd } from "~/components/json-ld";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { ContactBooking } from "./contact-booking";
 
@@ -216,7 +216,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:gap-x-10">
               {LOGOS.map((name) => (
                 <span key={name} className="inline-flex items-center gap-2 px-2 text-muted-foreground/85">
-                  <span aria-hidden="true" className="h-4 w-4 rounded-[3px] border-[1.5px] border-current opacity-70" />
+                  <span aria-hidden="true" className="h-4 w-4 rounded-sm border-[1.5px] border-current opacity-70" />
                   <span className="text-sm font-semibold tracking-tight">{name}</span>
                 </span>
               ))}

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePushPermission } from "~/hooks/use-push-permission";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 export function PushPermission() {
   const { permission, requestPermission } = usePushPermission();
@@ -19,7 +19,7 @@ export function PushPermission() {
       <div className="flex flex-col overflow-hidden rounded-md border bg-background">
         <div className="grid grid-cols-[1fr_auto] items-start gap-3.5 px-4 py-3.5">
           <div className="flex min-w-0 flex-col gap-[3px]">
-            <span className="text-[13.5px] font-medium text-foreground">{t("push_title")}</span>
+            <span className="text-sm font-medium text-foreground">{t("push_title")}</span>
             <span className="text-pretty text-xs leading-relaxed text-muted-foreground">
               {permission === "granted" && t("granted_desc")}
               {permission === "denied" && t("denied_desc")}

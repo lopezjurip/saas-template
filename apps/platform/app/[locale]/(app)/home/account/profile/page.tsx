@@ -1,7 +1,7 @@
 import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { ProfileAvatarControls } from "~/components/profile-avatar-controls";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { ProfileForm } from "./profile-form";
 
 export default async function AccountProfilePage(props: PageProps<"/[locale]/home/account/profile">) {
@@ -34,7 +34,7 @@ export default async function AccountProfilePage(props: PageProps<"/[locale]/hom
         <span className="text-muted-foreground text-tiny font-semibold tracking-[0.08em] uppercase">
           {t("breadcrumb")}
         </span>
-        <h1 className="text-foreground text-[22px] font-semibold tracking-[-0.02em]">{t("heading")}</h1>
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight">{t("heading")}</h1>
         <p className="text-muted-foreground text-sm/normal leading-relaxed text-pretty">{t("description")}</p>
       </header>
 
