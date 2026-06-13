@@ -1647,7 +1647,12 @@ export type Database = {
         };
       };
       viewer_conversations: {
-        Args: { include_archived?: boolean };
+        Args: {
+          include_archived?: boolean;
+          p_agency_id?: string;
+          p_organization_id?: number;
+          p_scope?: string;
+        };
         Returns: {
           agency_id: string | null;
           conversation_created_at: string;
@@ -1948,7 +1953,14 @@ export type Database = {
           isSetofReturn: true;
         };
       };
-      viewer_unread_count: { Args: never; Returns: number };
+      viewer_unread_count: {
+        Args: {
+          p_agency_id?: string;
+          p_organization_id?: number;
+          p_scope?: string;
+        };
+        Returns: number;
+      };
     };
     Enums: {
       message_channel: "in_app" | "email" | "web_push" | "whatsapp" | "sms";
