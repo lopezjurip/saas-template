@@ -4,7 +4,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Bell, ChevronsUpDown, CreditCard, KeyRound, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { Avatar, INITIALS_FROM_NAME, Tip, useClickOutside } from "~/components/shell/atoms";
+import { Avatar, INITIALS_OF, Tip, useClickOutside } from "~/components/shell/atoms";
 import type { ViewerProfileUseFragmentType } from "~/hooks/use-viewer-profile";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
@@ -18,7 +18,7 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
   useClickOutside(ref, () => setOpen(false), open);
 
   const display_name = viewer["profile_name_full"] || viewer["email"];
-  const initials = INITIALS_FROM_NAME(display_name);
+  const initials = INITIALS_OF(display_name);
   const color = "bg-fuchsia-600 text-white";
 
   const trigger = compact ? (

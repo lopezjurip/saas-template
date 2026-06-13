@@ -1,6 +1,7 @@
 import { Logo } from "@packages/ui-common/logo";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { SINGLE } from "@packages/utils/array";
+import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowRight, Check, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -80,7 +81,7 @@ export default async function AcceptInvitePage(props: PageProps<"/[locale]/home/
         <div className={CARD}>
           <div className="flex items-center gap-3.5">
             <span className="bg-foreground text-background inline-flex size-13 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold tracking-tight">
-              {ORG.slice(0, 2).toUpperCase()}
+              {INITIALS_OF(ORG)}
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">

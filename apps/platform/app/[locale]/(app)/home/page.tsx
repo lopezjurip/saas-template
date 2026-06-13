@@ -1,9 +1,11 @@
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Logo } from "@packages/ui-common/logo";
+import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowRight, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FloatingChrome } from "~/components/floating-chrome";
+import { LocaleToggle } from "~/components/locale-toggle";
+import { ThemeToggle } from "~/components/theme-toggle";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { getRosetta } from "~/lib/i18n.server";
@@ -59,15 +61,23 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
 
   return (
     <div className="relative flex min-h-svh w-full flex-col overflow-hidden bg-background">
-      <Link
-        href={ROUTE("/[locale]", { locale })}
-        aria-label="SaaS Template"
-        className="absolute top-4 left-4 z-10 inline-block transition-opacity hover:opacity-80"
-      >
-        <Logo />
-      </Link>
-      <div className="flex flex-1 items-center justify-center px-6 pt-6 pb-24">
-        <div className="flex w-full max-w-[1040px] flex-col items-center gap-7 text-center">
+      {/* Fixed top bar: logo left, locale+theme right — avoids overlap on mobile */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between px-4 py-3">
+        <Link
+          href={ROUTE("/[locale]", { locale })}
+          aria-label="SaaS Template"
+          className="pointer-events-auto inline-block shrink-0 transition-opacity hover:opacity-80"
+        >
+          <Logo />
+        </Link>
+        <div className="pointer-events-auto flex items-center gap-2">
+          <LocaleToggle />
+          <ThemeToggle />
+        </div>
+      </div>
+
+      <div className="flex flex-1 items-center justify-center px-6 pt-16 pb-24">
+        <div className="flex w-full max-w-260 flex-col items-center gap-7 text-center">
           <div className="flex flex-col gap-1.5 text-center">
             <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               {t("badge")}
@@ -77,24 +87,26 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
           </div>
 
           {obIncomplete && (
-            <div className="grid w-full max-w-[520px] grid-cols-[auto_1fr_auto] items-center gap-3 rounded-md border border-dashed bg-muted/35 px-3.5 py-3">
-              <span className="inline-flex size-7 items-center justify-center rounded-lg bg-foreground text-background">
-                <Sparkles size={13} />
-              </span>
-              <span className="flex min-w-0 flex-col gap-px text-left">
-                <span className="text-sm font-medium text-foreground">{t("onboardingTitle")}</span>
-                <span className="text-xs text-muted-foreground">
-                  {t("onboardingProgress", { done: obDone, total: obTotal })}
+            <Link
+              href={ROUTE("/[locale]/auth/onboarding", { locale })}
+              className="flex w-full max-w-130 flex-col gap-3 rounded-md border border-dashed bg-muted/35 px-3.5 py-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center"
+            >
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-foreground text-background">
+                  <Sparkles size={13} />
                 </span>
-              </span>
-              <Link
-                href={ROUTE("/[locale]/auth/onboarding", { locale })}
-                className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md border bg-background px-3 text-xs font-medium text-foreground hover:bg-accent"
-              >
+                <span className="flex min-w-0 flex-col gap-px text-left">
+                  <span className="text-sm font-medium text-foreground">{t("onboardingTitle")}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("onboardingProgress", { done: obDone, total: obTotal })}
+                  </span>
+                </span>
+              </div>
+              <span className="inline-flex h-8 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-md border bg-background px-3 text-xs font-medium text-foreground">
                 {t("onboardingCta")}
                 <ArrowRight size={13} />
-              </Link>
-            </div>
+              </span>
+            </Link>
           )}
 
           <div className="flex flex-wrap justify-center gap-[22px]">
@@ -105,19 +117,12 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
               if (!tenant_slug) return null;
               const name = organization["organization_name"];
               const hue = Math.abs(name.split("").reduce((a, c) => a + c.charCodeAt(0), 0)) % 360;
-              const initials =
-                name
-                  .split(/\s+/)
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .map((s) => s[0])
-                  .join("")
-                  .toUpperCase() || "·";
+              const initials = INITIALS_OF(name) || "·";
               return (
                 <Link
                   key={organization["organization_id"]}
                   href={ROUTE("/[locale]/t/[tenant_slug]", { locale, tenant_slug })}
-                  className="group flex w-[140px] flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
+                  className="group flex w-35 flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
                 >
                   <span
                     className="inline-flex size-28 items-center justify-center rounded-2xl border text-4xl font-semibold tracking-tight transition-shadow duration-150 group-hover:shadow-float"
@@ -136,7 +141,7 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
             })}
             <Link
               href={ROUTE("/[locale]/tenants/create", { locale })}
-              className="group flex w-[140px] flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
+              className="group flex w-35 flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
             >
               <span className="inline-flex size-28 items-center justify-center rounded-2xl border border-dashed bg-background text-muted-foreground transition-colors duration-150 group-hover:bg-muted/40 group-hover:text-foreground">
                 <Plus size={36} />
@@ -148,7 +153,6 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
         </div>
       </div>
 
-      <FloatingChrome />
       <UserMenu locale={locale} name={state.profile_name_full} email={state.email ?? user["email"] ?? ""} />
     </div>
   );

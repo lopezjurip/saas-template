@@ -3,7 +3,7 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ChevronDown, Menu, Search } from "lucide-react";
 import type { ComponentProps } from "react";
-import { Avatar, COLOR_FROM_ID, INITIALS_FROM_NAME } from "~/components/shell/atoms";
+import { Avatar, COLOR_FROM_ID, INITIALS_OF } from "~/components/shell/atoms";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
 
@@ -52,7 +52,7 @@ export function MobileTopBar({
           className="active:bg-accent flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-left"
         >
           <Avatar
-            initials={INITIALS_FROM_NAME(organization.organization_name)}
+            initials={INITIALS_OF(organization.organization_name)}
             color={COLOR_FROM_ID(organization.organization_id)}
             size="sm"
           />
@@ -84,7 +84,7 @@ export function MobileTopBar({
           className="flex h-9 w-9 items-center justify-center rounded-md"
         >
           <Avatar
-            initials={INITIALS_FROM_NAME(viewer.profile_name_full || viewer.email)}
+            initials={INITIALS_OF(viewer.profile_name_full || viewer.email)}
             color="bg-fuchsia-600 text-white"
             size="sm"
           />

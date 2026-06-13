@@ -139,7 +139,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
 
             <div className="mt-4 w-full sm:mt-8">
               <Card className="mx-auto max-w-4xl overflow-hidden text-left shadow-lg">
-                <CardContent className="grid gap-3 p-4 md:grid-cols-[1.15fr_1fr]">
+                <CardContent className="grid gap-3 p-4 md:grid-cols-2">
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-2">
                       <span className="inline-flex items-center gap-2">
@@ -282,7 +282,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
         </section>
 
         <section id="faq" className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
-          <div className="grid gap-6 lg:grid-cols-[0.85fr_1.4fr] lg:gap-10">
+          <div className="grid gap-6 lg:grid-cols-2 lg:gap-10">
             <div className="flex flex-col gap-2.5">
               <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 {t("faq.tag")}
@@ -309,7 +309,7 @@ export default async function HomePage(props: PageProps<"/[locale]">) {
 
         <section id="contact" className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
           <Card>
-            <CardContent className="grid items-start gap-8 p-6 sm:p-8 md:grid-cols-[1fr_1.05fr] md:gap-10 lg:p-10">
+            <CardContent className="grid items-start gap-8 p-6 sm:p-8 md:grid-cols-2 md:gap-10 lg:p-10">
               <div className="flex min-w-0 flex-col gap-5">
                 <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                   {t("contact.tag")}

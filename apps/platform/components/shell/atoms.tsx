@@ -26,7 +26,7 @@ export function useClickOutside<T extends HTMLElement>(
   }, [enabled, handler, ref]);
 }
 
-export function INITIALS_FROM_NAME(name: string): string {
+export function INITIALS_OF(name: string): string {
   const trimmed = name.trim();
   if (!trimmed) return "?";
   const parts = trimmed.split(/\s+/).slice(0, 2);

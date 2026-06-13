@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, ChevronsUpDown, HelpCircle, Settings as SettingsIcon, X } from "lucide-react";
 import Link from "next/link";
-import { Avatar, COLOR_FROM_ID, INITIALS_FROM_NAME } from "~/components/shell/atoms";
+import { Avatar, COLOR_FROM_ID, INITIALS_OF } from "~/components/shell/atoms";
 import { Scrim } from "~/components/shell/mobile-sheet";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
@@ -56,7 +56,7 @@ export function MobileNavDrawer({
             className="active:bg-accent -m-1 flex flex-1 items-center gap-2 rounded-md p-1"
           >
             <Avatar
-              initials={INITIALS_FROM_NAME(organization.organization_name)}
+              initials={INITIALS_OF(organization.organization_name)}
               color={COLOR_FROM_ID(organization.organization_id)}
               size="lg"
             />
@@ -126,7 +126,7 @@ export function MobileNavDrawer({
           </button>
           <div className="border-border mt-2 flex items-center gap-2 rounded-md border-t px-2 pt-3">
             <Avatar
-              initials={INITIALS_FROM_NAME(viewer.profile_name_full || viewer.email)}
+              initials={INITIALS_OF(viewer.profile_name_full || viewer.email)}
               color="bg-fuchsia-600 text-white"
               size="md"
             />
