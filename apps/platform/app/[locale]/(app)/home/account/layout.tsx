@@ -4,7 +4,7 @@ import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AccountMobileNav, AccountSidebar } from "./_components/sidebar";
 

@@ -4,9 +4,8 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Copy, Download, Mail } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 
 type InvoiceStatus = "paid" | "refunded" | "failed";
 type Invoice = { id: string; date: string; amount: string; status: InvoiceStatus };

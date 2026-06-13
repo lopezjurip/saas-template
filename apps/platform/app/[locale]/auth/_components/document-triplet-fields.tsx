@@ -10,7 +10,7 @@ import {
 } from "@packages/ui-common/shadcn/components/ui/select";
 import { RUT_FORMAT, RUT_NORMALIZE } from "@packages/utils/rut";
 import { Controller, type FieldValues, type UseFormReturn } from "react-hook-form";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { DOCUMENT_VALUE_LABEL, DOCUMENT_VALUE_PLACEHOLDER } from "./document-labels";
 
 export type DocumentTripletCountry = {

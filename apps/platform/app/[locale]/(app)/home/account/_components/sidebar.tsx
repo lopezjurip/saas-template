@@ -3,7 +3,7 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 import { ACCOUNT_SECTION_PATH, ACCOUNT_SECTIONS, type AccountGroupKey, type AccountSectionId } from "./sections";
 

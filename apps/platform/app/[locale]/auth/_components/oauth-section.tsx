@@ -3,7 +3,7 @@
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { signInWithOAuth } from "../actions";
 import { MAIN_OAUTH, MORE_OAUTH } from "../providers";
 

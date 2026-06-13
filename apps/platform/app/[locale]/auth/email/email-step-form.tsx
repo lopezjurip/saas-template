@@ -9,8 +9,8 @@ import { ArrowRight, Eye, EyeOff, Fingerprint, KeyRound, Lock, Mail } from "luci
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
-import { useRosetta } from "~/hooks/use-rosetta";
 import { notifyDevMailbox } from "~/lib/dev-mailbox-toast.client";
+import { useRosetta } from "~/lib/i18n.client";
 import { signInWithPasskey } from "~/lib/passkeys.client";
 import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 import { OtpField } from "../_components/otp-field";

@@ -1,8 +1,7 @@
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { AGENCY_WILDCARD, IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import { AgencyDirectory, type AgencyDirItem } from "./agency-directory";
 
 export async function generateMetadata(props: PageProps<"/[locale]/admin/agencies">): Promise<Metadata> {

@@ -14,7 +14,7 @@ import {
   type DocumentTripletCountry,
   DocumentTripletFields,
 } from "~/app/[locale]/auth/_components/document-triplet-fields";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { actionInviteMember } from "../actions";

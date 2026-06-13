@@ -11,7 +11,7 @@ import {
   DocumentTripletFields,
 } from "~/app/[locale]/auth/_components/document-triplet-fields";
 import { useLocaleParam } from "~/hooks/use-locale-param";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { type CheckDocumentValues, checkDocumentSchema } from "../../document/schemas";
 

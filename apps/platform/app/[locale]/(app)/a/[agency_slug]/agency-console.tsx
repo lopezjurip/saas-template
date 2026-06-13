@@ -21,8 +21,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
 import type { AffiliationState } from "~/lib/agencies";
+import { useRosetta } from "~/lib/i18n.client";
 import type { AppRoute } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionUpdateAffiliateMembership } from "./actions";

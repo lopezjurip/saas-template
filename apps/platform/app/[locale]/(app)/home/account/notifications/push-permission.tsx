@@ -1,7 +1,7 @@
 "use client";
 
 import { usePushPermission } from "~/hooks/use-push-permission";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 export function PushPermission() {
   const { permission, requestPermission } = usePushPermission();

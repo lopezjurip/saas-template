@@ -4,7 +4,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useLocaleParam } from "~/hooks/use-locale-param";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, UNSAFE_ROUTE } from "~/lib/route";
 import type { OnboardingMethodId, OnboardingState } from "../state";
 import { ObProgress } from "./ob-progress";

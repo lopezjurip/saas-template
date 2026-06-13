@@ -1,7 +1,7 @@
 import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { ProfileAvatarControls } from "~/components/profile-avatar-controls";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { ProfileForm } from "./profile-form";
 
 export default async function AccountProfilePage(props: PageProps<"/[locale]/home/account/profile">) {

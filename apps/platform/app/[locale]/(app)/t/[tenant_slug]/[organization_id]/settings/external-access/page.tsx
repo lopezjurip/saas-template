@@ -3,10 +3,9 @@ import { createServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import { ExternalAccess, type ExternalAccessAgency } from "./external-access";
 
 export async function generateMetadata(

@@ -6,9 +6,8 @@ import { BadgeCheck, Building2, Eye, Globe, Hourglass, ShieldCheck, UserPlus, X 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { AFFILIATION_STATE, type AffiliationState } from "~/lib/agencies";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 
 export async function generateMetadata(props: PageProps<"/[locale]/admin/agencies/[slug]">): Promise<Metadata> {

@@ -1,4 +1,4 @@
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { NotificationsMatrix } from "./notifications-matrix";
 import { PushPermission } from "./push-permission";
 

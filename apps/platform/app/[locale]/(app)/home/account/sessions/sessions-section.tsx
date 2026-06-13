@@ -13,7 +13,7 @@ import { useState, useTransition } from "react";
 import { UAParser } from "ua-parser-js";
 import { gql } from "~/generated/graphql";
 import { useIntlRelativeTimeFormat } from "~/hooks/use-intl";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionRevokeSession, actionSignOutOtherDevices } from "../actions";
 

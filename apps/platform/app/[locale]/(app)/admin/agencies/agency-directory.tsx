@@ -5,7 +5,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Building2, ChevronRight, Eye, Globe, LayoutGrid, List, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { type AppRoute, ROUTE } from "~/lib/route";
 
 export type AgencyDirItem = {

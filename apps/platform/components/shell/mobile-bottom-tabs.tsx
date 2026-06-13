@@ -4,7 +4,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Home, MoreHorizontal, Settings, Users } from "lucide-react";
 import type { ComponentProps } from "react";
 import { BUILD_NAV, PICK_ACTIVE_NAV } from "~/components/shell/sidebar";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import type { AppRoute } from "~/lib/route";
 
 export function MobileBottomTabs({

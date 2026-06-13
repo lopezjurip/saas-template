@@ -2,7 +2,7 @@
 
 import { Switch } from "@packages/ui-common/shadcn/components/ui/switch";
 import { useState } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 type RowKey =
   | "sysSecurity"

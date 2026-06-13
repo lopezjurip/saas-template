@@ -7,7 +7,7 @@ import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowUpRight, Building2, Check, Eye, Globe, Hourglass, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import { actionRespondInvitation } from "~/app/[locale]/a/[agency_slug]/actions";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 
 export type AffiliateOrg = {

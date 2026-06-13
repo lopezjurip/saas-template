@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useIntlDateTimeFormat } from "~/hooks/use-intl";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 /** Native Supabase passkey, as returned by `supabase.auth.passkey.list()`. */
 type Passkey = {

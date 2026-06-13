@@ -1,7 +1,7 @@
 import { Logo } from "@packages/ui-common/logo";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import Link from "next/link";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 
 /**

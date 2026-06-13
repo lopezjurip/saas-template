@@ -1,4 +1,4 @@
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { DeleteAccountDialog } from "./delete-account-dialog";
 
 export default async function DangerPage() {

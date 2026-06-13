@@ -1,22 +1,31 @@
-import { execSync } from "node:child_process";
+import os from "node:os";
 import path from "node:path";
 import { loadEnvConfig } from "@next/env";
 import type { NextConfig } from "next";
 import pkg from "~/package.json" with { type: "json" };
 
-const envDir = path.resolve(import.meta.dirname, "../..");
-console.log(`[next.config.ts] Loading environment variables from ${envDir}`);
+const NODE_ENV = process.env["NODE_ENV"] || "development";
+
+const env_dir = path.resolve(import.meta.dirname, "../..");
+console.log(`[next.config.ts] Loading environment variables from ${env_dir}`);
 /**
  * forceReload=true: Next.js already ran loadEnvConfig(process.cwd()) before evaluating this
  * config, which cached an empty result for apps/platform/. Without forceReload the second call
  * short-circuits on that cache and silently skips the monorepo-root .env files.
  */
-loadEnvConfig(envDir, (process.env.NODE_ENV ?? "development") !== "production", console, true);
+loadEnvConfig(env_dir, NODE_ENV !== "production", console, true);
 
-const NODE_ENV = process.env.NODE_ENV || "development";
-const NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const PORT = process.env.PORT || 9000;
+const NEXT_PUBLIC_SUPABASE_URL = process.env["NEXT_PUBLIC_SUPABASE_URL"];
+const PORT = process.env["PORT"] || 9000;
+/**
+ * `next dev --experimental-https` sets the `__NEXT_EXPERIMENTAL_HTTPS` env var on that worker.
+ */
+const PROTOCOL = process.env["__NEXT_EXPERIMENTAL_HTTPS"] ? "https" : "http"; // for auth passkeys in development.
 const VERSION = pkg["version"];
+
+const DEBUG = process.env["DEBUG"];
+const VERCEL_GIT_COMMIT_SHA = process.env["VERCEL_GIT_COMMIT_SHA"];
+const VERCEL_GIT_COMMIT_MESSAGE = process.env["VERCEL_GIT_COMMIT_MESSAGE"];
 
 const requiredEnvVars = [
   "NEXT_PUBLIC_SUPABASE_URL",
@@ -25,7 +34,6 @@ const requiredEnvVars = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "NEXT_PUBLIC_APEX_HOSTNAME",
 ];
-
 const missing = requiredEnvVars.filter((v) => !process.env[v]);
 if (missing.length > 0) {
   throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
@@ -39,20 +47,15 @@ if (missingOtel.length > 0) {
   );
 }
 
-const DEBUG = process.env.DEBUG;
-
-const VERCEL_GIT_COMMIT_SHA = process.env.VERCEL_GIT_COMMIT_SHA;
-const VERCEL_GIT_COMMIT_MESSAGE = process.env.VERCEL_GIT_COMMIT_MESSAGE;
-
 /**
- * You can access the server in a local network (tested in MacBook only).
- * Eg: http://lopezjurip-macbook.local:9000/
+ * Builds the local-network URL so the server is reachable from other devices on the same WiFi.
+ * Uses os.hostname() — on macOS this returns the `.local` name.
+ * @example LOCAL_HOSTNAME() // "http://lopezjurip-macbook.local:9000/"
  */
 function LOCAL_HOSTNAME(): string | null {
   try {
-    const local = execSync("scutil --get LocalHostName").toString().trim();
-    return new URL(`http://${local}.local:${PORT}/`).href;
-  } catch (_error) {
+    return new URL(`${PROTOCOL}://${os.hostname()}:${PORT}/`).href;
+  } catch {
     return null;
   }
 }
@@ -65,6 +68,7 @@ console.log("[next.config.ts] environment: %O", {
   VERSION,
   NEXT_PUBLIC_SUPABASE_URL,
   hostname: hostname,
+  localhost: `${PROTOCOL}://localhost:${PORT}`,
 });
 
 /**

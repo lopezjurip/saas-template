@@ -10,9 +10,9 @@ import {
 import { SINGLE } from "@packages/utils/array";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { getViewerOrganizations } from "~/hooks/get-viewer-organizations";
 import { getViewerTenantBySlugAssert } from "~/hooks/get-viewer-tenants";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
 export default async function TenantHomePage(props: PageProps<"/[locale]/t/[tenant_slug]">) {

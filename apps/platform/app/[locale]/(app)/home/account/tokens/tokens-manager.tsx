@@ -26,7 +26,7 @@ import {
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Copy, KeyRound, Plus } from "lucide-react";
 import { useState } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 type TokenRow = {
   id: string;

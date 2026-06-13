@@ -16,9 +16,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { Organization, WebSite, WithContext } from "schema-dts";
 import { JsonLd } from "~/components/json-ld";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { ContactBooking } from "./contact-booking";
 

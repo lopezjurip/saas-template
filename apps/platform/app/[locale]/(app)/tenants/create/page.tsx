@@ -2,7 +2,7 @@ import { Logo } from "@packages/ui-common/logo";
 import { Building2 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { CreateTenantForm } from "./create-form";
 

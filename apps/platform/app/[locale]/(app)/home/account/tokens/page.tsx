@@ -1,4 +1,4 @@
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { TokensManager } from "./tokens-manager";
 
 export default async function TokensPage() {

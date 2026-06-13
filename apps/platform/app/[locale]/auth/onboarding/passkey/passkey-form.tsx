@@ -7,7 +7,7 @@ import { Fingerprint } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { createPasskey } from "~/lib/passkeys.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 

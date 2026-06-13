@@ -5,8 +5,8 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
 import { useTransition } from "react";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
-import { useRosetta } from "~/hooks/use-rosetta";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, LOCALE_LABEL, SUPPORTED_LOCALES, type SupportedLocale } from "~/lib/i18n";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 
 /**

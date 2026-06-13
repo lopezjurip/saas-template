@@ -1,7 +1,7 @@
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { KeyRound, Mail } from "lucide-react";
 import Link from "next/link";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AuthBackLink } from "../_components/auth-back-link";
 import { AuthCard } from "../_components/auth-card";

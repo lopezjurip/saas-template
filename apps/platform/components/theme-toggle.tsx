@@ -4,8 +4,8 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import type { ComponentProps } from "react";
-import { useEffect, useState } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useMounted } from "~/hooks/use-mounted";
+import { useRosetta } from "~/lib/i18n.client";
 
 /**
  * Theme toggle component allowing users to switch between light, dark, and system themes.
@@ -14,8 +14,7 @@ import { useRosetta } from "~/hooks/use-rosetta";
 export function ThemeToggle({ className, ...props }: ComponentProps<"div">) {
   const { t } = useRosetta(LOCALES);
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
 
   const OPTIONS = [
     { value: "light", label: t("light"), Icon: Sun },

@@ -13,7 +13,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { INITIALS_OF } from "@packages/utils/string";
 import { Ban, Building2, Eye, Globe, Lock, Plus, Users } from "lucide-react";
 import { useState, useTransition } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionGrantAgencyAccess, actionRevokeAgencyAccess } from "./actions";
 

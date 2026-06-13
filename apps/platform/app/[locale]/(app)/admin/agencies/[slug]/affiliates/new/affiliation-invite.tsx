@@ -8,7 +8,7 @@ import { ArrowRight, Check, Eye, Mail, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { actionInviteAffiliate } from "~/app/[locale]/a/[agency_slug]/actions";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import type { AppRoute } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 

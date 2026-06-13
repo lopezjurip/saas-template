@@ -11,7 +11,7 @@ import { Kbd, Tip } from "~/components/shell/atoms";
 import { OrgSwitcher, type ShellOrganization, type ShellTenant } from "~/components/shell/org-switcher";
 import { ProfileMenu, type ShellViewer } from "~/components/shell/profile-menu";
 import { SettingsMenu } from "~/components/shell/settings-menu";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
 
 const SIDEBAR_COMPACT_THRESHOLD = 140;

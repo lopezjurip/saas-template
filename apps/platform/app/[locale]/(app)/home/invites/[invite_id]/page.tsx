@@ -4,8 +4,7 @@ import { SINGLE } from "@packages/utils/array";
 import { ArrowRight, Check, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getRosetta } from "~/hooks/get-rosetta";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 
 type AcceptState = "valid" | "loggedout" | "expired" | "claimed" | "rejected";

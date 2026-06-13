@@ -1,9 +1,8 @@
 import { createServerClient } from "@packages/supabase/client.server";
 import { createServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { AFFILIATION_STATE } from "~/lib/agencies";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import { type AffiliateAgency, AffiliateDashboard, type AffiliateInvitation } from "./affiliate-dashboard";
 
 export async function generateMetadata(props: PageProps<"/[locale]/affiliate">): Promise<Metadata> {

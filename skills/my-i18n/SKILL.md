@@ -8,12 +8,26 @@ description: Repository-specific @packages/rosetta, locale routing, dictionaries
 Supported app locales: `es`, `en`, `pt`. Default: `es`. Config:
 `apps/platform/lib/i18n.ts`.
 
+## API surface
+
+All i18n lives in `~/lib/i18n*` — three files, one place:
+
+| Module | Context | Key exports |
+|---|---|---|
+| `~/lib/i18n` | shared | `ROSETTA`, `LOCALE_CONFIG`, `SUPPORTED_LOCALES`, `DEFAULT_LOCALE`, `IS_SUPPORTED_LOCALE`, `LOCALE_FROM_PATH`, `SupportedLocale` |
+| `~/lib/i18n.server` | server-only | `getServerLocale`, `assertLocale`, `getRosetta`, `LOCALE_FROM_REQUEST`, `HEADER_ACCEPT_LANGUAGE_PARSE` |
+| `~/lib/i18n.client` | client-only | `useRosetta`, `useLocale`, `LocaleProvider`, `RosettaProvider` |
+
+`hooks/` only has real React hooks with state/router:
+- `~/hooks/use-locale-param` — reads locale from URL params (`useParams`)
+- `~/hooks/use-locale-cookie` — reads/sets locale cookie (`useStateCookie`, `useRouter`)
+
 ## Routing
 
 `apps/platform/proxy.ts` owns locale routing:
 
-- Missing locale -> cookie/Accept-Language/default -> redirect.
-- `/[locale]/...` sentinel -> active locale redirect.
+- Missing locale → cookie/Accept-Language/default → redirect.
+- `/[locale]/...` sentinel → active locale redirect. Also handles URL-encoded `%5Blocale%5D` and the `_` alias.
 - URL locale written to `NEXT_LOCALE` cookie before session update.
 
 Client links needing active locale use literal sentinel:
@@ -56,19 +70,22 @@ destructuring.
 Cookie locale:
 
 ```ts
-const locale = await getServerLocale();
-const r = ROSETTA(LOCALES, locale);
-throw new Error(r.t("invite_failed"));
-```
+import { getServerLocale, getRosetta } from "~/lib/i18n.server";
 
-Use `getServerLocale()` from `~/lib/i18n.server`.
+// With explicit locale (e.g. from params):
+const { t } = getRosetta(LOCALES, locale);
+
+// Without locale (reads cookie):
+const locale = await getServerLocale();
+const { t } = ROSETTA(LOCALES, locale);
+```
 
 ## Client component
 
 App layout supplies `LocaleProvider`. Use:
 
 ```ts
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 const { t } = useRosetta(LOCALES);
 ```
@@ -122,3 +139,4 @@ component render.
 - Keep dictionaries near sole consumer.
 - Use `IS_SUPPORTED_LOCALE` before trusting route locale when needed.
 - HTML `lang` uses BCP47 mapping from `LOCALE_TO_BCP47` when full tag needed.
+- `generateStaticParams` for locale-parameterized pages must include `locale`: `SUPPORTED_LOCALES.flatMap(locale => items.map(item => ({ locale, ...item })))`.

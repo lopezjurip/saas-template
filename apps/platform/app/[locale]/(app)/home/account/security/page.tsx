@@ -3,7 +3,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Check, Fingerprint, IdCard, Lock, Mail, Phone } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { UNSAFE_ROUTE } from "~/lib/route";
 import { EmailForm } from "./email-form";
 import { PasskeysList } from "./passkeys-list";

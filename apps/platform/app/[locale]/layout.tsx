@@ -7,9 +7,8 @@ import { PostHogIdentify } from "~/components/posthog-identify";
 import { PostHogProvider } from "~/components/posthog-provider";
 import { PwaRegister } from "~/components/pwa-register";
 import { ThemeProvider } from "~/components/theme-provider";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_URL } from "~/lib/constants";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import "~/styles/globals.css";
 
 export const viewport: Viewport = {

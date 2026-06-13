@@ -5,9 +5,9 @@ import { Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Avatar, COLOR_FROM_ID, INITIALS_FROM_NAME, Tip, useClickOutside } from "~/components/shell/atoms";
-import { useRosetta } from "~/hooks/use-rosetta";
 import type { ViewerOrganizationUseFragmentType } from "~/hooks/use-viewer-organizations";
 import type { ViewerTenantUseFragmentType } from "~/hooks/use-viewer-tenants";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 
 export type ShellOrganization = ViewerOrganizationUseFragmentType;

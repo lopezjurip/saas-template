@@ -1,6 +1,7 @@
 import "server-only";
 
 import { match } from "@formatjs/intl-localematcher";
+import type { RosettaDict } from "@packages/rosetta/rosetta";
 import Negotiator from "negotiator";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -10,6 +11,7 @@ import {
   IS_SUPPORTED_LOCALE,
   LOCALE_COOKIE,
   LOCALE_SUPPORTED_RESOLVE,
+  ROSETTA,
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "./i18n";
@@ -55,4 +57,21 @@ export function HEADER_ACCEPT_LANGUAGE_PARSE(header: string | null): SupportedLo
   } catch {
     return null;
   }
+}
+
+/**
+ * Resolves the `t` translator and `TError` constructor for the current server locale.
+ *
+ * @example
+ * const { t, TError } = await getRosetta({ es: { hello: "Hola" }, en: { hello: "Hello" } });
+ * t("hello"); // "Hola" | "Hello"
+ */
+export async function getRosetta<T>(dict: RosettaDict<T>, locale?: string) {
+  const requestedLocale = locale ?? (await getServerLocale());
+  const rosetta = ROSETTA(dict, requestedLocale);
+  return {
+    locale: requestedLocale,
+    t: rosetta.t,
+    TError: rosetta.TError,
+  };
 }

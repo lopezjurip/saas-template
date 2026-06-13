@@ -7,9 +7,9 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import type { WebPage, WithContext } from "schema-dts";
 import { JsonLd } from "~/components/json-ld";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { APP_URL } from "~/lib/constants";
 import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 
 type LegalLocale = "es" | "en" | "pt";
@@ -38,7 +38,7 @@ async function loadMarkdown(locale: LegalLocale, section: LegalSection): Promise
 }
 
 export function generateStaticParams() {
-  return SECTIONS.map((section) => ({ section }));
+  return SUPPORTED_LOCALES.flatMap((locale) => SECTIONS.map((section) => ({ locale, section })));
 }
 
 export async function generateMetadata(props: PageProps<"/[locale]/legal/[section]">): Promise<Metadata> {

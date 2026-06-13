@@ -3,13 +3,13 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowUpRight, ChevronDown, Globe, HelpCircle, Moon, Settings as SettingsIcon, Sun } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Tip, useClickOutside } from "~/components/shell/atoms";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useMounted } from "~/hooks/use-mounted";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { useRosetta } from "~/lib/i18n.client";
 import type { AppRoute } from "~/lib/route";
 
 export function SettingsMenu({
@@ -23,16 +23,13 @@ export function SettingsMenu({
 }) {
   const { t } = useRosetta(LOCALES);
   const { theme, resolvedTheme, setTheme } = useTheme();
-  const router = useRouter();
-  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false), open);
   const [, setLocale] = useLocaleCookie();
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
 
   const dark = mounted && (resolvedTheme ?? "light") === "dark";
 
@@ -44,32 +41,30 @@ export function SettingsMenu({
   const themeLabel = mounted ? (themeOptions.find((option) => option.value === theme)?.label ?? "") : "";
   const localeLabel = LOCALE_LABEL[locale as keyof typeof LOCALE_LABEL] ?? locale;
 
-  const trigger = compact ? (
-    <Tip label={t("trigger")} disabled={open}>
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        data-open={open}
-        className="text-foreground/80 hover:bg-accent/60 hover:text-foreground data-[open=true]:bg-accent flex h-9 w-9 items-center justify-center rounded-md transition-colors"
-      >
-        <SettingsIcon size={16} />
-      </button>
-    </Tip>
-  ) : (
-    <button
-      type="button"
-      onClick={() => setOpen((value) => !value)}
-      data-open={open}
-      className="text-foreground/80 hover:bg-accent/60 hover:text-foreground data-[open=true]:bg-accent flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors"
-    >
-      <SettingsIcon size={15} className="text-muted-foreground" />
-      <span className="flex-1">{t("trigger")}</span>
-    </button>
-  );
-
   return (
     <div className="relative" ref={ref} aria-busy={pending}>
-      {trigger}
+      {compact ? (
+        <Tip label={t("trigger")} disabled={open}>
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            data-open={open}
+            className="text-foreground/80 hover:bg-accent/60 hover:text-foreground data-[open=true]:bg-accent flex h-9 w-9 items-center justify-center rounded-md transition-colors"
+          >
+            <SettingsIcon size={16} />
+          </button>
+        </Tip>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          data-open={open}
+          className="text-foreground/80 hover:bg-accent/60 hover:text-foreground data-[open=true]:bg-accent flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors"
+        >
+          <SettingsIcon size={15} className="text-muted-foreground" />
+          <span className="flex-1">{t("trigger")}</span>
+        </button>
+      )}
       {open && (
         <div
           className={cn(

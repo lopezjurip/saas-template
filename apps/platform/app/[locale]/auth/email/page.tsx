@@ -1,6 +1,6 @@
 import { SINGLE } from "@packages/utils/array";
 import { redirect } from "next/navigation";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { AuthBackLink } from "../_components/auth-back-link";
 import { AuthCard } from "../_components/auth-card";
 import { AuthHeader } from "../_components/auth-header";

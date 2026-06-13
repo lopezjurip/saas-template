@@ -1,8 +1,8 @@
 import { getSupabaseServerSession } from "@packages/supabase/client.server";
 import { SUPABASE_JWT_DECODE_PAYLOAD } from "@packages/supabase/jwt";
 import { gql } from "~/generated/graphql";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { SessionsSection, type SessionsSectionSessionFragmentType } from "./sessions-section";
 
 const SessionsSectionPageQuery = gql(`

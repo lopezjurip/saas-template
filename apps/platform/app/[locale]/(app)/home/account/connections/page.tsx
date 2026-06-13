@@ -3,7 +3,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { SINGLE } from "@packages/utils/array";
 import { redirect } from "next/navigation";
 import { OAUTH_PROVIDERS } from "~/app/[locale]/auth/providers";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { actionLinkProvider } from "../actions";
 
 /**
