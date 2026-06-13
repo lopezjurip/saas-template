@@ -10,7 +10,7 @@ import { ArrowRight, IdCard } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { ErrorSafeAction } from "~/lib/safe-action.client";
 import { OtpField } from "../_components/otp-field";

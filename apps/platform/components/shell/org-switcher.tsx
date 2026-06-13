@@ -4,10 +4,10 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { Avatar, COLOR_FROM_ID, INITIALS_FROM_NAME, Tip, useClickOutside } from "~/components/shell/atoms";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { Avatar, COLOR_FROM_ID, INITIALS_OF, Tip, useClickOutside } from "~/components/shell/atoms";
 import type { ViewerOrganizationUseFragmentType } from "~/hooks/use-viewer-organizations";
 import type { ViewerTenantUseFragmentType } from "~/hooks/use-viewer-tenants";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 
 export type ShellOrganization = ViewerOrganizationUseFragmentType;
@@ -32,7 +32,7 @@ export function OrgSwitcher({
   useClickOutside(ref, () => setOpen(false), open);
 
   const color = COLOR_FROM_ID(current["organization_id"]);
-  const initials = INITIALS_FROM_NAME(current["organization_name"]);
+  const initials = INITIALS_OF(current["organization_name"]);
 
   const trigger = compact ? (
     <Tip label={`${current["organization_name"]} · ${tenant["tenant_name"]}`} disabled={open}>
@@ -89,7 +89,7 @@ export function OrgSwitcher({
                   className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
                 >
                   <Avatar
-                    initials={INITIALS_FROM_NAME(organization["organization_name"])}
+                    initials={INITIALS_OF(organization["organization_name"])}
                     color={COLOR_FROM_ID(organization["organization_id"])}
                     size="sm"
                   />

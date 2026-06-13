@@ -23,16 +23,17 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { Avatar, COLOR_FROM_ID, INITIALS_FROM_NAME } from "~/components/shell/atoms";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { Avatar, COLOR_FROM_ID, INITIALS_OF } from "~/components/shell/atoms";
 import { Sheet } from "~/components/shell/mobile-sheet";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useMounted } from "~/hooks/use-mounted";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { useRosetta } from "~/lib/i18n.client";
 import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
 
 export function MobileOrgSheet({
@@ -66,7 +67,7 @@ export function MobileOrgSheet({
             className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left"
           >
             <Avatar
-              initials={INITIALS_FROM_NAME(organization["organization_name"])}
+              initials={INITIALS_OF(organization["organization_name"])}
               color={COLOR_FROM_ID(organization["organization_id"])}
               size="md"
             />
@@ -129,7 +130,7 @@ export function MobileProfileSheet({
     <Sheet open={open} onClose={onClose}>
       <div className="border-border flex items-center gap-3 border-b px-4 pb-3">
         <Avatar
-          initials={INITIALS_FROM_NAME(viewer["profile_name_full"] || viewer["email"])}
+          initials={INITIALS_OF(viewer["profile_name_full"] || viewer["email"])}
           color="bg-fuchsia-600 text-white"
           size="lg"
         />
@@ -169,11 +170,8 @@ export function MobileProfileSheet({
 export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; onClose: () => void; locale: string }) {
   const { t } = useRosetta(LOCALES);
   const { theme, setTheme } = useTheme();
-  const router = useRouter();
-  const pathname = usePathname();
   const [pending, startTransition] = useTransition();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
   const [_, setLocale] = useLocaleCookie();
 
   const themes = [
@@ -307,75 +305,67 @@ export function MobileSearchSheet({
     return () => clearTimeout(timeout);
   }, [open]);
 
-  const groups = useMemo<SearchGroup[]>(
-    () => [
-      {
-        heading: t("navigate"),
-        items: [
-          {
-            id: "go-home",
-            label: t("navHome"),
-            Icon: Home,
-            href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
-              locale,
-              tenant_slug: tenant["tenant_slug"],
-              organization_id: current["organization_id"],
-            }),
-          },
-          {
-            id: "go-members",
-            label: t("navMembers"),
-            Icon: Users,
-            href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
-              locale,
-              tenant_slug: tenant["tenant_slug"],
-              organization_id: current["organization_id"],
-            }),
-          },
-          {
-            id: "go-settings",
-            label: t("navSettings"),
-            Icon: SettingsIcon,
-            href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
-              locale,
-              tenant_slug: tenant["tenant_slug"],
-              organization_id: current["organization_id"],
-            }),
-          },
-        ],
-      },
-      {
-        heading: t("switchOrg"),
-        items: organizations.map((organization) => ({
-          id: `org-${organization["organization_id"]}`,
-          label: organization["organization_name"],
-          hint:
-            organization["organization_id"] === current["organization_id"]
-              ? t("current")
-              : (tenant["tenant_tier"] ?? ""),
-          orgInitials: INITIALS_FROM_NAME(organization["organization_name"]),
-          orgColor: COLOR_FROM_ID(organization["organization_id"]),
+  const groups = [
+    {
+      heading: t("navigate"),
+      items: [
+        {
+          id: "go-home",
+          label: t("navHome"),
+          Icon: Home,
           href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
             locale,
             tenant_slug: tenant["tenant_slug"],
-            organization_id: organization["organization_id"],
+            organization_id: current["organization_id"],
           }),
-        })),
-      },
-    ],
-    [locale, tenant, organizations, current, t],
-  );
+        },
+        {
+          id: "go-members",
+          label: t("navMembers"),
+          Icon: Users,
+          href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
+            locale,
+            tenant_slug: tenant["tenant_slug"],
+            organization_id: current["organization_id"],
+          }),
+        },
+        {
+          id: "go-settings",
+          label: t("navSettings"),
+          Icon: SettingsIcon,
+          href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
+            locale,
+            tenant_slug: tenant["tenant_slug"],
+            organization_id: current["organization_id"],
+          }),
+        },
+      ],
+    },
+    {
+      heading: t("switchOrg"),
+      items: organizations.map((organization) => ({
+        id: `org-${organization["organization_id"]}`,
+        label: organization["organization_name"],
+        hint:
+          organization["organization_id"] === current["organization_id"] ? t("current") : (tenant["tenant_tier"] ?? ""),
+        orgInitials: INITIALS_OF(organization["organization_name"]),
+        orgColor: COLOR_FROM_ID(organization["organization_id"]),
+        href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+          locale,
+          tenant_slug: tenant["tenant_slug"],
+          organization_id: organization["organization_id"],
+        }),
+      })),
+    },
+  ];
 
-  const filtered = useMemo<SearchGroup[]>(() => {
-    const query = q.trim().toLowerCase();
-    if (!query) return groups;
-    const out: SearchGroup[] = [];
-    for (const group of groups) {
-      const items = group.items.filter((item) => `${item.label} ${item.hint ?? ""}`.toLowerCase().includes(query));
-      if (items.length) out.push({ ...group, items });
-    }
-    return out;
-  }, [groups, q]);
+  const query = q.trim().toLowerCase();
+  const filtered: SearchGroup[] = !query
+    ? groups
+    : groups.flatMap((group) => {
+        const items = group.items.filter((item) => `${item.label} ${item.hint ?? ""}`.toLowerCase().includes(query));
+        return items.length ? [{ ...group, items }] : [];
+      });
 
   function goTo(item: SearchItem) {
     onClose();

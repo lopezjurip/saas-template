@@ -3,15 +3,13 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Check, Star, X } from "lucide-react";
 import Link from "next/link";
-import { useLocaleParam } from "~/hooks/use-locale-param";
-import { useRosetta } from "~/hooks/use-rosetta";
 import { AUTH_TWEAKS } from "~/lib/auth-tweaks";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 import { METHOD_ORDER, ONBOARDING_METHOD_PATH, type OnboardingMethodId, type OnboardingState } from "../state";
 import { METHOD_CATALOG } from "./method-catalog";
 
 export function ObChips({ methods, current }: { methods: OnboardingState["methods"]; current?: OnboardingMethodId }) {
-  const locale = useLocaleParam();
   const { t } = useRosetta(LOCALES);
   const methodLabels = t("methods") as typeof LOCALE_ES.methods;
 
@@ -25,7 +23,7 @@ export function ObChips({ methods, current }: { methods: OnboardingState["method
         return (
           <Link
             key={id}
-            href={ROUTE(ONBOARDING_METHOD_PATH(id), { locale })}
+            href={ROUTE(ONBOARDING_METHOD_PATH(id))}
             className={cn(
               "inline-flex h-7 items-center gap-1.5 rounded-full border bg-background pl-1.5 pr-2.5 text-xs font-medium text-muted-foreground no-underline transition-colors hover:bg-accent hover:text-foreground",
               status === "done" &&

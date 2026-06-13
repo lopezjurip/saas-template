@@ -3,7 +3,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { SINGLE } from "@packages/utils/array";
 import { redirect } from "next/navigation";
 import { OAUTH_PROVIDERS } from "~/app/[locale]/auth/providers";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { actionLinkProvider } from "../actions";
 
 /**
@@ -29,7 +29,7 @@ export default async function ConnectionsPage(props: PageProps<"/[locale]/home/a
         <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {t("breadcrumb")}
         </span>
-        <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-foreground">{t("heading")}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("heading")}</h1>
         <p className="text-pretty text-sm/normal leading-normal text-muted-foreground">{t("description")}</p>
       </header>
 
@@ -51,7 +51,7 @@ export default async function ConnectionsPage(props: PageProps<"/[locale]/home/a
               className="grid grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border bg-background px-3.5 py-3"
               data-connected={isLinked ? "true" : "false"}
             >
-              <span className="inline-flex size-9 items-center justify-center rounded-[9px] border bg-background text-foreground">
+              <span className="inline-flex size-9 items-center justify-center rounded-lg border bg-background text-foreground">
                 <Mark size={20} />
               </span>
               <div className="flex min-w-0 flex-col gap-0.5">
@@ -77,13 +77,13 @@ export default async function ConnectionsPage(props: PageProps<"/[locale]/home/a
               </div>
               <div className="inline-flex gap-1.5">
                 {isLinked ? (
-                  <span className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-[12.5px] font-medium text-muted-foreground opacity-60">
+                  <span className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-xs font-medium text-muted-foreground opacity-60">
                     {t("unlink_soon")}
                   </span>
                 ) : (
                   <form action={actionLinkProvider}>
                     <input type="hidden" name="provider" value={p.id} />
-                    <Button type="submit" variant="outline" className="h-8 text-[12.5px]">
+                    <Button type="submit" variant="outline" className="h-8 text-xs">
                       {t("link")}
                     </Button>
                   </form>

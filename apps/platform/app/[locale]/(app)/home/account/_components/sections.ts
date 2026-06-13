@@ -7,27 +7,19 @@
  * translated strings — sidebar.tsx owns all translations for this nav surface.
  */
 
-import { Bell, Globe, Key, Monitor, ShieldCheck, Trash2, User } from "lucide-react";
+import { Bell, Globe, Monitor, ShieldCheck, Trash2, User } from "lucide-react";
 import type { ComponentType } from "react";
 import { ROUTE_PATH } from "~/lib/route";
 
-export type AccountSectionId =
-  | "profile"
-  | "security"
-  | "connections"
-  | "sessions"
-  | "tokens"
-  | "notifications"
-  | "danger";
+export type AccountSectionId = "profile" | "security" | "connections" | "sessions" | "notifications" | "danger";
 
-export type AccountGroupKey = "account" | "security_group" | "development" | "danger_zone" | "preferences";
+export type AccountGroupKey = "account" | "security_group" | "danger_zone" | "preferences";
 
 export type AccountLabelKey =
   | "nav_profile"
   | "nav_security"
   | "nav_connections"
   | "nav_sessions"
-  | "nav_tokens"
   | "nav_notifications"
   | "nav_danger";
 
@@ -45,7 +37,6 @@ export const ACCOUNT_SECTIONS: readonly AccountSection[] = [
   { id: "security", labelKey: "nav_security", groupKey: "account", Icon: ShieldCheck },
   { id: "connections", labelKey: "nav_connections", groupKey: "account", Icon: Globe, todo: true },
   { id: "sessions", labelKey: "nav_sessions", groupKey: "security_group", Icon: Monitor },
-  { id: "tokens", labelKey: "nav_tokens", groupKey: "development", Icon: Key, todo: true },
   { id: "notifications", labelKey: "nav_notifications", groupKey: "preferences", Icon: Bell, todo: true },
   { id: "danger", labelKey: "nav_danger", groupKey: "danger_zone", Icon: Trash2, danger: true, todo: true },
 ];
@@ -55,7 +46,6 @@ const ACCOUNT_SECTION_PATHS = {
   security: ROUTE_PATH("/[locale]/home/account/security"),
   connections: ROUTE_PATH("/[locale]/home/account/connections"),
   sessions: ROUTE_PATH("/[locale]/home/account/sessions"),
-  tokens: ROUTE_PATH("/[locale]/home/account/tokens"),
   notifications: ROUTE_PATH("/[locale]/home/account/notifications"),
   danger: ROUTE_PATH("/[locale]/home/account/danger"),
 } as const satisfies Record<AccountSectionId, string>;

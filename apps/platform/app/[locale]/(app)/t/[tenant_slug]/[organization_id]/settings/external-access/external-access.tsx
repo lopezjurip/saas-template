@@ -13,7 +13,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { INITIALS_OF } from "@packages/utils/string";
 import { Ban, Building2, Eye, Globe, Lock, Plus, Users } from "lucide-react";
 import { useState, useTransition } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionGrantAgencyAccess, actionRevokeAgencyAccess } from "./actions";
 
@@ -62,7 +62,7 @@ export function ExternalAccess({
         <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
           {organizationName} · {t("eyebrow")}
         </span>
-        <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("title")}</h1>
+        <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">
           {t("subtitle", { org: organizationName })}
         </p>

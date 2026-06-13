@@ -10,7 +10,7 @@ import {
 } from "@packages/ui-common/shadcn/components/ui/select";
 import { RUT_FORMAT, RUT_NORMALIZE } from "@packages/utils/rut";
 import { Controller, type FieldValues, type UseFormReturn } from "react-hook-form";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { DOCUMENT_VALUE_LABEL, DOCUMENT_VALUE_PLACEHOLDER } from "./document-labels";
 
 export type DocumentTripletCountry = {
@@ -78,12 +78,19 @@ export function DocumentTripletFields<TFormValues extends FieldValues>({
           function onChangeHandler(e: React.ChangeEvent<HTMLInputElement>) {
             const raw = e.target.value;
             if (isClNin) {
-              const normalized = RUT_NORMALIZE(raw);
-              const formatted = normalized.length > 1 ? RUT_FORMAT(normalized) : normalized;
-              field.onChange(formatted);
+              field.onChange(RUT_NORMALIZE(raw));
             } else {
               field.onChange(raw);
             }
+          }
+          function onBlurHandler() {
+            if (isClNin) {
+              const normalized = field.value as string;
+              if (normalized && normalized.length > 1) {
+                field.onChange(RUT_FORMAT(normalized));
+              }
+            }
+            field.onBlur();
           }
           return (
             <div className="flex flex-col gap-1.5">
@@ -112,7 +119,7 @@ export function DocumentTripletFields<TFormValues extends FieldValues>({
                   placeholder={valuePlaceholder}
                   autoComplete="off"
                   value={(field.value as string | undefined) ?? ""}
-                  onBlur={field.onBlur}
+                  onBlur={onBlurHandler}
                   ref={field.ref as React.Ref<HTMLInputElement>}
                   onChange={onChangeHandler}
                   aria-invalid={!!fieldState.error}

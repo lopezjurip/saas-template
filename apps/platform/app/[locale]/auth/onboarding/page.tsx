@@ -2,8 +2,8 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Check, Star } from "lucide-react";
 import Link from "next/link";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { AUTH_TWEAKS } from "~/lib/auth-tweaks";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 import { METHOD_CATALOG } from "./_components/method-catalog";
@@ -57,7 +57,7 @@ export default async function OnboardingHubPage(props: PageProps<"/[locale]/auth
           <div className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             {t("eyebrow")}
           </div>
-          <h1 className="m-0 text-[22px] font-semibold tracking-[-0.02em] text-foreground">
+          <h1 className="m-0 text-2xl font-semibold tracking-tight text-foreground">
             {firstName ? t("heading_with_name", { name: firstName }) : t("heading")}
           </h1>
           <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">
@@ -81,7 +81,7 @@ export default async function OnboardingHubPage(props: PageProps<"/[locale]/auth
                 className={cn(
                   "grid w-full grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border bg-background px-3.5 py-3 text-left text-foreground no-underline transition-colors hover:bg-accent",
                   isRecommended && "border-foreground/50",
-                  isDone && "border-solid bg-muted/35",
+                  isDone && "border-border/50 bg-transparent opacity-60 hover:opacity-100",
                   isSkipped && "border-dashed",
                 )}
                 data-status={status}
@@ -89,7 +89,7 @@ export default async function OnboardingHubPage(props: PageProps<"/[locale]/auth
               >
                 <span
                   className={cn(
-                    "inline-flex size-9 items-center justify-center rounded-[9px] bg-muted text-foreground",
+                    "inline-flex size-9 items-center justify-center rounded-lg bg-muted text-foreground",
                     (isDone || isRecommended) && "bg-foreground text-background",
                   )}
                 >
@@ -101,25 +101,23 @@ export default async function OnboardingHubPage(props: PageProps<"/[locale]/auth
                       {methods[id].label}
                     </span>
                     {isRecommended && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-[5px] py-px text-tiny font-semibold uppercase tracking-[0.02em] text-background">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-1.25 py-px text-tiny font-semibold uppercase tracking-[0.02em] text-background">
                         <Star size={9} /> {t("badge_recommended")}
                       </span>
                     )}
                     {isDone && (
-                      <span className="inline-flex items-center gap-1 rounded-full border px-[5px] py-px text-tiny font-semibold uppercase tracking-[0.02em] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full border px-1.25 py-px text-tiny font-semibold uppercase tracking-[0.02em] text-muted-foreground">
                         <Check size={10} /> {t("badge_done")}
                       </span>
                     )}
                     {isSkipped && <span className="text-xs text-muted-foreground">{t("badge_skipped")}</span>}
                   </span>
-                  <span className="text-[12.5px] leading-[1.45] text-muted-foreground text-pretty">
-                    {methods[id].desc}
-                  </span>
+                  <span className="text-xs leading-[1.45] text-muted-foreground text-pretty">{methods[id].desc}</span>
                 </span>
                 <span className="inline-flex items-center justify-end self-center">
                   <span
                     className={cn(
-                      "inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-muted px-2.5 py-1.5 text-[12.5px] font-medium text-foreground",
+                      "inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-muted px-2.5 py-1.5 text-xs font-medium text-foreground",
                       isDone && "bg-transparent text-muted-foreground",
                     )}
                   >
@@ -136,7 +134,7 @@ export default async function OnboardingHubPage(props: PageProps<"/[locale]/auth
           <Button
             type="submit"
             variant="outline"
-            className="h-11 w-full text-[13.5px] text-muted-foreground hover:text-foreground"
+            className="h-11 w-full text-sm text-muted-foreground hover:text-foreground"
           >
             <span>{done > 0 ? t("cta_continue") : t("cta_skip_all")}</span>
             <ArrowRight size={15} />

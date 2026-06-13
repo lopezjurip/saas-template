@@ -15,7 +15,7 @@ import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { Lock, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 export function DeleteAccountDialog() {
   const { t } = useRosetta(LOCALES);
@@ -40,7 +40,7 @@ export function DeleteAccountDialog() {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="inline-flex h-[30px] items-center gap-1.5 rounded-md border border-destructive/45 bg-background px-3 text-[12.5px] font-medium text-destructive hover:bg-destructive/6 dark:border-[hsl(0_70%_50%/0.5)] dark:text-[hsl(0_70%_70%)]"
+          className="inline-flex h-[30px] items-center gap-1.5 rounded-md border border-destructive/45 bg-background px-3 text-xs font-medium text-destructive hover:bg-destructive/6 dark:border-[hsl(0_70%_50%/0.5)] dark:text-[hsl(0_70%_70%)]"
         >
           <Trash2 size={14} /> {t("trigger_label")}
         </button>
@@ -48,12 +48,12 @@ export function DeleteAccountDialog() {
       <DialogContent>
         <DialogHeader>
           <div className="grid grid-cols-[36px_1fr] items-center gap-3">
-            <span className="inline-flex size-9 items-center justify-center rounded-[10px] bg-destructive/15 text-destructive dark:bg-[hsl(0_70%_40%/0.2)] dark:text-[hsl(0_70%_70%)]">
+            <span className="inline-flex size-9 items-center justify-center rounded-xl bg-destructive/15 text-destructive dark:bg-[hsl(0_70%_40%/0.2)] dark:text-[hsl(0_70%_70%)]">
               <Trash2 size={18} />
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
-              <DialogTitle className="text-[15px]">{t("dialog_title")}</DialogTitle>
-              <DialogDescription className="text-[12.5px]">
+              <DialogTitle className="text-base">{t("dialog_title")}</DialogTitle>
+              <DialogDescription className="text-xs">
                 {t("dialog_description_prefix")}{" "}
                 <code className="rounded bg-muted px-1 py-px font-mono text-xs text-foreground">{confirmWord}</code>{" "}
                 {t("dialog_description_suffix")}

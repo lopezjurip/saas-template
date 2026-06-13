@@ -7,7 +7,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { RUT_FORMAT } from "@packages/utils/rut";
 import { ArrowRight, IdCard, Mail, Phone, Search } from "lucide-react";
 import { useState } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { actionContinueAuth } from "../actions";
 
 type LocalKind = "email" | "phone" | "document";

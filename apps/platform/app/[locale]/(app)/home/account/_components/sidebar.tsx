@@ -3,7 +3,7 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 import { ACCOUNT_SECTION_PATH, ACCOUNT_SECTIONS, type AccountGroupKey, type AccountSectionId } from "./sections";
 
@@ -89,13 +89,11 @@ const LOCALE_ES = {
   nav_security: "Inicio de sesión",
   nav_connections: "Conexiones",
   nav_sessions: "Dispositivos",
-  nav_tokens: "Tokens de API",
   nav_notifications: "Notificaciones",
   nav_danger: "Eliminar cuenta",
   // group names
   account: "Cuenta",
   security_group: "Seguridad",
-  development: "Desarrollo",
   preferences: "Preferencias",
   danger_zone: "Zona de riesgo",
 };
@@ -105,12 +103,10 @@ const LOCALE_EN: typeof LOCALE_ES = {
   nav_security: "Sign in",
   nav_connections: "Connections",
   nav_sessions: "Devices",
-  nav_tokens: "API Tokens",
   nav_notifications: "Notifications",
   nav_danger: "Delete account",
   account: "Account",
   security_group: "Security",
-  development: "Development",
   preferences: "Preferences",
   danger_zone: "Danger zone",
 };
@@ -120,12 +116,10 @@ const LOCALE_PT: typeof LOCALE_ES = {
   nav_security: "Entrar",
   nav_connections: "Conexões",
   nav_sessions: "Dispositivos",
-  nav_tokens: "Tokens de API",
   nav_notifications: "Notificações",
   nav_danger: "Excluir conta",
   account: "Conta",
   security_group: "Segurança",
-  development: "Desenvolvimento",
   preferences: "Preferências",
   danger_zone: "Zona de risco",
 };

@@ -8,7 +8,7 @@ import { SLUGIFY } from "@packages/utils/slug";
 import { ArrowRight, Briefcase, Building2, Check, Eye, Plus, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
 import { actionCreateAgency } from "./actions";
@@ -74,7 +74,7 @@ export function AgencyCreate({ locale }: { locale: string }) {
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
             {t("eyebrow")}
           </span>
-          <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("title")}</h1>
+          <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">{t("subtitle")}</p>
         </header>
 

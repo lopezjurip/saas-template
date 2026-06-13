@@ -3,8 +3,7 @@
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useLocaleParam } from "~/hooks/use-locale-param";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, UNSAFE_ROUTE } from "~/lib/route";
 import type { OnboardingMethodId, OnboardingState } from "../state";
 import { ObProgress } from "./ob-progress";
@@ -25,8 +24,7 @@ export function StepShell({
   skipHref?: string;
 }) {
   const { t } = useRosetta(LOCALES);
-  const locale = useLocaleParam();
-  const hubHref = ROUTE("/[locale]/auth/onboarding", { locale });
+  const hubHref = ROUTE("/[locale]/auth/onboarding");
 
   return (
     <div className="flex flex-col gap-4.5">
@@ -42,7 +40,7 @@ export function StepShell({
       <ObProgress methods={methods} current={current} dense />
 
       <div className="flex flex-col gap-1">
-        <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">{title}</h1>
+        <h1 className="m-0 text-xl/normal font-semibold tracking-tight text-foreground">{title}</h1>
         {subtitle && <p className="m-0 text-sm leading-normal text-muted-foreground text-pretty">{subtitle}</p>}
       </div>
 
@@ -51,7 +49,7 @@ export function StepShell({
       <Button
         asChild
         variant="outline"
-        className="mt-1 h-[44px] w-full text-[13.5px] text-muted-foreground hover:text-foreground"
+        className="mt-1 h-11 w-full text-sm text-muted-foreground hover:text-foreground"
       >
         <Link href={skipHref ? UNSAFE_ROUTE(skipHref) : hubHref}>
           <span>{t("skip")}</span>

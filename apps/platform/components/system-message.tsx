@@ -2,7 +2,9 @@
 
 import { Logo } from "@packages/ui-common/logo";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { type LucideIcon, RotateCcw, Search, TriangleAlert, Wrench } from "lucide-react";
+import type { ComponentProps } from "react";
 import { useLocaleParam } from "~/hooks/use-locale-param";
 
 type SystemKind = "notFound" | "error" | "maintenance";
@@ -15,15 +17,21 @@ const DEFS: Record<SystemKind, SystemDef> = /*#__PURE__*/ {
   maintenance: { code: "503", Icon: Wrench },
 };
 
-export function SystemMessage({ kind = "notFound", reset }: { kind?: SystemKind; reset?: () => void }) {
+export function SystemMessage({
+  kind = "notFound",
+  reset,
+  className,
+  ...props
+}: { kind?: SystemKind; reset?: () => void } & ComponentProps<"div">) {
   const locale = useLocaleParam();
   const { code, Icon } = DEFS[kind];
   const copy = RESOLVE_COPY(locale)[kind];
-  const homeHref = `/${locale}`;
+  const homeHref = "/[locale]";
 
   return (
     <div
-      className="font-sans relative flex min-h-svh w-full items-center justify-center px-5 py-10"
+      {...props}
+      className={cn("font-sans relative flex min-h-svh w-full items-center justify-center px-5 py-10", className)}
       style={{
         background:
           "radial-gradient(ellipse at top, hsl(var(--muted) / 0.55), transparent 60%), hsl(var(--background))",
@@ -37,14 +45,14 @@ export function SystemMessage({ kind = "notFound", reset }: { kind?: SystemKind;
             {code}
           </span>
           <span className="absolute inset-0 inline-flex items-center justify-center">
-            <span className="bg-background border-border text-foreground inline-flex size-12 items-center justify-center rounded-2xl border shadow-[0_1px_3px_hsl(0_0%_0%/0.06)]">
+            <span className="bg-background border-border text-foreground inline-flex size-12 items-center justify-center rounded-2xl border shadow-subtle">
               <Icon size={22} />
             </span>
           </span>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em] text-balance">{copy.title}</h1>
+          <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight text-balance">{copy.title}</h1>
           <p className="text-muted-foreground m-0 text-sm leading-[1.55] text-pretty">{copy.desc}</p>
         </div>
 

@@ -2,7 +2,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { SINGLE } from "@packages/utils/array";
 import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 
@@ -31,7 +31,7 @@ export default async function AuthErrorPage(props: PageProps<"/[locale]/auth/err
           <TriangleAlert size={22} />
         </span>
         <div className="flex flex-col gap-1.5">
-          <h1 className="m-0 text-xl/normal font-semibold tracking-[-0.02em] text-foreground">{t("heading")}</h1>
+          <h1 className="m-0 text-xl/normal font-semibold tracking-tight text-foreground">{t("heading")}</h1>
           <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{message}</p>
         </div>
         <Button asChild className="h-10 w-full">

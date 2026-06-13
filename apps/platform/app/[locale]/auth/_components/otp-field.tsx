@@ -2,7 +2,7 @@
 
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 /**
  * Shared 6-digit code field for every OTP "sent" step (email, phone, document, accept).

@@ -161,7 +161,7 @@ export function PricingClient() {
         </div>
       </section>
 
-      <section className="mt-20 grid gap-8 lg:grid-cols-[0.8fr_1.4fr]">
+      <section className="mt-20 grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col gap-2">
           <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("faqTitle")}</h2>
           <p className="text-sm text-muted-foreground">{t("faqSubtitle")}</p>

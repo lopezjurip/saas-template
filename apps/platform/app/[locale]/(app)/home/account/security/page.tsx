@@ -1,48 +1,23 @@
-import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Check, Fingerprint, IdCard, Lock, Mail, Phone } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { gql } from "~/generated/graphql";
-import { getRosetta } from "~/hooks/get-rosetta";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { UNSAFE_ROUTE } from "~/lib/route";
 import { EmailForm } from "./email-form";
 import { PasskeysList } from "./passkeys-list";
 import { PasswordForm } from "./password-form";
 import { PhoneForm } from "./phone-form";
 
-const SecuritySectionPageQuery = gql(`
-  query SecuritySectionPageQuery {
-    profile: viewer_profile {
-      profile_id
-      profile_webauthn_credentialsCollection(
-        orderBy: [{ webauthn_credential_created_at: DescNullsLast }]
-      ) {
-        edges {
-          node {
-            webauthn_credential_id
-            webauthn_credential_friendly_name
-            webauthn_credential_device_type
-            webauthn_credential_backup_state
-            webauthn_credential_created_at
-            webauthn_credential_last_used_at
-          }
-        }
-      }
-    }
-  }
-`);
-
 export default async function SecurityPage(props: PageProps<"/[locale]/home/account/security">) {
   const { locale } = await props.params;
   const user = await getSupabaseServerUser();
   if (!user) redirect("/[locale]/auth");
 
-  const graphy = await getGraphySession();
-  const { data } = await graphy.query({ query: SecuritySectionPageQuery });
-  const passkeys =
-    data?.["profile"]?.["profile_webauthn_credentialsCollection"]?.["edges"]?.map((e) => e["node"]) ?? [];
+  const supabase = await createServerClient();
+  const { data: passkeyData } = await supabase.auth.passkey.list();
+  const passkeys = passkeyData ?? [];
 
   const identities = user["identities"] ?? [];
   const hasPassword = identities.some((i) => i["provider"] === "email");
@@ -58,7 +33,7 @@ export default async function SecurityPage(props: PageProps<"/[locale]/home/acco
         <span className="text-muted-foreground text-tiny font-semibold tracking-[0.08em] uppercase">
           {t("breadcrumb")}
         </span>
-        <h1 className="text-foreground text-[22px] font-semibold tracking-[-0.02em]">{t("heading")}</h1>
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight">{t("heading")}</h1>
         <p className="text-muted-foreground text-sm/normal leading-relaxed text-pretty">{t("description")}</p>
       </header>
 
@@ -165,7 +140,7 @@ function SecurityCard({
       <div className="grid w-full grid-cols-[36px_1fr_auto] items-center gap-3">
         <span
           className={cn(
-            "inline-flex size-9 items-center justify-center rounded-[9px]",
+            "inline-flex size-9 items-center justify-center rounded-lg",
             done ? "bg-foreground text-background" : "bg-muted text-foreground",
           )}
         >
@@ -182,18 +157,18 @@ function SecurityCard({
               </span>
             )}
           </span>
-          <span className="text-muted-foreground text-[12.5px] leading-snug text-pretty">{desc}</span>
+          <span className="text-muted-foreground text-xs leading-snug text-pretty">{desc}</span>
         </span>
         <span className="inline-flex items-center justify-end self-center">
           {actionHref ? (
             <Link
               href={UNSAFE_ROUTE(actionHref)}
-              className="bg-muted text-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[12.5px] font-medium whitespace-nowrap"
+              className="bg-muted text-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium whitespace-nowrap"
             >
               {actionLabel} <ArrowRight size={13} />
             </Link>
           ) : disabled ? (
-            <span className="bg-muted text-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[12.5px] font-medium whitespace-nowrap opacity-50">
+            <span className="bg-muted text-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium whitespace-nowrap opacity-50">
               {actionLabel}
             </span>
           ) : null}

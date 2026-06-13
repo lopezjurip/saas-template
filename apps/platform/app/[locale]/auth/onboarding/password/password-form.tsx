@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useOnboardingPassword } from "~/hooks/use-onboarding";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 function STRENGTH_SCORE(pw: string): number {
   let score = 0;

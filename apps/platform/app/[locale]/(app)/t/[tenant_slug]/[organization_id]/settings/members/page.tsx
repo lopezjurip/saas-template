@@ -8,9 +8,8 @@ import { ChevronRight, ShieldCheck, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getRosetta } from "~/hooks/get-rosetta";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { assertLocale } from "~/lib/i18n.server";
+import { assertLocale, getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { PendingInvitations } from "./pending-invitations";
 
@@ -137,7 +136,7 @@ export default async function MembersAdminPage(
           <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
             {organization["organization_name"]} · {t("eyebrow")}
           </span>
-          <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("page_title")}</h1>
+          <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("page_title")}</h1>
           <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">{t("subtitle")}</p>
         </div>
         <Button asChild>

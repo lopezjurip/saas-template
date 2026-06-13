@@ -16,7 +16,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { INITIALS_OF } from "@packages/utils/string";
 import { Check, Globe, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 type Access = "none" | "viewer" | "editor";
 
@@ -39,7 +39,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
         <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
           {organizationName} · {t("eyebrow")}
         </span>
-        <h1 className="text-foreground m-0 text-xl font-semibold tracking-[-0.02em]">{t("title")}</h1>
+        <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">{t("subtitle")}</p>
       </header>
 
@@ -93,7 +93,7 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
             >
               <span
                 className={cn(
-                  "bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-[9px]",
+                  "bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-lg",
                   !row.verified && "text-muted-foreground border-border border",
                 )}
               >

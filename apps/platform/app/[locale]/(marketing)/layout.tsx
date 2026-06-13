@@ -2,12 +2,30 @@ import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Logo } from "@packages/ui-common/logo";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { LocaleToggle } from "~/components/locale-toggle";
 import { ThemeToggle } from "~/components/theme-toggle";
-import { getRosetta } from "~/hooks/get-rosetta";
+import { APP_URL } from "~/lib/constants";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
+
+async function StatusBadge({ label }: { label: string }) {
+  let ok = false;
+  try {
+    const res = await fetch(new URL("/health", APP_URL), { next: { revalidate: 60 } });
+    const json = (await res.json()) as { ok: boolean };
+    ok = json["ok"] === true;
+  } catch {}
+
+  return (
+    <Badge variant="outline" className="mt-1 w-fit gap-1.5 rounded-full font-normal text-muted-foreground">
+      <span aria-hidden="true" className={cn("h-1.5 w-1.5 rounded-full", ok ? "bg-emerald-500" : "bg-red-500")} />
+      {label}
+    </Badge>
+  );
+}
 
 export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
   const { t, locale } = await getRosetta(LOCALES);
@@ -76,7 +94,7 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
           <Link
             href={ROUTE("/[locale]", { locale })}
             aria-label="SaaS Template"
-            className="inline-block transition-opacity hover:opacity-80"
+            className="inline-block shrink-0 transition-opacity hover:opacity-80"
           >
             <Logo />
           </Link>
@@ -123,7 +141,7 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
       <div className="flex flex-1 flex-col">{props.children}</div>
 
       <footer className="border-t border-border bg-muted/30">
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-8 px-6 py-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+        <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-8 px-6 py-12 lg:grid-cols-5">
           <div className="col-span-2 flex max-w-xs flex-col gap-3 lg:col-span-1">
             <Link
               href={ROUTE("/[locale]", { locale })}
@@ -133,10 +151,7 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
               <Logo />
             </Link>
             <p className="text-sm/normal leading-relaxed text-muted-foreground text-pretty">{t("footer.tagline")}</p>
-            <Badge variant="outline" className="mt-1 w-fit gap-1.5 rounded-full font-normal text-muted-foreground">
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              {t("footer.status")}
-            </Badge>
+            <StatusBadge label={t("footer.status")} />
           </div>
           {footerColumns.map((col) => (
             <nav key={col.title} aria-label={col.title} className="flex min-w-0 flex-col gap-2.5">
@@ -154,13 +169,13 @@ export default async function MarketingLayout(props: LayoutProps<"/[locale]">) {
           ))}
         </div>
         <div className="border-t border-border">
-          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-1.5 px-6 py-4 text-xs text-muted-foreground">
-            <span>{t("footer.copyright", { year })}</span>
+          <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3 px-6 py-4 text-xs text-muted-foreground sm:flex-row sm:gap-x-3 sm:gap-y-1.5">
+            <span className="text-center sm:text-left">{t("footer.copyright", { year })}</span>
             <span aria-hidden="true" className="hidden opacity-50 sm:inline">
               ·
             </span>
             <span className="font-mono">{t("footer.compliance")}</span>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:ml-auto">
               <LocaleToggle />
               <ThemeToggle />
             </div>
