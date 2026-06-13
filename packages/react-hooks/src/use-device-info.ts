@@ -1,4 +1,7 @@
+"use client";
+
 import { useMemo } from "react";
+import { useMounted } from "./use-mounted";
 
 export enum DeviceOS {
   MacOS = "macos",
@@ -27,9 +30,9 @@ export interface DeviceInfo {
   isMobile: boolean;
   isTouch: boolean;
   /** "⌘" on macOS, "Ctrl" elsewhere */
-  modKey: "⌘" | "Ctrl";
+  modKey: "⌘" | "Ctrl" | undefined;
   /** "Cmd" on macOS, "Ctrl" elsewhere — for readable labels */
-  modKeyLabel: "Cmd" | "Ctrl";
+  modKeyLabel: "Cmd" | "Ctrl" | undefined;
 }
 
 function DETECT_OS(ua: string): DeviceOS {
@@ -51,19 +54,21 @@ function DETECT_BROWSER(ua: string): DeviceBrowser {
   return DeviceBrowser.Unknown;
 }
 
-function COMPUTE_DEVICE_INFO(): DeviceInfo {
+const DEVICE_INFO_UNKNOWN: DeviceInfo = {
+  os: DeviceOS.Unknown,
+  browser: DeviceBrowser.Unknown,
+  isMac: false,
+  isWindows: false,
+  isLinux: false,
+  isMobile: false,
+  isTouch: false,
+  modKey: undefined,
+  modKeyLabel: undefined,
+};
+
+export function COMPUTE_DEVICE_INFO(): DeviceInfo {
   if (typeof navigator === "undefined") {
-    return {
-      os: DeviceOS.Unknown,
-      browser: DeviceBrowser.Unknown,
-      isMac: false,
-      isWindows: false,
-      isLinux: false,
-      isMobile: false,
-      isTouch: false,
-      modKey: "Ctrl",
-      modKeyLabel: "Ctrl",
-    };
+    return DEVICE_INFO_UNKNOWN;
   }
 
   const ua = navigator.userAgent;
@@ -88,6 +93,7 @@ function COMPUTE_DEVICE_INFO(): DeviceInfo {
   };
 }
 
-export function useDeviceInfo(): DeviceInfo {
-  return useMemo(COMPUTE_DEVICE_INFO, []);
+export function useDeviceInfo(): DeviceInfo | null {
+  const mounted = useMounted();
+  return useMemo(() => (mounted ? COMPUTE_DEVICE_INFO() : null), [mounted]);
 }

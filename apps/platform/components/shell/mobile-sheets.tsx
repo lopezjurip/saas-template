@@ -1,5 +1,6 @@
 "use client";
 
+import { useMounted } from "@packages/react-hooks/use-mounted";
 import {
   ArrowLeft,
   Bell,
@@ -31,7 +32,6 @@ import { Sheet } from "~/components/shell/mobile-sheet";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
-import { useMounted } from "~/hooks/use-mounted";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { useRosetta } from "~/lib/i18n.client";
 import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";

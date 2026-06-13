@@ -5,6 +5,7 @@ import { ArrowRight, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LocaleToggle } from "~/components/locale-toggle";
+import { COLOR_HSL_FROM_NAME } from "~/components/shell/atoms";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
@@ -116,8 +117,8 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
               const tenant_slug = tenant?.["tenant_slug"];
               if (!tenant_slug) return null;
               const name = organization["organization_name"];
-              const hue = Math.abs(name.split("").reduce((a, c) => a + c.charCodeAt(0), 0)) % 360;
               const initials = INITIALS_OF(name) || "·";
+              const colorStyle = COLOR_HSL_FROM_NAME(name);
               return (
                 <Link
                   key={organization["organization_id"]}
@@ -127,9 +128,9 @@ export default async function HomePage(props: PageProps<"/[locale]/home">) {
                   <span
                     className="inline-flex size-28 items-center justify-center rounded-2xl border text-4xl font-semibold tracking-tight transition-shadow duration-150 group-hover:shadow-float"
                     style={{
-                      background: `hsl(${hue} 60% 92%)`,
-                      color: `hsl(${hue} 55% 28%)`,
-                      borderColor: `hsl(${hue} 30% 80%)`,
+                      backgroundColor: colorStyle.background,
+                      color: colorStyle.color,
+                      borderColor: colorStyle.borderColor,
                     }}
                   >
                     {initials}

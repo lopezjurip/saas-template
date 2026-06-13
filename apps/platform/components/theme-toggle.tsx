@@ -1,10 +1,10 @@
 "use client";
 
+import { useMounted } from "@packages/react-hooks/use-mounted";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import type { ComponentProps } from "react";
-import { useMounted } from "~/hooks/use-mounted";
 import { useRosetta } from "~/lib/i18n.client";
 
 /**

@@ -50,6 +50,19 @@ export function COLOR_FROM_ID(id: string | number): string {
   return palette[hash % palette.length]!;
 }
 
+/**
+ * Returns inline style object for HSL color from organization name.
+ * @example COLOR_HSL_FROM_NAME("Acme Corp") // { background: "hsl(...)", color: "hsl(...)" }
+ */
+export function COLOR_HSL_FROM_NAME(name: string): Record<string, string> {
+  const hue = Math.abs(name.split("").reduce((a, c) => a + c.charCodeAt(0), 0)) % 360;
+  return {
+    background: `hsl(${hue} 60% 92%)`,
+    color: `hsl(${hue} 55% 28%)`,
+    borderColor: `hsl(${hue} 30% 80%)`,
+  };
+}
+
 export function Avatar({
   initials,
   color,
@@ -103,13 +116,15 @@ export function Tip({
   side?: "top" | "right" | "bottom";
   disabled?: boolean;
 } & ComponentProps<"span">) {
-  if (disabled || !label) return <>{children}</>;
-  const pos =
-    side === "top"
-      ? "bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2"
-      : side === "bottom"
-        ? "top-[calc(100%+6px)] left-1/2 -translate-x-1/2"
-        : "left-[calc(100%+8px)] top-1/2 -translate-y-1/2";
+  if (disabled || !label) {
+    return <>{children}</>;
+  }
+  let pos = "left-[calc(100%+8px)] top-1/2 -translate-y-1/2";
+  if (side === "top") {
+    pos = "bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2";
+  } else if (side === "bottom") {
+    pos = "top-[calc(100%+6px)] left-1/2 -translate-x-1/2";
+  }
   return (
     <span {...props} className={cn("group/tip relative inline-flex", className)}>
       {children}
