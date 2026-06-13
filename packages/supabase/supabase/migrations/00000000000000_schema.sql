@@ -378,6 +378,141 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
     allowed_mime_types = excluded.allowed_mime_types;
 
 -- ============================================================
+-- notifications
+-- ============================================================
+-- `notifications` is the catalog of notification types.
+-- `profile_notifications` stores per-profile preferences for the UI today and
+-- gives us a clean place to hang delivery state later if we add an outbox.
+
+do $$ begin
+  create type public.notification_priority as enum ('low', 'medium', 'high', 'critical');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type public.notification_kind as enum ('info', 'warn', 'fatal', 'error', 'debug', 'log');
+exception when duplicate_object then null; end $$;
+
+create table if not exists public.notifications (
+  notification_slug extensions.citext not null primary key
+    check (internal.slug_validate(notification_slug::text)),
+  notification_name text not null check (char_length(notification_name) between 1 and 120),
+  notification_description text not null check (char_length(notification_description) between 1 and 500),
+  notification_priority public.notification_priority not null default 'medium',
+  notification_kind public.notification_kind not null default 'log',
+  notification_disabled_at timestamptz,
+  notification_created_at timestamptz not null default current_timestamp,
+  notification_updated_at timestamptz not null default current_timestamp
+);
+
+create index if not exists notifications_priority_idx
+  on public.notifications (notification_priority desc)
+  where notification_disabled_at is null;
+
+drop trigger if exists handle_notifications_updated_at on public.notifications;
+create trigger handle_notifications_updated_at
+  before update on public.notifications
+  for each row execute procedure extensions.moddatetime(notification_updated_at);
+
+drop trigger if exists notifications_trigger_normalize_text on public.notifications;
+create trigger notifications_trigger_normalize_text
+  before insert or update of notification_name, notification_description on public.notifications
+  for each row execute procedure internal.column_normalize_text(notification_name, notification_description);
+
+alter table public.notifications enable row level security;
+
+revoke all on table public.notifications from anon, authenticated;
+grant select on table public.notifications to anon, authenticated;
+grant select, insert, update, delete on table public.notifications to service_role;
+
+drop policy if exists "notifications select active catalog" on public.notifications;
+create policy "notifications select active catalog"
+  on public.notifications for select
+  to anon, authenticated
+  using (notification_disabled_at is null);
+
+create table if not exists public.profile_notifications (
+  profile_id uuid not null references public.profiles (profile_id) on delete cascade,
+  notification_slug extensions.citext not null references public.notifications (notification_slug) on delete restrict,
+  profile_notification_priority public.notification_priority not null,
+  profile_notification_kind public.notification_kind not null,
+  profile_notification_enabled boolean not null default true,
+  profile_notification_created_at timestamptz not null default current_timestamp,
+  profile_notification_updated_at timestamptz not null default current_timestamp,
+  primary key (profile_id, notification_slug)
+);
+
+create index if not exists profile_notifications_notification_idx
+  on public.profile_notifications (notification_slug);
+
+drop trigger if exists handle_profile_notifications_updated_at on public.profile_notifications;
+create trigger handle_profile_notifications_updated_at
+  before update on public.profile_notifications
+  for each row execute procedure extensions.moddatetime(profile_notification_updated_at);
+
+create or replace function internal.profile_notifications_default_priority()
+  returns trigger
+  language plpgsql
+  set search_path to ''
+  as $$
+    begin
+      if NEW.profile_notification_priority is null or NEW.profile_notification_kind is null then
+        select n.notification_priority, n.notification_kind
+          into NEW.profile_notification_priority, NEW.profile_notification_kind
+          from public.notifications n
+          where n.notification_slug = NEW.notification_slug
+            and n.notification_disabled_at is null;
+      end if;
+
+      if NEW.profile_notification_priority is null or NEW.profile_notification_kind is null then
+        raise exception 'notification_not_found' using errcode = 'P0001';
+      end if;
+
+      return NEW;
+    end;
+  $$;
+
+drop trigger if exists profile_notifications_trigger_default_priority on public.profile_notifications;
+create trigger profile_notifications_trigger_default_priority
+  before insert or update of notification_slug, profile_notification_priority on public.profile_notifications
+  for each row execute procedure internal.profile_notifications_default_priority();
+
+alter table public.profile_notifications enable row level security;
+
+revoke all on table public.profile_notifications from anon, authenticated;
+grant select, insert, update, delete on table public.profile_notifications to anon, authenticated;
+grant select, insert, update, delete on table public.profile_notifications to service_role;
+
+drop policy if exists "profile_notifications select own" on public.profile_notifications;
+create policy "profile_notifications select own"
+  on public.profile_notifications for select
+  to authenticated
+  using (profile_id = (select public.viewer_profile_id()));
+
+drop policy if exists "profile_notifications write own" on public.profile_notifications;
+create policy "profile_notifications write own"
+  on public.profile_notifications for all
+  to authenticated
+  using (profile_id = (select public.viewer_profile_id()))
+  with check (profile_id = (select public.viewer_profile_id()));
+
+create or replace function public.viewer_profile_notifications()
+  returns setof public.profile_notifications
+  stable
+  security invoker
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select pn.*
+    from public.profile_notifications pn
+    join public.notifications n on n.notification_slug = pn.notification_slug
+    where pn.profile_id = (select public.viewer_profile_id())
+      and n.notification_disabled_at is null;
+  $$;
+
+grant execute on function public.viewer_profile_notifications() to authenticated;
+
+-- ============================================================
 -- tenants + organizations + organization_memberships + permissions
 -- ============================================================
 --

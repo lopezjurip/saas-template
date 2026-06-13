@@ -157,6 +157,45 @@ update public.profiles
   );
 
 -- ------------------------------------------------------------
+-- notifications catalog + demo profile preferences
+-- ------------------------------------------------------------
+
+insert into public.notifications (notification_slug, notification_name, notification_description, notification_priority, notification_kind)
+values
+  ('security-alert', 'Security alerts', 'Sign-ins from new devices, password changes, and new recovery methods.', 'critical', 'fatal'),
+  ('weekly-activity', 'Weekly activity', 'A summary of your active sessions and recent account activity.', 'medium', 'info'),
+  ('billing-change', 'Billing changes', 'Charges, payment failures, and plan changes in your organizations.', 'high', 'warn'),
+  ('organization-invitation', 'Organization invitations', 'When someone invites you to join their organization.', 'high', 'info'),
+  ('product-update', 'Product updates', 'New features, open betas, and important improvements.', 'medium', 'debug'),
+  ('tips-and-guides', 'Tips and guides', 'Short tricks to get more out of the tool.', 'low', 'log'),
+  ('surveys-and-interviews', 'Surveys and interviews', 'Help us improve. Sometimes there is an incentive.', 'low', 'log')
+on conflict (notification_slug) do nothing;
+
+insert into public.profile_notifications (
+  profile_id,
+  notification_slug,
+  profile_notification_priority,
+  profile_notification_kind,
+  profile_notification_enabled
+)
+values
+  ('00000000-0000-0000-0000-00000000a11c', 'security-alert', 'critical', 'fatal', true),
+  ('00000000-0000-0000-0000-00000000a11c', 'weekly-activity', 'medium', 'info', true),
+  ('00000000-0000-0000-0000-00000000a11c', 'billing-change', 'high', 'warn', true),
+  ('00000000-0000-0000-0000-00000000a11c', 'organization-invitation', 'high', 'info', true),
+  ('00000000-0000-0000-0000-00000000a11c', 'product-update', 'medium', 'debug', true),
+  ('00000000-0000-0000-0000-00000000a11c', 'tips-and-guides', 'low', 'log', false),
+  ('00000000-0000-0000-0000-00000000a11c', 'surveys-and-interviews', 'low', 'log', false),
+  ('00000000-0000-0000-0000-00000000b00b', 'security-alert', 'critical', 'fatal', true),
+  ('00000000-0000-0000-0000-00000000b00b', 'weekly-activity', 'medium', 'info', true),
+  ('00000000-0000-0000-0000-00000000b00b', 'billing-change', 'high', 'warn', true),
+  ('00000000-0000-0000-0000-00000000b00b', 'organization-invitation', 'high', 'info', true),
+  ('00000000-0000-0000-0000-00000000b00b', 'product-update', 'medium', 'debug', true),
+  ('00000000-0000-0000-0000-00000000b00b', 'tips-and-guides', 'low', 'log', false),
+  ('00000000-0000-0000-0000-00000000b00b', 'surveys-and-interviews', 'low', 'log', false)
+on conflict (profile_id, notification_slug) do nothing;
+
+-- ------------------------------------------------------------
 -- agencies — one demo agency so the agency screens render with real data.
 --
 -- A DEDICATED affiliate user (iris@humane.test) is the ACCEPTED affiliate and
