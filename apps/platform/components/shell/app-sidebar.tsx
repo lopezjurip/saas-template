@@ -134,7 +134,15 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter>
-        <ConversationsBell locale={locale} compact={collapsed} />
+        <ConversationsBell
+          scope={{
+            kind: "organization",
+            tenant_slug: tenant["tenant_slug"],
+            organization_id: current["organization_id"],
+          }}
+          compact={collapsed}
+          placement="up"
+        />
         <SettingsMenu locale={locale} settingsHref={settingsHref} compact={collapsed} />
         <ProfileMenu locale={locale} viewer={viewer} compact={collapsed} />
       </SidebarFooter>

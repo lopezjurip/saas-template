@@ -25,6 +25,8 @@ type Documents = {
   "\n  mutation CreateTenantFormMutation($tenant_name: String!, $tenant_slug: String!) {\n    tenant: viewer_tenant_create(tenant_name: $tenant_name, tenant_slug: $tenant_slug) {\n      tenant_id\n    }\n  }\n": typeof types.CreateTenantFormMutationDocument;
   "\n  mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.OnboardingProfileFormUpdateNameMutationDocument;
   "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": typeof types.HealthQueryDocument;
+  "\n  query ScopeSelectorOrgsQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          tenants {\n            tenant_slug\n          }\n        }\n      }\n    }\n  }\n": typeof types.ScopeSelectorOrgsQueryDocument;
+  "\n  query ScopeSelectorAgenciesQuery {\n    agencies: viewer_agencies(\n      orderBy: [{ agency_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          agency_id\n          agency_slug\n          agency_name\n        }\n      }\n    }\n  }\n": typeof types.ScopeSelectorAgenciesQueryDocument;
   "\n  query PostHogIdentify {\n    profile: viewer_profile {\n      profile_id\n      profile_name_full\n      profile_onboarded_at\n      profile_created_at\n    }\n    tenants: viewer_tenants {\n      edges {\n        node {\n          tenant_id\n          tenant_slug\n          tenant_tier\n          tenant_created_at\n        }\n      }\n    }\n    organizations: viewer_organizations {\n      edges {\n        node {\n          organization_id\n          organization_name\n          tenant_id\n        }\n      }\n    }\n  }\n": typeof types.PostHogIdentifyDocument;
   "\n  fragment CountryGetFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n": typeof types.CountryGetFragmentFragmentDoc;
   "\n  query CountriesGet(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: addresses_level0Filter\n    $orderBy: [addresses_level0OrderBy!]\n  ) {\n    addresses_level0: addresses_level0Collection(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...CountryGetFragment\n        }\n      }\n    }\n  }\n": typeof types.CountriesGetDocument;
@@ -83,6 +85,10 @@ const documents: Documents = {
   "\n  mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateprofilesCollection(\n      filter: { profile_id: { eq: $profile_id } }\n      set: { profile_name_full: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n":
     types.OnboardingProfileFormUpdateNameMutationDocument,
   "\n  query HealthQuery {\n    health_current_timestamp\n  }\n": types.HealthQueryDocument,
+  "\n  query ScopeSelectorOrgsQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          tenants {\n            tenant_slug\n          }\n        }\n      }\n    }\n  }\n":
+    types.ScopeSelectorOrgsQueryDocument,
+  "\n  query ScopeSelectorAgenciesQuery {\n    agencies: viewer_agencies(\n      orderBy: [{ agency_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          agency_id\n          agency_slug\n          agency_name\n        }\n      }\n    }\n  }\n":
+    types.ScopeSelectorAgenciesQueryDocument,
   "\n  query PostHogIdentify {\n    profile: viewer_profile {\n      profile_id\n      profile_name_full\n      profile_onboarded_at\n      profile_created_at\n    }\n    tenants: viewer_tenants {\n      edges {\n        node {\n          tenant_id\n          tenant_slug\n          tenant_tier\n          tenant_created_at\n        }\n      }\n    }\n    organizations: viewer_organizations {\n      edges {\n        node {\n          organization_id\n          organization_name\n          tenant_id\n        }\n      }\n    }\n  }\n":
     types.PostHogIdentifyDocument,
   "\n  fragment CountryGetFragment on addresses_level0 {\n    address_level0_id\n    address_level0_name\n    address_level0_emoji\n  }\n":
@@ -223,6 +229,18 @@ export function gql(
 export function gql(
   source: "\n  query HealthQuery {\n    health_current_timestamp\n  }\n",
 ): typeof import("./graphql").HealthQueryDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  query ScopeSelectorOrgsQuery {\n    viewer_organizations(\n      filter: { organization_disabled_at: { is: NULL } }\n      orderBy: [{ organization_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organization_id\n          organization_name\n          tenants {\n            tenant_slug\n          }\n        }\n      }\n    }\n  }\n",
+): typeof import("./graphql").ScopeSelectorOrgsQueryDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  query ScopeSelectorAgenciesQuery {\n    agencies: viewer_agencies(\n      orderBy: [{ agency_name: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          agency_id\n          agency_slug\n          agency_name\n        }\n      }\n    }\n  }\n",
+): typeof import("./graphql").ScopeSelectorAgenciesQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

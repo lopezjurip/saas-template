@@ -3,7 +3,7 @@
 import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { debug } from "~/lib/debug";
 
-const log = debug("app:[locale]:(app):home:inbox:[conversation_id]:actions");
+const log = debug("app:(app):components:inbox:actions");
 
 /**
  * Marks a list of conversation messages as read.

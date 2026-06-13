@@ -51,86 +51,86 @@ export function Shell({
   return (
     <TooltipProvider delayDuration={0}>
       <SidebarProvider defaultOpen={defaultOpen} className="h-svh overflow-hidden">
-      {/* Desktop only. Rendering conditionally on !isMobile keeps the primitive's mobile <Sheet>
+        {/* Desktop only. Rendering conditionally on !isMobile keeps the primitive's mobile <Sheet>
           (portaled to body when isMobile) from ever mounting — we use the custom drawer instead. */}
-      {isMobile ? null : (
-        <AppSidebar
+        {isMobile ? null : (
+          <AppSidebar
+            locale={locale}
+            tenant={tenant}
+            organizations={organizations}
+            current={current}
+            viewer={viewer}
+            activePath={pathname}
+            onOpenPalette={() => setPaletteOpen(true)}
+          />
+        )}
+
+        <SidebarInset className="min-w-0 overflow-hidden pl-safe pr-safe">
+          <div className="md:hidden">
+            <MobileTopBar
+              tenant={tenant}
+              organization={current}
+              viewer={viewer}
+              title=""
+              onMenu={() => setDrawerOpen(true)}
+              onSearch={() => setMobileSheet("search")}
+              onOrg={() => setMobileSheet("org")}
+              onProfile={() => setMobileSheet("profile")}
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto">{children}</div>
+        </SidebarInset>
+
+        <CommandPalette
+          open={paletteOpen}
+          onClose={() => setPaletteOpen(false)}
           locale={locale}
           tenant={tenant}
           organizations={organizations}
           current={current}
+        />
+
+        <MobileNavDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          locale={locale}
+          tenant={tenant}
+          organization={current}
           viewer={viewer}
           activePath={pathname}
-          onOpenPalette={() => setPaletteOpen(true)}
+          onOrg={() => {
+            setDrawerOpen(false);
+            setMobileSheet("org");
+          }}
+          onSettings={() => {
+            setDrawerOpen(false);
+            setMobileSheet("settings");
+          }}
         />
-      )}
 
-      <SidebarInset className="min-w-0 overflow-hidden pl-safe pr-safe">
-        <div className="md:hidden">
-          <MobileTopBar
-            tenant={tenant}
-            organization={current}
-            viewer={viewer}
-            title=""
-            onMenu={() => setDrawerOpen(true)}
-            onSearch={() => setMobileSheet("search")}
-            onOrg={() => setMobileSheet("org")}
-            onProfile={() => setMobileSheet("profile")}
-          />
-        </div>
-        <div className="flex-1 overflow-y-auto">{children}</div>
-      </SidebarInset>
-
-      <CommandPalette
-        open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-        locale={locale}
-        tenant={tenant}
-        organizations={organizations}
-        current={current}
-      />
-
-      <MobileNavDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        locale={locale}
-        tenant={tenant}
-        organization={current}
-        viewer={viewer}
-        activePath={pathname}
-        onOrg={() => {
-          setDrawerOpen(false);
-          setMobileSheet("org");
-        }}
-        onSettings={() => {
-          setDrawerOpen(false);
-          setMobileSheet("settings");
-        }}
-      />
-
-      <MobileSearchSheet
-        open={mobileSheet === "search"}
-        onClose={() => setMobileSheet(null)}
-        locale={locale}
-        tenant={tenant}
-        organizations={organizations}
-        current={current}
-      />
-      <MobileOrgSheet
-        open={mobileSheet === "org"}
-        onClose={() => setMobileSheet(null)}
-        locale={locale}
-        tenant={tenant}
-        organizations={organizations}
-        current={current}
-      />
-      <MobileProfileSheet
-        open={mobileSheet === "profile"}
-        onClose={() => setMobileSheet(null)}
-        locale={locale}
-        viewer={viewer}
-      />
-      <MobileSettingsSheet open={mobileSheet === "settings"} onClose={() => setMobileSheet(null)} locale={locale} />
+        <MobileSearchSheet
+          open={mobileSheet === "search"}
+          onClose={() => setMobileSheet(null)}
+          locale={locale}
+          tenant={tenant}
+          organizations={organizations}
+          current={current}
+        />
+        <MobileOrgSheet
+          open={mobileSheet === "org"}
+          onClose={() => setMobileSheet(null)}
+          locale={locale}
+          tenant={tenant}
+          organizations={organizations}
+          current={current}
+        />
+        <MobileProfileSheet
+          open={mobileSheet === "profile"}
+          onClose={() => setMobileSheet(null)}
+          locale={locale}
+          viewer={viewer}
+        />
+        <MobileSettingsSheet open={mobileSheet === "settings"} onClose={() => setMobileSheet(null)} locale={locale} />
       </SidebarProvider>
     </TooltipProvider>
   );
