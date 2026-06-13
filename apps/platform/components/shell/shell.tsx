@@ -2,6 +2,7 @@
 
 import { useKeyboardShortcut } from "@packages/react-hooks/use-keyboard-shortcut";
 import { SidebarInset, SidebarProvider } from "@packages/ui-common/shadcn/components/ui/sidebar";
+import { TooltipProvider } from "@packages/ui-common/shadcn/components/ui/tooltip";
 import { useIsMobile } from "@packages/ui-common/shadcn/hooks/use-mobile";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -48,7 +49,8 @@ export function Shell({
   useKeyboardShortcut("k", () => setPaletteOpen((value) => !value), { mod: true });
 
   return (
-    <SidebarProvider defaultOpen={defaultOpen} className="h-svh overflow-hidden">
+    <TooltipProvider delayDuration={0}>
+      <SidebarProvider defaultOpen={defaultOpen} className="h-svh overflow-hidden">
       {/* Desktop only. Rendering conditionally on !isMobile keeps the primitive's mobile <Sheet>
           (portaled to body when isMobile) from ever mounting — we use the custom drawer instead. */}
       {isMobile ? null : (
@@ -129,6 +131,7 @@ export function Shell({
         viewer={viewer}
       />
       <MobileSettingsSheet open={mobileSheet === "settings"} onClose={() => setMobileSheet(null)} locale={locale} />
-    </SidebarProvider>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }
