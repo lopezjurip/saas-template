@@ -3276,6 +3276,16 @@ create policy "conversation_messages select own"
     )
   );
 
+-- Stream inbox updates to the in-app bell via Supabase Realtime. RLS above
+-- still applies to the change stream for authenticated clients, so each viewer
+-- only receives inserts for their own conversations.
+do $$ begin
+  alter publication supabase_realtime add table public.conversation_messages;
+exception
+  when duplicate_object then null;  -- already in the publication
+  when undefined_object then null;  -- publication not present (non-Supabase env)
+end $$;
+
 -- -------
 
 alter table public.conversation_message_deliveries enable row level security;
