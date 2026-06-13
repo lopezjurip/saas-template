@@ -96,6 +96,10 @@ export default async function AgencyConsolePage(props: PageProps<"/[locale]/a/[a
         locale,
         slug: agency["agency_slug"],
       })}
+      ticketsHref={ROUTE("/[locale]/a/[agency_slug]/tickets", {
+        locale,
+        agency_slug: agency["agency_slug"],
+      })}
     />
   );
 }

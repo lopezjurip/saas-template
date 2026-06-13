@@ -11,6 +11,7 @@ import {
   Eye,
   Globe,
   Hourglass,
+  Inbox,
   type LucideIcon,
   RefreshCw,
   Settings,
@@ -52,9 +53,17 @@ export type ConsoleData = {
   orgs: ConsoleOrg[];
 };
 
-type ConsoleTab = "team" | "access" | "profile";
+type ConsoleTab = "team" | "access" | "profile" | "tickets";
 
-export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteHref: AppRoute }) {
+export function AgencyConsole({
+  data,
+  inviteHref,
+  ticketsHref,
+}: {
+  data: ConsoleData;
+  inviteHref: AppRoute;
+  ticketsHref: AppRoute;
+}) {
   const { t } = useRosetta(LOCALES);
   const [tab, setTab] = useState<ConsoleTab>("team");
 
@@ -114,6 +123,7 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
           <ConsoleTabTrigger value="team" icon={Users} label={t("tab_team")} count={teamCount} />
           <ConsoleTabTrigger value="access" icon={Globe} label={t("tab_access")} count={accessCount} />
           <ConsoleTabTrigger value="profile" icon={Settings} label={t("tab_profile")} count={null} />
+          <ConsoleTabTrigger value="tickets" icon={Inbox} label={t("tab_tickets")} count={null} href={ticketsHref} />
         </TabsList>
 
         <main className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-8 @min-[768px]:px-6 @min-[768px]:py-6 @min-[768px]:pb-10">
@@ -144,6 +154,10 @@ export function AgencyConsole({ data, inviteHref }: { data: ConsoleData; inviteH
             <TabsContent value="profile" className="mt-0">
               <ConsoleProfileTab data={data} t={t} />
             </TabsContent>
+            <TabsContent value="tickets" className="mt-0">
+              {/* Tickets live at a sub-route; this tab is a nav link in the header. */}
+              <span className="text-muted-foreground text-sm">{t("tickets_redirect_hint")}</span>
+            </TabsContent>
           </div>
         </main>
       </Tabs>
@@ -155,18 +169,33 @@ type Translate = ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"];
 
 /**
  * Chrome component for console tabs.
+ * When `href` is provided the tab renders as a navigation link instead of
+ * switching the in-page tab state.
  */
 function ConsoleTabTrigger({
   value,
   icon: Icon,
   label,
   count,
+  href,
 }: {
   value: ConsoleTab;
   icon: LucideIcon;
   label: string;
   count: number | null;
+  href?: AppRoute;
 }) {
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="text-muted-foreground hover:text-foreground flex h-auto flex-none items-center gap-1.5 border-b-2 border-transparent px-2.5 py-2.5 text-sm/normal transition-colors"
+      >
+        <Icon size={15} />
+        {label}
+      </Link>
+    );
+  }
   return (
     <TabsTrigger
       value={value}
@@ -577,6 +606,7 @@ function CONSOLE_HEAD(t: Translate): Record<ConsoleTab, { title: string; desc: s
     team: { title: t("team_title"), desc: t("team_desc") },
     access: { title: t("access_title"), desc: t("access_desc") },
     profile: { title: t("profile_title"), desc: t("profile_desc") },
+    tickets: { title: t("tickets_title"), desc: t("tickets_desc") },
   };
 }
 
@@ -639,6 +669,10 @@ const LOCALE_ES = {
   profile_active: "Activa",
   profile_disabled: "Deshabilitada",
   profile_note: "Para cambiar el nombre o el identificador de la agencia, escríbenos.",
+  tab_tickets: "Tickets",
+  tickets_title: "Tickets de soporte",
+  tickets_desc: "Gestiona los tickets de soporte de las organizaciones que atiende tu agencia.",
+  tickets_redirect_hint: "Abriendo tickets…",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
@@ -699,6 +733,10 @@ const LOCALE_EN: typeof LOCALE_ES = {
   profile_active: "Active",
   profile_disabled: "Disabled",
   profile_note: "To change the agency name or identifier, write to us.",
+  tab_tickets: "Tickets",
+  tickets_title: "Support tickets",
+  tickets_desc: "Manage support tickets from the organizations your agency serves.",
+  tickets_redirect_hint: "Opening tickets…",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
@@ -760,6 +798,10 @@ const LOCALE_PT: typeof LOCALE_ES = {
   profile_active: "Ativa",
   profile_disabled: "Desabilitada",
   profile_note: "Para alterar o nome ou o identificador da agência, escreva para nós.",
+  tab_tickets: "Tickets",
+  tickets_title: "Tickets de suporte",
+  tickets_desc: "Gerencie tickets de suporte das organizações que sua agência atende.",
+  tickets_redirect_hint: "Abrindo tickets…",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
