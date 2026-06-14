@@ -66,10 +66,14 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
 
   function onVerify(e: React.FormEvent) {
     e.preventDefault();
+    verifyOtp(token);
+  }
+
+  function verifyOtp(nextToken: string) {
     setError(null);
     startTransition(async () => {
       const supabase = createBrowserClient();
-      const { error: err } = await supabase.auth.verifyOtp({ email, token, type: "email" });
+      const { error: err } = await supabase.auth.verifyOtp({ email, token: nextToken, type: "email" });
       if (err) {
         setError(t("error_otp"));
         return;
@@ -78,6 +82,11 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
       router.push(ROUTE_HREF(UNSAFE_ROUTE(RESOLVE_TARGET(locale, next))));
       router.refresh();
     });
+  }
+
+  function onOtpPasteComplete(nextToken: string) {
+    setToken(nextToken);
+    verifyOtp(nextToken);
   }
 
   function onPassword(e: React.FormEvent) {
@@ -123,6 +132,7 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
           id="email-otp"
           value={token}
           onChange={setToken}
+          onPasteComplete={onOtpPasteComplete}
           sentTo={
             <>
               {t("sent_to_prefix")} <strong className="font-medium text-foreground">{email}</strong>.{" "}

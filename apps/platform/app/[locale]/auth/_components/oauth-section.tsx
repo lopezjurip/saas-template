@@ -1,5 +1,6 @@
 "use client";
 
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
@@ -22,10 +23,14 @@ export function OAuthSection({ next }: { next: string }) {
           <form key={p.id} action={signInWithOAuth}>
             <input type="hidden" name="provider" value={p.id} />
             <input type="hidden" name="next" value={next} />
-            <Button type="submit" variant="outline" className="h-10 w-full justify-center gap-2.5">
+            <ButtonSpinner
+              variant="outline"
+              pendingChildren={<><p.Mark size={18} /><span>{t("continue_with_pending", { provider: p.label })}</span></>}
+              className="h-10 w-full justify-center gap-2.5"
+            >
               <p.Mark size={18} />
               <span>{t("continue_with", { provider: p.label })}</span>
-            </Button>
+            </ButtonSpinner>
           </form>
         ))}
       </div>
@@ -36,16 +41,16 @@ export function OAuthSection({ next }: { next: string }) {
             <form key={p.id} action={signInWithOAuth}>
               <input type="hidden" name="provider" value={p.id} />
               <input type="hidden" name="next" value={next} />
-              <Button
-                type="submit"
+              <ButtonSpinner
                 variant="outline"
                 size="icon"
+                pendingChildren={null}
                 className="h-10 w-full"
                 aria-label={t("continue_with", { provider: p.label })}
                 title={p.label}
               >
                 <p.Mark size={18} />
-              </Button>
+              </ButtonSpinner>
             </form>
           ))}
         </div>
@@ -66,16 +71,19 @@ export function OAuthSection({ next }: { next: string }) {
 
 const LOCALE_ES = {
   continue_with: "Continuar con {{provider}}",
+  continue_with_pending: "Abriendo {{provider}}…",
   more_options: "Más opciones",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
   continue_with: "Continue with {{provider}}",
+  continue_with_pending: "Opening {{provider}}…",
   more_options: "More options",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
   continue_with: "Continuar com {{provider}}",
+  continue_with_pending: "Abrindo {{provider}}…",
   more_options: "Mais opções",
 };
 

@@ -1,4 +1,4 @@
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Check, Star } from "lucide-react";
 import Link from "next/link";
@@ -131,14 +131,14 @@ export default async function OnboardingHubPage(props: PageProps<"/[locale]/auth
         </div>
 
         <form action={actionFinishOnboarding} className="mt-1 flex flex-col border-t pt-3">
-          <Button
-            type="submit"
+          <ButtonSpinner
             variant="outline"
+            pendingChildren={<span>{t("cta_continuing")}</span>}
             className="h-11 w-full text-sm text-muted-foreground hover:text-foreground"
           >
             <span>{done > 0 ? t("cta_continue") : t("cta_skip_all")}</span>
             <ArrowRight size={15} />
-          </Button>
+          </ButtonSpinner>
         </form>
       </div>
     </AuthCard>
@@ -159,6 +159,7 @@ const LOCALE_ES = {
   action_do_now: "Hacer ahora",
   action_add: "Agregar",
   cta_continue: "Continuar a la app",
+  cta_continuing: "Entrando…",
   cta_skip_all: "Saltar todo — lo configuro después",
   methods: {
     passkey: { label: "Passkey", desc: "Entra sin contraseña usando Face ID, Touch ID o una llave de seguridad." },
@@ -189,6 +190,7 @@ const LOCALES = {
     action_do_now: "Do now",
     action_add: "Add",
     cta_continue: "Continue to app",
+    cta_continuing: "Entering…",
     cta_skip_all: "Skip all — I'll set it up later",
     methods: {
       passkey: { label: "Passkey", desc: "Sign in without a password using Face ID, Touch ID or a security key." },
@@ -216,6 +218,7 @@ const LOCALES = {
     action_do_now: "Fazer agora",
     action_add: "Adicionar",
     cta_continue: "Continuar para o app",
+    cta_continuing: "Entrando…",
     cta_skip_all: "Pular tudo — configuro depois",
     methods: {
       passkey: { label: "Passkey", desc: "Entre sem senha usando Face ID, Touch ID ou uma chave de segurança." },

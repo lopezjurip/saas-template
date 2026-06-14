@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
@@ -88,10 +88,13 @@ export function AuthEntryForm({ next, error }: { next: string; error?: string | 
           <p className="text-xs leading-relaxed text-muted-foreground">{t("hint")}</p>
         )}
       </div>
-      <Button type="submit" className="h-10 w-full">
+      <ButtonSpinner
+        pendingChildren={<span>{t("submit_pending")}</span>}
+        className="h-10 w-full"
+      >
         <span>{t("submit")}</span>
         <ArrowRight size={16} />
-      </Button>
+      </ButtonSpinner>
     </form>
   );
 }
@@ -111,6 +114,7 @@ const LOCALE_ES = {
   placeholder: "Correo, teléfono o RUT",
   hint: "Si no tienes cuenta, te enviaremos un enlace mágico para crearla.",
   submit: "Continuar",
+  submit_pending: "Continuando…",
   waiting: "Esperando input",
 };
 
@@ -123,6 +127,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
   placeholder: "Email, phone or ID",
   hint: "If you don't have an account, we'll send you a magic link to create one.",
   submit: "Continue",
+  submit_pending: "Continuing…",
   waiting: "Waiting for input",
 };
 
@@ -135,6 +140,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   placeholder: "E-mail, telefone ou documento",
   hint: "Se não tiver conta, enviaremos um link mágico para criá-la.",
   submit: "Continuar",
+  submit_pending: "Continuando…",
   waiting: "Aguardando entrada",
 };
 

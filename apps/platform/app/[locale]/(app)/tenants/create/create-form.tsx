@@ -9,6 +9,7 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { SLUGIFY } from "@packages/utils/slug";
 import { usePostHog } from "@posthog/next";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -57,6 +58,7 @@ export function CreateTenantForm() {
   const tenantName = form.watch("tenant_name");
   const slugTouched = Boolean(form.formState.dirtyFields.tenant_slug);
   const { setValue } = form;
+  const isCreating = createState.isValidating;
 
   /**
    * Suggest a slug derived from the tenant name until the user edits the slug field manually.
@@ -93,12 +95,13 @@ export function CreateTenantForm() {
   ];
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <form onSubmit={onSubmit} aria-busy={isCreating} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="tenant_name">{t("company_name_label")}</Label>
         <Input
           id="tenant_name"
           className="h-10"
+          disabled={isCreating}
           placeholder="Mi empresa"
           autoComplete="organization"
           aria-invalid={!!form.formState.errors.tenant_name}
@@ -114,6 +117,7 @@ export function CreateTenantForm() {
         <Input
           id="tenant_slug"
           className="h-10"
+          disabled={isCreating}
           placeholder="acme"
           autoCapitalize="none"
           autoCorrect="off"
@@ -138,6 +142,7 @@ export function CreateTenantForm() {
               <button
                 key={p.id}
                 type="button"
+                disabled={isCreating}
                 onClick={() => setPlan(p.id)}
                 data-active={on}
                 className={cn(
@@ -171,10 +176,14 @@ export function CreateTenantForm() {
       )}
 
       <div className="flex flex-col gap-2 pt-1">
-        <Button type="submit" disabled={createState.isValidating} className="h-10 w-full">
-          <span>{createState.isValidating ? t("creating") : t("create_company")}</span>
-          {!createState.isValidating && <ArrowRight size={16} />}
-        </Button>
+        <ButtonSpinner
+          pending={isCreating}
+          pendingChildren={<span>{t("creating")}</span>}
+          className="h-10 w-full"
+        >
+          <span>{t("create_company")}</span>
+          <ArrowRight size={16} />
+        </ButtonSpinner>
         <Button asChild type="button" variant="ghost" className="h-10 w-full text-muted-foreground">
           <Link href={ROUTE("/[locale]/home")}>{t("cancel")}</Link>
         </Button>
