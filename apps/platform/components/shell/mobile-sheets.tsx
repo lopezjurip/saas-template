@@ -61,7 +61,7 @@ export function MobileOrgSheet({
         {organizations.map((organization) => (
           <Link
             key={organization["organization_id"]}
-            href={ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+            href={ROUTE("/t/[tenant_slug]/[organization_id]", {
               locale,
               tenant_slug: tenant["tenant_slug"],
               organization_id: organization["organization_id"],
@@ -86,7 +86,7 @@ export function MobileOrgSheet({
       </div>
       <div className="border-border border-t px-2 py-2">
         <Link
-          href={ROUTE("/[locale]/home", { locale })}
+          href={ROUTE("/home", { locale })}
           onClick={onClose}
           className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-sm"
         >
@@ -94,7 +94,7 @@ export function MobileOrgSheet({
           <span>{t("switchTenant")}</span>
         </Link>
         <Link
-          href={ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
+          href={ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
             locale,
             tenant_slug: tenant["tenant_slug"],
             organization_id: current["organization_id"],
@@ -123,10 +123,10 @@ export function MobileProfileSheet({
 }) {
   const { t } = useRosetta(LOCALES);
   const items = [
-    { Icon: User, label: t("account"), href: ROUTE("/[locale]/home/account/profile", { locale }) },
-    { Icon: CreditCard, label: t("billing"), href: ROUTE("/[locale]/home/account/profile", { locale }) },
-    { Icon: KeyRound, label: t("tokens"), href: ROUTE("/[locale]/home/account/tokens", { locale }) },
-    { Icon: Bell, label: t("notifications"), href: ROUTE("/[locale]/home/account/notifications", { locale }) },
+    { Icon: User, label: t("account"), href: ROUTE("/home/account/profile", { locale }) },
+    { Icon: CreditCard, label: t("billing"), href: ROUTE("/home/account/profile", { locale }) },
+    { Icon: KeyRound, label: t("tokens"), href: ROUTE("/home/account/tokens", { locale }) },
+    { Icon: Bell, label: t("notifications"), href: ROUTE("/home/account/notifications", { locale }) },
   ];
 
   return (
@@ -158,7 +158,7 @@ export function MobileProfileSheet({
       </div>
       <div className="border-border border-t px-2 py-2">
         <Link
-          href={ROUTE("/[locale]/auth/logout", { locale })}
+          href={ROUTE("/auth/logout", { locale })}
           onClick={onClose}
           className="flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-sm text-rose-600 active:bg-rose-50 dark:active:bg-rose-950/30"
         >
@@ -316,7 +316,7 @@ export function MobileSearchSheet({
           id: "go-home",
           label: t("navHome"),
           Icon: Home,
-          href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+          href: ROUTE("/t/[tenant_slug]/[organization_id]", {
             locale,
             tenant_slug: tenant["tenant_slug"],
             organization_id: current["organization_id"],
@@ -326,7 +326,7 @@ export function MobileSearchSheet({
           id: "go-members",
           label: t("navMembers"),
           Icon: Users,
-          href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
+          href: ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
             locale,
             tenant_slug: tenant["tenant_slug"],
             organization_id: current["organization_id"],
@@ -336,7 +336,7 @@ export function MobileSearchSheet({
           id: "go-settings",
           label: t("navSettings"),
           Icon: SettingsIcon,
-          href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
+          href: ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
             locale,
             tenant_slug: tenant["tenant_slug"],
             organization_id: current["organization_id"],
@@ -353,7 +353,7 @@ export function MobileSearchSheet({
           organization["organization_id"] === current["organization_id"] ? t("current") : (tenant["tenant_tier"] ?? ""),
         orgInitials: INITIALS_OF(organization["organization_name"]),
         orgColor: COLOR_HSL_FROM_STRING(organization["organization_name"]),
-        href: ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+        href: ROUTE("/t/[tenant_slug]/[organization_id]", {
           locale,
           tenant_slug: tenant["tenant_slug"],
           organization_id: organization["organization_id"],

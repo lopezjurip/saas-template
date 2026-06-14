@@ -54,11 +54,13 @@ export function ROUTE_HREF(route: AppRoute | Route): Route {
   // TODO: use urls.ts: URL_NEW
   const query = { ...route["query"] };
 
+  // `locale` is no longer a URL segment (resolved from cookie/header). Drop any stray
+  // `locale` query key so callers migrated from `/…` don't leak `?locale=…`.
+  delete query["locale"];
+
   const pathname = route["pathname"].replace(/\[([^\]]+)\]/g, (_, key: string) => {
     const value = query[key];
-    if (value === undefined && key === "locale") {
-      return "_";
-    } else if (value === undefined || value === null || Array.isArray(value)) {
+    if (value === undefined || value === null || Array.isArray(value)) {
       throw new Error(`Missing scalar route segment: ${key}`);
     } else {
       delete query[key];

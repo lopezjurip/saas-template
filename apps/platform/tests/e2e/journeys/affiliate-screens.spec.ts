@@ -12,7 +12,7 @@ test.describe("affiliate screens", () => {
 
   test("accepted affiliate sees their agency and granted org", async ({ page }) => {
     await signIn(page, "iris@humane.test", password);
-    await page.goto("/es/affiliate");
+    await page.goto("/affiliate");
 
     await expect(page.getByText("Demo Auditores").first()).toBeVisible();
     // Verify agency read access to acme org
@@ -21,7 +21,7 @@ test.describe("affiliate screens", () => {
 
   test("pending invite shows accept / reject actions", async ({ page }) => {
     await signIn(page, "alice@humane.test", password);
-    await page.goto("/es/affiliate");
+    await page.goto("/affiliate");
 
     await expect(page.getByRole("heading", { name: /Tus agencias/ })).toBeVisible();
     await expect(page.getByText("Invitaciones pendientes")).toBeVisible();
@@ -32,7 +32,7 @@ test.describe("affiliate screens", () => {
 });
 
 async function signIn(page: Page, email: string, password: string) {
-  await page.goto("/es/auth");
+  await page.goto("/auth");
   await page.getByLabel("Cuenta").fill(email);
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
   await page.waitForURL(/\/auth\/email\?/);

@@ -42,7 +42,7 @@ export async function getViewerProfileRedirect() {
   const profile = data && data["profile"];
   if (!profile) {
     // Short circuit.
-    redirect("/[locale]/auth");
+    redirect("/auth");
   }
   return { data: { profile }, ...extra };
 }

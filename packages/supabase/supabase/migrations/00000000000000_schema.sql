@@ -3857,7 +3857,17 @@ grant execute on function public.conversation_archive(uuid) to authenticated;
 -- ============================================================
 
 -- viewer_conversations: list the caller's conversations (excludes archived by default).
-create or replace function public.viewer_conversations(include_archived boolean default false)
+-- p_scope filters by conversation scope:
+--   'personal'     → organization_id IS NULL AND agency_id IS NULL
+--   'organization' → organization_id = p_organization_id
+--   'agency'       → agency_id = p_agency_id
+--   NULL (default) → no scope filter (legacy: all caller's conversations)
+create or replace function public.viewer_conversations(
+  include_archived  boolean default false,
+  p_organization_id int     default null,
+  p_agency_id       uuid    default null,
+  p_scope           text    default null
+)
   returns setof public.conversations
   stable
   security definer
@@ -3869,10 +3879,16 @@ create or replace function public.viewer_conversations(include_archived boolean 
     from public.conversations c
     where c.profile_id = (select public.viewer_profile_id())
       and (viewer_conversations.include_archived or c.conversation_status <> 'archived')
+      and (
+        viewer_conversations.p_scope is null
+        or (viewer_conversations.p_scope = 'personal'      and c.organization_id is null and c.agency_id is null)
+        or (viewer_conversations.p_scope = 'organization'  and c.organization_id = viewer_conversations.p_organization_id)
+        or (viewer_conversations.p_scope = 'agency'        and c.agency_id = viewer_conversations.p_agency_id)
+      )
     order by c.conversation_last_message_at desc;
   $$;
 
-grant execute on function public.viewer_conversations(boolean) to authenticated;
+grant execute on function public.viewer_conversations(boolean, int, uuid, text) to authenticated;
 
 -- viewer_conversation_messages: thread messages for a conversation owned by caller.
 create or replace function public.viewer_conversation_messages(p_conversation_id uuid)
@@ -3908,8 +3924,17 @@ create or replace function public.viewer_conversation_messages(p_conversation_id
 
 grant execute on function public.viewer_conversation_messages(uuid) to authenticated;
 
--- viewer_unread_count: count of unread outbound messages across all non-archived conversations.
-create or replace function public.viewer_unread_count()
+-- viewer_unread_count: count of unread outbound messages across non-archived conversations.
+-- p_scope filters by conversation scope:
+--   'personal'     → organization_id IS NULL AND agency_id IS NULL
+--   'organization' → organization_id = p_organization_id
+--   'agency'       → agency_id = p_agency_id
+--   NULL (default) → no scope filter (legacy: all caller's conversations)
+create or replace function public.viewer_unread_count(
+  p_organization_id int  default null,
+  p_agency_id       uuid default null,
+  p_scope           text default null
+)
   returns int
   stable
   security definer
@@ -3923,10 +3948,16 @@ create or replace function public.viewer_unread_count()
     where c.profile_id = (select public.viewer_profile_id())
       and c.conversation_status <> 'archived'
       and cm.message_direction = 'outbound'
-      and cm.message_read_at is null;
+      and cm.message_read_at is null
+      and (
+        viewer_unread_count.p_scope is null
+        or (viewer_unread_count.p_scope = 'personal'      and c.organization_id is null and c.agency_id is null)
+        or (viewer_unread_count.p_scope = 'organization'  and c.organization_id = viewer_unread_count.p_organization_id)
+        or (viewer_unread_count.p_scope = 'agency'        and c.agency_id = viewer_unread_count.p_agency_id)
+      );
   $$;
 
-grant execute on function public.viewer_unread_count() to authenticated;
+grant execute on function public.viewer_unread_count(int, uuid, text) to authenticated;
 
 -- ============================================================
 -- RPC: agent_action_claim  (mutex before AI agent side-effects)

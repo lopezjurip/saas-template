@@ -5,9 +5,10 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Bell, Inbox } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import type { InboxScope } from "~/components/inbox/scope";
+import { SCOPE_DETAIL_HREF, SCOPE_INBOX_HREF, SCOPE_RPC_ARGS } from "~/components/inbox/scope";
 import { Tip, useClickOutside } from "~/components/shell/atoms";
 import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE } from "~/lib/route";
 
 type RecentConversation = {
   conversation_id: string;
@@ -22,16 +23,21 @@ type RecentConversation = {
 };
 
 /**
- * Loads recent conversations and unread count from Supabase RPCs.
+ * Loads recent conversations and unread count from Supabase RPCs for a given scope.
  * Returns up to 5 most-recent conversations for the bell popover.
  */
-async function fetchBellData(supabase: ReturnType<typeof createBrowserClient>): Promise<{
+async function fetchBellData(
+  supabase: ReturnType<typeof createBrowserClient>,
+  scope: InboxScope,
+): Promise<{
   unread: number;
   conversations: RecentConversation[];
 }> {
+  const rpcArgs = SCOPE_RPC_ARGS(scope);
+
   const [countResult, convsResult] = await Promise.all([
-    supabase.rpc("viewer_unread_count"),
-    supabase.rpc("viewer_conversations", { include_archived: false }),
+    supabase.rpc("viewer_unread_count", rpcArgs),
+    supabase.rpc("viewer_conversations", { include_archived: false, ...rpcArgs }),
   ]);
 
   const unread = (countResult.data as number | null) ?? 0;
@@ -56,10 +62,24 @@ async function fetchBellData(supabase: ReturnType<typeof createBrowserClient>): 
  * Bell icon button with popover listing recent conversations and unread count badge.
  * Subscribes to Supabase Realtime for live badge + list updates.
  *
+ * - `scope` determines which RPC args to pass and which inbox/detail routes to link.
+ * - `compact` collapses to icon-only button (sidebar icon-rail mode).
+ * - `placement` controls popover direction: "up" for sidebar footer, "down" for top bar headers.
+ *
  * @example
- * <ConversationsBell locale="es" compact={false} />
+ * <ConversationsBell scope={{ kind: "personal" }} compact={false} />
+ * <ConversationsBell scope={{ kind: "organization", tenant_slug: "acme", organization_id: 42 }} compact={true} />
+ * <ConversationsBell scope={{ kind: "agency", agency_slug: "abc", agency_id: "uuid" }} compact={true} placement="down" />
  */
-export function ConversationsBell({ locale, compact }: { locale: string; compact?: boolean }) {
+export function ConversationsBell({
+  scope,
+  compact,
+  placement = "up",
+}: {
+  scope: InboxScope;
+  compact?: boolean;
+  placement?: "up" | "down";
+}) {
   const { t } = useRosetta(LOCALES);
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
@@ -68,7 +88,7 @@ export function ConversationsBell({ locale, compact }: { locale: string; compact
   useClickOutside(ref, () => setOpen(false), open);
 
   async function refresh(supabase: ReturnType<typeof createBrowserClient>) {
-    const result = await fetchBellData(supabase);
+    const result = await fetchBellData(supabase, scope);
     setUnread(result.unread);
     setConversations(result.conversations);
   }
@@ -87,18 +107,19 @@ export function ConversationsBell({ locale, compact }: { locale: string; compact
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function markAllRead() {
     const supabase = createBrowserClient();
-    await supabase.rpc("viewer_unread_count");
-    // Optimistically reset badge; refresh will confirm
+    const rpcArgs = SCOPE_RPC_ARGS(scope);
+    await supabase.rpc("viewer_unread_count", rpcArgs);
     setUnread(0);
     setConversations((prev) => prev.map((c) => ({ ...c, unread: false })));
     await refresh(supabase);
   }
 
-  const inboxHref = ROUTE("/[locale]/home/inbox", { locale });
+  const inboxHref = SCOPE_INBOX_HREF(scope);
 
   const trigger = compact ? (
     <Tip label={t("inbox")} disabled={open}>
@@ -131,6 +152,16 @@ export function ConversationsBell({ locale, compact }: { locale: string; compact
     </button>
   );
 
+  // Popover position: sidebar footer opens upward; top-bar headers open downward.
+  const popoverPositionClass =
+    placement === "down"
+      ? compact
+        ? "absolute top-full left-0 z-40 mt-1.5 w-72"
+        : "absolute top-full left-0 right-0 z-30 mt-1.5"
+      : compact
+        ? "absolute bottom-0 left-full z-40 ml-2 w-72"
+        : "absolute bottom-full left-0 right-0 z-30 mb-1.5";
+
   return (
     <div className="relative" ref={ref}>
       {trigger}
@@ -138,7 +169,7 @@ export function ConversationsBell({ locale, compact }: { locale: string; compact
         <div
           className={cn(
             "border-border bg-card text-card-foreground overflow-hidden rounded-md border shadow-lg",
-            compact ? "absolute bottom-0 left-full z-40 ml-2 w-72" : "absolute bottom-full left-0 right-0 z-30 mb-1.5",
+            popoverPositionClass,
           )}
         >
           <div className="border-border flex items-center justify-between border-b px-3 py-2">
@@ -171,10 +202,7 @@ export function ConversationsBell({ locale, compact }: { locale: string; compact
                 return (
                   <Link
                     key={conv["conversation_id"]}
-                    href={ROUTE("/[locale]/home/inbox/[conversation_id]", {
-                      locale,
-                      conversation_id: conv["conversation_id"],
-                    })}
+                    href={SCOPE_DETAIL_HREF(scope, conv["conversation_id"]) as string}
                     onClick={() => setOpen(false)}
                     className="hover:bg-accent flex items-start gap-2.5 px-3 py-2.5"
                   >
@@ -198,7 +226,7 @@ export function ConversationsBell({ locale, compact }: { locale: string; compact
 
           <div className="border-border border-t px-3 py-2">
             <Link
-              href={inboxHref}
+              href={inboxHref as string}
               onClick={() => setOpen(false)}
               className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-xs"
             >

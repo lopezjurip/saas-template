@@ -24,7 +24,7 @@ test.describe("admin agencies screens", () => {
   });
 
   test("directory renders listing and new-agency button", async ({ page }) => {
-    await page.goto("/es/admin/agencies");
+    await page.goto("/admin/agencies");
     await expect(page.getByRole("heading", { name: "Agencias" })).toBeVisible();
     await expect(page.getByRole("link", { name: /Nueva agencia/i })).toBeVisible();
     // Demo Auditores seeded with test data
@@ -32,25 +32,25 @@ test.describe("admin agencies screens", () => {
   });
 
   test("agency detail renders for known slug", async ({ page }) => {
-    await page.goto("/es/admin/agencies/demo-auditores");
+    await page.goto("/admin/agencies/demo-auditores");
     await expect(page.getByRole("heading", { name: "Demo Auditores" })).toBeVisible();
     await expect(page.getByRole("link", { name: /Afiliar persona/i })).toBeVisible();
   });
 
   test("agency detail 404s for unknown slug", async ({ page }) => {
-    const response = await page.goto("/es/admin/agencies/does-not-exist");
+    const response = await page.goto("/admin/agencies/does-not-exist");
     expect(response?.status()).toBe(404);
   });
 
   test("affiliate invite form renders for known slug", async ({ page }) => {
-    await page.goto("/es/admin/agencies/demo-auditores/affiliates/new");
+    await page.goto("/admin/agencies/demo-auditores/affiliates/new");
     await expect(page.getByText("Demo Auditores").first()).toBeVisible();
     await expect(page.getByLabel(/Correo de la persona/)).toBeVisible();
   });
 });
 
 async function signIn(page: Page, email: string, password: string) {
-  await page.goto("/es/auth");
+  await page.goto("/auth");
   await page.getByLabel("Cuenta").fill(email);
   await page.getByRole("button", { name: "Continuar", exact: true }).click();
   await page.waitForURL(/\/auth\/email\?/);

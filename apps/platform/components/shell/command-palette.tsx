@@ -69,7 +69,7 @@ export function CommandPalette({
           onSelect: () =>
             router.push(
               ROUTE_HREF(
-                ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+                ROUTE("/t/[tenant_slug]/[organization_id]", {
                   locale,
                   tenant_slug: tenant["tenant_slug"],
                   organization_id: current["organization_id"],
@@ -84,7 +84,7 @@ export function CommandPalette({
           onSelect: () =>
             router.push(
               ROUTE_HREF(
-                ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings/members", {
+                ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
                   locale,
                   tenant_slug: tenant["tenant_slug"],
                   organization_id: current["organization_id"],
@@ -99,7 +99,7 @@ export function CommandPalette({
           onSelect: () =>
             router.push(
               ROUTE_HREF(
-                ROUTE("/[locale]/t/[tenant_slug]/[organization_id]/settings", {
+                ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
                   locale,
                   tenant_slug: tenant["tenant_slug"],
                   organization_id: current["organization_id"],
@@ -121,7 +121,7 @@ export function CommandPalette({
         onSelect: () =>
           router.push(
             ROUTE_HREF(
-              ROUTE("/[locale]/t/[tenant_slug]/[organization_id]", {
+              ROUTE("/t/[tenant_slug]/[organization_id]", {
                 locale,
                 tenant_slug: tenant["tenant_slug"],
                 organization_id: organization["organization_id"],
