@@ -1,5 +1,5 @@
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { SINGLE } from "@packages/utils/array";
 import { redirect } from "next/navigation";
 import { OAUTH_PROVIDERS } from "~/app/auth/providers";
@@ -83,9 +83,9 @@ export default async function ConnectionsPage(props: PageProps<"/home/account/co
                 ) : (
                   <form action={actionLinkProvider}>
                     <input type="hidden" name="provider" value={p.id} />
-                    <Button type="submit" variant="outline" className="h-8 text-xs">
+                    <ButtonSpinner variant="outline" pendingChildren={<span>{t("linking")}</span>} className="h-8 text-xs">
                       {t("link")}
-                    </Button>
+                    </ButtonSpinner>
                   </form>
                 )}
               </div>
@@ -108,6 +108,7 @@ const LOCALE_ES = {
   not_linked: "Aún no vinculada",
   unlink_soon: "Desvincular (próx.)",
   link: "Vincular",
+  linking: "Abriendo…",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
@@ -121,6 +122,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
   not_linked: "Not linked yet",
   unlink_soon: "Unlink (soon)",
   link: "Link",
+  linking: "Opening…",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
@@ -134,6 +136,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   not_linked: "Ainda não vinculada",
   unlink_soon: "Desvincular (em breve)",
   link: "Vincular",
+  linking: "Abrindo…",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

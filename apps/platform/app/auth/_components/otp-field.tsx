@@ -12,14 +12,27 @@ export function OtpField({
   id,
   value,
   onChange,
+  onPasteComplete,
   sentTo,
 }: {
   id: string;
   value: string;
   onChange: (next: string) => void;
+  onPasteComplete?: (next: string) => void;
   sentTo: React.ReactNode;
 }) {
   const { t } = useRosetta(LOCALES);
+
+  function handleChange(next: string) {
+    onChange(next.replace(/\D/g, "").slice(0, 6));
+  }
+
+  function handlePaste(event: React.ClipboardEvent<HTMLInputElement>) {
+    const next = event.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (next.length === 6) {
+      onPasteComplete?.(next);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -27,7 +40,8 @@ export function OtpField({
       <Input
         id={id}
         value={value}
-        onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 6))}
+        onChange={(e) => handleChange(e.target.value)}
+        onPaste={handlePaste}
         className="h-12 text-center font-mono text-lg tracking-[0.5em]"
         inputMode="numeric"
         maxLength={6}

@@ -7,6 +7,7 @@ import { getViewerProfileRedirect } from "~/hooks/get-viewer-profile";
 import { getRosetta, getServerLocale } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { signOutForm } from "./actions";
 
 export default async function AuthLogoutPage() {
@@ -47,11 +48,15 @@ export default async function AuthLogoutPage() {
 
         <div className="flex flex-col gap-2.5">
           <form action={signOutForm}>
-            <Button type="submit" variant="destructive" className="h-10 w-full">
-              <LogOut size={16} />
-              <span>{t("sign_out")}</span>
-            </Button>
-          </form>
+              <ButtonSpinner
+                variant="destructive"
+                pendingChildren={<><LogOut size={16} /><span>{t("signing_out")}</span></>}
+                className="h-10 w-full"
+              >
+                <LogOut size={16} />
+                <span>{t("sign_out")}</span>
+              </ButtonSpinner>
+            </form>
           <Button asChild variant="ghost" className="h-10 w-full text-muted-foreground">
             <Link href={ROUTE("/home", { locale })}>{t("cancel")}</Link>
           </Button>
@@ -65,6 +70,7 @@ const LOCALE_ES = {
   heading: "¿Cerrar sesión?",
   body: "Tendrás que volver a identificarte para entrar a tus organizaciones.",
   sign_out: "Cerrar sesión",
+  signing_out: "Cerrando sesión…",
   cancel: "Cancelar",
 };
 
@@ -72,6 +78,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
   heading: "Sign out?",
   body: "You'll need to identify yourself again to access your organizations.",
   sign_out: "Sign out",
+  signing_out: "Signing out…",
   cancel: "Cancel",
 };
 
@@ -79,6 +86,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   heading: "Terminar sessão?",
   body: "Precisará identificar-se novamente para aceder às suas organizações.",
   sign_out: "Terminar sessão",
+  signing_out: "A terminar sessão…",
   cancel: "Cancelar",
 };
 

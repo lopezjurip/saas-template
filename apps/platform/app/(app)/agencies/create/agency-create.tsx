@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { SLUGIFY } from "@packages/utils/slug";
 import { ArrowRight, Briefcase, Building2, Check, Eye, Plus, UserPlus } from "lucide-react";
 import Link from "next/link";
@@ -38,8 +39,10 @@ export function AgencyCreate() {
   const effectiveSlug = (touchedSlug ? slug : autoSlug) || t("slug_fallback");
   const consoleUrl = `app.example.com/a/${createdSlug}`;
   const backHref = ROUTE("/admin/agencies");
+  const isCreating = createState.isValidating;
 
-  async function submit() {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setServerError(null);
     const finalSlug = (touchedSlug ? slug : autoSlug).trim();
     if (!name.trim()) {
@@ -81,7 +84,7 @@ export function AgencyCreate() {
         </header>
 
         {stage === "form" ? (
-          <>
+          <form onSubmit={onSubmit} className="flex flex-col gap-6">
             {serverError ? (
               <Alert variant="destructive">
                 <AlertDescription>{serverError}</AlertDescription>
@@ -97,6 +100,7 @@ export function AgencyCreate() {
                 <Input
                   id="ag-name"
                   type="text"
+                  disabled={isCreating}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={t("name_ph")}
@@ -114,6 +118,7 @@ export function AgencyCreate() {
                 <input
                   id="ag-slug"
                   type="text"
+                  disabled={isCreating}
                   value={touchedSlug ? slug : autoSlug}
                   onChange={(e) => {
                     setTouchedSlug(true);
@@ -136,10 +141,15 @@ export function AgencyCreate() {
               </span>
             </div>
 
-            <Button className="h-9 w-full" onClick={submit} disabled={createState.isValidating}>
-              <Plus size={16} strokeWidth={2} /> {createState.isValidating ? t("creating") : t("create")}
-            </Button>
-          </>
+            <ButtonSpinner
+              pending={isCreating}
+              pendingChildren={<span>{t("creating")}</span>}
+              className="h-9 w-full"
+            >
+              <Plus size={16} strokeWidth={2} />
+              <span>{t("create")}</span>
+            </ButtonSpinner>
+          </form>
         ) : (
           <>
             <div className="flex flex-col items-center gap-3 py-2 text-center">
