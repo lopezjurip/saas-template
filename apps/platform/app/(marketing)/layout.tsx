@@ -90,7 +90,7 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
       </div>
 
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70">
-        <div className="mx-auto flex w-full max-w-6xl items-center gap-6 px-6 py-3">
+        <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-3 sm:px-6 lg:gap-6">
           <Link
             href={ROUTE("/", { locale })}
             aria-label="SaaS Template"
@@ -98,7 +98,7 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
           >
             <Logo />
           </Link>
-          <nav aria-label="Primary" className="hidden items-center gap-1 text-sm md:flex">
+          <nav aria-label="Primary" className="hidden items-center gap-1 text-sm lg:flex">
             <Link
               href={ROUTE("/", { locale }, "product")}
               className="rounded-md px-2.5 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -131,7 +131,7 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            <LocaleToggle />
+            <LocaleToggle className="hidden min-[380px]:inline-flex" />
             <div className="hidden sm:block">
               <ThemeToggle />
             </div>

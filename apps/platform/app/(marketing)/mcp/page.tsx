@@ -1,16 +1,15 @@
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Card, CardContent } from "@packages/ui-common/shadcn/components/ui/card";
 import { URL_NEW } from "@packages/utils/url";
-import { ArrowRight, KeyRound, Plug, ShieldCheck, Terminal } from "lucide-react";
+import { KeyRound, Plug, ShieldCheck, Terminal } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import type { WebPage, WithContext } from "schema-dts";
 import { JsonLd } from "~/components/json-ld";
 import { APP_URL } from "~/lib/constants";
 import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
+import { McpPromptCta } from "./mcp-prompt-cta";
 
 export async function generateMetadata(props: PageProps<"/mcp">): Promise<Metadata> {
   const { t, locale } = await getRosetta(LOCALES);
@@ -67,6 +66,8 @@ export default async function McpPage(props: PageProps<"/mcp">) {
           </Badge>
           <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">{t("title")}</h1>
           <p className="max-w-[60ch] text-pretty text-base leading-relaxed text-muted-foreground">{t("subtitle")}</p>
+
+          <McpPromptCta endpoint={endpoint} platformHref={ctaHref} />
 
           <Card className="mt-2">
             <CardContent className="flex flex-col gap-3 p-5 sm:p-6">
@@ -129,21 +130,6 @@ export default async function McpPage(props: PageProps<"/mcp">) {
             ))}
           </ul>
         </section>
-
-        <section className="mx-auto w-full max-w-4xl px-6 pb-16 sm:pb-24">
-          <Card>
-            <CardContent className="flex flex-col items-start gap-4 p-6 sm:p-8">
-              <h2 className="text-balance text-2xl font-semibold tracking-tight">{t("cta.title")}</h2>
-              <p className="max-w-[52ch] text-pretty leading-relaxed text-muted-foreground">{t("cta.subtitle")}</p>
-              <Button asChild size="sm" className="cursor-pointer">
-                <Link href={ctaHref}>
-                  {t("cta.button")}
-                  <ArrowRight aria-hidden="true" className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </section>
       </main>
     </>
   );
@@ -179,10 +165,6 @@ const LOCALE_ES = {
     "Lista miembros activos e invitaciones pendientes de una organización. Requiere el permiso members_manage.",
   "tools.auth.user": "Requiere usuario autenticado",
   "tools.auth.perm": "Requiere permiso members_manage",
-  "cta.title": "Empieza a construir",
-  "cta.subtitle":
-    "Inicia sesión, crea tu primer tenant y conecta tu cliente MCP favorito en minutos. La seguridad ya viene cableada.",
-  "cta.button": "Ir a la plataforma",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
@@ -215,10 +197,6 @@ const LOCALE_EN: typeof LOCALE_ES = {
     "Lists active members and pending invitations for an organization. Requires the members_manage permission.",
   "tools.auth.user": "Requires authenticated user",
   "tools.auth.perm": "Requires members_manage permission",
-  "cta.title": "Start building",
-  "cta.subtitle":
-    "Sign in, create your first tenant, and connect your favorite MCP client in minutes. Security is already wired in.",
-  "cta.button": "Go to the platform",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
@@ -251,10 +229,6 @@ const LOCALE_PT: typeof LOCALE_ES = {
     "Lista membros ativos e convites pendentes de uma organização. Requer a permissão members_manage.",
   "tools.auth.user": "Requer usuário autenticado",
   "tools.auth.perm": "Requer permissão members_manage",
-  "cta.title": "Comece a construir",
-  "cta.subtitle":
-    "Entre, crie seu primeiro tenant e conecte seu cliente MCP favorito em minutos. A segurança já vem pronta.",
-  "cta.button": "Ir para a plataforma",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
