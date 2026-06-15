@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserClient } from "@packages/supabase/client.browser";
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Fingerprint } from "lucide-react";
@@ -25,7 +25,7 @@ export function PasskeyForm({ email }: { email: string }) {
           return;
         }
         await createPasskey();
-        const supabase = createBrowserClient();
+        const supabase = createSupabaseBrowserClient();
         await supabase.auth.refreshSession();
         router.push(ROUTE_HREF(ROUTE("/auth/onboarding")));
       } catch (e) {

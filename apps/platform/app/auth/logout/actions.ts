@@ -1,7 +1,7 @@
 "use server";
 import "server-only";
 
-import { createServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
 import { captureUserSignedOut } from "~/lib/posthog/events.server";
@@ -10,7 +10,7 @@ import { action } from "~/lib/safe-action.server";
 const log = debug("auth:logout");
 
 export const signOut = action.action(async () => {
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

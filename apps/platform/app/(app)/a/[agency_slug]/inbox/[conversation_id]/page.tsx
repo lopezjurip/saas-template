@@ -1,5 +1,6 @@
-import { createServerClient } from "@packages/supabase/client.server";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { actionMarkRead } from "~/components/inbox/actions";
 import { ConversationThread } from "~/components/inbox/conversation-thread";
@@ -8,17 +9,19 @@ import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
 import { ROSETTA } from "~/lib/i18n";
 import { getServerLocale } from "~/lib/i18n.server";
 
-export async function generateMetadata(props: PageProps<"/a/[agency_slug]/inbox/[conversation_id]">) {
+export async function generateMetadata(
+  props: PageProps<"/a/[agency_slug]/inbox/[conversation_id]">,
+): Promise<Metadata> {
   const { agency_slug, conversation_id } = await props.params;
   const locale = await getServerLocale();
   const { t } = ROSETTA(LOCALES_META, locale);
 
-  const admin = createServiceRoleClient();
+  const admin = createSupabaseServiceRoleClient();
   const agencyRes = await admin.from("agencies").select("agency_id").eq("agency_slug", agency_slug).maybeSingle();
   if (!agencyRes.data) return { title: t("defaultTitle") };
   const agency_id = agencyRes.data["agency_id"];
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: rows } = await supabase.rpc("viewer_conversations", {
     include_archived: true,
     ...SCOPE_RPC_ARGS({ kind: "agency", agency_slug, agency_id }),
@@ -35,12 +38,12 @@ export default async function AgencyConversationPage(props: PageProps<"/a/[agenc
   const { agency_slug, conversation_id } = await props.params;
   const locale = await getServerLocale();
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const admin = createServiceRoleClient();
+  const admin = createSupabaseServiceRoleClient();
 
   const agencyRes = await admin
     .from("agencies")

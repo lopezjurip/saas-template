@@ -1,7 +1,7 @@
 "use server";
 import "server-only";
 
-import { createServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { debug } from "~/lib/debug";
@@ -24,7 +24,7 @@ const claimSchema = z.object({
  */
 export const actionClaimTicket = authedAction.inputSchema(claimSchema).action(async ({ parsedInput }) => {
   const { TError } = await getRosetta(LOCALES);
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
 
   const { error: rpcError } = await supabase.rpc("ticket_claim", {
     p_ticket_id: parsedInput.ticket_id,
@@ -59,7 +59,7 @@ const resolveSchema = z.object({
  */
 export const actionResolveTicket = authedAction.inputSchema(resolveSchema).action(async ({ parsedInput }) => {
   const { TError } = await getRosetta(LOCALES);
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
 
   const resolutionPayload = parsedInput.resolution ? { note: parsedInput.resolution } : undefined;
 
@@ -98,7 +98,7 @@ const postMessageSchema = z.object({
  */
 export const actionPostMessage = authedAction.inputSchema(postMessageSchema).action(async ({ parsedInput }) => {
   const { TError } = await getRosetta(LOCALES);
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
 
   const { error: rpcError } = await supabase.rpc("conversation_post_user_message", {
     conversation_id: parsedInput.conversation_id,
@@ -135,7 +135,7 @@ const escalateSchema = z.object({
  */
 export const actionEscalateTicket = authedAction.inputSchema(escalateSchema).action(async ({ parsedInput }) => {
   const { TError } = await getRosetta(LOCALES);
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
 
   const { data: ticketId, error: rpcError } = await supabase.rpc("ticket_escalate", {
     p_conversation_id: parsedInput.conversation_id,

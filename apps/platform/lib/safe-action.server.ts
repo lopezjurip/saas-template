@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { createSafeActionClient } from "next-safe-action";
@@ -21,7 +21,7 @@ export const action = createSafeActionClient({
  * export const actionDoThing = authedAction.action(async ({ ctx }) => ctx.user);
  */
 export const authedAction = action.use(async ({ next }) => {
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

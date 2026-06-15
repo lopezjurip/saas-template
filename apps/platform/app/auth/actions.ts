@@ -1,7 +1,7 @@
 "use server";
 import "server-only";
 
-import { createServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -31,7 +31,7 @@ const signInWithOAuthRun = action
     const headerList = await headers();
     const origin = headerList.get("origin") ?? `https://${headerList.get("host")}`;
 
-    const supabase = await createServerClient();
+    const supabase = await createSupabaseServerClient();
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}` },
@@ -70,7 +70,7 @@ async function continueWithEmail(value: string, next: string): Promise<never> {
     const qs = new URLSearchParams({ value: email, next });
     redirect(`/auth/email?${qs.toString()}`);
   }
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: exists } = await supabase.rpc("email_exists", { email_to_check: email });
   if (!exists) {
     const qs = new URLSearchParams({ value: email, exists: "0", next });
@@ -89,7 +89,7 @@ async function continueWithEmail(value: string, next: string): Promise<never> {
 async function continueWithPhone(value: string, next: string): Promise<never> {
   const phone = value.trim();
   if (!phone) redirect(`/auth/phone?error=invalid_phone&next=${encodeURIComponent(next)}`);
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: normalized } = await supabase.rpc("phone_normalize", { value: phone, default_code: "+56" });
   if (!normalized) {
     redirect(`/auth/phone?error=invalid_phone&next=${encodeURIComponent(next)}`);

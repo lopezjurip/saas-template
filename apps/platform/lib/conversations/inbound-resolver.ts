@@ -20,7 +20,7 @@
  * });
  */
 
-import type { createServiceRoleClient } from "@packages/supabase/client.service";
+import type { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { debug } from "~/lib/debug";
 
@@ -100,7 +100,7 @@ export type ResolveInboundResult = { ok: true; ctx: InboundContext } | { ok: fal
  * await runAgentLoop(result.ctx);
  */
 export async function resolveInbound(
-  admin: ReturnType<typeof createServiceRoleClient>,
+  admin: ReturnType<typeof createSupabaseServiceRoleClient>,
   params: InboundParams,
 ): Promise<ResolveInboundResult> {
   const { channel, senderAddress, replyToken, providerMessageId, body, rawPayload, signatureVerified } = params;

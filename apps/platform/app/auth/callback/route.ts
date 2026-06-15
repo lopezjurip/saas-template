@@ -1,4 +1,4 @@
-import { createServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { type NextRequest, NextResponse } from "next/server";
 import { RESOLVE_AUTH_NEXT } from "~/lib/auth-next";
 import { debug } from "~/lib/debug";
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/auth/callbac
     return NextResponse.redirect(`${origin}/auth/error?reason=missing_code`);
   }
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     error,
     data: { user },

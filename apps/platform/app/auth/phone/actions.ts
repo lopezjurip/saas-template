@@ -1,7 +1,7 @@
 "use server";
 import "server-only";
 
-import { createServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
@@ -20,7 +20,7 @@ const checkPhoneSchema = z.object({
  * /auth/phone route with `value=` + flags so the page renders the method picker.
  */
 const checkPhoneRun = action.inputSchema(checkPhoneSchema).action(async ({ parsedInput }) => {
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const phone = parsedInput["phone"];
   const next = parsedInput["next"];
 

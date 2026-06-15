@@ -5,7 +5,7 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * Load environment variables from monorepo root `.env.*` files.
  *
- * Playwright runs E2E fixtures that call `createServiceRoleClient()`, which reads
+ * Playwright runs E2E fixtures that call `createSupabaseServiceRoleClient()`, which reads
  * `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` at module init.
  * Playwright doesn't execute Next.js config, so we hydrate `process.env` manually
  * using a tiny parser (no dependency on `@next/env` which is ESM-only).

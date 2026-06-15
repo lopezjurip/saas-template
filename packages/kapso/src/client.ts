@@ -18,8 +18,8 @@ export class KapsoClient {
     const res = await fetch(`${this.baseUrl}/conversations/${conversationId}/messages`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKey}`,
+        ["Content-Type"]: "application/json",
+        ["Authorization"]: `Bearer ${this.apiKey}`,
       },
       body: JSON.stringify(response),
     });

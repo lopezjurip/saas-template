@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserClient } from "@packages/supabase/client.browser";
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
@@ -45,7 +45,7 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
   function onMagicLink() {
     setError(null);
     startTransition(async () => {
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -70,7 +70,7 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
   function verifyOtp(nextToken: string) {
     setError(null);
     startTransition(async () => {
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.verifyOtp({ email, token: nextToken, type: "email" });
       if (err) {
         setError(t("error_otp"));
@@ -91,7 +91,7 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.signInWithPassword({ email, password });
       if (err) {
         setError(t("error_password"));

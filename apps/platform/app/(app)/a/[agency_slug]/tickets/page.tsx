@@ -1,5 +1,5 @@
-import { createServerClient } from "@packages/supabase/client.server";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
@@ -14,12 +14,12 @@ export async function generateMetadata(props: PageProps<"/a/[agency_slug]/ticket
 export default async function AgencyTicketsPage(props: PageProps<"/a/[agency_slug]/tickets">) {
   const { agency_slug } = await props.params;
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const admin = createServiceRoleClient();
+  const admin = createSupabaseServiceRoleClient();
 
   const agencyRes = await admin
     .from("agencies")

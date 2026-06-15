@@ -1,4 +1,4 @@
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import webpush from "web-push";
 import { debug } from "~/lib/debug";
 import type { ChannelSender, ChannelSenderInput, ChannelSenderResult } from "./channel-sender";
@@ -38,7 +38,7 @@ export const sendWebPushNotification: ChannelSender = async function sendWebPush
     return { status: "skipped", error: "VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY not configured" };
   }
 
-  const admin = createServiceRoleClient();
+  const admin = createSupabaseServiceRoleClient();
 
   // Load all active push subscriptions for this recipient.
   const { data: subscriptions, error: fetchError } = await admin

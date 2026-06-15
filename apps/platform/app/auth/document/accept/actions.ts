@@ -1,8 +1,8 @@
 "use server";
 import "server-only";
 
-import { createServerClient } from "@packages/supabase/client.server";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
@@ -12,7 +12,7 @@ import { sendOtpSchema, verifyOtpSchema } from "./schemas";
 const log = debug("auth:document:accept");
 
 export const actionStartDocumentSignup = action.inputSchema(sendOtpSchema).action(async ({ parsedInput }) => {
-  const admin = createServiceRoleClient();
+  const admin = createSupabaseServiceRoleClient();
   const { data: inviteRow, error: inviteError } = await admin
     .from("organization_memberships")
     .select(
@@ -42,7 +42,7 @@ export const actionStartDocumentSignup = action.inputSchema(sendOtpSchema).actio
   }
 
   const channel = parsedInput["channel"];
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const metadata = {
     full_name: parsedInput["full_name"],
     profile_identity: { country, kind, value },
@@ -79,7 +79,7 @@ export const actionStartDocumentSignup = action.inputSchema(sendOtpSchema).actio
 });
 
 export const actionVerifyDocumentSignup = action.inputSchema(verifyOtpSchema).action(async ({ parsedInput }) => {
-  const admin = createServiceRoleClient();
+  const admin = createSupabaseServiceRoleClient();
   const { data: inviteRow, error: inviteError } = await admin
     .from("organization_memberships")
     .select(
@@ -101,7 +101,7 @@ export const actionVerifyDocumentSignup = action.inputSchema(verifyOtpSchema).ac
     throw new Error("Esta invitación expiró");
   }
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const channel = parsedInput["channel"];
   const contact = parsedInput["contact"];
   const token = parsedInput["token"];

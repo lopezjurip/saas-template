@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserClient } from "@packages/supabase/client.browser";
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -30,7 +30,7 @@ export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
   function onDelete(id: string) {
     setError(null);
     startDelete(async () => {
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.passkey.delete({ passkeyId: id });
       if (err) setError(t("error_delete"));
       else router.refresh();

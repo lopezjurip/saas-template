@@ -19,7 +19,7 @@
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { KapsoWebhookPayload } from "@packages/kapso/types";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { after, type NextRequest } from "next/server";
 import { runAgentLoop } from "~/lib/conversations/agent/agent-loop";
 import { resolveInbound } from "~/lib/conversations/inbound-resolver";
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   // ── Ack immediately; run agent in after() ────────────────────────────────
   after(async () => {
-    const admin = createServiceRoleClient();
+    const admin = createSupabaseServiceRoleClient();
     const result = await resolveInbound(admin, {
       channel: "whatsapp",
       senderAddress: senderPhone,

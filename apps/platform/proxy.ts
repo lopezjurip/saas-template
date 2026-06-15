@@ -13,7 +13,11 @@ const PH_BOOTSTRAP_COOKIE = "ph_bootstrap";
 
 const log = debug("proxy");
 
-const PUBLIC_PATH_REGEX = /^(\/|(\/(?:auth|legal|faq|pricing|opengraph-image|twitter-image|icon)(?:\/|$)))/;
+// /.well-known/* is public — includes /oauth-protected-resource (RFC 9728 PRM discovery for MCP clients).
+// Matching the whole /.well-known prefix intentionally: all well-known paths are conventionally public.
+// /oauth/consent stays PROTECTED — the page itself handles the auth redirect.
+const PUBLIC_PATH_REGEX =
+  /^(\/|(\/(?:auth|legal|faq|pricing|opengraph-image|twitter-image|icon|\.well-known)(?:\/|$)))/;
 // NOTE: /api/* routes (including /api/internal/conversations/* and /api/inbound/*) are
 // already excluded from the proxy middleware by the `matcher` config above — they never
 // reach this regex. The auth gate for the drain route is the shared-secret header.

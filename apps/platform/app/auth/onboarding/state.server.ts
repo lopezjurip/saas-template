@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { METHOD_ORDER, type OnboardingMethodStatus, type OnboardingState } from "./state";
 
@@ -12,7 +12,7 @@ import { METHOD_ORDER, type OnboardingMethodStatus, type OnboardingState } from 
 const DOCUMENT_STATUS: OnboardingMethodStatus = "pending";
 
 export async function getViewerOnboardingState(): Promise<OnboardingState> {
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: userResult } = await supabase.auth.getUser();
   const user = userResult.user;
   if (!user) {

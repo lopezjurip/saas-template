@@ -66,7 +66,7 @@ export async function GET(
 ) {
   const { searchParams, origin } = new URL(request.url);
   const next = RESOLVE_AUTH_NEXT(searchParams.get("next"), origin);
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.exchangeCodeForSession(
     searchParams.get("code")!,
   );

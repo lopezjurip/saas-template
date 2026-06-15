@@ -18,7 +18,7 @@
  */
 
 import { timingSafeEqual as cryptoTimingSafeEqual } from "node:crypto";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { NextRequest } from "next/server";
 import type { ChannelSender } from "~/lib/conversations/channel-sender";
@@ -75,14 +75,14 @@ const CHANNEL_SENDER: Record<string, ChannelSender | undefined> = {
  * and the cast can be removed.
  */
 async function pgmqRead(
-  admin: ReturnType<typeof createServiceRoleClient>,
+  admin: ReturnType<typeof createSupabaseServiceRoleClient>,
   vt: number,
   qty: number,
 ): Promise<{ data: PgmqMessage[] | null; error: { message: string } | null }> {
   return (admin as unknown as SupabaseClient).rpc("conversation_outbound_read", { vt, qty });
 }
 
-async function pgmqDelete(admin: ReturnType<typeof createServiceRoleClient>, msgId: number): Promise<void> {
+async function pgmqDelete(admin: ReturnType<typeof createSupabaseServiceRoleClient>, msgId: number): Promise<void> {
   await (admin as unknown as SupabaseClient).rpc("conversation_outbound_delete", { msg_id: msgId });
 }
 
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   // --- Read queue --------------------------------------------------------------
-  const admin = createServiceRoleClient();
+  const admin = createSupabaseServiceRoleClient();
 
   const { data: messages, error: readError } = await pgmqRead(admin, VISIBILITY_TIMEOUT_SECONDS, DRAIN_BATCH_SIZE);
 
@@ -341,7 +341,7 @@ export async function POST(request: NextRequest): Promise<Response> {
  * // { recipient_email: "user@example.com" }
  */
 async function resolveChannelContact(
-  admin: ReturnType<typeof createServiceRoleClient>,
+  admin: ReturnType<typeof createSupabaseServiceRoleClient>,
   profileId: string,
   channel: string,
   basePayload: Record<string, unknown>,

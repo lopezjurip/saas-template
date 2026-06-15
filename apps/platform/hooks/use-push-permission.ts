@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserClient } from "@packages/supabase/client.browser";
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
 import { useEffect, useState } from "react";
 
 export type PushPermissionState = "default" | "granted" | "denied" | "unsupported" | "no_vapid";
@@ -73,7 +73,7 @@ export function usePushPermission() {
         throw new Error("Incomplete push subscription");
       }
 
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -104,7 +104,7 @@ export function usePushPermission() {
       const endpoint = sub.endpoint;
       await sub.unsubscribe();
 
-      const supabase = createBrowserClient();
+      const supabase = createSupabaseBrowserClient();
       await supabase.from("profile_push_subscriptions").delete().eq("endpoint", endpoint);
       setSubscribed(false);
     } finally {

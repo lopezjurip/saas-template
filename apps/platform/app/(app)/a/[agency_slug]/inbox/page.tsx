@@ -1,13 +1,14 @@
-import { createServerClient } from "@packages/supabase/client.server";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { SINGLE } from "@packages/utils/array";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { InboxList } from "~/components/inbox/inbox-list";
 import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
 import { ROSETTA } from "~/lib/i18n";
 import { getServerLocale } from "~/lib/i18n.server";
 
-export async function generateMetadata(props: PageProps<"/a/[agency_slug]/inbox">) {
+export async function generateMetadata(props: PageProps<"/a/[agency_slug]/inbox">): Promise<Metadata> {
   const locale = await getServerLocale();
   const { t } = ROSETTA(LOCALES_META, locale);
   return { title: t("title") };
@@ -18,12 +19,12 @@ export default async function AgencyInboxPage(props: PageProps<"/a/[agency_slug]
   const sp = await props.searchParams;
   const filter = (SINGLE(sp["filter"]) ?? "open") as "open" | "archived";
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const admin = createServiceRoleClient();
+  const admin = createSupabaseServiceRoleClient();
 
   const agencyRes = await admin
     .from("agencies")

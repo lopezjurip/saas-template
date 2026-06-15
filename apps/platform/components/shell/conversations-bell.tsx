@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserClient } from "@packages/supabase/client.browser";
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Bell, Inbox } from "lucide-react";
 import Link from "next/link";
@@ -27,7 +27,7 @@ type RecentConversation = {
  * Returns up to 5 most-recent conversations for the bell popover.
  */
 async function fetchBellData(
-  supabase: ReturnType<typeof createBrowserClient>,
+  supabase: ReturnType<typeof createSupabaseBrowserClient>,
   scope: InboxScope,
 ): Promise<{
   unread: number;
@@ -87,14 +87,14 @@ export function ConversationsBell({
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false), open);
 
-  async function refresh(supabase: ReturnType<typeof createBrowserClient>) {
+  async function refresh(supabase: ReturnType<typeof createSupabaseBrowserClient>) {
     const result = await fetchBellData(supabase, scope);
     setUnread(result.unread);
     setConversations(result.conversations);
   }
 
   useEffect(() => {
-    const supabase = createBrowserClient();
+    const supabase = createSupabaseBrowserClient();
     void refresh(supabase);
 
     const channel = supabase
@@ -111,7 +111,7 @@ export function ConversationsBell({
   }, []);
 
   async function markAllRead() {
-    const supabase = createBrowserClient();
+    const supabase = createSupabaseBrowserClient();
     const rpcArgs = SCOPE_RPC_ARGS(scope);
     await supabase.rpc("viewer_unread_count", rpcArgs);
     setUnread(0);

@@ -39,6 +39,7 @@
     "llms",
     "magiclink",
     "mailpit",
+    "modelcontextprotocol",
     "noopener",
     "noreferrer",
     "posthog",

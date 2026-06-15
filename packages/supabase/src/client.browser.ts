@@ -9,10 +9,10 @@ export { type AppMetadata, AppMetadataSchema } from "./metadata";
  * Creates a Supabase browser client configured with env vars and optional cookie domain.
  *
  * @example
- * const supabase = createBrowserClient();
+ * const supabase = createSupabaseBrowserClient();
  * await supabase.from("posts").select("*");
  */
-export function createBrowserClient() {
+export function createSupabaseBrowserClient() {
   const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
   return createBrowserClientSsr<Database>(
     process.env["NEXT_PUBLIC_SUPABASE_URL"]!,
@@ -31,7 +31,7 @@ export function createBrowserClient() {
  * const supabase = getSupabaseClient();
  */
 export function getSupabaseClient() {
-  const supabase = createBrowserClient();
+  const supabase = createSupabaseBrowserClient();
   return supabase;
 }
 

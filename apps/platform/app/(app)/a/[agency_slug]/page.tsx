@@ -1,5 +1,5 @@
-import { createServerClient } from "@packages/supabase/client.server";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AFFILIATION_STATE } from "~/lib/agencies";
@@ -10,7 +10,7 @@ import { AgencyConsole, type ConsoleData } from "./agency-console";
 export async function generateMetadata(props: PageProps<"/a/[agency_slug]">): Promise<Metadata> {
   const { agency_slug } = await props.params;
   const { t } = await getRosetta(LOCALES);
-  const admin = createServiceRoleClient();
+  const admin = createSupabaseServiceRoleClient();
   const { data } = await admin.from("agencies").select("agency_name").eq("agency_slug", agency_slug).maybeSingle();
   return { title: data?.agency_name ?? t("page_title") };
 }
@@ -18,8 +18,8 @@ export async function generateMetadata(props: PageProps<"/a/[agency_slug]">): Pr
 export default async function AgencyConsolePage(props: PageProps<"/a/[agency_slug]">) {
   const { agency_slug } = await props.params;
 
-  const supabase = await createServerClient();
-  const admin = createServiceRoleClient();
+  const supabase = await createSupabaseServerClient();
+  const admin = createSupabaseServiceRoleClient();
 
   const [agencyRes, userRes] = await Promise.all([
     supabase.rpc("viewer_agency_by_slug", { agency_slug }).maybeSingle(),

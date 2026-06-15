@@ -15,7 +15,7 @@
  */
 
 import { anthropic } from "@ai-sdk/anthropic";
-import type { createServiceRoleClient } from "@packages/supabase/client.service";
+import type { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateText, stepCountIs } from "ai";
 import { debug } from "~/lib/debug";
@@ -53,7 +53,7 @@ const REPLY_SENDER: Record<string, ChannelSender | undefined> = {
  * await runAgentLoop(admin, ctx);
  */
 export async function runAgentLoop(
-  admin: ReturnType<typeof createServiceRoleClient>,
+  admin: ReturnType<typeof createSupabaseServiceRoleClient>,
   ctx: InboundContext,
 ): Promise<void> {
   log.info("[runAgentLoop] starting", {
@@ -118,7 +118,7 @@ export async function runAgentLoop(
  * over the originating channel by enqueuing a delivery.
  */
 async function postAgentReply(
-  admin: ReturnType<typeof createServiceRoleClient>,
+  admin: ReturnType<typeof createSupabaseServiceRoleClient>,
   ctx: InboundContext,
   replyText: string,
 ): Promise<void> {

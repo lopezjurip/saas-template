@@ -1,5 +1,5 @@
-import { createServerClient } from "@packages/supabase/client.server";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
@@ -34,8 +34,8 @@ export default async function MembersAdminPage(
     data: { organization },
   } = await getViewerOrganizationByIdAssert(organization_id);
 
-  const supabase = await createServerClient();
-  const admin = createServiceRoleClient();
+  const supabase = await createSupabaseServerClient();
+  const admin = createSupabaseServiceRoleClient();
 
   const {
     data: { user },

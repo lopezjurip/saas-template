@@ -1,8 +1,8 @@
 import "server-only";
 
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 
-export const supabaseAdmin = createServiceRoleClient();
+export const supabaseAdmin = createSupabaseServiceRoleClient();
 
 /**
  * Provision an auth.users row with `email_confirm: true` so the test can sign in
