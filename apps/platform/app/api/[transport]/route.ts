@@ -5,10 +5,12 @@
  *   POST /api/mcp   → tool calls, initialize, etc.
  *   GET  /api/mcp   → Streamable HTTP SSE stream (if client requests)
  *
- * Authentication: Bearer token must be a valid Supabase access_token.
- * `verifyToken` validates with `supabase.auth.getUser(token)` — signing-agnostic,
- * no additional `jose` dependency needed. On success, injects AuthInfo into the
- * request so each tool handler can build a user-scoped graphy/supabase client.
+ * Authentication: optional (`required: false`). A Bearer token, when present, must be
+ * a valid Supabase access_token; `verifyToken` validates it with `supabase.auth.getUser`
+ * — signing-agnostic, no `jose` dependency. On success it injects AuthInfo so handlers
+ * resolve a user-scoped client. Anonymous callers (no/invalid token) still reach tools:
+ * each tool opts into auth via `getGraphyFromMcpAssert` / `getSupabaseFromMcpAssert`
+ * (which throw for anon), or stays anon-friendly via the non-`Assert` variants.
  *
  * Tenant scoping: tools receive `extra.authInfo.extra.host` (from the Host header)
  * and can call `tenantSlugFromHost()` to determine if the request came from a
@@ -50,7 +52,9 @@ function createAnonClientForValidation() {
 
 /**
  * Validates a bearer token by calling Supabase Auth.
- * Returns an AuthInfo if the token is valid; undefined causes 401.
+ * Returns an AuthInfo when the token is valid; `undefined` otherwise. With
+ * `required: false`, `undefined` does NOT 401 — the request proceeds anonymously
+ * (no `authInfo`), and tools requiring auth throw via the `*Assert` helpers.
  *
  * `extra` carries the user ID and original host so tool handlers can
  * build per-user clients and resolve tenant slugs without re-parsing.
@@ -100,7 +104,9 @@ const mcpHandler = createMcpHandler(
 );
 
 const authHandler = withMcpAuth(mcpHandler, verifyToken, {
-  required: true,
+  // Optional auth: anonymous callers reach tools; per-tool `*Assert` helpers gate
+  // the ones that need an authenticated caller.
+  required: false,
   resourceMetadataPath: "/.well-known/oauth-protected-resource",
 });
 

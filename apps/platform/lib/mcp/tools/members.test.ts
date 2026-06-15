@@ -3,6 +3,17 @@ import { describe, expect, it, vi } from "vitest";
 import type { McpContext } from "~/lib/mcp/tool";
 import { ListOrganizationMembersTool } from "./members";
 
+// Fake Supabase client returned by the mocked resolver; configured per test.
+const { supabase } = vi.hoisted(() => ({
+  supabase: { rpc: vi.fn(), from: vi.fn() },
+}));
+vi.mock("~/lib/mcp/clients", () => ({
+  getSupabaseFromMcpAssert: () => supabase,
+}));
+
+/** Minimal authenticated context (clients come from the mocked resolver). */
+const CTX: McpContext = { token: "token", userId: "user-1", host: undefined };
+
 /** Reads the text payload of the first content block. */
 function TEXT_OF(res: CallToolResult): string {
   const block = res.content[0];
@@ -19,43 +30,29 @@ function QUERY_BUILDER(result: unknown) {
   return builder;
 }
 
-/** Builds a fake McpContext with a stubbed Supabase client. */
-function CONTEXT(rpcResult: unknown, membersResult: unknown): McpContext {
-  return {
-    token: "token",
-    userId: "user-1",
-    host: undefined,
-    graphy: {} as never,
-    supabase: {
-      rpc: vi.fn().mockResolvedValue(rpcResult),
-      from: () => QUERY_BUILDER(membersResult),
-    },
-  } as unknown as McpContext;
-}
-
 describe("ListOrganizationMembersTool", () => {
   it("returns Forbidden when the viewer lacks the permission", async () => {
-    const ctx = CONTEXT({ data: false, error: null }, { data: [], error: null });
+    supabase.rpc.mockResolvedValue({ data: false, error: null });
 
-    const res = await new ListOrganizationMembersTool().run({ organization_id: 1 }, ctx);
+    const res = await new ListOrganizationMembersTool().run({ organization_id: 1 }, CTX);
 
     expect(res.isError).toBe(true);
     expect(TEXT_OF(res)).toContain("Forbidden");
   });
 
   it("surfaces a permission-check error", async () => {
-    const ctx = CONTEXT({ data: null, error: { message: "rpc down" } }, { data: [], error: null });
+    supabase.rpc.mockResolvedValue({ data: null, error: { message: "rpc down" } });
 
-    const res = await new ListOrganizationMembersTool().run({ organization_id: 1 }, ctx);
+    const res = await new ListOrganizationMembersTool().run({ organization_id: 1 }, CTX);
 
     expect(res.isError).toBe(true);
     expect(TEXT_OF(res)).toContain("rpc down");
   });
 
   it("lists members when the viewer has the permission", async () => {
-    const ctx = CONTEXT(
-      { data: true, error: null },
-      {
+    supabase.rpc.mockResolvedValue({ data: true, error: null });
+    supabase.from.mockReturnValue(
+      QUERY_BUILDER({
         data: [
           {
             organization_membership_id: 10,
@@ -67,10 +64,10 @@ describe("ListOrganizationMembersTool", () => {
           },
         ],
         error: null,
-      },
+      }),
     );
 
-    const res = await new ListOrganizationMembersTool().run({ organization_id: 1 }, ctx);
+    const res = await new ListOrganizationMembersTool().run({ organization_id: 1 }, CTX);
 
     expect(res.isError).toBeUndefined();
     const parsed = JSON.parse(TEXT_OF(res));

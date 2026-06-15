@@ -11,6 +11,7 @@
 import { z } from "zod";
 import { gql } from "~/generated/graphql";
 import { debug } from "~/lib/debug";
+import { getGraphyFromMcpAssert } from "~/lib/mcp/clients";
 import { type InferArgs, type McpContext, McpTool, type McpToolStream } from "~/lib/mcp/tool";
 
 const log = debug("app:api:mcp:tools:profile");
@@ -45,11 +46,13 @@ export class UpdateProfileTool extends McpTool<typeof UpdateProfileSchema> {
   readonly inputSchema = UpdateProfileSchema;
 
   async *handle(args: UpdateProfileArgs, ctx: McpContext): McpToolStream {
+    const graphy = getGraphyFromMcpAssert(ctx);
+
     if (!ctx.userId) {
       return { content: [{ type: "text", text: "Could not resolve userId from token" }], isError: true };
     }
 
-    const { data, error } = await ctx.graphy.mutate({
+    const { data, error } = await graphy.mutate({
       query: UpdateProfileMcpMutation,
       variables: {
         profile_id: ctx.userId,

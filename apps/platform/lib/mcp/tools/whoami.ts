@@ -7,6 +7,7 @@
 
 import { gql } from "~/generated/graphql";
 import { debug } from "~/lib/debug";
+import { getGraphyFromMcpAssert } from "~/lib/mcp/clients";
 import { type McpContext, McpTool, type McpToolStream } from "~/lib/mcp/tool";
 
 const log = debug("app:api:mcp:tools:whoami");
@@ -35,7 +36,8 @@ export class WhoamiTool extends McpTool {
   readonly description = "Returns the authenticated user's profile (display name, onboarding status, timestamps).";
 
   async *handle(_args: Record<string, unknown>, ctx: McpContext): McpToolStream {
-    const { data, error } = await ctx.graphy.query({ query: WhoamiMcpQuery });
+    const graphy = getGraphyFromMcpAssert(ctx);
+    const { data, error } = await graphy.query({ query: WhoamiMcpQuery });
 
     if (error) {
       log.error("[whoami] graphy query failed: %o", { message: error.message });

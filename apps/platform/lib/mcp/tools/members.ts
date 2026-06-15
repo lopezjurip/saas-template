@@ -16,6 +16,7 @@
 
 import { z } from "zod";
 import { debug } from "~/lib/debug";
+import { getSupabaseFromMcpAssert } from "~/lib/mcp/clients";
 import { type InferArgs, type McpContext, McpTool, type McpToolStream } from "~/lib/mcp/tool";
 
 const log = debug("app:api:mcp:tools:members");
@@ -44,9 +45,10 @@ export class ListOrganizationMembersTool extends McpTool<typeof ListOrganization
 
   async *handle(args: ListOrganizationMembersArgs, ctx: McpContext): McpToolStream {
     const { organization_id } = args;
+    const supabase = getSupabaseFromMcpAssert(ctx);
 
     // Check permission first using the authenticated client (RLS-backed).
-    const { data: canManage, error: permError } = await ctx.supabase.rpc("viewer_has_permission", {
+    const { data: canManage, error: permError } = await supabase.rpc("viewer_has_permission", {
       organization_id,
       permission_id: "members_manage",
     });
@@ -66,7 +68,7 @@ export class ListOrganizationMembersTool extends McpTool<typeof ListOrganization
       };
     }
 
-    const { data: members, error: membersError } = await ctx.supabase
+    const { data: members, error: membersError } = await supabase
       .from("organization_memberships")
       .select(
         "organization_membership_id, profile_id, organization_membership_invite_email, organization_membership_accepted_at, organization_membership_created_at, profiles(profile_name_full)",

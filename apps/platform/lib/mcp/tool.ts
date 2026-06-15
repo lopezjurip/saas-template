@@ -16,9 +16,7 @@
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { McpServer, ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult, ServerNotification } from "@modelcontextprotocol/sdk/types.js";
-import { createSupabaseMcpClient } from "@packages/supabase/client.mcp";
 import type { ZodRawShape, z } from "zod";
-import { createGraphyMcp } from "~/lib/graphy/graphy.mcp";
 
 /** Args inferred from a tool's raw Zod input shape. */
 export type InferArgs<Shape extends ZodRawShape> = z.infer<z.ZodObject<Shape>>;
@@ -37,20 +35,18 @@ export type InferArgs<Shape extends ZodRawShape> = z.infer<z.ZodObject<Shape>>;
 export type McpToolStream = AsyncGenerator<ServerNotification, CallToolResult, void>;
 
 /**
- * Authenticated, token-scoped context handed to every MCP tool handler.
- * `graphy` and `supabase` are lazy — constructed (and memoized) on first access.
+ * Context handed to every MCP tool handler. Carries raw auth only; tools resolve a
+ * client via the `getGraphyFromMcp` / `getSupabaseFromMcp` (anon) or `*Assert`
+ * (require auth) helpers in `~/lib/mcp/clients`. All fields may be `undefined` —
+ * the endpoint runs with `required: false`, so anonymous callers reach tools.
  */
 export type McpContext = {
-  /** Raw Supabase access token (Bearer). */
-  token: string;
+  /** Raw Supabase access token (Bearer), or `undefined` for anonymous callers. */
+  token: string | undefined;
   /** Authenticated user id (`auth.users.id`), from `authInfo.extra.user_id`. */
   userId: string | undefined;
   /** Original `Host` header, for subdomain tenant scoping. */
   host: string | undefined;
-  /** Token-scoped typed pg_graphql client. */
-  readonly graphy: ReturnType<typeof createGraphyMcp>;
-  /** Token-scoped PostgREST/Supabase client. */
-  readonly supabase: ReturnType<typeof createSupabaseMcpClient>;
 };
 
 /**
@@ -58,9 +54,9 @@ export type McpContext = {
  *
  * Subclasses declare `name` / `description` (and optionally `inputSchema`) and
  * implement `handle` as an async generator: `yield` a `ServerNotification` to stream
- * progress, `return` the final `CallToolResult`. `register` extracts `authInfo`,
- * returns 401 when absent, builds a token-scoped `ctx` (lazy `graphy` / `supabase`),
- * and drives the generator — forwarding yields to `extra.sendNotification`.
+ * progress, `return` the final `CallToolResult`. `register` builds the `ctx` from
+ * `authInfo` (may be anonymous) and drives the generator — forwarding yields to
+ * `extra.sendNotification`. Tools requiring a viewer use the `*Assert` client helpers.
  *
  * @example
  * class WhoamiTool extends McpTool {
@@ -124,26 +120,11 @@ export abstract class McpTool<Shape extends ZodRawShape = ZodRawShape> {
     // be matched against the overloaded `registerTool` signature.
     const callback = (async (args, extra) => {
       const authInfo = extra.authInfo as AuthInfo | undefined;
-      if (!authInfo) {
-        return { content: [{ type: "text", text: "Unauthorized" }], isError: true };
-      }
-
-      const token = authInfo.token;
-      let graphy: ReturnType<typeof createGraphyMcp> | undefined;
-      let supabase: ReturnType<typeof createSupabaseMcpClient> | undefined;
 
       const ctx: McpContext = {
-        token,
-        userId: authInfo.extra?.["user_id"] as string | undefined,
-        host: authInfo.extra?.["host"] as string | undefined,
-        get graphy() {
-          graphy ??= createGraphyMcp(token);
-          return graphy;
-        },
-        get supabase() {
-          supabase ??= createSupabaseMcpClient(token);
-          return supabase;
-        },
+        token: authInfo?.token,
+        userId: authInfo?.extra?.["user_id"] as string | undefined,
+        host: authInfo?.extra?.["host"] as string | undefined,
       };
 
       return this.run(args as InferArgs<Shape>, ctx, (notification) => extra.sendNotification(notification));

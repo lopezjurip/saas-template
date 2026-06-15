@@ -3,16 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 import { type McpContext, McpTool, type McpToolStream } from "~/lib/mcp/tool";
 import { WhoamiTool } from "./whoami";
 
-/** Builds a fake McpContext whose `graphy.query` resolves to the given result. */
-function CONTEXT(queryResult: unknown): McpContext {
-  return {
-    token: "token",
-    userId: "user-1",
-    host: undefined,
-    graphy: { query: vi.fn().mockResolvedValue(queryResult) },
-    supabase: {} as never,
-  } as unknown as McpContext;
-}
+// Fake graphy returned by the mocked client resolver; configured per test.
+const { graphy } = vi.hoisted(() => ({ graphy: { query: vi.fn() } }));
+vi.mock("~/lib/mcp/clients", () => ({
+  getGraphyFromMcpAssert: () => graphy,
+}));
+
+/** Minimal authenticated context (clients come from the mocked resolver). */
+const CTX: McpContext = { token: "token", userId: "user-1", host: undefined };
 
 /** Reads the text payload of the first content block. */
 function TEXT_OF(res: CallToolResult): string {
@@ -22,30 +20,30 @@ function TEXT_OF(res: CallToolResult): string {
 
 describe("WhoamiTool", () => {
   it("returns the viewer profile as JSON", async () => {
-    const ctx = CONTEXT({
+    graphy.query.mockResolvedValue({
       data: { profile: { profileId: "p1", profileNameFull: "Ada" } },
       error: null,
     });
 
-    const res = await new WhoamiTool().run({}, ctx);
+    const res = await new WhoamiTool().run({}, CTX);
 
     expect(res.isError).toBeUndefined();
     expect(JSON.parse(TEXT_OF(res))).toMatchObject({ profileId: "p1", profileNameFull: "Ada" });
   });
 
   it("surfaces a graphy error", async () => {
-    const ctx = CONTEXT({ data: null, error: { message: "boom" } });
+    graphy.query.mockResolvedValue({ data: null, error: { message: "boom" } });
 
-    const res = await new WhoamiTool().run({}, ctx);
+    const res = await new WhoamiTool().run({}, CTX);
 
     expect(res.isError).toBe(true);
     expect(TEXT_OF(res)).toContain("boom");
   });
 
   it("returns an error when no profile is found", async () => {
-    const ctx = CONTEXT({ data: { profile: null }, error: null });
+    graphy.query.mockResolvedValue({ data: { profile: null }, error: null });
 
-    const res = await new WhoamiTool().run({}, ctx);
+    const res = await new WhoamiTool().run({}, CTX);
 
     expect(res.isError).toBe(true);
     expect(TEXT_OF(res)).toContain("Profile not found");
@@ -66,10 +64,9 @@ class StreamingTool extends McpTool {
 
 describe("McpTool.run", () => {
   it("forwards each yielded notification to emit and returns the final result", async () => {
-    const ctx = {} as McpContext;
     const notifications: ServerNotification[] = [];
 
-    const res = await new StreamingTool().run({}, ctx, (notification) => {
+    const res = await new StreamingTool().run({}, CTX, (notification) => {
       notifications.push(notification);
     });
 
@@ -80,7 +77,7 @@ describe("McpTool.run", () => {
   });
 
   it("works without an emit callback (drops notifications)", async () => {
-    const res = await new StreamingTool().run({}, {} as McpContext);
+    const res = await new StreamingTool().run({}, CTX);
 
     expect(TEXT_OF(res)).toBe("done");
   });
