@@ -5,7 +5,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { RUT_FORMAT } from "@packages/utils/rut";
+import { RUT_FORMAT, RUT_NORMALIZE } from "@packages/utils/rut";
 import { ArrowRight, IdCard } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -173,9 +173,15 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
           <Input
             id="doc-value"
             value={doc}
-            onChange={(e) =>
-              setDoc(kind === "nin" ? RUT_FORMAT(e.target.value, { dots: true, dash: true }) : e.target.value)
-            }
+            onChange={(e) => {
+              const raw = e.target.value;
+              setDoc(kind === "nin" ? RUT_NORMALIZE(raw) : raw);
+            }}
+            onBlur={() => {
+              if (kind === "nin" && doc.length > 1) {
+                setDoc(RUT_FORMAT(doc, { dots: true, dash: true }));
+              }
+            }}
             className="h-10 pl-9"
             placeholder={kind === "nin" ? t("placeholder_rut") : t("placeholder_passport")}
             autoComplete="off"

@@ -4,7 +4,7 @@ import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { RUT_FORMAT } from "@packages/utils/rut";
+import { RUT_FORMAT, RUT_NORMALIZE } from "@packages/utils/rut";
 import { ArrowRight, IdCard, Mail, Phone, Search } from "lucide-react";
 import { useState } from "react";
 import { useRosetta } from "~/lib/i18n.client";
@@ -45,9 +45,15 @@ export function AuthEntryForm({ next, error }: { next: string; error?: string | 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
     let next = e.target.value;
     if (DETECT_LOCAL_TYPE(next) === "document" && /[\dkK]/.test(next)) {
-      next = RUT_FORMAT(next, { dots: true, dash: true });
+      next = RUT_NORMALIZE(next);
     }
     setValue(next);
+  }
+
+  function onBlur() {
+    if (DETECT_LOCAL_TYPE(value) === "document" && value.length > 1) {
+      setValue(RUT_FORMAT(value, { dots: true, dash: true }));
+    }
   }
 
   return (
@@ -76,6 +82,7 @@ export function AuthEntryForm({ next, error }: { next: string; error?: string | 
             name={fieldName}
             value={value}
             onChange={onChange}
+            onBlur={onBlur}
             className={cn("h-10 pl-9", error && "border-destructive")}
             placeholder={t("placeholder")}
             autoComplete="username"

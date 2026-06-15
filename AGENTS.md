@@ -242,6 +242,9 @@ Permission-backed (DB lookup, security definer; wildcard `*` honored):
 
 ## Critical Rules
 
+### Contradicciones entre código y documentación
+Si al trabajar en una tarea se detecta una contradicción entre lo que dice el código real y lo que indica `AGENTS.md` o alguna skill propia (`skills/my-*`), **no elegir un camino silenciosamente**. Detener el trabajo, exponer la contradicción al usuario con precisión (archivo:línea del código vs. sección del doc), preguntar qué fuente prevalece, y luego corregir tanto el código como el markdown que resulte incorrecto. La fuente de verdad debe quedar consistente en ambos lados.
+
 ### No barrel index files
 Never create `index.ts` (or `index.tsx`) whose sole purpose is re-exporting. Import directly from source file.
 
