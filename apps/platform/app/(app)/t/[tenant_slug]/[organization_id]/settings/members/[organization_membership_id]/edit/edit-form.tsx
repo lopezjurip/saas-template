@@ -1,7 +1,6 @@
 "use client";
 
-import type { GraphyError } from "@packages/graphy/graphy";
-import { useGraphyMutation } from "@packages/graphy/react";
+import { createBrowserClient } from "@packages/supabase/client.browser";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Checkbox } from "@packages/ui-common/shadcn/components/ui/checkbox";
@@ -11,54 +10,22 @@ import { ArrowRight, Check } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
-import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE_HREF } from "~/lib/route";
 import { PERMISSION_SLUG_WILDCARD } from "../../schemas";
 
 /**
- * Maps a Postgres trigger exception message to a locale key for the UI.
+ * Maps a Supabase error message to a locale key for the UI.
  * Falls back to `save_failed` when no specific code is recognized.
  * @example
  * setError(t(MAP_PG_ERROR_KEY(err)));
  */
-function MAP_PG_ERROR_KEY(err: GraphyError): "last_admin_protected" | "self_remove_blocked" | "save_failed" {
+function MAP_PG_ERROR_KEY(err: { message: string }): "last_admin_protected" | "self_remove_blocked" | "save_failed" {
   const msg = err.message;
   if (msg.includes("last_admin_protected")) return "last_admin_protected";
   if (msg.includes("self_remove_blocked")) return "self_remove_blocked";
   return "save_failed";
 }
-
-const GrantPermissionMutation = /*#__PURE__*/ gql(`
-  mutation EditOrganizationMembershipGrantPermissionMutation($organization_membership_id: Int!, $permission_id: String!) {
-    insertIntoorganization_membership_permissionsCollection(
-      objects: [{ organization_membership_id: $organization_membership_id, permission_id: $permission_id }]
-    ) {
-      affectedCount
-    }
-  }
-`);
-
-const RevokePermissionMutation = /*#__PURE__*/ gql(`
-  mutation EditOrganizationMembershipRevokePermissionMutation($organization_membership_id: Int!, $permission_id: String!) {
-    deleteFromorganization_membership_permissionsCollection(
-      filter: { organization_membership_id: { eq: $organization_membership_id }, permission_id: { eq: $permission_id } }
-    ) {
-      affectedCount
-    }
-  }
-`);
-
-const RevokeOrganizationMembershipMutation = /*#__PURE__*/ gql(`
-  mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($organization_membership_id: Int!, $now: Datetime!) {
-    updateorganization_membershipsCollection(
-      filter: { organization_membership_id: { eq: $organization_membership_id } }
-      set: { organization_membership_revoked_at: $now }
-    ) {
-      affectedCount
-    }
-  }
-`);
 
 interface PermissionRow {
   permission_id: string;
@@ -119,9 +86,7 @@ export function EditPermissionsForm({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const [, grantPermission] = useGraphyMutation(GrantPermissionMutation);
-  const [, revokePermission] = useGraphyMutation(RevokePermissionMutation);
-  const [, revokeOrganizationMembership] = useGraphyMutation(RevokeOrganizationMembershipMutation);
+  const supabase = createBrowserClient();
 
   const initialWildcard = grantedSlugs.includes(PERMISSION_SLUG_WILDCARD);
   const initialSlugs = new Set(grantedSlugs.filter((s) => s !== PERMISSION_SLUG_WILDCARD));
@@ -134,13 +99,19 @@ export function EditPermissionsForm({
    */
   async function writePermission(permission_id: string, granted: boolean): Promise<boolean> {
     if (granted) {
-      const { error: err } = await grantPermission({ organization_membership_id, permission_id });
+      const { error: err } = await supabase
+        .from("organization_membership_permissions")
+        .insert({ organization_membership_id, permission_id });
       if (err) {
         setError(t(MAP_PG_ERROR_KEY(err)));
         return false;
       }
     } else {
-      const { error: err } = await revokePermission({ organization_membership_id, permission_id });
+      const { error: err } = await supabase
+        .from("organization_membership_permissions")
+        .delete()
+        .eq("organization_membership_id", organization_membership_id)
+        .eq("permission_id", permission_id);
       if (err) {
         setError(t(MAP_PG_ERROR_KEY(err)));
         return false;
@@ -214,10 +185,10 @@ export function EditPermissionsForm({
     if (!window.confirm(t("remove_confirm"))) return;
     setError(null);
     startTransition(async () => {
-      const { error: err } = await revokeOrganizationMembership({
-        organization_membership_id,
-        now: new Date().toISOString(),
-      });
+      const { error: err } = await supabase
+        .from("organization_memberships")
+        .update({ organization_membership_revoked_at: new Date().toISOString() })
+        .eq("organization_membership_id", organization_membership_id);
       if (err) {
         setError(t(MAP_PG_ERROR_KEY(err)));
         return;
