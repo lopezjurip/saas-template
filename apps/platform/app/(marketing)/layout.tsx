@@ -47,7 +47,7 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
       links: [
         { label: t("footer.resources.a"), href: ROUTE("/", { locale }, "faq") },
         { label: t("footer.resources.b"), href: ROUTE("/", { locale }, "contact") },
-        { label: t("footer.resources.c"), href: ROUTE("/", { locale }) },
+        { label: t("footer.resources.c"), href: ROUTE("/mcp", { locale }) },
         { label: t("footer.resources.d"), href: ROUTE("/", { locale }) },
       ],
     },
@@ -123,6 +123,12 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
             >
               {t("nav.faq")}
             </Link>
+            <Link
+              href={ROUTE("/mcp", { locale })}
+              className="rounded-md px-2.5 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              {t("nav.mcp")}
+            </Link>
           </nav>
           <div className="ml-auto flex items-center gap-2">
             <LocaleToggle />
@@ -193,6 +199,7 @@ const LOCALE_ES = {
   "nav.pricing": "Precios",
   "nav.customers": "Clientes",
   "nav.faq": "Preguntas frecuentes",
+  "nav.mcp": "MCP",
   "cta.signin": "Ingresar",
   "cta.dashboard": "Ir al panel",
   "footer.tagline": "La plataforma SaaS lista para producción para equipos que avanzan.",
@@ -205,7 +212,7 @@ const LOCALE_ES = {
   "footer.resources.title": "Recursos",
   "footer.resources.a": "Preguntas frecuentes",
   "footer.resources.b": "Contacto",
-  "footer.resources.c": "Guías",
+  "footer.resources.c": "MCP para agentes",
   "footer.resources.d": "Estado",
   "footer.company.title": "Empresa",
   "footer.company.a": "Sobre nosotros",
@@ -227,6 +234,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
   "nav.pricing": "Pricing",
   "nav.customers": "Customers",
   "nav.faq": "FAQ",
+  "nav.mcp": "MCP",
   "cta.signin": "Sign in",
   "cta.dashboard": "Go to dashboard",
   "footer.tagline": "The production-ready SaaS platform for teams that keep moving.",
@@ -239,7 +247,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
   "footer.resources.title": "Resources",
   "footer.resources.a": "FAQ",
   "footer.resources.b": "Contact",
-  "footer.resources.c": "Guides",
+  "footer.resources.c": "MCP for agents",
   "footer.resources.d": "Status",
   "footer.company.title": "Company",
   "footer.company.a": "About",
@@ -261,6 +269,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   "nav.pricing": "Preços",
   "nav.customers": "Clientes",
   "nav.faq": "Perguntas frequentes",
+  "nav.mcp": "MCP",
   "cta.signin": "Entrar",
   "cta.dashboard": "Ir para o painel",
   "footer.tagline": "A plataforma SaaS pronta para produção para times que avançam.",
@@ -273,7 +282,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   "footer.resources.title": "Recursos",
   "footer.resources.a": "Perguntas frequentes",
   "footer.resources.b": "Contato",
-  "footer.resources.c": "Guias",
+  "footer.resources.c": "MCP para agentes",
   "footer.resources.d": "Status",
   "footer.company.title": "Empresa",
   "footer.company.a": "Sobre nós",

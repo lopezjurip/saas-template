@@ -20,19 +20,29 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/llms.txt">) 
 > Production-ready SaaS template with multi-tenant support, chat-first UX,
 > and an opinionated web surface for teams that move fast.
 
-The marketing site has two locales (Spanish / English). The product itself
-(/home, /auth/onboarding, tenant subdomains) is auth-gated and not exposed
-here.
+The marketing site negotiates its language (Spanish / English / Portuguese)
+from the request, so a single URL serves the visitor's locale. The product
+itself (/home, /auth/onboarding, tenant subdomains) is auth-gated and not
+exposed here.
 
 ## Pages
 
-- [Inicio (es-CL)](${base}/es): Landing en español.
-- [Home (en-US)](${base}/en): English landing.
+- [Home](${base}/): Landing page.
+- [MCP](${base}/mcp): Remote Model Context Protocol server — connect AI agents.
+- [Pricing](${base}/pricing): Plans and pricing.
+- [FAQ](${base}/faq): Frequently asked questions.
+
+## For agents
+
+- [MCP endpoint](${base}/api/mcp): Streamable HTTP MCP server. Anonymous tools
+  respond without a token; data tools require a Supabase OAuth Bearer token.
+- [OAuth metadata](${base}/.well-known/oauth-protected-resource): RFC 9728
+  protected-resource metadata for authorization-server discovery.
 
 ## Optional
 
 - [robots.txt](${base}/robots.txt): Crawl policy.
-- [sitemap.xml](${base}/sitemap.xml): Public URLs with hreflang.
+- [sitemap.xml](${base}/sitemap.xml): Public URLs.
 `;
 
   return new NextResponse(body, {

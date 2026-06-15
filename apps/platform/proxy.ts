@@ -17,7 +17,7 @@ const log = debug("proxy");
 // Matching the whole /.well-known prefix intentionally: all well-known paths are conventionally public.
 // /oauth/consent stays PROTECTED — the page itself handles the auth redirect.
 const PUBLIC_PATH_REGEX =
-  /^(\/|(\/(?:auth|legal|faq|pricing|opengraph-image|twitter-image|icon|\.well-known)(?:\/|$)))/;
+  /^(\/|(\/(?:auth|legal|faq|pricing|mcp|opengraph-image|twitter-image|icon|\.well-known)(?:\/|$)))/;
 // NOTE: /api/* routes (including /api/internal/conversations/* and /api/inbound/*) are
 // already excluded from the proxy middleware by the `matcher` config above — they never
 // reach this regex. The auth gate for the drain route is the shared-secret header.
@@ -108,6 +108,7 @@ export async function proxy(request: NextRequest) {
       pathname === "/" ||
       pathname.startsWith("/faq") ||
       pathname.startsWith("/pricing") ||
+      pathname.startsWith("/mcp") ||
       pathname.startsWith("/legal");
     if (isMarketingPath) {
       await setPostHogBootstrap(request, sessionResponse);
