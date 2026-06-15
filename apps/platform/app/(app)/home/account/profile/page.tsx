@@ -41,7 +41,7 @@ export default async function AccountProfilePage(props: PageProps<"/home/account
       <div className="flex flex-col gap-3.5">
         <ProfileAvatarControls profileId={user.id} name={name} avatarSrc={avatarSrc} />
 
-        <ProfileForm profile_id={user.id} defaultValue={name} />
+        <ProfileForm defaultValue={name} />
       </div>
     </div>
   );
