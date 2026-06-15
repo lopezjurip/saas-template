@@ -7,11 +7,18 @@
  * translated strings — sidebar.tsx owns all translations for this nav surface.
  */
 
-import { Bell, Globe, Monitor, ShieldCheck, Trash2, User } from "lucide-react";
+import { Bell, Globe, Monitor, ShieldCheck, Trash2, Unplug, User } from "lucide-react";
 import type { ComponentType } from "react";
 import { ROUTE_PATH } from "~/lib/route";
 
-export type AccountSectionId = "profile" | "security" | "connections" | "sessions" | "notifications" | "danger";
+export type AccountSectionId =
+  | "profile"
+  | "security"
+  | "connections"
+  | "sessions"
+  | "notifications"
+  | "integrations"
+  | "danger";
 
 export type AccountGroupKey = "account" | "security_group" | "danger_zone" | "preferences";
 
@@ -21,6 +28,7 @@ export type AccountLabelKey =
   | "nav_connections"
   | "nav_sessions"
   | "nav_notifications"
+  | "nav_integrations"
   | "nav_danger";
 
 export type AccountSection = {
@@ -38,6 +46,7 @@ export const ACCOUNT_SECTIONS: readonly AccountSection[] = [
   { id: "connections", labelKey: "nav_connections", groupKey: "account", Icon: Globe, todo: true },
   { id: "sessions", labelKey: "nav_sessions", groupKey: "security_group", Icon: Monitor },
   { id: "notifications", labelKey: "nav_notifications", groupKey: "preferences", Icon: Bell, todo: true },
+  { id: "integrations", labelKey: "nav_integrations", groupKey: "preferences", Icon: Unplug },
   { id: "danger", labelKey: "nav_danger", groupKey: "danger_zone", Icon: Trash2, danger: true, todo: true },
 ];
 
@@ -47,6 +56,7 @@ const ACCOUNT_SECTION_PATHS = {
   connections: ROUTE_PATH("/home/account/connections"),
   sessions: ROUTE_PATH("/home/account/sessions"),
   notifications: ROUTE_PATH("/home/account/notifications"),
+  integrations: ROUTE_PATH("/home/account/integrations"),
   danger: ROUTE_PATH("/home/account/danger"),
 } as const satisfies Record<AccountSectionId, string>;
 

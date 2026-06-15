@@ -4540,3 +4540,271 @@ do $$
       raise notice 'conversation_outbound_drain schedule skipped: %', sqlerrm;
   end;
 $$;
+
+-- ============================================================
+-- Viewer-scoped mutations — replaces direct Collection operations
+-- in client components, following the viewer_* naming convention.
+-- ============================================================
+
+-- viewer_profile_update: update the authenticated caller's own display name.
+-- Replaces updateprofilesCollection used in profile forms.
+create or replace function public.viewer_profile_update(profile_name_full text)
+  returns public.profiles
+  language plpgsql
+  security definer
+  set search_path to ''
+  as $$
+    declare
+      _user_id uuid := public.viewer_profile_id(strict => true);
+      _row public.profiles;
+    begin
+      update public.profiles
+        set profile_name_full = viewer_profile_update.profile_name_full
+        where public.profiles.profile_id = _user_id
+          and public.profiles.profile_disabled_at is null
+        returning * into _row;
+      if _row is null then
+        raise exception 'not_found' using errcode = 'P0001';
+      end if;
+      return _row;
+    end;
+  $$;
+
+grant execute on function public.viewer_profile_update(text) to authenticated;
+
+-- viewer_organization_membership_revoke: revoke an active membership.
+-- Caller must hold members_manage in the membership's organization.
+-- Replaces updateorganization_membershipsCollection(set: {revoked_at}).
+create or replace function public.viewer_organization_membership_revoke(organization_membership_id int)
+  returns public.organization_memberships
+  language plpgsql
+  security definer
+  set search_path to ''
+  as $$
+    declare
+      _row public.organization_memberships;
+    begin
+      update public.organization_memberships
+        set organization_membership_revoked_at = current_timestamp
+        where public.organization_memberships.organization_membership_id = viewer_organization_membership_revoke.organization_membership_id
+          and organization_id in (select public.viewer_permission_org_ids('members_manage'))
+          and organization_membership_revoked_at is null
+          and organization_membership_rejected_at is null
+        returning * into _row;
+      if _row is null then
+        raise exception 'not_found_or_forbidden' using errcode = 'P0001';
+      end if;
+      return _row;
+    end;
+  $$;
+
+grant execute on function public.viewer_organization_membership_revoke(int) to authenticated;
+
+-- viewer_organization_membership_invitation_cancel: cancel a pending invitation (not yet accepted).
+-- Caller must hold members_manage; membership must have profile_id IS NULL.
+-- Replaces updateorganization_membershipsCollection(filter:{profile_id:{is:NULL},...}, set:{revoked_at,...}).
+create or replace function public.viewer_organization_membership_invitation_cancel(organization_membership_id int)
+  returns public.organization_memberships
+  language plpgsql
+  security definer
+  set search_path to ''
+  as $$
+    declare
+      _row public.organization_memberships;
+    begin
+      update public.organization_memberships
+        set organization_membership_revoked_at = current_timestamp,
+            organization_membership_invite_token = null
+        where public.organization_memberships.organization_membership_id = viewer_organization_membership_invitation_cancel.organization_membership_id
+          and organization_id in (select public.viewer_permission_org_ids('members_manage'))
+          and profile_id is null
+          and organization_membership_revoked_at is null
+          and organization_membership_rejected_at is null
+        returning * into _row;
+      if _row is null then
+        raise exception 'not_found_or_forbidden' using errcode = 'P0001';
+      end if;
+      return _row;
+    end;
+  $$;
+
+grant execute on function public.viewer_organization_membership_invitation_cancel(int) to authenticated;
+
+-- viewer_organization_membership_permission_grant: grant one permission to a membership.
+-- Caller must hold members_manage in the membership's organization.
+-- Replaces insertIntoorganization_membership_permissionsCollection.
+create or replace function public.viewer_organization_membership_permission_grant(
+  organization_membership_id int,
+  permission_id text
+) returns void
+  language plpgsql
+  security definer
+  set search_path to ''
+  as $$
+    begin
+      if not exists (
+        select 1 from public.organization_memberships m
+        where m.organization_membership_id = viewer_organization_membership_permission_grant.organization_membership_id
+          and m.organization_id in (select public.viewer_permission_org_ids('members_manage'))
+      ) then
+        raise exception 'not_found_or_forbidden' using errcode = 'P0001';
+      end if;
+      insert into public.organization_membership_permissions(organization_membership_id, permission_id)
+        values(
+          viewer_organization_membership_permission_grant.organization_membership_id,
+          viewer_organization_membership_permission_grant.permission_id
+        )
+        on conflict do nothing;
+    end;
+  $$;
+
+grant execute on function public.viewer_organization_membership_permission_grant(int, text) to authenticated;
+
+-- viewer_organization_membership_permission_revoke: revoke one permission from a membership.
+-- Caller must hold members_manage in the membership's organization.
+-- Replaces deleteFromorganization_membership_permissionsCollection.
+create or replace function public.viewer_organization_membership_permission_revoke(
+  organization_membership_id int,
+  permission_id text
+) returns void
+  language plpgsql
+  security definer
+  set search_path to ''
+  as $$
+    begin
+      if not exists (
+        select 1 from public.organization_memberships m
+        where m.organization_membership_id = viewer_organization_membership_permission_revoke.organization_membership_id
+          and m.organization_id in (select public.viewer_permission_org_ids('members_manage'))
+      ) then
+        raise exception 'not_found_or_forbidden' using errcode = 'P0001';
+      end if;
+      delete from public.organization_membership_permissions
+        where public.organization_membership_permissions.organization_membership_id = viewer_organization_membership_permission_revoke.organization_membership_id
+          and public.organization_membership_permissions.permission_id = viewer_organization_membership_permission_revoke.permission_id;
+    end;
+  $$;
+
+grant execute on function public.viewer_organization_membership_permission_revoke(int, text) to authenticated;
+
+-- =============================================================================
+-- API Keys (for MCP server and integrations)
+-- =============================================================================
+
+create table if not exists public.api_keys (
+  api_key_id    bigint generated always as identity primary key,
+  profile_id    uuid        not null references public.profiles(profile_id) on delete cascade,
+  api_key_name  text        not null check (length(trim(api_key_name)) >= 1 and length(api_key_name) <= 128),
+  api_key_prefix text       not null,
+  api_key_hash  text        not null unique,
+  api_key_created_at  timestamptz not null default now(),
+  api_key_last_used_at timestamptz,
+  api_key_revoked_at   timestamptz
+);
+
+alter table public.api_keys enable row level security;
+
+create policy "api_keys_select" on public.api_keys
+  for select using (profile_id = public.viewer_profile_id());
+
+create policy "api_keys_insert" on public.api_keys
+  for insert with check (profile_id = public.viewer_profile_id());
+
+create policy "api_keys_update" on public.api_keys
+  for update using (profile_id = public.viewer_profile_id());
+
+create policy "api_keys_delete" on public.api_keys
+  for delete using (profile_id = public.viewer_profile_id());
+
+-- Validates an API key value (raw secret). Returns profile_id or null.
+-- Called by the MCP route using service role (no viewer JWT in that context).
+create or replace function internal.api_key_validate(key_value text)
+  returns uuid
+  security definer
+  language plpgsql
+as $$
+declare
+  _profile_id uuid;
+begin
+  select profile_id into _profile_id
+  from public.api_keys
+  where api_key_hash = encode(sha256(key_value::bytea), 'hex')
+    and api_key_revoked_at is null;
+
+  if _profile_id is null then
+    return null;
+  end if;
+
+  update public.api_keys
+  set api_key_last_used_at = now()
+  where api_key_hash = encode(sha256(key_value::bytea), 'hex');
+
+  return _profile_id;
+end;
+$$;
+
+-- Creates a new API key for the authenticated viewer.
+-- Returns prefix (for display) and the secret (shown once, never stored plain).
+create or replace function public.viewer_api_key_create(key_name text)
+  returns table(api_key_id bigint, api_key_prefix text, api_key_secret text)
+  security definer
+  language plpgsql
+as $$
+declare
+  _profile_id uuid;
+  _secret     text;
+  _prefix     text;
+  _hash       text;
+  _id         bigint;
+begin
+  _profile_id := public.viewer_profile_id(strict => true);
+
+  -- Generate cryptographically random 32-byte secret, base64url-encoded
+  _secret := 'sk_' || replace(replace(encode(gen_random_bytes(32), 'base64'), '+', '-'), '/', '_');
+  _secret := rtrim(_secret, '=');
+  _prefix := left(_secret, 12);
+  _hash   := encode(sha256(_secret::bytea), 'hex');
+
+  insert into public.api_keys(profile_id, api_key_name, api_key_prefix, api_key_hash)
+  values (_profile_id, key_name, _prefix, _hash)
+  returning public.api_keys.api_key_id into _id;
+
+  return query select _id, _prefix, _secret;
+end;
+$$;
+
+grant execute on function public.viewer_api_key_create(text) to authenticated;
+
+-- Revokes an API key owned by the viewer.
+create or replace function public.viewer_api_key_revoke(p_api_key_id bigint)
+  returns void
+  security definer
+  language plpgsql
+as $$
+declare
+  _profile_id uuid;
+begin
+  _profile_id := public.viewer_profile_id(strict => true);
+
+  update public.api_keys
+  set api_key_revoked_at = now()
+  where api_key_id = p_api_key_id
+    and profile_id = _profile_id
+    and api_key_revoked_at is null;
+
+  if not found then
+    raise exception 'not_found' using errcode = 'P0001';
+  end if;
+end;
+$$;
+
+grant execute on function public.viewer_api_key_revoke(bigint) to authenticated;
+
+-- Public wrapper so the MCP route (service role, no JWT) can call internal.api_key_validate via .rpc().
+create or replace function public.api_key_validate_internal(key_value text)
+  returns uuid
+  security definer
+  language sql
+as $$
+  select internal.api_key_validate(key_value);
+$$;
