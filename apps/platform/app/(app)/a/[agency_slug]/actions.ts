@@ -1,8 +1,8 @@
 "use server";
 import "server-only";
 
-import { createServerClient } from "@packages/supabase/client.server";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -28,7 +28,7 @@ export const actionInviteAffiliate = authedAction
   .inputSchema(inviteAffiliateSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
     const { TError } = await getRosetta(LOCALES);
-    const admin = createServiceRoleClient();
+    const admin = createSupabaseServiceRoleClient();
 
     const email = parsedInput.invitation_email.trim().toLowerCase();
 
@@ -107,7 +107,7 @@ export const actionUpdateAffiliateMembership = authedAction
   .inputSchema(membershipActionSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
     const { TError } = await getRosetta(LOCALES);
-    const admin = createServiceRoleClient();
+    const admin = createSupabaseServiceRoleClient();
 
     const { error: rpcError } = await admin.rpc("agency_membership_update", {
       agency_membership_id: parsedInput.agency_membership_id,
@@ -155,7 +155,7 @@ export const actionRespondInvitation = authedAction
   .inputSchema(respondInvitationSchema)
   .action(async ({ parsedInput }) => {
     const { TError } = await getRosetta(LOCALES);
-    const supabase = await createServerClient();
+    const supabase = await createSupabaseServerClient();
 
     const { error: rpcError } = await supabase.rpc("agency_membership_respond", {
       agency_membership_id: parsedInput.agency_membership_id,

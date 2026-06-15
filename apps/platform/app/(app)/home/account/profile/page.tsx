@@ -1,4 +1,4 @@
-import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
+import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { ProfileAvatarControls } from "~/components/profile-avatar-controls";
 import { getRosetta } from "~/lib/i18n.server";
@@ -8,7 +8,7 @@ export default async function AccountProfilePage(props: PageProps<"/home/account
   const user = await getSupabaseServerUser();
   if (!user) redirect("/auth");
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const [profileResult, avatarResult] = await Promise.all([
     supabase.from("profiles").select("profile_name_full").eq("profile_id", user.id).maybeSingle(),
     supabase

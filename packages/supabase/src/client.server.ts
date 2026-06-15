@@ -20,7 +20,7 @@ export { type AppMetadata, AppMetadataSchema } from "./metadata";
  * Creates a Supabase server client with per-request caching.
  * @returns Cached Supabase client instance with cookie management.
  */
-export const createServerClient = cache(async () => {
+export const createSupabaseServerClient = cache(async () => {
   const cookieStore = await cookies();
   const cookieDomain = process.env["NEXT_PUBLIC_COOKIE_DOMAIN"];
   return createServerClientSsr<Database>(
@@ -61,7 +61,7 @@ export const createServerClient = cache(async () => {
  * }
  */
 export const getSupabaseServerUser = cache(async () => {
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();
   return data.user;
 });
@@ -101,7 +101,7 @@ export async function getSupabaseServerUserAssert() {
  * @returns Session with auth token or null. Note: `session.user` is not authenticated.
  */
 export const getSupabaseServerSession = cache(async () => {
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

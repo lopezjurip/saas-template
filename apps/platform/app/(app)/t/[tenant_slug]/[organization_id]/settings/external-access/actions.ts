@@ -1,7 +1,7 @@
 "use server";
 import "server-only";
 
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { debug } from "~/lib/debug";
@@ -45,7 +45,7 @@ export const actionGrantAgencyAccess = authedAction
       throw new TError("no_permission");
     }
 
-    const admin = createServiceRoleClient();
+    const admin = createSupabaseServiceRoleClient();
 
     const agencyRes = await admin
       .from("agencies")
@@ -101,7 +101,7 @@ export const actionRevokeAgencyAccess = authedAction
       throw new TError("no_permission");
     }
 
-    const admin = createServiceRoleClient();
+    const admin = createSupabaseServiceRoleClient();
 
     /**
      * Only org-scoped grants can be revoked here. Global grants (organization_id IS NULL)

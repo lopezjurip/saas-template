@@ -17,7 +17,7 @@
  *   Phone Numbers → Active Numbers → Messaging → Webhook URL: https://<host>/api/inbound/sms
  */
 
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { after, type NextRequest } from "next/server";
 import { runAgentLoop } from "~/lib/conversations/agent/agent-loop";
 import { parseTwilioInbound } from "~/lib/conversations/inbound-parser-twilio";
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   // ── Ack immediately; run agent in after() ────────────────────────────────
   after(async () => {
-    const admin = createServiceRoleClient();
+    const admin = createSupabaseServiceRoleClient();
     const result = await resolveInbound(admin, {
       channel: "sms",
       senderAddress: senderPhone,

@@ -644,6 +644,44 @@ export type ViewerTenantBySlugUseQuery = {
   tenant: { tenantId: number; tenantSlug: string; tenantName: string; tenantTier: TenantTier } | null;
 };
 
+export type UpdateProfileMcpMutationVariables = Exact<{
+  profile_id: string;
+  profile_name_full: string;
+}>;
+
+export type UpdateProfileMcpMutation = { updateProfilesCollection: { affectedCount: number } };
+
+export type ListTenantsMcpQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ListTenantsMcpQuery = {
+  tenants: {
+    edges: Array<{ node: { tenantId: number; tenantSlug: string; tenantName: string; tenantTier: TenantTier } }>;
+  } | null;
+};
+
+export type ListOrganizationsMcpQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ListOrganizationsMcpQuery = {
+  organizations: {
+    edges: Array<{
+      node: { organizationId: number; tenantId: number; organizationSlug: string; organizationName: string };
+    }>;
+  } | null;
+};
+
+export type WhoamiMcpQueryVariables = Exact<{ [key: string]: never }>;
+
+export type WhoamiMcpQuery = {
+  profile: {
+    profileId: string;
+    profileNameFull: string | null;
+    profileOnboardedAt: string | null;
+    profileDisabledAt: string | null;
+    profileCreatedAt: string;
+    profileUpdatedAt: string;
+  } | null;
+};
+
 export class TypedDocumentString<TResult, TVariables>
   extends String
   implements DocumentTypeDecoration<TResult, TVariables>
@@ -1341,3 +1379,53 @@ export const ViewerTenantBySlugUseDocument = new TypedDocumentString(`
   tenantName
   tenantTier
 }`) as unknown as TypedDocumentString<ViewerTenantBySlugUseQuery, ViewerTenantBySlugUseQueryVariables>;
+export const UpdateProfileMcpDocument = new TypedDocumentString(`
+    mutation UpdateProfileMcp($profile_id: UUID!, $profile_name_full: String!) {
+  updateProfilesCollection(
+    filter: {profileId: {eq: $profile_id}}
+    set: {profileNameFull: $profile_name_full}
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<UpdateProfileMcpMutation, UpdateProfileMcpMutationVariables>;
+export const ListTenantsMcpDocument = new TypedDocumentString(`
+    query ListTenantsMcp {
+  tenants: viewerTenants(orderBy: [{tenantName: AscNullsLast}]) {
+    edges {
+      node {
+        tenantId
+        tenantSlug
+        tenantName
+        tenantTier
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<ListTenantsMcpQuery, ListTenantsMcpQueryVariables>;
+export const ListOrganizationsMcpDocument = new TypedDocumentString(`
+    query ListOrganizationsMcp {
+  organizations: viewerOrganizations(orderBy: [{organizationName: AscNullsLast}]) {
+    edges {
+      node {
+        organizationId
+        tenantId
+        organizationSlug
+        organizationName
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<ListOrganizationsMcpQuery, ListOrganizationsMcpQueryVariables>;
+export const WhoamiMcpDocument = new TypedDocumentString(`
+    query WhoamiMcp {
+  profile: viewerProfile {
+    profileId
+    profileNameFull
+    profileOnboardedAt
+    profileDisabledAt
+    profileCreatedAt
+    profileUpdatedAt
+  }
+}
+    `) as unknown as TypedDocumentString<WhoamiMcpQuery, WhoamiMcpQueryVariables>;

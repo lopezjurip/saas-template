@@ -32,7 +32,7 @@
  * ```
  */
 
-import type { createServiceRoleClient } from "@packages/supabase/client.service";
+import type { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { tool } from "ai";
 import { z } from "zod";
 import { debug } from "~/lib/debug";
@@ -75,7 +75,7 @@ export interface AgentTool<_Name extends string = string, TInput = any> {
   execute: (args: {
     input: TInput;
     ctx: InboundContext;
-    admin: ReturnType<typeof createServiceRoleClient>;
+    admin: ReturnType<typeof createSupabaseServiceRoleClient>;
     /** Logical action idempotency key (e.g. `org:42:payment_order:123:approve`). */
     idempotencyKey: string;
   }) => Promise<Record<string, unknown>>;
@@ -239,7 +239,7 @@ export const TOOL_REGISTRY: Record<string, AgentTool<string, any>> = {
  * const { text } = await generateText({ model, tools, messages, ... });
  */
 export async function buildPermittedTools(
-  admin: ReturnType<typeof createServiceRoleClient>,
+  admin: ReturnType<typeof createSupabaseServiceRoleClient>,
   ctx: InboundContext,
   // biome-ignore lint/suspicious/noExplicitAny: tool() generic is opaque; callers use the ToolSet union
 ): Promise<Record<string, ReturnType<typeof tool<any, any>>>> {

@@ -1,8 +1,8 @@
 "use server";
 import "server-only";
 
-import { createServerClient } from "@packages/supabase/client.server";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { redirect } from "next/navigation";
 import { debug } from "~/lib/debug";
 import { action } from "~/lib/safe-action.server";
@@ -45,7 +45,7 @@ function maskEmail(email: string): string {
 export const actionCheckDocument = action
   .inputSchema(checkDocumentSchema)
   .action(async ({ parsedInput }): Promise<CheckDocumentResult> => {
-    const supabase = await createServerClient();
+    const supabase = await createSupabaseServerClient();
     const country = parsedInput["address_level0_id"];
     const kind = parsedInput["profile_identity_document_kind"];
     const value = parsedInput["profile_identity_document_value"];
@@ -77,7 +77,7 @@ export const actionCheckDocument = action
     }
 
     if (profileId) {
-      const adminClient = createServiceRoleClient();
+      const adminClient = createSupabaseServiceRoleClient();
       const { data: userResult, error: userError } = await adminClient.auth.admin.getUserById(profileId);
       if (userError || !userResult?.user) {
         log.error("getUserById failed for resolved profile", { profileId, userError });
@@ -142,7 +142,7 @@ export const actionCheckDocument = action
   });
 
 export const actionVerifyDocumentLoginOtp = action.inputSchema(verifyLoginOtpSchema).action(async ({ parsedInput }) => {
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const channel = parsedInput["channel"];
   const contact = parsedInput["contact"];
   const token = parsedInput["token"];

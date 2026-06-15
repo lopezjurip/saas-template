@@ -1,5 +1,5 @@
-import { createServerClient } from "@packages/supabase/client.server";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { INITIALS_OF } from "@packages/utils/string";
@@ -63,7 +63,7 @@ export default async function OrganizationMembershipEditPage(
     tenant_slug,
     organization_id,
   });
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: canManage } = await supabase.rpc("viewer_has_permission", {
     organization_id: organization_id,
     permission_id: "members_manage",
@@ -79,7 +79,7 @@ export default async function OrganizationMembershipEditPage(
     );
   }
 
-  const admin = createServiceRoleClient();
+  const admin = createSupabaseServiceRoleClient();
   const [organizationMembershipRes, permissionsRes, grantsRes, presetsRes] = await Promise.all([
     admin
       .from("organization_memberships")

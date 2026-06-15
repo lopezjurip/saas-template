@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserClient } from "@packages/supabase/client.browser";
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
 import type { Database } from "@packages/supabase/types";
 import { Switch } from "@packages/ui-common/shadcn/components/ui/switch";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
@@ -51,7 +51,7 @@ export function NotificationsMatrix() {
   // Load topics + existing prefs
   useEffect(function loadData() {
     let cancelled = false;
-    const supabase = createBrowserClient();
+    const supabase = createSupabaseBrowserClient();
 
     async function fetch() {
       const [topicsRes, prefsRes] = await Promise.all([
@@ -99,7 +99,7 @@ export function NotificationsMatrix() {
 
   // Flush pending upserts to DB
   const flushPending = useCallback(async function flushPending() {
-    const supabase = createBrowserClient();
+    const supabase = createSupabaseBrowserClient();
     const batch = Array.from(pendingRef.current.values());
     if (batch.length === 0) return;
     pendingRef.current.clear();

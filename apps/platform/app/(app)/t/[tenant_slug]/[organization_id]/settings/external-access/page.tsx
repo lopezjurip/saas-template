@@ -1,5 +1,5 @@
-import { createServerClient } from "@packages/supabase/client.server";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -29,7 +29,7 @@ export default async function OrganizationExternalAccessPage(
     data: { organization },
   } = await getViewerOrganizationByIdAssert(organization_id);
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: canManage } = await supabase.rpc("viewer_has_permission", {
     organization_id,
     permission_id: "organization_manage",
@@ -49,7 +49,7 @@ export default async function OrganizationExternalAccessPage(
    * Grants + agencies are service_role-only in RLS; use the admin client now that the
    * org-manage gate passed.
    */
-  const admin = createServiceRoleClient();
+  const admin = createSupabaseServiceRoleClient();
 
   const [agenciesRes, grantsRes, membershipsRes] = await Promise.all([
     admin

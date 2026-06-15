@@ -11,28 +11,28 @@ Use factories from `@packages/supabase`. Never instantiate app clients elsewhere
 
 ```ts
 import {
-  createServerClient,
+  createSupabaseServerClient,
   getSupabaseServerUser,
   getSupabaseServerUserMetadata,
 } from "@packages/supabase/client.server";
 
 const [supabase, user, metadata] = await Promise.all([
-  createServerClient(),
+  createSupabaseServerClient(),
   getSupabaseServerUser(),
   getSupabaseServerUserMetadata(),
 ]);
 ```
 
-Exports are React `cache()`-wrapped per request. `createServerClient()` uses cookies and anon
+Exports are React `cache()`-wrapped per request. `createSupabaseServerClient()` uses cookies and anon
 key, so RLS applies.
 
 ## Browser
 
 ```ts
-import { createBrowserClient } from
+import { createSupabaseBrowserClient } from
   "@packages/supabase/client.browser";
 
-const supabase = createBrowserClient();
+const supabase = createSupabaseBrowserClient();
 ```
 
 For component reuse:
@@ -105,7 +105,7 @@ non-browser entry points.
 ## Service role
 
 ```ts
-import { createServiceRoleClient } from
+import { createSupabaseServiceRoleClient } from
   "@packages/supabase/client.service";
 ```
 

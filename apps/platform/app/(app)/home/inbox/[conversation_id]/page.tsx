@@ -1,4 +1,4 @@
-import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
+import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { notFound, redirect } from "next/navigation";
 import { actionMarkRead } from "~/components/inbox/actions";
 import { ConversationThread } from "~/components/inbox/conversation-thread";
@@ -13,7 +13,7 @@ export async function generateMetadata(props: PageProps<"/home/inbox/[conversati
   const locale = await getServerLocale();
   const { t } = ROSETTA(LOCALES_META, locale);
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: rows } = await supabase.rpc("viewer_conversations", {
     include_archived: true,
     ...SCOPE_RPC_ARGS(PERSONAL_SCOPE),
@@ -35,7 +35,7 @@ export default async function ConversationPage(props: PageProps<"/home/inbox/[co
     redirect(`/auth?next=${encodeURIComponent(`/home/inbox/${conversation_id}`)}`);
   }
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const [convsResult, msgsResult] = await Promise.all([
     supabase.rpc("viewer_conversations", {
       include_archived: true,

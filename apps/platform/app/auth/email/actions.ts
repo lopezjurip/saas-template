@@ -1,7 +1,7 @@
 "use server";
 import "server-only";
 
-import { createServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
@@ -20,7 +20,7 @@ const checkEmailSchema = z.object({
  * /auth/email route with `value=` + flags so the page renders the method picker.
  */
 const checkEmailRun = action.inputSchema(checkEmailSchema).action(async ({ parsedInput }) => {
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const email = parsedInput["email"];
   const next = parsedInput["next"];
 

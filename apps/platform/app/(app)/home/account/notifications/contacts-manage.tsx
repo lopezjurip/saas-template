@@ -2,7 +2,7 @@
 
 // Local component — used only in notifications/page.tsx
 
-import { createBrowserClient } from "@packages/supabase/client.browser";
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
 import type { Database } from "@packages/supabase/types";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
@@ -41,7 +41,7 @@ export function ContactsManage() {
   const [deleting, setDeleting] = useState<string | null>(null);
 
   function loadContacts() {
-    const supabase = createBrowserClient();
+    const supabase = createSupabaseBrowserClient();
     supabase
       .from("profile_contacts")
       .select("*")
@@ -94,7 +94,7 @@ export function ContactsManage() {
     setSubmitting(true);
     setError(null);
 
-    const supabase = createBrowserClient();
+    const supabase = createSupabaseBrowserClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -127,7 +127,7 @@ export function ContactsManage() {
 
   async function deleteContact(contactId: string) {
     setDeleting(contactId);
-    const supabase = createBrowserClient();
+    const supabase = createSupabaseBrowserClient();
     const { error: delError } = await supabase.from("profile_contacts").delete().eq("profile_contact_id", contactId);
 
     if (delError) {

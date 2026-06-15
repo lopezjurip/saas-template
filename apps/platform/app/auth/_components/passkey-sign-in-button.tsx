@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserClient } from "@packages/supabase/client.browser";
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Fingerprint } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -24,7 +24,7 @@ export function PasskeySignInButton({ next }: { next: string }) {
           setError("Tu navegador no soporta passkeys.");
           return;
         }
-        const supabase = createBrowserClient();
+        const supabase = createSupabaseBrowserClient();
         const { error: err } = await supabase.auth.signInWithPasskey();
         if (err) throw err;
         await supabase.auth.refreshSession();

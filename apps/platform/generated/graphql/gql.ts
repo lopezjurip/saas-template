@@ -60,6 +60,10 @@ type Documents = {
   "\n  query ViewerTenantsUse(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: TenantsFilter\n    $orderBy: [TenantsOrderBy!]\n  ) {\n    tenants: viewerTenants(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...ViewerTenantUseFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantsUseDocument;
   "\n  query ViewerTenantByIdUse($tenantId: Int!) {\n    tenant: viewerTenantById(tenantId: $tenantId) {\n      ...ViewerTenantUseFragment\n    }\n  }\n": typeof types.ViewerTenantByIdUseDocument;
   "\n  query ViewerTenantBySlugUse($tenantSlug: String!) {\n    tenant: viewerTenantBySlug(tenantSlug: $tenantSlug) {\n      ...ViewerTenantUseFragment\n    }\n  }\n": typeof types.ViewerTenantBySlugUseDocument;
+  "\n  mutation UpdateProfileMcp($profile_id: UUID!, $profile_name_full: String!) {\n    updateProfilesCollection(\n      filter: { profileId: { eq: $profile_id } }\n      set: { profileNameFull: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.UpdateProfileMcpDocument;
+  "\n  query ListTenantsMcp {\n    tenants: viewerTenants(orderBy: [{ tenantName: AscNullsLast }]) {\n      edges {\n        node {\n          tenantId\n          tenantSlug\n          tenantName\n          tenantTier\n        }\n      }\n    }\n  }\n": typeof types.ListTenantsMcpDocument;
+  "\n  query ListOrganizationsMcp {\n    organizations: viewerOrganizations(orderBy: [{ organizationName: AscNullsLast }]) {\n      edges {\n        node {\n          organizationId\n          tenantId\n          organizationSlug\n          organizationName\n        }\n      }\n    }\n  }\n": typeof types.ListOrganizationsMcpDocument;
+  "\n  query WhoamiMcp {\n    profile: viewerProfile {\n      profileId\n      profileNameFull\n      profileOnboardedAt\n      profileDisabledAt\n      profileCreatedAt\n      profileUpdatedAt\n    }\n  }\n": typeof types.WhoamiMcpDocument;
 };
 const documents: Documents = {
   "\n  mutation AgencyCreateMutation($agency_name: String!, $agency_slug: String!) {\n    agency: viewerAgencyCreate(agencyName: $agency_name, agencySlug: $agency_slug) {\n      agencyId\n    }\n  }\n":
@@ -155,6 +159,14 @@ const documents: Documents = {
     types.ViewerTenantByIdUseDocument,
   "\n  query ViewerTenantBySlugUse($tenantSlug: String!) {\n    tenant: viewerTenantBySlug(tenantSlug: $tenantSlug) {\n      ...ViewerTenantUseFragment\n    }\n  }\n":
     types.ViewerTenantBySlugUseDocument,
+  "\n  mutation UpdateProfileMcp($profile_id: UUID!, $profile_name_full: String!) {\n    updateProfilesCollection(\n      filter: { profileId: { eq: $profile_id } }\n      set: { profileNameFull: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n":
+    types.UpdateProfileMcpDocument,
+  "\n  query ListTenantsMcp {\n    tenants: viewerTenants(orderBy: [{ tenantName: AscNullsLast }]) {\n      edges {\n        node {\n          tenantId\n          tenantSlug\n          tenantName\n          tenantTier\n        }\n      }\n    }\n  }\n":
+    types.ListTenantsMcpDocument,
+  "\n  query ListOrganizationsMcp {\n    organizations: viewerOrganizations(orderBy: [{ organizationName: AscNullsLast }]) {\n      edges {\n        node {\n          organizationId\n          tenantId\n          organizationSlug\n          organizationName\n        }\n      }\n    }\n  }\n":
+    types.ListOrganizationsMcpDocument,
+  "\n  query WhoamiMcp {\n    profile: viewerProfile {\n      profileId\n      profileNameFull\n      profileOnboardedAt\n      profileDisabledAt\n      profileCreatedAt\n      profileUpdatedAt\n    }\n  }\n":
+    types.WhoamiMcpDocument,
 };
 
 /**
@@ -439,6 +451,30 @@ export function gql(
 export function gql(
   source: "\n  query ViewerTenantBySlugUse($tenantSlug: String!) {\n    tenant: viewerTenantBySlug(tenantSlug: $tenantSlug) {\n      ...ViewerTenantUseFragment\n    }\n  }\n",
 ): typeof import("./graphql").ViewerTenantBySlugUseDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  mutation UpdateProfileMcp($profile_id: UUID!, $profile_name_full: String!) {\n    updateProfilesCollection(\n      filter: { profileId: { eq: $profile_id } }\n      set: { profileNameFull: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n",
+): typeof import("./graphql").UpdateProfileMcpDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  query ListTenantsMcp {\n    tenants: viewerTenants(orderBy: [{ tenantName: AscNullsLast }]) {\n      edges {\n        node {\n          tenantId\n          tenantSlug\n          tenantName\n          tenantTier\n        }\n      }\n    }\n  }\n",
+): typeof import("./graphql").ListTenantsMcpDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  query ListOrganizationsMcp {\n    organizations: viewerOrganizations(orderBy: [{ organizationName: AscNullsLast }]) {\n      edges {\n        node {\n          organizationId\n          tenantId\n          organizationSlug\n          organizationName\n        }\n      }\n    }\n  }\n",
+): typeof import("./graphql").ListOrganizationsMcpDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  query WhoamiMcp {\n    profile: viewerProfile {\n      profileId\n      profileNameFull\n      profileOnboardedAt\n      profileDisabledAt\n      profileCreatedAt\n      profileUpdatedAt\n    }\n  }\n",
+): typeof import("./graphql").WhoamiMcpDocument;
 
 export function gql(source: string) {
   return (documents as any)[source] ?? {};

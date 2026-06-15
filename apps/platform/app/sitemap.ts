@@ -31,6 +31,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.8,
     }),
+    PAGE("/mcp", {
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    }),
   );
 
   return sitemap;

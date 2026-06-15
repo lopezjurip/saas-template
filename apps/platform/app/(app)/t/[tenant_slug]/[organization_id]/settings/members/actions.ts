@@ -2,7 +2,7 @@
 import "server-only";
 
 import { randomBytes } from "node:crypto";
-import { createServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { debug } from "~/lib/debug";
@@ -33,7 +33,7 @@ export const actionInviteMember = authedAction
       throw new TError("no_permission");
     }
 
-    const admin = createServiceRoleClient();
+    const admin = createSupabaseServiceRoleClient();
 
     const orgRes = await admin
       .from("organizations")

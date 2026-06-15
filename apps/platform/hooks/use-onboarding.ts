@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserClient } from "@packages/supabase/client.browser";
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
 import { useState } from "react";
 
 export function useOnboardingEmailOtp() {
@@ -11,7 +11,7 @@ export function useOnboardingEmailOtp() {
     setPending(true);
     setError(null);
     try {
-      const supabase = await createBrowserClient();
+      const supabase = await createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.updateUser({ email });
       if (err) {
         setError(err.message);
@@ -31,7 +31,7 @@ export function useOnboardingEmailOtp() {
     setPending(true);
     setError(null);
     try {
-      const supabase = await createBrowserClient();
+      const supabase = await createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.verifyOtp({ type: "email_change", email, token });
       if (err) {
         setError(err.message);
@@ -59,7 +59,7 @@ export function useOnboardingPassword() {
     setPending(true);
     setError(null);
     try {
-      const supabase = await createBrowserClient();
+      const supabase = await createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.updateUser({ password });
       if (err) {
         setError(err.message);
@@ -87,7 +87,7 @@ export function useOnboardingPhoneOtp() {
     setPending(true);
     setError(null);
     try {
-      const supabase = await createBrowserClient();
+      const supabase = await createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.updateUser({ phone });
       if (err) {
         setError(err.message);
@@ -107,7 +107,7 @@ export function useOnboardingPhoneOtp() {
     setPending(true);
     setError(null);
     try {
-      const supabase = await createBrowserClient();
+      const supabase = await createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.verifyOtp({ type: "phone_change", phone, token });
       if (err) {
         setError(err.message);

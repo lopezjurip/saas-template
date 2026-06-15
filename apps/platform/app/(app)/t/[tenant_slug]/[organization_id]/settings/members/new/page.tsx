@@ -1,4 +1,4 @@
-import { createServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
@@ -41,7 +41,7 @@ export default async function NewMemberInvitePage(
     organization_id,
   });
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   // viewer_has_permission is SECURITY DEFINER and honors '*' as a match.
   const { data: canManage } = await supabase.rpc("viewer_has_permission", {
     organization_id: organization_id,

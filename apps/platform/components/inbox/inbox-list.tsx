@@ -1,4 +1,4 @@
-import { createServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Archive, Inbox, MessageSquare } from "lucide-react";
@@ -21,7 +21,7 @@ export async function InboxList({ scope, filter }: { scope: InboxScope; filter: 
   const locale = await getServerLocale();
   const includeArchived = filter === "archived";
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: rows, error } = await supabase.rpc("viewer_conversations", {
     include_archived: includeArchived,
     ...SCOPE_RPC_ARGS(scope),

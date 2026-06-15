@@ -1,4 +1,4 @@
-import { createServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
+import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Check, Fingerprint, IdCard, Lock, Mail, Phone } from "lucide-react";
 import Link from "next/link";
@@ -14,7 +14,7 @@ export default async function SecurityPage(props: PageProps<"/home/account/secur
   const user = await getSupabaseServerUser();
   if (!user) redirect("/auth");
 
-  const supabase = await createServerClient();
+  const supabase = await createSupabaseServerClient();
   const { data: passkeyData } = await supabase.auth.passkey.list();
   const passkeys = passkeyData ?? [];
 
