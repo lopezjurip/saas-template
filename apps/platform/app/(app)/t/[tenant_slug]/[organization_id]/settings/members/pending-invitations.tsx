@@ -1,35 +1,15 @@
 "use client";
 
-import { useGraphyMutation } from "@packages/graphy/react";
+import { createBrowserClient } from "@packages/supabase/client.browser";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { FileText, Mail, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
-import { gql } from "~/generated/graphql";
 import { useIntlDateTimeFormat } from "~/hooks/use-intl";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
-
-const MembersPendingInvitationsCancelMutation = /*#__PURE__*/ gql(`
-  mutation MembersPendingInvitationsCancelMutation($organization_membership_id: Int!, $now: Datetime!) {
-    updateorganization_membershipsCollection(
-      filter: {
-        organization_membership_id: { eq: $organization_membership_id }
-        profile_id: { is: NULL }
-        organization_membership_revoked_at: { is: NULL }
-        organization_membership_rejected_at: { is: NULL }
-      }
-      set: {
-        organization_membership_revoked_at: $now
-        organization_membership_invite_token: null
-      }
-    ) {
-      affectedCount
-    }
-  }
-`);
 
 interface InvitationRow {
   organization_membership_id: number;
@@ -73,7 +53,6 @@ export function PendingInvitations({ invitations, locale, tenantSlug, organizati
   const [pendingId, setPendingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
-  const [, cancelInvitation] = useGraphyMutation(MembersPendingInvitationsCancelMutation);
   const [optimisticInvitations, removeOptimistic] = useOptimistic(
     invitations,
     (state: InvitationRow[], organization_membership_id: number) =>
@@ -86,10 +65,17 @@ export function PendingInvitations({ invitations, locale, tenantSlug, organizati
     setPendingId(inv["organization_membership_id"]);
     startTransition(async () => {
       removeOptimistic(inv["organization_membership_id"]);
-      const { error: err } = await cancelInvitation({
-        organization_membership_id: inv["organization_membership_id"],
-        now: new Date().toISOString(),
-      });
+      const supabase = createBrowserClient();
+      const { error: err } = await supabase
+        .from("organization_memberships")
+        .update({
+          organization_membership_revoked_at: new Date().toISOString(),
+          organization_membership_invite_token: null,
+        })
+        .eq("organization_membership_id", inv["organization_membership_id"])
+        .is("profile_id", null)
+        .is("organization_membership_revoked_at", null)
+        .is("organization_membership_rejected_at", null);
       setPendingId(null);
       if (err) setError("No pudimos cancelar la invitación");
       router.refresh();

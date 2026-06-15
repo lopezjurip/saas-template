@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useGraphyMutation } from "@packages/graphy/react";
+import { createBrowserClient } from "@packages/supabase/client.browser";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
@@ -11,24 +11,8 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
-
-/**
- * GraphQL mutation kept in this client island so the hub never has to re-fetch the profile
- * on every render; we revalidate the next /auth/onboarding hit via router.push().
- */
-const OnboardingProfileFormUpdateNameMutation = /*#__PURE__*/ gql(`
-  mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
-    updateprofilesCollection(
-      filter: { profile_id: { eq: $profile_id } }
-      set: { profile_name_full: $profile_name_full }
-    ) {
-      affectedCount
-    }
-  }
-`);
 
 export function ProfileForm({
   profile_id,
@@ -43,7 +27,6 @@ export function ProfileForm({
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [, updateName] = useGraphyMutation(OnboardingProfileFormUpdateNameMutation);
 
   const schema = z.object({
     profile_name_full: z.string().min(2, t("name_required")).max(256),
@@ -55,7 +38,11 @@ export function ProfileForm({
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const { error } = await updateName({ profile_id, profile_name_full: values.profile_name_full });
+      const supabase = createBrowserClient();
+      const { error } = await supabase
+        .from("profiles")
+        .update({ profile_name_full: values.profile_name_full })
+        .eq("profile_id", profile_id);
       if (error) {
         setServerError(t("error_save"));
         return;

@@ -31,9 +31,8 @@ export default async function NewMemberInvitePage(
     {
       data: { organization },
     },
-    { data: countriesData },
+    countries,
   ] = await Promise.all([getViewerOrganizationByIdAssert(organization_id), getCountries()]);
-  const countries = countriesData?.["addresses_level0"]?.["edges"]?.map((e) => e["node"]) ?? [];
 
   const membersHref = ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
     locale,
