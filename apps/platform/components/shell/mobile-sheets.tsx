@@ -25,19 +25,19 @@ import {
   Users,
   X,
 } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState, useTransition } from "react";
-
-import { Avatar } from "~/components/shell/atoms";
+import { InitialsAvatar } from "~/components/shell/atoms";
 import { Sheet } from "~/components/shell/mobile-sheet";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { useRosetta } from "~/lib/i18n.client";
-import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
 export function MobileOrgSheet({
   open,
@@ -69,10 +69,9 @@ export function MobileOrgSheet({
             onClick={onClose}
             className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left"
           >
-            <Avatar
+            <InitialsAvatar
               initials={INITIALS_OF(organization["organization_name"])}
               style={COLOR_HSL_FROM_STRING(organization["organization_name"])}
-              size="md"
             />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium">{organization["organization_name"]}</div>
@@ -125,14 +124,14 @@ export function MobileProfileSheet({
   const items = [
     { Icon: User, label: t("account"), href: ROUTE("/home/account/profile", { locale }) },
     { Icon: CreditCard, label: t("billing"), href: ROUTE("/home/account/profile", { locale }) },
-    { Icon: KeyRound, label: t("tokens"), href: ROUTE("/home/account/tokens", { locale }) },
+    { Icon: KeyRound, label: t("tokens"), href: ROUTE("/home/account/security", { locale }) },
     { Icon: Bell, label: t("notifications"), href: ROUTE("/home/account/notifications", { locale }) },
   ];
 
   return (
     <Sheet open={open} onClose={onClose}>
       <div className="border-border flex items-center gap-3 border-b px-4 pb-3">
-        <Avatar
+        <InitialsAvatar
           initials={INITIALS_OF(viewer["profile_name_full"] || viewer["email"])}
           color="bg-fuchsia-600 text-white"
           size="lg"
@@ -268,12 +267,12 @@ export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; 
 type SearchItem = {
   id: string;
   label: string;
-  href?: AppRoute;
+  href?: Route;
   onTap?: () => void;
   hint?: string;
   Icon?: React.ComponentType<{ size?: number; className?: string }>;
   orgInitials?: string;
-  orgColor?: string;
+  orgColor?: Record<string, string>;
 };
 
 type SearchGroup = {
@@ -308,7 +307,7 @@ export function MobileSearchSheet({
     return () => clearTimeout(timeout);
   }, [open]);
 
-  const groups = [
+  const groups: SearchGroup[] = [
     {
       heading: t("navigate"),
       items: [
@@ -424,7 +423,7 @@ export function MobileSearchSheet({
                   className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-sm"
                 >
                   {item.orgInitials && item.orgColor ? (
-                    <Avatar initials={item.orgInitials} color={item.orgColor} size="sm" className="h-6 w-6" />
+                    <InitialsAvatar initials={item.orgInitials} style={item.orgColor} size="sm" className="h-6 w-6" />
                   ) : Icon ? (
                     <Icon size={16} className="text-muted-foreground" />
                   ) : (

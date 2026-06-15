@@ -5,7 +5,7 @@ import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowUpRight, ChevronsUpDown, HelpCircle, Settings as SettingsIcon, X } from "lucide-react";
 import Link from "next/link";
 
-import { Avatar } from "~/components/shell/atoms";
+import { InitialsAvatar } from "~/components/shell/atoms";
 import { Scrim } from "~/components/shell/mobile-sheet";
 import { BUILD_NAV_TREE, IS_NAV_GROUP, type NavLeaf, PICK_ACTIVE_LEAF_ID } from "~/components/shell/nav-tree";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
@@ -61,7 +61,7 @@ export function MobileNavDrawer({
             onClick={onOrg}
             className="active:bg-accent -m-1 flex flex-1 items-center gap-2 rounded-md p-1"
           >
-            <Avatar
+            <InitialsAvatar
               initials={INITIALS_OF(organization.organization_name)}
               style={COLOR_HSL_FROM_STRING(organization.organization_name)}
               size="lg"
@@ -125,10 +125,9 @@ export function MobileNavDrawer({
             <ArrowUpRight size={13} className="text-muted-foreground" />
           </button>
           <div className="border-border mt-2 flex items-center gap-2 rounded-md border-t px-2 pt-3">
-            <Avatar
+            <InitialsAvatar
               initials={INITIALS_OF(viewer.profile_name_full || viewer.email)}
               color="bg-fuchsia-600 text-white"
-              size="md"
             />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm/normal font-medium leading-tight">

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { type VariantProps } from "class-variance-authority";
+import type { VariantProps } from "class-variance-authority";
 import { useFormStatus } from "react-dom";
 import type { PolymorphicProps } from "./polymorphic";
 import { buttonVariants } from "./shadcn/components/ui/button";

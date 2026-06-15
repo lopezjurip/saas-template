@@ -2,6 +2,7 @@ import { createServerClient } from "@packages/supabase/client.server";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Archive, Inbox, MessageSquare } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { ScopeSelector } from "~/components/inbox/scope-selector";
 import { ROSETTA } from "~/lib/i18n";
@@ -31,8 +32,8 @@ export async function InboxList({ scope, filter }: { scope: InboxScope; filter: 
   const conversations = (rows ?? []) as Array<Record<string, unknown>>;
 
   const inboxHref = SCOPE_INBOX_HREF(scope);
-  const openHref = ROUTE_WITH_FILTER(inboxHref as string, "open");
-  const archivedHref = ROUTE_WITH_FILTER(inboxHref as string, "archived");
+  const openHref = ROUTE_WITH_FILTER(inboxHref, "open");
+  const archivedHref = ROUTE_WITH_FILTER(inboxHref, "archived");
 
   return (
     <div className="flex h-full flex-col">
@@ -92,7 +93,7 @@ export async function InboxList({ scope, filter }: { scope: InboxScope; filter: 
             return (
               <Link
                 key={id}
-                href={SCOPE_DETAIL_HREF(scope, id) as string}
+                href={SCOPE_DETAIL_HREF(scope, id)}
                 className="hover:bg-accent/50 flex items-start gap-3 px-6 py-4 transition-colors"
               >
                 <Archive size={16} className="text-muted-foreground mt-0.5 shrink-0" />
@@ -119,10 +120,10 @@ export async function InboxList({ scope, filter }: { scope: InboxScope; filter: 
   );
 }
 
-function ROUTE_WITH_FILTER(basePath: string, filter: string): string {
+function ROUTE_WITH_FILTER(basePath: string, filter: string): Route {
   const url = new URL(basePath, "http://x");
   url.searchParams.set("filter", filter);
-  return `${url.pathname}${url.search}`;
+  return `${url.pathname}${url.search}` as Route;
 }
 
 const LOCALE_ES = {

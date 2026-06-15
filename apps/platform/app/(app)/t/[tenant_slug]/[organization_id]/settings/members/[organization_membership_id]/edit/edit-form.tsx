@@ -8,11 +8,12 @@ import { Checkbox } from "@packages/ui-common/shadcn/components/ui/checkbox";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Check } from "lucide-react";
+import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
-import { type AppRoute, ROUTE_HREF } from "~/lib/route";
+import { ROUTE_HREF } from "~/lib/route";
 import { PERMISSION_SLUG_WILDCARD } from "../../schemas";
 
 /**
@@ -76,7 +77,7 @@ interface Props {
   permissions: PermissionRow[];
   presets: PresetRow[];
   grantedSlugs: string[];
-  membersHref: AppRoute;
+  membersHref: Route;
 }
 
 type OptimisticAction =

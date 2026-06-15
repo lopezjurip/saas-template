@@ -3,6 +3,7 @@
 import { useMounted } from "@packages/react-hooks/use-mounted";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowUpRight, ChevronDown, Globe, HelpCircle, Moon, Settings as SettingsIcon, Sun } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useRef, useState, useTransition } from "react";
@@ -10,7 +11,6 @@ import { Tip, useClickOutside } from "~/components/shell/atoms";
 import { useLocaleCookie } from "~/hooks/use-locale-cookie";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { useRosetta } from "~/lib/i18n.client";
-import type { AppRoute } from "~/lib/route";
 
 export function SettingsMenu({
   locale,
@@ -18,7 +18,7 @@ export function SettingsMenu({
   compact,
 }: {
   locale: string;
-  settingsHref: AppRoute;
+  settingsHref: Route;
   compact?: boolean;
 }) {
   const { t } = useRosetta(LOCALES);

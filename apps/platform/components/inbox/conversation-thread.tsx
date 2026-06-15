@@ -5,10 +5,10 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Textarea } from "@packages/ui-common/shadcn/components/ui/textarea";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Archive, ArrowLeft, MessageSquare, Send } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRosetta } from "~/lib/i18n.client";
-import type { AppRoute } from "~/lib/route";
 import { actionArchive, actionPostMessage } from "./actions";
 
 type Message = {
@@ -71,7 +71,7 @@ export function ConversationThread({
   conversation: Record<string, unknown>;
   initialMessages: Array<Record<string, unknown>>;
   viewerId: string;
-  backHref: AppRoute | string;
+  backHref: Route;
 }) {
   const { t } = useRosetta(LOCALES);
 
@@ -163,11 +163,7 @@ export function ConversationThread({
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className="border-border flex shrink-0 items-center gap-3 border-b px-6 py-3">
-        <Link
-          href={backHref as string}
-          className="text-muted-foreground hover:text-foreground"
-          aria-label={t("backToInbox")}
-        >
+        <Link href={backHref} className="text-muted-foreground hover:text-foreground" aria-label={t("backToInbox")}>
           <ArrowLeft size={16} />
         </Link>
         <div className="min-w-0 flex-1">

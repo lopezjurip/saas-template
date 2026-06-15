@@ -4,13 +4,13 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { INITIALS_OF } from "@packages/utils/string";
 import { ArrowLeft, FileText, Mail, Phone, ShieldCheck } from "lucide-react";
-import type { Metadata } from "next";
+import type { Metadata, Route } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { type AppRoute, ROUTE } from "~/lib/route";
+import { ROUTE } from "~/lib/route";
 import { EditPermissionsForm } from "./edit-form";
 
 function MEMBER_LABEL(row: {
@@ -204,7 +204,7 @@ function EditShell({
   backLabel,
   children,
 }: {
-  membersHref: AppRoute;
+  membersHref: Route;
   backLabel: string;
   children: ReactNode;
 }) {

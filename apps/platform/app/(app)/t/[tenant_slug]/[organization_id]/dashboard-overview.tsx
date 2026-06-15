@@ -16,10 +16,10 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { useState } from "react";
 import { useRosetta } from "~/lib/i18n.client";
-import type { AppRoute } from "~/lib/route";
 
 type Period = "today" | "week" | "month";
 
@@ -86,13 +86,7 @@ const CHECKLIST: ChecklistStep[] = /*#__PURE__*/ [
   { key: "integration", done: false },
 ];
 
-export function DashboardOverview({
-  organizationName,
-  membersHref,
-}: {
-  organizationName: string;
-  membersHref: AppRoute;
-}) {
+export function DashboardOverview({ organizationName, membersHref }: { organizationName: string; membersHref: Route }) {
   const { t } = useRosetta(LOCALES);
   const [period, setPeriod] = useState<Period>("week");
   const doneCount = CHECKLIST.filter((c) => c.done).length;

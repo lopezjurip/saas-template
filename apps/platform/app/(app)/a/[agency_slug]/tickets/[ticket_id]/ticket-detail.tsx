@@ -9,6 +9,7 @@ import Link from "next/link";
 import type { ElementType } from "react";
 import { useRef, useState, useTransition } from "react";
 import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionClaimTicket, actionPostMessage, actionResolveTicket } from "../actions";
 
@@ -117,7 +118,7 @@ export function TicketDetail({ data }: { data: TicketDetailData }) {
     });
   }
 
-  const poolHref = `/a/${data["agency_slug"]}/tickets`;
+  const poolHref = ROUTE("/a/[agency_slug]/tickets", { agency_slug: data["agency_slug"] as string });
   const scope = data["organization_name"]
     ? `${data["organization_name"]}${data["tenant_name"] ? ` · ${data["tenant_name"]}` : ""}`
     : (data["tenant_name"] ?? null);

@@ -45,7 +45,7 @@
     "@types/ua-parser-js": "^0.7.39",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
-    "ai": "^6.0.204",
+    "ai": "^6.0.205",
     "clsx": "^2.1.1",
     "lucide-react": "^1.18.0",
     "negotiator": "^1.0.0",

@@ -1,11 +1,11 @@
 "use client";
 
 import { useGraphyMutation } from "@packages/graphy/react";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { SLUGIFY } from "@packages/utils/slug";
 import { ArrowRight, Briefcase, Building2, Check, Eye, Plus, UserPlus } from "lucide-react";
 import Link from "next/link";
@@ -38,7 +38,7 @@ export function AgencyCreate() {
   const autoSlug = SLUGIFY(name).slice(0, 40);
   const effectiveSlug = (touchedSlug ? slug : autoSlug) || t("slug_fallback");
   const consoleUrl = `app.example.com/a/${createdSlug}`;
-  const backHref = ROUTE("/admin/agencies");
+  const backHref = ROUTE("/home");
   const isCreating = createState.isValidating;
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -66,7 +66,7 @@ export function AgencyCreate() {
   }
 
   const consoleHref = ROUTE("/a/[agency_slug]", { agency_slug: createdSlug });
-  const inviteHref = ROUTE("/admin/agencies/[slug]/affiliates/new", { slug: createdSlug });
+  const inviteHref = ROUTE("/a/[agency_slug]", { agency_slug: createdSlug });
 
   return (
     <div className="mx-auto flex w-full max-w-[520px] flex-col gap-7 px-6 py-8">
@@ -141,11 +141,7 @@ export function AgencyCreate() {
               </span>
             </div>
 
-            <ButtonSpinner
-              pending={isCreating}
-              pendingChildren={<span>{t("creating")}</span>}
-              className="h-9 w-full"
-            >
+            <ButtonSpinner pending={isCreating} pendingChildren={<span>{t("creating")}</span>} className="h-9 w-full">
               <Plus size={16} strokeWidth={2} />
               <span>{t("create")}</span>
             </ButtonSpinner>

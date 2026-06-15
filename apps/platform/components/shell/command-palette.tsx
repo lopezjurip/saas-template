@@ -8,7 +8,7 @@ import { Building2, Circle, Home, type LucideIcon, Search, Settings, Users } fro
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Avatar, Kbd } from "~/components/shell/atoms";
+import { InitialsAvatar, Kbd } from "~/components/shell/atoms";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
@@ -19,7 +19,7 @@ type PaletteItem = {
   hint?: string;
   Icon?: LucideIcon;
   orgInitials?: string;
-  orgColor?: string;
+  orgColor?: Record<string, string>;
   onSelect: () => void;
 };
 
@@ -239,7 +239,7 @@ export function CommandPalette({
                     )}
                   >
                     {item.orgInitials && item.orgColor ? (
-                      <Avatar initials={item.orgInitials} color={item.orgColor} size="sm" className="h-5 w-5" />
+                      <InitialsAvatar initials={item.orgInitials} style={item.orgColor} size="sm" className="h-5 w-5" />
                     ) : (
                       <Icon size={15} className="text-muted-foreground" />
                     )}

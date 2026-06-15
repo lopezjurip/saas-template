@@ -25,7 +25,12 @@ export function OAuthSection({ next }: { next: string }) {
             <input type="hidden" name="next" value={next} />
             <ButtonSpinner
               variant="outline"
-              pendingChildren={<><p.Mark size={18} /><span>{t("continue_with_pending", { provider: p.label })}</span></>}
+              pendingChildren={
+                <>
+                  <p.Mark size={18} />
+                  <span>{t("continue_with_pending", { provider: p.label })}</span>
+                </>
+              }
               className="h-10 w-full justify-center gap-2.5"
             >
               <p.Mark size={18} />

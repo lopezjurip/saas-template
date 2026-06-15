@@ -75,7 +75,7 @@ export async function getSupabaseServerUserRedirect() {
   const user = await getSupabaseServerUser();
   if (!user) {
     // Short circuit.
-    redirect("/[locale]/auth");
+    redirect("/auth");
   }
   return user;
 }

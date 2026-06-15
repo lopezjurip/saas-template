@@ -202,7 +202,7 @@ export function ConversationsBell({
                 return (
                   <Link
                     key={conv["conversation_id"]}
-                    href={SCOPE_DETAIL_HREF(scope, conv["conversation_id"]) as string}
+                    href={SCOPE_DETAIL_HREF(scope, conv["conversation_id"])}
                     onClick={() => setOpen(false)}
                     className="hover:bg-accent flex items-start gap-2.5 px-3 py-2.5"
                   >
@@ -226,7 +226,7 @@ export function ConversationsBell({
 
           <div className="border-border border-t px-3 py-2">
             <Link
-              href={inboxHref as string}
+              href={inboxHref}
               onClick={() => setOpen(false)}
               className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-xs"
             >

@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { LocaleToggle } from "~/components/locale-toggle";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { gql } from "~/generated/graphql";
+import { OrderByDirection } from "~/generated/graphql/graphql";
 import { getViewerAgencies } from "~/hooks/get-viewer-agencies";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { getRosetta } from "~/lib/i18n.server";
@@ -52,7 +53,7 @@ export default async function HomePage(props: PageProps<"/home">) {
   const graphy = await getGraphySession();
   const [{ data }, agenciesRes] = await Promise.all([
     graphy.query({ query: HomePickerPageQuery }),
-    getViewerAgencies({ orderBy: [{ agency_name: "AscNullsLast" }] }),
+    getViewerAgencies({ orderBy: [{ agency_name: OrderByDirection.AscNullsLast }] }),
   ]);
   const edges = data?.["viewer_organizations"]?.["edges"] ?? [];
   const agencyEdges = agenciesRes.data?.["agencies"]?.["edges"] ?? [];

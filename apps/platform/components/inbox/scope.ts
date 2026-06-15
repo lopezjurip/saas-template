@@ -1,4 +1,4 @@
-import type { AppRoute } from "~/lib/route";
+import type { Route } from "next";
 import { ROUTE } from "~/lib/route";
 
 /**
@@ -42,7 +42,7 @@ export function SCOPE_RPC_ARGS(scope: InboxScope): {
  * @example
  * SCOPE_INBOX_HREF({ kind: "personal" }) // "/home/inbox"
  */
-export function SCOPE_INBOX_HREF(scope: InboxScope): AppRoute | string {
+export function SCOPE_INBOX_HREF(scope: InboxScope): Route {
   if (scope.kind === "personal") {
     return ROUTE("/home/inbox");
   }
@@ -62,7 +62,7 @@ export function SCOPE_INBOX_HREF(scope: InboxScope): AppRoute | string {
  * SCOPE_DETAIL_HREF({ kind: "personal" }, "conv-uuid")
  * // "/home/inbox/conv-uuid"
  */
-export function SCOPE_DETAIL_HREF(scope: InboxScope, conversation_id: string): AppRoute | string {
+export function SCOPE_DETAIL_HREF(scope: InboxScope, conversation_id: string): Route {
   if (scope.kind === "personal") {
     return ROUTE("/home/inbox/[conversation_id]", { conversation_id });
   }

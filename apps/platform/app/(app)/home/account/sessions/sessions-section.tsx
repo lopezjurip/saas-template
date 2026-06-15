@@ -100,7 +100,7 @@ function SessionRow(props: {
       <div className="inline-flex items-center gap-1.5">
         {current ? (
           <Link
-            href="/_/auth/logout"
+            href="/auth/logout"
             className="inline-flex h-7.5 items-center rounded-md px-3 text-xs font-medium text-destructive hover:bg-accent"
           >
             {t("revoke")}

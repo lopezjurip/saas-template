@@ -1,4 +1,5 @@
 import { getSupabaseClientUser } from "@packages/supabase/client.browser";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { INITIALS_OF } from "@packages/utils/string";
 import { LogOut } from "lucide-react";
@@ -7,7 +8,6 @@ import { getViewerProfileRedirect } from "~/hooks/get-viewer-profile";
 import { getRosetta, getServerLocale } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
-import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { signOutForm } from "./actions";
 
 export default async function AuthLogoutPage() {
@@ -48,15 +48,20 @@ export default async function AuthLogoutPage() {
 
         <div className="flex flex-col gap-2.5">
           <form action={signOutForm}>
-              <ButtonSpinner
-                variant="destructive"
-                pendingChildren={<><LogOut size={16} /><span>{t("signing_out")}</span></>}
-                className="h-10 w-full"
-              >
-                <LogOut size={16} />
-                <span>{t("sign_out")}</span>
-              </ButtonSpinner>
-            </form>
+            <ButtonSpinner
+              variant="destructive"
+              pendingChildren={
+                <>
+                  <LogOut size={16} />
+                  <span>{t("signing_out")}</span>
+                </>
+              }
+              className="h-10 w-full"
+            >
+              <LogOut size={16} />
+              <span>{t("sign_out")}</span>
+            </ButtonSpinner>
+          </form>
           <Button asChild variant="ghost" className="h-10 w-full text-muted-foreground">
             <Link href={ROUTE("/home", { locale })}>{t("cancel")}</Link>
           </Button>

@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionClaimTicket } from "./actions";
 
@@ -68,7 +69,10 @@ export function TicketPool({
   return (
     <div className="@container bg-background relative flex min-h-svh w-full flex-col overflow-hidden">
       <header className="border-border bg-background flex shrink-0 items-center gap-3 border-b px-4 py-3 @min-[768px]:px-6">
-        <Link href={`/a/${agency_slug}`} className="text-muted-foreground hover:text-foreground transition-colors">
+        <Link
+          href={ROUTE("/a/[agency_slug]", { agency_slug })}
+          className="text-muted-foreground hover:text-foreground transition-colors"
+        >
           <span className="bg-muted text-foreground border-border inline-flex size-8 shrink-0 items-center justify-center rounded-lg border">
             <Building2 size={15} />
           </span>
@@ -209,7 +213,10 @@ function TicketRow({
     ? `${ticket["organization_name"]}${ticket["tenant_name"] ? ` · ${ticket["tenant_name"]}` : ""}`
     : (ticket["tenant_name"] ?? null);
 
-  const detailHref = `/a/${agency_slug}/tickets/${ticket["ticket_id"]}`;
+  const detailHref = ROUTE("/a/[agency_slug]/tickets/[ticket_id]", {
+    agency_slug,
+    ticket_id: ticket["ticket_id"] as string,
+  });
   const priority = ticket["ticket_priority"];
   const status = ticket["ticket_status"];
 

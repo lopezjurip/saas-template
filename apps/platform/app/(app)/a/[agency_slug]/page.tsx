@@ -83,8 +83,8 @@ export default async function AgencyConsolePage(props: PageProps<"/a/[agency_slu
   return (
     <AgencyConsole
       data={data}
-      inviteHref={ROUTE("/admin/agencies/[slug]/affiliates/new", {
-        slug: agency["agency_slug"],
+      inviteHref={ROUTE("/a/[agency_slug]", {
+        agency_slug: agency["agency_slug"],
       })}
       ticketsHref={ROUTE("/a/[agency_slug]/tickets", {
         agency_slug: agency["agency_slug"],

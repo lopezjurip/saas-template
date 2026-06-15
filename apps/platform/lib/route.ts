@@ -37,8 +37,7 @@ export function ROUTE_PATH<const Pathname extends string>(pathname: Pathname & R
 export function ROUTE<const Pathname extends string>(
   pathname: Pathname & Route<Pathname>,
   ...[query, hash]: RouteArguments<Pathname>
-): AppRoute<Pathname> | Route {
-  // return { pathname, query, hash };
+): Route {
   return ROUTE_HREF({ pathname, query, hash });
 }
 

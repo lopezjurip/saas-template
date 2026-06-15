@@ -20,12 +20,12 @@ import {
   Users,
   X,
 } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { ConversationsBell } from "~/components/shell/conversations-bell";
 import type { AffiliationState } from "~/lib/agencies";
 import { useRosetta } from "~/lib/i18n.client";
-import type { AppRoute } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionUpdateAffiliateMembership } from "./actions";
 
@@ -62,8 +62,8 @@ export function AgencyConsole({
   ticketsHref,
 }: {
   data: ConsoleData;
-  inviteHref: AppRoute;
-  ticketsHref: AppRoute;
+  inviteHref: Route;
+  ticketsHref: Route;
 }) {
   const { t } = useRosetta(LOCALES);
   const [tab, setTab] = useState<ConsoleTab>("team");
@@ -189,7 +189,7 @@ function ConsoleTabTrigger({
   icon: LucideIcon;
   label: string;
   count: number | null;
-  href?: AppRoute;
+  href?: Route;
 }) {
   if (href) {
     return (
@@ -261,7 +261,7 @@ function ConsoleTeamTab({
 }: {
   data: ConsoleData;
   active: number;
-  inviteHref: AppRoute;
+  inviteHref: Route;
   t: Translate;
 }) {
   if (data.affiliates.length === 0) {

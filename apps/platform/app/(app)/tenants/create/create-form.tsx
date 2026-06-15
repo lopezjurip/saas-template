@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useGraphyMutation } from "@packages/graphy/react";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
@@ -9,7 +10,6 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { SLUGIFY } from "@packages/utils/slug";
 import { usePostHog } from "@posthog/next";
-import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -176,11 +176,7 @@ export function CreateTenantForm() {
       )}
 
       <div className="flex flex-col gap-2 pt-1">
-        <ButtonSpinner
-          pending={isCreating}
-          pendingChildren={<span>{t("creating")}</span>}
-          className="h-10 w-full"
-        >
+        <ButtonSpinner pending={isCreating} pendingChildren={<span>{t("creating")}</span>} className="h-10 w-full">
           <span>{t("create_company")}</span>
           <ArrowRight size={16} />
         </ButtonSpinner>

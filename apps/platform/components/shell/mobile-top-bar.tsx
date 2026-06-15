@@ -6,7 +6,7 @@ import { INITIALS_OF } from "@packages/utils/string";
 import { ChevronDown, Menu, Search } from "lucide-react";
 import type { ComponentProps } from "react";
 
-import { Avatar } from "~/components/shell/atoms";
+import { InitialsAvatar } from "~/components/shell/atoms";
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
 
@@ -54,7 +54,7 @@ export function MobileTopBar({
           onClick={onOrg}
           className="active:bg-accent flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-left"
         >
-          <Avatar
+          <InitialsAvatar
             initials={INITIALS_OF(organization.organization_name)}
             style={COLOR_HSL_FROM_STRING(organization.organization_name)}
             size="sm"
@@ -86,7 +86,7 @@ export function MobileTopBar({
           aria-label="Profile"
           className="flex h-9 w-9 items-center justify-center rounded-md"
         >
-          <Avatar
+          <InitialsAvatar
             initials={INITIALS_OF(viewer.profile_name_full || viewer.email)}
             color="bg-fuchsia-600 text-white"
             size="sm"

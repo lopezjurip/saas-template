@@ -1,5 +1,6 @@
 import { CreditCard, ExternalLink, Home, type LucideIcon, Settings, Users } from "lucide-react";
-import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
+import type { Route } from "next";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
 /**
  * Unified navigation tree for the tenant shell. Single source of truth that drives BOTH the
@@ -9,7 +10,7 @@ import { type AppRoute, ROUTE, ROUTE_HREF } from "~/lib/route";
 export type NavLeaf = {
   id: string;
   label: string;
-  href: AppRoute;
+  href: Route;
   /** Pre-resolved href string, used for pure (server- or client-safe) active-state matching. */
   path: string;
   Icon: LucideIcon;

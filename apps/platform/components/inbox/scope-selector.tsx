@@ -233,7 +233,7 @@ function ScopeOption({
 }) {
   return (
     <Link
-      href={SCOPE_INBOX_HREF(scope) as string}
+      href={SCOPE_INBOX_HREF(scope)}
       onClick={onSelect}
       className={cn(
         "flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors",
