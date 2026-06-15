@@ -7,11 +7,11 @@ import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 
 export const ViewerOrganizationGetFragment = /*#__PURE__*/ gql(`
-  fragment ViewerOrganizationGetFragment on organizations {
-    organization_id
-    tenant_id
-    organization_slug
-    organization_name
+  fragment ViewerOrganizationGetFragment on Organizations {
+    organizationId
+    tenantId
+    organizationSlug
+    organizationName
   }
 `);
 
@@ -23,10 +23,10 @@ export const ViewerOrganizationsGet = /*#__PURE__*/ gql(`
     $last: Int
     $after: Cursor
     $before: Cursor
-    $filter: organizationsFilter
-    $orderBy: [organizationsOrderBy!]
+    $filter: OrganizationsFilter
+    $orderBy: [OrganizationsOrderBy!]
   ) {
-    organizations: viewer_organizations(
+    organizations: viewerOrganizations(
       first: $first
       last: $last
       after: $after
@@ -44,18 +44,18 @@ export const ViewerOrganizationsGet = /*#__PURE__*/ gql(`
 `);
 
 export const ViewerOrganizationByIdQuery = /*#__PURE__*/ gql(`
-  query ViewerOrganizationByIdQuery($organization_id: Int!) {
-    organization: viewer_organization_by_id(organization_id: $organization_id) {
+  query ViewerOrganizationByIdQuery($organizationId: Int!) {
+    organization: viewerOrganizationById(organizationId: $organizationId) {
       ...ViewerOrganizationGetFragment
     }
   }
 `);
 
 export const ViewerOrganizationBySlugQuery = /*#__PURE__*/ gql(`
-  query ViewerOrganizationBySlugQuery($organization_slug: String!) {
-    organizations: viewer_organizations(
+  query ViewerOrganizationBySlugQuery($organizationSlug: String!) {
+    organizations: viewerOrganizations(
       first: 1
-      filter: { organization_slug: { eq: $organization_slug } }
+      filter: { organizationSlug: { eq: $organizationSlug } }
     ) {
       edges {
         node {
@@ -83,7 +83,7 @@ export const getViewerOrganizations = cache(async (options?: ViewerOrganizations
  */
 export const getViewerOrganizationById = cache(async (organization_id: number) => {
   const graphy = await getGraphySession();
-  return await graphy.query({ query: ViewerOrganizationByIdQuery, variables: { organization_id } });
+  return await graphy.query({ query: ViewerOrganizationByIdQuery, variables: { organizationId: organization_id } });
 });
 
 /**
@@ -103,7 +103,10 @@ export async function getViewerOrganizationByIdAssert(organization_id: number) {
  */
 export const getViewerOrganizationBySlug = cache(async (organization_slug: string) => {
   const graphy = await getGraphySession();
-  const result = await graphy.query({ query: ViewerOrganizationBySlugQuery, variables: { organization_slug } });
+  const result = await graphy.query({
+    query: ViewerOrganizationBySlugQuery,
+    variables: { organizationSlug: organization_slug },
+  });
   const organization = result.data?.["organizations"]?.edges?.[0]?.node ?? null;
   return { ...result, data: { organization } };
 });

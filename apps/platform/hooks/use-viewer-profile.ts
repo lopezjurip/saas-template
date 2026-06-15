@@ -7,13 +7,13 @@ import type { SWRConfiguration } from "swr";
 import { gql } from "~/generated/graphql";
 
 export const ViewerProfileUseFragment = /*#__PURE__*/ gql(`
-  fragment ViewerProfileUseFragment on profiles {
-    profile_id
-    profile_name_full
-    profile_onboarded_at
-    profile_disabled_at
-    profile_created_at
-    profile_updated_at
+  fragment ViewerProfileUseFragment on Profiles {
+    profileId
+    profileNameFull
+    profileOnboardedAt
+    profileDisabledAt
+    profileCreatedAt
+    profileUpdatedAt
   }
 `);
 
@@ -21,7 +21,7 @@ export type ViewerProfileUseFragmentType = ResultOf<typeof ViewerProfileUseFragm
 
 export const ViewerProfileUse = /*#__PURE__*/ gql(`
   query ViewerProfileUse {
-    profile: viewer_profile {
+    profile: viewerProfile {
       ...ViewerProfileUseFragment
     }
   }

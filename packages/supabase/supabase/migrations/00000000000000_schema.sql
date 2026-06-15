@@ -62,8 +62,8 @@ grant usage on schema protected to service_role, authenticator;
 -- it schema-wide. Callers still pass an explicit `first: N` and pay only for the rows they
 -- request; this cap only changes the *ceiling*, not the default page size.
 -- Once the CLI ships pg_graphql ≥ 1.5.12, replace with:
---   comment on table public.addresses_level0 is e'@graphql({"max_rows": 250})';
-comment on schema public is e'@graphql({"max_rows": 250})';
+--   comment on table public.addresses_level0 is e'@graphql({"max_rows": 250, "totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on schema public is e'@graphql({"inflect_names": true, "max_rows": 250})';
 
 -- ============================================================
 -- internal utilities
@@ -4540,3 +4540,38 @@ do $$
       raise notice 'conversation_outbound_drain schedule skipped: %', sqlerrm;
   end;
 $$;
+
+-- ============================================================
+-- pg_graphql table-level configuration
+-- Enable totalCount and aggregate on every table so callers
+-- can always request counts and aggregations without schema changes.
+-- max_rows per table requires pg_graphql ≥ 1.5.12 (current: 1.5.11);
+-- once upgraded, move schema-wide max_rows here per-table.
+-- ============================================================
+
+comment on table public.profiles is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.conversation_topics is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.reserved_slugs is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.tenants is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.organizations is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.addresses_level0 is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.addresses_level1 is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.addresses_level2 is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.addresses_level3 is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.organization_memberships is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.permissions is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.organization_membership_permissions is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.permission_presets is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.agencies is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.agency_memberships is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.agencies_organizations_grants is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.profile_identities is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.tenant_domains is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.conversations is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.conversation_messages is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.conversation_message_deliveries is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.profile_topic_channels is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.profile_contacts is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.profile_push_subscriptions is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.agent_action_log is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.tickets is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';

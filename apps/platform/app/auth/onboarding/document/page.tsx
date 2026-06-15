@@ -10,7 +10,7 @@ export default async function OnboardingDocumentPage() {
   const locale = await getServerLocale();
   const { t } = await getRosetta(LOCALES, locale);
   const [state, countriesResult] = await Promise.all([getViewerOnboardingState(), getCountries()]);
-  const countries = countriesResult.data?.["addresses_level0"]?.["edges"]?.map((entry) => entry["node"]) ?? [];
+  const countries = countriesResult.data?.["addressesLevel0"]?.["edges"]?.map((entry) => entry["node"]) ?? [];
 
   return (
     <AuthCard className="max-w-115">

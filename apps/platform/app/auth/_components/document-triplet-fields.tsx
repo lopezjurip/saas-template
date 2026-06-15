@@ -14,9 +14,9 @@ import { useRosetta } from "~/lib/i18n.client";
 import { DOCUMENT_VALUE_LABEL, DOCUMENT_VALUE_PLACEHOLDER } from "./document-labels";
 
 export type DocumentTripletCountry = {
-  address_level0_id: string;
-  address_level0_name: string;
-  address_level0_emoji?: string | null;
+  addressLevel0Id: string;
+  addressLevel0Name: string;
+  addressLevel0Emoji?: string | null;
 };
 
 type Props<TFormValues extends FieldValues> = {
@@ -57,12 +57,12 @@ export function DocumentTripletFields<TFormValues extends FieldValues>({
               <SelectContent>
                 {countries.map((c) => (
                   <SelectItem
-                    key={c["address_level0_id"]}
-                    value={c["address_level0_id"]}
-                    textValue={c["address_level0_name"]}
+                    key={c["addressLevel0Id"]}
+                    value={c["addressLevel0Id"]}
+                    textValue={c["addressLevel0Name"]}
                   >
-                    {c["address_level0_emoji"] ? `${c["address_level0_emoji"]} ` : ""}
-                    {c["address_level0_name"]}
+                    {c["addressLevel0Emoji"] ? `${c["addressLevel0Emoji"]} ` : ""}
+                    {c["addressLevel0Name"]}
                   </SelectItem>
                 ))}
               </SelectContent>

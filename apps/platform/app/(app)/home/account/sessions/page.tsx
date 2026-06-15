@@ -7,7 +7,7 @@ import { SessionsSection, type SessionsSectionSessionFragmentType } from "./sess
 
 const SessionsSectionPageQuery = gql(`
   query SessionsSectionPageQuery {
-    viewer_sessions {
+    viewerSessions {
       edges {
         node {
           ...SessionsSectionSessionFragment
@@ -23,7 +23,7 @@ export default async function SessionsPage(props: PageProps<"/home/account/sessi
   const serverSession = await getSupabaseServerSession();
   const payload = serverSession?.["access_token"] ? SUPABASE_JWT_DECODE_PAYLOAD(serverSession["access_token"]) : null;
   const sessions: SessionsSectionSessionFragmentType[] =
-    data?.["viewer_sessions"]?.["edges"].map((edge) => edge["node"]) || [];
+    data?.["viewerSessions"]?.["edges"].map((edge) => edge["node"]) || [];
 
   const { t } = await getRosetta(LOCALES);
 

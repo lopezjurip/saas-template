@@ -7,11 +7,11 @@ import type { SWRConfiguration } from "swr";
 import { gql } from "~/generated/graphql";
 
 export const ViewerTenantUseFragment = /*#__PURE__*/ gql(`
-  fragment ViewerTenantUseFragment on tenants {
-    tenant_id
-    tenant_slug
-    tenant_name
-    tenant_tier
+  fragment ViewerTenantUseFragment on Tenants {
+    tenantId
+    tenantSlug
+    tenantName
+    tenantTier
   }
 `);
 
@@ -23,10 +23,10 @@ export const ViewerTenantsUse = /*#__PURE__*/ gql(`
     $last: Int
     $after: Cursor
     $before: Cursor
-    $filter: tenantsFilter
-    $orderBy: [tenantsOrderBy!]
+    $filter: TenantsFilter
+    $orderBy: [TenantsOrderBy!]
   ) {
-    tenants: viewer_tenants(
+    tenants: viewerTenants(
       first: $first
       last: $last
       after: $after
@@ -44,16 +44,16 @@ export const ViewerTenantsUse = /*#__PURE__*/ gql(`
 `);
 
 export const ViewerTenantByIdUse = /*#__PURE__*/ gql(`
-  query ViewerTenantByIdUse($tenant_id: Int!) {
-    tenant: viewer_tenant_by_id(tenant_id: $tenant_id) {
+  query ViewerTenantByIdUse($tenantId: Int!) {
+    tenant: viewerTenantById(tenantId: $tenantId) {
       ...ViewerTenantUseFragment
     }
   }
 `);
 
 export const ViewerTenantBySlugUse = /*#__PURE__*/ gql(`
-  query ViewerTenantBySlugUse($tenant_slug: String!) {
-    tenant: viewer_tenant_by_slug(tenant_slug: $tenant_slug) {
+  query ViewerTenantBySlugUse($tenantSlug: String!) {
+    tenant: viewerTenantBySlug(tenantSlug: $tenantSlug) {
       ...ViewerTenantUseFragment
     }
   }
@@ -71,10 +71,10 @@ export function useViewerTenants(options?: ViewerTenantsUseVars, config?: SWRCon
 
 export function useViewerTenantById(tenant_id: number, config?: SWRConfiguration<ViewerTenantByIdUseData>) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(user ? { query: ViewerTenantByIdUse, variables: { tenant_id } } : null, config);
+  return useGraphyQuery(user ? { query: ViewerTenantByIdUse, variables: { tenantId: tenant_id } } : null, config);
 }
 
 export function useViewerTenantBySlug(tenant_slug: string, config?: SWRConfiguration<ViewerTenantBySlugUseData>) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(user ? { query: ViewerTenantBySlugUse, variables: { tenant_slug } } : null, config);
+  return useGraphyQuery(user ? { query: ViewerTenantBySlugUse, variables: { tenantSlug: tenant_slug } } : null, config);
 }

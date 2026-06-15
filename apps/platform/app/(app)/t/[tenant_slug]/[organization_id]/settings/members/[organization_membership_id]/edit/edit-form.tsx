@@ -31,8 +31,8 @@ function MAP_PG_ERROR_KEY(err: GraphyError): "last_admin_protected" | "self_remo
 
 const GrantPermissionMutation = /*#__PURE__*/ gql(`
   mutation EditOrganizationMembershipGrantPermissionMutation($organization_membership_id: Int!, $permission_id: String!) {
-    insertIntoorganization_membership_permissionsCollection(
-      objects: [{ organization_membership_id: $organization_membership_id, permission_id: $permission_id }]
+    insertIntoOrganizationMembershipPermissionsCollection(
+      objects: [{ organizationMembershipId: $organization_membership_id, permissionId: $permission_id }]
     ) {
       affectedCount
     }
@@ -41,8 +41,8 @@ const GrantPermissionMutation = /*#__PURE__*/ gql(`
 
 const RevokePermissionMutation = /*#__PURE__*/ gql(`
   mutation EditOrganizationMembershipRevokePermissionMutation($organization_membership_id: Int!, $permission_id: String!) {
-    deleteFromorganization_membership_permissionsCollection(
-      filter: { organization_membership_id: { eq: $organization_membership_id }, permission_id: { eq: $permission_id } }
+    deleteFromOrganizationMembershipPermissionsCollection(
+      filter: { organizationMembershipId: { eq: $organization_membership_id }, permissionId: { eq: $permission_id } }
     ) {
       affectedCount
     }
@@ -51,9 +51,9 @@ const RevokePermissionMutation = /*#__PURE__*/ gql(`
 
 const RevokeOrganizationMembershipMutation = /*#__PURE__*/ gql(`
   mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($organization_membership_id: Int!, $now: Datetime!) {
-    updateorganization_membershipsCollection(
-      filter: { organization_membership_id: { eq: $organization_membership_id } }
-      set: { organization_membership_revoked_at: $now }
+    updateOrganizationMembershipsCollection(
+      filter: { organizationMembershipId: { eq: $organization_membership_id } }
+      set: { organizationMembershipRevokedAt: $now }
     ) {
       affectedCount
     }

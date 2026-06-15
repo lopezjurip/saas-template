@@ -25,15 +25,15 @@ export default async function OrganizationLayout({
 
   const tenant = tenantData?.["tenant"];
   if (!tenant) notFound();
-  const tenant_id = tenant["tenant_id"];
+  const tenant_id = tenant["tenantId"];
 
   const current = orgData?.["organization"];
-  if (!current || current["tenant_id"] !== tenant_id) notFound();
+  if (!current || current["tenantId"] !== tenant_id) notFound();
 
   const profile = profileData?.["profile"];
   if (!profile) notFound();
 
-  const { data: orgsData } = await getViewerOrganizations({ filter: { tenant_id: { eq: tenant_id } } });
+  const { data: orgsData } = await getViewerOrganizations({ filter: { tenantId: { eq: tenant_id } } });
   const organizations = orgsData?.["organizations"]?.["edges"]?.map((edge) => edge["node"]) ?? [];
 
   const viewer = { ...profile, email: user?.email ?? "" };

@@ -55,19 +55,19 @@ export function MobileTopBar({
           className="active:bg-accent flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-left"
         >
           <InitialsAvatar
-            initials={INITIALS_OF(organization.organization_name)}
-            style={COLOR_HSL_FROM_STRING(organization.organization_name)}
+            initials={INITIALS_OF(organization["organizationName"])}
+            style={COLOR_HSL_FROM_STRING(organization["organizationName"])}
             size="sm"
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1">
               <span className="truncate text-sm/normal font-semibold leading-none">
-                {organization.organization_name}
+                {organization["organizationName"]}
               </span>
               <ChevronDown size={12} className="text-muted-foreground shrink-0" />
             </div>
             <div className="text-muted-foreground mt-0.5 truncate text-tiny leading-none">
-              {title || tenant.tenant_name}
+              {title || tenant["tenantName"]}
             </div>
           </div>
         </button>
@@ -87,7 +87,7 @@ export function MobileTopBar({
           className="flex h-9 w-9 items-center justify-center rounded-md"
         >
           <InitialsAvatar
-            initials={INITIALS_OF(viewer.profile_name_full || viewer.email)}
+            initials={INITIALS_OF(viewer["profileNameFull"] || viewer["email"])}
             color="bg-fuchsia-600 text-white"
             size="sm"
           />

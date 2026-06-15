@@ -23,7 +23,7 @@ export default async function OrganizationGeneralSettingsPage(
     data: { organization },
   } = await getViewerOrganizationByIdAssert(organization_id);
 
-  return <GeneralSettings organizationName={organization["organization_name"]} slug={tenant_slug} />;
+  return <GeneralSettings organizationName={organization["organizationName"]} slug={tenant_slug} />;
 }
 
 const LOCALE_ES = { page_title: "Organización" };

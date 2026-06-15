@@ -60,26 +60,26 @@ export function MobileOrgSheet({
       <div className="px-2 pb-2">
         {organizations.map((organization) => (
           <Link
-            key={organization["organization_id"]}
+            key={organization["organizationId"]}
             href={ROUTE("/t/[tenant_slug]/[organization_id]", {
               locale,
-              tenant_slug: tenant["tenant_slug"],
-              organization_id: organization["organization_id"],
+              tenant_slug: tenant["tenantSlug"],
+              organization_id: organization["organizationId"],
             })}
             onClick={onClose}
             className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left"
           >
             <InitialsAvatar
-              initials={INITIALS_OF(organization["organization_name"])}
-              style={COLOR_HSL_FROM_STRING(organization["organization_name"])}
+              initials={INITIALS_OF(organization["organizationName"])}
+              style={COLOR_HSL_FROM_STRING(organization["organizationName"])}
             />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium">{organization["organization_name"]}</div>
-              {organization["organization_slug"] ? (
-                <div className="text-muted-foreground truncate text-xs">{organization["organization_slug"]}</div>
+              <div className="truncate text-sm font-medium">{organization["organizationName"]}</div>
+              {organization["organizationSlug"] ? (
+                <div className="text-muted-foreground truncate text-xs">{organization["organizationSlug"]}</div>
               ) : null}
             </div>
-            {organization["organization_id"] === current["organization_id"] ? <Check size={16} /> : null}
+            {organization["organizationId"] === current["organizationId"] ? <Check size={16} /> : null}
           </Link>
         ))}
       </div>
@@ -95,8 +95,8 @@ export function MobileOrgSheet({
         <Link
           href={ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
             locale,
-            tenant_slug: tenant["tenant_slug"],
-            organization_id: current["organization_id"],
+            tenant_slug: tenant["tenantSlug"],
+            organization_id: current["organizationId"],
           })}
           onClick={onClose}
           className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-sm"
@@ -132,12 +132,12 @@ export function MobileProfileSheet({
     <Sheet open={open} onClose={onClose}>
       <div className="border-border flex items-center gap-3 border-b px-4 pb-3">
         <InitialsAvatar
-          initials={INITIALS_OF(viewer["profile_name_full"] || viewer["email"])}
+          initials={INITIALS_OF(viewer["profileNameFull"] || viewer["email"])}
           color="bg-fuchsia-600 text-white"
           size="lg"
         />
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold">{viewer["profile_name_full"] || viewer["email"]}</div>
+          <div className="truncate text-sm font-semibold">{viewer["profileNameFull"] || viewer["email"]}</div>
           <div className="text-muted-foreground truncate text-xs">{viewer["email"]}</div>
         </div>
       </div>
@@ -317,8 +317,8 @@ export function MobileSearchSheet({
           Icon: Home,
           href: ROUTE("/t/[tenant_slug]/[organization_id]", {
             locale,
-            tenant_slug: tenant["tenant_slug"],
-            organization_id: current["organization_id"],
+            tenant_slug: tenant["tenantSlug"],
+            organization_id: current["organizationId"],
           }),
         },
         {
@@ -327,8 +327,8 @@ export function MobileSearchSheet({
           Icon: Users,
           href: ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
             locale,
-            tenant_slug: tenant["tenant_slug"],
-            organization_id: current["organization_id"],
+            tenant_slug: tenant["tenantSlug"],
+            organization_id: current["organizationId"],
           }),
         },
         {
@@ -337,8 +337,8 @@ export function MobileSearchSheet({
           Icon: SettingsIcon,
           href: ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
             locale,
-            tenant_slug: tenant["tenant_slug"],
-            organization_id: current["organization_id"],
+            tenant_slug: tenant["tenantSlug"],
+            organization_id: current["organizationId"],
           }),
         },
       ],
@@ -346,16 +346,16 @@ export function MobileSearchSheet({
     {
       heading: t("switchOrg"),
       items: organizations.map((organization) => ({
-        id: `org-${organization["organization_id"]}`,
-        label: organization["organization_name"],
+        id: `org-${organization["organizationId"]}`,
+        label: organization["organizationName"],
         hint:
-          organization["organization_id"] === current["organization_id"] ? t("current") : (tenant["tenant_tier"] ?? ""),
-        orgInitials: INITIALS_OF(organization["organization_name"]),
-        orgColor: COLOR_HSL_FROM_STRING(organization["organization_name"]),
+          organization["organizationId"] === current["organizationId"] ? t("current") : (tenant["tenantTier"] ?? ""),
+        orgInitials: INITIALS_OF(organization["organizationName"]),
+        orgColor: COLOR_HSL_FROM_STRING(organization["organizationName"]),
         href: ROUTE("/t/[tenant_slug]/[organization_id]", {
           locale,
-          tenant_slug: tenant["tenant_slug"],
-          organization_id: organization["organization_id"],
+          tenant_slug: tenant["tenantSlug"],
+          organization_id: organization["organizationId"],
         }),
       })),
     },

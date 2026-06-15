@@ -154,7 +154,7 @@ export default async function OrganizationMembershipEditPage(
     <EditShell membersHref={membersHref} backLabel={t("back")}>
       <header className="flex flex-col gap-3">
         <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
-          {organization["organization_name"]} · {t("eyebrow")}
+          {organization["organizationName"]} · {t("eyebrow")}
         </span>
         <div className="flex items-center gap-3">
           <span

@@ -18,13 +18,13 @@ import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client
 import { actionRevokeSession, actionSignOutOtherDevices } from "../actions";
 
 export const SessionsSectionSessionFragment = gql(`
-  fragment SessionsSectionSessionFragment on user_sessions {
+  fragment SessionsSectionSessionFragment on UserSessions {
     id
-    user_agent
+    userAgent
     ip
-    created_at
-    refreshed_at
-    not_after
+    createdAt
+    refreshedAt
+    notAfter
   }
 `);
 
@@ -44,7 +44,7 @@ function SessionRow(props: {
   const { t } = useRosetta(LOCALES);
   const relativeTimeFormatter = useIntlRelativeTimeFormat();
   const current = props.session["id"] === props.currentSessionId;
-  const parser = new UAParser(props.session["user_agent"] ?? "");
+  const parser = new UAParser(props.session["userAgent"] ?? "");
   const browser = parser.getBrowser();
   const device = parser.getDevice();
   const os = parser.getOS();
@@ -52,11 +52,11 @@ function SessionRow(props: {
   const deviceLabel =
     [device["vendor"], device["model"]].filter(Boolean).join(" ") || os["name"] || t("device_unknown");
   const kind = device["type"] === "mobile" || device["type"] === "tablet" ? "mobile" : "desktop";
-  const activeDate = DATETIME(props.session["refreshed_at"] ?? props.session["created_at"]);
+  const activeDate = DATETIME(props.session["refreshedAt"] ?? props.session["createdAt"]);
   const lastActive = activeDate
     ? `${t("active_prefix")} ${relativeTimeFormatter.format(...RELATIVE_DATE_FORMAT(activeDate))}`
     : t("activity_unknown");
-  const notAfter = DATETIME(props.session["not_after"]);
+  const notAfter = DATETIME(props.session["notAfter"]);
   const stale = notAfter ? notAfter.getTime() <= Date.now() : false;
 
   return (

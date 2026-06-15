@@ -7,10 +7,10 @@ import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 
 export const ViewerAgencyGetFragment = /*#__PURE__*/ gql(`
-  fragment ViewerAgencyGetFragment on agencies {
-    agency_id
-    agency_slug
-    agency_name
+  fragment ViewerAgencyGetFragment on Agencies {
+    agencyId
+    agencySlug
+    agencyName
   }
 `);
 
@@ -22,10 +22,10 @@ export const ViewerAgenciesGet = /*#__PURE__*/ gql(`
     $last: Int
     $after: Cursor
     $before: Cursor
-    $filter: agenciesFilter
-    $orderBy: [agenciesOrderBy!]
+    $filter: AgenciesFilter
+    $orderBy: [AgenciesOrderBy!]
   ) {
-    agencies: viewer_agencies(
+    agencies: viewerAgencies(
       first: $first
       last: $last
       after: $after
@@ -43,16 +43,16 @@ export const ViewerAgenciesGet = /*#__PURE__*/ gql(`
 `);
 
 export const ViewerAgencyByIdGet = /*#__PURE__*/ gql(`
-  query ViewerAgencyByIdGet($agency_id: UUID!) {
-    agency: viewer_agency_by_id(agency_id: $agency_id) {
+  query ViewerAgencyByIdGet($agencyId: UUID!) {
+    agency: viewerAgencyById(agencyId: $agencyId) {
       ...ViewerAgencyGetFragment
     }
   }
 `);
 
 export const ViewerAgencyBySlugGet = /*#__PURE__*/ gql(`
-  query ViewerAgencyBySlugGet($agency_slug: String!) {
-    agency: viewer_agency_by_slug(agency_slug: $agency_slug) {
+  query ViewerAgencyBySlugGet($agencySlug: String!) {
+    agency: viewerAgencyBySlug(agencySlug: $agencySlug) {
       ...ViewerAgencyGetFragment
     }
   }
@@ -73,7 +73,7 @@ export const getViewerAgencies = cache(async (options?: ViewerAgenciesGetVars) =
  */
 export const getViewerAgencyById = cache(async (agency_id: string) => {
   const graphy = await getGraphySession();
-  return await graphy.query({ query: ViewerAgencyByIdGet, variables: { agency_id } });
+  return await graphy.query({ query: ViewerAgencyByIdGet, variables: { agencyId: agency_id } });
 });
 
 /**
@@ -93,7 +93,7 @@ export async function getViewerAgencyByIdAssert(agency_id: string) {
  */
 export const getViewerAgencyBySlug = cache(async (agency_slug: string) => {
   const graphy = await getGraphySession();
-  return await graphy.query({ query: ViewerAgencyBySlugGet, variables: { agency_slug } });
+  return await graphy.query({ query: ViewerAgencyBySlugGet, variables: { agencySlug: agency_slug } });
 });
 
 /**

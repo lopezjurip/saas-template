@@ -14,16 +14,16 @@ import { ROUTE } from "~/lib/route";
 
 const MembersPendingInvitationsCancelMutation = /*#__PURE__*/ gql(`
   mutation MembersPendingInvitationsCancelMutation($organization_membership_id: Int!, $now: Datetime!) {
-    updateorganization_membershipsCollection(
+    updateOrganizationMembershipsCollection(
       filter: {
-        organization_membership_id: { eq: $organization_membership_id }
-        profile_id: { is: NULL }
-        organization_membership_revoked_at: { is: NULL }
-        organization_membership_rejected_at: { is: NULL }
+        organizationMembershipId: { eq: $organization_membership_id }
+        profileId: { is: NULL }
+        organizationMembershipRevokedAt: { is: NULL }
+        organizationMembershipRejectedAt: { is: NULL }
       }
       set: {
-        organization_membership_revoked_at: $now
-        organization_membership_invite_token: null
+        organizationMembershipRevokedAt: $now
+        organizationMembershipInviteToken: null
       }
     ) {
       affectedCount

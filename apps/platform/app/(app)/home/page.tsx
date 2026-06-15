@@ -19,19 +19,19 @@ import { UserMenu } from "./_components/user-menu";
 
 const HomePickerPageQuery = gql(`
   query HomePickerPageQuery {
-    viewer_organizations(
-      filter: { organization_disabled_at: { is: NULL } }
-      orderBy: [{ organization_name: AscNullsLast }]
+    viewerOrganizations(
+      filter: { organizationDisabledAt: { is: NULL } }
+      orderBy: [{ organizationName: AscNullsLast }]
     ) {
       edges {
         node {
-          organization_id
-          organization_name
-          organization_slug
-          tenants {
-            tenant_id
-            tenant_slug
-            tenant_name
+          organizationId
+          organizationName
+          organizationSlug
+          tenant {
+            tenantId
+            tenantSlug
+            tenantName
           }
         }
       }
@@ -53,9 +53,9 @@ export default async function HomePage(props: PageProps<"/home">) {
   const graphy = await getGraphySession();
   const [{ data }, agenciesRes] = await Promise.all([
     graphy.query({ query: HomePickerPageQuery }),
-    getViewerAgencies({ orderBy: [{ agency_name: OrderByDirection.AscNullsLast }] }),
+    getViewerAgencies({ orderBy: [{ agencyName: OrderByDirection.AscNullsLast }] }),
   ]);
-  const edges = data?.["viewer_organizations"]?.["edges"] ?? [];
+  const edges = data?.["viewerOrganizations"]?.["edges"] ?? [];
   const agencyEdges = agenciesRes.data?.["agencies"]?.["edges"] ?? [];
 
   const state = await getViewerOnboardingState();
@@ -118,15 +118,15 @@ export default async function HomePage(props: PageProps<"/home">) {
           <div className="flex flex-wrap justify-center gap-[22px]">
             {edges.map((edge) => {
               const organization = edge["node"];
-              const tenant = organization["tenants"];
-              const tenant_slug = tenant?.["tenant_slug"];
+              const tenant = organization["tenant"];
+              const tenant_slug = tenant?.["tenantSlug"];
               if (!tenant_slug) return null;
-              const name = organization["organization_name"];
+              const name = organization["organizationName"];
               const initials = INITIALS_OF(name) || "·";
               const colorStyle = COLOR_HSL_FROM_STRING(name);
               return (
                 <Link
-                  key={organization["organization_id"]}
+                  key={organization["organizationId"]}
                   href={ROUTE("/t/[tenant_slug]", { locale, tenant_slug })}
                   className="group flex w-35 flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
                 >
@@ -141,7 +141,7 @@ export default async function HomePage(props: PageProps<"/home">) {
                     {initials}
                   </span>
                   <span className="text-center text-sm font-medium text-balance">{name}</span>
-                  <span className="-mt-1 text-xs text-muted-foreground">{tenant?.["tenant_name"] ?? "—"}</span>
+                  <span className="-mt-1 text-xs text-muted-foreground">{tenant?.["tenantName"] ?? "—"}</span>
                 </Link>
               );
             })}
@@ -165,13 +165,13 @@ export default async function HomePage(props: PageProps<"/home">) {
               <div className="flex flex-wrap justify-center gap-[22px]">
                 {agencyEdges.map((edge) => {
                   const agency = edge["node"];
-                  const agency_slug = agency["agency_slug"];
-                  const name = agency["agency_name"];
+                  const agency_slug = agency["agencySlug"];
+                  const name = agency["agencyName"];
                   const initials = INITIALS_OF(name) || "·";
                   const colorStyle = COLOR_HSL_FROM_STRING(name);
                   return (
                     <Link
-                      key={agency["agency_id"]}
+                      key={agency["agencyId"]}
                       href={ROUTE("/a/[agency_slug]", { locale, agency_slug })}
                       className="group flex w-28 flex-col items-center gap-2 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
                     >

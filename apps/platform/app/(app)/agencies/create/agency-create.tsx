@@ -18,8 +18,8 @@ type Stage = "form" | "created";
 
 const AgencyCreateMutation = /*#__PURE__*/ gql(`
   mutation AgencyCreateMutation($agency_name: String!, $agency_slug: String!) {
-    agency: viewer_agency_create(agency_name: $agency_name, agency_slug: $agency_slug) {
-      agency_id
+    agency: viewerAgencyCreate(agencyName: $agency_name, agencySlug: $agency_slug) {
+      agencyId
     }
   }
 `);
@@ -57,7 +57,7 @@ export function AgencyCreate() {
       agency_name: name.trim(),
       agency_slug: finalSlug,
     });
-    if (error || !data?.["agency"]?.["agency_id"]) {
+    if (error || !data?.["agency"]?.["agencyId"]) {
       setServerError(error?.message.includes("slug_taken") ? t("slug_taken") : t("create_failed"));
       return;
     }

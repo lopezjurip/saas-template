@@ -7,11 +7,11 @@ import type { SWRConfiguration } from "swr";
 import { gql } from "~/generated/graphql";
 
 export const ViewerOrganizationUseFragment = /*#__PURE__*/ gql(`
-  fragment ViewerOrganizationUseFragment on organizations {
-    organization_id
-    tenant_id
-    organization_slug
-    organization_name
+  fragment ViewerOrganizationUseFragment on Organizations {
+    organizationId
+    tenantId
+    organizationSlug
+    organizationName
   }
 `);
 
@@ -23,10 +23,10 @@ export const ViewerOrganizationsUse = /*#__PURE__*/ gql(`
     $last: Int
     $after: Cursor
     $before: Cursor
-    $filter: organizationsFilter
-    $orderBy: [organizationsOrderBy!]
+    $filter: OrganizationsFilter
+    $orderBy: [OrganizationsOrderBy!]
   ) {
-    organizations: viewer_organizations(
+    organizations: viewerOrganizations(
       first: $first
       last: $last
       after: $after
@@ -44,18 +44,18 @@ export const ViewerOrganizationsUse = /*#__PURE__*/ gql(`
 `);
 
 export const ViewerOrganizationByIdUse = /*#__PURE__*/ gql(`
-  query ViewerOrganizationByIdUse($organization_id: Int!) {
-    organization: viewer_organization_by_id(organization_id: $organization_id) {
+  query ViewerOrganizationByIdUse($organizationId: Int!) {
+    organization: viewerOrganizationById(organizationId: $organizationId) {
       ...ViewerOrganizationUseFragment
     }
   }
 `);
 
 export const ViewerOrganizationBySlugUse = /*#__PURE__*/ gql(`
-  query ViewerOrganizationBySlugUse($organization_slug: String!) {
-    organizations: viewer_organizations(
+  query ViewerOrganizationBySlugUse($organizationSlug: String!) {
+    organizations: viewerOrganizations(
       first: 1
-      filter: { organization_slug: { eq: $organization_slug } }
+      filter: { organizationSlug: { eq: $organizationSlug } }
     ) {
       edges {
         node {
@@ -84,7 +84,10 @@ export function useViewerOrganization(
   config?: SWRConfiguration<ViewerOrganizationByIdUseData>,
 ) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(user ? { query: ViewerOrganizationByIdUse, variables: { organization_id } } : null, config);
+  return useGraphyQuery(
+    user ? { query: ViewerOrganizationByIdUse, variables: { organizationId: organization_id } } : null,
+    config,
+  );
 }
 
 export function useViewerOrganizationBySlug(
@@ -92,5 +95,8 @@ export function useViewerOrganizationBySlug(
   config?: SWRConfiguration<ViewerOrganizationBySlugUseData>,
 ) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(user ? { query: ViewerOrganizationBySlugUse, variables: { organization_slug } } : null, config);
+  return useGraphyQuery(
+    user ? { query: ViewerOrganizationBySlugUse, variables: { organizationSlug: organization_slug } } : null,
+    config,
+  );
 }

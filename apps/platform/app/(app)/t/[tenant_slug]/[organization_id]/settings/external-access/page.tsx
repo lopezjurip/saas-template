@@ -105,7 +105,7 @@ export default async function OrganizationExternalAccessPage(
   return (
     <ExternalAccess
       organizationId={organization_id}
-      organizationName={organization["organization_name"]}
+      organizationName={organization["organizationName"]}
       withAccess={withAccess}
       available={available}
     />

@@ -34,11 +34,11 @@ export function OrgSwitcher({
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false), open);
 
-  const initials = INITIALS_OF(current["organization_name"]);
-  const colorStyle = COLOR_HSL_FROM_STRING(current["organization_name"]);
+  const initials = INITIALS_OF(current["organizationName"]);
+  const colorStyle = COLOR_HSL_FROM_STRING(current["organizationName"]);
 
   const trigger = compact ? (
-    <Tip label={`${current["organization_name"]} · ${tenant["tenant_name"]}`} disabled={open}>
+    <Tip label={`${current["organizationName"]} · ${tenant["tenantName"]}`} disabled={open}>
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -71,8 +71,8 @@ export function OrgSwitcher({
         {initials}
       </span>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium leading-tight">{current["organization_name"]}</div>
-        <div className="text-muted-foreground truncate text-xs leading-tight">{tenant["tenant_name"]}</div>
+        <div className="truncate text-sm font-medium leading-tight">{current["organizationName"]}</div>
+        <div className="text-muted-foreground truncate text-xs leading-tight">{tenant["tenantName"]}</div>
       </div>
       <ChevronsUpDown size={14} className="text-muted-foreground" />
     </button>
@@ -93,15 +93,15 @@ export function OrgSwitcher({
           </div>
           <div className="px-1 pb-1">
             {organizations.map((organization) => {
-              const isCurrent = organization["organization_id"] === current["organization_id"];
-              const orgColorStyle = COLOR_HSL_FROM_STRING(organization["organization_name"]);
+              const isCurrent = organization["organizationId"] === current["organizationId"];
+              const orgColorStyle = COLOR_HSL_FROM_STRING(organization["organizationName"]);
               return (
                 <Link
-                  key={organization["organization_id"]}
+                  key={organization["organizationId"]}
                   href={ROUTE("/t/[tenant_slug]/[organization_id]", {
                     locale,
-                    tenant_slug: tenant["tenant_slug"],
-                    organization_id: organization["organization_id"],
+                    tenant_slug: tenant["tenantSlug"],
+                    organization_id: organization["organizationId"],
                   })}
                   onClick={() => setOpen(false)}
                   className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
@@ -114,12 +114,12 @@ export function OrgSwitcher({
                       borderColor: orgColorStyle.borderColor,
                     }}
                   >
-                    {INITIALS_OF(organization["organization_name"])}
+                    {INITIALS_OF(organization["organizationName"])}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm">{organization["organization_name"]}</div>
-                    {organization["organization_slug"] ? (
-                      <div className="text-muted-foreground truncate text-xs">{organization["organization_slug"]}</div>
+                    <div className="truncate text-sm">{organization["organizationName"]}</div>
+                    {organization["organizationSlug"] ? (
+                      <div className="text-muted-foreground truncate text-xs">{organization["organizationSlug"]}</div>
                     ) : null}
                   </div>
                   {isCurrent ? <Check size={14} className="text-foreground" /> : null}
@@ -139,8 +139,8 @@ export function OrgSwitcher({
             <Link
               href={ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
                 locale,
-                tenant_slug: tenant["tenant_slug"],
-                organization_id: current["organization_id"],
+                tenant_slug: tenant["tenantSlug"],
+                organization_id: current["organizationId"],
               })}
               onClick={() => setOpen(false)}
               className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"

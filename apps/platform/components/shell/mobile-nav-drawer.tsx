@@ -34,7 +34,7 @@ export function MobileNavDrawer({
   onSettings: () => void;
 }) {
   const { t } = useRosetta(LOCALES);
-  const items = BUILD_NAV_TREE(tenant["tenant_slug"], organization["organization_id"], {
+  const items = BUILD_NAV_TREE(tenant["tenantSlug"], organization["organizationId"], {
     navHome: t("navHome"),
     navSettings: t("navSettings"),
     navGeneral: t("navGeneral"),
@@ -62,14 +62,14 @@ export function MobileNavDrawer({
             className="active:bg-accent -m-1 flex flex-1 items-center gap-2 rounded-md p-1"
           >
             <InitialsAvatar
-              initials={INITIALS_OF(organization.organization_name)}
-              style={COLOR_HSL_FROM_STRING(organization.organization_name)}
+              initials={INITIALS_OF(organization["organizationName"])}
+              style={COLOR_HSL_FROM_STRING(organization["organizationName"])}
               size="lg"
             />
             <div className="min-w-0 flex-1 text-left">
-              <div className="truncate text-sm font-semibold">{organization.organization_name}</div>
+              <div className="truncate text-sm font-semibold">{organization["organizationName"]}</div>
               <div className="text-muted-foreground truncate text-xs">
-                {tenant.tenant_tier ?? tenant.tenant_name} {t("plan")}
+                {tenant["tenantTier"] ?? tenant["tenantName"]} {t("plan")}
               </div>
             </div>
             <ChevronsUpDown size={14} className="text-muted-foreground" />
@@ -126,14 +126,14 @@ export function MobileNavDrawer({
           </button>
           <div className="border-border mt-2 flex items-center gap-2 rounded-md border-t px-2 pt-3">
             <InitialsAvatar
-              initials={INITIALS_OF(viewer.profile_name_full || viewer.email)}
+              initials={INITIALS_OF(viewer["profileNameFull"] || viewer["email"])}
               color="bg-fuchsia-600 text-white"
             />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm/normal font-medium leading-tight">
-                {viewer.profile_name_full || viewer.email}
+                {viewer["profileNameFull"] || viewer["email"]}
               </div>
-              <div className="text-muted-foreground truncate text-xs leading-tight">{viewer.email}</div>
+              <div className="text-muted-foreground truncate text-xs leading-tight">{viewer["email"]}</div>
             </div>
           </div>
         </div>

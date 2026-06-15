@@ -71,8 +71,8 @@ export function CommandPalette({
               ROUTE_HREF(
                 ROUTE("/t/[tenant_slug]/[organization_id]", {
                   locale,
-                  tenant_slug: tenant["tenant_slug"],
-                  organization_id: current["organization_id"],
+                  tenant_slug: tenant["tenantSlug"],
+                  organization_id: current["organizationId"],
                 }),
               ),
             ),
@@ -86,8 +86,8 @@ export function CommandPalette({
               ROUTE_HREF(
                 ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
                   locale,
-                  tenant_slug: tenant["tenant_slug"],
-                  organization_id: current["organization_id"],
+                  tenant_slug: tenant["tenantSlug"],
+                  organization_id: current["organizationId"],
                 }),
               ),
             ),
@@ -101,8 +101,8 @@ export function CommandPalette({
               ROUTE_HREF(
                 ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
                   locale,
-                  tenant_slug: tenant["tenant_slug"],
-                  organization_id: current["organization_id"],
+                  tenant_slug: tenant["tenantSlug"],
+                  organization_id: current["organizationId"],
                 }),
               ),
             ),
@@ -112,19 +112,19 @@ export function CommandPalette({
     const switchOrg: PaletteGroup = {
       heading: t("switchOrg"),
       items: organizations.map((organization) => ({
-        id: `org-${organization["organization_id"]}`,
-        label: organization["organization_name"],
+        id: `org-${organization["organizationId"]}`,
+        label: organization["organizationName"],
         hint:
-          organization["organization_id"] === current["organization_id"] ? t("current") : (tenant["tenant_tier"] ?? ""),
-        orgInitials: INITIALS_OF(organization["organization_name"]),
-        orgColor: COLOR_HSL_FROM_STRING(organization["organization_name"]),
+          organization["organizationId"] === current["organizationId"] ? t("current") : (tenant["tenantTier"] ?? ""),
+        orgInitials: INITIALS_OF(organization["organizationName"]),
+        orgColor: COLOR_HSL_FROM_STRING(organization["organizationName"]),
         onSelect: () =>
           router.push(
             ROUTE_HREF(
               ROUTE("/t/[tenant_slug]/[organization_id]", {
                 locale,
-                tenant_slug: tenant["tenant_slug"],
-                organization_id: organization["organization_id"],
+                tenant_slug: tenant["tenantSlug"],
+                organization_id: organization["organizationId"],
               }),
             ),
           ),
@@ -255,7 +255,7 @@ export function CommandPalette({
         <div className="border-border bg-muted/30 text-muted-foreground flex items-center justify-between gap-3 border-t px-3 py-2 text-xs">
           <div className="flex items-center gap-1.5">
             <Building2 size={11} />
-            <span className="text-foreground/80 font-medium">{current.organization_name}</span>
+            <span className="text-foreground/80 font-medium">{current["organizationName"]}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">

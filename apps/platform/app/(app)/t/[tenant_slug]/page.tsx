@@ -26,10 +26,10 @@ export default async function TenantHomePage(props: PageProps<"/t/[tenant_slug]"
   const {
     data: { tenant },
   } = await getViewerTenantBySlugAssert(tenant_slug);
-  const tenant_id = tenant["tenant_id"];
+  const tenant_id = tenant["tenantId"];
 
   const { data } = await getViewerOrganizations({
-    filter: { tenant_id: { eq: tenant_id } },
+    filter: { tenantId: { eq: tenant_id } },
   });
   const organizations = data?.["organizations"]?.["edges"] || [];
 
@@ -38,7 +38,7 @@ export default async function TenantHomePage(props: PageProps<"/t/[tenant_slug]"
       <main className="bg-muted flex min-h-svh items-center justify-center p-6">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>{tenant["tenant_name"]}</CardTitle>
+            <CardTitle>{tenant["tenantName"]}</CardTitle>
             <CardDescription>{tenant_slug}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -61,7 +61,7 @@ export default async function TenantHomePage(props: PageProps<"/t/[tenant_slug]"
         ROUTE("/t/[tenant_slug]/[organization_id]", {
           locale,
           tenant_slug,
-          organization_id: only["organization_id"],
+          organization_id: only["organizationId"],
         }),
       ),
     );
@@ -71,7 +71,7 @@ export default async function TenantHomePage(props: PageProps<"/t/[tenant_slug]"
     <main className="bg-muted flex min-h-svh items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>{tenant["tenant_name"]}</CardTitle>
+          <CardTitle>{tenant["tenantName"]}</CardTitle>
           <CardDescription>{t("pickOrg")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
@@ -79,8 +79,8 @@ export default async function TenantHomePage(props: PageProps<"/t/[tenant_slug]"
             return (
               <Button
                 asChild
-                key={organization["organization_id"]}
-                data-organization_id={organization["organization_id"]}
+                key={organization["organizationId"]}
+                data-organization_id={organization["organizationId"]}
                 variant="outline"
                 className="w-full justify-between"
               >
@@ -88,11 +88,11 @@ export default async function TenantHomePage(props: PageProps<"/t/[tenant_slug]"
                   href={ROUTE("/t/[tenant_slug]/[organization_id]", {
                     locale,
                     tenant_slug,
-                    organization_id: organization["organization_id"],
+                    organization_id: organization["organizationId"],
                   })}
                 >
-                  <span>{organization["organization_name"]}</span>
-                  <span className="text-xs text-muted-foreground">{organization["organization_slug"]}</span>
+                  <span>{organization["organizationName"]}</span>
+                  <span className="text-xs text-muted-foreground">{organization["organizationSlug"]}</span>
                 </Link>
               </Button>
             );

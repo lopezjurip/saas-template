@@ -4,7 +4,7 @@ import { getGraphySession } from "~/lib/graphy/graphy.server";
 
 const HealthQuery = /*#__PURE__*/ gql(`
   query HealthQuery {
-    health_current_timestamp
+    healthCurrentTimestamp
   }
 `);
 

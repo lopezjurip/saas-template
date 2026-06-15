@@ -17,7 +17,7 @@ export default async function AuthLogoutPage() {
   } = await getViewerProfileRedirect();
   const user = await getSupabaseClientUser();
 
-  const name_full = profile["profile_name_full"];
+  const name_full = profile["profileNameFull"];
   const email = user["email"];
   const initials = INITIALS_OF(name_full || email || "User");
 

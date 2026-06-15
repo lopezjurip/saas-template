@@ -15,9 +15,9 @@ import { useRosetta } from "~/lib/i18n.client";
 
 const ProfileSectionUpdateNameMutation = /*#__PURE__*/ gql(`
   mutation ProfileSectionUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
-    updateprofilesCollection(
-      filter: { profile_id: { eq: $profile_id } }
-      set: { profile_name_full: $profile_name_full }
+    updateProfilesCollection(
+      filter: { profileId: { eq: $profile_id } }
+      set: { profileNameFull: $profile_name_full }
     ) {
       affectedCount
     }

@@ -84,7 +84,7 @@ export function AppSidebar({
   const collapsed = state === "collapsed";
   const device = useDeviceInfo();
 
-  const items = BUILD_NAV_TREE(tenant["tenant_slug"], current["organization_id"], {
+  const items = BUILD_NAV_TREE(tenant["tenantSlug"], current["organizationId"], {
     navHome: t("navHome"),
     navSettings: t("navSettings"),
     navGeneral: t("navGeneral"),
@@ -94,8 +94,8 @@ export function AppSidebar({
   });
 
   const settingsHref = ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
-    tenant_slug: tenant["tenant_slug"],
-    organization_id: current["organization_id"],
+    tenant_slug: tenant["tenantSlug"],
+    organization_id: current["organizationId"],
   });
 
   return (
@@ -137,8 +137,8 @@ export function AppSidebar({
         <ConversationsBell
           scope={{
             kind: "organization",
-            tenant_slug: tenant["tenant_slug"],
-            organization_id: current["organization_id"],
+            tenant_slug: tenant["tenantSlug"],
+            organization_id: current["organizationId"],
           }}
           compact={collapsed}
           placement="up"

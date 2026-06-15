@@ -7,13 +7,13 @@ import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 
 export const ViewerProfileGetFragment = /*#__PURE__*/ gql(`
-  fragment ViewerProfileGetFragment on profiles {
-    profile_id
-    profile_name_full
-    profile_onboarded_at
-    profile_disabled_at
-    profile_created_at
-    profile_updated_at
+  fragment ViewerProfileGetFragment on Profiles {
+    profileId
+    profileNameFull
+    profileOnboardedAt
+    profileDisabledAt
+    profileCreatedAt
+    profileUpdatedAt
   }
 `);
 
@@ -21,7 +21,7 @@ export type ViewerProfileGetFragmentType = ResultOf<typeof ViewerProfileGetFragm
 
 export const ViewerProfileGet = /*#__PURE__*/ gql(`
   query ViewerProfileGet {
-    profile: viewer_profile {
+    profile: viewerProfile {
       ...ViewerProfileGetFragment
     }
   }

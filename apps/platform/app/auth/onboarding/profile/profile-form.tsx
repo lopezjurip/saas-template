@@ -21,9 +21,9 @@ import { ROUTE, ROUTE_HREF } from "~/lib/route";
  */
 const OnboardingProfileFormUpdateNameMutation = /*#__PURE__*/ gql(`
   mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
-    updateprofilesCollection(
-      filter: { profile_id: { eq: $profile_id } }
-      set: { profile_name_full: $profile_name_full }
+    updateProfilesCollection(
+      filter: { profileId: { eq: $profile_id } }
+      set: { profileNameFull: $profile_name_full }
     ) {
       affectedCount
     }

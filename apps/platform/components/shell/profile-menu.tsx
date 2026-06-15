@@ -19,7 +19,7 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false), open);
 
-  const display_name = viewer["profile_name_full"] || viewer["email"];
+  const display_name = viewer["profileNameFull"] || viewer["email"];
   const initials = INITIALS_OF(display_name);
   const color = "bg-fuchsia-600 text-white";
 

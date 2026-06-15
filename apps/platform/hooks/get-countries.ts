@@ -7,10 +7,10 @@ import { FilterIs, OrderByDirection } from "~/generated/graphql/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 
 export const CountryGetFragment = /*#__PURE__*/ gql(`
-  fragment CountryGetFragment on addresses_level0 {
-    address_level0_id
-    address_level0_name
-    address_level0_emoji
+  fragment CountryGetFragment on AddressesLevel0 {
+    addressLevel0Id
+    addressLevel0Name
+    addressLevel0Emoji
   }
 `);
 
@@ -22,10 +22,10 @@ export const CountriesGet = /*#__PURE__*/ gql(`
     $last: Int
     $after: Cursor
     $before: Cursor
-    $filter: addresses_level0Filter
-    $orderBy: [addresses_level0OrderBy!]
+    $filter: AddressesLevel0Filter
+    $orderBy: [AddressesLevel0OrderBy!]
   ) {
-    addresses_level0: addresses_level0Collection(
+    addressesLevel0: addressesLevel0Collection(
       first: $first
       last: $last
       after: $after
@@ -53,8 +53,8 @@ export const getCountries = cache(async (options?: CountriesGetVars) => {
     query: CountriesGet,
     variables: {
       first: 250,
-      filter: { address_level0_disabled_at: { is: FilterIs.Null } },
-      orderBy: [{ address_level0_name: OrderByDirection.AscNullsLast }],
+      filter: { addressLevel0DisabledAt: { is: FilterIs.Null } },
+      orderBy: [{ addressLevel0Name: OrderByDirection.AscNullsLast }],
       ...options,
     },
   });

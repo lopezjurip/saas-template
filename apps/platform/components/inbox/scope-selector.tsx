@@ -15,16 +15,16 @@ import { useRosetta } from "~/lib/i18n.client";
 
 const ScopeSelectorOrgsQuery = /*#__PURE__*/ gql(`
   query ScopeSelectorOrgsQuery {
-    viewer_organizations(
-      filter: { organization_disabled_at: { is: NULL } }
-      orderBy: [{ organization_name: AscNullsLast }]
+    viewerOrganizations(
+      filter: { organizationDisabledAt: { is: NULL } }
+      orderBy: [{ organizationName: AscNullsLast }]
     ) {
       edges {
         node {
-          organization_id
-          organization_name
-          tenants {
-            tenant_slug
+          organizationId
+          organizationName
+          tenant {
+            tenantSlug
           }
         }
       }
@@ -34,14 +34,14 @@ const ScopeSelectorOrgsQuery = /*#__PURE__*/ gql(`
 
 const ScopeSelectorAgenciesQuery = /*#__PURE__*/ gql(`
   query ScopeSelectorAgenciesQuery {
-    agencies: viewer_agencies(
-      orderBy: [{ agency_name: AscNullsLast }]
+    agencies: viewerAgencies(
+      orderBy: [{ agencyName: AscNullsLast }]
     ) {
       edges {
         node {
-          agency_id
-          agency_slug
-          agency_name
+          agencyId
+          agencySlug
+          agencyName
         }
       }
     }
@@ -99,22 +99,22 @@ export function ScopeSelector({ currentScope }: { currentScope: InboxScope }) {
   const { data: orgsData } = useGraphyQuery(user ? { query: ScopeSelectorOrgsQuery } : null);
   const { data: agenciesData } = useGraphyQuery(user ? { query: ScopeSelectorAgenciesQuery } : null);
 
-  const orgEdges = orgsData?.["viewer_organizations"]?.["edges"] ?? [];
+  const orgEdges = orgsData?.["viewerOrganizations"]?.["edges"] ?? [];
   const agencyEdges = agenciesData?.["agencies"]?.["edges"] ?? [];
 
   const orgs: ScopeOrg[] = orgEdges.flatMap(
-    (edge: NonNullable<ResultOf<typeof ScopeSelectorOrgsQuery>["viewer_organizations"]>["edges"][number]) => {
+    (edge: NonNullable<ResultOf<typeof ScopeSelectorOrgsQuery>["viewerOrganizations"]>["edges"][number]) => {
       const node = edge["node"];
-      const tenant_slug = node?.["tenants"]?.["tenant_slug"];
+      const tenant_slug = node?.["tenant"]?.["tenantSlug"];
       if (!tenant_slug || !node) return [];
-      return [{ organization_id: node["organization_id"], organization_name: node["organization_name"], tenant_slug }];
+      return [{ organization_id: node["organizationId"], organization_name: node["organizationName"], tenant_slug }];
     },
   );
 
   const agencies: ScopeAgency[] = agencyEdges.map(
     (edge: NonNullable<ResultOf<typeof ScopeSelectorAgenciesQuery>["agencies"]>["edges"][number]) => {
       const node = edge["node"];
-      return { agency_id: node["agency_id"], agency_slug: node["agency_slug"], agency_name: node["agency_name"] };
+      return { agency_id: node["agencyId"], agency_slug: node["agencySlug"], agency_name: node["agencyName"] };
     },
   );
 

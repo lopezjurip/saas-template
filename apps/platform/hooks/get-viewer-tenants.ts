@@ -7,11 +7,11 @@ import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 
 export const ViewerTenantGetFragment = /*#__PURE__*/ gql(`
-  fragment ViewerTenantGetFragment on tenants {
-    tenant_id
-    tenant_slug
-    tenant_name
-    tenant_tier
+  fragment ViewerTenantGetFragment on Tenants {
+    tenantId
+    tenantSlug
+    tenantName
+    tenantTier
   }
 `);
 
@@ -23,10 +23,10 @@ export const ViewerTenantsGet = /*#__PURE__*/ gql(`
     $last: Int
     $after: Cursor
     $before: Cursor
-    $filter: tenantsFilter
-    $orderBy: [tenantsOrderBy!]
+    $filter: TenantsFilter
+    $orderBy: [TenantsOrderBy!]
   ) {
-    tenants: viewer_tenants(
+    tenants: viewerTenants(
       first: $first
       last: $last
       after: $after
@@ -44,16 +44,16 @@ export const ViewerTenantsGet = /*#__PURE__*/ gql(`
 `);
 
 export const ViewerTenantByIdGet = /*#__PURE__*/ gql(`
-  query ViewerTenantByIdGet($tenant_id: Int!) {
-    tenant: viewer_tenant_by_id(tenant_id: $tenant_id) {
+  query ViewerTenantByIdGet($tenantId: Int!) {
+    tenant: viewerTenantById(tenantId: $tenantId) {
       ...ViewerTenantGetFragment
     }
   }
 `);
 
 export const ViewerTenantBySlugGet = /*#__PURE__*/ gql(`
-  query ViewerTenantBySlugGet($tenant_slug: String!) {
-    tenant: viewer_tenant_by_slug(tenant_slug: $tenant_slug) {
+  query ViewerTenantBySlugGet($tenantSlug: String!) {
+    tenant: viewerTenantBySlug(tenantSlug: $tenantSlug) {
       ...ViewerTenantGetFragment
     }
   }
@@ -74,7 +74,7 @@ export const getViewerTenants = cache(async (options?: ViewerTenantsGetVars) => 
  */
 export const getViewerTenantById = cache(async (tenant_id: number) => {
   const graphy = await getGraphySession();
-  return await graphy.query({ query: ViewerTenantByIdGet, variables: { tenant_id } });
+  return await graphy.query({ query: ViewerTenantByIdGet, variables: { tenantId: tenant_id } });
 });
 
 /**
@@ -94,7 +94,7 @@ export async function getViewerTenantByIdAssert(tenant_id: number) {
  */
 export const getViewerTenantBySlug = cache(async (tenant_slug: string) => {
   const graphy = await getGraphySession();
-  return await graphy.query({ query: ViewerTenantBySlugGet, variables: { tenant_slug } });
+  return await graphy.query({ query: ViewerTenantBySlugGet, variables: { tenantSlug: tenant_slug } });
 });
 
 /**

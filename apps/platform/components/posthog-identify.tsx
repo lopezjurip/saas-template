@@ -7,28 +7,28 @@ import { gql } from "~/generated/graphql";
 
 const PostHogIdentifyQuery = /*#__PURE__*/ gql(`
   query PostHogIdentify {
-    profile: viewer_profile {
-      profile_id
-      profile_name_full
-      profile_onboarded_at
-      profile_created_at
+    profile: viewerProfile {
+      profileId
+      profileNameFull
+      profileOnboardedAt
+      profileCreatedAt
     }
-    tenants: viewer_tenants {
+    tenants: viewerTenants {
       edges {
         node {
-          tenant_id
-          tenant_slug
-          tenant_tier
-          tenant_created_at
+          tenantId
+          tenantSlug
+          tenantTier
+          tenantCreatedAt
         }
       }
     }
-    organizations: viewer_organizations {
+    organizations: viewerOrganizations {
       edges {
         node {
-          organization_id
-          organization_name
-          tenant_id
+          organizationId
+          organizationName
+          tenantId
         }
       }
     }
@@ -49,24 +49,24 @@ export function PostHogIdentify() {
       return;
     }
 
-    posthog?.identify(profile["profile_id"], {
+    posthog?.identify(profile["profileId"], {
       email: user["email"],
-      name: profile["profile_name_full"],
-      onboarded_at: profile["profile_onboarded_at"],
-      created_at: profile["profile_created_at"],
+      name: profile["profileNameFull"],
+      onboarded_at: profile["profileOnboardedAt"],
+      created_at: profile["profileCreatedAt"],
     });
 
     for (const { ["node"]: tenant } of data["tenants"]?.["edges"] ?? []) {
-      posthog?.group("tenant", String(tenant["tenant_id"]), {
-        slug: tenant["tenant_slug"],
-        tier: tenant["tenant_tier"],
-        created_at: tenant["tenant_created_at"],
+      posthog?.group("tenant", String(tenant["tenantId"]), {
+        slug: tenant["tenantSlug"],
+        tier: tenant["tenantTier"],
+        created_at: tenant["tenantCreatedAt"],
       });
     }
     for (const { ["node"]: organization } of data["organizations"]?.["edges"] ?? []) {
-      posthog?.group("organization", String(organization["organization_id"]), {
-        name: organization["organization_name"],
-        tenant_id: String(organization["tenant_id"]),
+      posthog?.group("organization", String(organization["organizationId"]), {
+        name: organization["organizationName"],
+        tenant_id: String(organization["tenantId"]),
       });
     }
   }, [user, posthog, data]);

@@ -7,10 +7,10 @@ import type { SWRConfiguration } from "swr";
 import { gql } from "~/generated/graphql";
 
 export const ViewerAgencyUseFragment = /*#__PURE__*/ gql(`
-  fragment ViewerAgencyUseFragment on agencies {
-    agency_id
-    agency_slug
-    agency_name
+  fragment ViewerAgencyUseFragment on Agencies {
+    agencyId
+    agencySlug
+    agencyName
   }
 `);
 
@@ -22,10 +22,10 @@ export const ViewerAgenciesUse = /*#__PURE__*/ gql(`
     $last: Int
     $after: Cursor
     $before: Cursor
-    $filter: agenciesFilter
-    $orderBy: [agenciesOrderBy!]
+    $filter: AgenciesFilter
+    $orderBy: [AgenciesOrderBy!]
   ) {
-    agencies: viewer_agencies(
+    agencies: viewerAgencies(
       first: $first
       last: $last
       after: $after
@@ -43,16 +43,16 @@ export const ViewerAgenciesUse = /*#__PURE__*/ gql(`
 `);
 
 export const ViewerAgencyByIdUse = /*#__PURE__*/ gql(`
-  query ViewerAgencyByIdUse($agency_id: UUID!) {
-    agency: viewer_agency_by_id(agency_id: $agency_id) {
+  query ViewerAgencyByIdUse($agencyId: UUID!) {
+    agency: viewerAgencyById(agencyId: $agencyId) {
       ...ViewerAgencyUseFragment
     }
   }
 `);
 
 export const ViewerAgencyBySlugUse = /*#__PURE__*/ gql(`
-  query ViewerAgencyBySlugUse($agency_slug: String!) {
-    agency: viewer_agency_by_slug(agency_slug: $agency_slug) {
+  query ViewerAgencyBySlugUse($agencySlug: String!) {
+    agency: viewerAgencyBySlug(agencySlug: $agencySlug) {
       ...ViewerAgencyUseFragment
     }
   }
@@ -70,10 +70,10 @@ export function useViewerAgencies(options?: ViewerAgenciesUseVars, config?: SWRC
 
 export function useViewerAgencyById(agency_id: string, config?: SWRConfiguration<ViewerAgencyByIdUseData>) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(user ? { query: ViewerAgencyByIdUse, variables: { agency_id } } : null, config);
+  return useGraphyQuery(user ? { query: ViewerAgencyByIdUse, variables: { agencyId: agency_id } } : null, config);
 }
 
 export function useViewerAgencyBySlug(agency_slug: string, config?: SWRConfiguration<ViewerAgencyBySlugUseData>) {
   const { data: user } = useSupabaseUser();
-  return useGraphyQuery(user ? { query: ViewerAgencyBySlugUse, variables: { agency_slug } } : null, config);
+  return useGraphyQuery(user ? { query: ViewerAgencyBySlugUse, variables: { agencySlug: agency_slug } } : null, config);
 }

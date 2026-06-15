@@ -27,8 +27,8 @@ type PlanId = "free" | "pro";
 
 const CreateTenantFormMutation = /*#__PURE__*/ gql(`
   mutation CreateTenantFormMutation($tenant_name: String!, $tenant_slug: String!) {
-    tenant: viewer_tenant_create(tenant_name: $tenant_name, tenant_slug: $tenant_slug) {
-      tenant_id
+    tenant: viewerTenantCreate(tenantName: $tenant_name, tenantSlug: $tenant_slug) {
+      tenantId
     }
   }
 `);
@@ -72,7 +72,7 @@ export function CreateTenantForm() {
   const onSubmit = form.handleSubmit(async (values) => {
     setServerError(null);
     const { data, error } = await createTenant(values);
-    const tenant_id = data?.["tenant"]?.["tenant_id"];
+    const tenant_id = data?.["tenant"]?.["tenantId"];
     if (error || !tenant_id) {
       const message = error?.message ?? "";
       if (message.includes("duplicate") || message.includes("unique")) {
