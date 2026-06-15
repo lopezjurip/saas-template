@@ -90,6 +90,7 @@ const LOCALE_ES = {
   nav_connections: "Conexiones",
   nav_sessions: "Dispositivos",
   nav_notifications: "Notificaciones",
+  nav_integrations: "Integraciones",
   nav_danger: "Eliminar cuenta",
   // group names
   account: "Cuenta",
@@ -104,6 +105,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
   nav_connections: "Connections",
   nav_sessions: "Devices",
   nav_notifications: "Notifications",
+  nav_integrations: "Integrations",
   nav_danger: "Delete account",
   account: "Account",
   security_group: "Security",
@@ -117,6 +119,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   nav_connections: "Conexões",
   nav_sessions: "Dispositivos",
   nav_notifications: "Notificações",
+  nav_integrations: "Integrações",
   nav_danger: "Excluir conta",
   account: "Conta",
   security_group: "Segurança",
