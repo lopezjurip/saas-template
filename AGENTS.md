@@ -127,15 +127,22 @@ After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) 
 
 ## Skills
 
-Skill sources in `skills/my-*`. `pnpm install` runs `scripts/skills-setup.js`, symlinking into `.agents/skills/` and `.claude/skills/`. Read relevant skill before working in that subsystem.
+Two kinds of skills, both materialized on `pnpm install` by `scripts/skills-setup.js` (postinstall). The generated dirs `.agents/skills/` and `.claude/skills/` are **gitignored** — never committed, always regenerated. Read relevant skill before working in that subsystem.
 
-Install third-party skill:
+- **First-party (`my-*`)** — sources committed in `skills/my-*`. The script symlinks them into `.agents/skills/` and `.claude/skills/`.
+- **Third-party** — pinned in `skills-lock.json` (committed), restored by the `skills` CLI (a devDependency). The script's restore step snapshots `skills-lock.json` and writes it back after, so installs never churn the committed lock.
+
+`.agents/skills/` is the **universal store** read directly by Codex, Cursor, GitHub Copilot, OpenCode, and Zed; `.claude/skills/` is Claude Code's. Source of truth = `skills/` (first-party) + `skills-lock.json` (third-party).
+
+Add a third-party skill (writes the file tree + records it in `skills-lock.json`):
 
 ```bash
 pnpm dlx skills add <registry-url> --skill <skill-name>
 ```
 
-Skills run with full agent permissions — review skill source before using in production.
+Commit the resulting `skills-lock.json` change — the file tree itself is gitignored and reappears on the next `pnpm install`. Update pins with `pnpm dlx skills update`.
+
+**Caveat:** `skills-lock.json` records the source repo, not a commit SHA, so restore re-clones each skill at upstream **HEAD** — `computedHash` is descriptive, not enforced. Third-party skills track latest, not a frozen version. Skills run with **full agent permissions** — review skill source before using in production.
 
 ## Documentation
 
