@@ -19,6 +19,12 @@
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
     },
+    "integrate-whatsapp": {
+      "source": "gokapso/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/integrate-whatsapp/SKILL.md",
+      "computedHash": "acd8594565afb7b28c5490ce1d52fbb2fd99d998c2d500c70a8bbade56f710aa"
+    },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",

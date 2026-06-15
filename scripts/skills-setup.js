@@ -1,12 +1,21 @@
 #!/usr/bin/env node
 /**
- * Sets up symlinks for custom skills in .agents/skills/ and .claude/skills/.
- * Each symlink points to the shared skills directory.
- * Also initializes .env.local from .env.example if it doesn't exist.
+ * Sets up skills for every agent on install. Two kinds:
  *
- * Usage: pnpm skills-setup
+ *  1. First-party `my-*` skills — sources live in `skills/` (committed). Symlinked
+ *     into `.agents/skills/` (universal store: Codex, Cursor, Copilot, OpenCode, Zed)
+ *     and `.claude/skills/` (Claude Code).
+ *  2. Third-party skills — not committed (the generated trees are gitignored).
+ *     Restored from `skills-lock.json` via the `skills` CLI into `.agents/skills/`.
+ *
+ * Both generated dirs (`.agents/skills/`, `.claude/skills/`) are gitignored; this
+ * script is the single source that materializes them. Also initializes `.env.local`
+ * from `.env.example` if it doesn't exist.
+ *
+ * Usage: pnpm skills-setup (runs automatically via postinstall)
  */
 
+import { execFileSync } from "node:child_process";
 import { promises as fs } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,6 +25,7 @@ const rootDir = resolve(__dirname, "..");
 const agentsSkillsDir = join(rootDir, ".agents", "skills");
 const claudeSkillsDir = join(rootDir, ".claude", "skills");
 const skillsDir = join(rootDir, "skills");
+const skillsLockPath = join(rootDir, "skills-lock.json");
 
 const SKILLS = [
   "my-graphql",
@@ -30,6 +40,8 @@ const SKILLS = [
   "my-react-email",
   "my-permissions",
   "my-proxy",
+  "psql",
+  "psql-query",
 ];
 
 const LEGACY_SKILLS = ["my-email", "my-pdf"];
@@ -82,6 +94,65 @@ async function removeLegacySymlink(source) {
 }
 
 /**
+ * Restores third-party skills from `skills-lock.json` via the `skills` CLI.
+ *
+ * The CLI's `experimental_install` re-clones each skill's source at HEAD and rewrites
+ * `skills-lock.json` with freshly computed hashes — so a naive call would churn the
+ * committed lock on every install. We snapshot the lock bytes before the call and write
+ * them back after, keeping the committed manifest stable. Non-fatal: a registry/network
+ * outage logs a warning but never fails the install (first-party `my-*` skills are
+ * already wired by the symlink pass above).
+ */
+async function restoreThirdPartySkills() {
+  const cliPath = join(rootDir, "node_modules", "skills", "bin", "cli.mjs");
+  try {
+    await fs.access(cliPath);
+  } catch {
+    console.warn("⚠️  skills CLI not installed yet — skipping third-party skill restore.");
+    return;
+  }
+
+  let lockSnapshot;
+  try {
+    lockSnapshot = await fs.readFile(skillsLockPath);
+  } catch {
+    console.warn("⚠️  skills-lock.json missing — skipping third-party skill restore.");
+    return;
+  }
+
+  console.log("Restoring third-party skills from skills-lock.json...");
+  try {
+    execFileSync(process.execPath, [cliPath, "experimental_install", "-y"], {
+      stdio: "inherit",
+      cwd: rootDir,
+    });
+  } catch (error) {
+    console.warn(`⚠️  Third-party skill restore failed (skills still usable once network returns): ${error.message}`);
+  } finally {
+    // Re-pin to the committed manifest so installs never churn skills-lock.json.
+    await fs.writeFile(skillsLockPath, lockSnapshot);
+  }
+
+  // The CLI only populates the universal `.agents/skills/` store (read directly by
+  // Codex, Cursor, Copilot, OpenCode, Zed). Claude Code reads `.claude/skills/`, so
+  // mirror each restored third-party skill there as a symlink into the universal store.
+  let names = [];
+  try {
+    names = Object.keys(JSON.parse(lockSnapshot.toString())["skills"] ?? {});
+  } catch {
+    return;
+  }
+  for (const name of names) {
+    try {
+      await fs.access(join(agentsSkillsDir, name));
+    } catch {
+      continue; // restore skipped/failed for this skill — nothing to link
+    }
+    await symlink(`../../.agents/skills/${name}`, join(claudeSkillsDir, name));
+  }
+}
+
+/**
  * Initializes .env.local from .env.example if it doesn't already exist.
  */
 async function initEnv() {
@@ -119,6 +190,8 @@ async function main() {
       const target = `../../skills/${skill}`;
       await symlink(target, source);
     }
+
+    await restoreThirdPartySkills();
 
     console.log("✓ Skills setup complete!");
   } catch (error) {

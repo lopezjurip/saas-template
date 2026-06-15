@@ -40,6 +40,7 @@
     "graphql": "^16.14.2",
     "graphql-config": "^5.1.6",
     "qrcode-terminal": "^0.12.0",
+    "skills": "1.5.11",
     "turbo": "^2.9.18",
     "typescript": "^6.0.3"
   },

@@ -49,3 +49,11 @@ pnpm-debug.log*
 # Playwright
 .playwright-mcp
 .claude/worktrees/
+
+# Agent skills — generated/installed, not committed.
+# Restored on `pnpm install` via postinstall: my-* symlinks by scripts/skills-setup.js,
+# third-party from skills-lock.json by `skills experimental_install`.
+# Source of truth: skills/ (my-* sources) + skills-lock.json (third-party pins).
+# .agents/skills/ is the universal store read by Codex, Cursor, Copilot, OpenCode, Zed.
+.agents/skills/
+.claude/skills/
