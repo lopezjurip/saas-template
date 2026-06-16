@@ -61,11 +61,6 @@ test.describe("settings screens", () => {
     await expect(page.getByText("Configuración")).toBeVisible();
   });
 
-  test("billing page renders without error", async ({ page }) => {
-    await page.goto(`/t/${tenantSlug}/${orgId}/settings/billing`);
-    await expect(page.getByText("Configuración")).toBeVisible();
-  });
-
   test("external-access page renders without error", async ({ page }) => {
     await page.goto(`/t/${tenantSlug}/${orgId}/settings/external-access`);
     await expect(page.getByText("Configuración")).toBeVisible();

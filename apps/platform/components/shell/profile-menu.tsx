@@ -2,7 +2,7 @@
 
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { INITIALS_OF } from "@packages/utils/string";
-import { Bell, ChevronsUpDown, CreditCard, KeyRound, LogOut, User } from "lucide-react";
+import { Bell, ChevronsUpDown, KeyRound, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 
@@ -52,7 +52,6 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
 
   const items = [
     { Icon: User, label: t("account"), href: ROUTE("/home/account/profile") },
-    { Icon: CreditCard, label: t("billing"), href: ROUTE("/home/account/profile") },
     { Icon: KeyRound, label: t("tokens"), href: ROUTE("/home/account/security") },
     { Icon: Bell, label: t("notifications"), href: ROUTE("/home/account/notifications") },
   ];
@@ -105,7 +104,6 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
 
 const LOCALE_ES = {
   account: "Cuenta",
-  billing: "Facturación",
   tokens: "Tokens de API",
   notifications: "Notificaciones",
   signOut: "Cerrar sesión",
@@ -113,7 +111,6 @@ const LOCALE_ES = {
 
 const LOCALE_EN: typeof LOCALE_ES = {
   account: "Account",
-  billing: "Billing",
   tokens: "API tokens",
   notifications: "Notifications",
   signOut: "Sign out",
@@ -121,7 +118,6 @@ const LOCALE_EN: typeof LOCALE_ES = {
 
 const LOCALE_PT: typeof LOCALE_ES = {
   account: "Conta",
-  billing: "Faturamento",
   tokens: "Tokens de API",
   notifications: "Notificações",
   signOut: "Sair",
