@@ -36,11 +36,13 @@ export function MobileNavDrawer({
   const { t } = useRosetta(LOCALES);
   const items = BUILD_NAV_TREE(tenant["tenantSlug"], organization["organizationId"], {
     navHome: t("navHome"),
-    navSettings: t("navSettings"),
+    navOrganization: t("navOrganization"),
+    navCompany: t("navCompany"),
     navGeneral: t("navGeneral"),
     navMembers: t("navMembers"),
     navBilling: t("navBilling"),
     navExternalAccess: t("navExternalAccess"),
+    navDomains: t("navDomains"),
   });
   const activeId = PICK_ACTIVE_LEAF_ID(items, activePath);
 
@@ -170,10 +172,13 @@ const LOCALE_ES = {
   help: "Ayuda y documentación",
   navHome: "Inicio",
   navSettings: "Configuración",
+  navOrganization: "Organización",
+  navCompany: "Empresa",
   navGeneral: "General",
   navMembers: "Miembros",
   navBilling: "Facturación",
   navExternalAccess: "Acceso externo",
+  navDomains: "Dominios",
 };
 
 const LOCALES = {
@@ -185,10 +190,13 @@ const LOCALES = {
     help: "Help & docs",
     navHome: "Home",
     navSettings: "Settings",
+    navOrganization: "Organization",
+    navCompany: "Company",
     navGeneral: "General",
     navMembers: "Members",
     navBilling: "Billing",
     navExternalAccess: "External access",
+    navDomains: "Domains",
   } satisfies typeof LOCALE_ES,
   pt: {
     plan: "plano",
@@ -197,9 +205,12 @@ const LOCALES = {
     help: "Ajuda e documentação",
     navHome: "Início",
     navSettings: "Configurações",
+    navOrganization: "Organização",
+    navCompany: "Empresa",
     navGeneral: "General",
     navMembers: "Membros",
     navBilling: "Cobrança",
     navExternalAccess: "Acesso externo",
+    navDomains: "Domínios",
   } satisfies typeof LOCALE_ES,
 };

@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
@@ -12,20 +11,12 @@ import {
   SelectValue,
 } from "@packages/ui-common/shadcn/components/ui/select";
 import { Switch } from "@packages/ui-common/shadcn/components/ui/switch";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { Check, Globe, Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { EntityLogoControls } from "~/components/entity-logo-controls";
 import { useRosetta } from "~/lib/i18n.client";
 
 type Access = "none" | "viewer" | "editor";
-
-type DomainRow = { domain: string; verified: boolean; meta: string };
-
-const DOMAINS: DomainRow[] = /*#__PURE__*/ [
-  { domain: "empresa.com", verified: true, meta: "domain_members" },
-  { domain: "studio.cl", verified: false, meta: "domain_dns" },
-];
 
 export function GeneralSettings({
   organizationId,
@@ -75,61 +66,6 @@ export function GeneralSettings({
             <Input id="org-slug" defaultValue={slug} className="pl-[104px]" />
           </div>
           <p className="text-muted-foreground text-xs leading-normal">{t("slug_hint")}</p>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-2.5">
-        <div className="flex min-h-7 items-center justify-between gap-2.5">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
-            {t("domains")}
-          </span>
-          <Button variant="outline" size="sm">
-            <Plus size={13} /> {t("add_domain")}
-          </Button>
-        </div>
-        <div className="flex flex-col gap-2">
-          {DOMAINS.map((row) => (
-            <div
-              key={row.domain}
-              className={cn(
-                "border-border bg-background grid grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border px-3.5 py-3",
-                !row.verified && "bg-muted/30",
-              )}
-            >
-              <span
-                className={cn(
-                  "bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-lg",
-                  !row.verified && "text-muted-foreground border-border border",
-                )}
-              >
-                <Globe size={16} />
-              </span>
-              <div className="flex min-w-0 flex-col gap-[3px]">
-                <span className="text-foreground inline-flex items-center gap-2 text-sm font-medium">
-                  {row.domain}
-                  {row.verified ? (
-                    <Badge className="gap-1 border-emerald-600/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-                      <Check size={10} strokeWidth={3} /> {t("verified")}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-muted-foreground">
-                      {t("pending_dns")}
-                    </Badge>
-                  )}
-                </span>
-                <span className="text-muted-foreground text-xs">{t(row.meta as "domain_members")}</span>
-              </div>
-              {row.verified ? (
-                <Button variant="ghost" size="sm" className="text-destructive">
-                  {t("remove")}
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm">
-                  {t("view_record")}
-                </Button>
-              )}
-            </div>
-          ))}
         </div>
       </section>
 
@@ -225,7 +161,8 @@ export function GeneralSettings({
 const LOCALE_ES = {
   eyebrow: "Organización",
   title: "Ajustes de la organización",
-  subtitle: "Identidad, dominios y qué reciben las personas nuevas al unirse. Cambia cualquier cosa cuando quieras.",
+  subtitle:
+    "La identidad de la organización y qué reciben las personas nuevas al unirse. Cambia cualquier cosa cuando quieras.",
   logo_hint: "Usa una imagen cuadrada. Si no subes una, mostramos las iniciales.",
   remove: "Quitar",
   name_label: "Nombre de la organización",
@@ -262,7 +199,7 @@ const LOCALE_ES = {
 const LOCALE_EN: typeof LOCALE_ES = {
   eyebrow: "Organization",
   title: "Organization settings",
-  subtitle: "Identity, domains and what new people get when they join. Change anything whenever you want.",
+  subtitle: "The organization's identity and what new people get when they join. Change anything whenever you want.",
   logo_hint: "Use a square image. If you don't upload one, we show the initials.",
   remove: "Remove",
   name_label: "Organization name",
@@ -299,7 +236,8 @@ const LOCALE_EN: typeof LOCALE_ES = {
 const LOCALE_PT: typeof LOCALE_ES = {
   eyebrow: "Organização",
   title: "Configurações da organização",
-  subtitle: "Identidade, domínios e o que as novas pessoas recebem ao entrar. Mude qualquer coisa quando quiser.",
+  subtitle:
+    "A identidade da organização e o que as novas pessoas recebem ao entrar. Mude qualquer coisa quando quiser.",
   logo_hint: "Use uma imagem quadrada. Se você não enviar uma, mostramos as iniciais.",
   remove: "Remover",
   name_label: "Nome da organização",
