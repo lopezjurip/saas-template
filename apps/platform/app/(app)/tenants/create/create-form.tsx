@@ -176,7 +176,12 @@ export function CreateTenantForm() {
       )}
 
       <div className="flex flex-col gap-2 pt-1">
-        <ButtonSpinner pending={isCreating} pendingChildren={<span>{t("creating")}</span>} className="h-10 w-full">
+        <ButtonSpinner
+          type="submit"
+          pending={isCreating}
+          pendingChildren={<span>{t("creating")}</span>}
+          className="h-10 w-full"
+        >
           <span>{t("create_company")}</span>
           <ArrowRight size={16} />
         </ButtonSpinner>

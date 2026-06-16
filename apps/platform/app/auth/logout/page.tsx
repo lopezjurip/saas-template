@@ -49,6 +49,7 @@ export default async function AuthLogoutPage() {
         <div className="flex flex-col gap-2.5">
           <form action={signOutForm}>
             <ButtonSpinner
+              type="submit"
               variant="destructive"
               pendingChildren={
                 <>

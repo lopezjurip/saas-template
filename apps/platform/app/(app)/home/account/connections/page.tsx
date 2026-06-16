@@ -84,6 +84,7 @@ export default async function ConnectionsPage(props: PageProps<"/home/account/co
                   <form action={actionLinkProvider}>
                     <input type="hidden" name="provider" value={p.id} />
                     <ButtonSpinner
+                      type="submit"
                       variant="outline"
                       pendingChildren={<span>{t("linking")}</span>}
                       className="h-8 text-xs"

@@ -132,6 +132,7 @@ export default async function OnboardingHubPage() {
 
         <form action={actionFinishOnboarding} className="mt-1 flex flex-col border-t pt-3">
           <ButtonSpinner
+            type="submit"
             variant="outline"
             pendingChildren={<span>{t("cta_continuing")}</span>}
             className="h-11 w-full text-sm text-muted-foreground hover:text-foreground"
