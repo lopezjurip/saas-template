@@ -18,7 +18,7 @@ import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client
 import { actionGrantAgencyAccess, actionRevokeAgencyAccess } from "./actions";
 
 export type ExternalAccessAgency = {
-  agency_id: string;
+  agency_id: number;
   agency_name: string;
   agency_slug: string;
   active_affiliates: number;
@@ -88,7 +88,7 @@ export function ExternalAccess({
               </SelectTrigger>
               <SelectContent>
                 {available.map((a) => (
-                  <SelectItem key={a.agency_id} value={a.agency_id}>
+                  <SelectItem key={a.agency_id} value={String(a.agency_id)}>
                     {a.agency_name}
                   </SelectItem>
                 ))}

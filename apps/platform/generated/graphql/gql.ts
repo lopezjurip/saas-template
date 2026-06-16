@@ -36,7 +36,7 @@ type Documents = {
   "\n  query CountriesGet(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: AddressesLevel0Filter\n    $orderBy: [AddressesLevel0OrderBy!]\n  ) {\n    addressesLevel0: addressesLevel0Collection(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...CountryGetFragment\n        }\n      }\n    }\n  }\n": typeof types.CountriesGetDocument;
   "\n  fragment ViewerAgencyGetFragment on Agencies {\n    agencyId\n    agencySlug\n    agencyName\n  }\n": typeof types.ViewerAgencyGetFragmentFragmentDoc;
   "\n  query ViewerAgenciesGet(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: AgenciesFilter\n    $orderBy: [AgenciesOrderBy!]\n  ) {\n    agencies: viewerAgencies(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...ViewerAgencyGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerAgenciesGetDocument;
-  "\n  query ViewerAgencyByIdGet($agencyId: UUID!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyGetFragment\n    }\n  }\n": typeof types.ViewerAgencyByIdGetDocument;
+  "\n  query ViewerAgencyByIdGet($agencyId: Int!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyGetFragment\n    }\n  }\n": typeof types.ViewerAgencyByIdGetDocument;
   "\n  query ViewerAgencyBySlugGet($agencySlug: String!) {\n    agency: viewerAgencyBySlug(agencySlug: $agencySlug) {\n      ...ViewerAgencyGetFragment\n    }\n  }\n": typeof types.ViewerAgencyBySlugGetDocument;
   "\n  fragment ViewerOrganizationGetFragment on Organizations {\n    organizationId\n    tenantId\n    organizationSlug\n    organizationName\n  }\n": typeof types.ViewerOrganizationGetFragmentFragmentDoc;
   "\n  query ViewerOrganizationsGet(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: OrganizationsFilter\n    $orderBy: [OrganizationsOrderBy!]\n  ) {\n    organizations: viewerOrganizations(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationGetFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationsGetDocument;
@@ -52,7 +52,7 @@ type Documents = {
   "\n  query CountriesUse(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: AddressesLevel0Filter\n    $orderBy: [AddressesLevel0OrderBy!]\n  ) {\n    addressesLevel0: addressesLevel0Collection(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...CountryHookUseFragment\n        }\n      }\n    }\n  }\n": typeof types.CountriesUseDocument;
   "\n  fragment ViewerAgencyUseFragment on Agencies {\n    agencyId\n    agencySlug\n    agencyName\n  }\n": typeof types.ViewerAgencyUseFragmentFragmentDoc;
   "\n  query ViewerAgenciesUse(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: AgenciesFilter\n    $orderBy: [AgenciesOrderBy!]\n  ) {\n    agencies: viewerAgencies(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...ViewerAgencyUseFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerAgenciesUseDocument;
-  "\n  query ViewerAgencyByIdUse($agencyId: UUID!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyUseFragment\n    }\n  }\n": typeof types.ViewerAgencyByIdUseDocument;
+  "\n  query ViewerAgencyByIdUse($agencyId: Int!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyUseFragment\n    }\n  }\n": typeof types.ViewerAgencyByIdUseDocument;
   "\n  query ViewerAgencyBySlugUse($agencySlug: String!) {\n    agency: viewerAgencyBySlug(agencySlug: $agencySlug) {\n      ...ViewerAgencyUseFragment\n    }\n  }\n": typeof types.ViewerAgencyBySlugUseDocument;
   "\n  fragment ViewerOrganizationUseFragment on Organizations {\n    organizationId\n    tenantId\n    organizationSlug\n    organizationName\n  }\n": typeof types.ViewerOrganizationUseFragmentFragmentDoc;
   "\n  query ViewerOrganizationsUse(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: OrganizationsFilter\n    $orderBy: [OrganizationsOrderBy!]\n  ) {\n    organizations: viewerOrganizations(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...ViewerOrganizationUseFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerOrganizationsUseDocument;
@@ -115,7 +115,7 @@ const documents: Documents = {
     types.ViewerAgencyGetFragmentFragmentDoc,
   "\n  query ViewerAgenciesGet(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: AgenciesFilter\n    $orderBy: [AgenciesOrderBy!]\n  ) {\n    agencies: viewerAgencies(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...ViewerAgencyGetFragment\n        }\n      }\n    }\n  }\n":
     types.ViewerAgenciesGetDocument,
-  "\n  query ViewerAgencyByIdGet($agencyId: UUID!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyGetFragment\n    }\n  }\n":
+  "\n  query ViewerAgencyByIdGet($agencyId: Int!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyGetFragment\n    }\n  }\n":
     types.ViewerAgencyByIdGetDocument,
   "\n  query ViewerAgencyBySlugGet($agencySlug: String!) {\n    agency: viewerAgencyBySlug(agencySlug: $agencySlug) {\n      ...ViewerAgencyGetFragment\n    }\n  }\n":
     types.ViewerAgencyBySlugGetDocument,
@@ -147,7 +147,7 @@ const documents: Documents = {
     types.ViewerAgencyUseFragmentFragmentDoc,
   "\n  query ViewerAgenciesUse(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: AgenciesFilter\n    $orderBy: [AgenciesOrderBy!]\n  ) {\n    agencies: viewerAgencies(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...ViewerAgencyUseFragment\n        }\n      }\n    }\n  }\n":
     types.ViewerAgenciesUseDocument,
-  "\n  query ViewerAgencyByIdUse($agencyId: UUID!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyUseFragment\n    }\n  }\n":
+  "\n  query ViewerAgencyByIdUse($agencyId: Int!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyUseFragment\n    }\n  }\n":
     types.ViewerAgencyByIdUseDocument,
   "\n  query ViewerAgencyBySlugUse($agencySlug: String!) {\n    agency: viewerAgencyBySlug(agencySlug: $agencySlug) {\n      ...ViewerAgencyUseFragment\n    }\n  }\n":
     types.ViewerAgencyBySlugUseDocument,
@@ -323,7 +323,7 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerAgencyByIdGet($agencyId: UUID!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyGetFragment\n    }\n  }\n",
+  source: "\n  query ViewerAgencyByIdGet($agencyId: Int!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyGetFragment\n    }\n  }\n",
 ): typeof import("./graphql").ViewerAgencyByIdGetDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -419,7 +419,7 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
-  source: "\n  query ViewerAgencyByIdUse($agencyId: UUID!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyUseFragment\n    }\n  }\n",
+  source: "\n  query ViewerAgencyByIdUse($agencyId: Int!) {\n    agency: viewerAgencyById(agencyId: $agencyId) {\n      ...ViewerAgencyUseFragment\n    }\n  }\n",
 ): typeof import("./graphql").ViewerAgencyByIdUseDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.

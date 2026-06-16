@@ -195,13 +195,13 @@ set local role service_role;
 
 -- Create agency, affiliate Eve, add global wildcard grant.
 insert into public.agencies (agency_id, agency_name, agency_slug)
-  values ('a0000000-0000-0000-0000-000000000001', 'Humane Platform', 'humane-platform');
+  values (9001, 'Humane Platform', 'humane-platform');
 
 insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
-  values ('a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000eee0', now());
+  values (9001, '00000000-0000-0000-0000-00000000eee0', now());
 
 insert into public.agencies_organizations_grants (agency_id, organization_id, permission_id)
-  values ('a0000000-0000-0000-0000-000000000001', null, '*');
+  values (9001, null, '*');
 
 reset role;
 
@@ -212,7 +212,7 @@ set local request.jwt.claims to '{
   "app_metadata": {
     "tenants": [],
     "organizations": [],
-    "agencies": [{"id": "a0000000-0000-0000-0000-000000000001"}]
+    "agencies": [{"id": 9001}]
   }
 }';
 
@@ -262,7 +262,7 @@ set local request.jwt.claims to '{
   "app_metadata": {
     "tenants": [],
     "organizations": [],
-    "agencies": [{"id": "a0000000-0000-0000-0000-000000000001"}]
+    "agencies": [{"id": 9001}]
   }
 }';
 

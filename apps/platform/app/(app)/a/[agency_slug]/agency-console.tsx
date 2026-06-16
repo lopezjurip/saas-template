@@ -47,7 +47,7 @@ export type ConsoleOrg = {
 };
 
 export type ConsoleData = {
-  agency_id: string;
+  agency_id: number;
   agency_name: string;
   agency_slug: string;
   disabled: boolean;
@@ -329,7 +329,7 @@ function ConsoleTeamTab({
   );
 }
 
-function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: string; aff: ConsoleAffiliate; t: Translate }) {
+function ConsoleAffiliateRow({ agencyId, aff, t }: { agencyId: number; aff: ConsoleAffiliate; t: Translate }) {
   const dim = aff.state === "revoked" || aff.state === "rejected";
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);

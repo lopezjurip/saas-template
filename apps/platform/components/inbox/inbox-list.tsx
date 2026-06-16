@@ -84,7 +84,7 @@ export async function InboxList({ scope, filter }: { scope: InboxScope; filter: 
             const subject = (conv["conversation_subject"] as string | null) || t("noSubject");
             const status = conv["conversation_status"] as string;
             const orgId = conv["organization_id"] as number | null;
-            const agencyId = conv["agency_id"] as string | null;
+            const agencyId = conv["agency_id"] as number | null;
             const lastAt = conv["conversation_last_message_at"] as string;
 
             const scopeLabel = orgId ? t("scopeOrg") : agencyId ? t("scopeAgency") : t("scopePersonal");

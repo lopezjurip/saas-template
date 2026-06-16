@@ -63,13 +63,13 @@ export default async function OrganizationExternalAccessPage(
       .select("agency_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at"),
   ]);
 
-  const activeByAgency = new Map<string, number>();
+  const activeByAgency = new Map<number, number>();
   for (const m of membershipsRes.data ?? []) {
     if (IS_ACTIVE_MEMBERSHIP(m)) activeByAgency.set(m.agency_id, (activeByAgency.get(m.agency_id) ?? 0) + 1);
   }
 
-  const grantedHere = new Set<string>();
-  const globalAgencies = new Set<string>();
+  const grantedHere = new Set<number>();
+  const globalAgencies = new Set<number>();
   for (const g of grantsRes.data ?? []) {
     if (g.organization_id === null) {
       if (g.permission_id === "*") globalAgencies.add(g.agency_id);

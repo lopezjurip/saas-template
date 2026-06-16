@@ -5,12 +5,11 @@ import { streamPublicAvatar } from "~/lib/avatar";
 
 /**
  * Stable avatar URL for an agency. Resolves the latest logo from `storage_agencies` (keyed by the
- * agency uuid) and streams its bytes; 404 when none. See the organizations route for the rationale.
+ * agency id) and streams its bytes; 404 when none. See the organizations route for the rationale.
  * Use `src="/api/v1/agencies/{id}/avatar"`.
  */
 export const GET = createZodRoute()
-  // z.guid() (not z.uuid()) — loose, version-agnostic, matching the DB's internal.is_uuid.
-  .params(z.object({ agency_id: z.guid() }))
+  .params(z.object({ agency_id: z.coerce.number().int().positive() }))
   .handler(async (_request, context) => {
     const supabase = createSupabaseServiceRoleClient();
     const { data } = await supabase

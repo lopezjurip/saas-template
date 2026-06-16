@@ -2859,7 +2859,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "UUID",
+                "name": "Int",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -3301,7 +3301,7 @@
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
-              "name": "UUIDFilter",
+              "name": "IntFilter",
               "ofType": null
             },
             "defaultValue": null,
@@ -3555,7 +3555,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "UUID",
+                "name": "Int",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -3791,7 +3791,7 @@
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
-              "name": "UUIDFilter",
+              "name": "IntFilter",
               "ofType": null
             },
             "defaultValue": null,
@@ -3989,7 +3989,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "UUID",
+                "name": "Int",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -4261,7 +4261,7 @@
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
-              "name": "UUIDFilter",
+              "name": "IntFilter",
               "ofType": null
             },
             "defaultValue": null,
@@ -6824,7 +6824,7 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "name": "UUID",
+                    "name": "Int",
                     "kind": "SCALAR",
                     "ofType": null
                   }
@@ -6930,7 +6930,7 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "name": "UUID",
+                    "name": "Int",
                     "kind": "SCALAR",
                     "ofType": null
                   }
@@ -18356,7 +18356,7 @@
                   "kind": "NON_NULL",
                   "name": null,
                   "ofType": {
-                    "name": "UUID",
+                    "name": "Int",
                     "kind": "SCALAR",
                     "ofType": null
                   }
@@ -19174,7 +19174,7 @@
                 "description": null,
                 "type": {
                   "kind": "SCALAR",
-                  "name": "UUID",
+                  "name": "Int",
                   "ofType": null
                 },
                 "defaultValue": null,
@@ -19244,7 +19244,7 @@
             "args": [],
             "type": {
               "kind": "SCALAR",
-              "name": "UUID",
+              "name": "Int",
               "ofType": null
             },
             "isDeprecated": false,
@@ -19506,7 +19506,7 @@
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
-              "name": "UUIDFilter",
+              "name": "IntFilter",
               "ofType": null
             },
             "defaultValue": null,

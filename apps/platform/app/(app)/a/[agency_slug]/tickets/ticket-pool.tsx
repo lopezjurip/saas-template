@@ -33,7 +33,7 @@ export type PoolTicket = {
   ticket_resolved_at: string | null;
   ticket_created_at: string;
   assigned_profile_id: string | null;
-  assigned_agency_id: string | null;
+  assigned_agency_id: number | null;
   organization_id: number | null;
   tenant_id: number;
   conversation_id: string;
@@ -55,7 +55,7 @@ export function TicketPool({
   agency_name,
 }: {
   tickets: PoolTicket[];
-  agency_id: string;
+  agency_id: number;
   agency_slug: string;
   agency_name: string;
 }) {
@@ -157,7 +157,7 @@ function TicketList({
   t,
 }: {
   tickets: PoolTicket[];
-  agency_id: string;
+  agency_id: number;
   agency_slug: string;
   filter: StatusFilter;
   t: Translate;
@@ -194,7 +194,7 @@ function TicketRow({
   t,
 }: {
   ticket: PoolTicket;
-  agency_id: string;
+  agency_id: number;
   agency_slug: string;
   t: Translate;
 }) {

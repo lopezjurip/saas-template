@@ -1005,7 +1005,7 @@ on conflict do nothing;
 -- Access is controlled by explicit agency grants, not by a binary flag.
 
 create table if not exists public.agencies (
-  agency_id uuid not null primary key default internal.uuid_generate_v7(),
+  agency_id serial primary key,
   agency_name text not null check (char_length(agency_name) between 1 and 100),
   agency_slug extensions.citext not null unique,
   agency_disabled_at timestamptz,
@@ -1021,7 +1021,7 @@ create trigger handle_agencies_updated_at
 -- AgencyMemberships: a profile belongs to an agency. Mirrors public.organization_memberships.
 create table if not exists public.agency_memberships (
   agency_membership_id serial primary key,
-  agency_id uuid not null references public.agencies (agency_id) on delete cascade,
+  agency_id int not null references public.agencies (agency_id) on delete cascade,
   profile_id uuid not null references public.profiles (profile_id) on delete cascade,
   agency_membership_accepted_at timestamptz,
   agency_membership_revoked_at timestamptz,
@@ -1042,7 +1042,7 @@ create trigger handle_agency_memberships_updated_at
 -- organization_id IS NULL = all orgs. permission_id = '*' = all permissions.
 create table if not exists public.agencies_organizations_grants (
   agencies_organizations_grant_id uuid not null primary key default internal.uuid_generate_v7(),
-  agency_id uuid not null references public.agencies (agency_id) on delete cascade,
+  agency_id int not null references public.agencies (agency_id) on delete cascade,
   organization_id int references public.organizations (organization_id) on delete cascade,
   permission_id extensions.citext not null references public.permissions (permission_id) on delete cascade,
   agencies_organizations_grant_created_at timestamptz not null default current_timestamp
@@ -1065,6 +1065,7 @@ alter table public.agencies_organizations_grants enable row level security;
 revoke all on table public.agencies from anon, authenticated;
 grant select on table public.agencies to anon, authenticated;
 grant select, insert, update, delete on table public.agencies to service_role;
+grant usage, select on sequence public.agencies_agency_id_seq to service_role;
 
 revoke all on table public.agency_memberships from anon, authenticated;
 grant select on table public.agency_memberships to anon, authenticated;
@@ -1358,7 +1359,7 @@ create or replace function public.viewer_organization_membership_permissions()
 -- use SECURITY DEFINER to bypass RLS on the grant tables they query.
 
 create or replace function public.viewer_agency_ids()
-  returns setof uuid
+  returns setof int
   stable
   security definer
   parallel safe
@@ -1461,7 +1462,7 @@ create or replace function public.viewer_agencies()
     where a.agency_id in (select public.viewer_agency_ids());
   $$;
 
-create or replace function public.viewer_agency_by_id(agency_id uuid)
+create or replace function public.viewer_agency_by_id(agency_id int)
   returns setof public.agencies rows 1
   stable
   security definer
@@ -2777,7 +2778,7 @@ create policy "tenants bucket: tenant_manage avatar"
     and path_tokens[1]::int in (select public.viewer_permission_tenant_ids('tenant_manage'))
   );
 
--- Agency PK is a uuid, so guard the cast with internal.is_uuid before it (avoids 22P02).
+-- Agency PK is an int, so guard the cast with a numeric regex before it (avoids 22P02).
 -- Any accepted agency member may manage the agency logo (agencies have no granular catalog).
 drop policy if exists "agencies bucket: member avatar" on storage.objects;
 create policy "agencies bucket: member avatar"
@@ -2786,14 +2787,14 @@ create policy "agencies bucket: member avatar"
   using (
     bucket_id = 'agencies'
     and path_tokens[2] = 'avatar'
-    and internal.is_uuid(path_tokens[1])
-    and path_tokens[1]::uuid in (select public.viewer_agency_ids())
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_agency_ids())
   )
   with check (
     bucket_id = 'agencies'
     and path_tokens[2] = 'avatar'
-    and internal.is_uuid(path_tokens[1])
-    and path_tokens[1]::uuid in (select public.viewer_agency_ids())
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_agency_ids())
   );
 
 -- ============================================================
@@ -2882,7 +2883,7 @@ create or replace view public.storage_agencies
     obj.id                                       as storage_agency_id,
     obj.bucket_id,
     obj.name,
-    obj.path_tokens[1]::uuid                     as agency_id,
+    obj.path_tokens[1]::int                      as agency_id,
     obj.path_tokens[2]                           as folder,
     obj.metadata->>'mimetype'                    as mimetype,
     (obj.metadata->>'contentLength')::bigint     as content_length,
@@ -2892,7 +2893,7 @@ create or replace view public.storage_agencies
     '/storage/v1/object/public/' || obj.bucket_id || '/' || obj.name as src
   from storage.objects as obj
   where obj.bucket_id = 'agencies'
-    and internal.is_uuid(obj.path_tokens[1]);
+    and obj.path_tokens[1] ~ '^[0-9]+$';
 
 grant select on public.storage_agencies to authenticated, anon, service_role;
 
@@ -3260,7 +3261,7 @@ grant execute on function public.viewer_agency_create(text, text) to anon, authe
 -- Granted to service_role because the auth-user resolution step happens server-side
 -- and this RPC is always called from a trusted server action.
 create or replace function public.agency_membership_invite(
-  agency_id   uuid,
+  agency_id   int,
   profile_id  uuid,
   caller_id   uuid
 )
@@ -3314,13 +3315,13 @@ create or replace function public.agency_membership_invite(
     end;
   $$;
 
-grant execute on function public.agency_membership_invite(uuid, uuid, uuid) to service_role;
+grant execute on function public.agency_membership_invite(int, uuid, uuid) to service_role;
 
 -- Revoke or reactivate a membership. Any active affiliate may do this.
 -- Returns the updated agency_membership_id.
 create or replace function public.agency_membership_update(
   agency_membership_id int,
-  agency_id            uuid,
+  agency_id            int,
   operation            text,  -- 'revoke' | 'reactivate'
   caller_id            uuid
 )
@@ -3368,7 +3369,7 @@ create or replace function public.agency_membership_update(
     end;
   $$;
 
-grant execute on function public.agency_membership_update(int, uuid, text, uuid) to service_role;
+grant execute on function public.agency_membership_update(int, int, text, uuid) to service_role;
 
 -- Respond to an invitation. The caller must own the pending membership.
 -- Returns the updated agency_membership_id.
@@ -3459,7 +3460,7 @@ create table if not exists public.conversations (
   profile_id        uuid not null references public.profiles (profile_id) on delete cascade,
   tenant_id         int  references public.tenants (tenant_id) on delete cascade,
   organization_id   int  references public.organizations (organization_id) on delete cascade,
-  agency_id         uuid references public.agencies (agency_id) on delete cascade,
+  agency_id         int  references public.agencies (agency_id) on delete cascade,
   conversation_subject text check (char_length(conversation_subject) <= 200),
   conversation_kind   text not null default 'notification'
                         check (conversation_kind in ('notification', 'agent', 'support', 'system')),
@@ -3624,7 +3625,7 @@ create table if not exists public.agent_action_log (
   conversation_message_id uuid not null references public.conversation_messages (conversation_message_id) on delete cascade,
   profile_id uuid not null references public.profiles (profile_id),
   organization_id int references public.organizations (organization_id),
-  agency_id uuid references public.agencies (agency_id),
+  agency_id int references public.agencies (agency_id),
   tool_name text not null,
   tool_input jsonb not null default '{}',
   tool_output jsonb,
@@ -3645,7 +3646,7 @@ create table if not exists public.tickets (
   ticket_subject  text not null check (char_length(ticket_subject) between 1 and 200),
   ticket_status   public.ticket_status not null default 'open',
   ticket_priority public.notification_priority not null default 'medium',
-  assigned_agency_id  uuid references public.agencies (agency_id) on delete set null,
+  assigned_agency_id  int references public.agencies (agency_id) on delete set null,
   assigned_profile_id uuid references public.profiles (profile_id) on delete set null,
   ticket_claimed_at  timestamptz,
   ticket_resolved_at timestamptz,
@@ -3833,7 +3834,7 @@ create or replace function public.conversation_emit(
   payload              jsonb   default '{}',
   subject              text    default null,
   organization_id      int     default null,
-  agency_id            uuid    default null,
+  agency_id            int     default null,
   conversation_id      uuid    default null
 )
   returns table (out_conversation_id uuid, out_conversation_message_id uuid)
@@ -3997,7 +3998,7 @@ create or replace function public.conversation_emit(
     end;
   $$;
 
-grant execute on function public.conversation_emit(uuid, extensions.citext, text, jsonb, text, int, uuid, uuid) to service_role;
+grant execute on function public.conversation_emit(uuid, extensions.citext, text, jsonb, text, int, int, uuid) to service_role;
 
 -- conversation_post_user_message: a profile replies to a conversation.
 create or replace function public.conversation_post_user_message(
@@ -4115,7 +4116,7 @@ grant execute on function public.conversation_archive(uuid) to authenticated;
 create or replace function public.viewer_conversations(
   include_archived  boolean default false,
   p_organization_id int     default null,
-  p_agency_id       uuid    default null,
+  p_agency_id       int     default null,
   p_scope           text    default null
 )
   returns setof public.conversations
@@ -4138,7 +4139,7 @@ create or replace function public.viewer_conversations(
     order by c.conversation_last_message_at desc;
   $$;
 
-grant execute on function public.viewer_conversations(boolean, int, uuid, text) to authenticated;
+grant execute on function public.viewer_conversations(boolean, int, int, text) to authenticated;
 
 -- viewer_conversation_messages: thread messages for a conversation owned by caller.
 create or replace function public.viewer_conversation_messages(p_conversation_id uuid)
@@ -4182,7 +4183,7 @@ grant execute on function public.viewer_conversation_messages(uuid) to authentic
 --   NULL (default) → no scope filter (legacy: all caller's conversations)
 create or replace function public.viewer_unread_count(
   p_organization_id int  default null,
-  p_agency_id       uuid default null,
+  p_agency_id       int  default null,
   p_scope           text default null
 )
   returns int
@@ -4207,7 +4208,7 @@ create or replace function public.viewer_unread_count(
       );
   $$;
 
-grant execute on function public.viewer_unread_count(int, uuid, text) to authenticated;
+grant execute on function public.viewer_unread_count(int, int, text) to authenticated;
 
 -- ============================================================
 -- RPC: agent_action_claim  (mutex before AI agent side-effects)
@@ -4405,7 +4406,7 @@ create or replace function public.ticket_claim(p_ticket_id uuid)
     declare
       _caller_id uuid := public.viewer_profile_id();
       _ticket    public.tickets%rowtype;
-      _agency_id uuid;
+      _agency_id int;
     begin
       if _caller_id is null then
         raise exception 'not_authenticated' using errcode = 'P0001';
@@ -4616,7 +4617,7 @@ create or replace function public.conversation_ingest_inbound(
     out_conversation_id         uuid,
     out_profile_id              uuid,
     out_organization_id         int,
-    out_agency_id               uuid,
+    out_agency_id               int,
     out_tenant_id               int,
     out_already_resolved        boolean
   )

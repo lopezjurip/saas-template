@@ -16,7 +16,7 @@ type RecentConversation = {
   conversation_status: string;
   conversation_last_message_at: string;
   organization_id: number | null;
-  agency_id: string | null;
+  agency_id: number | null;
   tenant_id: number | null;
   snippet: string | null;
   unread: boolean;
@@ -49,7 +49,7 @@ async function fetchBellData(
     conversation_status: row["conversation_status"] as string,
     conversation_last_message_at: row["conversation_last_message_at"] as string,
     organization_id: (row["organization_id"] as number | null) ?? null,
-    agency_id: (row["agency_id"] as string | null) ?? null,
+    agency_id: (row["agency_id"] as number | null) ?? null,
     tenant_id: (row["tenant_id"] as number | null) ?? null,
     snippet: null,
     unread: false,
@@ -69,7 +69,7 @@ async function fetchBellData(
  * @example
  * <ConversationsBell scope={{ kind: "personal" }} compact={false} />
  * <ConversationsBell scope={{ kind: "organization", tenant_slug: "acme", organization_id: 42 }} compact={true} />
- * <ConversationsBell scope={{ kind: "agency", agency_slug: "abc", agency_id: "uuid" }} compact={true} placement="down" />
+ * <ConversationsBell scope={{ kind: "agency", agency_slug: "abc", agency_id: 7 }} compact={true} placement="down" />
  */
 export function ConversationsBell({
   scope,

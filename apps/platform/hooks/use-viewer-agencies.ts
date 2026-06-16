@@ -43,7 +43,7 @@ export const ViewerAgenciesUse = /*#__PURE__*/ gql(`
 `);
 
 export const ViewerAgencyByIdUse = /*#__PURE__*/ gql(`
-  query ViewerAgencyByIdUse($agencyId: UUID!) {
+  query ViewerAgencyByIdUse($agencyId: Int!) {
     agency: viewerAgencyById(agencyId: $agencyId) {
       ...ViewerAgencyUseFragment
     }
@@ -68,7 +68,7 @@ export function useViewerAgencies(options?: ViewerAgenciesUseVars, config?: SWRC
   return useGraphyQuery(user ? { query: ViewerAgenciesUse, variables: options ?? {} } : null, config);
 }
 
-export function useViewerAgencyById(agency_id: string, config?: SWRConfiguration<ViewerAgencyByIdUseData>) {
+export function useViewerAgencyById(agency_id: number, config?: SWRConfiguration<ViewerAgencyByIdUseData>) {
   const { data: user } = useSupabaseUser();
   return useGraphyQuery(user ? { query: ViewerAgencyByIdUse, variables: { agencyId: agency_id } } : null, config);
 }
