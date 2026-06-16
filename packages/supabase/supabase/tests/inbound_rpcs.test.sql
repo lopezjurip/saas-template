@@ -40,7 +40,7 @@ create temp table _ingest_result (
   out_conversation_id         uuid,
   out_profile_id              uuid,
   out_organization_id         int,
-  out_agency_id               uuid,
+  out_agency_id               int,
   out_tenant_id               int,
   out_already_resolved        boolean
 ) on commit drop;

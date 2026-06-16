@@ -189,8 +189,8 @@ on conflict (conversation_topic_slug) do nothing;
 --
 -- The agency is granted read access to the acme org via the wildcard permission
 -- (the only permission the catalog ships and the only one the read-visibility
--- RLS checks for agencies). UUID is fixed and distinct from the pgTAP fixture
--- agency (…0001).
+-- RLS checks for agencies). As the only agencies row inserted by the seed it
+-- gets serial agency_id = 1; pgTAP fixtures use their own high explicit ids.
 -- ------------------------------------------------------------
 
 insert into auth.users (
@@ -232,18 +232,18 @@ update public.profiles
   set profile_onboarded_at = current_timestamp
   where profile_id = '00000000-0000-0000-0000-0000000ca401';
 
-insert into public.agencies (agency_id, agency_name, agency_slug)
-values ('a0000000-0000-0000-0000-0000000000de', 'Demo Auditores', 'demo-auditores')
-on conflict (agency_id) do nothing;
+insert into public.agencies (agency_name, agency_slug)
+values ('Demo Auditores', 'demo-auditores')
+on conflict (agency_slug) do nothing;
 
 insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
 values
-  ('a0000000-0000-0000-0000-0000000000de', '00000000-0000-0000-0000-0000000ca401', current_timestamp),
-  ('a0000000-0000-0000-0000-0000000000de', '00000000-0000-0000-0000-00000000a11c', null)
+  ((select agency_id from public.agencies where agency_slug = 'demo-auditores'), '00000000-0000-0000-0000-0000000ca401', current_timestamp),
+  ((select agency_id from public.agencies where agency_slug = 'demo-auditores'), '00000000-0000-0000-0000-00000000a11c', null)
 on conflict (agency_id, profile_id) do nothing;
 
 insert into public.agencies_organizations_grants (agency_id, organization_id, permission_id)
-values ('a0000000-0000-0000-0000-0000000000de', 1, '*')
+values ((select agency_id from public.agencies where agency_slug = 'demo-auditores'), 1, '*')
 on conflict do nothing;
 
 -- ------------------------------------------------------------

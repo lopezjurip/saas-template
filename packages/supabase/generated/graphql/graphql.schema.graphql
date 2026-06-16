@@ -346,7 +346,7 @@ type Agencies implements Node {
   ): AgenciesOrganizationsGrantsConnection
   agencyCreatedAt: Datetime!
   agencyDisabledAt: Datetime
-  agencyId: UUID!
+  agencyId: Int!
   agencyMembershipsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
@@ -405,7 +405,7 @@ type AgenciesEdge {
 input AgenciesFilter {
   agencyCreatedAt: DatetimeFilter
   agencyDisabledAt: DatetimeFilter
-  agencyId: UUIDFilter
+  agencyId: IntFilter
   agencyName: StringFilter
   agencySlug: StringFilter
   agencyUpdatedAt: DatetimeFilter
@@ -435,7 +435,7 @@ type AgenciesOrganizationsGrants implements Node {
   agenciesOrganizationsGrantCreatedAt: Datetime!
   agenciesOrganizationsGrantId: UUID!
   agency: Agencies
-  agencyId: UUID!
+  agencyId: Int!
   """Globally Unique Record Identifier"""
   nodeId: ID!
   organization: Organizations
@@ -459,7 +459,7 @@ type AgenciesOrganizationsGrantsEdge {
 input AgenciesOrganizationsGrantsFilter {
   agenciesOrganizationsGrantCreatedAt: DatetimeFilter
   agenciesOrganizationsGrantId: UUIDFilter
-  agencyId: UUIDFilter
+  agencyId: IntFilter
   """
   Returns true only if all its inner filters are true, otherwise returns false
   """
@@ -485,7 +485,7 @@ input AgenciesOrganizationsGrantsOrderBy {
 
 type AgencyMemberships implements Node {
   agency: Agencies
-  agencyId: UUID!
+  agencyId: Int!
   agencyMembershipAcceptedAt: Datetime
   agencyMembershipCreatedAt: Datetime!
   agencyMembershipId: Int!
@@ -511,7 +511,7 @@ type AgencyMembershipsEdge {
 }
 
 input AgencyMembershipsFilter {
-  agencyId: UUIDFilter
+  agencyId: IntFilter
   agencyMembershipAcceptedAt: DatetimeFilter
   agencyMembershipCreatedAt: DatetimeFilter
   agencyMembershipId: IntFilter
@@ -822,9 +822,9 @@ input MessageChannelFilter {
 
 """The root type for creating and mutating data"""
 type Mutation {
-  agencyMembershipInvite(agencyId: UUID!, callerId: UUID!, profileId: UUID!): Int
+  agencyMembershipInvite(agencyId: Int!, callerId: UUID!, profileId: UUID!): Int
   agencyMembershipRespond(agencyMembershipId: Int!, response: String!): Int
-  agencyMembershipUpdate(agencyId: UUID!, agencyMembershipId: Int!, callerId: UUID!, operation: String!): Int
+  agencyMembershipUpdate(agencyId: Int!, agencyMembershipId: Int!, callerId: UUID!, operation: String!): Int
   agentActionComplete(idempotencyKey: String!, status: String!, toolOutput: JSON): Opaque
   conversationArchive(pConversationId: UUID!): Opaque
   conversationMarkRead(messageIds: [UUID]!): Int
@@ -2326,7 +2326,7 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [AgenciesOrderBy!]
   ): AgenciesConnection
-  viewerAgencyById(agencyId: UUID!): Agencies
+  viewerAgencyById(agencyId: Int!): Agencies
   viewerAgencyBySlug(agencySlug: String!): Agencies
   viewerHasAgencyPermission(organizationId: Int!, permissionId: String!): Boolean
   viewerHasPermission(organizationId: Int!, permissionId: String!): Boolean
@@ -2411,12 +2411,12 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [TenantsOrderBy!]
   ): TenantsConnection
-  viewerUnreadCount(pAgencyId: UUID, pOrganizationId: Int, pScope: String): Int
+  viewerUnreadCount(pAgencyId: Int, pOrganizationId: Int, pScope: String): Int
 }
 
 type StorageAgencies implements Node {
   agency: Agencies
-  agencyId: UUID
+  agencyId: Int
   bucketId: String
   contentLength: BigInt
   createdAt: Datetime
@@ -2442,7 +2442,7 @@ type StorageAgenciesEdge {
 }
 
 input StorageAgenciesFilter {
-  agencyId: UUIDFilter
+  agencyId: IntFilter
   """
   Returns true only if all its inner filters are true, otherwise returns false
   """

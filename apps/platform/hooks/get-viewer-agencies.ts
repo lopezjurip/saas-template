@@ -43,7 +43,7 @@ export const ViewerAgenciesGet = /*#__PURE__*/ gql(`
 `);
 
 export const ViewerAgencyByIdGet = /*#__PURE__*/ gql(`
-  query ViewerAgencyByIdGet($agencyId: UUID!) {
+  query ViewerAgencyByIdGet($agencyId: Int!) {
     agency: viewerAgencyById(agencyId: $agencyId) {
       ...ViewerAgencyGetFragment
     }
@@ -71,7 +71,7 @@ export const getViewerAgencies = cache(async (options?: ViewerAgenciesGetVars) =
 /**
  * Fetches the agency that the viewer belongs to by its ID.
  */
-export const getViewerAgencyById = cache(async (agency_id: string) => {
+export const getViewerAgencyById = cache(async (agency_id: number) => {
   const graphy = await getGraphySession();
   return await graphy.query({ query: ViewerAgencyByIdGet, variables: { agencyId: agency_id } });
 });
@@ -79,7 +79,7 @@ export const getViewerAgencyById = cache(async (agency_id: string) => {
 /**
  * Fetches the agency by its ID and asserts it exists. Throws a 404 if not found.
  */
-export async function getViewerAgencyByIdAssert(agency_id: string) {
+export async function getViewerAgencyByIdAssert(agency_id: number) {
   const { data, ...extra } = await getViewerAgencyById(agency_id);
   const agency = data && data["agency"];
   if (!agency) {

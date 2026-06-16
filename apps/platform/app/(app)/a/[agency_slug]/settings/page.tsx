@@ -53,7 +53,7 @@ export default async function AgencySettingsPage(props: PageProps<"/a/[agency_sl
         <section className="border-border bg-background flex flex-col gap-4 rounded-xl border p-5">
           <EntityLogoControls
             bucket="agencies"
-            ownerKey={agency["agency_id"]}
+            ownerKey={String(agency["agency_id"])}
             name={agency["agency_name"]}
             src={logoSrc}
             shape="square"

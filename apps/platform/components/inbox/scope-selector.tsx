@@ -55,7 +55,7 @@ type ScopeOrg = {
 };
 
 type ScopeAgency = {
-  agency_id: string;
+  agency_id: number;
   agency_slug: string;
   agency_name: string;
 };

@@ -19,7 +19,7 @@ const GRANT_PERMISSION = "*";
 
 const baseSchema = z.object({
   organization_id: z.number().int().positive(),
-  agency_id: z.string().uuid(),
+  agency_id: z.coerce.number().int().positive(),
 });
 
 const grantAgencyAccessSchema = baseSchema;

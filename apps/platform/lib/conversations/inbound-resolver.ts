@@ -62,7 +62,7 @@ export interface InboundContext {
   conversationId: string;
   profileId: string;
   organizationId: number | null;
-  agencyId: string | null;
+  agencyId: number | null;
   tenantId: number | null;
   /** True when the conversation was already resolved before this inbound. */
   alreadyResolved: boolean;
@@ -205,7 +205,7 @@ export async function resolveInbound(
 
   const conversationMessageId = ingestRow["out_conversation_message_id"] as string;
   const organizationId = (ingestRow["out_organization_id"] as number | null) ?? null;
-  const agencyId = (ingestRow["out_agency_id"] as string | null) ?? null;
+  const agencyId = (ingestRow["out_agency_id"] as number | null) ?? null;
   const tenantId = (ingestRow["out_tenant_id"] as number | null) ?? null;
   const alreadyResolved = Boolean(ingestRow["out_already_resolved"]);
   const idempotencyKey = `${channel}:${providerMessageId}`;

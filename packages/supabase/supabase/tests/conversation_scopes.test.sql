@@ -49,7 +49,7 @@ with agency_conv as (
     '00000000-0000-0000-0000-00000000a11c'::uuid,
     null,
     null,
-    'a0000000-0000-0000-0000-0000000000de'::uuid,
+    1,
     'notification'
   )
   returning conversation_id
@@ -167,7 +167,7 @@ select is(
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, null, 'a0000000-0000-0000-0000-0000000000de'::uuid, 'agency')
+    from public.viewer_conversations(false, null, 1, 'agency')
     where conversation_id = (select conv_id from _scope_convs where scope = 'agency')
   ),
   1,
@@ -177,7 +177,7 @@ select is(
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, null, 'a0000000-0000-0000-0000-0000000000de'::uuid, 'agency')
+    from public.viewer_conversations(false, null, 1, 'agency')
     where conversation_id = (select conv_id from _scope_convs where scope = 'personal')
   ),
   0,
@@ -188,7 +188,7 @@ select is(
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, null, 'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid, 'agency')
+    from public.viewer_conversations(false, null, 999999, 'agency')
     where conversation_id = (select conv_id from _scope_convs where scope = 'agency')
   ),
   0,
@@ -224,7 +224,7 @@ select is(
 );
 
 select is(
-  public.viewer_unread_count(null, 'a0000000-0000-0000-0000-0000000000de'::uuid, 'agency'),
+  public.viewer_unread_count(null, 1, 'agency'),
   1,
   'viewer_unread_count agency scope returns 1 (one unread agency message)'
 );
@@ -244,7 +244,7 @@ select ok(
 
 -- Wrong foreign agency_id → 0 unread.
 select is(
-  public.viewer_unread_count(null, 'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid, 'agency'),
+  public.viewer_unread_count(null, 999999, 'agency'),
   0,
   'viewer_unread_count agency scope with foreign agency_id returns 0'
 );

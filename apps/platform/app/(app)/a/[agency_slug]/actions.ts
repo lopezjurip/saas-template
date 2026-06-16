@@ -13,7 +13,7 @@ import { authedAction } from "~/lib/safe-action.server";
 const log = debug("app:[locale]:(app):a:[agency_slug]:actions");
 
 const inviteAffiliateSchema = z.object({
-  agency_id: z.string().uuid(),
+  agency_id: z.coerce.number().int().positive(),
   invitation_email: z.string().trim().email().max(254),
 });
 
@@ -94,7 +94,7 @@ export const actionInviteAffiliate = authedAction
   });
 
 const membershipActionSchema = z.object({
-  agency_id: z.string().uuid(),
+  agency_id: z.coerce.number().int().positive(),
   agency_membership_id: z.number().int().positive(),
   operation: z.enum(["revoke", "reactivate"]),
 });

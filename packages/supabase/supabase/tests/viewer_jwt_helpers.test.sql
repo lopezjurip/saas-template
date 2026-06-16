@@ -111,9 +111,9 @@ reset role;
 
 set local role service_role;
 insert into public.agencies (agency_id, agency_name, agency_slug)
-  values ('a0000000-0000-0000-0000-000000000001', 'Test Agency', 'test-agency');
+  values (9001, 'Test Agency', 'test-agency');
 insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
-  values ('a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000a11c', now());
+  values (9001, '00000000-0000-0000-0000-00000000a11c', now());
 reset role;
 
 set local role authenticated;
@@ -126,8 +126,8 @@ select ok(
 
 select set_eq(
   $$ select * from public.viewer_agency_ids() $$,
-  $$ values ('a0000000-0000-0000-0000-000000000001'::uuid) $$,
-  'viewer_agency_ids() returns the agency UUID from the DB'
+  $$ values (9001) $$,
+  'viewer_agency_ids() returns the agency id from the DB'
 );
 
 reset role;

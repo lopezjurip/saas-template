@@ -35,7 +35,7 @@ export type AddressesLevel0OrderBy = {
 export type AgenciesFilter = {
   agencyCreatedAt?: DatetimeFilter | null | undefined;
   agencyDisabledAt?: DatetimeFilter | null | undefined;
-  agencyId?: UuidFilter | null | undefined;
+  agencyId?: IntFilter | null | undefined;
   agencyName?: StringFilter | null | undefined;
   agencySlug?: StringFilter | null | undefined;
   agencyUpdatedAt?: DatetimeFilter | null | undefined;
@@ -190,20 +190,12 @@ export type TenantsOrderBy = {
   tenantUpdatedAt?: OrderByDirection | null | undefined;
 };
 
-/** Boolean expression comparing fields on type "UUID" */
-export type UuidFilter = {
-  eq?: string | null | undefined;
-  in?: Array<string> | null | undefined;
-  is?: FilterIs | null | undefined;
-  neq?: string | null | undefined;
-};
-
 export type AgencyCreateMutationMutationVariables = Exact<{
   agency_name: string;
   agency_slug: string;
 }>;
 
-export type AgencyCreateMutationMutation = { agency: { agencyId: string } | null };
+export type AgencyCreateMutationMutation = { agency: { agencyId: number } | null };
 
 export type ProfileSectionUpdateNameMutationMutationVariables = Exact<{
   profile_id: string;
@@ -351,7 +343,7 @@ export type ScopeSelectorOrgsQueryQuery = {
 export type ScopeSelectorAgenciesQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type ScopeSelectorAgenciesQueryQuery = {
-  agencies: { edges: Array<{ node: { agencyId: string; agencySlug: string; agencyName: string } }> } | null;
+  agencies: { edges: Array<{ node: { agencyId: number; agencySlug: string; agencyName: string } }> } | null;
 };
 
 export type PostHogIdentifyQueryVariables = Exact<{ [key: string]: never }>;
@@ -392,7 +384,7 @@ export type CountriesGetQuery = {
   } | null;
 };
 
-export type ViewerAgencyGetFragmentFragment = { agencyId: string; agencySlug: string; agencyName: string };
+export type ViewerAgencyGetFragmentFragment = { agencyId: number; agencySlug: string; agencyName: string };
 
 export type ViewerAgenciesGetQueryVariables = Exact<{
   first?: number | null | undefined;
@@ -404,21 +396,21 @@ export type ViewerAgenciesGetQueryVariables = Exact<{
 }>;
 
 export type ViewerAgenciesGetQuery = {
-  agencies: { edges: Array<{ node: { agencyId: string; agencySlug: string; agencyName: string } }> } | null;
+  agencies: { edges: Array<{ node: { agencyId: number; agencySlug: string; agencyName: string } }> } | null;
 };
 
 export type ViewerAgencyByIdGetQueryVariables = Exact<{
-  agencyId: string;
+  agencyId: number;
 }>;
 
-export type ViewerAgencyByIdGetQuery = { agency: { agencyId: string; agencySlug: string; agencyName: string } | null };
+export type ViewerAgencyByIdGetQuery = { agency: { agencyId: number; agencySlug: string; agencyName: string } | null };
 
 export type ViewerAgencyBySlugGetQueryVariables = Exact<{
   agencySlug: string;
 }>;
 
 export type ViewerAgencyBySlugGetQuery = {
-  agency: { agencyId: string; agencySlug: string; agencyName: string } | null;
+  agency: { agencyId: number; agencySlug: string; agencyName: string } | null;
 };
 
 export type ViewerOrganizationGetFragmentFragment = {
@@ -546,7 +538,7 @@ export type CountriesUseQuery = {
   } | null;
 };
 
-export type ViewerAgencyUseFragmentFragment = { agencyId: string; agencySlug: string; agencyName: string };
+export type ViewerAgencyUseFragmentFragment = { agencyId: number; agencySlug: string; agencyName: string };
 
 export type ViewerAgenciesUseQueryVariables = Exact<{
   first?: number | null | undefined;
@@ -558,21 +550,21 @@ export type ViewerAgenciesUseQueryVariables = Exact<{
 }>;
 
 export type ViewerAgenciesUseQuery = {
-  agencies: { edges: Array<{ node: { agencyId: string; agencySlug: string; agencyName: string } }> } | null;
+  agencies: { edges: Array<{ node: { agencyId: number; agencySlug: string; agencyName: string } }> } | null;
 };
 
 export type ViewerAgencyByIdUseQueryVariables = Exact<{
-  agencyId: string;
+  agencyId: number;
 }>;
 
-export type ViewerAgencyByIdUseQuery = { agency: { agencyId: string; agencySlug: string; agencyName: string } | null };
+export type ViewerAgencyByIdUseQuery = { agency: { agencyId: number; agencySlug: string; agencyName: string } | null };
 
 export type ViewerAgencyBySlugUseQueryVariables = Exact<{
   agencySlug: string;
 }>;
 
 export type ViewerAgencyBySlugUseQuery = {
-  agency: { agencyId: string; agencySlug: string; agencyName: string } | null;
+  agency: { agencyId: number; agencySlug: string; agencyName: string } | null;
 };
 
 export type ViewerOrganizationUseFragmentFragment = {
@@ -1145,7 +1137,7 @@ export const ViewerAgenciesGetDocument = new TypedDocumentString(`
   agencyName
 }`) as unknown as TypedDocumentString<ViewerAgenciesGetQuery, ViewerAgenciesGetQueryVariables>;
 export const ViewerAgencyByIdGetDocument = new TypedDocumentString(`
-    query ViewerAgencyByIdGet($agencyId: UUID!) {
+    query ViewerAgencyByIdGet($agencyId: Int!) {
   agency: viewerAgencyById(agencyId: $agencyId) {
     ...ViewerAgencyGetFragment
   }
@@ -1326,7 +1318,7 @@ export const ViewerAgenciesUseDocument = new TypedDocumentString(`
   agencyName
 }`) as unknown as TypedDocumentString<ViewerAgenciesUseQuery, ViewerAgenciesUseQueryVariables>;
 export const ViewerAgencyByIdUseDocument = new TypedDocumentString(`
-    query ViewerAgencyByIdUse($agencyId: UUID!) {
+    query ViewerAgencyByIdUse($agencyId: Int!) {
   agency: viewerAgencyById(agencyId: $agencyId) {
     ...ViewerAgencyUseFragment
   }

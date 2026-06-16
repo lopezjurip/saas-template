@@ -98,7 +98,7 @@ export function ConversationThread({
   const conversationId = conversation["conversation_id"] as string;
   const subject = (conversation["conversation_subject"] as string | null) || t("noSubject");
   const orgId = conversation["organization_id"] as number | null;
-  const agencyId = conversation["agency_id"] as string | null;
+  const agencyId = conversation["agency_id"] as number | null;
   const scopeLabel = orgId ? t("scopeOrg") : agencyId ? t("scopeAgency") : t("scopePersonal");
 
   async function handleSend() {

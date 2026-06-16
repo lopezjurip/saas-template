@@ -7,12 +7,12 @@ import { ROUTE } from "~/lib/route";
  * @example
  * const scope: InboxScope = { kind: "personal" };
  * const scope: InboxScope = { kind: "organization", tenant_slug: "acme", organization_id: 42 };
- * const scope: InboxScope = { kind: "agency", agency_slug: "abc", agency_id: "uuid-here" };
+ * const scope: InboxScope = { kind: "agency", agency_slug: "abc", agency_id: 7 };
  */
 export type InboxScope =
   | { kind: "personal" }
   | { kind: "organization"; tenant_slug: string; organization_id: number }
-  | { kind: "agency"; agency_slug: string; agency_id: string };
+  | { kind: "agency"; agency_slug: string; agency_id: number };
 
 /**
  * Returns the RPC args (without `include_archived`) for a given inbox scope.
@@ -25,7 +25,7 @@ export type InboxScope =
 export function SCOPE_RPC_ARGS(scope: InboxScope): {
   p_scope: string;
   p_organization_id?: number;
-  p_agency_id?: string;
+  p_agency_id?: number;
 } {
   if (scope.kind === "personal") {
     return { p_scope: "personal" };
