@@ -57,16 +57,6 @@ export function GeneralSettings({
           <Label htmlFor="org-name">{t("name_label")}</Label>
           <Input id="org-name" defaultValue={organizationName} />
         </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="org-slug">{t("slug_label")}</Label>
-          <div className="relative">
-            <span className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm/normal">
-              acme.com/o/
-            </span>
-            <Input id="org-slug" defaultValue={slug} className="pl-[104px]" />
-          </div>
-          <p className="text-muted-foreground text-xs leading-normal">{t("slug_hint")}</p>
-        </div>
       </section>
 
       <section className="flex flex-col gap-2.5">
@@ -166,8 +156,6 @@ const LOCALE_ES = {
   logo_hint: "Usa una imagen cuadrada. Si no subes una, mostramos las iniciales.",
   remove: "Quitar",
   name_label: "Nombre de la organización",
-  slug_label: "Identificador (slug)",
-  slug_hint: "Aparece en enlaces y URLs. Cambiarlo rompe los enlaces antiguos.",
   domains: "Dominios",
   add_domain: "Agregar dominio",
   verified: "Verificado",
@@ -203,8 +191,6 @@ const LOCALE_EN: typeof LOCALE_ES = {
   logo_hint: "Use a square image. If you don't upload one, we show the initials.",
   remove: "Remove",
   name_label: "Organization name",
-  slug_label: "Identifier (slug)",
-  slug_hint: "Shows up in links and URLs. Changing it breaks old links.",
   domains: "Domains",
   add_domain: "Add domain",
   verified: "Verified",
@@ -241,8 +227,6 @@ const LOCALE_PT: typeof LOCALE_ES = {
   logo_hint: "Use uma imagem quadrada. Se você não enviar uma, mostramos as iniciais.",
   remove: "Remover",
   name_label: "Nome da organização",
-  slug_label: "Identificador (slug)",
-  slug_hint: "Aparece em links e URLs. Mudá-lo quebra os links antigos.",
   domains: "Domínios",
   add_domain: "Adicionar domínio",
   verified: "Verificado",

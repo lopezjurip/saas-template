@@ -114,20 +114,29 @@ export function CreateTenantForm() {
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="tenant_slug">{t("slug_label")}</Label>
-        <Input
-          id="tenant_slug"
-          className="h-10"
-          disabled={isCreating}
-          placeholder="acme"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          aria-invalid={!!form.formState.errors.tenant_slug}
-          {...form.register("tenant_slug")}
-        />
-        <p className="text-muted-foreground text-xs">
-          {t("url_preview")} <strong className="font-medium text-foreground">{`${appHost}/${slug || "{slug}"}`}</strong>
-        </p>
+        <div className="border-input focus-within:border-ring focus-within:ring-ring/40 flex items-stretch overflow-hidden rounded-md border bg-transparent focus-within:ring-[3px]">
+          <span className="text-muted-foreground bg-muted/50 border-border inline-flex items-center whitespace-nowrap border-r pl-3 pr-1.5 font-mono text-sm/normal">
+            {appHost}/t/
+          </span>
+          <input
+            id="tenant_slug"
+            type="text"
+            disabled={isCreating}
+            placeholder="acme"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            aria-invalid={!!form.formState.errors.tenant_slug}
+            value={slug}
+            onChange={(e) => {
+              setValue("tenant_slug", SLUGIFY(e.target.value).slice(0, 40), {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+            }}
+            className="text-foreground placeholder:text-muted-foreground h-10 min-w-0 flex-1 bg-transparent px-2.5 font-mono text-sm outline-none"
+          />
+        </div>
         {form.formState.errors.tenant_slug && (
           <p className="text-destructive text-xs">{form.formState.errors.tenant_slug.message}</p>
         )}
@@ -196,7 +205,6 @@ export function CreateTenantForm() {
 const LOCALE_ES = {
   company_name_label: "Nombre",
   slug_label: "Identificador",
-  url_preview: "Tu URL será",
   plan_label: "Plan inicial",
   plan_free_per: "para siempre",
   plan_free_blurb: "Hasta 3 miembros y lo esencial.",
@@ -214,7 +222,6 @@ const LOCALE_ES = {
 const LOCALE_EN: typeof LOCALE_ES = {
   company_name_label: "Name",
   slug_label: "Identifier",
-  url_preview: "Your URL will be",
   plan_label: "Starting plan",
   plan_free_per: "forever",
   plan_free_blurb: "Up to 3 members and the essentials.",
@@ -232,7 +239,6 @@ const LOCALE_EN: typeof LOCALE_ES = {
 const LOCALE_PT: typeof LOCALE_ES = {
   company_name_label: "Nome",
   slug_label: "Identificador",
-  url_preview: "Sua URL será",
   plan_label: "Plano inicial",
   plan_free_per: "para sempre",
   plan_free_blurb: "Até 3 membros e o essencial.",

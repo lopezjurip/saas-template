@@ -9,7 +9,7 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { SLUGIFY } from "@packages/utils/slug";
 import { ArrowRight, Briefcase, Building2, Check, Eye, Plus, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
@@ -33,11 +33,21 @@ export function AgencyCreate() {
   const [createdSlug, setCreatedSlug] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
   const [createState, createAgency] = useGraphyMutation(AgencyCreateMutation);
+  /**
+   * Read the live host (hostname + port) so the previewed URL stays accurate in Conductor
+   * dev where parallel instances bind to different ports. Empty on SSR → matches the initial
+   * client render to avoid hydration mismatches; populated after mount. `APP_HOST` from
+   * constants is server-only (PORT isn't inlined into client bundles), so we read it here.
+   */
+  const [appHost, setAppHost] = useState("");
+  useEffect(() => {
+    setAppHost(window.location.host);
+  }, []);
 
   // Shared slug rule from @packages/utils, capped at 40 like the tenant-create flow.
   const autoSlug = SLUGIFY(name).slice(0, 40);
   const effectiveSlug = (touchedSlug ? slug : autoSlug) || t("slug_fallback");
-  const consoleUrl = `app.example.com/a/${createdSlug}`;
+  const consoleUrl = `${appHost}/a/${createdSlug}`;
   const backHref = ROUTE("/home");
   const isCreating = createState.isValidating;
 
@@ -113,7 +123,7 @@ export function AgencyCreate() {
               <Label htmlFor="ag-slug">{t("slug_label")}</Label>
               <div className="border-input focus-within:border-ring focus-within:ring-ring/40 flex items-stretch overflow-hidden rounded-md border bg-transparent focus-within:ring-[3px]">
                 <span className="text-muted-foreground bg-muted/50 border-border inline-flex items-center whitespace-nowrap border-r pl-3 pr-1.5 font-mono text-sm/normal">
-                  app.example.com/a/
+                  {appHost}/a/
                 </span>
                 <input
                   id="ag-slug"
