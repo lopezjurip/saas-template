@@ -1061,7 +1061,7 @@ alter table public.agency_memberships enable row level security;
 alter table public.agencies_organizations_grants enable row level security;
 
 revoke all on table public.agencies from anon, authenticated;
-grant select on table public.agencies to anon, authenticated;
+grant select, update on table public.agencies to anon, authenticated;
 grant select, insert, update, delete on table public.agencies to service_role;
 grant usage, select on sequence public.agencies_agency_id_seq to service_role;
 
@@ -1600,6 +1600,14 @@ drop policy if exists "agencies select by affiliates" on public.agencies;
 create policy "agencies select by affiliates"
   on public.agencies for select to authenticated
   using (agency_id in (select public.viewer_agency_ids()));
+
+-- agencies: affiliates may update their agency (rename, etc.). Full-column update gated by
+-- membership; the with check prevents reassigning a row to an agency the caller isn't in.
+drop policy if exists "agencies update by affiliates" on public.agencies;
+create policy "agencies update by affiliates"
+  on public.agencies for update to authenticated
+  using (agency_id in (select public.viewer_agency_ids()))
+  with check (agency_id in (select public.viewer_agency_ids()));
 
 -- agency_memberships: each profile sees their own.
 drop policy if exists "agency_memberships select own" on public.agency_memberships;
