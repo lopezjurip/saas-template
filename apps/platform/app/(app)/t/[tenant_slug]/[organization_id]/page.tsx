@@ -4,6 +4,7 @@ import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organization
 import { getRosetta, getServerLocale } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { DashboardOverview } from "./dashboard-overview";
+import { TenantOnboardingBanner } from "./onboarding/onboarding-banner";
 
 export async function generateMetadata(props: PageProps<"/t/[tenant_slug]/[organization_id]">): Promise<Metadata> {
   const { t, locale } = await getRosetta(LOCALES);
@@ -22,13 +23,18 @@ export default async function OrganizationHomePage(props: PageProps<"/t/[tenant_
   } = await getViewerOrganizationByIdAssert(organization_id);
 
   return (
-    <DashboardOverview
-      organizationName={organization["organizationName"]}
-      membersHref={ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
-        tenant_slug,
-        organization_id,
-      })}
-    />
+    <>
+      <div className="empty:hidden px-5 pt-5 sm:px-8 sm:pt-7">
+        <TenantOnboardingBanner tenantSlug={tenant_slug} organizationId={organization_id} />
+      </div>
+      <DashboardOverview
+        organizationName={organization["organizationName"]}
+        membersHref={ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
+          tenant_slug,
+          organization_id,
+        })}
+      />
+    </>
   );
 }
 

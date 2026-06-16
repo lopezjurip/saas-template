@@ -1106,6 +1106,8 @@ export type Database = {
           tenant_disabled_at: string | null
           tenant_id: number
           tenant_name: string
+          tenant_onboarded_at: string | null
+          tenant_onboarding_state: Json
           tenant_slug: string
           tenant_tier: Database["public"]["Enums"]["tenant_tier"]
           tenant_updated_at: string
@@ -1115,6 +1117,8 @@ export type Database = {
           tenant_disabled_at?: string | null
           tenant_id?: number
           tenant_name: string
+          tenant_onboarded_at?: string | null
+          tenant_onboarding_state?: Json
           tenant_slug: string
           tenant_tier?: Database["public"]["Enums"]["tenant_tier"]
           tenant_updated_at?: string
@@ -1124,6 +1128,8 @@ export type Database = {
           tenant_disabled_at?: string | null
           tenant_id?: number
           tenant_name?: string
+          tenant_onboarded_at?: string | null
+          tenant_onboarding_state?: Json
           tenant_slug?: string
           tenant_tier?: Database["public"]["Enums"]["tenant_tier"]
           tenant_updated_at?: string
@@ -1970,6 +1976,8 @@ export type Database = {
           tenant_disabled_at: string | null
           tenant_id: number
           tenant_name: string
+          tenant_onboarded_at: string | null
+          tenant_onboarding_state: Json
           tenant_slug: string
           tenant_tier: Database["public"]["Enums"]["tenant_tier"]
           tenant_updated_at: string
@@ -1988,6 +1996,8 @@ export type Database = {
           tenant_disabled_at: string | null
           tenant_id: number
           tenant_name: string
+          tenant_onboarded_at: string | null
+          tenant_onboarding_state: Json
           tenant_slug: string
           tenant_tier: Database["public"]["Enums"]["tenant_tier"]
           tenant_updated_at: string
@@ -2006,6 +2016,8 @@ export type Database = {
           tenant_disabled_at: string | null
           tenant_id: number
           tenant_name: string
+          tenant_onboarded_at: string | null
+          tenant_onboarding_state: Json
           tenant_slug: string
           tenant_tier: Database["public"]["Enums"]["tenant_tier"]
           tenant_updated_at: string
@@ -2018,6 +2030,46 @@ export type Database = {
         }
       }
       viewer_tenant_ids: { Args: never; Returns: number[] }
+      viewer_tenant_onboarding_finish: {
+        Args: { tenant_id: number }
+        Returns: {
+          tenant_created_at: string
+          tenant_disabled_at: string | null
+          tenant_id: number
+          tenant_name: string
+          tenant_onboarded_at: string | null
+          tenant_onboarding_state: Json
+          tenant_slug: string
+          tenant_tier: Database["public"]["Enums"]["tenant_tier"]
+          tenant_updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tenants"
+          isOneToOne: true
+          isSetofReturn: true
+        }
+      }
+      viewer_tenant_onboarding_set: {
+        Args: { status: string; step: string; tenant_id: number }
+        Returns: {
+          tenant_created_at: string
+          tenant_disabled_at: string | null
+          tenant_id: number
+          tenant_name: string
+          tenant_onboarded_at: string | null
+          tenant_onboarding_state: Json
+          tenant_slug: string
+          tenant_tier: Database["public"]["Enums"]["tenant_tier"]
+          tenant_updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tenants"
+          isOneToOne: true
+          isSetofReturn: true
+        }
+      }
       viewer_tenant_validate: { Args: { tenant_id: number }; Returns: boolean }
       viewer_tenants: {
         Args: never
@@ -2026,6 +2078,8 @@ export type Database = {
           tenant_disabled_at: string | null
           tenant_id: number
           tenant_name: string
+          tenant_onboarded_at: string | null
+          tenant_onboarding_state: Json
           tenant_slug: string
           tenant_tier: Database["public"]["Enums"]["tenant_tier"]
           tenant_updated_at: string
