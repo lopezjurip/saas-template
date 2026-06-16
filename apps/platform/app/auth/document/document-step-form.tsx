@@ -4,15 +4,28 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@packages/ui-common/shadcn/components/ui/select";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { RUT_FORMAT, RUT_NORMALIZE } from "@packages/utils/rut";
 import { ArrowRight, IdCard } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useCountries } from "~/hooks/use-countries";
 import { useLocaleParam } from "~/hooks/use-locale-param";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { ErrorSafeAction } from "~/lib/safe-action.client";
+import {
+  DOCUMENT_VALUE_LABEL,
+  DOCUMENT_VALUE_PLACEHOLDER,
+  FORMAT_DOCUMENT,
+  NORMALIZE_DOCUMENT,
+} from "../_components/document-labels";
 import { OtpField } from "../_components/otp-field";
 import { actionCheckDocument, actionVerifyDocumentLoginOtp } from "./actions";
 
@@ -27,13 +40,18 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  const [country, setCountry] = useState("CL");
   const [kind, setKind] = useState<DocKind>("nin");
-  const [doc, setDoc] = useState(() => (value ? RUT_FORMAT(RUT_NORMALIZE(value), { dots: true, dash: true }) : ""));
+  // The initial `value` prefill comes from the signup hand-off, which today is always a CL RUT.
+  const [doc, setDoc] = useState(() =>
+    value ? FORMAT_DOCUMENT("CL", "nin", NORMALIZE_DOCUMENT("CL", "nin", value)) : "",
+  );
   const [login, setLogin] = useState<LoginState | null>(null);
   const [noAccount, setNoAccount] = useState(false);
   const [token, setToken] = useState("");
 
-  const country = "CL";
+  const { data: countriesData } = useCountries();
+  const countries = countriesData?.["addressesLevel0"]?.["edges"] ?? [];
 
   function onCheck(e: React.FormEvent) {
     e.preventDefault();
@@ -92,7 +110,7 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
     if (!login) return;
     setError(null);
     startTransition(async () => {
-      // on success this action redirects server-side to /home; only returns on failure
+      // on success this action redirects server-side to /auth/router; only returns on failure
       const [, err] = await ErrorSafeAction.unwrap(
         actionVerifyDocumentLoginOtp({
           address_level0_id: country,
@@ -101,6 +119,7 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
           channel: login.channel,
           contact: login.contact,
           token,
+          next,
         }),
       );
       if (err) setError(t("error_otp"));
@@ -172,25 +191,60 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
 
   return (
     <form onSubmit={onCheck} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="doc-country">{t("label_country")}</Label>
+        <Select
+          value={country}
+          onValueChange={(next_country) => {
+            setCountry(next_country);
+            // A value formatted under one country's rule is meaningless under another — start fresh.
+            setDoc("");
+          }}
+        >
+          <SelectTrigger id="doc-country" className="w-full">
+            <SelectValue placeholder={t("select_country")} />
+          </SelectTrigger>
+          <SelectContent>
+            {countries.map((edge) => {
+              const node = edge["node"];
+              return (
+                <SelectItem
+                  key={node["addressLevel0Id"]}
+                  value={node["addressLevel0Id"]}
+                  textValue={node["addressLevel0Name"]}
+                >
+                  {node["addressLevel0Emoji"] ? `${node["addressLevel0Emoji"]} ` : ""}
+                  {node["addressLevel0Name"]}
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="grid grid-cols-2 gap-1 rounded-md bg-muted p-1">
         {(["nin", "passport"] as const).map((k) => (
           <button
             key={k}
             type="button"
-            onClick={() => setKind(k)}
+            onClick={() => {
+              // Re-normalize the current value under the new kind so blur formatting stays correct.
+              setDoc((current) => NORMALIZE_DOCUMENT(country, k, current));
+              setKind(k);
+            }}
             data-active={kind === k}
             className={cn(
               "h-8 rounded text-sm/normal font-medium text-muted-foreground transition-colors",
               "data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:shadow-sm",
             )}
           >
-            {k === "nin" ? t("tab_rut") : t("tab_passport")}
+            {k === "nin" ? DOCUMENT_VALUE_LABEL(country, "nin") : t("tab_passport")}
           </button>
         ))}
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="doc-value">{kind === "nin" ? t("label_rut") : t("label_passport")}</Label>
+        <Label htmlFor="doc-value">{DOCUMENT_VALUE_LABEL(country, kind)}</Label>
         <div className="relative">
           <span className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 text-muted-foreground">
             <IdCard size={16} />
@@ -199,16 +253,13 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
             id="doc-value"
             value={doc}
             onChange={(e) => {
-              const raw = e.target.value;
-              setDoc(kind === "nin" ? RUT_NORMALIZE(raw) : raw);
+              setDoc(NORMALIZE_DOCUMENT(country, kind, e.target.value));
             }}
             onBlur={() => {
-              if (kind === "nin" && doc.length > 1) {
-                setDoc(RUT_FORMAT(doc, { dots: true, dash: true }));
-              }
+              setDoc((current) => FORMAT_DOCUMENT(country, kind, current));
             }}
             className="h-10 pl-9"
-            placeholder={kind === "nin" ? t("placeholder_rut") : t("placeholder_passport")}
+            placeholder={DOCUMENT_VALUE_PLACEHOLDER(country, kind)}
             autoComplete="off"
             autoFocus
           />
@@ -231,12 +282,9 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
 }
 
 const LOCALE_ES = {
-  tab_rut: "RUT",
+  label_country: "País",
+  select_country: "Selecciona…",
   tab_passport: "Pasaporte",
-  label_rut: "RUT",
-  label_passport: "Número de pasaporte",
-  placeholder_rut: "12.345.678-9",
-  placeholder_passport: "P1234567",
   sent_to_prefix: "Enviado por {{channel}} a",
   channel_sms: "SMS",
   channel_email: "correo",
@@ -254,12 +302,9 @@ const LOCALE_ES = {
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
-  tab_rut: "ID",
+  label_country: "Country",
+  select_country: "Select…",
   tab_passport: "Passport",
-  label_rut: "ID",
-  label_passport: "Passport number",
-  placeholder_rut: "12.345.678-9",
-  placeholder_passport: "P1234567",
   sent_to_prefix: "Sent via {{channel}} to",
   channel_sms: "SMS",
   channel_email: "email",
@@ -277,12 +322,9 @@ const LOCALE_EN: typeof LOCALE_ES = {
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
-  tab_rut: "Documento",
+  label_country: "País",
+  select_country: "Selecione…",
   tab_passport: "Passaporte",
-  label_rut: "Documento",
-  label_passport: "Número de passaporte",
-  placeholder_rut: "12.345.678-9",
-  placeholder_passport: "P1234567",
   sent_to_prefix: "Enviado via {{channel}} para",
   channel_sms: "SMS",
   channel_email: "e-mail",

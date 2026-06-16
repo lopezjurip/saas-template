@@ -158,5 +158,7 @@ export const actionVerifyDocumentLoginOtp = action.inputSchema(verifyLoginOtpSch
   }
 
   log.info("document login succeeded", { channel });
-  redirect("/home");
+  // Hand off to the post-auth router (onboarding-vs-next). The router re-validates `next`.
+  const next = parsedInput["next"];
+  redirect(next ? `/auth/router?next=${encodeURIComponent(next)}` : "/auth/router");
 });

@@ -43,5 +43,8 @@ export const verifyLoginOtpSchema = z.object({
   channel: z.enum(["sms", "email"]),
   contact: z.string().min(1),
   token: z.string().regex(/^\d{6}$/, "Código de 6 dígitos"),
+  // Raw redirect target carried from the entry URL. Never trusted here — forwarded to
+  // /auth/router, which re-validates it with RESOLVE_AUTH_NEXT before honouring it.
+  next: z.string().optional(),
 });
 export type VerifyLoginOtpValues = z.infer<typeof verifyLoginOtpSchema>;
