@@ -18,6 +18,7 @@ type Documents = {
   "\n  query SessionsSectionPageQuery {\n    viewerSessions {\n      edges {\n        node {\n          ...SessionsSectionSessionFragment\n        }\n      }\n    }\n  }\n": typeof types.SessionsSectionPageQueryDocument;
   "\n  fragment SessionsSectionSessionFragment on UserSessions {\n    id\n    userAgent\n    ip\n    createdAt\n    refreshedAt\n    notAfter\n  }\n": typeof types.SessionsSectionSessionFragmentFragmentDoc;
   "\n  query HomePickerPageQuery {\n    viewerOrganizations(\n      filter: { organizationDisabledAt: { is: NULL } }\n      orderBy: [{ organizationName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organizationId\n          organizationName\n          organizationSlug\n          tenant {\n            tenantId\n            tenantSlug\n            tenantName\n          }\n        }\n      }\n    }\n  }\n": typeof types.HomePickerPageQueryDocument;
+  "\n  mutation CreateOrganizationFormMutation($organization_name: String!, $organization_slug: String!, $tenant_id: Int!) {\n    organization: viewerOrganizationCreate(\n      organizationName: $organization_name\n      organizationSlug: $organization_slug\n      tenantId: $tenant_id\n    ) {\n      organizationId\n      organizationSlug\n    }\n  }\n": typeof types.CreateOrganizationFormMutationDocument;
   "\n  mutation EditOrganizationMembershipGrantPermissionMutation($organization_membership_id: Int!, $permission_id: String!) {\n    insertIntoOrganizationMembershipPermissionsCollection(\n      objects: [{ organizationMembershipId: $organization_membership_id, permissionId: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditOrganizationMembershipGrantPermissionMutationDocument;
   "\n  mutation EditOrganizationMembershipRevokePermissionMutation($organization_membership_id: Int!, $permission_id: String!) {\n    deleteFromOrganizationMembershipPermissionsCollection(\n      filter: { organizationMembershipId: { eq: $organization_membership_id }, permissionId: { eq: $permission_id } }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditOrganizationMembershipRevokePermissionMutationDocument;
   "\n  mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($organization_membership_id: Int!, $now: Datetime!) {\n    updateOrganizationMembershipsCollection(\n      filter: { organizationMembershipId: { eq: $organization_membership_id } }\n      set: { organizationMembershipRevokedAt: $now }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditOrganizationMembershipRevokeOrganizationMembershipMutationDocument;
@@ -76,6 +77,8 @@ const documents: Documents = {
     types.SessionsSectionSessionFragmentFragmentDoc,
   "\n  query HomePickerPageQuery {\n    viewerOrganizations(\n      filter: { organizationDisabledAt: { is: NULL } }\n      orderBy: [{ organizationName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organizationId\n          organizationName\n          organizationSlug\n          tenant {\n            tenantId\n            tenantSlug\n            tenantName\n          }\n        }\n      }\n    }\n  }\n":
     types.HomePickerPageQueryDocument,
+  "\n  mutation CreateOrganizationFormMutation($organization_name: String!, $organization_slug: String!, $tenant_id: Int!) {\n    organization: viewerOrganizationCreate(\n      organizationName: $organization_name\n      organizationSlug: $organization_slug\n      tenantId: $tenant_id\n    ) {\n      organizationId\n      organizationSlug\n    }\n  }\n":
+    types.CreateOrganizationFormMutationDocument,
   "\n  mutation EditOrganizationMembershipGrantPermissionMutation($organization_membership_id: Int!, $permission_id: String!) {\n    insertIntoOrganizationMembershipPermissionsCollection(\n      objects: [{ organizationMembershipId: $organization_membership_id, permissionId: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n":
     types.EditOrganizationMembershipGrantPermissionMutationDocument,
   "\n  mutation EditOrganizationMembershipRevokePermissionMutation($organization_membership_id: Int!, $permission_id: String!) {\n    deleteFromOrganizationMembershipPermissionsCollection(\n      filter: { organizationMembershipId: { eq: $organization_membership_id }, permissionId: { eq: $permission_id } }\n    ) {\n      affectedCount\n    }\n  }\n":
@@ -199,6 +202,12 @@ export function gql(
 export function gql(
   source: "\n  query HomePickerPageQuery {\n    viewerOrganizations(\n      filter: { organizationDisabledAt: { is: NULL } }\n      orderBy: [{ organizationName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organizationId\n          organizationName\n          organizationSlug\n          tenant {\n            tenantId\n            tenantSlug\n            tenantName\n          }\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").HomePickerPageQueryDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  mutation CreateOrganizationFormMutation($organization_name: String!, $organization_slug: String!, $tenant_id: Int!) {\n    organization: viewerOrganizationCreate(\n      organizationName: $organization_name\n      organizationSlug: $organization_slug\n      tenantId: $tenant_id\n    ) {\n      organizationId\n      organizationSlug\n    }\n  }\n",
+): typeof import("./graphql").CreateOrganizationFormMutationDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

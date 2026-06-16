@@ -1,4 +1,4 @@
-import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Logo } from "@packages/ui-common/logo";
 import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
 import { INITIALS_OF } from "@packages/utils/string";
@@ -58,6 +58,26 @@ export default async function HomePage(props: PageProps<"/home">) {
   const edges = data?.["viewerOrganizations"]?.["edges"] ?? [];
   const agencyEdges = agenciesRes.data?.["agencies"]?.["edges"] ?? [];
 
+  // Org logos come from the FK-less `storage_organizations` view (not the GraphQL fragment).
+  const orgIds = edges.map((edge) => edge["node"]["organizationId"]);
+  const logoByOrgId = new Map<number, string>();
+  if (orgIds.length > 0) {
+    const supabase = await createSupabaseServerClient();
+    const { data: logoRows } = await supabase
+      .from("storage_organizations")
+      .select("organization_id, src, created_at")
+      .in("organization_id", orgIds)
+      .eq("folder", "avatar")
+      .order("created_at", { ascending: false });
+    for (const row of logoRows ?? []) {
+      const id = row["organization_id"];
+      const src = row["src"];
+      if (id != null && src && !logoByOrgId.has(id)) {
+        logoByOrgId.set(id, new URL(src, process.env["NEXT_PUBLIC_SUPABASE_URL"]!).toString());
+      }
+    }
+  }
+
   const state = await getViewerOnboardingState();
   const obDone = COUNT_DONE(state.methods);
   const obTotal = METHOD_ORDER.length;
@@ -70,7 +90,7 @@ export default async function HomePage(props: PageProps<"/home">) {
       {/* Fixed top bar: logo left, locale+theme right — avoids overlap on mobile */}
       <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between px-4 py-3">
         <Link
-          href={ROUTE("/", { locale })}
+          href={ROUTE("/")}
           aria-label="SaaS Template"
           className="pointer-events-auto inline-block shrink-0 transition-opacity hover:opacity-80"
         >
@@ -94,7 +114,7 @@ export default async function HomePage(props: PageProps<"/home">) {
 
           {obIncomplete && (
             <Link
-              href={ROUTE("/auth/onboarding", { locale })}
+              href={ROUTE("/auth/onboarding")}
               className="flex w-full max-w-130 flex-col gap-3 rounded-md border border-dashed bg-muted/35 px-3.5 py-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center"
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -124,29 +144,38 @@ export default async function HomePage(props: PageProps<"/home">) {
               const name = organization["organizationName"];
               const initials = INITIALS_OF(name) || "·";
               const colorStyle = COLOR_HSL_FROM_STRING(name);
+              const logoSrc = logoByOrgId.get(organization["organizationId"]);
               return (
                 <Link
                   key={organization["organizationId"]}
-                  href={ROUTE("/t/[tenant_slug]", { locale, tenant_slug })}
+                  href={ROUTE("/t/[tenant_slug]", { tenant_slug })}
                   className="group flex w-35 flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
                 >
-                  <span
-                    className="inline-flex size-28 items-center justify-center rounded-2xl border text-4xl font-semibold tracking-tight transition-shadow duration-150 group-hover:shadow-float"
-                    style={{
-                      backgroundColor: colorStyle.background,
-                      color: colorStyle.color,
-                      borderColor: colorStyle.borderColor,
-                    }}
-                  >
-                    {initials}
-                  </span>
+                  {logoSrc ? (
+                    <img
+                      src={logoSrc}
+                      alt={name}
+                      className="size-28 rounded-2xl border object-cover transition-shadow duration-150 group-hover:shadow-float"
+                    />
+                  ) : (
+                    <span
+                      className="inline-flex size-28 items-center justify-center rounded-2xl border text-4xl font-semibold tracking-tight transition-shadow duration-150 group-hover:shadow-float"
+                      style={{
+                        backgroundColor: colorStyle.background,
+                        color: colorStyle.color,
+                        borderColor: colorStyle.borderColor,
+                      }}
+                    >
+                      {initials}
+                    </span>
+                  )}
                   <span className="text-center text-sm font-medium text-balance">{name}</span>
                   <span className="-mt-1 text-xs text-muted-foreground">{tenant?.["tenantName"] ?? "—"}</span>
                 </Link>
               );
             })}
             <Link
-              href={ROUTE("/tenants/create", { locale })}
+              href={ROUTE("/tenants/create")}
               className="group flex w-35 flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
             >
               <span className="inline-flex size-28 items-center justify-center rounded-2xl border border-dashed bg-background text-muted-foreground transition-colors duration-150 group-hover:bg-muted/40 group-hover:text-foreground">
@@ -172,7 +201,7 @@ export default async function HomePage(props: PageProps<"/home">) {
                   return (
                     <Link
                       key={agency["agencyId"]}
-                      href={ROUTE("/a/[agency_slug]", { locale, agency_slug })}
+                      href={ROUTE("/a/[agency_slug]", { agency_slug })}
                       className="group flex w-28 flex-col items-center gap-2 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
                     >
                       <span
@@ -194,7 +223,7 @@ export default async function HomePage(props: PageProps<"/home">) {
           )}
 
           <Link
-            href={ROUTE("/agencies/create", { locale })}
+            href={ROUTE("/agencies/create")}
             className="text-tiny text-muted-foreground/50 underline-offset-2 transition-colors hover:text-muted-foreground hover:underline"
           >
             {t("newAgency")}

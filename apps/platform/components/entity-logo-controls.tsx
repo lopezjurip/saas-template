@@ -1,0 +1,201 @@
+"use client";
+
+import { getSupabaseClient } from "@packages/supabase/client.browser";
+import { Avatar, AvatarFallback, AvatarImage } from "@packages/ui-common/shadcn/components/ui/avatar";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { INITIALS_OF } from "@packages/utils/string";
+import { useRouter } from "next/navigation";
+import { type ChangeEvent, type ComponentProps, useRef, useState } from "react";
+
+const LOGO_ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+const LOGO_MAX_SIZE = 5 * 1024 * 1024;
+
+function LOGO_SAFE_FILE_NAME(fileName: string) {
+  return (
+    fileName
+      .trim()
+      .replace(/[^a-zA-Z0-9._-]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "") || "avatar"
+  );
+}
+
+function LOGO_PATH(folder: string, fileName: string) {
+  const timestamp = String(Date.now()).padStart(13, "0");
+  const random = crypto.randomUUID();
+  return `${folder}/${timestamp}-${random}-${LOGO_SAFE_FILE_NAME(fileName)}`;
+}
+
+/**
+ * Headless upload/remove control for any public storage "avatar" folder following the
+ * `<ownerKey>/<folder>/<filename>` convention (the same one `profiles`, `organizations` and
+ * `tenants` buckets use). Validates mime + size, replaces the previous file on upload, and
+ * `router.refresh()`es so the server re-reads the storage view. RLS on the bucket decides who
+ * may write — the control just surfaces the resulting error.
+ *
+ * @example
+ * <EntityLogoControls bucket="organizations" ownerKey={String(organizationId)} name={orgName} src={logoSrc} shape="square" />
+ */
+export function EntityLogoControls({
+  bucket,
+  ownerKey,
+  folder = "avatar",
+  name,
+  src,
+  shape = "circle",
+  helpText = "Usa una imagen cuadrada. Si no subes una, seguimos mostrando las iniciales.",
+  className,
+  ...props
+}: {
+  bucket: string;
+  ownerKey: string;
+  folder?: string;
+  name: string;
+  src: string | null;
+  shape?: "circle" | "square";
+  helpText?: string;
+} & ComponentProps<"div">) {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+
+  const folderPath = `${ownerKey}/${folder}`;
+
+  function triggerUpload() {
+    inputRef.current?.click();
+  }
+
+  async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file || busy) {
+      return;
+    }
+    if (!LOGO_ALLOWED_MIME_TYPES.has(file.type)) {
+      setServerError("Solo aceptamos PNG, JPEG, WebP o GIF.");
+      return;
+    }
+    if (file.size > LOGO_MAX_SIZE) {
+      setServerError("La imagen no puede superar 5 MiB.");
+      return;
+    }
+
+    setBusy(true);
+    setServerError(null);
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: existingFiles, error: listError } = await supabase.storage.from(bucket).list(folderPath, {
+        limit: 1000,
+        sortBy: { column: "name", order: "desc" },
+      });
+      if (listError) {
+        throw listError;
+      }
+
+      const path = LOGO_PATH(folderPath, file.name);
+      const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file, {
+        contentType: file.type,
+        upsert: false,
+      });
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const oldPaths =
+        existingFiles
+          ?.map((entry) => `${folderPath}/${entry["name"]}`)
+          .filter((existingPath) => existingPath !== path) ?? [];
+      if (oldPaths.length > 0) {
+        const { error: removeError } = await supabase.storage.from(bucket).remove(oldPaths);
+        if (removeError) {
+          throw removeError;
+        }
+      }
+
+      router.refresh();
+    } catch (error) {
+      setServerError(error instanceof Error ? error.message : "No pudimos subir la imagen.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRemove() {
+    if (busy || !src) {
+      return;
+    }
+
+    setBusy(true);
+    setServerError(null);
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: files, error: listError } = await supabase.storage.from(bucket).list(folderPath, {
+        limit: 1000,
+        sortBy: { column: "name", order: "desc" },
+      });
+      if (listError) {
+        throw listError;
+      }
+      const paths = files?.map((file) => `${folderPath}/${file["name"]}`) ?? [];
+      if (paths.length > 0) {
+        const { error: removeError } = await supabase.storage.from(bucket).remove(paths);
+        if (removeError) {
+          throw removeError;
+        }
+      }
+      router.refresh();
+    } catch (error) {
+      setServerError(error instanceof Error ? error.message : "No pudimos quitar la imagen.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const rounded = shape === "circle" ? "rounded-full" : "rounded-2xl";
+
+  return (
+    <div {...props} className={cn("flex flex-col gap-3.5", className)}>
+      <div className="flex items-center gap-4">
+        <Avatar
+          className={cn(
+            "bg-muted text-muted-foreground inline-flex size-22 shrink-0 overflow-hidden border text-3xl font-semibold tracking-tight",
+            rounded,
+          )}
+        >
+          {src ? <AvatarImage src={src} alt={name || "Logo"} className="object-cover" /> : null}
+          <AvatarFallback className={cn("bg-muted text-foreground text-3xl font-semibold tracking-tight", rounded)}>
+            {INITIALS_OF(name)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col gap-1.5">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            className="hidden"
+            onChange={handleUpload}
+          />
+          <Button type="button" variant="outline" size="sm" disabled={busy} onClick={triggerUpload}>
+            {busy ? "Procesando…" : src ? "Cambiar imagen" : "Subir imagen"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={busy || !src}
+            className="text-muted-foreground"
+            onClick={handleRemove}
+          >
+            {busy ? "Quitando…" : "Quitar"}
+          </Button>
+        </div>
+      </div>
+      <p className="text-muted-foreground text-xs leading-snug">{helpText}</p>
+      {serverError && <p className="text-destructive text-xs leading-snug">{serverError}</p>}
+    </div>
+  );
+}

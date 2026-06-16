@@ -123,7 +123,6 @@ export function PendingInvitations({ invitations, locale, tenantSlug, organizati
             </span>
             <Link
               href={ROUTE("/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit", {
-                locale,
                 tenant_slug: tenantSlug,
                 organization_id: organizationId,
                 organization_membership_id: inv["organization_membership_id"],

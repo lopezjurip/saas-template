@@ -28,7 +28,7 @@ export default async function AcceptInvitePage(props: PageProps<"/home/invites/[
   const state = (SINGLE(sp["state"]) ?? "valid") as AcceptState;
 
   const firstName = INVITED_BY.split(" ")[0];
-  const homeHref = ROUTE("/home", { locale });
+  const homeHref = ROUTE("/home");
 
   return (
     <div
@@ -120,7 +120,7 @@ export default async function AcceptInvitePage(props: PageProps<"/home/invites/[
                 {t("loggedout_desc", { dest: DESTINATION })}
               </p>
               <Button asChild className="w-full">
-                <Link href={ROUTE("/auth", { locale })}>
+                <Link href={ROUTE("/auth")}>
                   {t("continue_accept")} <ArrowRight size={16} />
                 </Link>
               </Button>

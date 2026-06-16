@@ -35,7 +35,7 @@ export default async function AuthErrorPage(props: PageProps<"/auth/error">) {
           <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{message}</p>
         </div>
         <Button asChild className="h-10 w-full">
-          <Link href={ROUTE("/auth", { locale })}>{t("back")}</Link>
+          <Link href={ROUTE("/auth")}>{t("back")}</Link>
         </Button>
       </div>
     </AuthCard>

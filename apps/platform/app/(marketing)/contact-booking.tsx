@@ -69,7 +69,7 @@ export function ContactBooking({ locale, labels, days }: ContactBookingProps) {
       </div>
       <div className="mt-1 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
         <Button asChild className="cursor-pointer sm:flex-1">
-          <Link href={ROUTE("/auth", { locale })}>
+          <Link href={ROUTE("/auth")}>
             {labels.book}
             <ArrowRight aria-hidden="true" className="h-4 w-4" />
           </Link>

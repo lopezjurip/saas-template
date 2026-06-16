@@ -14,7 +14,7 @@ export async function AuthHeader({ small = false }: { small?: boolean }) {
   if (small) {
     return (
       <div className="flex justify-center">
-        <Link href={ROUTE("/", { locale: "_" })} aria-label={t("home_label")}>
+        <Link href={ROUTE("/")} aria-label={t("home_label")}>
           <Logo />
         </Link>
       </div>

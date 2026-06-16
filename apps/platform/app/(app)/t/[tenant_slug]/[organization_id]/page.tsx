@@ -25,7 +25,6 @@ export default async function OrganizationHomePage(props: PageProps<"/t/[tenant_
     <DashboardOverview
       organizationName={organization["organizationName"]}
       membersHref={ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
-        locale,
         tenant_slug,
         organization_id,
       })}

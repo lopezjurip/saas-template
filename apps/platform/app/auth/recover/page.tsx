@@ -30,7 +30,7 @@ export default async function AuthRecoverPage() {
         </div>
 
         <Button asChild className="h-10 w-full">
-          <Link href={ROUTE("/auth", { locale })}>
+          <Link href={ROUTE("/auth")}>
             <Mail size={16} />
             <span>{t("cta")}</span>
           </Link>

@@ -1,3 +1,4 @@
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
@@ -23,7 +24,27 @@ export default async function OrganizationGeneralSettingsPage(
     data: { organization },
   } = await getViewerOrganizationByIdAssert(organization_id);
 
-  return <GeneralSettings organizationName={organization["organizationName"]} slug={tenant_slug} />;
+  const supabase = await createSupabaseServerClient();
+  const logoResult = await supabase
+    .from("storage_organizations")
+    .select("src")
+    .eq("organization_id", organization_id)
+    .eq("folder", "avatar")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const logoSrc = logoResult.data?.["src"]
+    ? new URL(logoResult.data["src"], process.env["NEXT_PUBLIC_SUPABASE_URL"]!).toString()
+    : null;
+
+  return (
+    <GeneralSettings
+      organizationId={organization_id}
+      organizationName={organization["organizationName"]}
+      slug={tenant_slug}
+      logoSrc={logoSrc}
+    />
+  );
 }
 
 const LOCALE_ES = { page_title: "Organización" };

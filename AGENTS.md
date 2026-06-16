@@ -25,7 +25,7 @@ Always use **pnpm**. Never npm or yarn.
 | GraphQL | `pg_graphql` + a typed client (`@packages/graphy`) |
 | PDF generation | `@react-pdf/renderer` (in `packages/react-pdf`) |
 | Email templates | React Email (in `packages/react-email`; delivery not wired) |
-| i18n | `@packages/rosetta` + `[locale]` route segment |
+| i18n | `@packages/rosetta` + locale from cookie/header (no URL segment) |
 | Linting/Formatting | Biome.js 2.x |
 | Hosting | Vercel |
 
@@ -41,13 +41,17 @@ One Next.js app — `apps/platform` — hosts marketing, auth, dashboard, and te
 │   └── platform/             # @apps/platform — single Next.js app
 │       ├── app/
 │       │   ├── health/route.ts       # /health — canonical health check (public)
-│       │   └── [locale]/
-│       │       ├── (marketing)/      # /{locale} — public landing, FAQ, pricing, legal
-│       │       ├── auth/             # /{locale}/auth/* — auth + onboarding
-│       │       ├── home/             # /{locale}/home — org picker + account
-│       │       ├── tenants/create/   # /{locale}/tenants/create
-│       │       └── [tenant_slug]/    # /{locale}/{slug}/* tenant product
-│       ├── proxy.ts          # Locale, host routing, session, auth, tenant membership gates
+│       │   ├── (marketing)/          # / — public landing, FAQ, pricing, legal
+│       │   ├── auth/                 # /auth/* — auth + onboarding
+│       │   ├── oauth/                # /oauth/* — MCP consent
+│       │   ├── api/                  # route handlers (e.g. /api/mcp)
+│       │   └── (app)/                # authenticated shell (route group, no URL segment)
+│       │       ├── home/             # /home — org picker + account
+│       │       ├── tenants/create/   # /tenants/create
+│       │       ├── t/[tenant_slug]/[organization_id]/   # /t/{slug}/{org_id}/* — tenant product
+│       │       ├── a/[agency_slug]/  # /a/{slug}/* — agency surface
+│       │       └── agencies/         # /agencies/* — agency management
+│       ├── proxy.ts          # Host routing, locale (cookie/header), session, auth, tenant membership gates
 │       ├── styles/globals.css
 │       └── next.config.ts
 │
@@ -72,10 +76,10 @@ One Next.js app — `apps/platform` — hosts marketing, auth, dashboard, and te
 
 ### Routing
 
-Hostname determines whether request enters tenant context:
+Tenant routing is **path-based** (`/t/{slug}/{organization_id}/...`) — there is no `[locale]` URL segment (locale is resolved from cookie/header by the proxy) and no subdomain extraction.
 
-- `<apex>/...` and `www.<apex>/...` → main site. Proxy adds locale segment when missing.
-- `{slug}.<apex>/...` → proxy rewrites to `/{locale}/{slug}{path}` so same `[tenant_slug]` route renders. `/auth/*` and `/health` on subdomain redirect to apex.
+- `<apex>/...` and `www.<apex>/...` → main site + the authenticated app shell. Proxy detects locale from cookie/`Accept-Language` and persists it in a cookie; it does **not** add a URL segment.
+- `{slug}.<apex>/...` → legacy tenant subdomains are not used for routing; such hosts redirect to the apex. Reach a tenant via the path `<apex>/t/{slug}/{organization_id}/...`.
 - Custom apex domains — phase 2; unknown hosts redirect to configured apex. Cookies can't span apexes without SSO redirect/exchange flow.
 
 `<apex>` is `NEXT_PUBLIC_APEX_HOSTNAME` (hostname only) + `process.env.PORT` (assigned per instance). `lvh.me` + `7003` in dev (Conductor reassigns `PORT` for parallel instances), `example.com` + implicit `443` in prod.
@@ -84,7 +88,7 @@ Hostname determines whether request enters tenant context:
 
 - `proxy.ts` calls `updateSession` (`@packages/supabase/client.middleware`) to refresh JWT cookie, then reads `sub` claim (the `profile_id`) — only claim hook carries. JWT no longer holds tenant/organization/agency/onboarding metadata; resolve from DB via `viewer_*` helpers (or `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server`).
 - Gates, in order: public path bypass → auth (redirect to `/auth?next=…`, `next` derived from `Host` header since `request.url` drops subdomain in Next dev) → for tenant subdomains, membership check from DB (`viewer_tenant_validate`). Onboarding completion is **not** hard gate — surfaced via /home banner.
-- Reserved slugs (`auth`, `home`, `tenants`, `health`, `api`, `_next`, `www`, …) rejected at tenant creation (`apps/platform/app/[locale]/tenants/create/schemas.ts`, enforced by `internal.slug_reserved_validate()` in DB) — never collide with first-party routes.
+- Reserved slugs (`auth`, `home`, `tenants`, `health`, `api`, `_next`, `www`, …) rejected at tenant creation (`apps/platform/app/(app)/tenants/create/schemas.ts`, enforced by `internal.slug_reserved_validate()` in DB) — never collide with first-party routes.
 - **Public paths in proxy:** adding new marketing pages (e.g., `/faq`, `/pricing`) → update `PUBLIC_PATH_REGEX` in `apps/platform/proxy.ts` to avoid auth gate. Regex matches root + any route under `/auth`, `/legal`, plus exact matches.
 
 ### Reserved Slugs
@@ -230,7 +234,7 @@ Two-level model:
 
 Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to filter, cheap in indexes) and, when data is org-scoped, also `organization_id int`. Supabase RLS enforces isolation at DB layer — never rely on application-level filtering alone.
 
-**Active tenant from subdomain or locale-prefixed path segment.** `apps/platform/proxy.ts` resolves `{tenant_slug}.<apex>` via service-role client, validates membership against DB (`viewer_tenant_validate`), **rewrites** URL to `/{locale}/{tenant_slug}/...` — every tenant route under `app/[locale]/[tenant_slug]/...`. Path access (`<apex>/{locale}/{tenant_slug}/...`) works without host rewrite. Pages use viewer-scoped GraphQL helpers or resolve `tenant_id` from DB via `viewer_*` helpers; no `x-tenant-*` headers. Direct table queries must explicitly filter `tenant_id`.
+**Active tenant from the path segment.** Tenant routing is path-based: `apps/platform/proxy.ts` validates membership against DB (`viewer_tenant_validate`) for requests under `/t/{tenant_slug}/...`; there is no subdomain extraction and no `[locale]` segment. Every tenant route lives under `app/(app)/t/[tenant_slug]/[organization_id]/...`, reached at `<apex>/t/{tenant_slug}/{organization_id}/...`. Pages use viewer-scoped GraphQL helpers or resolve `tenant_id` from DB via `viewer_*` helpers; no `x-tenant-*` headers. Direct table queries must explicitly filter `tenant_id`.
 
 **Custom domain mapping (`public.tenant_domains`, many domains per tenant)** staged in schema, not yet wired into proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates advanced features once billing exists.
 
@@ -290,24 +294,25 @@ Inside `declare` blocks, prefix **local variables** with leading underscore (`_u
 
 **Always use `PageProps<"route">` for `page.tsx`, `LayoutProps<"route">` for `layout.tsx`, `RouteContext<"route">` for `route.ts`.** With `typedRoutes: true` in `next.config.ts`, Next.js generates these as global types under `.next/dev/types/`. Use instead of hand-rolling `{ params: Promise<...> }` — stay in sync with actual file path, so renaming folder fails type-check on next `pnpm build:dry`.
 
+There is **no `locale` route param** — locale comes from a cookie/header, so `params` only ever holds real dynamic segments.
+
 ```ts
-// page.tsx
-export default async function Page(props: PageProps<"/[locale]/auth/email/login">) {
-  const { locale } = await props.params;
+// page.tsx — dynamic segments come from props.params
+export default async function Page(props: PageProps<"/t/[tenant_slug]/[organization_id]">) {
+  const { tenant_slug, organization_id } = await props.params;
   const sp = await props.searchParams;
-  const email = SINGLE(sp["email"]) ?? "";
+  const tab = SINGLE(sp["tab"]) ?? "";
   // ...
 }
 
-// layout.tsx
-export default async function Layout(props: LayoutProps<"/[locale]/home">) {
-  const { locale } = await props.params;
+// layout.tsx — static route, no params to read
+export default async function Layout(props: LayoutProps<"/home">) {
   return <main>{props.children}</main>;
 }
 
 // route.ts
-export async function GET(request: NextRequest, ctx: RouteContext<"/[locale]/auth/callback">) {
-  const { locale } = await ctx.params;
+export async function GET(request: NextRequest, ctx: RouteContext<"/auth/callback">) {
+  // const { ... } = await ctx.params; // only when the route has dynamic segments
   // ...
 }
 ```
@@ -336,14 +341,20 @@ Brackets mark "this shape is contractual with another system" — distinguishes 
 
 **Mock/fixture data counts as external.** Objects from `~/lib/*-mock.ts` (and any fixture standing in for DB rows / API responses) are contractual with future backend — read with brackets too (`agency["name"]`, `aff["email"]`, `org["slug"]`). Destructuring top-level is fine — `const { org } = item` — then bracket leaf reads: `org["name"]`.
 
-### Locale-prefixed links — use the `/[locale]/…` sentinel
-Client-side hrefs needing active locale must use **literal** `/[locale]/…` sentinel. `proxy.ts` rewrites `/[locale]/…` to real locale on the way through. Do **not** thread `locale` / `localePrefix` / pre-built `base` string from server `page.tsx` into client component — build href inside component with sentinel:
+### Links — bare paths, never pass `locale`
+Locale is **not** a URL segment — the proxy resolves it from a cookie/header. So links are plain paths and **never** carry a locale. Do **not** pass `locale` into `ROUTE`/`ROUTE_HREF` (the helper strips it anyway — see `delete query["locale"]` in `apps/platform/lib/route.ts`), and do **not** thread `locale` / `localePrefix` / a pre-built `base` string from server `page.tsx` into a client component just to build hrefs.
 
 ```tsx
-// ✅ client component — no locale prop threaded in
-const inviteHref = `/[locale]/admin/agencies/${agency["slug"]}/affiliates/new`;
+// ✅ build hrefs with ROUTE and the real params only — no locale
+const inviteHref = ROUTE("/t/[tenant_slug]/[organization_id]/settings/members/new", {
+  tenant_slug: agency["slug"],
+  organization_id,
+});
 <Link href={inviteHref}>…</Link>
-<Link href="/[locale]/agencies/create">…</Link>
+<Link href={ROUTE("/agencies/create")}>…</Link>
+
+// ❌ never — locale is dead here and gets stripped
+<Link href={ROUTE("/agencies/create", { locale })}>…</Link>
 ```
 
 ### i18n dictionaries — each file owns its own copy
@@ -451,7 +462,7 @@ end if;
   ```
 - **Logging pattern.** Top of each file declare namespaced logger mirroring file's route path:
   ```ts
-  const log = debug("app:[locale]:t:[tenant_slug]:[organization_id]:settings:members:actions")
+  const log = debug("app:t:[tenant_slug]:[organization_id]:settings:members:actions")
   ```
   Always call method — `log.error(…)`, `log.warn(…)`, `log.info(…)` — never bare `log(…)`. Always prefix message with `[functionName]` or `[handlerName]`:
   ```ts
@@ -549,6 +560,6 @@ Guidelines:
 ## What NOT to Do
 
 - Don't add new technology without strong justification — stack intentionally familiar
-- Don't use tenant slug from reserved-route list (auth, home, tenants, health, …) — schema check in `apps/platform/app/[locale]/tenants/create/schemas.ts` + `internal.reserved_slugs` is source of truth
+- Don't use tenant slug from reserved-route list (auth, home, tenants, health, …) — schema check in `apps/platform/app/(app)/tenants/create/schemas.ts` + `internal.reserved_slugs` is source of truth
 - Don't expect tenant / organization / agency / onboarding state in JWT — hook is pass-through, only `profile_id` (the `sub` claim) carried. Resolve from DB via `viewer_*` helpers or `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server`
 - Don't put shadcn components in `apps/platform/` — they belong in `packages/ui-common/src/shadcn`

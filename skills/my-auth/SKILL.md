@@ -10,7 +10,7 @@ Use current code. Do not invent generic Supabase wrappers.
 ## Source map
 
 - Clients: `packages/supabase/src/client.{browser,server,middleware}.ts`, `metadata.ts`
-- Routes/actions: `apps/platform/app/[locale]/auth/**`
+- Routes/actions: `apps/platform/app/auth/**`
 - Passkeys: `apps/platform/lib/passkeys.client.ts`
 - Hook/schema: `packages/supabase/supabase/migrations/00000000000000_schema.sql`
 - Config/templates: `packages/supabase/supabase/config.toml`, `supabase/templates/*`
@@ -62,7 +62,7 @@ Callback must use typed route context and same-origin resolver:
 ```ts
 export async function GET(
   request: NextRequest,
-  _ctx: RouteContext<"/[locale]/auth/callback">,
+  _ctx: RouteContext<"/auth/callback">,
 ) {
   const { searchParams, origin } = new URL(request.url);
   const next = RESOLVE_AUTH_NEXT(searchParams.get("next"), origin);
@@ -70,7 +70,7 @@ export async function GET(
   const { error } = await supabase.auth.exchangeCodeForSession(
     searchParams.get("code")!,
   );
-  if (error) return NextResponse.redirect(`${origin}/[locale]/auth/error`);
+  if (error) return NextResponse.redirect(`${origin}/auth/error`);
   return NextResponse.redirect(next);
 }
 ```
@@ -90,7 +90,7 @@ await supabase.auth.verifyOtp({ email, token, type: "email" });
 await supabase.auth.refreshSession();
 ```
 
-Email links route through `/[locale]/auth/confirm`; route validates allowed `EmailOtpType`,
+Email links route through `/auth/confirm`; route validates allowed `EmailOtpType`,
 calls `verifyOtp({ token_hash, type })`, then uses safe `next`.
 
 ## Passkeys

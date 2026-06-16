@@ -77,7 +77,7 @@ export default async function OnboardingHubPage() {
             return (
               <Link
                 key={id}
-                href={ROUTE(ONBOARDING_METHOD_PATH(id), { locale })}
+                href={ROUTE(ONBOARDING_METHOD_PATH(id))}
                 className={cn(
                   "grid w-full grid-cols-[36px_1fr_auto] items-center gap-3 rounded-md border bg-background px-3.5 py-3 text-left text-foreground no-underline transition-colors hover:bg-accent",
                   isRecommended && "border-foreground/50",

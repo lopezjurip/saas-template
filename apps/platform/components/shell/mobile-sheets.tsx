@@ -62,7 +62,6 @@ export function MobileOrgSheet({
           <Link
             key={organization["organizationId"]}
             href={ROUTE("/t/[tenant_slug]/[organization_id]", {
-              locale,
               tenant_slug: tenant["tenantSlug"],
               organization_id: organization["organizationId"],
             })}
@@ -85,7 +84,7 @@ export function MobileOrgSheet({
       </div>
       <div className="border-border border-t px-2 py-2">
         <Link
-          href={ROUTE("/home", { locale })}
+          href={ROUTE("/home")}
           onClick={onClose}
           className="active:bg-accent flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-sm"
         >
@@ -94,7 +93,6 @@ export function MobileOrgSheet({
         </Link>
         <Link
           href={ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
-            locale,
             tenant_slug: tenant["tenantSlug"],
             organization_id: current["organizationId"],
           })}
@@ -122,10 +120,10 @@ export function MobileProfileSheet({
 }) {
   const { t } = useRosetta(LOCALES);
   const items = [
-    { Icon: User, label: t("account"), href: ROUTE("/home/account/profile", { locale }) },
-    { Icon: CreditCard, label: t("billing"), href: ROUTE("/home/account/profile", { locale }) },
-    { Icon: KeyRound, label: t("tokens"), href: ROUTE("/home/account/security", { locale }) },
-    { Icon: Bell, label: t("notifications"), href: ROUTE("/home/account/notifications", { locale }) },
+    { Icon: User, label: t("account"), href: ROUTE("/home/account/profile") },
+    { Icon: CreditCard, label: t("billing"), href: ROUTE("/home/account/profile") },
+    { Icon: KeyRound, label: t("tokens"), href: ROUTE("/home/account/security") },
+    { Icon: Bell, label: t("notifications"), href: ROUTE("/home/account/notifications") },
   ];
 
   return (
@@ -157,7 +155,7 @@ export function MobileProfileSheet({
       </div>
       <div className="border-border border-t px-2 py-2">
         <Link
-          href={ROUTE("/auth/logout", { locale })}
+          href={ROUTE("/auth/logout")}
           onClick={onClose}
           className="flex w-full items-center gap-3 rounded-md px-2.5 py-2.5 text-left text-sm text-rose-600 active:bg-rose-50 dark:active:bg-rose-950/30"
         >
@@ -316,7 +314,6 @@ export function MobileSearchSheet({
           label: t("navHome"),
           Icon: Home,
           href: ROUTE("/t/[tenant_slug]/[organization_id]", {
-            locale,
             tenant_slug: tenant["tenantSlug"],
             organization_id: current["organizationId"],
           }),
@@ -326,7 +323,6 @@ export function MobileSearchSheet({
           label: t("navMembers"),
           Icon: Users,
           href: ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
-            locale,
             tenant_slug: tenant["tenantSlug"],
             organization_id: current["organizationId"],
           }),
@@ -336,7 +332,6 @@ export function MobileSearchSheet({
           label: t("navSettings"),
           Icon: SettingsIcon,
           href: ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
-            locale,
             tenant_slug: tenant["tenantSlug"],
             organization_id: current["organizationId"],
           }),
@@ -353,7 +348,6 @@ export function MobileSearchSheet({
         orgInitials: INITIALS_OF(organization["organizationName"]),
         orgColor: COLOR_HSL_FROM_STRING(organization["organizationName"]),
         href: ROUTE("/t/[tenant_slug]/[organization_id]", {
-          locale,
           tenant_slug: tenant["tenantSlug"],
           organization_id: organization["organizationId"],
         }),
@@ -392,7 +386,7 @@ export function MobileSearchSheet({
             value={q}
             onChange={(event) => setQ(event.target.value)}
             placeholder={t("searchPlaceholder")}
-            className="placeholder:text-muted-foreground h-9 flex-1 bg-transparent text-sm outline-none"
+            className="text-foreground placeholder:text-muted-foreground h-9 flex-1 bg-transparent text-sm outline-none"
           />
           {q ? (
             <button type="button" onClick={() => setQ("")} className="text-muted-foreground">

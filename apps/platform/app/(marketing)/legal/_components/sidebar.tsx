@@ -64,7 +64,7 @@ export function LegalSidebar() {
           {items.map((item) => (
             <Link
               key={item["id"]}
-              href={ROUTE("/legal/[section]", { locale: appLocale, section: item["slug"] })}
+              href={ROUTE("/legal/[section]", { section: item["slug"] })}
               data-active={item["id"] === active ? "true" : "false"}
               aria-current={item["id"] === active ? "page" : undefined}
               className={cn(

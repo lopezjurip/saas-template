@@ -3,7 +3,7 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
 import { INITIALS_OF } from "@packages/utils/string";
-import { Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
+import { ArrowLeftRight, Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 
@@ -13,8 +13,31 @@ import type { ViewerTenantUseFragmentType } from "~/hooks/use-viewer-tenants";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 
-export type ShellOrganization = ViewerOrganizationUseFragmentType;
+/**
+ * Shell-level org shape. `logoSrc` is attached server-side from the FK-less `storage_organizations`
+ * view (not part of the GraphQL fragment) — optional so every other shell surface keeps compiling.
+ */
+export type ShellOrganization = ViewerOrganizationUseFragmentType & { logoSrc?: string | null };
 export type ShellTenant = ViewerTenantUseFragmentType;
+
+/** Org logo if uploaded, otherwise the deterministic colored initials block. Used across the switcher. */
+function OrgAvatar({ name, logoSrc, className }: { name: string; logoSrc?: string | null; className?: string }) {
+  if (logoSrc) {
+    return <img src={logoSrc} alt={name} className={cn("shrink-0 rounded-md border object-cover", className)} />;
+  }
+  const colorStyle = COLOR_HSL_FROM_STRING(name);
+  return (
+    <span
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-md font-mono font-medium tracking-tight",
+        className,
+      )}
+      style={{ backgroundColor: colorStyle.background, color: colorStyle.color, borderColor: colorStyle.borderColor }}
+    >
+      {INITIALS_OF(name)}
+    </span>
+  );
+}
 
 export function OrgSwitcher({
   locale,
@@ -34,9 +57,6 @@ export function OrgSwitcher({
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false), open);
 
-  const initials = INITIALS_OF(current["organizationName"]);
-  const colorStyle = COLOR_HSL_FROM_STRING(current["organizationName"]);
-
   const trigger = compact ? (
     <Tip label={`${current["organizationName"]} · ${tenant["tenantName"]}`} disabled={open}>
       <button
@@ -45,16 +65,7 @@ export function OrgSwitcher({
         data-open={open}
         className="hover:bg-accent/70 data-[open=true]:bg-accent data-[open=true]:border-border flex h-9 w-9 items-center justify-center rounded-md border border-transparent transition-colors"
       >
-        <span
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md font-mono text-xs font-medium tracking-tight"
-          style={{
-            backgroundColor: colorStyle.background,
-            color: colorStyle.color,
-            borderColor: colorStyle.borderColor,
-          }}
-        >
-          {initials}
-        </span>
+        <OrgAvatar name={current["organizationName"]} logoSrc={current["logoSrc"]} className="h-8 w-8 text-xs" />
       </button>
     </Tip>
   ) : (
@@ -64,12 +75,7 @@ export function OrgSwitcher({
       data-open={open}
       className="hover:bg-accent/70 data-[open=true]:bg-accent data-[open=true]:border-border flex w-full items-center gap-2 rounded-md border border-transparent px-2 py-1.5 text-left transition-colors"
     >
-      <span
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md font-mono text-xs font-medium tracking-tight"
-        style={{ backgroundColor: colorStyle.background, color: colorStyle.color, borderColor: colorStyle.borderColor }}
-      >
-        {initials}
-      </span>
+      <OrgAvatar name={current["organizationName"]} logoSrc={current["logoSrc"]} className="h-8 w-8 text-xs" />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium leading-tight">{current["organizationName"]}</div>
         <div className="text-muted-foreground truncate text-xs leading-tight">{tenant["tenantName"]}</div>
@@ -94,28 +100,21 @@ export function OrgSwitcher({
           <div className="px-1 pb-1">
             {organizations.map((organization) => {
               const isCurrent = organization["organizationId"] === current["organizationId"];
-              const orgColorStyle = COLOR_HSL_FROM_STRING(organization["organizationName"]);
               return (
                 <Link
                   key={organization["organizationId"]}
                   href={ROUTE("/t/[tenant_slug]/[organization_id]", {
-                    locale,
                     tenant_slug: tenant["tenantSlug"],
                     organization_id: organization["organizationId"],
                   })}
                   onClick={() => setOpen(false)}
                   className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
                 >
-                  <span
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md font-mono text-tiny font-medium tracking-tight"
-                    style={{
-                      backgroundColor: orgColorStyle.background,
-                      color: orgColorStyle.color,
-                      borderColor: orgColorStyle.borderColor,
-                    }}
-                  >
-                    {INITIALS_OF(organization["organizationName"])}
-                  </span>
+                  <OrgAvatar
+                    name={organization["organizationName"]}
+                    logoSrc={organization["logoSrc"]}
+                    className="h-6 w-6 text-tiny"
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm">{organization["organizationName"]}</div>
                     {organization["organizationSlug"] ? (
@@ -129,16 +128,26 @@ export function OrgSwitcher({
           </div>
           <div className="border-border border-t px-1 py-1">
             <Link
-              href={ROUTE("/home", { locale })}
+              href={ROUTE("/t/[tenant_slug]/[organization_id]/organizations/create", {
+                tenant_slug: tenant["tenantSlug"],
+                organization_id: current["organizationId"],
+              })}
               onClick={() => setOpen(false)}
               className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
             >
               <Plus size={14} className="text-muted-foreground" />
+              <span>{t("create")}</span>
+            </Link>
+            <Link
+              href={ROUTE("/home")}
+              onClick={() => setOpen(false)}
+              className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
+            >
+              <ArrowLeftRight size={14} className="text-muted-foreground" />
               <span>{t("switchTenant")}</span>
             </Link>
             <Link
               href={ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
-                locale,
                 tenant_slug: tenant["tenantSlug"],
                 organization_id: current["organizationId"],
               })}

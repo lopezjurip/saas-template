@@ -33,13 +33,13 @@ export function UserMenu({ locale, name, email }: { locale: string; name: string
           </div>
           <div className="flex flex-col border-b py-1">
             <Link
-              href={ROUTE("/home/account/profile", { locale })}
+              href={ROUTE("/home/account/profile")}
               className="flex h-8 items-center gap-2.5 rounded-md px-2.5 text-sm/normal text-foreground hover:bg-accent"
             >
               {t("profile")}
             </Link>
             <Link
-              href={ROUTE("/home/account/security", { locale })}
+              href={ROUTE("/home/account/security")}
               className="flex h-8 items-center gap-2.5 rounded-md px-2.5 text-sm/normal text-foreground hover:bg-accent"
             >
               {t("security")}
@@ -47,7 +47,7 @@ export function UserMenu({ locale, name, email }: { locale: string; name: string
           </div>
           <div className="flex flex-col py-1">
             <Link
-              href={ROUTE("/auth/logout", { locale })}
+              href={ROUTE("/auth/logout")}
               className="flex h-8 items-center gap-2.5 rounded-md px-2.5 text-sm/normal text-destructive hover:bg-accent"
             >
               {t("signOut")}

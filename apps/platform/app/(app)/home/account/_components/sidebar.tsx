@@ -30,27 +30,23 @@ export function AccountSidebar({ locale }: { locale: string }) {
   }
 
   return (
-    <nav className="bg-muted/22 flex h-full flex-col gap-1 border-r px-2.5 py-4">
+    <nav className="bg-sidebar text-sidebar-foreground flex h-full flex-col gap-1 border-r px-2 py-3">
       {groups.map((g) => (
-        <div key={g.key}>
-          <div className="text-muted-foreground px-2.5 pt-4 pb-1.5 text-tiny font-semibold tracking-[0.08em] uppercase first:pt-1">
-            {t(g.key)}
-          </div>
+        <div key={g.key} className="flex flex-col">
+          <div className="text-sidebar-foreground/70 flex h-8 items-center px-3 text-xs font-medium">{t(g.key)}</div>
           {g.items.map((s) => (
             <Link
               key={s.id}
-              href={ROUTE(ACCOUNT_SECTION_PATH(s.id), { locale })}
+              href={ROUTE(ACCOUNT_SECTION_PATH(s.id))}
               data-active={s.id === active ? "true" : "false"}
               className={cn(
-                "text-muted-foreground hover:bg-accent hover:text-foreground flex w-full items-center gap-2.5 rounded-md border border-transparent px-2.5 py-2 text-left text-sm/normal font-medium no-underline",
-                "data-[active=true]:bg-background data-[active=true]:text-foreground data-[active=true]:border-border data-[active=true]:shadow-sm",
+                "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm no-underline transition-colors [&_svg]:size-4 [&_svg]:shrink-0",
+                "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium",
                 s.danger && "text-destructive",
               )}
             >
-              <span className="inline-flex size-[18px] items-center justify-center text-current">
-                <s.Icon size={15} />
-              </span>
-              <span>{t(s.labelKey)}</span>
+              <s.Icon />
+              <span className="truncate">{t(s.labelKey)}</span>
             </Link>
           ))}
         </div>
