@@ -15,11 +15,6 @@ import { ROUTE } from "~/lib/route";
 export type ShellOrganization = ViewerOrganizationUseFragmentType;
 export type ShellTenant = ViewerTenantUseFragmentType;
 
-/** Stable avatar URL for an org — the route resolves the latest logo or 404s to initials. */
-function ORG_AVATAR_SRC(organizationId: number): string {
-  return `/api/v1/organizations/${organizationId}/avatar`;
-}
-
 export function OrgSwitcher({
   locale,
   tenant,
@@ -47,8 +42,9 @@ export function OrgSwitcher({
         className="hover:bg-accent/70 data-[open=true]:bg-accent data-[open=true]:border-border flex h-9 w-9 items-center justify-center rounded-md border border-transparent transition-colors"
       >
         <EntityAvatar
+          entity="organizations"
+          entityId={current["organizationId"]}
           name={current["organizationName"]}
-          src={ORG_AVATAR_SRC(current["organizationId"])}
           className="h-8 w-8 text-xs"
         />
       </button>
@@ -61,8 +57,9 @@ export function OrgSwitcher({
       className="hover:bg-accent/70 data-[open=true]:bg-accent data-[open=true]:border-border flex w-full items-center gap-2 rounded-md border border-transparent px-2 py-1.5 text-left transition-colors"
     >
       <EntityAvatar
+        entity="organizations"
+        entityId={current["organizationId"]}
         name={current["organizationName"]}
-        src={ORG_AVATAR_SRC(current["organizationId"])}
         className="h-8 w-8 text-xs"
       />
       <div className="min-w-0 flex-1">
@@ -100,8 +97,9 @@ export function OrgSwitcher({
                   className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
                 >
                   <EntityAvatar
+                    entity="organizations"
+                    entityId={organization["organizationId"]}
                     name={organization["organizationName"]}
-                    src={ORG_AVATAR_SRC(organization["organizationId"])}
                     className="h-6 w-6 text-tiny"
                   />
                   <div className="min-w-0 flex-1">

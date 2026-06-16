@@ -82,8 +82,9 @@ export function AgencyConsole({
       <header className="border-border bg-background flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 @min-[768px]:px-6">
         <div className="flex min-w-0 items-center gap-2.5">
           <EntityAvatar
+            entity="agencies"
+            entityId={data.agency_id}
             name={data.agency_name}
-            src={`/api/v1/agencies/${data.agency_id}/avatar`}
             className="size-9 rounded-lg text-xs"
           />
           <div className="flex min-w-0 flex-col gap-px">
