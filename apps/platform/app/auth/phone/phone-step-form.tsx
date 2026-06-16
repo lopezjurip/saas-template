@@ -18,10 +18,6 @@ type Props = {
   channels: Channel[];
 };
 
-function RESOLVE_TARGET(next: string): string {
-  return next.startsWith("/") && next !== "/" ? next : "/home";
-}
-
 /**
  * Phone path is OTP-only. Passkey sign-in is keyed by email in this system, so it is
  * not offered here even when the account has one — the email path covers passkey.
@@ -61,7 +57,8 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
         return;
       }
       await supabase.auth.refreshSession();
-      router.push(ROUTE_HREF(UNSAFE_ROUTE(RESOLVE_TARGET(next))));
+      // Hand off to the post-auth router (onboarding-vs-next). It re-validates `next` server-side.
+      router.push(ROUTE_HREF(UNSAFE_ROUTE("/auth/router", { next })));
       router.refresh();
     });
   }

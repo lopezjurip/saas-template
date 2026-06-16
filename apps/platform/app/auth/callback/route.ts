@@ -38,5 +38,9 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/auth/callbac
     }
   }
 
-  return NextResponse.redirect(next);
+  // Hand off to the post-auth router, which decides onboarding-vs-next. `next` is already
+  // same-origin-validated; the router re-validates it before honouring it.
+  const router = new URL("/auth/router", origin);
+  router.searchParams.set("next", next);
+  return NextResponse.redirect(router);
 }

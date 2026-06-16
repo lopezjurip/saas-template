@@ -110,7 +110,7 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
     if (!login) return;
     setError(null);
     startTransition(async () => {
-      // on success this action redirects server-side to /home; only returns on failure
+      // on success this action redirects server-side to /auth/router; only returns on failure
       const [, err] = await ErrorSafeAction.unwrap(
         actionVerifyDocumentLoginOtp({
           address_level0_id: country,
@@ -119,6 +119,7 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
           channel: login.channel,
           contact: login.contact,
           token,
+          next,
         }),
       );
       if (err) setError(t("error_otp"));
