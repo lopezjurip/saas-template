@@ -8,7 +8,6 @@ import {
   Bell,
   Check,
   ChevronRight,
-  CreditCard,
   Globe,
   HelpCircle,
   Home,
@@ -121,7 +120,6 @@ export function MobileProfileSheet({
   const { t } = useRosetta(LOCALES);
   const items = [
     { Icon: User, label: t("account"), href: ROUTE("/home/account/profile") },
-    { Icon: CreditCard, label: t("billing"), href: ROUTE("/home/account/profile") },
     { Icon: KeyRound, label: t("tokens"), href: ROUTE("/home/account/security") },
     { Icon: Bell, label: t("notifications"), href: ROUTE("/home/account/notifications") },
   ];
@@ -443,7 +441,6 @@ const LOCALE_ES = {
   switchTenant: "Cambiar de empresa",
   orgSettings: "Configuración de la organización",
   account: "Cuenta",
-  billing: "Facturación",
   tokens: "Tokens de API",
   notifications: "Notificaciones",
   signOut: "Cerrar sesión",
@@ -474,7 +471,6 @@ const LOCALES = {
     switchTenant: "Switch company",
     orgSettings: "Organization settings",
     account: "Account",
-    billing: "Billing",
     tokens: "API tokens",
     notifications: "Notifications",
     signOut: "Sign out",
@@ -502,7 +498,6 @@ const LOCALES = {
     switchTenant: "Trocar de empresa",
     orgSettings: "Configurações da organização",
     account: "Conta",
-    billing: "Faturamento",
     tokens: "Tokens de API",
     notifications: "Notificações",
     signOut: "Sair",

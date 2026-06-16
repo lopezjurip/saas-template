@@ -2,6 +2,8 @@ import "server-only";
 
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { METHOD_ORDER, type OnboardingMethodStatus, type OnboardingState } from "./state";
 
 /**
@@ -11,6 +13,31 @@ import { METHOD_ORDER, type OnboardingMethodStatus, type OnboardingState } from 
  */
 const DOCUMENT_STATUS: OnboardingMethodStatus = "pending";
 
+/**
+ * Viewer's profile and its latest avatar in a single round-trip. The avatar nests through the
+ * `storage_profiles` relationship on Profiles (RLS-scoped), so onboarding reads everything it
+ * needs with one GraphQL call instead of separate profile + storage queries.
+ */
+const ViewerOnboardingStateGet = /*#__PURE__*/ gql(`
+  query ViewerOnboardingStateGet {
+    profile: viewerProfile {
+      profileNameFull
+      profileOnboardedAt
+      avatar: storage_profiles(
+        filter: { folder: { eq: "avatar" } }
+        orderBy: [{ createdAt: DescNullsLast }]
+        first: 1
+      ) {
+        edges {
+          node {
+            src
+          }
+        }
+      }
+    }
+  }
+`);
+
 export async function getViewerOnboardingState(): Promise<OnboardingState> {
   const supabase = await createSupabaseServerClient();
   const { data: userResult } = await supabase.auth.getUser();
@@ -19,27 +46,17 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
     redirect("/auth");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("profile_name_full, profile_onboarded_at")
-    .eq("profile_id", user.id)
-    .maybeSingle();
+  const graphy = await getGraphySession();
+  const [{ data: stateData }, { data: passkeyList }] = await Promise.all([
+    graphy.query({ query: ViewerOnboardingStateGet }),
+    supabase.auth.passkey.list(),
+  ]);
 
-  const { data: passkeyList } = await supabase.auth.passkey.list();
+  const profile = stateData?.["profile"] ?? null;
+  const avatarSrc = profile?.["avatar"]?.["edges"]?.[0]?.["node"]?.["src"] ?? null;
 
-  const { data: avatar } = await supabase
-    .from("storage_profiles")
-    .select("src")
-    .eq("profile_id", user.id)
-    .eq("folder", "avatar")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const profile_name_full = profile?.["profile_name_full"] ?? "";
-  const profile_avatar_src = avatar?.["src"]
-    ? new URL(avatar["src"], process.env["NEXT_PUBLIC_SUPABASE_URL"]!).toString()
-    : null;
+  const profile_name_full = profile?.["profileNameFull"] ?? "";
+  const profile_avatar_src = avatarSrc ? new URL(avatarSrc, process.env["NEXT_PUBLIC_SUPABASE_URL"]!).toString() : null;
   const identities = user["identities"] ?? [];
   const hasPassword = identities.some((i) => i["provider"] === "email");
   const hasPasskey = (passkeyList?.length ?? 0) > 0;
@@ -52,7 +69,7 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
     email: user["email"] ?? null,
     phone: user["phone"] ?? null,
     profile_name_full,
-    profile_onboarded_at: profile?.["profile_onboarded_at"] ?? null,
+    profile_onboarded_at: profile?.["profileOnboardedAt"] ?? null,
     profile_avatar_src,
     methods: {
       passkey: hasPasskey ? "done" : "pending",

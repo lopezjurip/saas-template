@@ -1000,7 +1000,6 @@ type Mutation {
   viewerOrganizationMembershipReject(organizationMembershipId: Int!): OrganizationMemberships
   viewerTenantCreate(tenantName: String!, tenantSlug: String!): Tenants
   viewerTenantOnboardingFinish(tenantId: Int!): Tenants
-  viewerTenantOnboardingSet(status: String!, step: String!, tenantId: Int!): Tenants
   viewerTenantUpdate(tenantId: Int!, tenantName: String!): Tenants
 }
 
@@ -2865,7 +2864,6 @@ type Tenants implements Node {
   tenantId: Int!
   tenantName: String!
   tenantOnboardedAt: Datetime
-  tenantOnboardingState: JSON!
   tenantSlug: String!
   tenantTier: TenantTier!
   tenantUpdatedAt: Datetime!
@@ -2921,7 +2919,6 @@ input TenantsUpdateInput {
   tenantDisabledAt: Datetime
   tenantName: String
   tenantOnboardedAt: Datetime
-  tenantOnboardingState: JSON
   tenantSlug: String
   tenantTier: TenantTier
   tenantUpdatedAt: Datetime
