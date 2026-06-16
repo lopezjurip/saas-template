@@ -66,7 +66,6 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
           router.push(
             ROUTE_HREF(
               ROUTE("/auth/document/accept", {
-                locale,
                 token: result["invitation_token"],
               }),
             ),
@@ -77,7 +76,6 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
           router.push(
             ROUTE_HREF(
               ROUTE("/auth/document/accept", {
-                locale,
                 token: result["invites"][0]?.["invitation_token"] ?? "",
               }),
             ),

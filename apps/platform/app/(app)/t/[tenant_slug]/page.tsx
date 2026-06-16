@@ -46,7 +46,7 @@ export default async function TenantHomePage(props: PageProps<"/t/[tenant_slug]"
           </CardContent>
           <CardFooter>
             <Button asChild variant="ghost" className="w-full">
-              <Link href={ROUTE("/auth/logout", { locale })}>{t("signOut")}</Link>
+              <Link href={ROUTE("/auth/logout")}>{t("signOut")}</Link>
             </Button>
           </CardFooter>
         </Card>
@@ -59,7 +59,6 @@ export default async function TenantHomePage(props: PageProps<"/t/[tenant_slug]"
     redirect(
       ROUTE_HREF(
         ROUTE("/t/[tenant_slug]/[organization_id]", {
-          locale,
           tenant_slug,
           organization_id: only["organizationId"],
         }),
@@ -86,7 +85,6 @@ export default async function TenantHomePage(props: PageProps<"/t/[tenant_slug]"
               >
                 <Link
                   href={ROUTE("/t/[tenant_slug]/[organization_id]", {
-                    locale,
                     tenant_slug,
                     organization_id: organization["organizationId"],
                   })}
@@ -100,7 +98,7 @@ export default async function TenantHomePage(props: PageProps<"/t/[tenant_slug]"
         </CardContent>
         <CardFooter>
           <Button asChild variant="ghost" className="w-full">
-            <Link href={ROUTE("/auth/logout", { locale })}>{t("signOut")}</Link>
+            <Link href={ROUTE("/auth/logout")}>{t("signOut")}</Link>
           </Button>
         </CardFooter>
       </Card>

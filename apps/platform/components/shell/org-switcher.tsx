@@ -104,7 +104,6 @@ export function OrgSwitcher({
                 <Link
                   key={organization["organizationId"]}
                   href={ROUTE("/t/[tenant_slug]/[organization_id]", {
-                    locale,
                     tenant_slug: tenant["tenantSlug"],
                     organization_id: organization["organizationId"],
                   })}
@@ -130,7 +129,6 @@ export function OrgSwitcher({
           <div className="border-border border-t px-1 py-1">
             <Link
               href={ROUTE("/t/[tenant_slug]/[organization_id]/organizations/create", {
-                locale,
                 tenant_slug: tenant["tenantSlug"],
                 organization_id: current["organizationId"],
               })}
@@ -141,7 +139,7 @@ export function OrgSwitcher({
               <span>{t("create")}</span>
             </Link>
             <Link
-              href={ROUTE("/home", { locale })}
+              href={ROUTE("/home")}
               onClick={() => setOpen(false)}
               className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
             >
@@ -150,7 +148,6 @@ export function OrgSwitcher({
             </Link>
             <Link
               href={ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
-                locale,
                 tenant_slug: tenant["tenantSlug"],
                 organization_id: current["organizationId"],
               })}

@@ -79,7 +79,7 @@ export default async function LegalSectionPage(props: PageProps<"/legal/[section
         <nav aria-label="Breadcrumb">
           <ol className="text-muted-foreground flex items-center gap-1.5 font-mono text-xs">
             <li>
-              <Link href={ROUTE("/legal", { locale })} className="hover:text-foreground no-underline">
+              <Link href={ROUTE("/legal")} className="hover:text-foreground no-underline">
                 /legal
               </Link>
             </li>

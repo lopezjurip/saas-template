@@ -21,7 +21,7 @@ export default async function CreateTenantPage(props: PageProps<"/tenants/create
       }}
     >
       <Link
-        href={ROUTE("/home", { locale })}
+        href={ROUTE("/home")}
         aria-label="Inicio"
         className="absolute left-6 top-5 transition-opacity hover:opacity-80"
       >

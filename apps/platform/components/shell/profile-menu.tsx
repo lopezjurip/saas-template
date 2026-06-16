@@ -51,10 +51,10 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
   );
 
   const items = [
-    { Icon: User, label: t("account"), href: ROUTE("/home/account/profile", { locale }) },
-    { Icon: CreditCard, label: t("billing"), href: ROUTE("/home/account/profile", { locale }) },
-    { Icon: KeyRound, label: t("tokens"), href: ROUTE("/home/account/security", { locale }) },
-    { Icon: Bell, label: t("notifications"), href: ROUTE("/home/account/notifications", { locale }) },
+    { Icon: User, label: t("account"), href: ROUTE("/home/account/profile") },
+    { Icon: CreditCard, label: t("billing"), href: ROUTE("/home/account/profile") },
+    { Icon: KeyRound, label: t("tokens"), href: ROUTE("/home/account/security") },
+    { Icon: Bell, label: t("notifications"), href: ROUTE("/home/account/notifications") },
   ];
 
   return (
@@ -89,7 +89,7 @@ export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewe
           </div>
           <div className="border-border border-t px-1 py-1">
             <Link
-              href={ROUTE("/auth/logout", { locale })}
+              href={ROUTE("/auth/logout")}
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30"
             >

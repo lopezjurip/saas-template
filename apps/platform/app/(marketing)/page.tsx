@@ -49,7 +49,7 @@ export default async function HomePage(props: PageProps<"/">) {
 
   const user = await getSupabaseServerUser();
 
-  const ctaHref = user ? ROUTE("/home", { locale }) : ROUTE("/auth", { locale });
+  const ctaHref = user ? ROUTE("/home") : ROUTE("/auth");
   const ctaLabel = user ? t("cta.dashboard") : t("cta.signin");
 
   const mockSteps = [t("mock.step.1"), t("mock.step.2"), t("mock.step.3"), t("mock.step.4")];
@@ -122,7 +122,7 @@ export default async function HomePage(props: PageProps<"/">) {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="cursor-pointer">
-                <Link href={ROUTE("/", { locale }, "contact")}>{t("hero.secondary")}</Link>
+                <Link href={ROUTE("/", {}, "contact")}>{t("hero.secondary")}</Link>
               </Button>
             </div>
             <p className="font-mono text-xs text-muted-foreground">{t("hero.trust")}</p>

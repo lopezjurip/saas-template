@@ -41,7 +41,6 @@ interface Props {
 export function InviteMemberForm({ organization_id, countries, membersHref, locale, tenantSlug }: Props) {
   function editHrefFor(organization_membership_id: number) {
     return ROUTE("/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit", {
-      locale,
       tenant_slug: tenantSlug,
       organization_id,
       organization_membership_id,

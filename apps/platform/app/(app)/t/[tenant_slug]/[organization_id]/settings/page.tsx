@@ -8,7 +8,6 @@ export default async function SettingsIndexPage(props: PageProps<"/t/[tenant_slu
   redirect(
     ROUTE_HREF(
       ROUTE("/t/[tenant_slug]/[organization_id]/settings/general", {
-        locale,
         tenant_slug,
         organization_id,
       }),

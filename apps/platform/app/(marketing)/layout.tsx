@@ -36,36 +36,36 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
     {
       title: t("footer.product.title"),
       links: [
-        { label: t("footer.product.a"), href: ROUTE("/", { locale }) },
-        { label: t("footer.product.b"), href: ROUTE("/", { locale }, "product") },
-        { label: t("footer.product.c"), href: ROUTE("/pricing", { locale }) },
-        { label: t("footer.product.d"), href: ROUTE("/", { locale }, "customers") },
+        { label: t("footer.product.a"), href: ROUTE("/") },
+        { label: t("footer.product.b"), href: ROUTE("/", {}, "product") },
+        { label: t("footer.product.c"), href: ROUTE("/pricing") },
+        { label: t("footer.product.d"), href: ROUTE("/", {}, "customers") },
       ],
     },
     {
       title: t("footer.resources.title"),
       links: [
-        { label: t("footer.resources.a"), href: ROUTE("/", { locale }, "faq") },
-        { label: t("footer.resources.b"), href: ROUTE("/", { locale }, "contact") },
-        { label: t("footer.resources.c"), href: ROUTE("/mcp", { locale }) },
-        { label: t("footer.resources.d"), href: ROUTE("/", { locale }) },
+        { label: t("footer.resources.a"), href: ROUTE("/", {}, "faq") },
+        { label: t("footer.resources.b"), href: ROUTE("/", {}, "contact") },
+        { label: t("footer.resources.c"), href: ROUTE("/mcp") },
+        { label: t("footer.resources.d"), href: ROUTE("/") },
       ],
     },
     {
       title: t("footer.company.title"),
       links: [
-        { label: t("footer.company.a"), href: ROUTE("/", { locale }) },
-        { label: t("footer.company.b"), href: ROUTE("/", { locale }, "customers") },
-        { label: t("footer.company.c"), href: ROUTE("/", { locale }, "contact") },
-        { label: t("footer.company.d"), href: ROUTE("/", { locale }) },
+        { label: t("footer.company.a"), href: ROUTE("/") },
+        { label: t("footer.company.b"), href: ROUTE("/", {}, "customers") },
+        { label: t("footer.company.c"), href: ROUTE("/", {}, "contact") },
+        { label: t("footer.company.d"), href: ROUTE("/") },
       ],
     },
     {
       title: t("footer.legal.title"),
       links: [
-        { label: t("footer.terms"), href: ROUTE("/legal/terms", { locale }) },
-        { label: t("footer.privacy"), href: ROUTE("/legal/privacy", { locale }) },
-        { label: t("footer.cookies"), href: ROUTE("/legal/cookies", { locale }) },
+        { label: t("footer.terms"), href: ROUTE("/legal/terms") },
+        { label: t("footer.privacy"), href: ROUTE("/legal/privacy") },
+        { label: t("footer.cookies"), href: ROUTE("/legal/cookies") },
       ],
     },
   ];
@@ -80,7 +80,7 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
             ·
           </span>
           <Link
-            href={ROUTE("/", { locale }, "contact")}
+            href={ROUTE("/", {}, "contact")}
             className="hidden shrink-0 items-center gap-1 underline-offset-2 hover:underline sm:inline-flex"
           >
             {t("announce.cta")}
@@ -92,7 +92,7 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur supports-backdrop-filter:bg-background/70">
         <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-3 sm:px-6 lg:gap-6">
           <Link
-            href={ROUTE("/", { locale })}
+            href={ROUTE("/")}
             aria-label="SaaS Template"
             className="inline-block shrink-0 transition-opacity hover:opacity-80"
           >
@@ -100,31 +100,31 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
           </Link>
           <nav aria-label="Primary" className="hidden items-center gap-1 text-sm lg:flex">
             <Link
-              href={ROUTE("/", { locale }, "product")}
+              href={ROUTE("/", {}, "product")}
               className="rounded-md px-2.5 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               {t("nav.product")}
             </Link>
             <Link
-              href={ROUTE("/pricing", { locale })}
+              href={ROUTE("/pricing")}
               className="rounded-md px-2.5 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               {t("nav.pricing")}
             </Link>
             <Link
-              href={ROUTE("/", { locale }, "customers")}
+              href={ROUTE("/", {}, "customers")}
               className="rounded-md px-2.5 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               {t("nav.customers")}
             </Link>
             <Link
-              href={ROUTE("/", { locale }, "faq")}
+              href={ROUTE("/", {}, "faq")}
               className="rounded-md px-2.5 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               {t("nav.faq")}
             </Link>
             <Link
-              href={ROUTE("/mcp", { locale })}
+              href={ROUTE("/mcp")}
               className="rounded-md px-2.5 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               {t("nav.mcp")}
@@ -136,9 +136,7 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
               <ThemeToggle />
             </div>
             <Button asChild size="sm" className="cursor-pointer">
-              <Link href={user ? ROUTE("/home", { locale }) : ROUTE("/auth", { locale })}>
-                {user ? t("cta.dashboard") : t("cta.signin")}
-              </Link>
+              <Link href={user ? ROUTE("/home") : ROUTE("/auth")}>{user ? t("cta.dashboard") : t("cta.signin")}</Link>
             </Button>
           </div>
         </div>
@@ -150,7 +148,7 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
         <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-8 px-6 py-12 lg:grid-cols-5">
           <div className="col-span-2 flex max-w-xs flex-col gap-3 lg:col-span-1">
             <Link
-              href={ROUTE("/", { locale })}
+              href={ROUTE("/")}
               aria-label="SaaS Template"
               className="inline-block transition-opacity hover:opacity-80"
             >

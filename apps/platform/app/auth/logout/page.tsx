@@ -63,7 +63,7 @@ export default async function AuthLogoutPage() {
             </ButtonSpinner>
           </form>
           <Button asChild variant="ghost" className="h-10 w-full text-muted-foreground">
-            <Link href={ROUTE("/home", { locale })}>{t("cancel")}</Link>
+            <Link href={ROUTE("/home")}>{t("cancel")}</Link>
           </Button>
         </div>
       </div>

@@ -36,7 +36,6 @@ export default async function NewMemberInvitePage(
   const countries = countriesData?.["addressesLevel0"]?.["edges"]?.map((e) => e["node"]) ?? [];
 
   const membersHref = ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
-    locale,
     tenant_slug,
     organization_id,
   });

@@ -90,7 +90,7 @@ export default async function HomePage(props: PageProps<"/home">) {
       {/* Fixed top bar: logo left, locale+theme right — avoids overlap on mobile */}
       <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex items-center justify-between px-4 py-3">
         <Link
-          href={ROUTE("/", { locale })}
+          href={ROUTE("/")}
           aria-label="SaaS Template"
           className="pointer-events-auto inline-block shrink-0 transition-opacity hover:opacity-80"
         >
@@ -114,7 +114,7 @@ export default async function HomePage(props: PageProps<"/home">) {
 
           {obIncomplete && (
             <Link
-              href={ROUTE("/auth/onboarding", { locale })}
+              href={ROUTE("/auth/onboarding")}
               className="flex w-full max-w-130 flex-col gap-3 rounded-md border border-dashed bg-muted/35 px-3.5 py-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center"
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -148,7 +148,7 @@ export default async function HomePage(props: PageProps<"/home">) {
               return (
                 <Link
                   key={organization["organizationId"]}
-                  href={ROUTE("/t/[tenant_slug]", { locale, tenant_slug })}
+                  href={ROUTE("/t/[tenant_slug]", { tenant_slug })}
                   className="group flex w-35 flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
                 >
                   {logoSrc ? (
@@ -175,7 +175,7 @@ export default async function HomePage(props: PageProps<"/home">) {
               );
             })}
             <Link
-              href={ROUTE("/tenants/create", { locale })}
+              href={ROUTE("/tenants/create")}
               className="group flex w-35 flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
             >
               <span className="inline-flex size-28 items-center justify-center rounded-2xl border border-dashed bg-background text-muted-foreground transition-colors duration-150 group-hover:bg-muted/40 group-hover:text-foreground">
@@ -201,7 +201,7 @@ export default async function HomePage(props: PageProps<"/home">) {
                   return (
                     <Link
                       key={agency["agencyId"]}
-                      href={ROUTE("/a/[agency_slug]", { locale, agency_slug })}
+                      href={ROUTE("/a/[agency_slug]", { agency_slug })}
                       className="group flex w-28 flex-col items-center gap-2 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
                     >
                       <span
@@ -223,7 +223,7 @@ export default async function HomePage(props: PageProps<"/home">) {
           )}
 
           <Link
-            href={ROUTE("/agencies/create", { locale })}
+            href={ROUTE("/agencies/create")}
             className="text-tiny text-muted-foreground/50 underline-offset-2 transition-colors hover:text-muted-foreground hover:underline"
           >
             {t("newAgency")}

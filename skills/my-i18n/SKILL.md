@@ -1,6 +1,6 @@
 ---
 name: my-i18n
-description: Repository-specific @packages/rosetta, locale routing, dictionaries, server/client translation, locale sentinel links, email, and PDF localization patterns.
+description: Repository-specific @packages/rosetta, cookie-based locale (no URL segment), dictionaries, server/client translation, email, and PDF localization patterns.
 ---
 
 # i18n
@@ -24,16 +24,12 @@ All i18n lives in `~/lib/i18n*` — three files, one place:
 
 ## Routing
 
-`apps/platform/proxy.ts` owns locale routing:
+Locale is **not** a URL segment. `apps/platform/proxy.ts` resolves it from the `NEXT_LOCALE` cookie (falling back to `Accept-Language`, then the default) and persists it in that cookie before the session update. There is no `/[locale]/` prefix and no sentinel to rewrite.
 
-- Missing locale → cookie/Accept-Language/default → redirect.
-- `/[locale]/...` sentinel → active locale redirect. Also handles URL-encoded `%5Blocale%5D` and the `_` alias.
-- URL locale written to `NEXT_LOCALE` cookie before session update.
-
-Client links needing active locale use literal sentinel:
+Client links are plain paths — never embed a locale, and never pass `locale` to `ROUTE` (the helper strips it: `delete query["locale"]` in `apps/platform/lib/route.ts`):
 
 ```tsx
-<Link href="/[locale]/tenants/create">Crear</Link>
+<Link href={ROUTE("/tenants/create")}>Crear</Link>
 ```
 
 Do not thread locale props only to construct hrefs.
@@ -55,9 +51,9 @@ const LOCALES = {
   } satisfies typeof LOCALE_ES,
 };
 
-export default async function Page(props: PageProps<"/[locale]/home">) {
-  const { locale } = await props.params;
-  const { t } = ROSETTA(LOCALES, locale);
+export default async function Page(props: PageProps<"/home">) {
+  // locale comes from the cookie via getRosetta — never from props.params
+  const { t } = await getRosetta(LOCALES);
   return <h1>{t("title")}</h1>;
 }
 ```

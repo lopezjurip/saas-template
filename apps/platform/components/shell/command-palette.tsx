@@ -70,7 +70,6 @@ export function CommandPalette({
             router.push(
               ROUTE_HREF(
                 ROUTE("/t/[tenant_slug]/[organization_id]", {
-                  locale,
                   tenant_slug: tenant["tenantSlug"],
                   organization_id: current["organizationId"],
                 }),
@@ -85,7 +84,6 @@ export function CommandPalette({
             router.push(
               ROUTE_HREF(
                 ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
-                  locale,
                   tenant_slug: tenant["tenantSlug"],
                   organization_id: current["organizationId"],
                 }),
@@ -100,7 +98,6 @@ export function CommandPalette({
             router.push(
               ROUTE_HREF(
                 ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
-                  locale,
                   tenant_slug: tenant["tenantSlug"],
                   organization_id: current["organizationId"],
                 }),
@@ -122,7 +119,6 @@ export function CommandPalette({
           router.push(
             ROUTE_HREF(
               ROUTE("/t/[tenant_slug]/[organization_id]", {
-                locale,
                 tenant_slug: tenant["tenantSlug"],
                 organization_id: organization["organizationId"],
               }),
@@ -131,7 +127,7 @@ export function CommandPalette({
       })),
     };
     return [navigate, switchOrg];
-  }, [locale, tenant, organizations, current, router, t]);
+  }, [tenant, organizations, current, router, t]);
 
   const filtered = useMemo<PaletteGroup[]>(() => {
     const q = query.trim().toLowerCase();

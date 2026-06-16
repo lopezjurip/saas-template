@@ -32,7 +32,7 @@ export default async function McpPage(props: PageProps<"/mcp">) {
   const user = await getSupabaseServerUser();
 
   const endpoint = `${APP_URL.origin}/api/mcp`;
-  const ctaHref = user ? ROUTE("/home", { locale }) : ROUTE("/auth", { locale });
+  const ctaHref = user ? ROUTE("/home") : ROUTE("/auth");
 
   const webPageSchema: WithContext<WebPage> = {
     "@context": "https://schema.org",

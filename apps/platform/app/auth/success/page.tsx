@@ -25,13 +25,13 @@ export default async function AuthSuccessPage(props: PageProps<"/auth/success">)
         <p className="m-0 max-w-90 text-sm leading-normal text-muted-foreground text-pretty">{t("body")}</p>
         <div className="mt-2 flex w-full max-w-70 flex-col gap-2.5">
           <Button asChild className="h-10 w-full">
-            <Link href={ROUTE("/home", { locale })}>
+            <Link href={ROUTE("/home")}>
               <span>{t("go_home")}</span>
               <ArrowRight size={16} />
             </Link>
           </Button>
           <Button asChild variant="ghost" className="h-10 w-full text-xs text-muted-foreground">
-            <Link href={ROUTE("/home/account/security", { locale })}>{t("review_account")}</Link>
+            <Link href={ROUTE("/home/account/security")}>{t("review_account")}</Link>
           </Button>
         </div>
       </div>

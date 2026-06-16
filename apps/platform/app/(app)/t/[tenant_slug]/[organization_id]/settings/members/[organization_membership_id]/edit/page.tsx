@@ -59,7 +59,6 @@ export default async function OrganizationMembershipEditPage(
   } = await getViewerOrganizationByIdAssert(organization_id);
 
   const membersHref = ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
-    locale,
     tenant_slug,
     organization_id,
   });

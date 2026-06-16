@@ -142,7 +142,6 @@ export default async function MembersAdminPage(
         <Button asChild>
           <Link
             href={ROUTE("/t/[tenant_slug]/[organization_id]/settings/members/new", {
-              locale,
               tenant_slug,
               organization_id,
             })}
@@ -170,7 +169,6 @@ export default async function MembersAdminPage(
                 <Link
                   key={m["organization_membership_id"]}
                   href={ROUTE("/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit", {
-                    locale,
                     tenant_slug,
                     organization_id,
                     organization_membership_id: m["organization_membership_id"],

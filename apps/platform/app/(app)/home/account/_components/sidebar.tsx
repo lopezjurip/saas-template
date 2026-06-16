@@ -37,7 +37,7 @@ export function AccountSidebar({ locale }: { locale: string }) {
           {g.items.map((s) => (
             <Link
               key={s.id}
-              href={ROUTE(ACCOUNT_SECTION_PATH(s.id), { locale })}
+              href={ROUTE(ACCOUNT_SECTION_PATH(s.id))}
               data-active={s.id === active ? "true" : "false"}
               className={cn(
                 "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm no-underline transition-colors [&_svg]:size-4 [&_svg]:shrink-0",
