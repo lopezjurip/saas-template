@@ -9,12 +9,13 @@ import { ACCOUNT_SECTION_PATH, ACCOUNT_SECTIONS, type AccountGroupKey, type Acco
 
 function ACTIVE_SECTION(pathname: string): AccountSectionId {
   const segments = pathname.split("/").filter(Boolean);
-  const last = segments[segments.length - 1];
-  if (!last) return "profile";
-  return (ACCOUNT_SECTIONS.find((s) => s.id === last)?.id ?? "profile") as AccountSectionId;
+  // Match a section id anywhere in the path so security sub-routes
+  // (e.g. /home/account/security/passkeys) still highlight "security".
+  const match = segments.find((segment) => ACCOUNT_SECTIONS.some((s) => s.id === segment));
+  return (match ?? "profile") as AccountSectionId;
 }
 
-export function AccountSidebar({ locale }: { locale: string }) {
+export function AccountSidebar() {
   const pathname = usePathname();
   const active = ACTIVE_SECTION(pathname);
   const { t } = useRosetta(LOCALES);
@@ -55,7 +56,7 @@ export function AccountSidebar({ locale }: { locale: string }) {
   );
 }
 
-export function AccountMobileNav({ locale }: { locale: string }) {
+export function AccountMobileNav() {
   const pathname = usePathname();
   const active = ACTIVE_SECTION(pathname);
   const { t } = useRosetta(LOCALES);
@@ -64,7 +65,7 @@ export function AccountMobileNav({ locale }: { locale: string }) {
       {ACCOUNT_SECTIONS.map((s) => (
         <Link
           key={s.id}
-          href={ROUTE(ACCOUNT_SECTION_PATH(s.id), { locale })}
+          href={ROUTE(ACCOUNT_SECTION_PATH(s.id))}
           data-active={s.id === active ? "true" : "false"}
           className={cn(
             "text-muted-foreground inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium whitespace-nowrap no-underline",
@@ -86,6 +87,8 @@ const LOCALE_ES = {
   nav_connections: "Conexiones",
   nav_sessions: "Dispositivos",
   nav_notifications: "Notificaciones",
+  nav_theme: "Tema",
+  nav_language: "Idioma",
   nav_danger: "Eliminar cuenta",
   // group names
   account: "Cuenta",
@@ -100,6 +103,8 @@ const LOCALE_EN: typeof LOCALE_ES = {
   nav_connections: "Connections",
   nav_sessions: "Devices",
   nav_notifications: "Notifications",
+  nav_theme: "Theme",
+  nav_language: "Language",
   nav_danger: "Delete account",
   account: "Account",
   security_group: "Security",
@@ -113,6 +118,8 @@ const LOCALE_PT: typeof LOCALE_ES = {
   nav_connections: "Conexões",
   nav_sessions: "Dispositivos",
   nav_notifications: "Notificações",
+  nav_theme: "Tema",
+  nav_language: "Idioma",
   nav_danger: "Excluir conta",
   account: "Conta",
   security_group: "Segurança",

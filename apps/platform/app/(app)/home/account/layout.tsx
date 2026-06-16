@@ -1,7 +1,6 @@
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Logo } from "@packages/ui-common/logo";
-import { INITIALS_OF } from "@packages/utils/string";
-import { ArrowLeft, ChevronDown } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getRosetta } from "~/lib/i18n.server";
@@ -11,8 +10,7 @@ import { AccountMobileNav, AccountSidebar } from "./_components/sidebar";
 export default async function AccountLayout(props: LayoutProps<"/home/account">) {
   const user = await getSupabaseServerUser();
   if (!user) redirect("/auth");
-  const email = user["email"] ?? "";
-  const { t, locale } = await getRosetta(LOCALES);
+  const { t } = await getRosetta(LOCALES);
 
   return (
     <div className="bg-background relative flex min-h-svh w-full flex-col">
@@ -33,27 +31,14 @@ export default async function AccountLayout(props: LayoutProps<"/home/account">)
         </Link>
         <span className="text-muted-foreground hidden text-sm/normal opacity-50 sm:inline">/</span>
         <span className="text-foreground hidden text-sm/normal font-medium sm:inline">{t("my_account")}</span>
-        <div className="min-w-2 flex-1" />
-        <Link
-          href={ROUTE("/home/account/profile")}
-          className="text-foreground bg-background hover:bg-accent inline-flex min-w-0 max-w-[55vw] cursor-pointer items-center gap-2 rounded-full border py-1 pr-2 pl-1 text-xs sm:max-w-none"
-        >
-          <span className="bg-primary text-primary-foreground inline-flex size-6.5 shrink-0 items-center justify-center rounded-full text-tiny font-semibold">
-            {INITIALS_OF(email)}
-          </span>
-          <span className="truncate">{email}</span>
-          <span className="text-muted-foreground shrink-0">
-            <ChevronDown size={13} />
-          </span>
-        </Link>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_1fr] md:grid-cols-[232px_1fr] md:grid-rows-1">
         <div className="hidden md:block">
-          <AccountSidebar locale={locale} />
+          <AccountSidebar />
         </div>
         <div className="md:hidden">
-          <AccountMobileNav locale={locale} />
+          <AccountMobileNav />
         </div>
         <main className="overflow-auto px-8 py-7">{props.children}</main>
       </div>

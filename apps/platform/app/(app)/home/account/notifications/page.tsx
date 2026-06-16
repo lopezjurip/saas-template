@@ -1,6 +1,6 @@
 import { getRosetta } from "~/lib/i18n.server";
 import { ContactsManage } from "./contacts-manage";
-import { NotificationsMatrix } from "./notifications-matrix";
+import { NotificationsChannels } from "./notifications-channels";
 import { PushPermission } from "./push-permission";
 
 export default async function NotificationsPage() {
@@ -15,7 +15,7 @@ export default async function NotificationsPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("heading")}</h1>
         <p className="text-pretty text-sm/normal leading-normal text-muted-foreground">{t("description")}</p>
       </header>
-      <NotificationsMatrix />
+      <NotificationsChannels />
       <ContactsManage />
       <PushPermission />
     </div>

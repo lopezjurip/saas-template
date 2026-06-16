@@ -4,11 +4,7 @@ import { ArrowRight, Check, Fingerprint, IdCard, Lock, Mail, Phone } from "lucid
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getRosetta } from "~/lib/i18n.server";
-import { UNSAFE_ROUTE } from "~/lib/route";
-import { EmailForm } from "./email-form";
-import { PasskeysList } from "./passkeys-list";
-import { PasswordForm } from "./password-form";
-import { PhoneForm } from "./phone-form";
+import { type AppRoute, ROUTE, UNSAFE_ROUTE } from "~/lib/route";
 
 export default async function SecurityPage(props: PageProps<"/home/account/security">) {
   const user = await getSupabaseServerUser();
@@ -49,9 +45,8 @@ export default async function SecurityPage(props: PageProps<"/home/account/secur
           doneLabel={t("done_label")}
           desc={hasPasskey ? t("passkey_count", { n: passkeys.length }) : t("passkey_no")}
           actionLabel={hasPasskey ? t("passkey_manage") : t("passkey_add")}
-          actionHref="/auth/onboarding/passkey"
+          actionHref={ROUTE("/home/account/security/passkeys")}
         />
-        <PasskeysList passkeys={passkeys} />
 
         <SecurityCard
           Icon={Lock}
@@ -60,9 +55,8 @@ export default async function SecurityPage(props: PageProps<"/home/account/secur
           doneLabel={t("done_label")}
           desc={hasPassword ? t("password_set") : t("password_no")}
           actionLabel={hasPassword ? t("password_change") : t("password_create")}
-        >
-          <PasswordForm hasPassword={hasPassword} />
-        </SecurityCard>
+          actionHref={ROUTE("/home/account/security/password")}
+        />
       </div>
 
       {/* Identifiers */}
@@ -79,9 +73,8 @@ export default async function SecurityPage(props: PageProps<"/home/account/secur
           doneLabel={t("done_label")}
           desc={user["email"] ?? t("email_no")}
           actionLabel={t("email_change")}
-        >
-          <EmailForm currentEmail={user["email"] ?? null} />
-        </SecurityCard>
+          actionHref={ROUTE("/home/account/security/email")}
+        />
 
         <SecurityCard
           Icon={Phone}
@@ -90,9 +83,8 @@ export default async function SecurityPage(props: PageProps<"/home/account/secur
           doneLabel={t("done_label")}
           desc={user["phone"] ? `+${user["phone"]}` : t("phone_no")}
           actionLabel={hasPhone ? t("phone_change") : t("phone_add")}
-        >
-          <PhoneForm currentPhone={user["phone"] ? `+${user["phone"]}` : null} />
-        </SecurityCard>
+          actionHref={ROUTE("/home/account/security/phone")}
+        />
 
         <SecurityCard
           Icon={IdCard}
@@ -108,6 +100,7 @@ export default async function SecurityPage(props: PageProps<"/home/account/secur
   );
 }
 
+// Local component — used only in /home/account/security/page.tsx (the security index).
 function SecurityCard({
   Icon,
   title,
@@ -117,7 +110,6 @@ function SecurityCard({
   actionLabel,
   actionHref,
   disabled,
-  children,
 }: {
   Icon: React.ComponentType<{ size?: number; className?: string }>;
   title: string;
@@ -125,9 +117,8 @@ function SecurityCard({
   doneLabel: string;
   desc: string;
   actionLabel: string;
-  actionHref?: string;
+  actionHref?: AppRoute | string;
   disabled?: boolean;
-  children?: React.ReactNode;
 }) {
   return (
     <div
@@ -161,7 +152,7 @@ function SecurityCard({
         <span className="inline-flex items-center justify-end self-center">
           {actionHref ? (
             <Link
-              href={UNSAFE_ROUTE(actionHref)}
+              href={typeof actionHref === "string" ? UNSAFE_ROUTE(actionHref) : actionHref}
               className="bg-muted text-foreground inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium whitespace-nowrap"
             >
               {actionLabel} <ArrowRight size={13} />
@@ -173,7 +164,6 @@ function SecurityCard({
           ) : null}
         </span>
       </div>
-      {children && <div className="mt-3">{children}</div>}
     </div>
   );
 }
