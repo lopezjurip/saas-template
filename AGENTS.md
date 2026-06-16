@@ -326,6 +326,20 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/auth/callbac
 
 **Exception:** `page.tsx` or `layout.tsx` not `async` and not accessing `params` or `searchParams` — no typed props needed. But always make `async` if needing any server-side capability.
 
+### API route handlers — validate input with `next-zod-route`
+For `route.ts` handlers that consume dynamic path params, query, or a JSON body, validate with **`next-zod-route`** instead of hand-parsing — it returns 400 on bad input and hands the handler fully-typed `context.params` / `context.query` / `context.body`. The param schema keys must match the `[segment]` folder names. Use `z.guid()` (loose, version-agnostic — matches the DB's `internal.is_uuid`) for uuid path params, **not** `z.uuid()` (which rejects non-RFC-version uuids like the seed's). The handler may return any `Response` (e.g. a streamed image).
+
+```ts
+// app/api/v1/organizations/[organization_id]/avatar/route.ts
+export const GET = createZodRoute()
+  .params(z.object({ organization_id: z.coerce.number().int().positive() }))
+  .handler(async (_request, context) => {
+    return streamPublicAvatar(/* … context.params.organization_id … */);
+  });
+```
+
+Routes whose "invalid input" is a user-facing **redirect** (e.g. the auth `callback`/`confirm` flows redirecting to `/auth/error`) deliberately keep hand-parsing — next-zod-route's 400 doesn't fit that UX.
+
 ### Bracket notation for external data
 Reading properties off objects from outside program (GraphQL/REST responses, parsed JSON, file contents, webhook payloads, MCP tool results) → use bracket notation, not dot access.
 

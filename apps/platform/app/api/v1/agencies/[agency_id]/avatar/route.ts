@@ -1,5 +1,6 @@
 import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import { type NextRequest, NextResponse } from "next/server";
+import { createZodRoute } from "next-zod-route";
+import { z } from "zod";
 import { streamPublicAvatar } from "~/lib/avatar";
 
 /**
@@ -7,19 +8,19 @@ import { streamPublicAvatar } from "~/lib/avatar";
  * agency uuid) and streams its bytes; 404 when none. See the organizations route for the rationale.
  * Use `src="/api/v1/agencies/{id}/avatar"`.
  */
-export async function GET(_request: NextRequest, ctx: RouteContext<"/api/v1/agencies/[agency_id]/avatar">) {
-  const { agency_id } = await ctx.params;
-  if (!agency_id) return new NextResponse(null, { status: 404 });
+export const GET = createZodRoute()
+  // z.guid() (not z.uuid()) — loose, version-agnostic, matching the DB's internal.is_uuid.
+  .params(z.object({ agency_id: z.guid() }))
+  .handler(async (_request, context) => {
+    const supabase = createSupabaseServiceRoleClient();
+    const { data } = await supabase
+      .from("storage_agencies")
+      .select("src")
+      .eq("agency_id", context.params.agency_id)
+      .eq("folder", "avatar")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  const supabase = createSupabaseServiceRoleClient();
-  const { data } = await supabase
-    .from("storage_agencies")
-    .select("src")
-    .eq("agency_id", agency_id)
-    .eq("folder", "avatar")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  return streamPublicAvatar(data?.["src"]);
-}
+    return streamPublicAvatar(data?.["src"]);
+  });
