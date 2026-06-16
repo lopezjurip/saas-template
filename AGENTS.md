@@ -1,5 +1,7 @@
 # SaaS Template — Multi-tenant SaaS Starter
 
+> **Recommended skills:** run `/codebase` to load the generated whole-monorepo reference before working anywhere in the repo, and `/caveman` for ultra-compressed, token-efficient responses.
+
 ## What This Is
 
 Production-grade multi-tenant SaaS starter. Hard parts pre-wired: authentication (email/password, OAuth, phone OTP, WebAuthn passkeys), two-level multi-tenancy with Postgres RLS, capability-based permissions, agency/affiliate surface for cross-tenant partner access, i18n, React Email/PDF template packages, shadcn-based design system — all in Turborepo monorepo.
@@ -131,10 +133,11 @@ After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) 
 
 ## Skills
 
-Two kinds of skills, both materialized on `pnpm install` by `scripts/skills-setup.js` (postinstall). The generated dirs `.agents/skills/` and `.claude/skills/` are **gitignored** — never committed, always regenerated. Read relevant skill before working in that subsystem.
+Three kinds of skills, all materialized on `pnpm install` by `scripts/skills-setup.js` (postinstall). The generated dirs `.agents/skills/` and `.claude/skills/` are **gitignored** — never committed, always regenerated. Read relevant skill before working in that subsystem.
 
 - **First-party (`my-*`)** — sources committed in `skills/my-*`. The script symlinks them into `.agents/skills/` and `.claude/skills/`.
 - **Third-party** — pinned in `skills-lock.json` (committed), restored by the `skills` CLI (a devDependency). The script's restore step snapshots `skills-lock.json` and writes it back after, so installs never churn the committed lock.
+- **Generated codebase reference (`codebase`)** — `repomix --skill-generate` packs the whole monorepo into a LLM-loadable reference skill at `skills/codebase/` (committed source, registered in `SKILLS[]`, symlinked like the `my-*` skills). Regenerate with `pnpm generate:repomix:skills` after significant changes. **Generated — never hand-edit.** Exclusions (codegen, `**/generated/**`, `node_modules`, `.env*`, `pnpm-lock.yaml`, all tests/`**/certificates/**`/`**/*.pem`, and the skill itself to avoid recursive bloat) live in `repomix.config.ts`; secrets are stripped by repomix's `security` check.
 
 `.agents/skills/` is the **universal store** read directly by Codex, Cursor, GitHub Copilot, OpenCode, and Zed; `.claude/skills/` is Claude Code's. Source of truth = `skills/` (first-party) + `skills-lock.json` (third-party).
 

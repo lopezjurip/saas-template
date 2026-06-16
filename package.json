@@ -31,6 +31,7 @@
     "generate:graphql:schema": "pnpm --filter @packages/supabase run generate:graphql:schema",
     "generate:graphql:schema:local": "pnpm --filter @packages/supabase run generate:graphql:schema:local",
     "generate:graphql:platform": "pnpm --filter @apps/platform run generate:graphql",
+    "generate:repomix:skills": "repomix -c repomix.config.ts --skill-generate codebase --skill-output skills/codebase -f && node scripts/repomix-skill-rename.js",
     "typecheck:platform": "turbo run build:dry --filter=@apps/platform"
   },
   "devDependencies": {
@@ -40,6 +41,7 @@
     "graphql": "^16.14.2",
     "graphql-config": "^5.1.6",
     "qrcode-terminal": "^0.12.0",
+    "repomix": "^1.14.1",
     "skills": "1.5.11",
     "turbo": "^2.9.18",
     "typescript": "^6.0.3"
