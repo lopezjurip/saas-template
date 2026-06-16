@@ -13,9 +13,9 @@ import {
 } from "@packages/ui-common/shadcn/components/ui/select";
 import { Switch } from "@packages/ui-common/shadcn/components/ui/switch";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { INITIALS_OF } from "@packages/utils/string";
 import { Check, Globe, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { EntityLogoControls } from "~/components/entity-logo-controls";
 import { useRosetta } from "~/lib/i18n.client";
 
 type Access = "none" | "viewer" | "editor";
@@ -27,7 +27,17 @@ const DOMAINS: DomainRow[] = /*#__PURE__*/ [
   { domain: "studio.cl", verified: false, meta: "domain_dns" },
 ];
 
-export function GeneralSettings({ organizationName, slug }: { organizationName: string; slug: string }) {
+export function GeneralSettings({
+  organizationId,
+  organizationName,
+  slug,
+  logoSrc,
+}: {
+  organizationId: number;
+  organizationName: string;
+  slug: string;
+  logoSrc: string | null;
+}) {
   const { t } = useRosetta(LOCALES);
   const [autoJoin, setAutoJoin] = useState(false);
   const [access, setAccess] = useState<Access>("none");
@@ -44,19 +54,14 @@ export function GeneralSettings({ organizationName, slug }: { organizationName: 
       </header>
 
       <section className="border-border bg-background flex flex-col gap-4 rounded-xl border p-5">
-        <div className="flex items-center gap-4">
-          <span className="bg-foreground text-background inline-flex size-14 shrink-0 items-center justify-center rounded-xl text-lg font-semibold">
-            {INITIALS_OF(organizationName)}
-          </span>
-          <div className="flex flex-col gap-1.5">
-            <Button variant="outline" size="sm">
-              {t("change_logo")}
-            </Button>
-            <Button variant="ghost" size="sm" className="text-muted-foreground h-7 self-start px-2">
-              {t("remove")}
-            </Button>
-          </div>
-        </div>
+        <EntityLogoControls
+          bucket="organizations"
+          ownerKey={String(organizationId)}
+          name={organizationName}
+          src={logoSrc}
+          shape="square"
+          helpText={t("logo_hint")}
+        />
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="org-name">{t("name_label")}</Label>
           <Input id="org-name" defaultValue={organizationName} />
@@ -221,7 +226,7 @@ const LOCALE_ES = {
   eyebrow: "Organización",
   title: "Ajustes de la organización",
   subtitle: "Identidad, dominios y qué reciben las personas nuevas al unirse. Cambia cualquier cosa cuando quieras.",
-  change_logo: "Cambiar logo",
+  logo_hint: "Usa una imagen cuadrada. Si no subes una, mostramos las iniciales.",
   remove: "Quitar",
   name_label: "Nombre de la organización",
   slug_label: "Identificador (slug)",
@@ -258,7 +263,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
   eyebrow: "Organization",
   title: "Organization settings",
   subtitle: "Identity, domains and what new people get when they join. Change anything whenever you want.",
-  change_logo: "Change logo",
+  logo_hint: "Use a square image. If you don't upload one, we show the initials.",
   remove: "Remove",
   name_label: "Organization name",
   slug_label: "Identifier (slug)",
@@ -295,7 +300,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   eyebrow: "Organização",
   title: "Configurações da organização",
   subtitle: "Identidade, domínios e o que as novas pessoas recebem ao entrar. Mude qualquer coisa quando quiser.",
-  change_logo: "Mudar logo",
+  logo_hint: "Use uma imagem quadrada. Se você não enviar uma, mostramos as iniciais.",
   remove: "Remover",
   name_label: "Nome da organização",
   slug_label: "Identificador (slug)",

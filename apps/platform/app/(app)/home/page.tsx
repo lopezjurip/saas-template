@@ -1,4 +1,4 @@
-import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Logo } from "@packages/ui-common/logo";
 import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
 import { INITIALS_OF } from "@packages/utils/string";
@@ -57,6 +57,26 @@ export default async function HomePage(props: PageProps<"/home">) {
   ]);
   const edges = data?.["viewerOrganizations"]?.["edges"] ?? [];
   const agencyEdges = agenciesRes.data?.["agencies"]?.["edges"] ?? [];
+
+  // Org logos come from the FK-less `storage_organizations` view (not the GraphQL fragment).
+  const orgIds = edges.map((edge) => edge["node"]["organizationId"]);
+  const logoByOrgId = new Map<number, string>();
+  if (orgIds.length > 0) {
+    const supabase = await createSupabaseServerClient();
+    const { data: logoRows } = await supabase
+      .from("storage_organizations")
+      .select("organization_id, src, created_at")
+      .in("organization_id", orgIds)
+      .eq("folder", "avatar")
+      .order("created_at", { ascending: false });
+    for (const row of logoRows ?? []) {
+      const id = row["organization_id"];
+      const src = row["src"];
+      if (id != null && src && !logoByOrgId.has(id)) {
+        logoByOrgId.set(id, new URL(src, process.env["NEXT_PUBLIC_SUPABASE_URL"]!).toString());
+      }
+    }
+  }
 
   const state = await getViewerOnboardingState();
   const obDone = COUNT_DONE(state.methods);
@@ -124,22 +144,31 @@ export default async function HomePage(props: PageProps<"/home">) {
               const name = organization["organizationName"];
               const initials = INITIALS_OF(name) || "·";
               const colorStyle = COLOR_HSL_FROM_STRING(name);
+              const logoSrc = logoByOrgId.get(organization["organizationId"]);
               return (
                 <Link
                   key={organization["organizationId"]}
                   href={ROUTE("/t/[tenant_slug]", { locale, tenant_slug })}
                   className="group flex w-35 flex-col items-center gap-2.5 rounded-2xl px-1 py-2 text-foreground transition-transform duration-150 hover:translate-y-[-3px] hover:bg-muted/50"
                 >
-                  <span
-                    className="inline-flex size-28 items-center justify-center rounded-2xl border text-4xl font-semibold tracking-tight transition-shadow duration-150 group-hover:shadow-float"
-                    style={{
-                      backgroundColor: colorStyle.background,
-                      color: colorStyle.color,
-                      borderColor: colorStyle.borderColor,
-                    }}
-                  >
-                    {initials}
-                  </span>
+                  {logoSrc ? (
+                    <img
+                      src={logoSrc}
+                      alt={name}
+                      className="size-28 rounded-2xl border object-cover transition-shadow duration-150 group-hover:shadow-float"
+                    />
+                  ) : (
+                    <span
+                      className="inline-flex size-28 items-center justify-center rounded-2xl border text-4xl font-semibold tracking-tight transition-shadow duration-150 group-hover:shadow-float"
+                      style={{
+                        backgroundColor: colorStyle.background,
+                        color: colorStyle.color,
+                        borderColor: colorStyle.borderColor,
+                      }}
+                    >
+                      {initials}
+                    </span>
+                  )}
                   <span className="text-center text-sm font-medium text-balance">{name}</span>
                   <span className="-mt-1 text-xs text-muted-foreground">{tenant?.["tenantName"] ?? "—"}</span>
                 </Link>
