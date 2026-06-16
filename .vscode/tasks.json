@@ -111,6 +111,13 @@
       "command": "pnpm generate:graphql:schema:local",
       "presentation": { "reveal": "always", "panel": "shared" },
       "problemMatcher": []
+    },
+    {
+      "label": "generate: repomix skills",
+      "type": "shell",
+      "command": "pnpm generate:repomix:skills",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
     }
   ]
 }
