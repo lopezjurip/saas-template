@@ -504,6 +504,12 @@ create table if not exists public.tenants (
   tenant_id serial primary key,
   tenant_slug extensions.citext not null unique check (internal.slug_reserved_validate(tenant_slug::text)),
   tenant_name text not null check (char_length(tenant_name) between 1 and 256),
+  -- Onboarding (extensible, resumable, soft nudge). Derivable steps (logo set, first member
+  -- invited) are computed at read time; non-derivable steps (e.g. billing) record their status
+  -- in `tenant_onboarding_state` as { "<step>": "done" | "skipped" }. `tenant_onboarded_at` is
+  -- set when the whole flow is dismissed/finished so the banner stops.
+  tenant_onboarded_at timestamptz,
+  tenant_onboarding_state jsonb not null default '{}'::jsonb,
   tenant_disabled_at timestamptz,
   tenant_created_at timestamptz not null default current_timestamp,
   tenant_updated_at timestamptz not null default current_timestamp
@@ -552,6 +558,32 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
   values (
     'organizations',
     'organizations',
+    true,
+    internal.convert_unit_byte(5, 'MiB'),
+    array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+  )
+  on conflict (id) do update set
+    public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  values (
+    'tenants',
+    'tenants',
+    true,
+    internal.convert_unit_byte(5, 'MiB'),
+    array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+  )
+  on conflict (id) do update set
+    public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  values (
+    'agencies',
+    'agencies',
     true,
     internal.convert_unit_byte(5, 'MiB'),
     array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
@@ -951,7 +983,8 @@ create trigger permission_presets_trigger_validate_slugs
 -- Seed catalog (idempotent: ON CONFLICT skips). Add new slugs here, then re-run db:reset.
 insert into public.permissions (permission_id, permission_description) values
   ('*',                    'Wildcard: grants every permission within the organization (typical use: founder).'),
-  ('organization_manage',  'Edit the name, settings, and domains of the tenant/organization.'),
+  ('organization_manage',  'Edit the organization: name, logo, members, and presets.'),
+  ('tenant_manage',        'Edit the tenant (billing entity): name, logo, billing, and domains.'),
   ('members_manage',       'Invite, remove, and reassign permissions to members.'),
   ('presets_manage',       'Create and edit the organization''s permission presets.'),
   ('tickets_manage',       'View, claim, and resolve support tickets on behalf of the organization.')
@@ -1252,6 +1285,54 @@ create or replace function public.viewer_has_permission(
         and m.organization_membership_revoked_at is null
         and m.organization_membership_rejected_at is null
         and (mp.permission_id = viewer_has_permission.permission_id or mp.permission_id = '*')
+    );
+  $$;
+
+-- Tenant-scoped permission helpers. There is no tenant-level membership table — tenant authority
+-- rides on the organization grants of the orgs inside the tenant (the espejo org created by
+-- protected.tenant_create is where `tenant_manage` is granted by default). Wildcard `*` is honored.
+
+create or replace function public.viewer_permission_tenant_ids(permission_id extensions.citext)
+  returns setof int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select distinct o.tenant_id
+    from public.organization_membership_permissions mp
+    join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
+    join public.organizations o on o.organization_id = m.organization_id
+    where m.profile_id = (select public.viewer_profile_id())
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null
+      and (mp.permission_id = viewer_permission_tenant_ids.permission_id or mp.permission_id = '*');
+  $$;
+
+create or replace function public.viewer_has_tenant_permission(
+  tenant_id int,
+  permission_id extensions.citext
+)
+  returns boolean
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select exists (
+      select 1
+      from public.organization_membership_permissions mp
+      join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
+      join public.organizations o on o.organization_id = m.organization_id
+      where o.tenant_id = viewer_has_tenant_permission.tenant_id
+        and m.profile_id = (select public.viewer_profile_id())
+        and m.organization_membership_accepted_at is not null
+        and m.organization_membership_revoked_at is null
+        and m.organization_membership_rejected_at is null
+        and (mp.permission_id = viewer_has_tenant_permission.permission_id or mp.permission_id = '*')
     );
   $$;
 
@@ -1644,16 +1725,12 @@ create policy "tenants select by members or agency affiliates"
 
 drop policy if exists "tenants update by owner" on public.tenants;
 drop policy if exists "tenants update with organization_manage" on public.tenants;
-create policy "tenants update with organization_manage"
+drop policy if exists "tenants update with tenant_manage" on public.tenants;
+create policy "tenants update with tenant_manage"
   on public.tenants for update
   to authenticated
-  using (
-    exists (
-      select 1 from public.organizations o
-      where o.tenant_id = public.tenants.tenant_id
-        and o.organization_id in (select public.viewer_permission_org_ids('organization_manage'))
-    )
-  );
+  using (tenant_id in (select public.viewer_permission_tenant_ids('tenant_manage')))
+  with check (tenant_id in (select public.viewer_permission_tenant_ids('tenant_manage')));
 
 -- INSERT/DELETE on tenants: service_role only. No authenticated policy -> default deny.
 
@@ -2646,7 +2723,7 @@ create policy "public buckets: read avatars"
   on storage.objects for select
   to authenticated, anon
   using (
-    bucket_id in ('profiles', 'organizations')
+    bucket_id in ('profiles', 'organizations', 'tenants', 'agencies')
     and path_tokens[2] = 'avatar'
   );
 
@@ -2683,6 +2760,42 @@ create policy "organizations bucket: organization_manage avatar"
     and path_tokens[1]::int in (select public.viewer_permission_org_ids('organization_manage'))
   );
 
+drop policy if exists "tenants bucket: tenant_manage avatar" on storage.objects;
+create policy "tenants bucket: tenant_manage avatar"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id = 'tenants'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_permission_tenant_ids('tenant_manage'))
+  )
+  with check (
+    bucket_id = 'tenants'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_permission_tenant_ids('tenant_manage'))
+  );
+
+-- Agency PK is a uuid, so guard the cast with internal.is_uuid before it (avoids 22P02).
+-- Any accepted agency member may manage the agency logo (agencies have no granular catalog).
+drop policy if exists "agencies bucket: member avatar" on storage.objects;
+create policy "agencies bucket: member avatar"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id = 'agencies'
+    and path_tokens[2] = 'avatar'
+    and internal.is_uuid(path_tokens[1])
+    and path_tokens[1]::uuid in (select public.viewer_agency_ids())
+  )
+  with check (
+    bucket_id = 'agencies'
+    and path_tokens[2] = 'avatar'
+    and internal.is_uuid(path_tokens[1])
+    and path_tokens[1]::uuid in (select public.viewer_agency_ids())
+  );
+
 -- ============================================================
 -- GraphQL views over storage.objects
 -- ============================================================
@@ -2712,7 +2825,7 @@ create or replace view public.storage_profiles
   where obj.bucket_id = 'profiles'
     and internal.is_uuid(obj.path_tokens[1]);
 
-grant select on public.storage_profiles to authenticated, anon;
+grant select on public.storage_profiles to authenticated, anon, service_role;
 
 -- pg_graphql foreign_keys naming is counterintuitive: `local_name` is the field name on
 -- the PARENT type (here `profiles`) returning a collection back; `foreign_name` is the
@@ -2737,9 +2850,53 @@ create or replace view public.storage_organizations
   where obj.bucket_id = 'organizations'
     and obj.path_tokens[1] ~ '^[0-9]+$';
 
-grant select on public.storage_organizations to authenticated, anon;
+grant select on public.storage_organizations to authenticated, anon, service_role;
 
 comment on view public.storage_organizations is e'@graphql({"primary_key_columns": ["storage_organization_id"], "foreign_keys": [{"local_name": "storage_organizations", "local_columns": ["organization_id"], "foreign_name": "organization", "foreign_schema": "public", "foreign_table": "organizations", "foreign_columns": ["organization_id"]}]})';
+
+create or replace view public.storage_tenants
+  with (security_invoker = on) as
+  select
+    obj.id                                       as storage_tenant_id,
+    obj.bucket_id,
+    obj.name,
+    obj.path_tokens[1]::int                      as tenant_id,
+    obj.path_tokens[2]                           as folder,
+    obj.metadata->>'mimetype'                    as mimetype,
+    (obj.metadata->>'contentLength')::bigint     as content_length,
+    obj.metadata,
+    obj.created_at,
+    obj.updated_at,
+    '/storage/v1/object/public/' || obj.bucket_id || '/' || obj.name as src
+  from storage.objects as obj
+  where obj.bucket_id = 'tenants'
+    and obj.path_tokens[1] ~ '^[0-9]+$';
+
+grant select on public.storage_tenants to authenticated, anon, service_role;
+
+comment on view public.storage_tenants is e'@graphql({"primary_key_columns": ["storage_tenant_id"], "foreign_keys": [{"local_name": "storage_tenants", "local_columns": ["tenant_id"], "foreign_name": "tenant", "foreign_schema": "public", "foreign_table": "tenants", "foreign_columns": ["tenant_id"]}]})';
+
+create or replace view public.storage_agencies
+  with (security_invoker = on) as
+  select
+    obj.id                                       as storage_agency_id,
+    obj.bucket_id,
+    obj.name,
+    obj.path_tokens[1]::uuid                     as agency_id,
+    obj.path_tokens[2]                           as folder,
+    obj.metadata->>'mimetype'                    as mimetype,
+    (obj.metadata->>'contentLength')::bigint     as content_length,
+    obj.metadata,
+    obj.created_at,
+    obj.updated_at,
+    '/storage/v1/object/public/' || obj.bucket_id || '/' || obj.name as src
+  from storage.objects as obj
+  where obj.bucket_id = 'agencies'
+    and internal.is_uuid(obj.path_tokens[1]);
+
+grant select on public.storage_agencies to authenticated, anon, service_role;
+
+comment on view public.storage_agencies is e'@graphql({"primary_key_columns": ["storage_agency_id"], "foreign_keys": [{"local_name": "storage_agencies", "local_columns": ["agency_id"], "foreign_name": "agency", "foreign_schema": "public", "foreign_table": "agencies", "foreign_columns": ["agency_id"]}]})';
 
 -- Sessions: list and revoke the viewer's own auth sessions.
 -- Uses security definer to read auth.sessions (not exposed to anon/authenticated).
@@ -2824,8 +2981,13 @@ create or replace function protected.tenant_create(
         values (_organization_id, $1, current_timestamp)
         returning organization_membership_id into _organization_membership_id;
 
+      -- Founder gets the org wildcard plus an explicit tenant_manage grant on the espejo org, so
+      -- tenant-level authority (viewer_permission_tenant_ids) is real and grantable, not only a
+      -- side effect of holding '*'.
       insert into public.organization_membership_permissions (organization_membership_id, permission_id)
-        values (_organization_membership_id, '*');
+        values
+          (_organization_membership_id, '*'),
+          (_organization_membership_id, 'tenant_manage');
 
       return next _tenant;
     end;
@@ -2854,6 +3016,94 @@ create or replace function public.viewer_tenant_create(
 
 revoke execute on function public.viewer_tenant_create(text, text) from public;
 grant execute on function public.viewer_tenant_create(text, text) to anon, authenticated;
+
+-- Rename a tenant. Exposed as a pg_graphql Mutation (setof rows 1, volatile) so client
+-- components can call it via useGraphyMutation instead of a pass-through Server Action.
+-- Gated by tenant_manage; the tenant_name length check on the column enforces 1..256.
+create or replace function public.viewer_tenant_update(
+  tenant_id    int,
+  tenant_name  text
+)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _tenant public.tenants;
+    begin
+      if not public.viewer_has_tenant_permission($1, 'tenant_manage') then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      update public.tenants
+        set tenant_name = $2,
+            tenant_updated_at = current_timestamp
+        where public.tenants.tenant_id = $1
+        returning * into _tenant;
+
+      return next _tenant;
+    end;
+  $$;
+
+-- Tenant onboarding writes. Both require tenant_manage on the tenant. `set` records a non-derivable
+-- step's status in tenant_onboarding_state (jsonb_set is atomic, no read-modify-write race); `finish`
+-- stamps tenant_onboarded_at so the soft banner stops. Derivable steps (logo, first member) are never
+-- written — they are computed at read time from storage/memberships.
+create or replace function public.viewer_tenant_onboarding_set(
+  tenant_id  int,
+  step       text,
+  status     text
+)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _tenant public.tenants;
+    begin
+      if not public.viewer_has_tenant_permission($1, 'tenant_manage') then
+        raise exception 'no_permission' using errcode = 'P0001';
+      elsif $3 not in ('done', 'skipped', 'pending') then
+        raise exception 'invalid_status' using errcode = 'P0001';
+      end if;
+
+      update public.tenants
+        set tenant_onboarding_state = jsonb_set(tenant_onboarding_state, array[$2], to_jsonb($3::text), true),
+            tenant_updated_at = current_timestamp
+        where public.tenants.tenant_id = $1
+        returning * into _tenant;
+
+      return next _tenant;
+    end;
+  $$;
+
+create or replace function public.viewer_tenant_onboarding_finish(tenant_id int)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _tenant public.tenants;
+    begin
+      if not public.viewer_has_tenant_permission($1, 'tenant_manage') then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      update public.tenants
+        set tenant_onboarded_at = current_timestamp,
+            tenant_updated_at = current_timestamp
+        where public.tenants.tenant_id = $1
+        returning * into _tenant;
+
+      return next _tenant;
+    end;
+  $$;
 
 create or replace function protected.organization_create(
   profile_id         uuid,

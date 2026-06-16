@@ -18,11 +18,14 @@ type Documents = {
   "\n  query SessionsSectionPageQuery {\n    viewerSessions {\n      edges {\n        node {\n          ...SessionsSectionSessionFragment\n        }\n      }\n    }\n  }\n": typeof types.SessionsSectionPageQueryDocument;
   "\n  fragment SessionsSectionSessionFragment on UserSessions {\n    id\n    userAgent\n    ip\n    createdAt\n    refreshedAt\n    notAfter\n  }\n": typeof types.SessionsSectionSessionFragmentFragmentDoc;
   "\n  query HomePickerPageQuery {\n    viewerOrganizations(\n      filter: { organizationDisabledAt: { is: NULL } }\n      orderBy: [{ organizationName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organizationId\n          organizationName\n          organizationSlug\n          tenant {\n            tenantId\n            tenantSlug\n            tenantName\n          }\n        }\n      }\n    }\n  }\n": typeof types.HomePickerPageQueryDocument;
+  "\n  mutation SetTenantOnboardingStepMutation($tenant_id: Int!, $step: String!, $status: String!) {\n    tenant: viewerTenantOnboardingSet(tenantId: $tenant_id, step: $step, status: $status) {\n      tenantId\n    }\n  }\n": typeof types.SetTenantOnboardingStepMutationDocument;
+  "\n  mutation FinishTenantOnboardingMutation($tenant_id: Int!) {\n    tenant: viewerTenantOnboardingFinish(tenantId: $tenant_id) {\n      tenantId\n      tenantOnboardedAt\n    }\n  }\n": typeof types.FinishTenantOnboardingMutationDocument;
   "\n  mutation CreateOrganizationFormMutation($organization_name: String!, $organization_slug: String!, $tenant_id: Int!) {\n    organization: viewerOrganizationCreate(\n      organizationName: $organization_name\n      organizationSlug: $organization_slug\n      tenantId: $tenant_id\n    ) {\n      organizationId\n      organizationSlug\n    }\n  }\n": typeof types.CreateOrganizationFormMutationDocument;
   "\n  mutation EditOrganizationMembershipGrantPermissionMutation($organization_membership_id: Int!, $permission_id: String!) {\n    insertIntoOrganizationMembershipPermissionsCollection(\n      objects: [{ organizationMembershipId: $organization_membership_id, permissionId: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditOrganizationMembershipGrantPermissionMutationDocument;
   "\n  mutation EditOrganizationMembershipRevokePermissionMutation($organization_membership_id: Int!, $permission_id: String!) {\n    deleteFromOrganizationMembershipPermissionsCollection(\n      filter: { organizationMembershipId: { eq: $organization_membership_id }, permissionId: { eq: $permission_id } }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditOrganizationMembershipRevokePermissionMutationDocument;
   "\n  mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($organization_membership_id: Int!, $now: Datetime!) {\n    updateOrganizationMembershipsCollection(\n      filter: { organizationMembershipId: { eq: $organization_membership_id } }\n      set: { organizationMembershipRevokedAt: $now }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.EditOrganizationMembershipRevokeOrganizationMembershipMutationDocument;
   "\n  mutation MembersPendingInvitationsCancelMutation($organization_membership_id: Int!, $now: Datetime!) {\n    updateOrganizationMembershipsCollection(\n      filter: {\n        organizationMembershipId: { eq: $organization_membership_id }\n        profileId: { is: NULL }\n        organizationMembershipRevokedAt: { is: NULL }\n        organizationMembershipRejectedAt: { is: NULL }\n      }\n      set: {\n        organizationMembershipRevokedAt: $now\n        organizationMembershipInviteToken: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.MembersPendingInvitationsCancelMutationDocument;
+  "\n  mutation UpdateTenantNameMutation($tenant_id: Int!, $tenant_name: String!) {\n    tenant: viewerTenantUpdate(tenantId: $tenant_id, tenantName: $tenant_name) {\n      tenantId\n      tenantName\n    }\n  }\n": typeof types.UpdateTenantNameMutationDocument;
   "\n  mutation CreateTenantFormMutation($tenant_name: String!, $tenant_slug: String!) {\n    tenant: viewerTenantCreate(tenantName: $tenant_name, tenantSlug: $tenant_slug) {\n      tenantId\n    }\n  }\n": typeof types.CreateTenantFormMutationDocument;
   "\n  mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateProfilesCollection(\n      filter: { profileId: { eq: $profile_id } }\n      set: { profileNameFull: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n": typeof types.OnboardingProfileFormUpdateNameMutationDocument;
   "\n  query HealthQuery {\n    healthCurrentTimestamp\n  }\n": typeof types.HealthQueryDocument;
@@ -77,6 +80,10 @@ const documents: Documents = {
     types.SessionsSectionSessionFragmentFragmentDoc,
   "\n  query HomePickerPageQuery {\n    viewerOrganizations(\n      filter: { organizationDisabledAt: { is: NULL } }\n      orderBy: [{ organizationName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organizationId\n          organizationName\n          organizationSlug\n          tenant {\n            tenantId\n            tenantSlug\n            tenantName\n          }\n        }\n      }\n    }\n  }\n":
     types.HomePickerPageQueryDocument,
+  "\n  mutation SetTenantOnboardingStepMutation($tenant_id: Int!, $step: String!, $status: String!) {\n    tenant: viewerTenantOnboardingSet(tenantId: $tenant_id, step: $step, status: $status) {\n      tenantId\n    }\n  }\n":
+    types.SetTenantOnboardingStepMutationDocument,
+  "\n  mutation FinishTenantOnboardingMutation($tenant_id: Int!) {\n    tenant: viewerTenantOnboardingFinish(tenantId: $tenant_id) {\n      tenantId\n      tenantOnboardedAt\n    }\n  }\n":
+    types.FinishTenantOnboardingMutationDocument,
   "\n  mutation CreateOrganizationFormMutation($organization_name: String!, $organization_slug: String!, $tenant_id: Int!) {\n    organization: viewerOrganizationCreate(\n      organizationName: $organization_name\n      organizationSlug: $organization_slug\n      tenantId: $tenant_id\n    ) {\n      organizationId\n      organizationSlug\n    }\n  }\n":
     types.CreateOrganizationFormMutationDocument,
   "\n  mutation EditOrganizationMembershipGrantPermissionMutation($organization_membership_id: Int!, $permission_id: String!) {\n    insertIntoOrganizationMembershipPermissionsCollection(\n      objects: [{ organizationMembershipId: $organization_membership_id, permissionId: $permission_id }]\n    ) {\n      affectedCount\n    }\n  }\n":
@@ -87,6 +94,8 @@ const documents: Documents = {
     types.EditOrganizationMembershipRevokeOrganizationMembershipMutationDocument,
   "\n  mutation MembersPendingInvitationsCancelMutation($organization_membership_id: Int!, $now: Datetime!) {\n    updateOrganizationMembershipsCollection(\n      filter: {\n        organizationMembershipId: { eq: $organization_membership_id }\n        profileId: { is: NULL }\n        organizationMembershipRevokedAt: { is: NULL }\n        organizationMembershipRejectedAt: { is: NULL }\n      }\n      set: {\n        organizationMembershipRevokedAt: $now\n        organizationMembershipInviteToken: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n":
     types.MembersPendingInvitationsCancelMutationDocument,
+  "\n  mutation UpdateTenantNameMutation($tenant_id: Int!, $tenant_name: String!) {\n    tenant: viewerTenantUpdate(tenantId: $tenant_id, tenantName: $tenant_name) {\n      tenantId\n      tenantName\n    }\n  }\n":
+    types.UpdateTenantNameMutationDocument,
   "\n  mutation CreateTenantFormMutation($tenant_name: String!, $tenant_slug: String!) {\n    tenant: viewerTenantCreate(tenantName: $tenant_name, tenantSlug: $tenant_slug) {\n      tenantId\n    }\n  }\n":
     types.CreateTenantFormMutationDocument,
   "\n  mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {\n    updateProfilesCollection(\n      filter: { profileId: { eq: $profile_id } }\n      set: { profileNameFull: $profile_name_full }\n    ) {\n      affectedCount\n    }\n  }\n":
@@ -206,6 +215,18 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
+  source: "\n  mutation SetTenantOnboardingStepMutation($tenant_id: Int!, $step: String!, $status: String!) {\n    tenant: viewerTenantOnboardingSet(tenantId: $tenant_id, step: $step, status: $status) {\n      tenantId\n    }\n  }\n",
+): typeof import("./graphql").SetTenantOnboardingStepMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  mutation FinishTenantOnboardingMutation($tenant_id: Int!) {\n    tenant: viewerTenantOnboardingFinish(tenantId: $tenant_id) {\n      tenantId\n      tenantOnboardedAt\n    }\n  }\n",
+): typeof import("./graphql").FinishTenantOnboardingMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
   source: "\n  mutation CreateOrganizationFormMutation($organization_name: String!, $organization_slug: String!, $tenant_id: Int!) {\n    organization: viewerOrganizationCreate(\n      organizationName: $organization_name\n      organizationSlug: $organization_slug\n      tenantId: $tenant_id\n    ) {\n      organizationId\n      organizationSlug\n    }\n  }\n",
 ): typeof import("./graphql").CreateOrganizationFormMutationDocument;
 /**
@@ -232,6 +253,12 @@ export function gql(
 export function gql(
   source: "\n  mutation MembersPendingInvitationsCancelMutation($organization_membership_id: Int!, $now: Datetime!) {\n    updateOrganizationMembershipsCollection(\n      filter: {\n        organizationMembershipId: { eq: $organization_membership_id }\n        profileId: { is: NULL }\n        organizationMembershipRevokedAt: { is: NULL }\n        organizationMembershipRejectedAt: { is: NULL }\n      }\n      set: {\n        organizationMembershipRevokedAt: $now\n        organizationMembershipInviteToken: null\n      }\n    ) {\n      affectedCount\n    }\n  }\n",
 ): typeof import("./graphql").MembersPendingInvitationsCancelMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  mutation UpdateTenantNameMutation($tenant_id: Int!, $tenant_name: String!) {\n    tenant: viewerTenantUpdate(tenantId: $tenant_id, tenantName: $tenant_name) {\n      tenantId\n      tenantName\n    }\n  }\n",
+): typeof import("./graphql").UpdateTenantNameMutationDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

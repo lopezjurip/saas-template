@@ -86,11 +86,13 @@ export function AppSidebar({
 
   const items = BUILD_NAV_TREE(tenant["tenantSlug"], current["organizationId"], {
     navHome: t("navHome"),
-    navSettings: t("navSettings"),
+    navOrganization: t("navOrganization"),
+    navCompany: t("navCompany"),
     navGeneral: t("navGeneral"),
     navMembers: t("navMembers"),
     navBilling: t("navBilling"),
     navExternalAccess: t("navExternalAccess"),
+    navDomains: t("navDomains"),
   });
 
   const settingsHref = ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
@@ -204,30 +206,39 @@ function NavGroupItem({ group, activePath }: { group: NavGroup; activePath: stri
 const LOCALE_ES = {
   navHome: "Inicio",
   navSettings: "Configuración",
+  navOrganization: "Organización",
+  navCompany: "Empresa",
   navGeneral: "General",
   navMembers: "Miembros",
   navBilling: "Facturación",
   navExternalAccess: "Acceso externo",
+  navDomains: "Dominios",
   search: "Buscar…",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
   navHome: "Home",
   navSettings: "Settings",
+  navOrganization: "Organization",
+  navCompany: "Company",
   navGeneral: "General",
   navMembers: "Members",
   navBilling: "Billing",
   navExternalAccess: "External access",
+  navDomains: "Domains",
   search: "Search…",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
   navHome: "Início",
   navSettings: "Configurações",
+  navOrganization: "Organização",
+  navCompany: "Empresa",
   navGeneral: "General",
   navMembers: "Membros",
   navBilling: "Cobrança",
   navExternalAccess: "Acesso externo",
+  navDomains: "Domínios",
   search: "Buscar…",
 };
 

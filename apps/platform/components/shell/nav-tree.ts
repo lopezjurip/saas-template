@@ -1,4 +1,4 @@
-import { CreditCard, ExternalLink, Home, type LucideIcon, Settings, Users } from "lucide-react";
+import { Building2, CreditCard, ExternalLink, Globe, Home, type LucideIcon, Settings, Users } from "lucide-react";
 import type { Route } from "next";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
@@ -31,11 +31,13 @@ export type NavItem = NavLeaf | NavGroup;
 
 export type NavLabels = {
   navHome: string;
-  navSettings: string;
+  navOrganization: string;
+  navCompany: string;
   navGeneral: string;
   navMembers: string;
   navBilling: string;
   navExternalAccess: string;
+  navDomains: string;
 };
 
 /**
@@ -55,19 +57,20 @@ export function BUILD_NAV_TREE(tenant_slug: string, organization_id: number, lab
   const home = ROUTE("/t/[tenant_slug]/[organization_id]", params);
   const general = ROUTE("/t/[tenant_slug]/[organization_id]/settings/general", params);
   const members = ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", params);
-  const billing = ROUTE("/t/[tenant_slug]/[organization_id]/settings/billing", params);
   const external = ROUTE("/t/[tenant_slug]/[organization_id]/settings/external-access", params);
+  const tenantGeneral = ROUTE("/t/[tenant_slug]/[organization_id]/settings/tenant/general", params);
+  const billing = ROUTE("/t/[tenant_slug]/[organization_id]/settings/tenant/billing", params);
+  const domains = ROUTE("/t/[tenant_slug]/[organization_id]/settings/tenant/domains", params);
 
   return [
     { id: "home", label: labels.navHome, href: home, path: ROUTE_HREF(home), Icon: Home, exact: true },
     {
-      id: "settings",
-      label: labels.navSettings,
+      id: "organization",
+      label: labels.navOrganization,
       Icon: Settings,
       children: [
         { id: "general", label: labels.navGeneral, href: general, path: ROUTE_HREF(general), Icon: Settings },
         { id: "members", label: labels.navMembers, href: members, path: ROUTE_HREF(members), Icon: Users },
-        { id: "billing", label: labels.navBilling, href: billing, path: ROUTE_HREF(billing), Icon: CreditCard },
         {
           id: "external",
           label: labels.navExternalAccess,
@@ -75,6 +78,22 @@ export function BUILD_NAV_TREE(tenant_slug: string, organization_id: number, lab
           path: ROUTE_HREF(external),
           Icon: ExternalLink,
         },
+      ],
+    },
+    {
+      id: "company",
+      label: labels.navCompany,
+      Icon: Building2,
+      children: [
+        {
+          id: "tenant-general",
+          label: labels.navGeneral,
+          href: tenantGeneral,
+          path: ROUTE_HREF(tenantGeneral),
+          Icon: Building2,
+        },
+        { id: "billing", label: labels.navBilling, href: billing, path: ROUTE_HREF(billing), Icon: CreditCard },
+        { id: "domains", label: labels.navDomains, href: domains, path: ROUTE_HREF(domains), Icon: Globe },
       ],
     },
   ];

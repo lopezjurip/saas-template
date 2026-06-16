@@ -23,9 +23,11 @@ import {
 import type { Route } from "next";
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { EntityAvatar } from "~/components/entity-avatar";
 import { ConversationsBell } from "~/components/shell/conversations-bell";
 import type { AffiliationState } from "~/lib/agencies";
 import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE } from "~/lib/route";
 import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
 import { actionUpdateAffiliateMembership } from "./actions";
 
@@ -79,7 +81,12 @@ export function AgencyConsole({
     <div className="@container bg-background relative flex min-h-svh w-full flex-col overflow-hidden">
       <header className="border-border bg-background flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 @min-[768px]:px-6">
         <div className="flex min-w-0 items-center gap-2.5">
-          <AgencyTile size={36} />
+          <EntityAvatar
+            entity="agencies"
+            entityId={data.agency_id}
+            name={data.agency_name}
+            className="size-9 rounded-lg text-xs"
+          />
           <div className="flex min-w-0 flex-col gap-px">
             <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">
               {data.agency_name}
@@ -95,6 +102,17 @@ export function AgencyConsole({
           <span className="border-border text-muted-foreground bg-muted/50 hidden items-center gap-1.5 whitespace-nowrap rounded-full border px-2 py-0.5 text-tiny font-medium leading-none tracking-[0.02em] @min-[768px]:flex">
             <ShieldCheck size={11} /> {t("topbar_affiliate")}
           </span>
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground size-8"
+            aria-label={t("settings")}
+          >
+            <Link href={ROUTE("/a/[agency_slug]/settings", { agency_slug: data.agency_slug })}>
+              <Settings size={16} />
+            </Link>
+          </Button>
           <ConversationsBell
             scope={{ kind: "agency", agency_slug: data.agency_slug, agency_id: data.agency_id }}
             compact={true}
@@ -537,17 +555,6 @@ function ConsoleProfileTab({ data, t }: { data: ConsoleData; t: Translate }) {
 /**
  * Inline atoms scoped to this surface to honor the file-list constraint.
  */
-function AgencyTile({ size = 40 }: { size?: number }) {
-  return (
-    <span
-      style={{ width: size, height: size }}
-      className="border-border bg-muted text-foreground inline-flex shrink-0 items-center justify-center rounded-lg border"
-    >
-      <Building2 size={Math.round(size * 0.46)} />
-    </span>
-  );
-}
-
 function AffiliationBadge({ state, label }: { state: AffiliationState; label: string }) {
   const base =
     "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-tiny font-medium leading-[1.2] tracking-[0.01em]";
@@ -619,6 +626,7 @@ function CONSOLE_HEAD(t: Translate): Record<ConsoleTab, { title: string; desc: s
 const LOCALE_ES = {
   page_title: "Consola de agencia",
   topbar_console: "Consola de agencia",
+  settings: "Ajustes",
   topbar_affiliate: "Afiliado",
   tabs_aria: "Secciones de la agencia",
   tab_team: "Equipo",
@@ -684,6 +692,7 @@ const LOCALE_ES = {
 const LOCALE_EN: typeof LOCALE_ES = {
   page_title: "Agency console",
   topbar_console: "Agency console",
+  settings: "Settings",
   topbar_affiliate: "Affiliate",
   tabs_aria: "Agency sections",
   tab_team: "Team",
@@ -748,6 +757,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
 const LOCALE_PT: typeof LOCALE_ES = {
   page_title: "Console da agência",
   topbar_console: "Console da agência",
+  settings: "Configurações",
   topbar_affiliate: "Afiliado",
   tabs_aria: "Seções da agência",
   tab_team: "Equipe",

@@ -242,7 +242,7 @@ Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to fi
 **Custom domain mapping (`public.tenant_domains`, many domains per tenant)** staged in schema, not yet wired into proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates advanced features once billing exists.
 
 **Permissions (capability-based, not role-based):**
-- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs. Ships English admin capabilities only: `*`, `organization_manage`, `members_manage`, `presets_manage`. Reserved slug `*` is wildcard — membership holding `*` passes every permission check inside its organization. Used for tenant creator and other "full admin" grants without enumerating every slug.
+- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs. Ships English admin capabilities: `*`, `organization_manage` (org-level: name, logo, members, presets), `tenant_manage` (company/tenant-level: name, logo, billing, domains — distinct from `organization_manage`), `members_manage`, `presets_manage`. Reserved slug `*` is wildcard — membership holding `*` passes every permission check inside its organization (and, via the tenant helpers, every tenant check too). Used for tenant creator and other "full admin" grants without enumerating every slug.
 - `public.organization_membership_permissions(organization_membership_id, permission_id)` — explicit grants. Organization/profile derive through membership row. Composite PK prevents duplicate grants; deletion cascades from memberships.
 - `public.permission_presets(permission_preset_id, organization_id?, permission_preset_name, permission_preset_slugs[])` — UX-only named bundles; carries no enforcement. `organization_id IS NULL` = global preset. Seeded global presets: `Owner` / `Administrator` / `Member manager`. Trigger validates every slug.
 
@@ -266,6 +266,8 @@ Permission-backed (DB lookup, security definer; wildcard `*` honored):
 - `public.viewer_permission_org_ids(permission_id)` — orgs where caller has perm (or `*`). Use in RLS `IN`-subqueries.
 - `public.viewer_has_permission(organization_id, permission_id)` — boolean shortcut for single (org, perm) check.
 - `public.viewer_organization_membership_permissions()` — setof `(organization_id, permission_id)` for UI listing.
+- `public.viewer_permission_tenant_ids(permission_id)` — tenants where caller has perm (or `*`) on **any org in that tenant**. There is no tenant-membership table — tenant authority rides on org grants (the espejo org from `tenant_create` is where `tenant_manage` is granted by default). Use in RLS `IN`-subqueries.
+- `public.viewer_has_tenant_permission(tenant_id, permission_id)` — boolean shortcut for a single (tenant, perm) check. Gates the `tenants` UPDATE policy, the `tenants` storage bucket, the company settings layout, and the tenant onboarding RPCs.
 
 ## Critical Rules
 
@@ -323,6 +325,20 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/auth/callbac
 `searchParams` typed as `Record<string, string | string[] | undefined>` because URL params can repeat. Narrow with `SINGLE(sp["foo"])` from `@packages/utils/array` to get first value as `string | undefined`.
 
 **Exception:** `page.tsx` or `layout.tsx` not `async` and not accessing `params` or `searchParams` — no typed props needed. But always make `async` if needing any server-side capability.
+
+### API route handlers — validate input with `next-zod-route`
+For `route.ts` handlers that consume dynamic path params, query, or a JSON body, validate with **`next-zod-route`** instead of hand-parsing — it returns 400 on bad input and hands the handler fully-typed `context.params` / `context.query` / `context.body`. The param schema keys must match the `[segment]` folder names. Use `z.guid()` (loose, version-agnostic — matches the DB's `internal.is_uuid`) for uuid path params, **not** `z.uuid()` (which rejects non-RFC-version uuids like the seed's). The handler may return any `Response` (e.g. a streamed image).
+
+```ts
+// app/api/v1/organizations/[organization_id]/avatar/route.ts
+export const GET = createZodRoute()
+  .params(z.object({ organization_id: z.coerce.number().int().positive() }))
+  .handler(async (_request, context) => {
+    return streamPublicAvatar(/* … context.params.organization_id … */);
+  });
+```
+
+Routes whose "invalid input" is a user-facing **redirect** (e.g. the auth `callback`/`confirm` flows redirecting to `/auth/error`) deliberately keep hand-parsing — next-zod-route's 400 doesn't fit that UX.
 
 ### Bracket notation for external data
 Reading properties off objects from outside program (GraphQL/REST responses, parsed JSON, file contents, webhook payloads, MCP tool results) → use bracket notation, not dot access.
@@ -417,8 +433,16 @@ Action matches `rpcError.message` against LOCALES keys — never parse prose.
 **Client choice:**
 - **Service-role client** for RPCs requiring `caller_id` passed explicitly (service role has no JWT `sub`).
 - **Authenticated server client** for RPCs calling `viewer_profile_id()` internally (e.g., `actionRespondInvitation`).
-- **`useGraphyMutation` directly from client components** for viewer-scoped RPCs whose entire workflow is transactional SQL and which need no server-only API or secret. Do not add a pass-through Server Action.
-- **Creation RPC return shape:** `protected.*_create(profile_id, ...)` and `public.viewer_*_create(...)` return `setof public.<table> rows 1`, explicitly `volatile`. pg_graphql exposes the viewer function as a singular table object on `Mutation`, allowing callers to select the created row fields.
+- **`useGraphyMutation` directly from client components — the DEFAULT for viewer-scoped mutations.** If an RPC's entire workflow is transactional SQL, calls `viewer_*` helpers internally, and needs no server-only API or secret, expose it through pg_graphql and call it as a GraphQL mutation from the client. **Do NOT wrap it in a Server Action** — a pass-through `action*` that only forwards args to `.rpc()` is an anti-pattern (it adds a network hop, a file, and a serialization boundary for nothing). Reserve Server Actions for workflows that genuinely need the server: a secret/service-role, a non-DB side effect (`auth.admin.*`, email), or `redirect()`/cookie work. Renames, status toggles, onboarding step writes, soft-dismiss, etc. → GraphQL mutation, not an action.
+  ```tsx
+  // ❌ pass-through action — don't
+  export const actionRenameTenant = authedAction.inputSchema(...).action(({ ctx }) => ctx.supabase.rpc("viewer_tenant_update", ...));
+  // ✅ GraphQL mutation from the client component
+  const [, renameTenant] = useGraphyMutation(UpdateTenantNameMutation);
+  const { data, error } = await renameTenant({ tenant_id, tenant_name });
+  ```
+- **Mutating-RPC return shape + exposure:** viewer-scoped mutating RPCs (`public.viewer_*_create` / `_update` / etc.) return `setof public.<table> rows 1` and are explicitly `volatile` (volatility decides Query vs Mutation in pg_graphql). Leave the default `EXECUTE` grant — `public` already covers `anon`/`authenticated`, and the function self-guards via its internal `viewer_*` permission check, so the `revoke … from public; grant … to anon, authenticated` boilerplate is unnecessary noise. pg_graphql then exposes the function as a singular table object on `Mutation`.
+- **Regen workflow after adding/altering an RPC:** edit `schema.sql` → `pnpm db:reset` → `pnpm generate:graphql:schema` (live introspection — **not** `:local`, which only reformats the cached JSON and will silently miss new fields) → `pnpm generate:types`. Then write the `gql()` doc and run `pnpm generate:graphql:platform`.
 
 ### SQL / PL/pgSQL style
 
