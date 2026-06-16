@@ -1,4 +1,4 @@
-import { getSupabaseClientUser } from "@packages/supabase/client.browser";
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { ButtonSpinner } from "@packages/ui-common/button-spinner";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { INITIALS_OF } from "@packages/utils/string";
@@ -15,10 +15,10 @@ export default async function AuthLogoutPage() {
   const {
     data: { profile },
   } = await getViewerProfileRedirect();
-  const user = await getSupabaseClientUser();
+  const user = await getSupabaseServerUser();
 
   const name_full = profile["profileNameFull"];
-  const email = user["email"];
+  const email = user?.["email"];
   const initials = INITIALS_OF(name_full || email || "User");
 
   const { t } = await getRosetta(LOCALES, locale);
