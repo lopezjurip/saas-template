@@ -1,39 +1,13 @@
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Logo } from "@packages/ui-common/logo";
-import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { LocaleToggle } from "~/components/locale-toggle";
+import { StatusBadge } from "~/components/status-badge";
 import { ThemeToggle } from "~/components/theme-toggle";
-import { APP_URL } from "~/lib/constants";
 import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
-
-async function StatusBadge({ okLabel, downLabel }: { okLabel: string; downLabel: string }) {
-  let ok = false;
-  try {
-    // Build the health URL from the actual request (proto + host) so it works over the dev HTTPS
-    // origin and behind the prod load balancer alike. APP_URL is only a fallback — in dev it carries
-    // the "http://" scheme while the server runs on "https://", which makes a hardcoded fetch fail.
-    const h = await headers();
-    const host = h.get("x-forwarded-host") ?? h.get("host");
-    const proto = h.get("x-forwarded-proto") ?? APP_URL.protocol.replace(":", "");
-    const healthUrl = host ? `${proto}://${host}/health` : new URL("/health", APP_URL).toString();
-    const res = await fetch(healthUrl, { next: { revalidate: 60 } });
-    const json = (await res.json()) as { ok: boolean };
-    ok = json["ok"] === true;
-  } catch {}
-
-  return (
-    <Badge variant="outline" className="mt-1 w-fit gap-1.5 rounded-full font-normal text-muted-foreground">
-      <span aria-hidden="true" className={cn("h-1.5 w-1.5 rounded-full", ok ? "bg-emerald-500" : "bg-red-500")} />
-      {ok ? okLabel : downLabel}
-    </Badge>
-  );
-}
 
 export default async function MarketingLayout(props: LayoutProps<"/">) {
   const { t, locale } = await getRosetta(LOCALES);
@@ -163,7 +137,7 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
               <Logo />
             </Link>
             <p className="text-sm/normal leading-relaxed text-muted-foreground text-pretty">{t("footer.tagline")}</p>
-            <StatusBadge okLabel={t("footer.status")} downLabel={t("footer.status_down")} />
+            <StatusBadge />
           </div>
           {footerColumns.map((col) => (
             <nav key={col.title} aria-label={col.title} className="flex min-w-0 flex-col gap-2.5">
@@ -209,8 +183,6 @@ const LOCALE_ES = {
   "cta.signin": "Ingresar",
   "cta.dashboard": "Ir al panel",
   "footer.tagline": "La plataforma SaaS lista para producción para equipos que avanzan.",
-  "footer.status": "Todo operativo",
-  "footer.status_down": "Interrupción del servicio",
   "footer.product.title": "Producto",
   "footer.product.a": "Inicio",
   "footer.product.b": "Características",
@@ -245,8 +217,6 @@ const LOCALE_EN: typeof LOCALE_ES = {
   "cta.signin": "Sign in",
   "cta.dashboard": "Go to dashboard",
   "footer.tagline": "The production-ready SaaS platform for teams that keep moving.",
-  "footer.status": "All systems normal",
-  "footer.status_down": "Service disruption",
   "footer.product.title": "Product",
   "footer.product.a": "Home",
   "footer.product.b": "Features",
@@ -281,8 +251,6 @@ const LOCALE_PT: typeof LOCALE_ES = {
   "cta.signin": "Entrar",
   "cta.dashboard": "Ir para o painel",
   "footer.tagline": "A plataforma SaaS pronta para produção para times que avançam.",
-  "footer.status": "Tudo operacional",
-  "footer.status_down": "Interrupção do serviço",
   "footer.product.title": "Produto",
   "footer.product.a": "Início",
   "footer.product.b": "Recursos",
