@@ -1,4 +1,4 @@
-import { Building2, CreditCard, ExternalLink, Globe, Home, type LucideIcon, Settings, Users } from "lucide-react";
+import { Building2, ExternalLink, Globe, Home, type LucideIcon, Settings, Users } from "lucide-react";
 import type { Route } from "next";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
@@ -35,7 +35,6 @@ export type NavLabels = {
   navCompany: string;
   navGeneral: string;
   navMembers: string;
-  navBilling: string;
   navExternalAccess: string;
   navDomains: string;
 };
@@ -59,7 +58,6 @@ export function BUILD_NAV_TREE(tenant_slug: string, organization_id: number, lab
   const members = ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", params);
   const external = ROUTE("/t/[tenant_slug]/[organization_id]/settings/external-access", params);
   const tenantGeneral = ROUTE("/t/[tenant_slug]/[organization_id]/settings/tenant/general", params);
-  const billing = ROUTE("/t/[tenant_slug]/[organization_id]/settings/tenant/billing", params);
   const domains = ROUTE("/t/[tenant_slug]/[organization_id]/settings/tenant/domains", params);
 
   return [
@@ -92,7 +90,6 @@ export function BUILD_NAV_TREE(tenant_slug: string, organization_id: number, lab
           path: ROUTE_HREF(tenantGeneral),
           Icon: Building2,
         },
-        { id: "billing", label: labels.navBilling, href: billing, path: ROUTE_HREF(billing), Icon: CreditCard },
         { id: "domains", label: labels.navDomains, href: domains, path: ROUTE_HREF(domains), Icon: Globe },
       ],
     },
@@ -120,7 +117,7 @@ export function GROUP_CONTAINS_ACTIVE(pathname: string, group: NavGroup): boolea
 
 /**
  * Picks the single active leaf id (longest matching path wins), for highlight.
- * @example PICK_ACTIVE_LEAF_ID(items, "/t/acme/42/settings/billing") // "billing"
+ * @example PICK_ACTIVE_LEAF_ID(items, "/t/acme/42/settings/members") // "members"
  */
 export function PICK_ACTIVE_LEAF_ID(items: NavItem[], pathname: string): string | null {
   let bestId: string | null = null;

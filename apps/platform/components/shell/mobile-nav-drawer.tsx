@@ -40,7 +40,6 @@ export function MobileNavDrawer({
     navCompany: t("navCompany"),
     navGeneral: t("navGeneral"),
     navMembers: t("navMembers"),
-    navBilling: t("navBilling"),
     navExternalAccess: t("navExternalAccess"),
     navDomains: t("navDomains"),
   });
@@ -176,7 +175,6 @@ const LOCALE_ES = {
   navCompany: "Empresa",
   navGeneral: "General",
   navMembers: "Miembros",
-  navBilling: "Facturación",
   navExternalAccess: "Acceso externo",
   navDomains: "Dominios",
 };
@@ -194,7 +192,6 @@ const LOCALES = {
     navCompany: "Company",
     navGeneral: "General",
     navMembers: "Members",
-    navBilling: "Billing",
     navExternalAccess: "External access",
     navDomains: "Domains",
   } satisfies typeof LOCALE_ES,
@@ -209,7 +206,6 @@ const LOCALES = {
     navCompany: "Empresa",
     navGeneral: "General",
     navMembers: "Membros",
-    navBilling: "Cobrança",
     navExternalAccess: "Acesso externo",
     navDomains: "Domínios",
   } satisfies typeof LOCALE_ES,

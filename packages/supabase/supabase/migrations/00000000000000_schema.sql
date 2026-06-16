@@ -504,12 +504,10 @@ create table if not exists public.tenants (
   tenant_id serial primary key,
   tenant_slug extensions.citext not null unique check (internal.slug_reserved_validate(tenant_slug::text)),
   tenant_name text not null check (char_length(tenant_name) between 1 and 256),
-  -- Onboarding (extensible, resumable, soft nudge). Derivable steps (logo set, first member
-  -- invited) are computed at read time; non-derivable steps (e.g. billing) record their status
-  -- in `tenant_onboarding_state` as { "<step>": "done" | "skipped" }. `tenant_onboarded_at` is
-  -- set when the whole flow is dismissed/finished so the banner stops.
+  -- Onboarding (extensible, resumable, soft nudge). Steps (logo set, first member invited) are
+  -- derivable — computed at read time from storage/memberships, never stored. `tenant_onboarded_at`
+  -- is set when the whole flow is dismissed/finished so the banner stops.
   tenant_onboarded_at timestamptz,
-  tenant_onboarding_state jsonb not null default '{}'::jsonb,
   tenant_disabled_at timestamptz,
   tenant_created_at timestamptz not null default current_timestamp,
   tenant_updated_at timestamptz not null default current_timestamp
@@ -3148,40 +3146,9 @@ create or replace function public.viewer_tenant_update(
     end;
   $$;
 
--- Tenant onboarding writes. Both require tenant_manage on the tenant. `set` records a non-derivable
--- step's status in tenant_onboarding_state (jsonb_set is atomic, no read-modify-write race); `finish`
--- stamps tenant_onboarded_at so the soft banner stops. Derivable steps (logo, first member) are never
--- written — they are computed at read time from storage/memberships.
-create or replace function public.viewer_tenant_onboarding_set(
-  tenant_id  int,
-  step       text,
-  status     text
-)
-  returns setof public.tenants rows 1
-  volatile
-  security definer
-  language plpgsql
-  set search_path to ''
-  as $$
-    declare
-      _tenant public.tenants;
-    begin
-      if not public.viewer_has_tenant_permission($1, 'tenant_manage') then
-        raise exception 'no_permission' using errcode = 'P0001';
-      elsif $3 not in ('done', 'skipped', 'pending') then
-        raise exception 'invalid_status' using errcode = 'P0001';
-      end if;
-
-      update public.tenants
-        set tenant_onboarding_state = jsonb_set(tenant_onboarding_state, array[$2], to_jsonb($3::text), true),
-            tenant_updated_at = current_timestamp
-        where public.tenants.tenant_id = $1
-        returning * into _tenant;
-
-      return next _tenant;
-    end;
-  $$;
-
+-- Tenant onboarding finish. Requires tenant_manage on the tenant. Stamps tenant_onboarded_at so
+-- the soft banner stops. Steps (logo, first member) are derivable — computed at read time from
+-- storage/memberships, never written.
 create or replace function public.viewer_tenant_onboarding_finish(tenant_id int)
   returns setof public.tenants rows 1
   volatile

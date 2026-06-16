@@ -1,30 +1,45 @@
-import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { ProfileAvatarControls } from "~/components/profile-avatar-controls";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { getRosetta } from "~/lib/i18n.server";
 import { ProfileForm } from "./profile-form";
+
+/**
+ * Viewer's display name plus latest avatar in one round-trip — the avatar nests through the
+ * `storage_profiles` relationship on Profiles (RLS-scoped).
+ */
+const AccountProfilePageQuery = /*#__PURE__*/ gql(`
+  query AccountProfilePageQuery {
+    profile: viewerProfile {
+      profileNameFull
+      avatar: storage_profiles(
+        filter: { folder: { eq: "avatar" } }
+        orderBy: [{ createdAt: DescNullsLast }]
+        first: 1
+      ) {
+        edges {
+          node {
+            src
+          }
+        }
+      }
+    }
+  }
+`);
 
 export default async function AccountProfilePage(props: PageProps<"/home/account/profile">) {
   const user = await getSupabaseServerUser();
   if (!user) redirect("/auth");
 
-  const supabase = await createSupabaseServerClient();
-  const [profileResult, avatarResult] = await Promise.all([
-    supabase.from("profiles").select("profile_name_full").eq("profile_id", user.id).maybeSingle(),
-    supabase
-      .from("storage_profiles")
-      .select("src")
-      .eq("profile_id", user.id)
-      .eq("folder", "avatar")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const graphy = await getGraphySession();
+  const { data } = await graphy.query({ query: AccountProfilePageQuery });
 
-  const name = profileResult.data?.["profile_name_full"] ?? "";
-  const avatarSrc = avatarResult.data?.["src"]
-    ? new URL(avatarResult.data["src"], process.env["NEXT_PUBLIC_SUPABASE_URL"]!).toString()
-    : null;
+  const profile = data?.["profile"] ?? null;
+  const name = profile?.["profileNameFull"] ?? "";
+  const avatarRaw = profile?.["avatar"]?.["edges"]?.[0]?.["node"]?.["src"] ?? null;
+  const avatarSrc = avatarRaw ? new URL(avatarRaw, process.env["NEXT_PUBLIC_SUPABASE_URL"]!).toString() : null;
 
   const { t } = await getRosetta(LOCALES);
 
