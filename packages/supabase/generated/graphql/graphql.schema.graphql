@@ -370,6 +370,24 @@ type Agencies implements Node {
   agencyUpdatedAt: Datetime!
   """Globally Unique Record Identifier"""
   nodeId: ID!
+  storage_agencies(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: StorageAgenciesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [StorageAgenciesOrderBy!]
+  ): StorageAgenciesConnection
 }
 
 type AgenciesConnection {
@@ -981,6 +999,9 @@ type Mutation {
   viewerOrganizationMembershipAccept(organizationMembershipId: Int!): OrganizationMemberships
   viewerOrganizationMembershipReject(organizationMembershipId: Int!): OrganizationMemberships
   viewerTenantCreate(tenantName: String!, tenantSlug: String!): Tenants
+  viewerTenantOnboardingFinish(tenantId: Int!): Tenants
+  viewerTenantOnboardingSet(status: String!, step: String!, tenantId: Int!): Tenants
+  viewerTenantUpdate(tenantId: Int!, tenantName: String!): Tenants
 }
 
 interface Node {
@@ -2154,6 +2175,25 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [ProfilesOrderBy!]
   ): ProfilesConnection
+  """A pagable collection of type `StorageAgencies`"""
+  storageAgenciesCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: StorageAgenciesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [StorageAgenciesOrderBy!]
+  ): StorageAgenciesConnection
   """A pagable collection of type `StorageOrganizations`"""
   storageOrganizationsCollection(
     """Query values in the collection after the provided cursor"""
@@ -2192,6 +2232,25 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [StorageProfilesOrderBy!]
   ): StorageProfilesConnection
+  """A pagable collection of type `StorageTenants`"""
+  storageTenantsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: StorageTenantsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [StorageTenantsOrderBy!]
+  ): StorageTenantsConnection
   """A pagable collection of type `TenantDomains`"""
   tenantDomainsCollection(
     """Query values in the collection after the provided cursor"""
@@ -2271,6 +2330,7 @@ type Query {
   viewerAgencyBySlug(agencySlug: String!): Agencies
   viewerHasAgencyPermission(organizationId: Int!, permissionId: String!): Boolean
   viewerHasPermission(organizationId: Int!, permissionId: String!): Boolean
+  viewerHasTenantPermission(permissionId: String!, tenantId: Int!): Boolean
   viewerIsAgencyMember: Boolean
   viewerOrganizationById(organizationId: Int!): Organizations
   viewerOrganizationMembershipPending(
@@ -2352,6 +2412,70 @@ type Query {
     orderBy: [TenantsOrderBy!]
   ): TenantsConnection
   viewerUnreadCount(pAgencyId: UUID, pOrganizationId: Int, pScope: String): Int
+}
+
+type StorageAgencies implements Node {
+  agency: Agencies
+  agencyId: UUID
+  bucketId: String
+  contentLength: BigInt
+  createdAt: Datetime
+  folder: String
+  metadata: JSON
+  mimetype: String
+  name: String
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  src: String
+  storageAgencyId: UUID
+  updatedAt: Datetime
+}
+
+type StorageAgenciesConnection {
+  edges: [StorageAgenciesEdge!]!
+  pageInfo: PageInfo!
+}
+
+type StorageAgenciesEdge {
+  cursor: String!
+  node: StorageAgencies!
+}
+
+input StorageAgenciesFilter {
+  agencyId: UUIDFilter
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [StorageAgenciesFilter!]
+  bucketId: StringFilter
+  contentLength: BigIntFilter
+  createdAt: DatetimeFilter
+  folder: StringFilter
+  mimetype: StringFilter
+  name: StringFilter
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: StorageAgenciesFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [StorageAgenciesFilter!]
+  src: StringFilter
+  storageAgencyId: UUIDFilter
+  updatedAt: DatetimeFilter
+}
+
+input StorageAgenciesOrderBy {
+  agencyId: OrderByDirection
+  bucketId: OrderByDirection
+  contentLength: OrderByDirection
+  createdAt: OrderByDirection
+  folder: OrderByDirection
+  mimetype: OrderByDirection
+  name: OrderByDirection
+  src: OrderByDirection
+  storageAgencyId: OrderByDirection
+  updatedAt: OrderByDirection
 }
 
 type StorageOrganizations implements Node {
@@ -2479,6 +2603,70 @@ input StorageProfilesOrderBy {
   profileId: OrderByDirection
   src: OrderByDirection
   storageProfileId: OrderByDirection
+  updatedAt: OrderByDirection
+}
+
+type StorageTenants implements Node {
+  bucketId: String
+  contentLength: BigInt
+  createdAt: Datetime
+  folder: String
+  metadata: JSON
+  mimetype: String
+  name: String
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  src: String
+  storageTenantId: UUID
+  tenant: Tenants
+  tenantId: Int
+  updatedAt: Datetime
+}
+
+type StorageTenantsConnection {
+  edges: [StorageTenantsEdge!]!
+  pageInfo: PageInfo!
+}
+
+type StorageTenantsEdge {
+  cursor: String!
+  node: StorageTenants!
+}
+
+input StorageTenantsFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [StorageTenantsFilter!]
+  bucketId: StringFilter
+  contentLength: BigIntFilter
+  createdAt: DatetimeFilter
+  folder: StringFilter
+  mimetype: StringFilter
+  name: StringFilter
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: StorageTenantsFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [StorageTenantsFilter!]
+  src: StringFilter
+  storageTenantId: UUIDFilter
+  tenantId: IntFilter
+  updatedAt: DatetimeFilter
+}
+
+input StorageTenantsOrderBy {
+  bucketId: OrderByDirection
+  contentLength: OrderByDirection
+  createdAt: OrderByDirection
+  folder: OrderByDirection
+  mimetype: OrderByDirection
+  name: OrderByDirection
+  src: OrderByDirection
+  storageTenantId: OrderByDirection
+  tenantId: OrderByDirection
   updatedAt: OrderByDirection
 }
 
@@ -2636,6 +2824,24 @@ type Tenants implements Node {
     """Sort order to apply to the collection"""
     orderBy: [OrganizationsOrderBy!]
   ): OrganizationsConnection
+  storage_tenants(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: StorageTenantsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [StorageTenantsOrderBy!]
+  ): StorageTenantsConnection
   tenantCreatedAt: Datetime!
   tenantDisabledAt: Datetime
   tenantDomainsCollection(
@@ -2658,6 +2864,8 @@ type Tenants implements Node {
   ): TenantDomainsConnection
   tenantId: Int!
   tenantName: String!
+  tenantOnboardedAt: Datetime
+  tenantOnboardingState: JSON!
   tenantSlug: String!
   tenantTier: TenantTier!
   tenantUpdatedAt: Datetime!
@@ -2691,6 +2899,7 @@ input TenantsFilter {
   tenantDisabledAt: DatetimeFilter
   tenantId: IntFilter
   tenantName: StringFilter
+  tenantOnboardedAt: DatetimeFilter
   tenantSlug: StringFilter
   tenantTier: TenantTierFilter
   tenantUpdatedAt: DatetimeFilter
@@ -2701,6 +2910,7 @@ input TenantsOrderBy {
   tenantDisabledAt: OrderByDirection
   tenantId: OrderByDirection
   tenantName: OrderByDirection
+  tenantOnboardedAt: OrderByDirection
   tenantSlug: OrderByDirection
   tenantTier: OrderByDirection
   tenantUpdatedAt: OrderByDirection
@@ -2710,6 +2920,8 @@ input TenantsUpdateInput {
   tenantCreatedAt: Datetime
   tenantDisabledAt: Datetime
   tenantName: String
+  tenantOnboardedAt: Datetime
+  tenantOnboardingState: JSON
   tenantSlug: String
   tenantTier: TenantTier
   tenantUpdatedAt: Datetime

@@ -580,6 +580,19 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
     file_size_limit = excluded.file_size_limit,
     allowed_mime_types = excluded.allowed_mime_types;
 
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  values (
+    'agencies',
+    'agencies',
+    true,
+    internal.convert_unit_byte(5, 'MiB'),
+    array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+  )
+  on conflict (id) do update set
+    public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
 -- Forward declarations needed before `public.organization_memberships` so its invite columns + triggers
 -- can reference them. The full `public.addresses_level0` table (with seed + indexes) and
 -- the `profile_identities` section appear later in the file with their RLS policies; this
@@ -2710,7 +2723,7 @@ create policy "public buckets: read avatars"
   on storage.objects for select
   to authenticated, anon
   using (
-    bucket_id in ('profiles', 'organizations', 'tenants')
+    bucket_id in ('profiles', 'organizations', 'tenants', 'agencies')
     and path_tokens[2] = 'avatar'
   );
 
@@ -2764,6 +2777,25 @@ create policy "tenants bucket: tenant_manage avatar"
     and path_tokens[1]::int in (select public.viewer_permission_tenant_ids('tenant_manage'))
   );
 
+-- Agency PK is a uuid, so guard the cast with internal.is_uuid before it (avoids 22P02).
+-- Any accepted agency member may manage the agency logo (agencies have no granular catalog).
+drop policy if exists "agencies bucket: member avatar" on storage.objects;
+create policy "agencies bucket: member avatar"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id = 'agencies'
+    and path_tokens[2] = 'avatar'
+    and internal.is_uuid(path_tokens[1])
+    and path_tokens[1]::uuid in (select public.viewer_agency_ids())
+  )
+  with check (
+    bucket_id = 'agencies'
+    and path_tokens[2] = 'avatar'
+    and internal.is_uuid(path_tokens[1])
+    and path_tokens[1]::uuid in (select public.viewer_agency_ids())
+  );
+
 -- ============================================================
 -- GraphQL views over storage.objects
 -- ============================================================
@@ -2793,7 +2825,7 @@ create or replace view public.storage_profiles
   where obj.bucket_id = 'profiles'
     and internal.is_uuid(obj.path_tokens[1]);
 
-grant select on public.storage_profiles to authenticated, anon;
+grant select on public.storage_profiles to authenticated, anon, service_role;
 
 -- pg_graphql foreign_keys naming is counterintuitive: `local_name` is the field name on
 -- the PARENT type (here `profiles`) returning a collection back; `foreign_name` is the
@@ -2818,7 +2850,7 @@ create or replace view public.storage_organizations
   where obj.bucket_id = 'organizations'
     and obj.path_tokens[1] ~ '^[0-9]+$';
 
-grant select on public.storage_organizations to authenticated, anon;
+grant select on public.storage_organizations to authenticated, anon, service_role;
 
 comment on view public.storage_organizations is e'@graphql({"primary_key_columns": ["storage_organization_id"], "foreign_keys": [{"local_name": "storage_organizations", "local_columns": ["organization_id"], "foreign_name": "organization", "foreign_schema": "public", "foreign_table": "organizations", "foreign_columns": ["organization_id"]}]})';
 
@@ -2840,9 +2872,31 @@ create or replace view public.storage_tenants
   where obj.bucket_id = 'tenants'
     and obj.path_tokens[1] ~ '^[0-9]+$';
 
-grant select on public.storage_tenants to authenticated, anon;
+grant select on public.storage_tenants to authenticated, anon, service_role;
 
 comment on view public.storage_tenants is e'@graphql({"primary_key_columns": ["storage_tenant_id"], "foreign_keys": [{"local_name": "storage_tenants", "local_columns": ["tenant_id"], "foreign_name": "tenant", "foreign_schema": "public", "foreign_table": "tenants", "foreign_columns": ["tenant_id"]}]})';
+
+create or replace view public.storage_agencies
+  with (security_invoker = on) as
+  select
+    obj.id                                       as storage_agency_id,
+    obj.bucket_id,
+    obj.name,
+    obj.path_tokens[1]::uuid                     as agency_id,
+    obj.path_tokens[2]                           as folder,
+    obj.metadata->>'mimetype'                    as mimetype,
+    (obj.metadata->>'contentLength')::bigint     as content_length,
+    obj.metadata,
+    obj.created_at,
+    obj.updated_at,
+    '/storage/v1/object/public/' || obj.bucket_id || '/' || obj.name as src
+  from storage.objects as obj
+  where obj.bucket_id = 'agencies'
+    and internal.is_uuid(obj.path_tokens[1]);
+
+grant select on public.storage_agencies to authenticated, anon, service_role;
+
+comment on view public.storage_agencies is e'@graphql({"primary_key_columns": ["storage_agency_id"], "foreign_keys": [{"local_name": "storage_agencies", "local_columns": ["agency_id"], "foreign_name": "agency", "foreign_schema": "public", "foreign_table": "agencies", "foreign_columns": ["agency_id"]}]})';
 
 -- Sessions: list and revoke the viewer's own auth sessions.
 -- Uses security definer to read auth.sessions (not exposed to anon/authenticated).
@@ -2963,6 +3017,36 @@ create or replace function public.viewer_tenant_create(
 revoke execute on function public.viewer_tenant_create(text, text) from public;
 grant execute on function public.viewer_tenant_create(text, text) to anon, authenticated;
 
+-- Rename a tenant. Exposed as a pg_graphql Mutation (setof rows 1, volatile) so client
+-- components can call it via useGraphyMutation instead of a pass-through Server Action.
+-- Gated by tenant_manage; the tenant_name length check on the column enforces 1..256.
+create or replace function public.viewer_tenant_update(
+  tenant_id    int,
+  tenant_name  text
+)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _tenant public.tenants;
+    begin
+      if not public.viewer_has_tenant_permission($1, 'tenant_manage') then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      update public.tenants
+        set tenant_name = $2,
+            tenant_updated_at = current_timestamp
+        where public.tenants.tenant_id = $1
+        returning * into _tenant;
+
+      return next _tenant;
+    end;
+  $$;
+
 -- Tenant onboarding writes. Both require tenant_manage on the tenant. `set` records a non-derivable
 -- step's status in tenant_onboarding_state (jsonb_set is atomic, no read-modify-write race); `finish`
 -- stamps tenant_onboarded_at so the soft banner stops. Derivable steps (logo, first member) are never
@@ -2997,9 +3081,6 @@ create or replace function public.viewer_tenant_onboarding_set(
     end;
   $$;
 
-revoke execute on function public.viewer_tenant_onboarding_set(int, text, text) from public;
-grant execute on function public.viewer_tenant_onboarding_set(int, text, text) to authenticated;
-
 create or replace function public.viewer_tenant_onboarding_finish(tenant_id int)
   returns setof public.tenants rows 1
   volatile
@@ -3023,9 +3104,6 @@ create or replace function public.viewer_tenant_onboarding_finish(tenant_id int)
       return next _tenant;
     end;
   $$;
-
-revoke execute on function public.viewer_tenant_onboarding_finish(int) from public;
-grant execute on function public.viewer_tenant_onboarding_finish(int) to authenticated;
 
 create or replace function protected.organization_create(
   profile_id         uuid,

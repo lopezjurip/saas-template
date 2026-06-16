@@ -1,22 +1,39 @@
 "use client";
 
+import { useGraphyMutation } from "@packages/graphy/react";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Check, ImageIcon, type LucideIcon, UserPlus, Wallet } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
-import { ErrorSafeAction } from "~/lib/safe-action.client";
-import { actionDismissTenantOnboarding, actionSetTenantOnboardingStep } from "./actions";
 import {
   TENANT_COUNT_DONE,
   TENANT_STEP_ORDER,
   type TenantOnboardingStepId,
   type TenantOnboardingStepStatus,
 } from "./state";
+
+const SetTenantOnboardingStepMutation = /*#__PURE__*/ gql(`
+  mutation SetTenantOnboardingStepMutation($tenant_id: Int!, $step: String!, $status: String!) {
+    tenant: viewerTenantOnboardingSet(tenantId: $tenant_id, step: $step, status: $status) {
+      tenantId
+    }
+  }
+`);
+
+const FinishTenantOnboardingMutation = /*#__PURE__*/ gql(`
+  mutation FinishTenantOnboardingMutation($tenant_id: Int!) {
+    tenant: viewerTenantOnboardingFinish(tenantId: $tenant_id) {
+      tenantId
+      tenantOnboardedAt
+    }
+  }
+`);
 
 const STEP_ICON: Record<TenantOnboardingStepId, LucideIcon> = {
   tenant_logo: ImageIcon,
@@ -45,7 +62,9 @@ export function OnboardingChecklist({
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [setStepState, setOnboardingStep] = useGraphyMutation(SetTenantOnboardingStepMutation);
+  const [finishState, finishOnboarding] = useGraphyMutation(FinishTenantOnboardingMutation);
+  const pending = setStepState.isValidating || finishState.isValidating;
 
   const params = { tenant_slug: tenantSlug, organization_id: organizationId };
   const STEP_HREF: Record<TenantOnboardingStepId, Route> = {
@@ -57,30 +76,24 @@ export function OnboardingChecklist({
   const done = TENANT_COUNT_DONE(steps);
   const total = TENANT_STEP_ORDER.length;
 
-  function setBilling(status: "done" | "skipped") {
+  async function setBilling(status: "done" | "skipped") {
     setError(null);
-    startTransition(async () => {
-      const [, err] = await ErrorSafeAction.unwrap(
-        actionSetTenantOnboardingStep({ tenant_id: tenantId, step: "billing", status }),
-      );
-      if (err) {
-        setError(t("action_failed"));
-        return;
-      }
-      router.refresh();
-    });
+    const { data, error: mutationError } = await setOnboardingStep({ tenant_id: tenantId, step: "billing", status });
+    if (mutationError || !data?.["tenant"]) {
+      setError(t("action_failed"));
+      return;
+    }
+    router.refresh();
   }
 
-  function onDismiss() {
+  async function onDismiss() {
     setError(null);
-    startTransition(async () => {
-      const [, err] = await ErrorSafeAction.unwrap(actionDismissTenantOnboarding({ tenant_id: tenantId }));
-      if (err) {
-        setError(t("action_failed"));
-        return;
-      }
-      router.push(ROUTE("/t/[tenant_slug]/[organization_id]", params));
-    });
+    const { data, error: mutationError } = await finishOnboarding({ tenant_id: tenantId });
+    if (mutationError || !data?.["tenant"]) {
+      setError(t("action_failed"));
+      return;
+    }
+    router.push(ROUTE("/t/[tenant_slug]/[organization_id]", params));
   }
 
   return (

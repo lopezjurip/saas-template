@@ -1,19 +1,29 @@
 "use client";
 
+import { useGraphyMutation } from "@packages/graphy/react";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { EntityLogoControls } from "~/components/entity-logo-controls";
+import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
-import { ErrorSafeAction } from "~/lib/safe-action.client";
-import { actionUpdateTenantName } from "./actions";
+
+const UpdateTenantNameMutation = /*#__PURE__*/ gql(`
+  mutation UpdateTenantNameMutation($tenant_id: Int!, $tenant_name: String!) {
+    tenant: viewerTenantUpdate(tenantId: $tenant_id, tenantName: $tenant_name) {
+      tenantId
+      tenantName
+    }
+  }
+`);
 
 /**
  * Tenant-level "general" settings: the tenant logo (public `tenants` bucket, gated by
  * `tenant_manage`) and the tenant name. Slug is immutable (it is the routing key and a
- * reserved-slug check applies), so it is shown read-only.
+ * reserved-slug check applies), so it is shown read-only. The rename is a viewer-scoped
+ * transactional RPC, so it runs as a GraphQL mutation from here — no pass-through Server Action.
  *
  * @example <TenantGeneralSettings tenantId={1} tenantName="Acme" tenantSlug="acme" logoSrc={null} />
  */
@@ -33,24 +43,21 @@ export function TenantGeneralSettings({
   const [name, setName] = useState(tenantName);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const [updateState, updateTenant] = useGraphyMutation(UpdateTenantNameMutation);
+  const pending = updateState.isValidating;
 
   const dirty = name.trim() !== tenantName && name.trim().length > 0;
 
-  function onSave() {
+  async function onSave() {
     setError(null);
     setSaved(false);
-    startTransition(async () => {
-      const [, err] = await ErrorSafeAction.unwrap(
-        actionUpdateTenantName({ tenant_id: tenantId, tenant_name: name.trim() }),
-      );
-      if (err) {
-        setError(t("save_failed"));
-        return;
-      }
-      setSaved(true);
-      router.refresh();
-    });
+    const { data, error: mutationError } = await updateTenant({ tenant_id: tenantId, tenant_name: name.trim() });
+    if (mutationError || !data?.["tenant"]) {
+      setError(t("save_failed"));
+      return;
+    }
+    setSaved(true);
+    router.refresh();
   }
 
   return (

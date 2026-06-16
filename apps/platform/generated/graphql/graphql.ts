@@ -173,6 +173,7 @@ export type TenantsFilter = {
   tenantDisabledAt?: DatetimeFilter | null | undefined;
   tenantId?: IntFilter | null | undefined;
   tenantName?: StringFilter | null | undefined;
+  tenantOnboardedAt?: DatetimeFilter | null | undefined;
   tenantSlug?: StringFilter | null | undefined;
   tenantTier?: TenantTierFilter | null | undefined;
   tenantUpdatedAt?: DatetimeFilter | null | undefined;
@@ -183,6 +184,7 @@ export type TenantsOrderBy = {
   tenantDisabledAt?: OrderByDirection | null | undefined;
   tenantId?: OrderByDirection | null | undefined;
   tenantName?: OrderByDirection | null | undefined;
+  tenantOnboardedAt?: OrderByDirection | null | undefined;
   tenantSlug?: OrderByDirection | null | undefined;
   tenantTier?: OrderByDirection | null | undefined;
   tenantUpdatedAt?: OrderByDirection | null | undefined;
@@ -251,6 +253,22 @@ export type HomePickerPageQueryQuery = {
   } | null;
 };
 
+export type SetTenantOnboardingStepMutationMutationVariables = Exact<{
+  tenant_id: number;
+  step: string;
+  status: string;
+}>;
+
+export type SetTenantOnboardingStepMutationMutation = { tenant: { tenantId: number } | null };
+
+export type FinishTenantOnboardingMutationMutationVariables = Exact<{
+  tenant_id: number;
+}>;
+
+export type FinishTenantOnboardingMutationMutation = {
+  tenant: { tenantId: number; tenantOnboardedAt: string | null } | null;
+};
+
 export type CreateOrganizationFormMutationMutationVariables = Exact<{
   organization_name: string;
   organization_slug: string;
@@ -296,6 +314,13 @@ export type MembersPendingInvitationsCancelMutationMutationVariables = Exact<{
 export type MembersPendingInvitationsCancelMutationMutation = {
   updateOrganizationMembershipsCollection: { affectedCount: number };
 };
+
+export type UpdateTenantNameMutationMutationVariables = Exact<{
+  tenant_id: number;
+  tenant_name: string;
+}>;
+
+export type UpdateTenantNameMutationMutation = { tenant: { tenantId: number; tenantName: string } | null };
 
 export type CreateTenantFormMutationMutationVariables = Exact<{
   tenant_name: string;
@@ -892,6 +917,31 @@ export const HomePickerPageQueryDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<HomePickerPageQueryQuery, HomePickerPageQueryQueryVariables>;
+export const SetTenantOnboardingStepMutationDocument = new TypedDocumentString(`
+    mutation SetTenantOnboardingStepMutation($tenant_id: Int!, $step: String!, $status: String!) {
+  tenant: viewerTenantOnboardingSet(
+    tenantId: $tenant_id
+    step: $step
+    status: $status
+  ) {
+    tenantId
+  }
+}
+    `) as unknown as TypedDocumentString<
+  SetTenantOnboardingStepMutationMutation,
+  SetTenantOnboardingStepMutationMutationVariables
+>;
+export const FinishTenantOnboardingMutationDocument = new TypedDocumentString(`
+    mutation FinishTenantOnboardingMutation($tenant_id: Int!) {
+  tenant: viewerTenantOnboardingFinish(tenantId: $tenant_id) {
+    tenantId
+    tenantOnboardedAt
+  }
+}
+    `) as unknown as TypedDocumentString<
+  FinishTenantOnboardingMutationMutation,
+  FinishTenantOnboardingMutationMutationVariables
+>;
 export const CreateOrganizationFormMutationDocument = new TypedDocumentString(`
     mutation CreateOrganizationFormMutation($organization_name: String!, $organization_slug: String!, $tenant_id: Int!) {
   organization: viewerOrganizationCreate(
@@ -957,6 +1007,14 @@ export const MembersPendingInvitationsCancelMutationDocument = new TypedDocument
   MembersPendingInvitationsCancelMutationMutation,
   MembersPendingInvitationsCancelMutationMutationVariables
 >;
+export const UpdateTenantNameMutationDocument = new TypedDocumentString(`
+    mutation UpdateTenantNameMutation($tenant_id: Int!, $tenant_name: String!) {
+  tenant: viewerTenantUpdate(tenantId: $tenant_id, tenantName: $tenant_name) {
+    tenantId
+    tenantName
+  }
+}
+    `) as unknown as TypedDocumentString<UpdateTenantNameMutationMutation, UpdateTenantNameMutationMutationVariables>;
 export const CreateTenantFormMutationDocument = new TypedDocumentString(`
     mutation CreateTenantFormMutation($tenant_name: String!, $tenant_slug: String!) {
   tenant: viewerTenantCreate(tenantName: $tenant_name, tenantSlug: $tenant_slug) {

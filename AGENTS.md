@@ -419,8 +419,16 @@ Action matches `rpcError.message` against LOCALES keys — never parse prose.
 **Client choice:**
 - **Service-role client** for RPCs requiring `caller_id` passed explicitly (service role has no JWT `sub`).
 - **Authenticated server client** for RPCs calling `viewer_profile_id()` internally (e.g., `actionRespondInvitation`).
-- **`useGraphyMutation` directly from client components** for viewer-scoped RPCs whose entire workflow is transactional SQL and which need no server-only API or secret. Do not add a pass-through Server Action.
-- **Creation RPC return shape:** `protected.*_create(profile_id, ...)` and `public.viewer_*_create(...)` return `setof public.<table> rows 1`, explicitly `volatile`. pg_graphql exposes the viewer function as a singular table object on `Mutation`, allowing callers to select the created row fields.
+- **`useGraphyMutation` directly from client components — the DEFAULT for viewer-scoped mutations.** If an RPC's entire workflow is transactional SQL, calls `viewer_*` helpers internally, and needs no server-only API or secret, expose it through pg_graphql and call it as a GraphQL mutation from the client. **Do NOT wrap it in a Server Action** — a pass-through `action*` that only forwards args to `.rpc()` is an anti-pattern (it adds a network hop, a file, and a serialization boundary for nothing). Reserve Server Actions for workflows that genuinely need the server: a secret/service-role, a non-DB side effect (`auth.admin.*`, email), or `redirect()`/cookie work. Renames, status toggles, onboarding step writes, soft-dismiss, etc. → GraphQL mutation, not an action.
+  ```tsx
+  // ❌ pass-through action — don't
+  export const actionRenameTenant = authedAction.inputSchema(...).action(({ ctx }) => ctx.supabase.rpc("viewer_tenant_update", ...));
+  // ✅ GraphQL mutation from the client component
+  const [, renameTenant] = useGraphyMutation(UpdateTenantNameMutation);
+  const { data, error } = await renameTenant({ tenant_id, tenant_name });
+  ```
+- **Mutating-RPC return shape + exposure:** viewer-scoped mutating RPCs (`public.viewer_*_create` / `_update` / etc.) return `setof public.<table> rows 1` and are explicitly `volatile` (volatility decides Query vs Mutation in pg_graphql). Leave the default `EXECUTE` grant — `public` already covers `anon`/`authenticated`, and the function self-guards via its internal `viewer_*` permission check, so the `revoke … from public; grant … to anon, authenticated` boilerplate is unnecessary noise. pg_graphql then exposes the function as a singular table object on `Mutation`.
+- **Regen workflow after adding/altering an RPC:** edit `schema.sql` → `pnpm db:reset` → `pnpm generate:graphql:schema` (live introspection — **not** `:local`, which only reformats the cached JSON and will silently miss new fields) → `pnpm generate:types`. Then write the `gql()` doc and run `pnpm generate:graphql:platform`.
 
 ### SQL / PL/pgSQL style
 

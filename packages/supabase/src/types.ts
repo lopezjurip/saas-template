@@ -1236,6 +1236,48 @@ export type Database = {
       }
     }
     Views: {
+      storage_agencies: {
+        Row: {
+          agency_id: string | null
+          bucket_id: string | null
+          content_length: number | null
+          created_at: string | null
+          folder: string | null
+          metadata: Json | null
+          mimetype: string | null
+          name: string | null
+          src: string | null
+          storage_agency_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agency_id?: never
+          bucket_id?: string | null
+          content_length?: never
+          created_at?: string | null
+          folder?: never
+          metadata?: Json | null
+          mimetype?: never
+          name?: string | null
+          src?: never
+          storage_agency_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agency_id?: never
+          bucket_id?: string | null
+          content_length?: never
+          created_at?: string | null
+          folder?: never
+          metadata?: Json | null
+          mimetype?: never
+          name?: string | null
+          src?: never
+          storage_agency_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       storage_organizations: {
         Row: {
           bucket_id: string | null
@@ -2052,6 +2094,26 @@ export type Database = {
       }
       viewer_tenant_onboarding_set: {
         Args: { status: string; step: string; tenant_id: number }
+        Returns: {
+          tenant_created_at: string
+          tenant_disabled_at: string | null
+          tenant_id: number
+          tenant_name: string
+          tenant_onboarded_at: string | null
+          tenant_onboarding_state: Json
+          tenant_slug: string
+          tenant_tier: Database["public"]["Enums"]["tenant_tier"]
+          tenant_updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "tenants"
+          isOneToOne: true
+          isSetofReturn: true
+        }
+      }
+      viewer_tenant_update: {
+        Args: { tenant_id: number; tenant_name: string }
         Returns: {
           tenant_created_at: string
           tenant_disabled_at: string | null
