@@ -242,7 +242,7 @@ Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to fi
 **Custom domain mapping (`public.tenant_domains`, many domains per tenant)** staged in schema, not yet wired into proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates advanced features once billing exists.
 
 **Permissions (capability-based, not role-based):**
-- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs. Ships English admin capabilities only: `*`, `organization_manage`, `members_manage`, `presets_manage`. Reserved slug `*` is wildcard — membership holding `*` passes every permission check inside its organization. Used for tenant creator and other "full admin" grants without enumerating every slug.
+- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs. Ships English admin capabilities: `*`, `organization_manage` (org-level: name, logo, members, presets), `tenant_manage` (company/tenant-level: name, logo, billing, domains — distinct from `organization_manage`), `members_manage`, `presets_manage`. Reserved slug `*` is wildcard — membership holding `*` passes every permission check inside its organization (and, via the tenant helpers, every tenant check too). Used for tenant creator and other "full admin" grants without enumerating every slug.
 - `public.organization_membership_permissions(organization_membership_id, permission_id)` — explicit grants. Organization/profile derive through membership row. Composite PK prevents duplicate grants; deletion cascades from memberships.
 - `public.permission_presets(permission_preset_id, organization_id?, permission_preset_name, permission_preset_slugs[])` — UX-only named bundles; carries no enforcement. `organization_id IS NULL` = global preset. Seeded global presets: `Owner` / `Administrator` / `Member manager`. Trigger validates every slug.
 
@@ -266,6 +266,8 @@ Permission-backed (DB lookup, security definer; wildcard `*` honored):
 - `public.viewer_permission_org_ids(permission_id)` — orgs where caller has perm (or `*`). Use in RLS `IN`-subqueries.
 - `public.viewer_has_permission(organization_id, permission_id)` — boolean shortcut for single (org, perm) check.
 - `public.viewer_organization_membership_permissions()` — setof `(organization_id, permission_id)` for UI listing.
+- `public.viewer_permission_tenant_ids(permission_id)` — tenants where caller has perm (or `*`) on **any org in that tenant**. There is no tenant-membership table — tenant authority rides on org grants (the espejo org from `tenant_create` is where `tenant_manage` is granted by default). Use in RLS `IN`-subqueries.
+- `public.viewer_has_tenant_permission(tenant_id, permission_id)` — boolean shortcut for a single (tenant, perm) check. Gates the `tenants` UPDATE policy, the `tenants` storage bucket, the company settings layout, and the tenant onboarding RPCs.
 
 ## Critical Rules
 
