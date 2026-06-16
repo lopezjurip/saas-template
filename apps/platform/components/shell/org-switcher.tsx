@@ -3,7 +3,7 @@
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
 import { INITIALS_OF } from "@packages/utils/string";
-import { Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
+import { ArrowLeftRight, Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 
@@ -129,11 +129,23 @@ export function OrgSwitcher({
           </div>
           <div className="border-border border-t px-1 py-1">
             <Link
-              href={ROUTE("/home", { locale })}
+              href={ROUTE("/t/[tenant_slug]/[organization_id]/organizations/create", {
+                locale,
+                tenant_slug: tenant["tenantSlug"],
+                organization_id: current["organizationId"],
+              })}
               onClick={() => setOpen(false)}
               className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
             >
               <Plus size={14} className="text-muted-foreground" />
+              <span>{t("create")}</span>
+            </Link>
+            <Link
+              href={ROUTE("/home", { locale })}
+              onClick={() => setOpen(false)}
+              className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
+            >
+              <ArrowLeftRight size={14} className="text-muted-foreground" />
               <span>{t("switchTenant")}</span>
             </Link>
             <Link

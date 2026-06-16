@@ -251,6 +251,16 @@ export type HomePickerPageQueryQuery = {
   } | null;
 };
 
+export type CreateOrganizationFormMutationMutationVariables = Exact<{
+  organization_name: string;
+  organization_slug: string;
+  tenant_id: number;
+}>;
+
+export type CreateOrganizationFormMutationMutation = {
+  organization: { organizationId: number; organizationSlug: string } | null;
+};
+
 export type EditOrganizationMembershipGrantPermissionMutationMutationVariables = Exact<{
   organization_membership_id: number;
   permission_id: string;
@@ -882,6 +892,21 @@ export const HomePickerPageQueryDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<HomePickerPageQueryQuery, HomePickerPageQueryQueryVariables>;
+export const CreateOrganizationFormMutationDocument = new TypedDocumentString(`
+    mutation CreateOrganizationFormMutation($organization_name: String!, $organization_slug: String!, $tenant_id: Int!) {
+  organization: viewerOrganizationCreate(
+    organizationName: $organization_name
+    organizationSlug: $organization_slug
+    tenantId: $tenant_id
+  ) {
+    organizationId
+    organizationSlug
+  }
+}
+    `) as unknown as TypedDocumentString<
+  CreateOrganizationFormMutationMutation,
+  CreateOrganizationFormMutationMutationVariables
+>;
 export const EditOrganizationMembershipGrantPermissionMutationDocument = new TypedDocumentString(`
     mutation EditOrganizationMembershipGrantPermissionMutation($organization_membership_id: Int!, $permission_id: String!) {
   insertIntoOrganizationMembershipPermissionsCollection(

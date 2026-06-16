@@ -110,7 +110,11 @@ export function AppSidebar({
         />
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={onOpenPalette} tooltip={t("search")}>
+            <SidebarMenuButton
+              onClick={onOpenPalette}
+              tooltip={t("search")}
+              className="border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground border group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent"
+            >
               <Search />
               <span>{t("search")}</span>
               <Kbd className="ml-auto shrink-0 group-data-[collapsible=icon]:hidden">{device?.modKey ?? " "}K</Kbd>

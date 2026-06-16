@@ -16,7 +16,7 @@ export default async function AccountLayout(props: LayoutProps<"/home/account">)
 
   return (
     <div className="bg-background relative flex min-h-svh w-full flex-col">
-      <div className="bg-background flex shrink-0 items-center gap-2.5 border-b px-4.5 py-2.5">
+      <div className="bg-background flex min-w-0 shrink-0 items-center gap-2.5 border-b px-4 py-2.5 sm:px-4.5">
         <Link
           href={ROUTE("/", { locale })}
           aria-label="SaaS Template"
@@ -24,25 +24,25 @@ export default async function AccountLayout(props: LayoutProps<"/home/account">)
         >
           <Logo />
         </Link>
-        <span className="text-muted-foreground text-sm/normal opacity-30">|</span>
+        <span className="text-muted-foreground hidden text-sm/normal opacity-30 sm:inline">|</span>
         <Link
           href={ROUTE("/home", { locale })}
-          className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex items-center gap-1.5 rounded-md py-1 pr-2 pl-1.5 text-xs font-medium no-underline"
+          className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex shrink-0 items-center gap-1.5 rounded-md py-1 pr-2 pl-1.5 text-xs font-medium no-underline"
         >
           <ArrowLeft size={14} /> <span>{t("home")}</span>
         </Link>
-        <span className="text-muted-foreground text-sm/normal opacity-50">/</span>
-        <span className="text-foreground text-sm/normal font-medium">{t("my_account")}</span>
-        <div className="flex-1" />
+        <span className="text-muted-foreground hidden text-sm/normal opacity-50 sm:inline">/</span>
+        <span className="text-foreground hidden text-sm/normal font-medium sm:inline">{t("my_account")}</span>
+        <div className="min-w-2 flex-1" />
         <Link
           href={ROUTE("/home/account/profile", { locale })}
-          className="text-foreground bg-background hover:bg-accent inline-flex cursor-pointer items-center gap-2 rounded-full border py-1 pr-2 pl-1 text-xs"
+          className="text-foreground bg-background hover:bg-accent inline-flex min-w-0 max-w-[55vw] cursor-pointer items-center gap-2 rounded-full border py-1 pr-2 pl-1 text-xs sm:max-w-none"
         >
-          <span className="bg-primary text-primary-foreground inline-flex size-6.5 items-center justify-center rounded-full text-tiny font-semibold">
+          <span className="bg-primary text-primary-foreground inline-flex size-6.5 shrink-0 items-center justify-center rounded-full text-tiny font-semibold">
             {INITIALS_OF(email)}
           </span>
-          <span>{email}</span>
-          <span className="text-muted-foreground">
+          <span className="truncate">{email}</span>
+          <span className="text-muted-foreground shrink-0">
             <ChevronDown size={13} />
           </span>
         </Link>

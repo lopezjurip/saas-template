@@ -202,7 +202,7 @@ export function CommandPalette({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("placeholder")}
-            className="placeholder:text-muted-foreground h-12 w-full bg-transparent text-sm outline-none"
+            className="text-foreground placeholder:text-muted-foreground h-12 w-full bg-transparent text-sm outline-none"
           />
           <Kbd className="hidden sm:flex">ESC</Kbd>
         </div>

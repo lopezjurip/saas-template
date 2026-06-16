@@ -392,7 +392,7 @@ export function MobileSearchSheet({
             value={q}
             onChange={(event) => setQ(event.target.value)}
             placeholder={t("searchPlaceholder")}
-            className="placeholder:text-muted-foreground h-9 flex-1 bg-transparent text-sm outline-none"
+            className="text-foreground placeholder:text-muted-foreground h-9 flex-1 bg-transparent text-sm outline-none"
           />
           {q ? (
             <button type="button" onClick={() => setQ("")} className="text-muted-foreground">
