@@ -1,99 +1,188 @@
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { Eye } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AFFILIATION_STATE } from "~/lib/agencies";
 import { getRosetta } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { AgencyConsole, type ConsoleData } from "./agency-console";
+import { getAgencyBySlug } from "./get-agency";
 
 export async function generateMetadata(props: PageProps<"/a/[agency_slug]">): Promise<Metadata> {
   const { agency_slug } = await props.params;
   const { t } = await getRosetta(LOCALES);
-  const admin = createSupabaseServiceRoleClient();
-  const { data } = await admin.from("agencies").select("agency_name").eq("agency_slug", agency_slug).maybeSingle();
-  return { title: data?.agency_name ?? t("page_title") };
+  const agency = await getAgencyBySlug(agency_slug);
+  return { title: agency?.["agency_name"] ?? t("page_title") };
 }
 
-export default async function AgencyConsolePage(props: PageProps<"/a/[agency_slug]">) {
+export default async function AgencyOverviewPage(props: PageProps<"/a/[agency_slug]">) {
   const { agency_slug } = await props.params;
+  const { t } = await getRosetta(LOCALES);
 
-  const supabase = await createSupabaseServerClient();
+  // Re-fetch the cached, RLS-scoped agency row (deduped with the layout's fetch).
+  const agency = await getAgencyBySlug(agency_slug);
+  if (!agency) notFound();
+
   const admin = createSupabaseServiceRoleClient();
-
-  const [agencyRes, userRes] = await Promise.all([
-    supabase.rpc("viewer_agency_by_slug", { agency_slug }).maybeSingle(),
-    supabase.auth.getUser(),
-  ]);
-  if (!agencyRes.data) notFound();
-  const agency = agencyRes.data;
-  const user = userRes.data.user;
-
-  const [membershipsRes, grantsRes, usersRes] = await Promise.all([
+  const [membershipsRes, grantsRes] = await Promise.all([
     admin
       .from("agency_memberships")
-      .select(
-        "agency_membership_id, profile_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at, agency_membership_created_at, profiles(profile_name_full)",
-      )
-      .eq("agency_id", agency.agency_id)
-      .order("agency_membership_created_at", { ascending: true }),
+      .select("agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at")
+      .eq("agency_id", agency["agency_id"]),
     admin
       .from("agencies_organizations_grants")
-      .select("agency_id, organization_id, permission_id, organizations(organization_name, organization_slug)")
-      .eq("agency_id", agency.agency_id),
-    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+      .select("organization_id, permission_id")
+      .eq("agency_id", agency["agency_id"]),
   ]);
 
   const memberships = membershipsRes.data ?? [];
-
-  const emailByProfileId = new Map<string, string | null>();
-  if (!usersRes.error) {
-    for (const u of usersRes.data.users) emailByProfileId.set(u.id, u.email ?? null);
-  }
-
-  const affiliates = memberships.map((m) => ({
-    agency_membership_id: m.agency_membership_id,
-    profile_id: m.profile_id,
-    state: AFFILIATION_STATE(m),
-    name: m.profiles?.profile_name_full ?? emailByProfileId.get(m.profile_id) ?? m.profile_id.slice(0, 8),
-    email: emailByProfileId.get(m.profile_id) ?? null,
-    is_self: Boolean(user && m.profile_id === user.id),
-  }));
+  const active = memberships.filter((m) => AFFILIATION_STATE(m) === "accepted").length;
+  const pending = memberships.filter((m) => AFFILIATION_STATE(m) === "pending").length;
 
   const grants = grantsRes.data ?? [];
-  const isGlobal = grants.some((g) => g.organization_id === null && g.permission_id === "*");
-  const orgs = grants
-    .filter((g) => g.organization_id !== null)
-    .map((g) => ({
-      organization_id: g.organization_id as number,
-      organization_name: g.organizations?.organization_name ?? String(g.organization_id),
-      organization_slug: g.organizations?.organization_slug ?? null,
-    }));
+  const isGlobal = grants.some((g) => g["organization_id"] === null && g["permission_id"] === "*");
+  const orgCount = grants.filter((g) => g["organization_id"] !== null).length;
 
-  const data: ConsoleData = {
-    agency_id: agency.agency_id,
-    agency_name: agency.agency_name,
-    agency_slug: agency.agency_slug,
-    disabled: Boolean(agency.agency_disabled_at),
-    affiliates,
-    is_global: isGlobal,
-    orgs,
-  };
+  const stats = [
+    {
+      label: t("stat_affiliates"),
+      value: String(active),
+      sub: pending > 0 ? t("stat_pending", { count: pending }) : t("stat_up_to_date"),
+    },
+    {
+      label: t("stat_orgs"),
+      value: isGlobal ? t("stat_all") : String(orgCount),
+      sub: isGlobal ? t("stat_global_scope") : t("stat_granted_you"),
+    },
+    { label: t("stat_access_level"), value: t("stat_read"), sub: t("stat_never_writes") },
+  ];
+
+  const rows = [
+    { label: t("profile_name"), value: agency["agency_name"] },
+    { label: t("profile_slug"), value: agency["agency_slug"], mono: true },
+    {
+      label: t("profile_status"),
+      value: agency["agency_disabled_at"] ? t("profile_disabled") : t("profile_active"),
+    },
+  ];
 
   return (
-    <AgencyConsole
-      data={data}
-      inviteHref={ROUTE("/a/[agency_slug]", {
-        agency_slug: agency["agency_slug"],
-      })}
-      ticketsHref={ROUTE("/a/[agency_slug]/tickets", {
-        agency_slug: agency["agency_slug"],
-      })}
-    />
+    <div className="px-4 py-5 pb-8 @min-[768px]:px-6 @min-[768px]:py-6 @min-[768px]:pb-10">
+      <div className="mx-auto flex w-full max-w-205 flex-col gap-6">
+        <div className="grid grid-cols-3 gap-2.5">
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              className="border-border bg-background flex flex-col gap-0.5 rounded-lg border px-3.5 py-3"
+            >
+              <span className="text-muted-foreground truncate text-tiny font-semibold uppercase tracking-[0.04em]">
+                {s.label}
+              </span>
+              <span className="text-foreground text-lg font-semibold leading-tight tracking-tight tabular-nums">
+                {s.value}
+              </span>
+              <span className="text-muted-foreground truncate text-xs">{s.sub}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <h1 className="text-foreground m-0 text-lg font-semibold tracking-tight">{t("profile_title")}</h1>
+          <p className="text-muted-foreground m-0 max-w-[60ch] text-xs leading-normal text-pretty">
+            {t("profile_desc")}
+          </p>
+        </div>
+
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            {rows.map((row) => (
+              <div
+                key={row.label}
+                className="border-border bg-background grid items-center gap-3 rounded-md border px-3.5 py-2.5"
+                style={{ gridTemplateColumns: "1fr auto" }}
+              >
+                <span className="text-muted-foreground text-xs font-medium">{row.label}</span>
+                <span className={cn("text-foreground text-sm/normal", row.mono && "font-mono text-xs")}>
+                  {row.value}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-muted-foreground mt-0.5 flex items-start gap-1.5 px-1 text-xs leading-normal">
+            <span className="text-muted-foreground/80 mt-px shrink-0">
+              <Eye size={13} />
+            </span>
+            <span className="text-pretty">{t("profile_note")}</span>
+          </p>
+        </section>
+      </div>
+    </div>
   );
 }
 
-const LOCALE_ES = { page_title: "Consola de agencia" };
-const LOCALE_EN: typeof LOCALE_ES = { page_title: "Agency console" };
-const LOCALE_PT: typeof LOCALE_ES = { page_title: "Console da agência" };
+const LOCALE_ES = {
+  page_title: "Consola de agencia",
+  stat_affiliates: "Afiliados activos",
+  stat_pending: "{{count}} pendientes",
+  stat_up_to_date: "al día",
+  stat_orgs: "Organizaciones",
+  stat_all: "Todas",
+  stat_global_scope: "alcance global",
+  stat_granted_you: "te dieron acceso",
+  stat_access_level: "Nivel de acceso",
+  stat_read: "Lectura",
+  stat_never_writes: "nunca escribe",
+  profile_title: "Perfil de la agencia",
+  profile_desc: "Cómo se ve tu agencia para las organizaciones que la habilitan.",
+  profile_name: "Nombre",
+  profile_slug: "Identificador",
+  profile_status: "Estado",
+  profile_active: "Activa",
+  profile_disabled: "Deshabilitada",
+  profile_note: "Para cambiar el nombre o el identificador de la agencia, escríbenos.",
+};
+
+const LOCALE_EN: typeof LOCALE_ES = {
+  page_title: "Agency console",
+  stat_affiliates: "Active affiliates",
+  stat_pending: "{{count}} pending",
+  stat_up_to_date: "up to date",
+  stat_orgs: "Organizations",
+  stat_all: "All",
+  stat_global_scope: "global scope",
+  stat_granted_you: "gave you access",
+  stat_access_level: "Access level",
+  stat_read: "Read",
+  stat_never_writes: "never writes",
+  profile_title: "Agency profile",
+  profile_desc: "How your agency looks to the organizations that enable it.",
+  profile_name: "Name",
+  profile_slug: "Identifier",
+  profile_status: "Status",
+  profile_active: "Active",
+  profile_disabled: "Disabled",
+  profile_note: "To change the agency name or identifier, write to us.",
+};
+
+const LOCALE_PT: typeof LOCALE_ES = {
+  page_title: "Console da agência",
+  stat_affiliates: "Afiliados ativos",
+  stat_pending: "{{count}} pendentes",
+  stat_up_to_date: "em dia",
+  stat_orgs: "Organizações",
+  stat_all: "Todas",
+  stat_global_scope: "alcance global",
+  stat_granted_you: "lhe deram acesso",
+  stat_access_level: "Nível de acesso",
+  stat_read: "Leitura",
+  stat_never_writes: "nunca escreve",
+  profile_title: "Perfil da agência",
+  profile_desc: "Como sua agência aparece para as organizações que a habilitam.",
+  profile_name: "Nome",
+  profile_slug: "Identificador",
+  profile_status: "Status",
+  profile_active: "Ativa",
+  profile_disabled: "Desabilitada",
+  profile_note: "Para alterar o nome ou o identificador da agência, escreva para nós.",
+};
+
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

@@ -52,12 +52,10 @@ export function TicketPool({
   tickets,
   agency_id,
   agency_slug,
-  agency_name,
 }: {
   tickets: PoolTicket[];
   agency_id: number;
   agency_slug: string;
-  agency_name: string;
 }) {
   const { t } = useRosetta(LOCALES);
   const [filter, setFilter] = useState<StatusFilter>("open");
@@ -67,56 +65,38 @@ export function TicketPool({
   const counts = TICKET_COUNTS(tickets);
 
   return (
-    <div className="@container bg-background relative flex min-h-svh w-full flex-col overflow-hidden">
-      <header className="border-border bg-background flex shrink-0 items-center gap-3 border-b px-4 py-3 @min-[768px]:px-6">
-        <Link
-          href={ROUTE("/a/[agency_slug]", { agency_slug })}
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <span className="bg-muted text-foreground border-border inline-flex size-8 shrink-0 items-center justify-center rounded-lg border">
-            <Building2 size={15} />
-          </span>
-        </Link>
-        <ChevronRight size={14} className="text-muted-foreground/50 shrink-0" />
-        <div className="flex min-w-0 flex-col gap-px">
-          <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">{t("header_title")}</span>
-          <span className="text-muted-foreground text-xs">{agency_name}</span>
-        </div>
-      </header>
-
-      <Tabs
-        value={filter}
-        onValueChange={(v) => setFilter(v as StatusFilter)}
-        className="flex min-h-0 flex-1 flex-col gap-0"
+    <Tabs
+      value={filter}
+      onValueChange={(v) => setFilter(v as StatusFilter)}
+      className="flex min-h-0 flex-1 flex-col gap-0"
+    >
+      <TabsList
+        variant="line"
+        className="border-border no-scrollbar h-auto w-full justify-start gap-1 overflow-x-auto border-b px-3 @min-[768px]:px-5"
       >
-        <TabsList
-          variant="line"
-          className="border-border no-scrollbar h-auto w-full justify-start gap-1 overflow-x-auto border-b px-3 @min-[768px]:px-5"
-        >
-          <PoolTabTrigger value="open" icon={Inbox} label={t("tab_open")} count={counts["open"]} />
-          <PoolTabTrigger
-            value="in_progress"
-            icon={CircleDot}
-            label={t("tab_in_progress")}
-            count={counts["in_progress"]}
-          />
-          <PoolTabTrigger value="claimed" icon={Hourglass} label={t("tab_claimed")} count={counts["claimed"]} />
-          <PoolTabTrigger value="resolved" icon={CheckCircle2} label={t("tab_resolved")} count={counts["resolved"]} />
-          <PoolTabTrigger value="closed" icon={Clock} label={t("tab_closed")} count={counts["closed"]} />
-          <PoolTabTrigger value="all" icon={ArrowRight} label={t("tab_all")} count={tickets.length} />
-        </TabsList>
+        <PoolTabTrigger value="open" icon={Inbox} label={t("tab_open")} count={counts["open"]} />
+        <PoolTabTrigger
+          value="in_progress"
+          icon={CircleDot}
+          label={t("tab_in_progress")}
+          count={counts["in_progress"]}
+        />
+        <PoolTabTrigger value="claimed" icon={Hourglass} label={t("tab_claimed")} count={counts["claimed"]} />
+        <PoolTabTrigger value="resolved" icon={CheckCircle2} label={t("tab_resolved")} count={counts["resolved"]} />
+        <PoolTabTrigger value="closed" icon={Clock} label={t("tab_closed")} count={counts["closed"]} />
+        <PoolTabTrigger value="all" icon={ArrowRight} label={t("tab_all")} count={tickets.length} />
+      </TabsList>
 
-        <main className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-8 @min-[768px]:px-6 @min-[768px]:py-6 @min-[768px]:pb-10">
-          <div className="mx-auto flex w-full max-w-205 flex-col gap-5">
-            {(["open", "claimed", "in_progress", "resolved", "closed", "all"] as const).map((status) => (
-              <TabsContent key={status} value={status} className="mt-0">
-                <TicketList tickets={filtered} agency_id={agency_id} agency_slug={agency_slug} filter={status} t={t} />
-              </TabsContent>
-            ))}
-          </div>
-        </main>
-      </Tabs>
-    </div>
+      <div className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-8 @min-[768px]:px-6 @min-[768px]:py-6 @min-[768px]:pb-10">
+        <div className="mx-auto flex w-full max-w-205 flex-col gap-5">
+          {(["open", "claimed", "in_progress", "resolved", "closed", "all"] as const).map((status) => (
+            <TabsContent key={status} value={status} className="mt-0">
+              <TicketList tickets={filtered} agency_id={agency_id} agency_slug={agency_slug} filter={status} t={t} />
+            </TabsContent>
+          ))}
+        </div>
+      </div>
+    </Tabs>
   );
 }
 
@@ -342,8 +322,6 @@ function RELATIVE_TIME(iso: string): string {
 }
 
 const LOCALE_ES = {
-  page_title: "Tickets de soporte",
-  header_title: "Tickets",
   tab_open: "Abiertos",
   tab_claimed: "Reclamados",
   tab_in_progress: "En proceso",
@@ -368,8 +346,6 @@ const LOCALE_ES = {
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
-  page_title: "Support tickets",
-  header_title: "Tickets",
   tab_open: "Open",
   tab_claimed: "Claimed",
   tab_in_progress: "In progress",
@@ -394,8 +370,6 @@ const LOCALE_EN: typeof LOCALE_ES = {
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
-  page_title: "Tickets de suporte",
-  header_title: "Tickets",
   tab_open: "Abertos",
   tab_claimed: "Reivindicados",
   tab_in_progress: "Em andamento",

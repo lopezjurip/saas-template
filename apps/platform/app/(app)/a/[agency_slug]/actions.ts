@@ -88,7 +88,8 @@ export const actionInviteAffiliate = authedAction
     const slug = agencyRes.data?.["agency_slug"];
     if (slug) {
       revalidatePath(`/admin/agencies/${slug}`);
-      revalidatePath(`/a/${slug}`);
+      // Layout scope so the agency shell's child routes (team, access, …) all refresh.
+      revalidatePath(`/a/${slug}`, "layout");
     }
     return { email };
   });
@@ -136,7 +137,8 @@ export const actionUpdateAffiliateMembership = authedAction
     const slug = agencyRes.data?.["agency_slug"];
     if (slug) {
       revalidatePath(`/admin/agencies/${slug}`);
-      revalidatePath(`/a/${slug}`);
+      // Layout scope so the agency shell's child routes (team, access, …) all refresh.
+      revalidatePath(`/a/${slug}`, "layout");
     }
     return { agency_membership_id: parsedInput.agency_membership_id };
   });
