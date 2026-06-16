@@ -1,16 +1,16 @@
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
+import { getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
 import { getRosetta } from "~/lib/i18n.server";
 import { type ConversationMessage, TicketDetail, type TicketDetailData } from "./ticket-detail";
 
 export async function generateMetadata(props: PageProps<"/a/[agency_slug]/tickets/[ticket_id]">): Promise<Metadata> {
   const { ticket_id } = await props.params;
   const { t } = await getRosetta(LOCALES);
-  const admin = createSupabaseServiceRoleClient();
-  const res = await admin.from("tickets").select("ticket_subject").eq("ticket_id", ticket_id).maybeSingle();
+  // Ticket RLS already scopes to agency affiliates → authenticated client, no service role.
+  const supabase = await createSupabaseServerClient();
+  const res = await supabase.from("tickets").select("ticket_subject").eq("ticket_id", ticket_id).maybeSingle();
   return { title: res.data?.["ticket_subject"] ?? t("page_title") };
 }
 
@@ -18,31 +18,11 @@ export default async function AgencyTicketDetailPage(props: PageProps<"/a/[agenc
   const { agency_slug, ticket_id } = await props.params;
 
   const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  const admin = createSupabaseServiceRoleClient();
-
-  const agencyRes = await admin
-    .from("agencies")
-    .select("agency_id, agency_name, agency_slug")
-    .eq("agency_slug", agency_slug)
-    .maybeSingle();
-  if (!agencyRes.data) notFound();
-  const agency = agencyRes.data;
-
-  // Gate: active affiliate only.
-  const membershipsRes = await admin
-    .from("agency_memberships")
-    .select(
-      "agency_membership_id, profile_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at",
-    )
-    .eq("agency_id", agency["agency_id"]);
-
-  const memberships = membershipsRes.data ?? [];
-  const viewerIsActive = memberships.some((m) => user && m["profile_id"] === user.id && IS_ACTIVE_MEMBERSHIP(m));
-  if (!viewerIsActive) notFound();
+  // RLS-scoped gql fetch is itself the active-affiliate gate (viewer_agency_ids()
+  // is accepted-and-not-revoked) → non-members get 404. No service-role client.
+  const { data: agencyData } = await getViewerAgencyBySlugAssert(agency_slug);
+  const agency = agencyData["agency"];
 
   // Load ticket via authenticated client (RLS enforces agency access).
   const ticketRes = await supabase
@@ -89,9 +69,9 @@ export default async function AgencyTicketDetailPage(props: PageProps<"/a/[agenc
     organization_slug: row["organizations"]?.["organization_slug"] ?? null,
     tenant_name: row["tenants"]?.["tenant_name"] ?? null,
     tenant_slug: row["tenants"]?.["tenant_slug"] ?? null,
-    agency_id: agency["agency_id"],
-    agency_slug: agency["agency_slug"],
-    agency_name: agency["agency_name"],
+    agency_id: agency["agencyId"],
+    agency_slug: agency["agencySlug"],
+    agency_name: agency["agencyName"],
     messages,
   };
 

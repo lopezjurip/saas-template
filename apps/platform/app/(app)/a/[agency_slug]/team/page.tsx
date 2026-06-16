@@ -1,11 +1,9 @@
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
 import { AFFILIATION_STATE } from "~/lib/agencies";
 import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
-import { getAgencyBySlug } from "../get-agency";
 import { type TeamAffiliate, TeamList } from "./team-list";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,46 +15,35 @@ export default async function AgencyTeamPage(props: PageProps<"/a/[agency_slug]/
   const { agency_slug } = await props.params;
 
   // Re-fetch the cached, RLS-scoped agency row (the layout already gated access).
-  const agency = await getAgencyBySlug(agency_slug);
-  if (!agency) notFound();
+  const { data } = await getViewerAgencyBySlugAssert(agency_slug);
+  const agency = data["agency"];
 
+  // The roster + each member's email come from the security-definer
+  // `viewer_agency_team` RPC under the caller's JWT (gated to accepted
+  // affiliates) — no service-role client, no `auth.admin.listUsers()`.
   const supabase = await createSupabaseServerClient();
-  const admin = createSupabaseServiceRoleClient();
-
-  const [userRes, membershipsRes, usersRes] = await Promise.all([
+  const [userRes, membershipsRes] = await Promise.all([
     supabase.auth.getUser(),
-    admin
-      .from("agency_memberships")
-      .select(
-        "agency_membership_id, profile_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at, agency_membership_created_at, profiles(profile_name_full)",
-      )
-      .eq("agency_id", agency["agency_id"])
-      .order("agency_membership_created_at", { ascending: true }),
-    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    supabase.rpc("viewer_agency_team", { agency_id: agency["agencyId"] }),
   ]);
 
   const user = userRes.data.user;
   const memberships = membershipsRes.data ?? [];
 
-  const emailByProfileId = new Map<string, string | null>();
-  if (!usersRes.error) {
-    for (const u of usersRes.data.users) emailByProfileId.set(u.id, u.email ?? null);
-  }
-
   const affiliates: TeamAffiliate[] = memberships.map((m) => ({
     agency_membership_id: m["agency_membership_id"],
     profile_id: m["profile_id"],
     state: AFFILIATION_STATE(m),
-    name: m["profiles"]?.["profile_name_full"] ?? emailByProfileId.get(m["profile_id"]) ?? m["profile_id"].slice(0, 8),
-    email: emailByProfileId.get(m["profile_id"]) ?? null,
+    name: m["profile_name_full"] ?? m["email"] ?? m["profile_id"].slice(0, 8),
+    email: m["email"] ?? null,
     is_self: Boolean(user && m["profile_id"] === user.id),
   }));
 
   return (
     <TeamList
-      agencyId={agency["agency_id"]}
+      agencyId={agency["agencyId"]}
       affiliates={affiliates}
-      inviteHref={ROUTE("/a/[agency_slug]/team", { agency_slug: agency["agency_slug"] })}
+      inviteHref={ROUTE("/a/[agency_slug]/team", { agency_slug: agency["agencySlug"] })}
     />
   );
 }

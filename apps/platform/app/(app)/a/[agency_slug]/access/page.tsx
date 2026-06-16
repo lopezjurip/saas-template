@@ -1,11 +1,10 @@
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { INITIALS_OF } from "@packages/utils/string";
 import { Building2, Eye, Globe } from "lucide-react";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
 import { getRosetta } from "~/lib/i18n.server";
-import { getAgencyBySlug } from "../get-agency";
 
 type AccessOrg = { organization_id: number; organization_name: string; organization_slug: string | null };
 
@@ -19,14 +18,16 @@ export default async function AgencyAccessPage(props: PageProps<"/a/[agency_slug
   const { t } = await getRosetta(LOCALES);
 
   // Re-fetch the cached, RLS-scoped agency row (the layout already gated access).
-  const agency = await getAgencyBySlug(agency_slug);
-  if (!agency) notFound();
+  const { data } = await getViewerAgencyBySlugAssert(agency_slug);
+  const agency = data["agency"];
 
-  const admin = createSupabaseServiceRoleClient();
-  const grantsRes = await admin
+  // RLS `agencies_organizations_grants select` already scopes grants to the
+  // viewer's agencies, so the authenticated client suffices — no service role.
+  const supabase = await createSupabaseServerClient();
+  const grantsRes = await supabase
     .from("agencies_organizations_grants")
     .select("organization_id, permission_id, organizations(organization_name, organization_slug)")
-    .eq("agency_id", agency["agency_id"]);
+    .eq("agency_id", agency["agencyId"]);
 
   const grants = grantsRes.data ?? [];
   const isGlobal = grants.some((g) => g["organization_id"] === null && g["permission_id"] === "*");
@@ -39,7 +40,7 @@ export default async function AgencyAccessPage(props: PageProps<"/a/[agency_slug
     }));
 
   return (
-    <div className="px-4 py-5 pb-8 @min-[768px]:px-6 @min-[768px]:py-6 @min-[768px]:pb-10">
+    <div className="px-4 py-5 pb-8 @3xl:px-6 @3xl:py-6 @3xl:pb-10">
       <div className="mx-auto flex w-full max-w-205 flex-col gap-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-foreground m-0 text-lg font-semibold tracking-tight">{t("access_title")}</h1>

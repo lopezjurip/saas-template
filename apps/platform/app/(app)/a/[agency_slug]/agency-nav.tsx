@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@packages/ui-common/shadcn/components/ui/dropdown-menu";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import {
   Check,
@@ -16,10 +24,8 @@ import {
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRef, useState } from "react";
 import { EntityAvatar } from "~/components/entity-avatar";
 import { LocaleToggle } from "~/components/locale-toggle";
-import { useClickOutside } from "~/components/shell/atoms";
 import { ConversationsBell } from "~/components/shell/conversations-bell";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { useRosetta } from "~/lib/i18n.client";
@@ -32,20 +38,26 @@ export type NavAgency = {
   agency_name: string;
 };
 
+type AgencyTab = { key: string; href: Route; label: string; icon: LucideIcon; exact: boolean };
+
 /**
- * Builds the ordered tab descriptors for the agency shell. Pure — depends only on
- * the slug and the translator, so it is safe to call on every render.
+ * Shared chrome for the agency shell: the logo-as-switcher (current agency opens a
+ * menu of the caller's other agencies plus a Home entry), the big route-based tab
+ * links with pathname-derived active state, and the locale/theme controls in-nav.
  *
- * `exact` index tab matches only `/a/{slug}`; the rest match by path prefix so a
- * detail route like `/a/{slug}/tickets/{id}` keeps its parent tab highlighted.
+ * Rendered once by `a/[agency_slug]/layout.tsx`; every tab is a real route segment.
  *
- * @example AGENCY_TABS("acme", t)[0].href // "/a/acme"
+ * @example <AgencyNav agency={agency} agencies={agencies} />
  */
-function AGENCY_TABS(
-  agency_slug: string,
-  t: ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"],
-): { key: string; href: Route; label: string; icon: LucideIcon; exact: boolean }[] {
-  return [
+export function AgencyNav({ agency, agencies }: { agency: NavAgency; agencies: NavAgency[] }) {
+  const { t } = useRosetta(LOCALES);
+  const pathname = usePathname();
+  const agency_slug = agency.agency_slug;
+
+  // Tabs are built inline so labels read straight from this scope's translator —
+  // no translator passed across a function boundary. `exact` index tab matches only
+  // `/a/{slug}`; the rest match by prefix so `/a/{slug}/tickets/{id}` keeps Tickets lit.
+  const tabs: AgencyTab[] = [
     {
       key: "overview",
       href: ROUTE("/a/[agency_slug]", { agency_slug }),
@@ -89,26 +101,11 @@ function AGENCY_TABS(
       exact: false,
     },
   ];
-}
-
-/**
- * Shared chrome for the agency shell: the logo-as-switcher (current agency opens a
- * menu of the caller's other agencies plus a Home entry), the big route-based tab
- * links with pathname-derived active state, and the locale/theme controls in-nav.
- *
- * Rendered once by `a/[agency_slug]/layout.tsx`; every tab is a real route segment.
- *
- * @example <AgencyNav agency={agency} agencies={agencies} />
- */
-export function AgencyNav({ agency, agencies }: { agency: NavAgency; agencies: NavAgency[] }) {
-  const { t } = useRosetta(LOCALES);
-  const pathname = usePathname();
-  const tabs = AGENCY_TABS(agency.agency_slug, t);
 
   return (
     <header className="border-border bg-background sticky top-0 z-30 flex shrink-0 flex-col gap-0 border-b">
-      <div className="flex items-center justify-between gap-3 px-4 py-3 @min-[768px]:px-6">
-        <AgencySwitcher agency={agency} agencies={agencies} t={t} />
+      <div className="flex items-center justify-between gap-3 px-4 py-3 @3xl:px-6">
+        <AgencySwitcher agency={agency} agencies={agencies} />
         <div className="flex shrink-0 items-center gap-2">
           <ConversationsBell
             scope={{ kind: "agency", agency_slug: agency.agency_slug, agency_id: agency.agency_id }}
@@ -122,7 +119,7 @@ export function AgencyNav({ agency, agencies }: { agency: NavAgency; agencies: N
 
       <nav
         aria-label={t("nav_aria")}
-        className="no-scrollbar -mb-px flex items-stretch gap-1 overflow-x-auto px-3 @min-[768px]:px-5"
+        className="no-scrollbar -mb-px flex items-stretch gap-1 overflow-x-auto px-3 @3xl:px-5"
       >
         {tabs.map((tab) => {
           const active = tab.exact
@@ -135,7 +132,7 @@ export function AgencyNav({ agency, agencies }: { agency: NavAgency; agencies: N
               href={tab.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-none items-center gap-2 border-b-2 px-3 py-3 text-base font-medium transition-colors @min-[768px]:px-4",
+                "flex flex-none items-center gap-2 border-b-2 px-3 py-3 text-base font-medium transition-colors @3xl:px-4",
                 active
                   ? "border-foreground text-foreground"
                   : "text-muted-foreground hover:text-foreground border-transparent",
@@ -152,67 +149,52 @@ export function AgencyNav({ agency, agencies }: { agency: NavAgency; agencies: N
 }
 
 /**
- * Logo-as-dropdown agency selector. Shows the current agency (logo + name); the menu
- * lists the caller's other agencies (switch to `/a/{slug}`) and a Home entry → `/home`.
+ * Logo-as-dropdown agency selector built on the shadcn `DropdownMenu`. Shows the
+ * current agency (logo + name); the menu lists the caller's other agencies
+ * (switch to `/a/{slug}`) and a Home entry → `/home`. Owns its own translator —
+ * never receives `t`/rosetta as a prop.
  */
-function AgencySwitcher({
-  agency,
-  agencies,
-  t,
-}: {
-  agency: NavAgency;
-  agencies: NavAgency[];
-  t: ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"];
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useClickOutside(ref, () => setOpen(false), open);
-
+function AgencySwitcher({ agency, agencies }: { agency: NavAgency; agencies: NavAgency[] }) {
+  const { t } = useRosetta(LOCALES);
   const others = agencies.filter((a) => a.agency_id !== agency.agency_id);
 
   return (
-    <div className="relative min-w-0" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        data-open={open}
-        aria-expanded={open}
-        aria-label={t("switcher_aria")}
-        className="hover:bg-accent/70 data-[open=true]:bg-accent data-[open=true]:border-border flex min-w-0 items-center gap-2.5 rounded-md border border-transparent px-2 py-1.5 text-left transition-colors"
-      >
-        <EntityAvatar
-          entity="agencies"
-          entityId={agency.agency_id}
-          name={agency.agency_name}
-          className="size-9 rounded-lg text-xs"
-        />
-        <span className="flex min-w-0 flex-col gap-px">
-          <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">
-            {agency.agency_name}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={t("switcher_aria")}
+          className="hover:bg-accent/70 data-[state=open]:bg-accent data-[state=open]:border-border flex min-w-0 items-center gap-2.5 rounded-md border border-transparent px-2 py-1.5 text-left transition-colors"
+        >
+          <EntityAvatar
+            entity="agencies"
+            entityId={agency.agency_id}
+            name={agency.agency_name}
+            className="size-9 rounded-lg text-xs"
+          />
+          <span className="flex min-w-0 flex-col gap-px">
+            <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">
+              {agency.agency_name}
+            </span>
+            <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
+              <span>{t("eyebrow")}</span>
+              <span className="opacity-40">·</span>
+              <code className="font-mono text-tiny">{agency.agency_slug}</code>
+            </span>
           </span>
-          <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
-            <span>{t("eyebrow")}</span>
-            <span className="opacity-40">·</span>
-            <code className="font-mono text-tiny">{agency.agency_slug}</code>
-          </span>
-        </span>
-        <ChevronsUpDown size={15} className="text-muted-foreground shrink-0" />
-      </button>
+          <ChevronsUpDown size={15} className="text-muted-foreground shrink-0" />
+        </button>
+      </DropdownMenuTrigger>
 
-      {open ? (
-        <div className="border-border bg-card text-card-foreground absolute left-0 top-full z-40 mt-1.5 w-72 overflow-hidden rounded-md border shadow-lg">
-          {others.length > 0 ? (
-            <div className="px-1 pb-1 pt-2">
-              <div className="text-muted-foreground px-2 pb-1 text-xs font-medium uppercase tracking-wider">
-                {t("switcher_heading")}
-              </div>
-              {others.map((other) => (
-                <Link
-                  key={other.agency_id}
-                  href={ROUTE("/a/[agency_slug]", { agency_slug: other.agency_slug })}
-                  onClick={() => setOpen(false)}
-                  className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
-                >
+      <DropdownMenuContent align="start" className="w-72">
+        {others.length > 0 ? (
+          <>
+            <DropdownMenuLabel className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+              {t("switcher_heading")}
+            </DropdownMenuLabel>
+            {others.map((other) => (
+              <DropdownMenuItem key={other.agency_id} asChild>
+                <Link href={ROUTE("/a/[agency_slug]", { agency_slug: other.agency_slug })}>
                   <EntityAvatar
                     entity="agencies"
                     entityId={other.agency_id}
@@ -221,32 +203,29 @@ function AgencySwitcher({
                   />
                   <span className="min-w-0 flex-1 truncate">{other.agency_name}</span>
                 </Link>
-              ))}
-            </div>
-          ) : null}
-          <div className={cn("px-1 py-1", others.length > 0 && "border-border border-t")}>
-            <div className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm">
-              <EntityAvatar
-                entity="agencies"
-                entityId={agency.agency_id}
-                name={agency.agency_name}
-                className="size-6 rounded-md text-tiny"
-              />
-              <span className="min-w-0 flex-1 truncate font-medium">{agency.agency_name}</span>
-              <Check size={15} className="text-foreground shrink-0" />
-            </div>
-            <Link
-              href={ROUTE("/home")}
-              onClick={() => setOpen(false)}
-              className="hover:bg-accent text-muted-foreground hover:text-foreground flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm"
-            >
-              <House size={15} className="shrink-0" />
-              <span>{t("home")}</span>
-            </Link>
-          </div>
-        </div>
-      ) : null}
-    </div>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
+        <DropdownMenuItem disabled className="opacity-100">
+          <EntityAvatar
+            entity="agencies"
+            entityId={agency.agency_id}
+            name={agency.agency_name}
+            className="size-6 rounded-md text-tiny"
+          />
+          <span className="min-w-0 flex-1 truncate font-medium">{agency.agency_name}</span>
+          <Check size={15} className="text-foreground shrink-0" />
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href={ROUTE("/home")} className="text-muted-foreground">
+            <House size={15} className="shrink-0" />
+            <span>{t("home")}</span>
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

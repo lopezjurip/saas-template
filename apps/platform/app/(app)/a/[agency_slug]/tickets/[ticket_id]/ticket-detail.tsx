@@ -126,7 +126,7 @@ export function TicketDetail({ data }: { data: TicketDetailData }) {
   return (
     <div className="@container bg-background relative flex min-h-svh w-full flex-col overflow-hidden">
       {/* Header */}
-      <header className="border-border bg-background flex shrink-0 items-start gap-3 border-b px-4 py-3 @min-[768px]:px-6">
+      <header className="border-border bg-background flex shrink-0 items-start gap-3 border-b px-4 py-3 @3xl:px-6">
         <Link
           href={poolHref}
           className="text-muted-foreground hover:text-foreground mt-0.5 shrink-0 transition-colors"
@@ -176,7 +176,7 @@ export function TicketDetail({ data }: { data: TicketDetailData }) {
 
       {/* Action error banner */}
       {actionError ? (
-        <div className="border-destructive/30 bg-destructive/6 text-destructive mx-4 mt-3 flex items-center gap-2 rounded-md border px-3 py-2 text-xs @min-[768px]:mx-6">
+        <div className="border-destructive/30 bg-destructive/6 text-destructive mx-4 mt-3 flex items-center gap-2 rounded-md border px-3 py-2 text-xs @3xl:mx-6">
           <Info size={13} className="shrink-0" />
           {actionError}
         </div>
@@ -184,7 +184,7 @@ export function TicketDetail({ data }: { data: TicketDetailData }) {
 
       {/* Resolve form */}
       {showResolveForm ? (
-        <div className="border-border bg-muted/30 mx-4 mt-3 flex flex-col gap-2.5 rounded-lg border p-3.5 @min-[768px]:mx-6">
+        <div className="border-border bg-muted/30 mx-4 mt-3 flex flex-col gap-2.5 rounded-lg border p-3.5 @3xl:mx-6">
           <span className="text-foreground text-xs font-semibold">{t("resolve_form_title")}</span>
           <Textarea
             placeholder={t("resolve_note_placeholder")}
@@ -213,7 +213,7 @@ export function TicketDetail({ data }: { data: TicketDetailData }) {
       ) : null}
 
       {/* Conversation thread */}
-      <main className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-3 @min-[768px]:px-6 @min-[768px]:py-6">
+      <main className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-3 @3xl:px-6 @3xl:py-6">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-3">
           {data["messages"].length === 0 ? (
             <div className="border-border text-muted-foreground flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-12 text-center">
@@ -231,7 +231,7 @@ export function TicketDetail({ data }: { data: TicketDetailData }) {
 
       {/* Reply box */}
       {canReply ? (
-        <footer className="border-border bg-background shrink-0 border-t px-4 py-3 @min-[768px]:px-6">
+        <footer className="border-border bg-background shrink-0 border-t px-4 py-3 @3xl:px-6">
           <div className="mx-auto flex w-full max-w-2xl flex-col gap-2">
             {replyError ? (
               <span className="text-destructive flex items-center gap-1.5 text-xs">

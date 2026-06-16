@@ -1,18 +1,18 @@
 import { notFound } from "next/navigation";
 import { OrderByDirection } from "~/generated/graphql/graphql";
-import { getViewerAgencies } from "~/hooks/get-viewer-agencies";
+import { getViewerAgencies, getViewerAgencyBySlug } from "~/hooks/get-viewer-agencies";
 import { AgencyNav, type NavAgency } from "./agency-nav";
-import { getAgencyBySlug } from "./get-agency";
 
 export default async function AgencyShellLayout(props: LayoutProps<"/a/[agency_slug]">) {
   const { agency_slug } = await props.params;
 
-  // RLS-scoped fetch doubles as the affiliate gate: non-members get null → 404.
+  // RLS-scoped gql fetch doubles as the affiliate gate: non-members get null → 404.
   // `cache()`-wrapped so each child page re-fetches the same row with zero extra round-trips.
-  const [agency, agenciesRes] = await Promise.all([
-    getAgencyBySlug(agency_slug),
+  const [agencyRes, agenciesRes] = await Promise.all([
+    getViewerAgencyBySlug(agency_slug),
     getViewerAgencies({ orderBy: [{ agencyName: OrderByDirection.AscNullsLast }] }),
   ]);
+  const agency = agencyRes.data?.["agency"];
   if (!agency) notFound();
 
   const agencies: NavAgency[] = (agenciesRes.data?.["agencies"]?.["edges"] ?? []).map((edge) => {
@@ -25,9 +25,9 @@ export default async function AgencyShellLayout(props: LayoutProps<"/a/[agency_s
   });
 
   const current: NavAgency = {
-    agency_id: agency["agency_id"],
-    agency_slug: agency["agency_slug"],
-    agency_name: agency["agency_name"],
+    agency_id: agency["agencyId"],
+    agency_slug: agency["agencySlug"],
+    agency_name: agency["agencyName"],
   };
 
   return (

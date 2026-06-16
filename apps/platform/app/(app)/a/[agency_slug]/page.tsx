@@ -1,17 +1,16 @@
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Eye } from "lucide-react";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { getViewerAgencyBySlug, getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
 import { AFFILIATION_STATE } from "~/lib/agencies";
 import { getRosetta } from "~/lib/i18n.server";
-import { getAgencyBySlug } from "./get-agency";
 
 export async function generateMetadata(props: PageProps<"/a/[agency_slug]">): Promise<Metadata> {
   const { agency_slug } = await props.params;
   const { t } = await getRosetta(LOCALES);
-  const agency = await getAgencyBySlug(agency_slug);
-  return { title: agency?.["agency_name"] ?? t("page_title") };
+  const { data } = await getViewerAgencyBySlug(agency_slug);
+  return { title: data?.["agency"]?.["agencyName"] ?? t("page_title") };
 }
 
 export default async function AgencyOverviewPage(props: PageProps<"/a/[agency_slug]">) {
@@ -19,19 +18,19 @@ export default async function AgencyOverviewPage(props: PageProps<"/a/[agency_sl
   const { t } = await getRosetta(LOCALES);
 
   // Re-fetch the cached, RLS-scoped agency row (deduped with the layout's fetch).
-  const agency = await getAgencyBySlug(agency_slug);
-  if (!agency) notFound();
+  const { data } = await getViewerAgencyBySlugAssert(agency_slug);
+  const agency = data["agency"];
 
-  const admin = createSupabaseServiceRoleClient();
+  // Both reads run under the caller's JWT: `viewer_agency_team` is a
+  // security-definer roster gated by `viewer_agency_ids()`, and the grants RLS
+  // policy already scopes to the viewer's agencies — no service-role client.
+  const supabase = await createSupabaseServerClient();
   const [membershipsRes, grantsRes] = await Promise.all([
-    admin
-      .from("agency_memberships")
-      .select("agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at")
-      .eq("agency_id", agency["agency_id"]),
-    admin
+    supabase.rpc("viewer_agency_team", { agency_id: agency["agencyId"] }),
+    supabase
       .from("agencies_organizations_grants")
       .select("organization_id, permission_id")
-      .eq("agency_id", agency["agency_id"]),
+      .eq("agency_id", agency["agencyId"]),
   ]);
 
   const memberships = membershipsRes.data ?? [];
@@ -57,16 +56,16 @@ export default async function AgencyOverviewPage(props: PageProps<"/a/[agency_sl
   ];
 
   const rows = [
-    { label: t("profile_name"), value: agency["agency_name"] },
-    { label: t("profile_slug"), value: agency["agency_slug"], mono: true },
+    { label: t("profile_name"), value: agency["agencyName"] },
+    { label: t("profile_slug"), value: agency["agencySlug"], mono: true },
     {
       label: t("profile_status"),
-      value: agency["agency_disabled_at"] ? t("profile_disabled") : t("profile_active"),
+      value: agency["agencyDisabledAt"] ? t("profile_disabled") : t("profile_active"),
     },
   ];
 
   return (
-    <div className="px-4 py-5 pb-8 @min-[768px]:px-6 @min-[768px]:py-6 @min-[768px]:pb-10">
+    <div className="px-4 py-5 pb-8 @3xl:px-6 @3xl:py-6 @3xl:pb-10">
       <div className="mx-auto flex w-full max-w-205 flex-col gap-6">
         <div className="grid grid-cols-3 gap-2.5">
           {stats.map((s) => (

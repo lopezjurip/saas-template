@@ -72,7 +72,7 @@ export function TicketPool({
     >
       <TabsList
         variant="line"
-        className="border-border no-scrollbar h-auto w-full justify-start gap-1 overflow-x-auto border-b px-3 @min-[768px]:px-5"
+        className="border-border no-scrollbar h-auto w-full justify-start gap-1 overflow-x-auto border-b px-3 @3xl:px-5"
       >
         <PoolTabTrigger value="open" icon={Inbox} label={t("tab_open")} count={counts["open"]} />
         <PoolTabTrigger
@@ -87,7 +87,7 @@ export function TicketPool({
         <PoolTabTrigger value="all" icon={ArrowRight} label={t("tab_all")} count={tickets.length} />
       </TabsList>
 
-      <div className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-8 @min-[768px]:px-6 @min-[768px]:py-6 @min-[768px]:pb-10">
+      <div className="min-w-0 flex-1 overflow-auto px-4 py-5 pb-8 @3xl:px-6 @3xl:py-6 @3xl:pb-10">
         <div className="mx-auto flex w-full max-w-205 flex-col gap-5">
           {(["open", "claimed", "in_progress", "resolved", "closed", "all"] as const).map((status) => (
             <TabsContent key={status} value={status} className="mt-0">

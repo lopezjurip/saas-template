@@ -43,7 +43,7 @@ export function TeamList({
   const active = affiliates.filter((a) => a.state === "accepted").length;
 
   return (
-    <div className="px-4 py-5 pb-8 @min-[768px]:px-6 @min-[768px]:py-6 @min-[768px]:pb-10">
+    <div className="px-4 py-5 pb-8 @3xl:px-6 @3xl:py-6 @3xl:pb-10">
       <div className="mx-auto flex w-full max-w-205 flex-col gap-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
@@ -54,7 +54,7 @@ export function TeamList({
           </div>
           <Button asChild size="sm" className="h-9 shrink-0">
             <Link href={inviteHref}>
-              <UserPlus size={15} strokeWidth={2} /> <span className="hidden @min-[520px]:inline">{t("invite")}</span>
+              <UserPlus size={15} strokeWidth={2} /> <span className="hidden @lg:inline">{t("invite")}</span>
             </Link>
           </Button>
         </div>
@@ -192,10 +192,10 @@ function TeamAffiliateRow({ agencyId, aff, t }: { agencyId: number; aff: TeamAff
               : "text-foreground hover:bg-accent",
           )}
         >
-          <action.icon size={13.5} /> <span className="hidden @min-[768px]:inline">{action.label}</span>
+          <action.icon size={13.5} /> <span className="hidden @3xl:inline">{action.label}</span>
         </button>
       ) : (
-        <span className="text-muted-foreground/70 hidden shrink-0 pr-1 text-xs italic @min-[768px]:inline">
+        <span className="text-muted-foreground/70 hidden shrink-0 pr-1 text-xs italic @3xl:inline">
           {aff.state === "rejected" ? t("action_declined") : ""}
         </span>
       )}

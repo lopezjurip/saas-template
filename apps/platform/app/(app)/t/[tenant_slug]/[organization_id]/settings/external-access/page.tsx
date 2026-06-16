@@ -1,10 +1,8 @@
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
 import { getRosetta, getServerLocale } from "~/lib/i18n.server";
 import { ExternalAccess, type ExternalAccessAgency } from "./external-access";
 
@@ -45,60 +43,31 @@ export default async function OrganizationExternalAccessPage(
     );
   }
 
-  /**
-   * Grants + agencies are service_role-only in RLS; use the admin client now that the
-   * org-manage gate passed.
-   */
-  const admin = createSupabaseServiceRoleClient();
+  // Enabled agencies + grant state + active-affiliate counts for this org, from a
+  // security-definer RPC self-gated on `organization_manage` — no service-role client.
+  const { data: rows } = await supabase.rpc("viewer_organization_external_agencies", { organization_id });
 
-  const [agenciesRes, grantsRes, membershipsRes] = await Promise.all([
-    admin
-      .from("agencies")
-      .select("agency_id, agency_name, agency_slug, agency_disabled_at")
-      .is("agency_disabled_at", null)
-      .order("agency_name", { ascending: true }),
-    admin.from("agencies_organizations_grants").select("agency_id, organization_id, permission_id"),
-    admin
-      .from("agency_memberships")
-      .select("agency_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at"),
-  ]);
-
-  const activeByAgency = new Map<number, number>();
-  for (const m of membershipsRes.data ?? []) {
-    if (IS_ACTIVE_MEMBERSHIP(m)) activeByAgency.set(m.agency_id, (activeByAgency.get(m.agency_id) ?? 0) + 1);
-  }
-
-  const grantedHere = new Set<number>();
-  const globalAgencies = new Set<number>();
-  for (const g of grantsRes.data ?? []) {
-    if (g.organization_id === null) {
-      if (g.permission_id === "*") globalAgencies.add(g.agency_id);
-    } else if (g.organization_id === organization_id) {
-      grantedHere.add(g.agency_id);
-    }
-  }
-
-  const all = agenciesRes.data ?? [];
+  const all = rows ?? [];
 
   // Agencies with access to THIS org: org-scoped grants here + any global (platform) grant.
   const withAccess: ExternalAccessAgency[] = all
-    .filter((a) => grantedHere.has(a.agency_id) || globalAgencies.has(a.agency_id))
+    .filter((a) => a["granted_here"] || a["is_global"])
     .map((a) => ({
-      agency_id: a.agency_id,
-      agency_name: a.agency_name,
-      agency_slug: a.agency_slug,
-      active_affiliates: activeByAgency.get(a.agency_id) ?? 0,
-      is_global: globalAgencies.has(a.agency_id),
+      agency_id: a["agency_id"],
+      agency_name: a["agency_name"],
+      agency_slug: a["agency_slug"],
+      active_affiliates: a["active_affiliates"],
+      is_global: a["is_global"],
     }));
 
   // Agencies available to grant: not already granted here and not global.
   const available: ExternalAccessAgency[] = all
-    .filter((a) => !grantedHere.has(a.agency_id) && !globalAgencies.has(a.agency_id))
+    .filter((a) => !a["granted_here"] && !a["is_global"])
     .map((a) => ({
-      agency_id: a.agency_id,
-      agency_name: a.agency_name,
-      agency_slug: a.agency_slug,
-      active_affiliates: activeByAgency.get(a.agency_id) ?? 0,
+      agency_id: a["agency_id"],
+      agency_name: a["agency_name"],
+      agency_slug: a["agency_slug"],
+      active_affiliates: a["active_affiliates"],
       is_global: false,
     }));
 
