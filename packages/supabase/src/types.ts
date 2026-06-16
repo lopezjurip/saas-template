@@ -1738,6 +1738,19 @@ export type Database = {
         Args: { permission_id: string }
         Returns: number[]
       }
+      viewer_agency_team: {
+        Args: { agency_id: number }
+        Returns: {
+          agency_membership_accepted_at: string
+          agency_membership_created_at: string
+          agency_membership_id: number
+          agency_membership_rejected_at: string
+          agency_membership_revoked_at: string
+          email: string
+          profile_id: string
+          profile_name_full: string
+        }[]
+      }
       viewer_agency_tenant_ids: { Args: never; Returns: number[] }
       viewer_conversation_messages: {
         Args: { p_conversation_id: string }
@@ -1849,6 +1862,17 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: true
         }
+      }
+      viewer_organization_external_agencies: {
+        Args: { organization_id: number }
+        Returns: {
+          active_affiliates: number
+          agency_id: number
+          agency_name: string
+          agency_slug: string
+          granted_here: boolean
+          is_global: boolean
+        }[]
       }
       viewer_organization_ids: { Args: never; Returns: number[] }
       viewer_organization_membership_accept: {

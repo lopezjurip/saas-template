@@ -1490,6 +1490,106 @@ create or replace function public.viewer_agency_by_slug(agency_slug text)
     limit 1;
   $$;
 
+-- Team roster for an agency: every membership (accepted, pending, revoked,
+-- rejected) with the member's display name and login email. The plain
+-- `agency_memberships select own` RLS policy only exposes the caller's own row,
+-- so listing co-members and reading their `auth.users` email both require a
+-- security-definer hop. The caller is gated to accepted affiliates via
+-- `viewer_agency_ids()` (so a non-member gets zero rows), letting the agency
+-- shell pages drop the service-role client and `auth.admin.listUsers()` entirely.
+create or replace function public.viewer_agency_team(agency_id int)
+  returns table (
+    agency_membership_id int,
+    profile_id uuid,
+    agency_membership_accepted_at timestamptz,
+    agency_membership_revoked_at timestamptz,
+    agency_membership_rejected_at timestamptz,
+    agency_membership_created_at timestamptz,
+    profile_name_full text,
+    email text
+  )
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select
+      m.agency_membership_id,
+      m.profile_id,
+      m.agency_membership_accepted_at,
+      m.agency_membership_revoked_at,
+      m.agency_membership_rejected_at,
+      m.agency_membership_created_at,
+      p.profile_name_full,
+      u.email::text
+    from public.agency_memberships m
+    join public.profiles p using (profile_id)
+    left join auth.users u on u.id = m.profile_id
+    where m.agency_id = viewer_agency_team.agency_id
+      and viewer_agency_team.agency_id in (select public.viewer_agency_ids())
+    order by m.agency_membership_created_at asc;
+  $$;
+
+-- External-access picker for an organization's admins: every enabled agency with
+-- its active-affiliate count and whether it is already granted access to THIS org
+-- (per-org grant) or globally (org IS NULL, permission '*'). The org admin is not
+-- an affiliate of these agencies, so `viewer_agency_ids()` does not apply and the
+-- agencies/grants/memberships tables are otherwise service-role-only in RLS — this
+-- security-definer hop is gated instead on `organization_manage` for the org, so
+-- the settings page drops its service-role client.
+create or replace function public.viewer_organization_external_agencies(organization_id int)
+  returns table (
+    agency_id int,
+    agency_name text,
+    agency_slug text,
+    active_affiliates int,
+    granted_here boolean,
+    is_global boolean
+  )
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select
+      a.agency_id,
+      a.agency_name,
+      a.agency_slug,
+      coalesce(m.active_count, 0)::int as active_affiliates,
+      coalesce(gh.granted, false) as granted_here,
+      coalesce(gg.granted, false) as is_global
+    from public.agencies a
+    left join lateral (
+      select count(*) as active_count
+      from public.agency_memberships am
+      where am.agency_id = a.agency_id
+        and am.agency_membership_accepted_at is not null
+        and am.agency_membership_revoked_at is null
+        and am.agency_membership_rejected_at is null
+    ) m on true
+    left join lateral (
+      select true as granted
+      from public.agencies_organizations_grants g
+      where g.agency_id = a.agency_id
+        and g.organization_id = viewer_organization_external_agencies.organization_id
+      limit 1
+    ) gh on true
+    left join lateral (
+      select true as granted
+      from public.agencies_organizations_grants g
+      where g.agency_id = a.agency_id
+        and g.organization_id is null
+        and g.permission_id = '*'
+      limit 1
+    ) gg on true
+    where a.agency_disabled_at is null
+      and public.viewer_has_permission(
+        viewer_organization_external_agencies.organization_id, 'organization_manage')
+    order by a.agency_name asc;
+  $$;
+
 -- ============================================================
 -- RLS SELECT policies for agency tables (defined here because they
 -- require viewer_agency_ids() and viewer_permission_org_ids() to exist first)

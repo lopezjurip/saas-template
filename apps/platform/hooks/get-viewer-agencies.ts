@@ -11,6 +11,7 @@ export const ViewerAgencyGetFragment = /*#__PURE__*/ gql(`
     agencyId
     agencySlug
     agencyName
+    agencyDisabledAt
   }
 `);
 

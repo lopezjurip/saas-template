@@ -1,12 +1,10 @@
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
+import { getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
 import { getRosetta } from "~/lib/i18n.server";
 import { type PoolTicket, TicketPool } from "./ticket-pool";
 
-export async function generateMetadata(props: PageProps<"/a/[agency_slug]/tickets">): Promise<Metadata> {
+export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getRosetta(LOCALES);
   return { title: t("page_title") };
 }
@@ -14,35 +12,14 @@ export async function generateMetadata(props: PageProps<"/a/[agency_slug]/ticket
 export default async function AgencyTicketsPage(props: PageProps<"/a/[agency_slug]/tickets">) {
   const { agency_slug } = await props.params;
 
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const admin = createSupabaseServiceRoleClient();
-
-  const agencyRes = await admin
-    .from("agencies")
-    .select("agency_id, agency_name, agency_slug")
-    .eq("agency_slug", agency_slug)
-    .maybeSingle();
-  if (!agencyRes.data) notFound();
-  const agency = agencyRes.data;
-
-  // Gate: must be an active affiliate of this agency.
-  const membershipsRes = await admin
-    .from("agency_memberships")
-    .select(
-      "agency_membership_id, profile_id, agency_membership_accepted_at, agency_membership_revoked_at, agency_membership_rejected_at",
-    )
-    .eq("agency_id", agency["agency_id"]);
-
-  const memberships = membershipsRes.data ?? [];
-  const viewerIsActive = memberships.some((m) => user && m["profile_id"] === user.id && IS_ACTIVE_MEMBERSHIP(m));
-  if (!viewerIsActive) notFound();
+  // The cached, RLS-scoped gql fetch is also the affiliate gate (non-members → 404),
+  // so no hand-rolled membership check is needed here anymore.
+  const { data } = await getViewerAgencyBySlugAssert(agency_slug);
+  const agency = data["agency"];
 
   // Fetch tickets accessible to this agency via RLS (viewer_agency_permission_org_ids).
   // Query via authenticated client — RLS policy allows agency members with tickets_manage.
+  const supabase = await createSupabaseServerClient();
   const ticketsRes = await supabase
     .from("tickets")
     .select(
@@ -70,14 +47,7 @@ export default async function AgencyTicketsPage(props: PageProps<"/a/[agency_slu
     tenant_slug: row["tenants"]?.["tenant_slug"] ?? null,
   }));
 
-  return (
-    <TicketPool
-      tickets={tickets}
-      agency_id={agency["agency_id"]}
-      agency_slug={agency["agency_slug"]}
-      agency_name={agency["agency_name"]}
-    />
-  );
+  return <TicketPool tickets={tickets} agency_id={agency["agencyId"]} agency_slug={agency["agencySlug"]} />;
 }
 
 const LOCALE_ES = { page_title: "Tickets de soporte" };

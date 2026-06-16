@@ -383,6 +383,7 @@ Never pass dictionary object as props; never import or export `LOCALES` between 
 - **Server page** (`page.tsx`): define minimal `LOCALES` with only what `generateMetadata` needs (e.g. `title`, `subtitle`). Use `ROSETTA(LOCALES, locale)` from `~/lib/i18n`.
 - **Client component**: define full `LOCALES` at top of file. Use `useRosetta(LOCALES)` from `@packages/rosetta/use-rosetta` inside component — no `dict` prop.
 - Sub-components in same file can also call `useRosetta(LOCALES)` directly — `LOCALES` is module-scoped.
+- **Never pass the translator (`t`) or a `ReturnType<typeof useRosetta>` across a function/component boundary as an argument or prop.** Each component/sub-component calls `useRosetta(LOCALES)` itself (`LOCALES` is module-scoped, so it's free). Likewise, a helper that builds labelled data (tab descriptors, menu items) does **not** take `t` as a parameter — inline the build inside the component where `t` is already in scope, or have it return string *keys* and translate at the call site. A `t` parameter is the same anti-pattern as a `dict` prop.
 - Two files needing same key (e.g. `title`) → each duplicates it. No sharing.
 - **`LOCALE_ES` and `LOCALES` always at bottom of file**, after all component/function definitions. Data constants — keep imports and logic at top.
 

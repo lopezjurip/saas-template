@@ -340,7 +340,7 @@ export type CountriesGetQueryVariables = Exact<{
 
 export type CountriesGetQuery = { addressesLevel0: { edges: Array<{ node: { addressLevel0Id: string, addressLevel0Name: string, addressLevel0Emoji: string | null } }> } | null };
 
-export type ViewerAgencyGetFragmentFragment = { agencyId: number, agencySlug: string, agencyName: string };
+export type ViewerAgencyGetFragmentFragment = { agencyId: number, agencySlug: string, agencyName: string, agencyDisabledAt: string | null };
 
 export type ViewerAgenciesGetQueryVariables = Exact<{
   first?: number | null | undefined;
@@ -352,21 +352,21 @@ export type ViewerAgenciesGetQueryVariables = Exact<{
 }>;
 
 
-export type ViewerAgenciesGetQuery = { agencies: { edges: Array<{ node: { agencyId: number, agencySlug: string, agencyName: string } }> } | null };
+export type ViewerAgenciesGetQuery = { agencies: { edges: Array<{ node: { agencyId: number, agencySlug: string, agencyName: string, agencyDisabledAt: string | null } }> } | null };
 
 export type ViewerAgencyByIdGetQueryVariables = Exact<{
   agencyId: number;
 }>;
 
 
-export type ViewerAgencyByIdGetQuery = { agency: { agencyId: number, agencySlug: string, agencyName: string } | null };
+export type ViewerAgencyByIdGetQuery = { agency: { agencyId: number, agencySlug: string, agencyName: string, agencyDisabledAt: string | null } | null };
 
 export type ViewerAgencyBySlugGetQueryVariables = Exact<{
   agencySlug: string;
 }>;
 
 
-export type ViewerAgencyBySlugGetQuery = { agency: { agencyId: number, agencySlug: string, agencyName: string } | null };
+export type ViewerAgencyBySlugGetQuery = { agency: { agencyId: number, agencySlug: string, agencyName: string, agencyDisabledAt: string | null } | null };
 
 export type ViewerOrganizationGetFragmentFragment = { organizationId: number, tenantId: number, organizationSlug: string, organizationName: string };
 
@@ -599,6 +599,7 @@ export const ViewerAgencyGetFragmentFragmentDoc = new TypedDocumentString(`
   agencyId
   agencySlug
   agencyName
+  agencyDisabledAt
 }
     `, {"fragmentName":"ViewerAgencyGetFragment"}) as unknown as TypedDocumentString<ViewerAgencyGetFragmentFragment, unknown>;
 export const ViewerOrganizationGetFragmentFragmentDoc = new TypedDocumentString(`
@@ -974,6 +975,7 @@ export const ViewerAgenciesGetDocument = new TypedDocumentString(`
   agencyId
   agencySlug
   agencyName
+  agencyDisabledAt
 }`) as unknown as TypedDocumentString<ViewerAgenciesGetQuery, ViewerAgenciesGetQueryVariables>;
 export const ViewerAgencyByIdGetDocument = new TypedDocumentString(`
     query ViewerAgencyByIdGet($agencyId: Int!) {
@@ -985,6 +987,7 @@ export const ViewerAgencyByIdGetDocument = new TypedDocumentString(`
   agencyId
   agencySlug
   agencyName
+  agencyDisabledAt
 }`) as unknown as TypedDocumentString<ViewerAgencyByIdGetQuery, ViewerAgencyByIdGetQueryVariables>;
 export const ViewerAgencyBySlugGetDocument = new TypedDocumentString(`
     query ViewerAgencyBySlugGet($agencySlug: String!) {
@@ -996,6 +999,7 @@ export const ViewerAgencyBySlugGetDocument = new TypedDocumentString(`
   agencyId
   agencySlug
   agencyName
+  agencyDisabledAt
 }`) as unknown as TypedDocumentString<ViewerAgencyBySlugGetQuery, ViewerAgencyBySlugGetQueryVariables>;
 export const ViewerOrganizationsGetDocument = new TypedDocumentString(`
     query ViewerOrganizationsGet($first: Int, $last: Int, $after: Cursor, $before: Cursor, $filter: OrganizationsFilter, $orderBy: [OrganizationsOrderBy!]) {
