@@ -141,7 +141,12 @@ export function AgencyCreate() {
               </span>
             </div>
 
-            <ButtonSpinner pending={isCreating} pendingChildren={<span>{t("creating")}</span>} className="h-9 w-full">
+            <ButtonSpinner
+              type="submit"
+              pending={isCreating}
+              pendingChildren={<span>{t("creating")}</span>}
+              className="h-9 w-full"
+            >
               <Plus size={16} strokeWidth={2} />
               <span>{t("create")}</span>
             </ButtonSpinner>

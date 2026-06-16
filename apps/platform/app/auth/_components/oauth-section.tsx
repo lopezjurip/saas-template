@@ -24,6 +24,7 @@ export function OAuthSection({ next }: { next: string }) {
             <input type="hidden" name="provider" value={p.id} />
             <input type="hidden" name="next" value={next} />
             <ButtonSpinner
+              type="submit"
               variant="outline"
               pendingChildren={
                 <>
@@ -47,6 +48,7 @@ export function OAuthSection({ next }: { next: string }) {
               <input type="hidden" name="provider" value={p.id} />
               <input type="hidden" name="next" value={next} />
               <ButtonSpinner
+                type="submit"
                 variant="outline"
                 size="icon"
                 pendingChildren={null}

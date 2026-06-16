@@ -95,7 +95,7 @@ export function AuthEntryForm({ next, error }: { next: string; error?: string | 
           <p className="text-xs leading-relaxed text-muted-foreground">{t("hint")}</p>
         )}
       </div>
-      <ButtonSpinner pendingChildren={<span>{t("submit_pending")}</span>} className="h-10 w-full">
+      <ButtonSpinner type="submit" pendingChildren={<span>{t("submit_pending")}</span>} className="h-10 w-full">
         <span>{t("submit")}</span>
         <ArrowRight size={16} />
       </ButtonSpinner>

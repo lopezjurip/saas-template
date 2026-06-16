@@ -27,7 +27,7 @@ export default async function AuthPage(props: PageProps<"/auth">) {
 
   return (
     <AuthCard>
-      <div className="flex flex-col gap-[22px]">
+      <div className="flex flex-col gap-5.5">
         <AuthHeader />
         <div className="flex flex-col gap-4">
           <OAuthSection next={next} />

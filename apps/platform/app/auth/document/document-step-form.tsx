@@ -25,12 +25,12 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
   const router = useRouter();
   const locale = useLocaleParam();
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const [kind, setKind] = useState<DocKind>("nin");
-  const [doc, setDoc] = useState(() => (value ? RUT_FORMAT(value, { dots: true, dash: true }) : ""));
+  const [doc, setDoc] = useState(() => (value ? RUT_FORMAT(RUT_NORMALIZE(value), { dots: true, dash: true }) : ""));
   const [login, setLogin] = useState<LoginState | null>(null);
+  const [noAccount, setNoAccount] = useState(false);
   const [token, setToken] = useState("");
 
   const country = "CL";
@@ -38,7 +38,6 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
   function onCheck(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setInfo(null);
     startTransition(async () => {
       const [result, err] = await ErrorSafeAction.unwrap(
         actionCheckDocument({
@@ -84,7 +83,7 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
           );
           break;
         case "redirect_signup":
-          setInfo(t("info_no_account"));
+          setNoAccount(true);
           break;
       }
     });
@@ -108,6 +107,34 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
       );
       if (err) setError(t("error_otp"));
     });
+  }
+
+  if (noAccount) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Alert>
+          <AlertDescription>{t("info_no_account")}</AlertDescription>
+        </Alert>
+        <Button
+          type="button"
+          onClick={() => router.push(ROUTE_HREF(ROUTE("/auth", { locale, next })))}
+          className="h-10 w-full"
+        >
+          <span>{t("signup_other_method")}</span>
+          <ArrowRight size={16} />
+        </Button>
+        <button
+          type="button"
+          onClick={() => {
+            setNoAccount(false);
+            setError(null);
+          }}
+          className="self-center text-xs text-muted-foreground underline hover:text-foreground"
+        >
+          {t("retry")}
+        </button>
+      </div>
+    );
   }
 
   if (login) {
@@ -195,11 +222,6 @@ export function DocumentStepForm({ value, next }: { value: string; next: string 
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      {info && (
-        <Alert>
-          <AlertDescription>{info}</AlertDescription>
-        </Alert>
-      )}
 
       <Button type="submit" disabled={pending || doc.trim().length < 2} className="h-10 w-full">
         <span>{pending ? t("checking") : t("continue")}</span>
@@ -229,6 +251,8 @@ const LOCALE_ES = {
   error_otp: "Código incorrecto o expirado.",
   info_no_account:
     "No encontramos una cuenta ni una invitación con ese documento. Pídele a tu empresa que te invite, o entra con tu correo.",
+  signup_other_method: "Crear cuenta con otro método",
+  retry: "Volver a intentar",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
@@ -250,6 +274,8 @@ const LOCALE_EN: typeof LOCALE_ES = {
   error_otp: "Incorrect or expired code.",
   info_no_account:
     "We didn't find an account or invitation with that document. Ask your company to invite you, or sign in with your email.",
+  signup_other_method: "Create account with another method",
+  retry: "Try again",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
@@ -271,6 +297,8 @@ const LOCALE_PT: typeof LOCALE_ES = {
   error_otp: "Código incorreto ou expirado.",
   info_no_account:
     "Não encontramos uma conta nem um convite com esse documento. Peça à sua empresa que o convide, ou entre com o seu e-mail.",
+  signup_other_method: "Criar conta com outro método",
+  retry: "Tentar novamente",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
