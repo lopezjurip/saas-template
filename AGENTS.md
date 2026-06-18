@@ -144,10 +144,14 @@ Three kinds of skills, all materialized on `pnpm install` by `scripts/skills-set
 Add a third-party skill (writes the file tree + records it in `skills-lock.json`):
 
 ```bash
-pnpm dlx skills add <registry-url> --skill <skill-name>
+# Use the github `owner/repo` shorthand, NOT the skills.sh share URL.
+# The CLI resolves a skill catalog from the repo; a skills.sh URL (e.g.
+# https://www.skills.sh/owner/repo/skill) has no /.well-known/agent-skills/
+# index.json and the add fails with "No skills found".
+pnpm dlx skills add <owner/repo> --skill <skill-name>   # e.g. dietrichgebert/ponytail --skill ponytail
 ```
 
-Commit the resulting `skills-lock.json` change — the file tree itself is gitignored and reappears on the next `pnpm install`. Update pins with `pnpm dlx skills update`.
+Commit **only** the resulting `skills-lock.json` change. The CLI also drops a stray `skills/<skill-name>` symlink → delete it: third-party skills are restored into the gitignored `.agents/skills/` (mirrored to `.claude/skills/` by `scripts/skills-setup.js`) on the next `pnpm install`, so the only first-party-tracked entries under `skills/` are the `my-*` sources and `codebase`. Update pins with `pnpm dlx skills update`.
 
 **Caveat:** `skills-lock.json` records the source repo, not a commit SHA, so restore re-clones each skill at upstream **HEAD** — `computedHash` is descriptive, not enforced. Third-party skills track latest, not a frozen version. Skills run with **full agent permissions** — review skill source before using in production.
 

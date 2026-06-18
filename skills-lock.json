@@ -25,6 +25,12 @@
       "skillPath": "skills/integrate-whatsapp/SKILL.md",
       "computedHash": "acd8594565afb7b28c5490ce1d52fbb2fd99d998c2d500c70a8bbade56f710aa"
     },
+    "ponytail": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail/SKILL.md",
+      "computedHash": "15811786f0277b0b4effe6b72cb9f3eaedefd1fe28f43f20aed3d926c10a88b1"
+    },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
