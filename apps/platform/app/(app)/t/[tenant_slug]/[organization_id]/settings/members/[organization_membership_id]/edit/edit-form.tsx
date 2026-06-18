@@ -30,31 +30,24 @@ function MAP_PG_ERROR_KEY(err: GraphyError): "last_admin_protected" | "self_remo
 }
 
 const GrantPermissionMutation = /*#__PURE__*/ gql(`
-  mutation EditOrganizationMembershipGrantPermissionMutation($organization_membership_id: Int!, $permission_id: String!) {
-    insertIntoOrganizationMembershipPermissionsCollection(
-      objects: [{ organizationMembershipId: $organization_membership_id, permissionId: $permission_id }]
-    ) {
+  mutation EditOrganizationMembershipGrantPermissionMutation($objects: [OrganizationMembershipPermissionsInsertInput!]!) {
+    insertIntoOrganizationMembershipPermissionsCollection(objects: $objects) {
       affectedCount
     }
   }
 `);
 
 const RevokePermissionMutation = /*#__PURE__*/ gql(`
-  mutation EditOrganizationMembershipRevokePermissionMutation($organization_membership_id: Int!, $permission_id: String!) {
-    deleteFromOrganizationMembershipPermissionsCollection(
-      filter: { organizationMembershipId: { eq: $organization_membership_id }, permissionId: { eq: $permission_id } }
-    ) {
+  mutation EditOrganizationMembershipRevokePermissionMutation($filter: OrganizationMembershipPermissionsFilter!) {
+    deleteFromOrganizationMembershipPermissionsCollection(filter: $filter) {
       affectedCount
     }
   }
 `);
 
 const RevokeOrganizationMembershipMutation = /*#__PURE__*/ gql(`
-  mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($organization_membership_id: Int!, $now: Datetime!) {
-    updateOrganizationMembershipsCollection(
-      filter: { organizationMembershipId: { eq: $organization_membership_id } }
-      set: { organizationMembershipRevokedAt: $now }
-    ) {
+  mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!) {
+    updateOrganizationMembershipsCollection(filter: $filter, set: $set) {
       affectedCount
     }
   }
@@ -134,13 +127,20 @@ export function EditPermissionsForm({
    */
   async function writePermission(permission_id: string, granted: boolean): Promise<boolean> {
     if (granted) {
-      const { error: err } = await grantPermission({ organization_membership_id, permission_id });
+      const { error: err } = await grantPermission({
+        objects: [{ organizationMembershipId: organization_membership_id, permissionId: permission_id }],
+      });
       if (err) {
         setError(t(MAP_PG_ERROR_KEY(err)));
         return false;
       }
     } else {
-      const { error: err } = await revokePermission({ organization_membership_id, permission_id });
+      const { error: err } = await revokePermission({
+        filter: {
+          organizationMembershipId: { eq: organization_membership_id },
+          permissionId: { eq: permission_id },
+        },
+      });
       if (err) {
         setError(t(MAP_PG_ERROR_KEY(err)));
         return false;
@@ -215,8 +215,8 @@ export function EditPermissionsForm({
     setError(null);
     startTransition(async () => {
       const { error: err } = await revokeOrganizationMembership({
-        organization_membership_id,
-        now: new Date().toISOString(),
+        filter: { organizationMembershipId: { eq: organization_membership_id } },
+        set: { organizationMembershipRevokedAt: new Date().toISOString() },
       });
       if (err) {
         setError(t(MAP_PG_ERROR_KEY(err)));

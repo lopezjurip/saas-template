@@ -20,30 +20,36 @@ const inviteAffiliateSchema = z.object({
 /**
  * Invite a person to an agency by email.
  *
- * Auth-user resolution/creation must happen in TS (GoTrue calls can't be
- * transactional). The membership upsert is an atomic RPC so there is no
- * TOCTOU race on insert-vs-reset.
+ * Two concerns split by trust boundary: ensuring an auth user exists (GoTrue, service-role,
+ * can't run under RLS) stays here; the membership write goes through the caller's RLS context
+ * via `viewer_agency_membership_invite_by_email`, which enforces `agency_members_manage`. We
+ * pre-check that capability so an unauthorized caller can't trigger user creation / invite email.
  */
 export const actionInviteAffiliate = authedAction
   .inputSchema(inviteAffiliateSchema)
-  .action(async ({ parsedInput, ctx: { user } }) => {
+  .action(async ({ parsedInput, ctx: { supabase } }) => {
     const { TError } = await getRosetta(LOCALES);
-    const admin = createSupabaseServiceRoleClient();
 
     const email = parsedInput.invitation_email.trim().toLowerCase();
 
-    // Resolve the profile_id for this email from auth.users.
-    // NOTE: listUsers is paginated. This is a known limitation below 1000 users;
-    // a security-definer SQL helper (like viewer_organization_membership_pending reads
-    // auth.users) would replace this, but that requires a schema change.
-    const existing = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    let profile_id: string | null = null;
-    if (!existing.error) {
-      const match = existing.data.users.find((u) => u.email?.toLowerCase() === email);
-      profile_id = match?.id ?? null;
+    // Permission pre-check (the RPC re-checks too) — gate the GoTrue side effects.
+    const { data: canManage } = await supabase
+      .rpc("viewer_has_agency_team_permission", {
+        agency_id: parsedInput.agency_id,
+        permission_id: "agency_members_manage",
+      })
+      .throwOnError();
+    if (!canManage) {
+      throw new TError("no_permission");
     }
 
-    if (!profile_id) {
+    // Ensure an auth user exists for this email (GoTrue — service-role, not transactional).
+    // NOTE: listUsers is paginated; known limitation below 1000 users.
+    const admin = createSupabaseServiceRoleClient();
+    const existing = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const match = existing.error ? undefined : existing.data.users.find((u) => u["email"]?.toLowerCase() === email);
+
+    if (!match) {
       const headerList = await headers();
       const proto = headerList.get("x-forwarded-proto") ?? "https";
       const host = headerList.get("host") ?? "";
@@ -57,29 +63,27 @@ export const actionInviteAffiliate = authedAction
         });
         throw new TError("invite_failed");
       }
-      profile_id = invite.data.user.id;
     }
 
-    // Atomic upsert: permission check + insert-or-reset in one DB round-trip.
-    const { data: agencySlug, error: rpcError } = await admin.rpc("agency_membership_invite", {
+    // Membership upsert under the caller's RLS context (resolves the profile by email in-DB).
+    const { error: rpcError } = await supabase.rpc("viewer_agency_membership_invite_by_email", {
       agency_id: parsedInput.agency_id,
-      profile_id: profile_id,
-      caller_id: user.id,
+      email,
     });
 
     if (rpcError) {
       const key = rpcError.message as keyof typeof LOCALE_ES;
       if (key in LOCALE_ES) throw new TError(key);
-      log.error("[actionInviteAffiliate] agency_membership_invite failed", {
+      log.error("[actionInviteAffiliate] viewer_agency_membership_invite_by_email failed", {
         agency_id: parsedInput.agency_id,
-        profile_id,
+        email,
         error: rpcError.message,
       });
       throw new TError("invite_failed");
     }
 
-    // Fetch slug for cache invalidation (RPC returns membership_id, not slug).
-    const agencyRes = await admin
+    // Fetch slug for cache invalidation (caller is an affiliate → RLS allows the read).
+    const agencyRes = await supabase
       .from("agencies")
       .select("agency_slug")
       .eq("agency_id", parsedInput.agency_id)
@@ -95,32 +99,30 @@ export const actionInviteAffiliate = authedAction
   });
 
 const membershipActionSchema = z.object({
+  // agency_id is kept only for cache revalidation; the RPC derives it from the membership row.
   agency_id: z.coerce.number().int().positive(),
   agency_membership_id: z.number().int().positive(),
   operation: z.enum(["revoke", "reactivate"]),
 });
 
 /**
- * Revoke or reactivate another affiliate's membership.
- * Permission check + update are atomic inside the RPC.
+ * Revoke or reactivate another affiliate's membership. Runs under the caller's RLS context;
+ * `viewer_agency_membership_update` enforces `agency_members_manage` and last-admin protection.
  */
 export const actionUpdateAffiliateMembership = authedAction
   .inputSchema(membershipActionSchema)
-  .action(async ({ parsedInput, ctx: { user } }) => {
+  .action(async ({ parsedInput, ctx: { supabase } }) => {
     const { TError } = await getRosetta(LOCALES);
-    const admin = createSupabaseServiceRoleClient();
 
-    const { error: rpcError } = await admin.rpc("agency_membership_update", {
+    const { error: rpcError } = await supabase.rpc("viewer_agency_membership_update", {
       agency_membership_id: parsedInput.agency_membership_id,
-      agency_id: parsedInput.agency_id,
       operation: parsedInput.operation,
-      caller_id: user.id,
     });
 
     if (rpcError) {
       const key = rpcError.message as keyof typeof LOCALE_ES;
       if (key in LOCALE_ES) throw new TError(key);
-      log.error("[actionUpdateAffiliateMembership] agency_membership_update failed", {
+      log.error("[actionUpdateAffiliateMembership] viewer_agency_membership_update failed", {
         agency_id: parsedInput.agency_id,
         agency_membership_id: parsedInput.agency_membership_id,
         error: rpcError.message,
@@ -128,7 +130,7 @@ export const actionUpdateAffiliateMembership = authedAction
       throw new TError("update_failed");
     }
 
-    const agencyRes = await admin
+    const agencyRes = await supabase
       .from("agencies")
       .select("agency_slug")
       .eq("agency_id", parsedInput.agency_id)
@@ -159,7 +161,7 @@ export const actionRespondInvitation = authedAction
     const { TError } = await getRosetta(LOCALES);
     const supabase = await createSupabaseServerClient();
 
-    const { error: rpcError } = await supabase.rpc("agency_membership_respond", {
+    const { error: rpcError } = await supabase.rpc("viewer_agency_membership_respond", {
       agency_membership_id: parsedInput.agency_membership_id,
       response: parsedInput.response,
     });
@@ -167,7 +169,7 @@ export const actionRespondInvitation = authedAction
     if (rpcError) {
       const key = rpcError.message as keyof typeof LOCALE_ES;
       if (key in LOCALE_ES) throw new TError(key);
-      log.error("[actionRespondInvitation] agency_membership_respond failed", {
+      log.error("[actionRespondInvitation] viewer_agency_membership_respond failed", {
         agency_membership_id: parsedInput.agency_membership_id,
         error: rpcError.message,
       });
@@ -179,12 +181,14 @@ export const actionRespondInvitation = authedAction
   });
 
 const LOCALE_ES = {
-  no_permission: "Debes ser afiliado activo de esta agencia para gestionar a su equipo",
+  no_permission: "No tienes permiso para gestionar el equipo de esta agencia",
   agency_not_found: "Agencia no encontrada",
+  user_not_found: "No existe una cuenta registrada con ese correo",
   invite_failed: "No pudimos enviar la invitación",
   already_member: "Esa persona ya es afiliada activa de la agencia",
   update_failed: "No pudimos actualizar la afiliación",
   membership_not_found: "Membresía no encontrada",
+  last_admin_protected: "No puedes revocar al último administrador del equipo de la agencia",
   invalid_operation: "Operación inválida",
   not_authenticated: "No autenticado",
   invitation_not_found: "Invitación no encontrada",
@@ -194,12 +198,14 @@ const LOCALE_ES = {
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
-  no_permission: "You must be an active affiliate of this agency to manage its team",
+  no_permission: "You don't have permission to manage this agency's team",
   agency_not_found: "Agency not found",
+  user_not_found: "No registered account exists for that email",
   invite_failed: "We couldn't send the invitation",
   already_member: "That person is already an active affiliate of the agency",
   update_failed: "We couldn't update the affiliation",
   membership_not_found: "Membership not found",
+  last_admin_protected: "You can't revoke the agency team's last admin",
   invalid_operation: "Invalid operation",
   not_authenticated: "Not authenticated",
   invitation_not_found: "Invitation not found",
@@ -209,12 +215,14 @@ const LOCALE_EN: typeof LOCALE_ES = {
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
-  no_permission: "Você precisa ser afiliado ativo desta agência para gerenciar sua equipe",
+  no_permission: "Você não tem permissão para gerenciar a equipe desta agência",
   agency_not_found: "Agência não encontrada",
+  user_not_found: "Não existe uma conta registrada com esse e-mail",
   invite_failed: "Não conseguimos enviar o convite",
   already_member: "Essa pessoa já é afiliada ativa da agência",
   update_failed: "Não conseguimos atualizar a afiliação",
   membership_not_found: "Membro não encontrado",
+  last_admin_protected: "Você não pode revogar o último administrador da equipe da agência",
   invalid_operation: "Operação inválida",
   not_authenticated: "Não autenticado",
   invitation_not_found: "Convite não encontrado",
