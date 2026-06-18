@@ -73,7 +73,11 @@
         "noUnusedVariables": "off",
         "noUnusedFunctionParameters": "off",
         "noUnreachable": "off",
-        "useExhaustiveDependencies": "off"
+        "useExhaustiveDependencies": "off",
+        // MCP tool `handle` methods are async generators by base-class contract
+        // (McpTool.handle: McpToolStream) so they can optionally stream progress via
+        // `yield`. Most just `return` a single result and never yield — intentional, not a bug.
+        "useYield": "off"
       },
       "performance": {
         "noAccumulatingSpread": "off",

@@ -17,11 +17,8 @@ import { type InferArgs, type McpContext, McpTool, type McpToolStream } from "~/
 const log = debug("app:api:mcp:tools:profile");
 
 const UpdateProfileMcpMutation = /*#__PURE__*/ gql(`
-  mutation UpdateProfileMcp($profile_id: UUID!, $profile_name_full: String!) {
-    updateProfilesCollection(
-      filter: { profileId: { eq: $profile_id } }
-      set: { profileNameFull: $profile_name_full }
-    ) {
+  mutation UpdateProfileMcp($filter: ProfilesFilter!, $set: ProfilesUpdateInput!) {
+    updateProfilesCollection(filter: $filter, set: $set) {
       affectedCount
     }
   }
@@ -55,8 +52,8 @@ export class UpdateProfileTool extends McpTool<typeof UpdateProfileSchema> {
     const { data, error } = await graphy.mutate({
       query: UpdateProfileMcpMutation,
       variables: {
-        profile_id: ctx.userId,
-        profile_name_full: args["profile_name_full"],
+        filter: { profileId: { eq: ctx.userId } },
+        set: { profileNameFull: args["profile_name_full"] },
       },
     });
 

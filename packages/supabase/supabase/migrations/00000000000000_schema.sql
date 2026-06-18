@@ -985,7 +985,8 @@ insert into public.permissions (permission_id, permission_description) values
   ('tenant_manage',        'Edit the tenant (billing entity): name, logo, billing, and domains.'),
   ('members_manage',       'Invite, remove, and reassign permissions to members.'),
   ('presets_manage',       'Create and edit the organization''s permission presets.'),
-  ('tickets_manage',       'View, claim, and resolve support tickets on behalf of the organization.')
+  ('tickets_manage',       'View, claim, and resolve support tickets on behalf of the organization.'),
+  ('agency_members_manage','Manage the agency team: invite, revoke, reactivate affiliates and reassign their agency permissions.')
 on conflict (permission_id) do nothing;
 
 -- Seed global presets (organization_id IS NULL → visibles para cualquier tenant).
@@ -1054,6 +1055,22 @@ create unique index if not exists agencies_organizations_grants_org_unique
 create unique index if not exists agencies_organizations_grants_global_unique
   on public.agencies_organizations_grants (agency_id, permission_id)
   where organization_id is null;
+
+-- Per-affiliate capabilities inside an agency. Mirrors public.organization_membership_permissions:
+-- capability-based, reuses the public.permissions catalog (e.g. 'agency_members_manage', '*').
+-- Controls who may manage the agency's own team — distinct from agencies_organizations_grants,
+-- which is the org-side decision of which agencies may reach which organizations.
+create table if not exists public.agency_membership_permissions (
+  agency_membership_id int not null references public.agency_memberships (agency_membership_id) on delete cascade,
+  permission_id extensions.citext not null references public.permissions (permission_id) on delete cascade,
+  agency_membership_permission_created_at timestamptz not null default current_timestamp,
+  primary key (agency_membership_id, permission_id)
+);
+
+alter table public.agency_membership_permissions enable row level security;
+revoke all on table public.agency_membership_permissions from anon, authenticated;
+grant select, insert, update, delete on table public.agency_membership_permissions to anon, authenticated;
+grant select, insert, update, delete on table public.agency_membership_permissions to service_role;
 
 -- RLS for agency tables.
 alter table public.agencies enable row level security;
@@ -1615,6 +1632,172 @@ create policy "agencies_organizations_grants select"
     agency_id in (select public.viewer_agency_ids())
     or organization_id in (select public.viewer_permission_org_ids('organization_manage'))
   );
+
+-- ============================================================
+-- Agency internal-capability helpers + RLS (agency_membership_permissions)
+-- ============================================================
+-- These mean "authority over the agency's OWN team" — NOT the same as the
+-- existing viewer_has_agency_permission / viewer_agency_permission_org_ids, which
+-- mean "this agency may reach that organization". Hence the distinct `_team_` names.
+-- SECURITY DEFINER so they bypass RLS on agency_membership_permissions itself.
+-- Wildcard `*` honored, mirroring viewer_permission_org_ids.
+
+create or replace function public.viewer_agency_team_permission_ids(permission_id extensions.citext)
+  returns setof int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select distinct m.agency_id
+    from public.agency_membership_permissions mp
+    join public.agency_memberships m on m.agency_membership_id = mp.agency_membership_id
+    join public.agencies a on a.agency_id = m.agency_id
+    where m.profile_id = (select public.viewer_profile_id())
+      and m.agency_membership_accepted_at is not null
+      and m.agency_membership_revoked_at is null
+      and m.agency_membership_rejected_at is null
+      and a.agency_disabled_at is null
+      and (mp.permission_id = viewer_agency_team_permission_ids.permission_id or mp.permission_id = '*');
+  $$;
+
+create or replace function public.viewer_has_agency_team_permission(
+  agency_id int,
+  permission_id extensions.citext
+)
+  returns boolean
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select viewer_has_agency_team_permission.agency_id in (
+      select public.viewer_agency_team_permission_ids(viewer_has_agency_team_permission.permission_id)
+    );
+  $$;
+
+-- Resolve a membership's agency, bypassing the own-row-only RLS on agency_memberships.
+-- The agency_membership_permissions policies need this: an admin grants/reads capabilities on
+-- OTHER affiliates' memberships, which the caller cannot SELECT directly under that table's RLS.
+create or replace function public.agency_id_of_membership(agency_membership_id int)
+  returns int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select m.agency_id
+    from public.agency_memberships m
+    where m.agency_membership_id = agency_id_of_membership.agency_membership_id;
+  $$;
+
+-- True iff the agency has at least one OTHER active affiliate holding
+-- `agency_members_manage` or `*`. Guards against removing the last team admin.
+create or replace function public.agency_has_other_active_admin(
+  _agency_id int,
+  _excluded_agency_membership_id int
+) returns boolean
+  language sql
+  stable
+  security definer
+  set search_path to ''
+as $$
+  select exists (
+    select 1
+    from public.agency_memberships m
+    join public.agency_membership_permissions mp on mp.agency_membership_id = m.agency_membership_id
+    where m.agency_id = _agency_id
+      and m.agency_membership_id <> _excluded_agency_membership_id
+      and m.agency_membership_accepted_at is not null
+      and m.agency_membership_revoked_at is null
+      and m.agency_membership_rejected_at is null
+      and mp.permission_id in ('agency_members_manage', '*')
+  );
+$$;
+
+revoke execute on function public.agency_has_other_active_admin(int, int) from public;
+grant execute on function public.agency_has_other_active_admin(int, int) to authenticated;
+
+-- Block deleting the last `agency_members_manage`/`*` grant of the agency's last admin.
+-- An admin holding BOTH may drop one — the other still grants admin status.
+-- service_role bypasses (viewer_profile_id() is NULL) so migrations can rescue agencies.
+create or replace function public.agency_membership_permissions_protect_last_admin()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path to ''
+as $$
+declare
+  _agency_id int;
+begin
+  if public.viewer_profile_id() is null then
+    return old;
+  elsif old.permission_id not in ('agency_members_manage', '*') then
+    return old;
+  end if;
+
+  select agency_id into _agency_id
+  from public.agency_memberships
+  where agency_membership_id = old.agency_membership_id;
+
+  -- If the membership keeps the OTHER admin permission, it stays an admin — no lockout.
+  if exists (
+    select 1 from public.agency_membership_permissions
+    where agency_membership_id = old.agency_membership_id
+      and permission_id in ('agency_members_manage', '*')
+      and permission_id <> old.permission_id
+  ) then
+    return old;
+  end if;
+
+  if not public.agency_has_other_active_admin(_agency_id, old.agency_membership_id) then
+    raise exception 'last_admin_protected'
+      using hint = 'cannot revoke the last admin permission in the agency';
+  end if;
+
+  return old;
+end;
+$$;
+
+drop trigger if exists agency_membership_permissions_trigger_protect_last_admin on public.agency_membership_permissions;
+create trigger agency_membership_permissions_trigger_protect_last_admin
+  before delete on public.agency_membership_permissions
+  for each row execute procedure public.agency_membership_permissions_protect_last_admin();
+
+-- agency_membership_permissions: visible to agency co-members; writable by team admins.
+drop policy if exists "agency_membership_permissions select by co-members" on public.agency_membership_permissions;
+create policy "agency_membership_permissions select by co-members"
+  on public.agency_membership_permissions for select
+  to authenticated
+  using (
+    public.agency_id_of_membership(agency_membership_id) in (select public.viewer_agency_ids())
+  );
+
+drop policy if exists "agency_membership_permissions write with agency_members_manage" on public.agency_membership_permissions;
+create policy "agency_membership_permissions write with agency_members_manage"
+  on public.agency_membership_permissions for all
+  to authenticated
+  using (
+    public.agency_id_of_membership(agency_membership_id)
+      in (select public.viewer_agency_team_permission_ids('agency_members_manage'))
+  )
+  with check (
+    public.agency_id_of_membership(agency_membership_id)
+      in (select public.viewer_agency_team_permission_ids('agency_members_manage'))
+  );
+
+-- agencies_organizations_grants writes: the ORG side decides (organization_manage).
+-- Global grants (organization_id IS NULL) are excluded by the IN test → stay service_role-only.
+grant insert, update, delete on table public.agencies_organizations_grants to anon, authenticated;
+drop policy if exists "agencies_organizations_grants write with organization_manage" on public.agencies_organizations_grants;
+create policy "agencies_organizations_grants write with organization_manage"
+  on public.agencies_organizations_grants for all
+  to authenticated
+  using (organization_id in (select public.viewer_permission_org_ids('organization_manage')))
+  with check (organization_id in (select public.viewer_permission_org_ids('organization_manage')));
 
 -- Active tenant-org organization_memberships for the current viewer.
 -- Runs as view owner (postgres), bypassing RLS; scoped to the caller
@@ -2699,6 +2882,65 @@ create or replace function public.viewer_organization_membership_reject(organiza
 
 grant execute on function public.viewer_organization_membership_reject(int) to authenticated;
 
+-- Atomically REPLACE a member's permission set with the given slugs (preset apply / MCP).
+-- Gated by `members_manage` on the membership's org. Grants are added before removals so
+-- swapping one admin slug for another doesn't trip the last-admin trigger mid-operation;
+-- clearing the last admin's grants is still blocked by that trigger. Returns the final set.
+create or replace function public.viewer_organization_membership_set_permissions(
+  organization_membership_id int,
+  permission_ids extensions.citext[]
+)
+  returns setof public.organization_membership_permissions
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _organization_id int;
+    begin
+      select m.organization_id into _organization_id
+        from public.organization_memberships m
+        where m.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id;
+
+      if _organization_id is null then
+        raise exception 'membership_not_found' using errcode = 'P0001';
+      elsif not public.viewer_has_permission(_organization_id, 'members_manage') then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      -- Every requested slug must exist in the catalog.
+      if exists (
+        select 1 from unnest(viewer_organization_membership_set_permissions.permission_ids) as s(permission_id)
+        where not exists (select 1 from public.permissions p where p.permission_id = s.permission_id)
+      ) then
+        raise exception 'invalid_permission' using errcode = 'P0001';
+      end if;
+
+      -- Add the desired grants that aren't already present (NOT EXISTS rather than ON CONFLICT,
+      -- whose conflict-target column would collide with the organization_membership_id param).
+      insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+        select viewer_organization_membership_set_permissions.organization_membership_id, s.permission_id
+        from unnest(viewer_organization_membership_set_permissions.permission_ids) as s(permission_id)
+        where not exists (
+          select 1 from public.organization_membership_permissions existing
+          where existing.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id
+            and existing.permission_id = s.permission_id
+        );
+
+      delete from public.organization_membership_permissions mp
+        where mp.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id
+          and mp.permission_id <> all (viewer_organization_membership_set_permissions.permission_ids);
+
+      return query
+        select mp.*
+        from public.organization_membership_permissions mp
+        where mp.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id;
+    end;
+  $$;
+
+grant execute on function public.viewer_organization_membership_set_permissions(int, extensions.citext[]) to authenticated;
+
 -- Anonymous lookup: given a (country, kind, value), normalize the value and return
 -- the pending organization_memberships that match. Used in /auth/document BEFORE the visitor has
 -- a session — they're trying to discover their own invites. Returns tenant + org names
@@ -3288,6 +3530,10 @@ create or replace function protected.agency_create(
         values (_agency.agency_id, $1, current_timestamp)
         returning agency_membership_id into _agency_membership_id;
 
+      -- Founder gets the wildcard so they can manage the agency team from day one.
+      insert into public.agency_membership_permissions (agency_membership_id, permission_id)
+        values (_agency_membership_id, '*');
+
       return next _agency;
     end;
   $$;
@@ -3322,46 +3568,62 @@ grant execute on function public.viewer_agency_create(text, text) to anon, authe
 -- Errors use SQLSTATE P0001 with a stable, locale-key message so callers
 -- can match the key without parsing prose.
 
--- Invite (upsert): called from actionInviteAffiliate after the caller resolves/creates
--- the auth user. Validates that the caller is an active affiliate, then upserts the
--- membership row atomically (insert on conflict → reset timestamps).
--- Granted to service_role because the auth-user resolution step happens server-side
--- and this RPC is always called from a trusted server action.
-create or replace function public.agency_membership_invite(
-  agency_id   int,
-  profile_id  uuid,
-  caller_id   uuid
+-- All three are viewer-scoped: the caller is resolved from the JWT via the agency
+-- team-permission helpers, so they run under the caller's own RLS context (callable
+-- from the public SDK and from MCP). They return `setof agency_memberships rows 1`
+-- so pg_graphql exposes them as singular Mutation objects.
+
+-- Drop the superseded caller_id/service-role variants.
+drop function if exists public.agency_membership_invite(int, uuid, uuid);
+drop function if exists public.agency_membership_update(int, int, text, uuid);
+drop function if exists public.agency_membership_respond(int, text);
+
+-- Invite an EXISTING registered user (by email) into the agency as a pending affiliate.
+-- Gated by `agency_members_manage`; resolves the profile from auth.users internally
+-- (SECURITY DEFINER) and raises `user_not_found` when the email isn't registered —
+-- creating a brand-new auth user + sending email is a server-only side effect that
+-- stays in the web action (GoTrue can't run under RLS). The web action ensures the
+-- user exists first, then calls this; MCP calls it directly.
+create or replace function public.viewer_agency_membership_invite_by_email(
+  agency_id int,
+  email     text
 )
-  returns int
+  returns setof public.agency_memberships rows 1
   volatile
   security definer
   language plpgsql
   set search_path to ''
   as $$
     declare
-      _membership_id int;
+      _profile_id uuid;
+      _row        public.agency_memberships;
     begin
-      -- Caller must be an active affiliate.
-      if not exists (
-        select 1 from public.agency_memberships af
-        where af.agency_id = agency_membership_invite.agency_id
-          and af.profile_id = agency_membership_invite.caller_id
-          and af.agency_membership_accepted_at is not null
-          and af.agency_membership_revoked_at is null
-          and af.agency_membership_rejected_at is null
-      ) then
+      if not public.viewer_has_agency_team_permission(
+           viewer_agency_membership_invite_by_email.agency_id, 'agency_members_manage') then
         raise exception 'no_permission' using errcode = 'P0001';
       end if;
 
-      if not exists (select 1 from public.agencies a where a.agency_id = agency_membership_invite.agency_id) then
+      if not exists (
+        select 1 from public.agencies a
+        where a.agency_id = viewer_agency_membership_invite_by_email.agency_id
+      ) then
         raise exception 'agency_not_found' using errcode = 'P0001';
       end if;
 
-      -- Check if already an active member (not revoked/rejected).
+      select u.id into _profile_id
+        from auth.users u
+        where lower(u.email) = lower(viewer_agency_membership_invite_by_email.email)
+        limit 1;
+
+      if _profile_id is null then
+        raise exception 'user_not_found' using errcode = 'P0001';
+      end if;
+
+      -- Already an active member (not revoked/rejected)?
       if exists (
         select 1 from public.agency_memberships af
-        where af.agency_id = agency_membership_invite.agency_id
-          and af.profile_id = agency_membership_invite.profile_id
+        where af.agency_id = viewer_agency_membership_invite_by_email.agency_id
+          and af.profile_id = _profile_id
           and af.agency_membership_accepted_at is not null
           and af.agency_membership_revoked_at is null
           and af.agency_membership_rejected_at is null
@@ -3369,82 +3631,91 @@ create or replace function public.agency_membership_invite(
         raise exception 'already_member' using errcode = 'P0001';
       end if;
 
-      -- Upsert: insert fresh pending invite; on conflict reset any prior timestamps.
-      insert into public.agency_memberships (agency_id, profile_id)
-        values (agency_membership_invite.agency_id, agency_membership_invite.profile_id)
-        on conflict (agency_id, profile_id) do update
-          set agency_membership_accepted_at = null,
-              agency_membership_revoked_at  = null,
-              agency_membership_rejected_at = null
-        returning agency_membership_id into _membership_id;
+      -- Reset any prior (pending/revoked/rejected) row to a fresh pending invite; else insert.
+      -- Not ON CONFLICT because the conflict-target column would collide with the agency_id param.
+      -- ponytail: tiny update-then-insert race; the unique (agency_id, profile_id) constraint backstops it.
+      update public.agency_memberships
+        set agency_membership_accepted_at = null,
+            agency_membership_revoked_at  = null,
+            agency_membership_rejected_at = null
+        where public.agency_memberships.agency_id = viewer_agency_membership_invite_by_email.agency_id
+          and public.agency_memberships.profile_id = _profile_id
+        returning * into _row;
 
-      return _membership_id;
+      if not found then
+        insert into public.agency_memberships (agency_id, profile_id)
+          values (viewer_agency_membership_invite_by_email.agency_id, _profile_id)
+          returning * into _row;
+      end if;
+
+      return next _row;
     end;
   $$;
 
-grant execute on function public.agency_membership_invite(int, uuid, uuid) to service_role;
+grant execute on function public.viewer_agency_membership_invite_by_email(int, text) to authenticated;
 
--- Revoke or reactivate a membership. Any active affiliate may do this.
--- Returns the updated agency_membership_id.
-create or replace function public.agency_membership_update(
+-- Revoke or reactivate another affiliate's membership. Gated by `agency_members_manage`;
+-- derives the agency from the membership row. Revoke is blocked if it would strip the
+-- agency's last active team admin.
+create or replace function public.viewer_agency_membership_update(
   agency_membership_id int,
-  agency_id            int,
-  operation            text,  -- 'revoke' | 'reactivate'
-  caller_id            uuid
+  operation            text  -- 'revoke' | 'reactivate'
 )
-  returns int
+  returns setof public.agency_memberships rows 1
   volatile
   security definer
   language plpgsql
   set search_path to ''
   as $$
+    declare
+      _agency_id int;
+      _row       public.agency_memberships;
     begin
-      if agency_membership_update.operation not in ('revoke', 'reactivate') then
+      if viewer_agency_membership_update.operation not in ('revoke', 'reactivate') then
         raise exception 'invalid_operation' using errcode = 'P0001';
       end if;
 
-      if not exists (
-        select 1 from public.agency_memberships af
-        where af.agency_id = agency_membership_update.agency_id
-          and af.profile_id = agency_membership_update.caller_id
-          and af.agency_membership_accepted_at is not null
-          and af.agency_membership_revoked_at is null
-          and af.agency_membership_rejected_at is null
-      ) then
+      select m.agency_id into _agency_id
+        from public.agency_memberships m
+        where m.agency_membership_id = viewer_agency_membership_update.agency_membership_id;
+
+      if _agency_id is null then
+        raise exception 'membership_not_found' using errcode = 'P0001';
+      end if;
+
+      if not public.viewer_has_agency_team_permission(_agency_id, 'agency_members_manage') then
         raise exception 'no_permission' using errcode = 'P0001';
       end if;
 
-      if agency_membership_update.operation = 'revoke' then
+      if viewer_agency_membership_update.operation = 'revoke' then
+        if not public.agency_has_other_active_admin(_agency_id, viewer_agency_membership_update.agency_membership_id) then
+          raise exception 'last_admin_protected' using errcode = 'P0001';
+        end if;
         update public.agency_memberships
           set agency_membership_revoked_at = current_timestamp
-          where public.agency_memberships.agency_membership_id = agency_membership_update.agency_membership_id
-            and public.agency_memberships.agency_id = agency_membership_update.agency_id;
+          where public.agency_memberships.agency_membership_id = viewer_agency_membership_update.agency_membership_id
+          returning * into _row;
       else
         update public.agency_memberships
           set agency_membership_revoked_at  = null,
               agency_membership_rejected_at = null,
               agency_membership_accepted_at = current_timestamp
-          where public.agency_memberships.agency_membership_id = agency_membership_update.agency_membership_id
-            and public.agency_memberships.agency_id = agency_membership_update.agency_id;
+          where public.agency_memberships.agency_membership_id = viewer_agency_membership_update.agency_membership_id
+          returning * into _row;
       end if;
 
-      if not found then
-        raise exception 'membership_not_found' using errcode = 'P0001';
-      end if;
-
-      return agency_membership_update.agency_membership_id;
+      return next _row;
     end;
   $$;
 
-grant execute on function public.agency_membership_update(int, int, text, uuid) to service_role;
+grant execute on function public.viewer_agency_membership_update(int, text) to authenticated;
 
--- Respond to an invitation. The caller must own the pending membership.
--- Returns the updated agency_membership_id.
-create or replace function public.agency_membership_respond(
+-- Respond to your own pending invitation (accept/reject). The caller must own the row.
+create or replace function public.viewer_agency_membership_respond(
   agency_membership_id int,
   response             text  -- 'accept' | 'reject'
 )
-  returns int
+  returns setof public.agency_memberships rows 1
   volatile
   security definer
   language plpgsql
@@ -3454,45 +3725,43 @@ create or replace function public.agency_membership_respond(
       _caller_id uuid := public.viewer_profile_id();
       _row       public.agency_memberships;
     begin
-      if agency_membership_respond.response not in ('accept', 'reject') then
+      if viewer_agency_membership_respond.response not in ('accept', 'reject') then
         raise exception 'invalid_response' using errcode = 'P0001';
-      end if;
-
-      if _caller_id is null then
+      elsif _caller_id is null then
         raise exception 'not_authenticated' using errcode = 'P0001';
       end if;
 
-      select * into _row
-        from public.agency_memberships
-        where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id
-          and profile_id = _caller_id;
+      select m.* into _row
+        from public.agency_memberships m
+        where m.agency_membership_id = viewer_agency_membership_respond.agency_membership_id
+          and m.profile_id = _caller_id;
 
       if not found then
         raise exception 'invitation_not_found' using errcode = 'P0001';
-      end if;
-
-      if _row.agency_membership_revoked_at is not null
+      elsif _row.agency_membership_revoked_at is not null
          or _row.agency_membership_accepted_at is not null
          or _row.agency_membership_rejected_at is not null
       then
         raise exception 'invitation_not_pending' using errcode = 'P0001';
       end if;
 
-      if agency_membership_respond.response = 'accept' then
+      if viewer_agency_membership_respond.response = 'accept' then
         update public.agency_memberships
           set agency_membership_accepted_at = current_timestamp
-          where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id;
+          where public.agency_memberships.agency_membership_id = viewer_agency_membership_respond.agency_membership_id
+          returning * into _row;
       else
         update public.agency_memberships
           set agency_membership_rejected_at = current_timestamp
-          where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id;
+          where public.agency_memberships.agency_membership_id = viewer_agency_membership_respond.agency_membership_id
+          returning * into _row;
       end if;
 
-      return agency_membership_respond.agency_membership_id;
+      return next _row;
     end;
   $$;
 
-grant execute on function public.agency_membership_respond(int, text) to authenticated;
+grant execute on function public.viewer_agency_membership_respond(int, text) to authenticated;
 
 -- ============================================================
 -- conversations + messaging + tickets

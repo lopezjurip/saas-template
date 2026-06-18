@@ -8,24 +8,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { gql } from "~/generated/graphql";
+import { FilterIs } from "~/generated/graphql/graphql";
 import { useIntlDateTimeFormat } from "~/hooks/use-intl";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 
 const MembersPendingInvitationsCancelMutation = /*#__PURE__*/ gql(`
-  mutation MembersPendingInvitationsCancelMutation($organization_membership_id: Int!, $now: Datetime!) {
-    updateOrganizationMembershipsCollection(
-      filter: {
-        organizationMembershipId: { eq: $organization_membership_id }
-        profileId: { is: NULL }
-        organizationMembershipRevokedAt: { is: NULL }
-        organizationMembershipRejectedAt: { is: NULL }
-      }
-      set: {
-        organizationMembershipRevokedAt: $now
-        organizationMembershipInviteToken: null
-      }
-    ) {
+  mutation MembersPendingInvitationsCancelMutation($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!) {
+    updateOrganizationMembershipsCollection(filter: $filter, set: $set) {
       affectedCount
     }
   }
@@ -87,8 +77,16 @@ export function PendingInvitations({ invitations, locale, tenantSlug, organizati
     startTransition(async () => {
       removeOptimistic(inv["organization_membership_id"]);
       const { error: err } = await cancelInvitation({
-        organization_membership_id: inv["organization_membership_id"],
-        now: new Date().toISOString(),
+        filter: {
+          organizationMembershipId: { eq: inv["organization_membership_id"] },
+          profileId: { is: FilterIs.Null },
+          organizationMembershipRevokedAt: { is: FilterIs.Null },
+          organizationMembershipRejectedAt: { is: FilterIs.Null },
+        },
+        set: {
+          organizationMembershipRevokedAt: new Date().toISOString(),
+          organizationMembershipInviteToken: null,
+        },
       });
       setPendingId(null);
       if (err) setError("No pudimos cancelar la invitación");

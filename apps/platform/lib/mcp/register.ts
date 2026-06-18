@@ -38,8 +38,24 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { debug } from "~/lib/debug";
 import type { McpTool } from "~/lib/mcp/tool";
+import {
+  GrantAgencyMemberPermissionTool,
+  GrantAgencyOrgAccessTool,
+  InviteAffiliateTool,
+  RevokeAgencyMemberPermissionTool,
+  RevokeAgencyOrgAccessTool,
+  UpdateAffiliateTool,
+} from "~/lib/mcp/tools/agency-admin";
 import { ListOrganizationMembersTool } from "~/lib/mcp/tools/members";
+import {
+  GrantMemberPermissionTool,
+  RevokeMemberPermissionTool,
+  SetMemberPermissionsTool,
+  UpdateMemberStatusTool,
+} from "~/lib/mcp/tools/permissions";
+import { CreatePresetTool, DeletePresetTool, UpdatePresetTool } from "~/lib/mcp/tools/presets";
 import { UpdateProfileTool } from "~/lib/mcp/tools/profile";
+import { FinishTenantOnboardingTool, RenameOrganizationTool, RenameTenantTool } from "~/lib/mcp/tools/settings";
 import { ListOrganizationsTool, ListTenantsTool } from "~/lib/mcp/tools/tenants";
 import { WhoamiTool } from "~/lib/mcp/tools/whoami";
 
@@ -55,6 +71,26 @@ const TOOLS: McpTool[] = [
   new ListOrganizationsTool(),
   // Member management (requires members_manage permission)
   new ListOrganizationMembersTool(),
+  // Organization member permission administration (requires members_manage)
+  new GrantMemberPermissionTool(),
+  new RevokeMemberPermissionTool(),
+  new SetMemberPermissionsTool(),
+  new UpdateMemberStatusTool(),
+  // Organization permission presets (requires presets_manage)
+  new CreatePresetTool(),
+  new UpdatePresetTool(),
+  new DeletePresetTool(),
+  // Agency administration (org-side grants + agency team, RLS-enforced)
+  new GrantAgencyOrgAccessTool(),
+  new RevokeAgencyOrgAccessTool(),
+  new InviteAffiliateTool(),
+  new UpdateAffiliateTool(),
+  new GrantAgencyMemberPermissionTool(),
+  new RevokeAgencyMemberPermissionTool(),
+  // Tenant / organization settings (rename + onboarding)
+  new RenameTenantTool(),
+  new RenameOrganizationTool(),
+  new FinishTenantOnboardingTool(),
 ];
 
 /**

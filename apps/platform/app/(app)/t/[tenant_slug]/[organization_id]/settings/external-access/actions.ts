@@ -1,7 +1,6 @@
 "use server";
 import "server-only";
 
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { debug } from "~/lib/debug";
@@ -26,37 +25,17 @@ const grantAgencyAccessSchema = baseSchema;
 type GrantAgencyAccessValues = z.infer<typeof grantAgencyAccessSchema>;
 
 /**
- * Grant or revoke an agency's read access to one organization. The caller must hold
- * `organization_manage` on that org (viewer-scoped check via the RLS server client),
- * then the write goes through the service-role admin client (grants are service_role-only).
+ * Grant an agency's read access to one organization. The write goes through the
+ * authenticated (RLS) client — the `agencies_organizations_grants` write policy enforces
+ * `organization_manage` on the org, so no separate pre-check is needed. The FK enforces a
+ * real agency (`23503` → not found); the unique index rejects duplicates (`23505`).
  */
 export const actionGrantAgencyAccess = authedAction
   .inputSchema(grantAgencyAccessSchema)
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
     const { TError } = await getRosetta(LOCALES);
 
-    const { data: canManage } = await supabase
-      .rpc("viewer_has_permission", {
-        organization_id: parsedInput.organization_id,
-        permission_id: "organization_manage",
-      })
-      .throwOnError();
-    if (!canManage) {
-      throw new TError("no_permission");
-    }
-
-    const admin = createSupabaseServiceRoleClient();
-
-    const agencyRes = await admin
-      .from("agencies")
-      .select("agency_id")
-      .eq("agency_id", parsedInput.agency_id)
-      .maybeSingle();
-    if (!agencyRes.data) {
-      throw new TError("agency_not_found");
-    }
-
-    const insertRes = await admin
+    const insertRes = await supabase
       .from("agencies_organizations_grants")
       .insert({
         agency_id: parsedInput.agency_id,
@@ -69,6 +48,13 @@ export const actionGrantAgencyAccess = authedAction
     if (insertRes.error) {
       if (insertRes.error.code === "23505") {
         throw new TError("already_granted");
+      }
+      if (insertRes.error.code === "23503") {
+        throw new TError("agency_not_found");
+      }
+      // RLS denial surfaces as no inserted row (42501 / empty) — treat as a permission error.
+      if (insertRes.error.code === "42501") {
+        throw new TError("no_permission");
       }
       log.error("[actionGrantAgencyAccess] grant insert failed", {
         profile_id: user.id,
@@ -91,23 +77,12 @@ export const actionRevokeAgencyAccess = authedAction
   .action(async ({ parsedInput, ctx: { supabase, user } }) => {
     const { TError } = await getRosetta(LOCALES);
 
-    const { data: canManage } = await supabase
-      .rpc("viewer_has_permission", {
-        organization_id: parsedInput.organization_id,
-        permission_id: "organization_manage",
-      })
-      .throwOnError();
-    if (!canManage) {
-      throw new TError("no_permission");
-    }
-
-    const admin = createSupabaseServiceRoleClient();
-
     /**
-     * Only org-scoped grants can be revoked here. Global grants (organization_id IS NULL)
-     * are platform-managed and never touched from the org settings surface.
+     * Authenticated (RLS) client: the write policy enforces `organization_manage`. Only
+     * org-scoped grants are matched here — global grants (organization_id IS NULL) are
+     * platform-managed and excluded by the policy, so they're never touched from this surface.
      */
-    const deleteRes = await admin
+    const deleteRes = await supabase
       .from("agencies_organizations_grants")
       .delete()
       .eq("agency_id", parsedInput.agency_id)

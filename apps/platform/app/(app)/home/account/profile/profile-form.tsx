@@ -14,11 +14,8 @@ import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
 
 const ProfileSectionUpdateNameMutation = /*#__PURE__*/ gql(`
-  mutation ProfileSectionUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
-    updateProfilesCollection(
-      filter: { profileId: { eq: $profile_id } }
-      set: { profileNameFull: $profile_name_full }
-    ) {
+  mutation ProfileSectionUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!) {
+    updateProfilesCollection(filter: $filter, set: $set) {
       affectedCount
     }
   }
@@ -47,7 +44,10 @@ export function ProfileForm({ profile_id, defaultValue }: { profile_id: string; 
     setServerError(null);
     setSuccess(false);
     startTransition(async () => {
-      const { error } = await updateName({ profile_id, profile_name_full: values.profile_name_full });
+      const { error } = await updateName({
+        filter: { profileId: { eq: profile_id } },
+        set: { profileNameFull: values.profile_name_full },
+      });
       if (error) {
         setServerError(t("error_save"));
         return;

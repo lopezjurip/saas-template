@@ -242,6 +242,18 @@ values
   ((select agency_id from public.agencies where agency_slug = 'demo-auditores'), '00000000-0000-0000-0000-00000000a11c', null)
 on conflict (agency_id, profile_id) do nothing;
 
+-- Founding affiliate (Iris) gets the wildcard so she can manage the demo agency's team.
+insert into public.agency_membership_permissions (agency_membership_id, permission_id)
+values (
+  (select am.agency_membership_id
+   from public.agency_memberships am
+   join public.agencies a using (agency_id)
+   where a.agency_slug = 'demo-auditores'
+     and am.profile_id = '00000000-0000-0000-0000-0000000ca401'),
+  '*'
+)
+on conflict (agency_membership_id, permission_id) do nothing;
+
 insert into public.agencies_organizations_grants (agency_id, organization_id, permission_id)
 values ((select agency_id from public.agencies where agency_slug = 'demo-auditores'), 1, '*')
 on conflict do nothing;

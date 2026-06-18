@@ -20,11 +20,8 @@ import { ROUTE, ROUTE_HREF } from "~/lib/route";
  * on every render; we revalidate the next /auth/onboarding hit via router.push().
  */
 const OnboardingProfileFormUpdateNameMutation = /*#__PURE__*/ gql(`
-  mutation OnboardingProfileFormUpdateNameMutation($profile_id: UUID!, $profile_name_full: String!) {
-    updateProfilesCollection(
-      filter: { profileId: { eq: $profile_id } }
-      set: { profileNameFull: $profile_name_full }
-    ) {
+  mutation OnboardingProfileFormUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!) {
+    updateProfilesCollection(filter: $filter, set: $set) {
       affectedCount
     }
   }
@@ -55,7 +52,10 @@ export function ProfileForm({
   const onSubmit = form.handleSubmit((values) => {
     setServerError(null);
     startTransition(async () => {
-      const { error } = await updateName({ profile_id, profile_name_full: values.profile_name_full });
+      const { error } = await updateName({
+        filter: { profileId: { eq: profile_id } },
+        set: { profileNameFull: values.profile_name_full },
+      });
       if (error) {
         setServerError(t("error_save"));
         return;
