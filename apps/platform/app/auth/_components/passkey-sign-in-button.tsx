@@ -5,12 +5,6 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Fingerprint } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
-
-function RESOLVE_TARGET(next: string): string {
-  return next.startsWith("/") && next !== "/" ? next : "/home";
-}
-
 export function PasskeySignInButton({ next }: { next: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +22,7 @@ export function PasskeySignInButton({ next }: { next: string }) {
         const { error: err } = await supabase.auth.signInWithPasskey();
         if (err) throw err;
         await supabase.auth.refreshSession();
-        router.push(ROUTE_HREF(UNSAFE_ROUTE(RESOLVE_TARGET(next))));
+        router.push(`/auth/router?next=${encodeURIComponent(next)}`);
         router.refresh();
       } catch (e) {
         if (e instanceof Error && e.name === "NotAllowedError") {

@@ -11,7 +11,6 @@ import { useState, useTransition } from "react";
 import { notifyDevMailbox } from "~/lib/dev-mailbox-toast.client";
 import { useRosetta } from "~/lib/i18n.client";
 import { signInWithPasskey } from "~/lib/passkeys.client";
-import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 import { OtpField } from "../_components/otp-field";
 
 type Props = {
@@ -22,10 +21,6 @@ type Props = {
   hasPasskey: boolean;
   hasPassword: boolean;
 };
-
-function RESOLVE_TARGET(next: string): string {
-  return next.startsWith("/") && next !== "/" ? next : "/home";
-}
 
 export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: Props) {
   const { t } = useRosetta(LOCALES);
@@ -77,7 +72,7 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
         return;
       }
       await supabase.auth.refreshSession();
-      router.push(ROUTE_HREF(UNSAFE_ROUTE(RESOLVE_TARGET(next))));
+      router.push(`/auth/router?next=${encodeURIComponent(next)}`);
       router.refresh();
     });
   }
@@ -98,7 +93,7 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
         return;
       }
       await supabase.auth.refreshSession();
-      router.push(ROUTE_HREF(UNSAFE_ROUTE(RESOLVE_TARGET(next))));
+      router.push(`/auth/router?next=${encodeURIComponent(next)}`);
       router.refresh();
     });
   }
@@ -112,6 +107,8 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
           return;
         }
         await signInWithPasskey();
+        router.push(`/auth/router?next=${encodeURIComponent(next)}`);
+        router.refresh();
       } catch (err) {
         if (err instanceof Error && err.name === "NotAllowedError") {
           setError(t("error_passkey_cancelled"));
