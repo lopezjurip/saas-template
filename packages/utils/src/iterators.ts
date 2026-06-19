@@ -244,12 +244,6 @@ export function COUNT<V>(yieldable: Iterable<V>): number {
   return i;
 }
 
-export const ARRAY = /*#__PURE__*/ Array.from; // TODO: Array.from.bind(Array); ?
-
-// export function ARRAY<T, U>(iterable: Iterable<T> | ArrayLike<T>, mapfn: (v: T, k: number) => U, thisArg?: any): U[] {
-//   return Array.from(iterable, mapfn, thisArg);
-// }
-
 export function IS_GT<V extends number | bigint>(a: V, b: V): boolean {
   return a > b;
 }
