@@ -1,0 +1,7 @@
+"$schema" = "https://conductor.build/schemas/settings.repo.schema.json"
+
+[scripts]
+archive = "WORKTREE_NAME=$CONDUCTOR_WORKSPACE_NAME WORKTREE_PROJECT=saas-template bash scripts/development/worktree-archive.sh"
+run = "pnpm run -w dev --filter={apps/platform} -- --port $CONDUCTOR_PORT"
+run_mode = "concurrent"
+setup = "WORKTREE_NAME=$CONDUCTOR_WORKSPACE_NAME WORKTREE_PORT=$CONDUCTOR_PORT WORKTREE_ROOT_PATH=$CONDUCTOR_ROOT_PATH WORKTREE_PROJECT=saas-template bash scripts/development/worktree-setup.sh"
