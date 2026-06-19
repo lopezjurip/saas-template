@@ -5,7 +5,7 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { type LucideIcon, RotateCcw, Search, TriangleAlert, Wrench } from "lucide-react";
 import type { ComponentProps } from "react";
-import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useLocale } from "~/lib/i18n.client";
 
 type SystemKind = "notFound" | "error" | "maintenance";
 
@@ -23,7 +23,7 @@ export function SystemMessage({
   className,
   ...props
 }: { kind?: SystemKind; reset?: () => void } & ComponentProps<"div">) {
-  const locale = useLocaleParam();
+  const locale = useLocale();
   const { code, Icon } = DEFS[kind];
   const copy = RESOLVE_COPY(locale)[kind];
   const homeHref = "/";

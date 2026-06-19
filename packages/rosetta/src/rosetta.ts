@@ -151,18 +151,6 @@ function OBJECT_MERGE_DEEP_INTO(
   return target;
 }
 
-function OBJECT_DEEP_CLONE(obj: Record<string, unknown>): Record<string, unknown> {
-  const clone: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (OBJECT_IS_PLAIN(value)) {
-      clone[key] = OBJECT_DEEP_CLONE(value as Record<string, unknown>);
-    } else {
-      clone[key] = value;
-    }
-  }
-  return clone;
-}
-
 function MERGE_LOCALES(dict: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = { ...dict };
   for (const locale of Object.keys(dict)) {
@@ -171,7 +159,7 @@ function MERGE_LOCALES(dict: Record<string, unknown>): Record<string, unknown> {
     const baseLanguage = locale.split(separator)[0];
     if (!baseLanguage || baseLanguage === locale) continue;
     if (baseLanguage in dict) {
-      const baseCopy = OBJECT_DEEP_CLONE(dict[baseLanguage] as Record<string, unknown>);
+      const baseCopy = structuredClone(dict[baseLanguage]) as Record<string, unknown>;
       result[locale] = OBJECT_MERGE_DEEP_INTO(baseCopy, dict[locale] as Record<string, unknown>);
     }
   }

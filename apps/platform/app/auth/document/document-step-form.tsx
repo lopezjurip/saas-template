@@ -16,8 +16,7 @@ import { ArrowRight, IdCard } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useCountries } from "~/hooks/use-countries";
-import { useLocaleParam } from "~/hooks/use-locale-param";
-import { useRosetta } from "~/lib/i18n.client";
+import { useLocale, useRosetta } from "~/lib/i18n.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { ErrorSafeAction } from "~/lib/safe-action.client";
 import {
@@ -36,7 +35,7 @@ type LoginState = { channel: "sms" | "email"; contact: string; masked: string };
 export function DocumentStepForm({ value, next }: { value: string; next: string }) {
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
-  const locale = useLocaleParam();
+  const locale = useLocale();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
