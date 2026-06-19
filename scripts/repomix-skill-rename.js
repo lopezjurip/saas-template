@@ -60,6 +60,4 @@ for (const file of FILES) {
   changed++;
 }
 
-console.log(
-  `[repomix-skill-rename] "${generatedName}" → "${PROJECT_NAME}" in ${changed} file(s)`,
-);
+console.log(`[repomix-skill-rename] "${generatedName}" → "${PROJECT_NAME}" in ${changed} file(s)`);
