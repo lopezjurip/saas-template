@@ -23,6 +23,8 @@ export default defineConfig({
       ".context/**",
       // never pack the skill into itself (recursive bloat)
       "skills/codebase/**",
+      // vendored third-party skills — external docs, not our codebase
+      "skills-third-party/**",
       // tests add tokens without helping code comprehension
       "**/*.test.ts",
       "**/*.test.tsx",

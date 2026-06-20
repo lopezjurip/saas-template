@@ -133,15 +133,15 @@ After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) 
 
 ## Skills
 
-Three kinds of skills, all materialized on `pnpm install` by the `postinstall` script (`skills experimental_install`). The generated dirs `.agents/skills/` and `.claude/skills/` are **gitignored** — never committed, always regenerated. Read relevant skill before working in that subsystem.
+Three kinds of skills, all **committed** and materialized on `pnpm install` by the `postinstall` script (`scripts/skills-setup.mjs`, exposed as `pnpm skills:install`). It symlinks every dir in `skills/` and `skills-third-party/` into both agent stores — no network, no cloning. The stores `.agents/skills/` and `.claude/skills/` are **gitignored** — pure generated symlinks, always rebuilt. Read relevant skill before working in that subsystem.
 
-- **First-party (`my-*`)** — sources committed in `skills/my-*`. The CLI links them into `.agents/skills/` and `.claude/skills/`.
-- **Third-party** — pinned in `skills-lock.json` (committed), restored by the `skills` CLI (a devDependency). `skills add` resolves local paths to absolute ones, so `postinstall` runs `scripts/skills-lock-relativize.mjs` afterward to rewrite local `source` entries back to repo-relative paths and keep the committed lock stable.
-- **Generated codebase reference (`codebase`)** — `repomix --skill-generate` packs the whole monorepo into a LLM-loadable reference skill at `skills/codebase/` (committed source, registered in `SKILLS[]`, symlinked like the `my-*` skills). Regenerate with `pnpm generate:repomix:skills` after significant changes. **Generated — never hand-edit.** Exclusions (codegen, `**/generated/**`, `node_modules`, `.env*`, `pnpm-lock.yaml`, all tests/`**/certificates/**`/`**/*.pem`, and the skill itself to avoid recursive bloat) live in `repomix.config.ts`; secrets are stripped by repomix's `security` check.
+- **First-party (`my-*`)** — sources committed in `skills/my-*`.
+- **Third-party** — vendored (committed) in `skills-third-party/<name>`. We commit the files instead of cloning from `skills-lock.json` at install because the `skills` CLI clones every repo serially, which is slow. `skills-lock.json` (committed) stays as the provenance record (which upstream repo each came from) for refreshing.
+- **Generated codebase reference (`codebase`)** — `repomix --skill-generate` packs the whole monorepo into a LLM-loadable reference skill at `skills/codebase/` (committed source). Regenerate with `pnpm generate:repomix:skills` after significant changes. **Generated — never hand-edit.** Exclusions (codegen, `**/generated/**`, `node_modules`, `.env*`, `pnpm-lock.yaml`, all tests/`**/certificates/**`/`**/*.pem`, `skills-third-party/**`, and the skill itself to avoid recursive bloat) live in `repomix.config.ts`; secrets are stripped by repomix's `security` check.
 
-`.agents/skills/` is the **universal store** read directly by Codex, Cursor, GitHub Copilot, OpenCode, and Zed; `.claude/skills/` is Claude Code's. Source of truth = `skills/` (first-party) + `skills-lock.json` (third-party).
+`.agents/skills/` is the **universal store** read directly by Codex, Cursor, GitHub Copilot, OpenCode, and Zed; `.claude/skills/` is Claude Code's. Source of truth = `skills/` + `skills-third-party/` (both committed).
 
-Add a third-party skill (writes the file tree + records it in `skills-lock.json`):
+Add or refresh a third-party skill — fetch it, then vendor it:
 
 ```bash
 # Use the github `owner/repo` shorthand, NOT the skills.sh share URL.
@@ -149,11 +149,13 @@ Add a third-party skill (writes the file tree + records it in `skills-lock.json`
 # https://www.skills.sh/owner/repo/skill) has no /.well-known/agent-skills/
 # index.json and the add fails with "No skills found".
 pnpm dlx skills add <owner/repo> --skill <skill-name>   # e.g. dietrichgebert/ponytail --skill ponytail
+cp -R .agents/skills/<skill-name> skills-third-party/<skill-name>   # vendor the fetched files
+pnpm skills:install                                                 # re-link the stores
 ```
 
-Commit **only** the resulting `skills-lock.json` change. The CLI also drops a stray `skills/<skill-name>` symlink → delete it: third-party skills are restored into the gitignored `.agents/skills/` and `.claude/skills/` by `skills experimental_install` on the next `pnpm install`, so the only first-party-tracked entries under `skills/` are the `my-*` sources and `codebase`. Update pins with `pnpm dlx skills update`.
+Commit the `skills-third-party/<skill-name>` files (and the `skills-lock.json` provenance bump). Delete any stray `skills/<skill-name>` symlink the CLI drops.
 
-**Caveat:** `skills-lock.json` records the source repo, not a commit SHA, so restore re-clones each skill at upstream **HEAD** — `computedHash` is descriptive, not enforced. Third-party skills track latest, not a frozen version. Skills run with **full agent permissions** — review skill source before using in production.
+**Caveat:** vendored third-party skills are frozen at the commit you fetched — they do **not** track upstream. Re-run the steps above to update. Skills run with **full agent permissions** — review skill source before vendoring.
 
 ## Documentation
 
