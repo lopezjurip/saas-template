@@ -1,7 +1,7 @@
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { KeyRound, Mail } from "lucide-react";
 import Link from "next/link";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AuthBackLink } from "../_components/auth-back-link";
 import { AuthCard } from "../_components/auth-card";
@@ -12,9 +12,7 @@ import { AuthCard } from "../_components/auth-card";
  * backend that isn't wired yet, so we point at support instead of faking it.
  */
 export default async function AuthRecoverPage() {
-  const locale = await getServerLocale();
-
-  const { t } = await getRosetta(LOCALES, locale);
+  const { t } = await getRosetta(LOCALES);
 
   return (
     <AuthCard>

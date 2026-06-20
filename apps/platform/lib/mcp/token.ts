@@ -17,9 +17,9 @@
  */
 
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import { createClient } from "@supabase/supabase-js";
-import { ARRAY_FORCED } from "@packages/utils/iterators";
 import { HOST_FROM_HEADERS } from "@packages/utils/headers";
+import { ARRAY_FORCED } from "@packages/utils/iterators";
+import { createClient } from "@supabase/supabase-js";
 import { createRemoteJWKSet, decodeJwt, jwtVerify } from "jose";
 import { debug } from "~/lib/debug";
 

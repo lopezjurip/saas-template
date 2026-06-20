@@ -5,23 +5,21 @@ import { INITIALS_OF } from "@packages/utils/string";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { getViewerProfileRedirect } from "~/hooks/get-viewer-profile";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 import { signOutForm } from "./actions";
 
 export default async function AuthLogoutPage() {
-  const locale = await getServerLocale();
   const {
     data: { profile },
   } = await getViewerProfileRedirect();
   const user = await getSupabaseServerUser();
+  const { t } = await getRosetta(LOCALES);
 
   const name_full = profile["profileNameFull"];
   const email = user?.["email"];
   const initials = INITIALS_OF(name_full || email || "User");
-
-  const { t } = await getRosetta(LOCALES, locale);
 
   return (
     <AuthCard className="max-w-104">

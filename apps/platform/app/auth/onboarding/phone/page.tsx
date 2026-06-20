@@ -1,4 +1,4 @@
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { AuthCard } from "../../_components/auth-card";
 import { AuthHeader } from "../../_components/auth-header";
 import { StepShell } from "../_components/step-shell";
@@ -6,8 +6,7 @@ import { getViewerOnboardingState } from "../state.server";
 import { PhoneForm } from "./phone-form";
 
 export default async function OnboardingPhonePage() {
-  const locale = await getServerLocale();
-  const { t } = await getRosetta(LOCALES, locale);
+  const { t } = await getRosetta(LOCALES);
   const state = await getViewerOnboardingState();
 
   return (

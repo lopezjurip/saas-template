@@ -9,7 +9,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { EditPermissionsForm } from "./edit-form";
 
@@ -46,8 +46,8 @@ export default async function OrganizationMembershipEditPage(
     organization_id: organization_id_param,
     organization_membership_id: organization_membership_id_param,
   } = await props.params;
-  const locale = await getServerLocale();
-  const { t } = await getRosetta(LOCALES, locale);
+
+  const { t } = await getRosetta(LOCALES);
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();

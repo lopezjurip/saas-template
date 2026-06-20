@@ -41,9 +41,7 @@ export default async function TenantDomainsPage(
 
       <section className="flex flex-col gap-2.5">
         <div className="flex min-h-7 items-center justify-between gap-2.5">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-            {t("domains")}
-          </span>
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{t("domains")}</span>
           <Button variant="outline" size="sm">
             <Plus size={13} /> {t("add_domain")}
           </Button>

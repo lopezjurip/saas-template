@@ -3,7 +3,7 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { ExternalAccess, type ExternalAccessAgency } from "./external-access";
 
 export async function generateMetadata(
@@ -17,8 +17,7 @@ export default async function OrganizationExternalAccessPage(
   props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/external-access">,
 ) {
   const { organization_id: organization_id_param } = await props.params;
-  const locale = await getServerLocale();
-  const { t } = await getRosetta(LOCALES, locale);
+  const { t } = await getRosetta(LOCALES);
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();

@@ -64,9 +64,7 @@ export default async function AcceptInvitePage(props: PageProps<"/home/invites/[
             <Check size={24} strokeWidth={2.25} />
           </span>
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-foreground m-0 text-lg font-semibold">
-              {t("claimed_title", { org: ORG })}
-            </h1>
+            <h1 className="text-foreground m-0 text-lg font-semibold">{t("claimed_title", { org: ORG })}</h1>
             <p className="text-muted-foreground m-0 text-sm leading-[1.55] text-pretty">{t("claimed_desc")}</p>
           </div>
           <Button asChild className="w-full">

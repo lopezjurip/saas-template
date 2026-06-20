@@ -21,8 +21,9 @@ export default async function NewMemberInvitePage(
   props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members/new">,
 ) {
   const { tenant_slug, organization_id: organization_id_param } = await props.params;
+
+  const { t } = await getRosetta(LOCALES);
   const locale = await getServerLocale();
-  const { t } = await getRosetta(LOCALES, locale);
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
