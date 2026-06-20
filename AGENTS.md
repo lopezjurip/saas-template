@@ -133,10 +133,10 @@ After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) 
 
 ## Skills
 
-Three kinds of skills, all materialized on `pnpm install` by `scripts/skills-setup.js` (postinstall). The generated dirs `.agents/skills/` and `.claude/skills/` are **gitignored** — never committed, always regenerated. Read relevant skill before working in that subsystem.
+Three kinds of skills, all materialized on `pnpm install` by the `postinstall` script (`skills experimental_install`). The generated dirs `.agents/skills/` and `.claude/skills/` are **gitignored** — never committed, always regenerated. Read relevant skill before working in that subsystem.
 
-- **First-party (`my-*`)** — sources committed in `skills/my-*`. The script symlinks them into `.agents/skills/` and `.claude/skills/`.
-- **Third-party** — pinned in `skills-lock.json` (committed), restored by the `skills` CLI (a devDependency). The script's restore step snapshots `skills-lock.json` and writes it back after, so installs never churn the committed lock.
+- **First-party (`my-*`)** — sources committed in `skills/my-*`. The CLI links them into `.agents/skills/` and `.claude/skills/`.
+- **Third-party** — pinned in `skills-lock.json` (committed), restored by the `skills` CLI (a devDependency). `skills add` resolves local paths to absolute ones, so `postinstall` runs `scripts/skills-lock-relativize.mjs` afterward to rewrite local `source` entries back to repo-relative paths and keep the committed lock stable.
 - **Generated codebase reference (`codebase`)** — `repomix --skill-generate` packs the whole monorepo into a LLM-loadable reference skill at `skills/codebase/` (committed source, registered in `SKILLS[]`, symlinked like the `my-*` skills). Regenerate with `pnpm generate:repomix:skills` after significant changes. **Generated — never hand-edit.** Exclusions (codegen, `**/generated/**`, `node_modules`, `.env*`, `pnpm-lock.yaml`, all tests/`**/certificates/**`/`**/*.pem`, and the skill itself to avoid recursive bloat) live in `repomix.config.ts`; secrets are stripped by repomix's `security` check.
 
 `.agents/skills/` is the **universal store** read directly by Codex, Cursor, GitHub Copilot, OpenCode, and Zed; `.claude/skills/` is Claude Code's. Source of truth = `skills/` (first-party) + `skills-lock.json` (third-party).
@@ -151,7 +151,7 @@ Add a third-party skill (writes the file tree + records it in `skills-lock.json`
 pnpm dlx skills add <owner/repo> --skill <skill-name>   # e.g. dietrichgebert/ponytail --skill ponytail
 ```
 
-Commit **only** the resulting `skills-lock.json` change. The CLI also drops a stray `skills/<skill-name>` symlink → delete it: third-party skills are restored into the gitignored `.agents/skills/` (mirrored to `.claude/skills/` by `scripts/skills-setup.js`) on the next `pnpm install`, so the only first-party-tracked entries under `skills/` are the `my-*` sources and `codebase`. Update pins with `pnpm dlx skills update`.
+Commit **only** the resulting `skills-lock.json` change. The CLI also drops a stray `skills/<skill-name>` symlink → delete it: third-party skills are restored into the gitignored `.agents/skills/` and `.claude/skills/` by `skills experimental_install` on the next `pnpm install`, so the only first-party-tracked entries under `skills/` are the `my-*` sources and `codebase`. Update pins with `pnpm dlx skills update`.
 
 **Caveat:** `skills-lock.json` records the source repo, not a commit SHA, so restore re-clones each skill at upstream **HEAD** — `computedHash` is descriptive, not enforced. Third-party skills track latest, not a frozen version. Skills run with **full agent permissions** — review skill source before using in production.
 
@@ -561,7 +561,7 @@ cd apps/platform && NODE_ENV=development pnpm exec next typegen
 Then `PageProps<"/new-route">` and the `AppRoutes` union pick up the new path and `build:dry` passes.
 
 ### File & Script Naming
-Use `noun-verb` order, not `verb-noun`: `skills-setup`, `alert-create`, `user-import`. Domain first, action second.
+Use `noun-verb` order, not `verb-noun`: `skill-rename`, `alert-create`, `user-import`. Domain first, action second.
 
 ### Commit Messages
 Conventional Commits with scope: `type(scope): description`

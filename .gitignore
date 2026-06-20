@@ -56,4 +56,5 @@ pnpm-debug.log*
 # Source of truth: skills/ (my-* sources) + skills-lock.json (third-party pins).
 # .agents/skills/ is the universal store read by Codex, Cursor, Copilot, OpenCode, Zed.
 .agents/skills/
+agent/skills/
 .claude/skills/
