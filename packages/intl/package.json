@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@packages/rosetta": "workspace:*",
-    "@packages/utils": "workspace:*"
+    "@packages/utils": "workspace:*",
+    "temporal-polyfill": "^1.0.1"
   },
   "devDependencies": {
     "@packages/typescript-config": "workspace:*",

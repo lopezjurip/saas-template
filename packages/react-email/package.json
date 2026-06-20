@@ -14,14 +14,14 @@
   "dependencies": {
     "@packages/rosetta": "workspace:*",
     "@react-email/components": "^1.0.12",
-    "@react-email/render": "2.0.8"
+    "@react-email/render": "2.0.9"
   },
   "devDependencies": {
     "@packages/typescript-config": "workspace:*",
-    "@react-email/ui": "6.6.0",
+    "@react-email/ui": "6.6.3",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.17",
-    "react-email": "^6.6.0",
+    "react-email": "^6.6.3",
     "typescript": "^6.0.3"
   },
   "peerDependencies": {
