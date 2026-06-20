@@ -32,7 +32,7 @@ This skill contains the following reference files:
 
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Files matching these patterns are excluded: packages/supabase/src/types.ts, **/generated/**, pnpm-lock.yaml, .context/**, skills/codebase/**, **/*.test.ts, **/*.test.tsx, **/*.spec.ts, **/*.test.sql, apps/platform/tests/**, **/*.pem, **/certificates/**
+- Files matching these patterns are excluded: packages/supabase/src/types.ts, **/generated/**, pnpm-lock.yaml, .context/**, skills/codebase/**, skills-third-party/**, **/*.test.ts, **/*.test.tsx, **/*.spec.ts, **/*.test.sql, apps/platform/tests/**, **/*.pem, **/certificates/**
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
 - Code comments have been removed from supported file types
@@ -43,30 +43,30 @@ This skill contains the following reference files:
 
 ## Statistics
 
-479 files | 14,771 lines
+514 files | 16,075 lines
 
 | Language | Files | Lines |
 |----------|------:|------:|
-| TypeScript (TSX) | 196 | 2,910 |
-| TypeScript | 187 | 2,512 |
-| JSON | 40 | 869 |
-| Markdown | 28 | 3,053 |
-| JavaScript | 4 | 12 |
+| TypeScript (TSX) | 218 | 3,111 |
+| TypeScript | 197 | 2,705 |
+| JSON | 39 | 1,001 |
+| Markdown | 29 | 3,171 |
+| Shell | 5 | 225 |
 | HTML | 4 | 35 |
-| JSONC | 3 | 133 |
-| No Extension | 3 | 66 |
-| Shell | 3 | 124 |
-| TOML | 2 | 333 |
-| Other | 9 | 4,724 |
+| JavaScript (ESM) | 3 | 46 |
+| JSONC | 3 | 141 |
+| No Extension | 3 | 70 |
+| TOML | 3 | 351 |
+| Other | 10 | 5,219 |
 
 **Largest files:**
-- `packages/supabase/supabase/migrations/00000000000000_schema.sql` (3,608 lines)
-- `packages/supabase/supabase/seed.sql` (845 lines)
-- `AGENTS.md` (566 lines)
+- `packages/supabase/supabase/migrations/00000000000000_schema.sql` (4,082 lines)
+- `packages/supabase/supabase/seed.sql` (855 lines)
+- `AGENTS.md` (608 lines)
 - `docs/notifications-system-plan.md` (437 lines)
-- `packages/supabase/supabase/config.toml` (327 lines)
+- `packages/supabase/supabase/config.toml` (338 lines)
 - `skills/my-graphql/SKILL.md` (255 lines)
 - `skills/my-supabase/SKILL.md` (188 lines)
-- `packages/intl/src/intl.ts` (161 lines)
-- `skills/my-graphy/SKILL.md` (141 lines)
-- `skills/psql-query/SKILL.md` (138 lines)
+- `packages/intl/src/intl.ts` (163 lines)
+- `skills-lock.json` (158 lines)
+- `skills/my-graphql-codegen/SKILL.md` (144 lines)

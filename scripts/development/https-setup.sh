@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Provision a local TLS cert for apps/platform so it can run over HTTPS in dev.
-# Required for WebAuthn / passkeys (secure context) and for OAuth callbacks to match
-# the https://lvh.me:7003 entries in supabase/config.toml.
+# Required for WebAuthn / passkeys (secure context) and for OAuth callbacks to match the https://lvh.me:7003 entries in supabase/config.toml.
 #
 # Idempotent — safe to re-run.
 
@@ -16,7 +15,7 @@ if ! command -v mkcert >/dev/null 2>&1; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CERT_DIR="$SCRIPT_DIR/../../apps/platform/certs"
+CERT_DIR="$SCRIPT_DIR/../../apps/platform/certificates"
 
 mkdir -p "$CERT_DIR"
 
@@ -30,5 +29,5 @@ mkcert \
   lvh.me localhost 127.0.0.1
 
 echo
-echo "✅ Certs written to apps/platform/certs/"
+echo "✅ Certs written to apps/platform/certificates/"
 echo "   Run 'pnpm dev' and open https://lvh.me:7003"
