@@ -30,6 +30,11 @@
       "skillPath": "skills/integrate-whatsapp/SKILL.md",
       "computedHash": "acd8594565afb7b28c5490ce1d52fbb2fd99d998c2d500c70a8bbade56f710aa"
     },
+    "karpathy-guidelines": {
+      "source": "multica-ai/andrej-karpathy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/karpathy-guidelines/SKILL.md"
+    },
     "my-auth": {
       "source": "./skills",
       "sourceType": "local",
@@ -96,6 +101,16 @@
       "skillPath": "skills/ponytail/SKILL.md",
       "computedHash": "55e888f9d81f873068de13d44f4f963595aa2c2c6bb0f9024160bea79f756618"
     },
+    "ponytail-audit": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail-audit/SKILL.md"
+    },
+    "ponytail-review": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail-review/SKILL.md"
+    },
     "psql": {
       "source": "./skills",
       "sourceType": "local",
@@ -111,6 +126,21 @@
       "sourceType": "github",
       "skillPath": "skills/shadcn/SKILL.md",
       "computedHash": "ac9d0d69caac7de1d1e5647f3db3bcd2f13af355d6b3a78780fbf7fc80e8dca0"
+    },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md"
+    },
+    "turborepo": {
+      "source": "vercel/turborepo",
+      "sourceType": "github",
+      "skillPath": "skills/turborepo/SKILL.md"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
