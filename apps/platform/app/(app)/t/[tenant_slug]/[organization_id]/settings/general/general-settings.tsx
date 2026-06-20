@@ -103,9 +103,7 @@ export function GeneralSettings({
       </section>
 
       <section className="flex flex-col gap-2.5">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-          {t("danger_zone")}
-        </span>
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{t("danger_zone")}</span>
         <div className="border-border bg-background flex flex-col overflow-hidden rounded-xl border">
           <div className="border-border grid grid-cols-[1fr_auto] items-center gap-3.5 border-b px-4 py-3.5">
             <div className="flex min-w-0 flex-col gap-[3px]">

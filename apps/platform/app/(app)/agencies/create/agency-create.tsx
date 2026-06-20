@@ -76,9 +76,7 @@ export function AgencyCreate() {
 
       <div className="flex flex-col gap-6">
         <header className="flex flex-col gap-2">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
-            {t("eyebrow")}
-          </span>
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">{t("eyebrow")}</span>
           <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="text-muted-foreground m-0 max-w-[60ch] text-sm leading-[1.55] text-pretty">{t("subtitle")}</p>
         </header>
@@ -171,9 +169,7 @@ export function AgencyCreate() {
                 <Building2 size={19} />
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-foreground truncate text-sm font-semibold">
-                  {name || t("created_fallback")}
-                </span>
+                <span className="text-foreground truncate text-sm font-semibold">{name || t("created_fallback")}</span>
                 <code className="text-muted-foreground font-mono text-xs">{createdSlug}</code>
               </div>
               <span className="text-muted-foreground bg-muted/60 border-border hidden items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-tiny font-medium leading-[1.2] tracking-wide sm:inline-flex">

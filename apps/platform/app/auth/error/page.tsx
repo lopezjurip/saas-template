@@ -2,16 +2,15 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { SINGLE } from "@packages/utils/array";
 import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 
 export default async function AuthErrorPage(props: PageProps<"/auth/error">) {
-  const locale = await getServerLocale();
+  const { t } = await getRosetta(LOCALES);
+
   const sp = await props.searchParams;
   const reason = SINGLE(sp["reason"]);
-
-  const { t } = await getRosetta(LOCALES, locale);
 
   const message =
     reason === "missing_code"

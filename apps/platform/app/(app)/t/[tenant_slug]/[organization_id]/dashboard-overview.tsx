@@ -307,10 +307,7 @@ function InitialsAvatar({ initials, tone, size }: { initials: string; tone: stri
     <span
       aria-hidden="true"
       style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}
-      className={cn(
-        "inline-flex shrink-0 select-none items-center justify-center rounded-full font-semibold",
-        tone,
-      )}
+      className={cn("inline-flex shrink-0 select-none items-center justify-center rounded-full font-semibold", tone)}
     >
       {initials}
     </span>

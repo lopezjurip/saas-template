@@ -1,5 +1,5 @@
 import { getCountries } from "~/hooks/get-countries";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { AuthCard } from "../../_components/auth-card";
 import { AuthHeader } from "../../_components/auth-header";
 import { StepShell } from "../_components/step-shell";
@@ -7,8 +7,7 @@ import { getViewerOnboardingState } from "../state.server";
 import { DocumentForm } from "./document-form";
 
 export default async function OnboardingDocumentPage() {
-  const locale = await getServerLocale();
-  const { t } = await getRosetta(LOCALES, locale);
+  const { t } = await getRosetta(LOCALES);
   const [state, countriesResult] = await Promise.all([getViewerOnboardingState(), getCountries()]);
   const countries = countriesResult.data?.["addressesLevel0"]?.["edges"]?.map((entry) => entry["node"]) ?? [];
 
