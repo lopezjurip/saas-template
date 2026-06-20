@@ -83,8 +83,8 @@ export class GrantAgencyOrgAccessTool extends McpTool<typeof OrgAccessSchema> {
 }
 
 const RevokeAgencyOrgAccessMcpMutation = /*#__PURE__*/ gql(`
-  mutation RevokeAgencyOrgAccessMcp($filter: AgenciesOrganizationsGrantsFilter!) {
-    deleteFromAgenciesOrganizationsGrantsCollection(filter: $filter) {
+  mutation RevokeAgencyOrgAccessMcp($filter: AgenciesOrganizationsGrantsFilter!, $atMost: Int! = 1000) {
+    deleteFromAgenciesOrganizationsGrantsCollection(filter: $filter, atMost: $atMost) {
       affectedCount
     }
   }
@@ -281,8 +281,8 @@ export class GrantAgencyMemberPermissionTool extends McpTool<typeof AgencyMember
 }
 
 const RevokeAgencyMemberPermissionMcpMutation = /*#__PURE__*/ gql(`
-  mutation RevokeAgencyMemberPermissionMcp($filter: AgencyMembershipPermissionsFilter!) {
-    deleteFromAgencyMembershipPermissionsCollection(filter: $filter) {
+  mutation RevokeAgencyMemberPermissionMcp($filter: AgencyMembershipPermissionsFilter!, $atMost: Int! = 1000) {
+    deleteFromAgencyMembershipPermissionsCollection(filter: $filter, atMost: $atMost) {
       affectedCount
     }
   }

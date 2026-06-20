@@ -107,7 +107,7 @@ export const getViewerOrganizationBySlug = cache(async (organization_slug: strin
     query: ViewerOrganizationBySlugQuery,
     variables: { organizationSlug: organization_slug },
   });
-  const organization = result.data?.["organizations"]?.edges?.[0]?.node ?? null;
+  const organization = result.data?.["organizations"]?.["edges"]?.[0]?.["node"] ?? null;
   return { ...result, data: { organization } };
 });
 

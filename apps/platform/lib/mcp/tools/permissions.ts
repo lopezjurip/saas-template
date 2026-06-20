@@ -80,8 +80,8 @@ export class GrantMemberPermissionTool extends McpTool<typeof GrantSchema> {
 }
 
 const RevokeMemberPermissionMcpMutation = /*#__PURE__*/ gql(`
-  mutation RevokeMemberPermissionMcp($filter: OrganizationMembershipPermissionsFilter!) {
-    deleteFromOrganizationMembershipPermissionsCollection(filter: $filter) {
+  mutation RevokeMemberPermissionMcp($filter: OrganizationMembershipPermissionsFilter!, $atMost: Int! = 1000) {
+    deleteFromOrganizationMembershipPermissionsCollection(filter: $filter, atMost: $atMost) {
       affectedCount
     }
   }
@@ -193,8 +193,8 @@ export class SetMemberPermissionsTool extends McpTool<typeof SetSchema> {
 }
 
 const UpdateMemberStatusMcpMutation = /*#__PURE__*/ gql(`
-  mutation UpdateMemberStatusMcp($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!) {
-    updateOrganizationMembershipsCollection(filter: $filter, set: $set) {
+  mutation UpdateMemberStatusMcp($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!, $atMost: Int! = 1000) {
+    updateOrganizationMembershipsCollection(filter: $filter, set: $set, atMost: $atMost) {
       affectedCount
     }
   }

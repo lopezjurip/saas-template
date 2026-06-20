@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import type { Database } from "@packages/supabase/types";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Archive, Inbox, MessageSquare } from "lucide-react";
@@ -29,7 +30,8 @@ export async function InboxList({ scope, filter }: { scope: InboxScope; filter: 
 
   const { t } = ROSETTA(LOCALES, locale);
 
-  const conversations = (rows ?? []) as Array<Record<string, unknown>>;
+  type ConversationRow = Database["public"]["Functions"]["viewer_conversations"]["Returns"][number];
+  const conversations: ConversationRow[] = rows ?? [];
 
   const inboxHref = SCOPE_INBOX_HREF(scope);
   const openHref = ROUTE_WITH_FILTER(inboxHref, "open");
@@ -80,12 +82,12 @@ export async function InboxList({ scope, filter }: { scope: InboxScope; filter: 
       ) : (
         <div className="divide-border flex-1 divide-y overflow-y-auto">
           {conversations.map((conv) => {
-            const id = conv["conversation_id"] as string;
-            const subject = (conv["conversation_subject"] as string | null) || t("noSubject");
-            const status = conv["conversation_status"] as string;
-            const orgId = conv["organization_id"] as number | null;
-            const agencyId = conv["agency_id"] as number | null;
-            const lastAt = conv["conversation_last_message_at"] as string;
+            const id = conv["conversation_id"];
+            const subject = conv["conversation_subject"] || t("noSubject");
+            const status = conv["conversation_status"];
+            const orgId = conv["organization_id"];
+            const agencyId = conv["agency_id"];
+            const lastAt = conv["conversation_last_message_at"];
 
             const scopeLabel = orgId ? t("scopeOrg") : agencyId ? t("scopeAgency") : t("scopePersonal");
             const dateStr = new Date(lastAt).toLocaleDateString(locale, { month: "short", day: "numeric" });

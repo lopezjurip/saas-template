@@ -38,17 +38,33 @@ const GrantPermissionMutation = /*#__PURE__*/ gql(`
 `);
 
 const RevokePermissionMutation = /*#__PURE__*/ gql(`
-  mutation EditOrganizationMembershipRevokePermissionMutation($filter: OrganizationMembershipPermissionsFilter!) {
-    deleteFromOrganizationMembershipPermissionsCollection(filter: $filter) {
+  mutation EditOrganizationMembershipRevokePermissionMutation($filter: OrganizationMembershipPermissionsFilter!, $atMost: Int! = 1000) {
+    deleteFromOrganizationMembershipPermissionsCollection(filter: $filter, atMost: $atMost) {
       affectedCount
     }
   }
 `);
 
 const RevokeOrganizationMembershipMutation = /*#__PURE__*/ gql(`
-  mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!) {
-    updateOrganizationMembershipsCollection(filter: $filter, set: $set) {
+  mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!, $atMost: Int! = 1000) {
+    updateOrganizationMembershipsCollection(filter: $filter, set: $set, atMost: $atMost) {
       affectedCount
+    }
+  }
+`);
+
+/**
+ * Atomic set-replacement: replaces a membership's entire grant set in one transaction
+ * (the SQL RPC validates `members_manage` + every slug, then adds/deletes the diff).
+ * Replaces the per-permission grant/revoke loop used when applying a preset.
+ */
+const SetPermissionsMutation = /*#__PURE__*/ gql(`
+  mutation EditOrganizationMembershipSetPermissionsMutation($organizationMembershipId: Int!, $permissionIds: [String]!) {
+    viewerOrganizationMembershipSetPermissions(
+      organizationMembershipId: $organizationMembershipId
+      permissionIds: $permissionIds
+    ) {
+      edges { node { permissionId } }
     }
   }
 `);
@@ -115,6 +131,7 @@ export function EditPermissionsForm({
   const [, grantPermission] = useGraphyMutation(GrantPermissionMutation);
   const [, revokePermission] = useGraphyMutation(RevokePermissionMutation);
   const [, revokeOrganizationMembership] = useGraphyMutation(RevokeOrganizationMembershipMutation);
+  const [, setPermissions] = useGraphyMutation(SetPermissionsMutation);
 
   const initialWildcard = grantedSlugs.includes(PERMISSION_SLUG_WILDCARD);
   const initialSlugs = new Set(grantedSlugs.filter((s) => s !== PERMISSION_SLUG_WILDCARD));
@@ -168,7 +185,8 @@ export function EditPermissionsForm({
   }
 
   /**
-   * Reconciles the granted permissions to match a preset's slug set, one mutation per diff.
+   * Replaces the membership's whole grant set with the preset's slugs in one atomic mutation —
+   * no partial state if a single write fails mid-way.
    * @example
    * <Button onClick={() => applyPreset(preset)}>{preset.permission_preset_name}</Button>
    */
@@ -177,35 +195,11 @@ export function EditPermissionsForm({
     setError(null);
     startTransition(async () => {
       applyOptimistic({ kind: "apply_preset", slugs });
-
-      const wantWildcard = slugs.includes(PERMISSION_SLUG_WILDCARD);
-      if (wantWildcard !== state.wildcard) {
-        const ok = await writePermission(PERMISSION_SLUG_WILDCARD, wantWildcard);
-        if (!ok) {
-          router.refresh();
-          return;
-        }
-      }
-
-      const desired = new Set(slugs.filter((s) => s !== PERMISSION_SLUG_WILDCARD));
-      for (const slug of desired) {
-        if (!state.slugs.has(slug)) {
-          const ok = await writePermission(slug, true);
-          if (!ok) {
-            router.refresh();
-            return;
-          }
-        }
-      }
-      for (const slug of state.slugs) {
-        if (!desired.has(slug)) {
-          const ok = await writePermission(slug, false);
-          if (!ok) {
-            router.refresh();
-            return;
-          }
-        }
-      }
+      const { error: err } = await setPermissions({
+        organizationMembershipId: organization_membership_id,
+        permissionIds: slugs,
+      });
+      if (err) setError(t(MAP_PG_ERROR_KEY(err)));
       router.refresh();
     });
   }

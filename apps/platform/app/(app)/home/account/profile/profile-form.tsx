@@ -14,8 +14,8 @@ import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
 
 const ProfileSectionUpdateNameMutation = /*#__PURE__*/ gql(`
-  mutation ProfileSectionUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!) {
-    updateProfilesCollection(filter: $filter, set: $set) {
+  mutation ProfileSectionUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!, $atMost: Int! = 1000) {
+    updateProfilesCollection(filter: $filter, set: $set, atMost: $atMost) {
       affectedCount
     }
   }

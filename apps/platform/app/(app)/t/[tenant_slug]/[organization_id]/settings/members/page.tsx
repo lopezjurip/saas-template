@@ -8,10 +8,57 @@ import { ChevronRight, ShieldCheck, UserPlus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { gql } from "~/generated/graphql";
+import { FilterIs } from "~/generated/graphql/graphql";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { getRosetta, getServerLocale } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { PendingInvitations } from "./pending-invitations";
+
+/**
+ * Active members + pending invites for an org, with each membership's permission grants nested
+ * via the FK relationship — one typed query replacing two service-role table selects + a manual
+ * join. RLS gates rows: a `members_manage` co-member sees their org's memberships and grants.
+ * Member emails live in `auth.users` (not here) and are fetched separately via the auth admin API.
+ * @example
+ * const { data } = await graphy.query({ query: MembersAdminPageQuery, variables: { organizationId } });
+ */
+const MembersAdminPageQuery = /*#__PURE__*/ gql(`
+  query MembersAdminPageQuery(
+    $filter: OrganizationMembershipsFilter
+    $orderBy: [OrganizationMembershipsOrderBy!] = [{ organizationMembershipCreatedAt: AscNullsLast }]
+    $first: Int = 250
+  ) {
+    memberships: organizationMembershipsCollection(first: $first, filter: $filter, orderBy: $orderBy) {
+      edges {
+        node {
+          organizationMembershipId
+          profileId
+          organizationMembershipInviteEmail
+          organizationMembershipInvitePhone
+          organizationMembershipInviteAddressLevel0Id
+          organizationMembershipInviteDocumentKind
+          organizationMembershipInviteDocumentValue
+          organizationMembershipInviteExpiresAt
+          organizationMembershipAcceptedAt
+          organizationMembershipCreatedAt
+          profile { profileNameFull }
+          organizationMembershipPermissionsCollection(first: 250) {
+            edges { node { permissionId } }
+          }
+        }
+      }
+    }
+  }
+`);
+
+/** Flattens a membership node's nested permission grants into a slug list. */
+function GRANTS_OF(node: {
+  organizationMembershipPermissionsCollection?: { edges: { node: { permissionId: string } }[] } | null;
+}): string[] {
+  return (node["organizationMembershipPermissionsCollection"]?.["edges"] ?? []).map((e) => e["node"]["permissionId"]);
+}
 
 export async function generateMetadata(
   props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members">,
@@ -59,37 +106,35 @@ export default async function MembersAdminPage(
   }
 
   /**
-   * organization_memberships now models both ACTIVE members and PENDING invites — split client-side.
+   * organization_memberships models both ACTIVE members and PENDING invites — split here.
+   * Permission grants arrive nested per membership via the FK relationship.
    */
-  const [allOrganizationOrganizationMembershipsRes, organizationMembershipPermissionsRes] = await Promise.all([
-    admin
-      .from("organization_memberships")
-      .select(
-        "organization_membership_id, profile_id, organization_membership_invite_email, organization_membership_invite_phone, organization_membership_invite_address_level0_id, organization_membership_invite_document_kind, organization_membership_invite_document_value, organization_membership_invite_expires_at, organization_membership_accepted_at, organization_membership_created_at, profiles(profile_name_full)",
-      )
-      .eq("organization_id", organization_id)
-      .is("organization_membership_revoked_at", null)
-      .is("organization_membership_rejected_at", null)
-      .order("organization_membership_created_at", { ascending: true }),
-    admin
-      .from("organization_membership_permissions")
-      .select("organization_membership_id, permission_id, organization_memberships!inner(organization_id)")
-      .eq("organization_memberships.organization_id", organization_id),
-  ]);
+  const graphy = await getGraphySession();
+  const { data, error } = await graphy.query({
+    query: MembersAdminPageQuery,
+    variables: {
+      filter: {
+        organizationId: { eq: organization_id },
+        organizationMembershipRevokedAt: { is: FilterIs.Null },
+        organizationMembershipRejectedAt: { is: FilterIs.Null },
+      },
+    },
+  });
+  if (error) throw error;
+  const membershipNodes = (data?.["memberships"]?.["edges"] ?? []).map((e) => e["node"]);
 
-  const allOrganizationOrganizationMemberships = allOrganizationOrganizationMembershipsRes.data ?? [];
-  const activeOrganizationOrganizationMemberships = allOrganizationOrganizationMemberships.filter(
-    (m) => m["profile_id"] && m["organization_membership_accepted_at"],
+  const activeOrganizationOrganizationMemberships = membershipNodes.filter(
+    (m) => m["profileId"] && m["organizationMembershipAcceptedAt"],
   );
-  const pendingOrganizationOrganizationMemberships = allOrganizationOrganizationMemberships.filter(
-    (m) => !m["profile_id"] && !m["organization_membership_accepted_at"],
+  const pendingOrganizationOrganizationMemberships = membershipNodes.filter(
+    (m) => !m["profileId"] && !m["organizationMembershipAcceptedAt"],
   );
 
   /**
    * Emails for member profiles (auth.users; not in profiles table). One paginated call
    * instead of N round-trips — Supabase admin rate-limits `getUserById`.
    */
-  const memberProfileIds = new Set(activeOrganizationOrganizationMemberships.map((m) => m["profile_id"] as string));
+  const memberProfileIds = new Set(activeOrganizationOrganizationMemberships.map((m) => m["profileId"]));
   const profileEmailById = new Map<string, string | null>();
   if (memberProfileIds.size > 0) {
     const usersRes = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
@@ -102,26 +147,15 @@ export default async function MembersAdminPage(
     }
   }
 
-  const permissionsByOrganizationMembershipId = new Map<number, { permission_id: string; is_wildcard: boolean }[]>();
-  for (const mp of organizationMembershipPermissionsRes.data ?? []) {
-    const list = permissionsByOrganizationMembershipId.get(mp["organization_membership_id"] as number) ?? [];
-    list.push({
-      permission_id: mp["permission_id"] as string,
-      is_wildcard: mp["permission_id"] === "*",
-    });
-    permissionsByOrganizationMembershipId.set(mp["organization_membership_id"] as number, list);
-  }
-
   const activeRows = activeOrganizationOrganizationMemberships.map((m) => {
-    const organization_membership_id = m["organization_membership_id"] as number;
-    const grants = permissionsByOrganizationMembershipId.get(organization_membership_id) ?? [];
-    const has_wildcard = grants.some((g) => g.is_wildcard);
-    const slugs = grants.filter((g) => !g.is_wildcard).map((g) => g.permission_id);
-    const profile_id = m["profile_id"] as string;
+    const grants = GRANTS_OF(m);
+    const has_wildcard = grants.includes("*");
+    const slugs = grants.filter((g) => g !== "*");
+    const profile_id = m["profileId"] ?? "";
     return {
-      organization_membership_id,
+      organization_membership_id: m["organizationMembershipId"],
       profile_id,
-      profile_name_full: m["profiles"]?.["profile_name_full"] ?? null,
+      profile_name_full: m["profile"]?.["profileNameFull"] ?? null,
       email: profileEmailById.get(profile_id) ?? null,
       has_wildcard,
       permission_count: slugs.length,
@@ -222,18 +256,15 @@ export default async function MembersAdminPage(
           tenantSlug={tenant_slug}
           organizationId={organization_id}
           invitations={pendingOrganizationOrganizationMemberships.map((i) => ({
-            organization_membership_id: i["organization_membership_id"] as number,
-            invitation_email: i["organization_membership_invite_email"] as string | null,
-            invitation_phone: i["organization_membership_invite_phone"] as string | null,
-            invitation_address_level0_id: i["organization_membership_invite_address_level0_id"] as string | null,
-            invitation_document_kind: i["organization_membership_invite_document_kind"] as string | null,
-            invitation_document_value: i["organization_membership_invite_document_value"] as string | null,
-            invitation_permission_slugs:
-              permissionsByOrganizationMembershipId
-                .get(i["organization_membership_id"] as number)
-                ?.map((g) => g.permission_id) ?? [],
-            invitation_created_at: i["organization_membership_created_at"] as string,
-            invitation_expires_at: i["organization_membership_invite_expires_at"] as string | null,
+            organization_membership_id: i["organizationMembershipId"],
+            invitation_email: i["organizationMembershipInviteEmail"] ?? null,
+            invitation_phone: i["organizationMembershipInvitePhone"] ?? null,
+            invitation_address_level0_id: i["organizationMembershipInviteAddressLevel0Id"] ?? null,
+            invitation_document_kind: i["organizationMembershipInviteDocumentKind"] ?? null,
+            invitation_document_value: i["organizationMembershipInviteDocumentValue"] ?? null,
+            invitation_permission_slugs: GRANTS_OF(i),
+            invitation_created_at: i["organizationMembershipCreatedAt"],
+            invitation_expires_at: i["organizationMembershipInviteExpiresAt"] ?? null,
           }))}
         />
         {pendingOrganizationOrganizationMemberships.length > 0 ? (

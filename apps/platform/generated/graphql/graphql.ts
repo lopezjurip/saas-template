@@ -189,6 +189,24 @@ export type OrganizationMembershipsFilter = {
   profileId?: UuidFilter | null | undefined;
 };
 
+export type OrganizationMembershipsOrderBy = {
+  organizationId?: OrderByDirection | null | undefined;
+  organizationMembershipAcceptedAt?: OrderByDirection | null | undefined;
+  organizationMembershipCreatedAt?: OrderByDirection | null | undefined;
+  organizationMembershipId?: OrderByDirection | null | undefined;
+  organizationMembershipInviteAddressLevel0Id?: OrderByDirection | null | undefined;
+  organizationMembershipInviteDocumentKind?: OrderByDirection | null | undefined;
+  organizationMembershipInviteDocumentValue?: OrderByDirection | null | undefined;
+  organizationMembershipInviteEmail?: OrderByDirection | null | undefined;
+  organizationMembershipInviteExpiresAt?: OrderByDirection | null | undefined;
+  organizationMembershipInvitePhone?: OrderByDirection | null | undefined;
+  organizationMembershipInviteToken?: OrderByDirection | null | undefined;
+  organizationMembershipRejectedAt?: OrderByDirection | null | undefined;
+  organizationMembershipRevokedAt?: OrderByDirection | null | undefined;
+  organizationMembershipUpdatedAt?: OrderByDirection | null | undefined;
+  profileId?: OrderByDirection | null | undefined;
+};
+
 export type OrganizationMembershipsUpdateInput = {
   organizationId?: number | null | undefined;
   organizationMembershipAcceptedAt?: string | null | undefined;
@@ -266,12 +284,27 @@ export type PermissionPresetsInsertInput = {
   permissionPresetUpdatedAt?: string | null | undefined;
 };
 
+export type PermissionPresetsOrderBy = {
+  organizationId?: OrderByDirection | null | undefined;
+  permissionPresetCreatedAt?: OrderByDirection | null | undefined;
+  permissionPresetId?: OrderByDirection | null | undefined;
+  permissionPresetName?: OrderByDirection | null | undefined;
+  permissionPresetUpdatedAt?: OrderByDirection | null | undefined;
+};
+
 export type PermissionPresetsUpdateInput = {
   organizationId?: number | null | undefined;
   permissionPresetCreatedAt?: string | null | undefined;
   permissionPresetName?: string | null | undefined;
   permissionPresetSlugs?: Array<string | null | undefined> | null | undefined;
   permissionPresetUpdatedAt?: string | null | undefined;
+};
+
+export type PermissionsOrderBy = {
+  permissionCreatedAt?: OrderByDirection | null | undefined;
+  permissionDescription?: OrderByDirection | null | undefined;
+  permissionId?: OrderByDirection | null | undefined;
+  permissionUpdatedAt?: OrderByDirection | null | undefined;
 };
 
 export enum ProfileIdentityDocumentKind {
@@ -415,6 +448,7 @@ export type AccountProfilePageQueryQuery = {
 export type ProfileSectionUpdateNameMutationMutationVariables = Exact<{
   filter: ProfilesFilter;
   set: ProfilesUpdateInput;
+  atMost?: number;
 }>;
 
 export type ProfileSectionUpdateNameMutationMutation = { updateProfilesCollection: { affectedCount: number } };
@@ -500,6 +534,7 @@ export type EditOrganizationMembershipGrantPermissionMutationMutation = {
 
 export type EditOrganizationMembershipRevokePermissionMutationMutationVariables = Exact<{
   filter: OrganizationMembershipPermissionsFilter;
+  atMost?: number;
 }>;
 
 export type EditOrganizationMembershipRevokePermissionMutationMutation = {
@@ -509,15 +544,93 @@ export type EditOrganizationMembershipRevokePermissionMutationMutation = {
 export type EditOrganizationMembershipRevokeOrganizationMembershipMutationMutationVariables = Exact<{
   filter: OrganizationMembershipsFilter;
   set: OrganizationMembershipsUpdateInput;
+  atMost?: number;
 }>;
 
 export type EditOrganizationMembershipRevokeOrganizationMembershipMutationMutation = {
   updateOrganizationMembershipsCollection: { affectedCount: number };
 };
 
+export type EditOrganizationMembershipSetPermissionsMutationMutationVariables = Exact<{
+  organizationMembershipId: number;
+  permissionIds: Array<string | null | undefined> | string;
+}>;
+
+export type EditOrganizationMembershipSetPermissionsMutationMutation = {
+  viewerOrganizationMembershipSetPermissions: { edges: Array<{ node: { permissionId: string } }> } | null;
+};
+
+export type OrganizationMembershipEditPageQueryQueryVariables = Exact<{
+  membershipFilter?: OrganizationMembershipsFilter | null | undefined;
+  presetsFilter?: PermissionPresetsFilter | null | undefined;
+  permissionsOrderBy?: Array<PermissionsOrderBy> | PermissionsOrderBy | null | undefined;
+  presetsOrderBy?: Array<PermissionPresetsOrderBy> | PermissionPresetsOrderBy | null | undefined;
+  first?: number | null | undefined;
+}>;
+
+export type OrganizationMembershipEditPageQueryQuery = {
+  memberships: {
+    edges: Array<{
+      node: {
+        organizationMembershipId: number;
+        profileId: string | null;
+        organizationMembershipInviteEmail: string | null;
+        organizationMembershipInvitePhone: string | null;
+        organizationMembershipInviteAddressLevel0Id: string | null;
+        organizationMembershipInviteDocumentKind: ProfileIdentityDocumentKind | null;
+        organizationMembershipInviteDocumentValue: string | null;
+        organizationMembershipAcceptedAt: string | null;
+        organizationMembershipRevokedAt: string | null;
+        organizationMembershipRejectedAt: string | null;
+        profile: { profileNameFull: string | null } | null;
+        organizationMembershipPermissionsCollection: { edges: Array<{ node: { permissionId: string } }> } | null;
+      };
+    }>;
+  } | null;
+  permissions: { edges: Array<{ node: { permissionId: string; permissionDescription: string | null } }> } | null;
+  presets: {
+    edges: Array<{
+      node: {
+        permissionPresetId: number;
+        permissionPresetName: string;
+        permissionPresetSlugs: Array<string | null>;
+        organizationId: number | null;
+      };
+    }>;
+  } | null;
+};
+
+export type MembersAdminPageQueryQueryVariables = Exact<{
+  filter?: OrganizationMembershipsFilter | null | undefined;
+  orderBy?: Array<OrganizationMembershipsOrderBy> | OrganizationMembershipsOrderBy | null | undefined;
+  first?: number | null | undefined;
+}>;
+
+export type MembersAdminPageQueryQuery = {
+  memberships: {
+    edges: Array<{
+      node: {
+        organizationMembershipId: number;
+        profileId: string | null;
+        organizationMembershipInviteEmail: string | null;
+        organizationMembershipInvitePhone: string | null;
+        organizationMembershipInviteAddressLevel0Id: string | null;
+        organizationMembershipInviteDocumentKind: ProfileIdentityDocumentKind | null;
+        organizationMembershipInviteDocumentValue: string | null;
+        organizationMembershipInviteExpiresAt: string | null;
+        organizationMembershipAcceptedAt: string | null;
+        organizationMembershipCreatedAt: string;
+        profile: { profileNameFull: string | null } | null;
+        organizationMembershipPermissionsCollection: { edges: Array<{ node: { permissionId: string } }> } | null;
+      };
+    }>;
+  } | null;
+};
+
 export type MembersPendingInvitationsCancelMutationMutationVariables = Exact<{
   filter: OrganizationMembershipsFilter;
   set: OrganizationMembershipsUpdateInput;
+  atMost?: number;
 }>;
 
 export type MembersPendingInvitationsCancelMutationMutation = {
@@ -541,6 +654,7 @@ export type CreateTenantFormMutationMutation = { tenant: { tenantId: number } | 
 export type OnboardingProfileFormUpdateNameMutationMutationVariables = Exact<{
   filter: ProfilesFilter;
   set: ProfilesUpdateInput;
+  atMost?: number;
 }>;
 
 export type OnboardingProfileFormUpdateNameMutationMutation = { updateProfilesCollection: { affectedCount: number } };
@@ -919,6 +1033,7 @@ export type GrantAgencyOrgAccessMcpMutation = {
 
 export type RevokeAgencyOrgAccessMcpMutationVariables = Exact<{
   filter: AgenciesOrganizationsGrantsFilter;
+  atMost?: number;
 }>;
 
 export type RevokeAgencyOrgAccessMcpMutation = {
@@ -949,6 +1064,7 @@ export type GrantAgencyMemberPermissionMcpMutation = {
 
 export type RevokeAgencyMemberPermissionMcpMutationVariables = Exact<{
   filter: AgencyMembershipPermissionsFilter;
+  atMost?: number;
 }>;
 
 export type RevokeAgencyMemberPermissionMcpMutation = {
@@ -965,6 +1081,7 @@ export type GrantMemberPermissionMcpMutation = {
 
 export type RevokeMemberPermissionMcpMutationVariables = Exact<{
   filter: OrganizationMembershipPermissionsFilter;
+  atMost?: number;
 }>;
 
 export type RevokeMemberPermissionMcpMutation = {
@@ -981,6 +1098,7 @@ export type SetMemberPermissionsMcpMutation = { result: { edges: Array<{ node: {
 export type UpdateMemberStatusMcpMutationVariables = Exact<{
   filter: OrganizationMembershipsFilter;
   set: OrganizationMembershipsUpdateInput;
+  atMost?: number;
 }>;
 
 export type UpdateMemberStatusMcpMutation = { updateOrganizationMembershipsCollection: { affectedCount: number } };
@@ -996,12 +1114,14 @@ export type CreatePresetMcpMutation = {
 export type UpdatePresetMcpMutationVariables = Exact<{
   filter: PermissionPresetsFilter;
   set: PermissionPresetsUpdateInput;
+  atMost?: number;
 }>;
 
 export type UpdatePresetMcpMutation = { updatePermissionPresetsCollection: { affectedCount: number } };
 
 export type DeletePresetMcpMutationVariables = Exact<{
   filter: PermissionPresetsFilter;
+  atMost?: number;
 }>;
 
 export type DeletePresetMcpMutation = { deleteFromPermissionPresetsCollection: { affectedCount: number } };
@@ -1009,6 +1129,7 @@ export type DeletePresetMcpMutation = { deleteFromPermissionPresetsCollection: {
 export type UpdateProfileMcpMutationVariables = Exact<{
   filter: ProfilesFilter;
   set: ProfilesUpdateInput;
+  atMost?: number;
 }>;
 
 export type UpdateProfileMcpMutation = { updateProfilesCollection: { affectedCount: number } };
@@ -1016,6 +1137,7 @@ export type UpdateProfileMcpMutation = { updateProfilesCollection: { affectedCou
 export type UpdateTenantMcpMutationVariables = Exact<{
   filter: TenantsFilter;
   set: TenantsUpdateInput;
+  atMost?: number;
 }>;
 
 export type UpdateTenantMcpMutation = {
@@ -1028,6 +1150,7 @@ export type UpdateTenantMcpMutation = {
 export type UpdateOrganizationMcpMutationVariables = Exact<{
   filter: OrganizationsFilter;
   set: OrganizationsUpdateInput;
+  atMost?: number;
 }>;
 
 export type UpdateOrganizationMcpMutation = { updateOrganizationsCollection: { affectedCount: number } };
@@ -1231,8 +1354,8 @@ export const AccountProfilePageQueryDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<AccountProfilePageQueryQuery, AccountProfilePageQueryQueryVariables>;
 export const ProfileSectionUpdateNameMutationDocument = new TypedDocumentString(`
-    mutation ProfileSectionUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!) {
-  updateProfilesCollection(filter: $filter, set: $set) {
+    mutation ProfileSectionUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!, $atMost: Int! = 1000) {
+  updateProfilesCollection(filter: $filter, set: $set, atMost: $atMost) {
     affectedCount
   }
 }
@@ -1339,8 +1462,11 @@ export const EditOrganizationMembershipGrantPermissionMutationDocument = new Typ
   EditOrganizationMembershipGrantPermissionMutationMutationVariables
 >;
 export const EditOrganizationMembershipRevokePermissionMutationDocument = new TypedDocumentString(`
-    mutation EditOrganizationMembershipRevokePermissionMutation($filter: OrganizationMembershipPermissionsFilter!) {
-  deleteFromOrganizationMembershipPermissionsCollection(filter: $filter) {
+    mutation EditOrganizationMembershipRevokePermissionMutation($filter: OrganizationMembershipPermissionsFilter!, $atMost: Int! = 1000) {
+  deleteFromOrganizationMembershipPermissionsCollection(
+    filter: $filter
+    atMost: $atMost
+  ) {
     affectedCount
   }
 }
@@ -1349,8 +1475,12 @@ export const EditOrganizationMembershipRevokePermissionMutationDocument = new Ty
   EditOrganizationMembershipRevokePermissionMutationMutationVariables
 >;
 export const EditOrganizationMembershipRevokeOrganizationMembershipMutationDocument = new TypedDocumentString(`
-    mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!) {
-  updateOrganizationMembershipsCollection(filter: $filter, set: $set) {
+    mutation EditOrganizationMembershipRevokeOrganizationMembershipMutation($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!, $atMost: Int! = 1000) {
+  updateOrganizationMembershipsCollection(
+    filter: $filter
+    set: $set
+    atMost: $atMost
+  ) {
     affectedCount
   }
 }
@@ -1358,9 +1488,122 @@ export const EditOrganizationMembershipRevokeOrganizationMembershipMutationDocum
   EditOrganizationMembershipRevokeOrganizationMembershipMutationMutation,
   EditOrganizationMembershipRevokeOrganizationMembershipMutationMutationVariables
 >;
+export const EditOrganizationMembershipSetPermissionsMutationDocument = new TypedDocumentString(`
+    mutation EditOrganizationMembershipSetPermissionsMutation($organizationMembershipId: Int!, $permissionIds: [String]!) {
+  viewerOrganizationMembershipSetPermissions(
+    organizationMembershipId: $organizationMembershipId
+    permissionIds: $permissionIds
+  ) {
+    edges {
+      node {
+        permissionId
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<
+  EditOrganizationMembershipSetPermissionsMutationMutation,
+  EditOrganizationMembershipSetPermissionsMutationMutationVariables
+>;
+export const OrganizationMembershipEditPageQueryDocument = new TypedDocumentString(`
+    query OrganizationMembershipEditPageQuery($membershipFilter: OrganizationMembershipsFilter, $presetsFilter: PermissionPresetsFilter, $permissionsOrderBy: [PermissionsOrderBy!] = [{permissionId: AscNullsLast}], $presetsOrderBy: [PermissionPresetsOrderBy!] = [{permissionPresetId: AscNullsLast}], $first: Int = 250) {
+  memberships: organizationMembershipsCollection(
+    first: 1
+    filter: $membershipFilter
+  ) {
+    edges {
+      node {
+        organizationMembershipId
+        profileId
+        organizationMembershipInviteEmail
+        organizationMembershipInvitePhone
+        organizationMembershipInviteAddressLevel0Id
+        organizationMembershipInviteDocumentKind
+        organizationMembershipInviteDocumentValue
+        organizationMembershipAcceptedAt
+        organizationMembershipRevokedAt
+        organizationMembershipRejectedAt
+        profile {
+          profileNameFull
+        }
+        organizationMembershipPermissionsCollection(first: 250) {
+          edges {
+            node {
+              permissionId
+            }
+          }
+        }
+      }
+    }
+  }
+  permissions: permissionsCollection(first: $first, orderBy: $permissionsOrderBy) {
+    edges {
+      node {
+        permissionId
+        permissionDescription
+      }
+    }
+  }
+  presets: permissionPresetsCollection(
+    first: $first
+    filter: $presetsFilter
+    orderBy: $presetsOrderBy
+  ) {
+    edges {
+      node {
+        permissionPresetId
+        permissionPresetName
+        permissionPresetSlugs
+        organizationId
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<
+  OrganizationMembershipEditPageQueryQuery,
+  OrganizationMembershipEditPageQueryQueryVariables
+>;
+export const MembersAdminPageQueryDocument = new TypedDocumentString(`
+    query MembersAdminPageQuery($filter: OrganizationMembershipsFilter, $orderBy: [OrganizationMembershipsOrderBy!] = [{organizationMembershipCreatedAt: AscNullsLast}], $first: Int = 250) {
+  memberships: organizationMembershipsCollection(
+    first: $first
+    filter: $filter
+    orderBy: $orderBy
+  ) {
+    edges {
+      node {
+        organizationMembershipId
+        profileId
+        organizationMembershipInviteEmail
+        organizationMembershipInvitePhone
+        organizationMembershipInviteAddressLevel0Id
+        organizationMembershipInviteDocumentKind
+        organizationMembershipInviteDocumentValue
+        organizationMembershipInviteExpiresAt
+        organizationMembershipAcceptedAt
+        organizationMembershipCreatedAt
+        profile {
+          profileNameFull
+        }
+        organizationMembershipPermissionsCollection(first: 250) {
+          edges {
+            node {
+              permissionId
+            }
+          }
+        }
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<MembersAdminPageQueryQuery, MembersAdminPageQueryQueryVariables>;
 export const MembersPendingInvitationsCancelMutationDocument = new TypedDocumentString(`
-    mutation MembersPendingInvitationsCancelMutation($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!) {
-  updateOrganizationMembershipsCollection(filter: $filter, set: $set) {
+    mutation MembersPendingInvitationsCancelMutation($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!, $atMost: Int! = 1000) {
+  updateOrganizationMembershipsCollection(
+    filter: $filter
+    set: $set
+    atMost: $atMost
+  ) {
     affectedCount
   }
 }
@@ -1384,8 +1627,8 @@ export const CreateTenantFormMutationDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<CreateTenantFormMutationMutation, CreateTenantFormMutationMutationVariables>;
 export const OnboardingProfileFormUpdateNameMutationDocument = new TypedDocumentString(`
-    mutation OnboardingProfileFormUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!) {
-  updateProfilesCollection(filter: $filter, set: $set) {
+    mutation OnboardingProfileFormUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!, $atMost: Int! = 1000) {
+  updateProfilesCollection(filter: $filter, set: $set, atMost: $atMost) {
     affectedCount
   }
 }
@@ -1850,8 +2093,11 @@ export const GrantAgencyOrgAccessMcpDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<GrantAgencyOrgAccessMcpMutation, GrantAgencyOrgAccessMcpMutationVariables>;
 export const RevokeAgencyOrgAccessMcpDocument = new TypedDocumentString(`
-    mutation RevokeAgencyOrgAccessMcp($filter: AgenciesOrganizationsGrantsFilter!) {
-  deleteFromAgenciesOrganizationsGrantsCollection(filter: $filter) {
+    mutation RevokeAgencyOrgAccessMcp($filter: AgenciesOrganizationsGrantsFilter!, $atMost: Int! = 1000) {
+  deleteFromAgenciesOrganizationsGrantsCollection(
+    filter: $filter
+    atMost: $atMost
+  ) {
     affectedCount
   }
 }
@@ -1887,8 +2133,11 @@ export const GrantAgencyMemberPermissionMcpDocument = new TypedDocumentString(`
   GrantAgencyMemberPermissionMcpMutationVariables
 >;
 export const RevokeAgencyMemberPermissionMcpDocument = new TypedDocumentString(`
-    mutation RevokeAgencyMemberPermissionMcp($filter: AgencyMembershipPermissionsFilter!) {
-  deleteFromAgencyMembershipPermissionsCollection(filter: $filter) {
+    mutation RevokeAgencyMemberPermissionMcp($filter: AgencyMembershipPermissionsFilter!, $atMost: Int! = 1000) {
+  deleteFromAgencyMembershipPermissionsCollection(
+    filter: $filter
+    atMost: $atMost
+  ) {
     affectedCount
   }
 }
@@ -1904,8 +2153,11 @@ export const GrantMemberPermissionMcpDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<GrantMemberPermissionMcpMutation, GrantMemberPermissionMcpMutationVariables>;
 export const RevokeMemberPermissionMcpDocument = new TypedDocumentString(`
-    mutation RevokeMemberPermissionMcp($filter: OrganizationMembershipPermissionsFilter!) {
-  deleteFromOrganizationMembershipPermissionsCollection(filter: $filter) {
+    mutation RevokeMemberPermissionMcp($filter: OrganizationMembershipPermissionsFilter!, $atMost: Int! = 1000) {
+  deleteFromOrganizationMembershipPermissionsCollection(
+    filter: $filter
+    atMost: $atMost
+  ) {
     affectedCount
   }
 }
@@ -1925,8 +2177,12 @@ export const SetMemberPermissionsMcpDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<SetMemberPermissionsMcpMutation, SetMemberPermissionsMcpMutationVariables>;
 export const UpdateMemberStatusMcpDocument = new TypedDocumentString(`
-    mutation UpdateMemberStatusMcp($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!) {
-  updateOrganizationMembershipsCollection(filter: $filter, set: $set) {
+    mutation UpdateMemberStatusMcp($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!, $atMost: Int! = 1000) {
+  updateOrganizationMembershipsCollection(
+    filter: $filter
+    set: $set
+    atMost: $atMost
+  ) {
     affectedCount
   }
 }
@@ -1941,29 +2197,29 @@ export const CreatePresetMcpDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<CreatePresetMcpMutation, CreatePresetMcpMutationVariables>;
 export const UpdatePresetMcpDocument = new TypedDocumentString(`
-    mutation UpdatePresetMcp($filter: PermissionPresetsFilter!, $set: PermissionPresetsUpdateInput!) {
-  updatePermissionPresetsCollection(filter: $filter, set: $set) {
+    mutation UpdatePresetMcp($filter: PermissionPresetsFilter!, $set: PermissionPresetsUpdateInput!, $atMost: Int! = 1000) {
+  updatePermissionPresetsCollection(filter: $filter, set: $set, atMost: $atMost) {
     affectedCount
   }
 }
     `) as unknown as TypedDocumentString<UpdatePresetMcpMutation, UpdatePresetMcpMutationVariables>;
 export const DeletePresetMcpDocument = new TypedDocumentString(`
-    mutation DeletePresetMcp($filter: PermissionPresetsFilter!) {
-  deleteFromPermissionPresetsCollection(filter: $filter) {
+    mutation DeletePresetMcp($filter: PermissionPresetsFilter!, $atMost: Int! = 1000) {
+  deleteFromPermissionPresetsCollection(filter: $filter, atMost: $atMost) {
     affectedCount
   }
 }
     `) as unknown as TypedDocumentString<DeletePresetMcpMutation, DeletePresetMcpMutationVariables>;
 export const UpdateProfileMcpDocument = new TypedDocumentString(`
-    mutation UpdateProfileMcp($filter: ProfilesFilter!, $set: ProfilesUpdateInput!) {
-  updateProfilesCollection(filter: $filter, set: $set) {
+    mutation UpdateProfileMcp($filter: ProfilesFilter!, $set: ProfilesUpdateInput!, $atMost: Int! = 1000) {
+  updateProfilesCollection(filter: $filter, set: $set, atMost: $atMost) {
     affectedCount
   }
 }
     `) as unknown as TypedDocumentString<UpdateProfileMcpMutation, UpdateProfileMcpMutationVariables>;
 export const UpdateTenantMcpDocument = new TypedDocumentString(`
-    mutation UpdateTenantMcp($filter: TenantsFilter!, $set: TenantsUpdateInput!) {
-  updateTenantsCollection(filter: $filter, set: $set) {
+    mutation UpdateTenantMcp($filter: TenantsFilter!, $set: TenantsUpdateInput!, $atMost: Int! = 1000) {
+  updateTenantsCollection(filter: $filter, set: $set, atMost: $atMost) {
     affectedCount
     records {
       tenantName
@@ -1973,8 +2229,8 @@ export const UpdateTenantMcpDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<UpdateTenantMcpMutation, UpdateTenantMcpMutationVariables>;
 export const UpdateOrganizationMcpDocument = new TypedDocumentString(`
-    mutation UpdateOrganizationMcp($filter: OrganizationsFilter!, $set: OrganizationsUpdateInput!) {
-  updateOrganizationsCollection(filter: $filter, set: $set) {
+    mutation UpdateOrganizationMcp($filter: OrganizationsFilter!, $set: OrganizationsUpdateInput!, $atMost: Int! = 1000) {
+  updateOrganizationsCollection(filter: $filter, set: $set, atMost: $atMost) {
     affectedCount
   }
 }
