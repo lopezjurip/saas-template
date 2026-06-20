@@ -20,7 +20,9 @@
       "!**/.temp",
       "!**/.agents",
       "!**/.claude",
-      "!**/agent"
+      "!**/agent",
+      "!skills-third-party",
+      "!skills/codebase"
     ]
   },
   "assist": {
