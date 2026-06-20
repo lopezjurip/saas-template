@@ -55,7 +55,7 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
   return (
     <div className="flex min-h-svh flex-col">
       <div className="w-full bg-foreground text-background">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-center gap-2 px-6 py-1.5 text-center text-xs font-medium tracking-[0.01em]">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-center gap-2 px-6 py-1.5 text-center text-xs font-medium">
           <Sparkles aria-hidden="true" className="hidden h-3 w-3 shrink-0 opacity-70 sm:inline-block" />
           <span className="truncate">{t("announce.message")}</span>
           <span aria-hidden="true" className="hidden opacity-40 sm:inline">
@@ -141,7 +141,7 @@ export default async function MarketingLayout(props: LayoutProps<"/">) {
           </div>
           {footerColumns.map((col) => (
             <nav key={col.title} aria-label={col.title} className="flex min-w-0 flex-col gap-2.5">
-              <span className="text-xs font-semibold uppercase tracking-[0.06em] text-foreground">{col.title}</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-foreground">{col.title}</span>
               <ul className="flex flex-col gap-1.5">
                 {col.links.map((link) => (
                   <li key={link.label}>

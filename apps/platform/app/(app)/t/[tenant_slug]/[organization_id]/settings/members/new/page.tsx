@@ -21,8 +21,9 @@ export default async function NewMemberInvitePage(
   props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members/new">,
 ) {
   const { tenant_slug, organization_id: organization_id_param } = await props.params;
+
+  const { t } = await getRosetta(LOCALES);
   const locale = await getServerLocale();
-  const { t } = await getRosetta(LOCALES, locale);
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
@@ -56,7 +57,7 @@ export default async function NewMemberInvitePage(
         <ArrowLeft size={14} /> {t("back")}
       </Link>
       <header className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
           {organization["organizationName"]} · {t("eyebrow")}
         </span>
         <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("page_title")}</h1>

@@ -18,7 +18,7 @@ build/
 .dev-env.md
 
 # Local TLS certs (mkcert-generated, machine-specific, never commit private keys)
-**/certs/
+**/certificates/
 
 # Turbo
 .turbo/
@@ -61,3 +61,5 @@ pnpm-debug.log*
 .agents/skills/
 agent/skills/
 .claude/skills/
+
+

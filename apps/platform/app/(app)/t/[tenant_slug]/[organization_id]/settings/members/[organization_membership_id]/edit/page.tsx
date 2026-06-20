@@ -12,7 +12,7 @@ import { gql } from "~/generated/graphql";
 import { FilterIs } from "~/generated/graphql/graphql";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { EditPermissionsForm } from "./edit-form";
 
@@ -92,8 +92,8 @@ export default async function OrganizationMembershipEditPage(
     organization_id: organization_id_param,
     organization_membership_id: organization_membership_id_param,
   } = await props.params;
-  const locale = await getServerLocale();
-  const { t } = await getRosetta(LOCALES, locale);
+
+  const { t } = await getRosetta(LOCALES);
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
@@ -201,7 +201,7 @@ export default async function OrganizationMembershipEditPage(
   return (
     <EditShell membersHref={membersHref} backLabel={t("back")}>
       <header className="flex flex-col gap-3">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
           {organization["organizationName"]} · {t("eyebrow")}
         </span>
         <div className="flex items-center gap-3">
@@ -209,14 +209,14 @@ export default async function OrganizationMembershipEditPage(
             className={
               isPending
                 ? "bg-muted text-muted-foreground border-border inline-flex size-11 shrink-0 items-center justify-center rounded-full border"
-                : "bg-muted text-foreground inline-flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold tracking-[-0.01em]"
+                : "bg-muted text-foreground inline-flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
             }
           >
             {isPending ? <ChannelIcon size={18} /> : INITIALS_OF(memberLabel)}
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="inline-flex min-w-0 items-center gap-2">
-              <h1 className="text-foreground m-0 truncate text-lg font-semibold tracking-[-0.01em]">{memberLabel}</h1>
+              <h1 className="text-foreground m-0 truncate text-lg font-semibold">{memberLabel}</h1>
               {isPending ? (
                 <Badge variant="outline" className="text-muted-foreground shrink-0">
                   {t("invitation_badge")}

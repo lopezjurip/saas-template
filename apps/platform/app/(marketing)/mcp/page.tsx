@@ -71,7 +71,7 @@ export default async function McpPage(props: PageProps<"/mcp">) {
 
           <Card className="mt-2">
             <CardContent className="flex flex-col gap-3 p-5 sm:p-6">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 {t("endpoint.label")}
               </span>
               <code className="block w-full overflow-x-auto rounded-md bg-muted px-3 py-2 font-mono text-sm">
@@ -84,7 +84,7 @@ export default async function McpPage(props: PageProps<"/mcp">) {
 
         <section className="mx-auto w-full max-w-4xl px-6 pb-14 sm:pb-20">
           <div className="mb-8 flex max-w-[44ch] flex-col gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               {t("flow.tag")}
             </span>
             <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("flow.title")}</h2>
@@ -106,7 +106,7 @@ export default async function McpPage(props: PageProps<"/mcp">) {
 
         <section className="mx-auto w-full max-w-4xl px-6 pb-14 sm:pb-20">
           <div className="mb-8 flex max-w-[44ch] flex-col gap-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               {t("tools.tag")}
             </span>
             <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("tools.title")}</h2>

@@ -77,7 +77,7 @@ export function TeamList({
         ) : (
           <section className="flex flex-col gap-2.5">
             <div className="flex min-h-7 items-center justify-between gap-2.5">
-              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
                 {t("team_group")}
               </span>
               <span className="text-muted-foreground text-xs tabular-nums">
@@ -148,7 +148,7 @@ function TeamAffiliateRow({ agencyId, aff, t }: { agencyId: number; aff: TeamAff
     >
       <span
         className={cn(
-          "bg-muted text-foreground inline-flex size-8.5 shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-[-0.01em]",
+          "bg-muted text-foreground inline-flex size-8.5 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
           dim && "opacity-60",
         )}
       >
@@ -165,7 +165,7 @@ function TeamAffiliateRow({ agencyId, aff, t }: { agencyId: number; aff: TeamAff
             {aff.name}
           </span>
           {aff.is_self ? (
-            <span className="bg-foreground text-background shrink-0 rounded-full px-1.5 py-0.5 text-tiny font-semibold uppercase leading-none tracking-[0.04em]">
+            <span className="bg-foreground text-background shrink-0 rounded-full px-1.5 py-0.5 text-tiny font-semibold uppercase leading-none tracking-wider">
               {t("self")}
             </span>
           ) : null}
@@ -206,7 +206,7 @@ function TeamAffiliateRow({ agencyId, aff, t }: { agencyId: number; aff: TeamAff
 /** Inline status pill scoped to the team list. */
 function AffiliationBadge({ state, label }: { state: AffiliationState; label: string }) {
   const base =
-    "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-tiny font-medium leading-[1.2] tracking-[0.01em]";
+    "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-tiny font-medium leading-[1.2]";
   if (state === "accepted") {
     return (
       <span

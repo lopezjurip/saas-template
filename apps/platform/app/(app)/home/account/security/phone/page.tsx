@@ -12,7 +12,7 @@ export default async function SecurityPhonePage(props: PageProps<"/home/account/
   return (
     <div className="flex max-w-[720px] flex-col gap-4.5">
       <header className="flex flex-col gap-1">
-        <span className="text-muted-foreground text-tiny font-semibold tracking-[0.08em] uppercase">
+        <span className="text-muted-foreground text-tiny font-semibold tracking-widest uppercase">
           {t("breadcrumb")}
         </span>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">{t("heading")}</h1>

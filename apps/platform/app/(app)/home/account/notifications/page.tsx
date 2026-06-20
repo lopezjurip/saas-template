@@ -9,7 +9,7 @@ export default async function NotificationsPage() {
   return (
     <div className="flex max-w-[720px] flex-col gap-4.5">
       <header className="flex flex-col gap-1">
-        <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <span className="text-tiny font-semibold uppercase tracking-widest text-muted-foreground">
           {t("breadcrumb")}
         </span>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("heading")}</h1>

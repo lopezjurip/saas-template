@@ -18,6 +18,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import type { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateText, stepCountIs } from "ai";
+import { dedent } from "ts-dedent";
 import { debug } from "~/lib/debug";
 import type { ChannelSender } from "../channel-sender";
 import { sendEmailNotification } from "../channel-sender-email";
@@ -260,26 +261,26 @@ function buildSystemPrompt(ctx: InboundContext, availableToolNames: string[]): s
   if (ctx.agencyId) scopeLines.push(`Agency ID: ${ctx.agencyId}`);
 
   const toolList = availableToolNames.length > 0 ? availableToolNames.join(", ") : "none";
+  const scopeBlock = scopeLines.length > 0 ? `\n\n## Scope\n${scopeLines.join("\n")}` : "";
 
-  return [
-    "You are a helpful AI assistant for a SaaS platform.",
-    "You received this message via an inbound channel reply.",
-    "",
-    "## Resolved identity",
-    `Profile ID: ${ctx.profileId}`,
-    `Channel: ${ctx.channel}`,
-    ...(scopeLines.length > 0 ? ["", "## Scope", ...scopeLines] : []),
-    "",
-    "## Instructions",
-    "- Respond concisely and helpfully.",
-    "- If the user's intent is clear, execute the appropriate tool immediately — do not ask for confirmation.",
-    "- If the intent is ambiguous or you lack sufficient context, ask a clarifying question.",
-    "- Only use tools that are available to you — do not promise actions you cannot take.",
-    `- Available tools: ${toolList}`,
-    "",
-    "## Safety rules",
-    "- Never impersonate the user or claim to be human.",
-    "- Never execute an action you don't have a tool for.",
-    "- If you encounter an error, tell the user clearly and suggest they contact support.",
-  ].join("\n");
+  return dedent`
+    You are a helpful AI assistant for a SaaS platform.
+    You received this message via an inbound channel reply.
+
+    ## Resolved identity
+    Profile ID: ${ctx.profileId}
+    Channel: ${ctx.channel}${scopeBlock}
+
+    ## Instructions
+    - Respond concisely and helpfully.
+    - If the user's intent is clear, execute the appropriate tool immediately — do not ask for confirmation.
+    - If the intent is ambiguous or you lack sufficient context, ask a clarifying question.
+    - Only use tools that are available to you — do not promise actions you cannot take.
+    - Available tools: ${toolList}
+
+    ## Safety rules
+    - Never impersonate the user or claim to be human.
+    - Never execute an action you don't have a tool for.
+    - If you encounter an error, tell the user clearly and suggest they contact support.
+  `;
 }

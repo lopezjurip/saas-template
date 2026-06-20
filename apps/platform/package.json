@@ -7,8 +7,8 @@
   },
   "scripts": {
     "postinstall": "NODE_ENV=development next typegen || true",
-    "dev": "next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003}",
-    "dev:debug": "next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003} --inspect",
+    "dev": "next dev --turbo --experimental-https --experimental-https-key ./certificates/lvh.me-key.pem --experimental-https-cert ./certificates/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003}",
+    "dev:debug": "next dev --turbo --experimental-https --experimental-https-key ./certificates/lvh.me-key.pem --experimental-https-cert ./certificates/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003} --inspect",
     "dev:exe": "next dev --turbo -H 0.0.0.0 --port ${PORT:-3000}",
     "build": "next build",
     "build:dry": "tsc --noEmit",
@@ -49,6 +49,7 @@
     "ai": "^6.0.208",
     "clsx": "^2.1.1",
     "lucide-react": "^1.21.0",
+    "jose": "^6.0.0",
     "mcp-handler": "^1.1.0",
     "negotiator": "^1.0.0",
     "next": "16.2.9",

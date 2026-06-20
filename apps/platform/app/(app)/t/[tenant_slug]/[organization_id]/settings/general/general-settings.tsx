@@ -37,7 +37,7 @@ export function GeneralSettings({
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-[26px] px-6 py-8">
       <header className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
           {organizationName} · {t("eyebrow")}
         </span>
         <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("title")}</h1>
@@ -70,7 +70,7 @@ export function GeneralSettings({
       </section>
 
       <section className="flex flex-col gap-2.5">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
           {t("access_on_join")}
         </span>
         <div className="border-border bg-background flex flex-col overflow-hidden rounded-md border">
@@ -103,9 +103,7 @@ export function GeneralSettings({
       </section>
 
       <section className="flex flex-col gap-2.5">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
-          {t("danger_zone")}
-        </span>
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">{t("danger_zone")}</span>
         <div className="border-border bg-background flex flex-col overflow-hidden rounded-xl border">
           <div className="border-border grid grid-cols-[1fr_auto] items-center gap-3.5 border-b px-4 py-3.5">
             <div className="flex min-w-0 flex-col gap-[3px]">

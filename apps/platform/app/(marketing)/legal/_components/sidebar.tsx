@@ -57,7 +57,7 @@ export function LegalSidebar() {
   return (
     <aside className="lg:sticky lg:top-20 lg:self-start">
       <div className="bg-card overflow-hidden rounded-xl border">
-        <div className="bg-muted/40 text-muted-foreground border-b px-3 py-2.5 text-tiny font-semibold tracking-[0.08em] uppercase">
+        <div className="bg-muted/40 text-muted-foreground border-b px-3 py-2.5 text-tiny font-semibold tracking-widest uppercase">
           {sidebarTitle}
         </div>
         <nav className="flex flex-col p-1.5" aria-label={sidebarTitle}>

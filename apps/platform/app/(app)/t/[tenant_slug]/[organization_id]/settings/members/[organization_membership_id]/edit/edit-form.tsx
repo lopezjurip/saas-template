@@ -226,7 +226,7 @@ export function EditPermissionsForm({
     <div className="flex flex-col gap-6">
       {presets.length > 0 && (
         <section className="flex flex-col gap-2.5">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
             {t("presets_label")}
           </span>
           <div className="flex flex-wrap gap-2">
@@ -249,7 +249,7 @@ export function EditPermissionsForm({
 
       <section className="flex flex-col gap-3">
         <div className="flex min-h-7 items-center justify-between gap-2.5">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
             {t("permissions_label", { count })}
           </span>
           <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">

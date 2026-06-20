@@ -8,6 +8,14 @@ import type { ComponentProps } from "react";
 export function ThemeProvider(props: ComponentProps<typeof NextThemesProvider>)
 ````
 
+## File: apps/platform/lib/graphy/graphy.server.ts
+````typescript
+import { GraphyClientSupabase } from "@packages/graphy/graphy";
+import { getSupabaseServerSession } from "@packages/supabase/client.server";
+import { URL_NEW } from "@packages/utils/url";
+import { cache } from "react";
+````
+
 ## File: apps/platform/postcss.config.mjs
 ````javascript
 
@@ -326,6 +334,19 @@ interface UseClipboardReturn {
 export function useClipboard(options: UseClipboardOptions =
 ````
 
+## File: packages/react-hooks/src/use-keyboard-shortcut.ts
+````typescript
+import { useEffect, useRef } from "react";
+⋮----
+export function useKeyboardShortcut(
+  key: string,
+  handler: () => void,
+  { mod = false, enabled = true }: { mod?: boolean; enabled?: boolean } = {},
+)
+⋮----
+const onKey = (event: KeyboardEvent) =>
+````
+
 ## File: packages/react-hooks/tsconfig.json
 ````json
 {
@@ -440,6 +461,31 @@ export function renderPdf(element: ReactElement<DocumentProps>)
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }
+````
+
+## File: packages/supabase/supabase/tests/README.md
+````markdown
+# Database tests (pgTAP)
+
+These tests run inside Postgres via [pgTAP](https://pgtap.org/) and verify SQL-layer behavior: RLS policies, security-definer functions (`viewer_*`), triggers, and the JWT-issuing hook (`user_auth_hook`). The runner is `supabase test db`, which spawns `pg_prove` in Docker and points it at the local DB.
+
+## Running
+
+Bring Supabase up first (`pnpm db:start`), then from the repo root:
+
+```
+pnpm test:db
+```
+
+The tests run against the same local DB as `pnpm dev` and the seed (`packages/supabase/supabase/seed.sql`). Each test file wraps itself in `begin; … rollback;` so it leaves no trace — running tests is safe even with the dev app open.
+
+## Conventions
+
+- One concern per file; name with `<topic>.test.sql`.
+- Wrap the whole file in `begin; … rollback;`. Never commit.
+- Mock the caller's JWT with `set local request.jwt.claims to '…'::jsonb::text;` AND `set local role authenticated;`. **Without `set local role`, you remain `postgres` and RLS is bypassed silently — your test will pass for the wrong reason.**
+- Reuse the seeded users (`alice@humane.test` = `00000000-0000-0000-0000-00000000a11c`, `bob@humane.test` = `00000000-0000-0000-0000-00000000b00b`). If you need a third user, insert with a UUID outside the seed range so re-runs are idempotent.
+- Use `select plan(N);` up top and `select * from finish();` at the bottom.
 ````
 
 ## File: packages/supabase/supabase/.gitignore
@@ -590,11 +636,6 @@ export function ASSERT_EMAIL(value: unknown): asserts value is string
 import type { Maybe } from "@packages/utils/maybe";
 ⋮----
 export function BOOLEAN<S>(item: Maybe<S> | false | 0 | ""): item is S
-````
-
-## File: packages/utils/src/buffer.ts
-````typescript
-export function BUFFER_FROM_ARRAYBUFFER(ab: ArrayBuffer): Buffer
 ````
 
 ## File: packages/utils/src/bytes.ts
@@ -784,64 +825,6 @@ export function HASH(str: string): string
 ## File: packages/utils/src/image.ts
 ````typescript
 
-````
-
-## File: packages/utils/src/iterators.ts
-````typescript
-import { BOOLEAN } from "./boolean";
-import type { Maybe } from "./maybe";
-import { IS_NILL } from "./nil";
-⋮----
-export function IDENTITY<T>(val: T): T
-export function SHALLOW_COMPARE<T>(a: T, b: T): boolean
-⋮----
-export function EVERY<T>(iterable: Iterable<T>, fn: (value: T, index: number, obj: Iterable<T>) => any): boolean
-export function SOME<T>(iterable: Iterable<T>, fn: (value: T, index: number, obj: Iterable<T>) => any): boolean
-⋮----
-export function IS_INTERSECTION<T>(
-  iterableA: Iterable<T>,
-  iterableB: Iterable<T>,
-  fn: (a: T, b: T) => any = SHALLOW_COMPARE,
-): boolean
-⋮----
-export function FIND<T>(
-  iterable: Iterable<T>,
-  fn: (value: T, index: number, iterable: Iterable<T>) => unknown,
-): T | undefined
-⋮----
-export function REDUCE<T, U>(
-  iterable: Iterable<T>,
-  fn: (previousValue: U, currentValue: T, currentIndex: number, iterable: Iterable<T>) => U,
-  initialValue: U,
-): U
-⋮----
-export function AT<V>(iterable: Iterable<V>, position = 0): V | undefined
-⋮----
-export function FIRST<V>(iterable: Iterable<V>): V | undefined
-export function LAST<V>(iterable: Iterable<V>): V | undefined
-⋮----
-export function COUNT<V>(yieldable: Iterable<V>): number
-⋮----
-export function IS_GT<V extends number | bigint>(a: V, b: V): boolean
-export function IS_LT<V extends number | bigint>(a: V, b: V): boolean
-export function IS_GTE<V extends number | bigint>(a: V, b: V): boolean
-export function IS_LTE<V extends number | bigint>(a: V, b: V): boolean
-⋮----
-export function INITIAL_SET<T>(): Set<T>
-⋮----
-export function COMPARE_SETS<T>(a: Set<T>, b: Set<T>)
-⋮----
-type ObjectEntry<T> = {
-  [K in keyof T]: readonly [K, T[K]];
-}[keyof T];
-⋮----
-type ObjectEntryKV<T> = {
-  [K in keyof T]: { key: K; value: T[K] };
-}[keyof T];
-⋮----
-export function OBJECT_PREFIX<T extends
-⋮----
-export function ARRAY_FORCED<T>(singleOrArray: T | T[] | null | undefined): T[]
 ````
 
 ## File: packages/utils/src/links.ts
@@ -1045,80 +1028,6 @@ function stringify(
 export function STRINGIFY_STABLE(obj: unknown): string
 ````
 
-## File: packages/utils/src/temporal.ts
-````typescript
-import { Temporal } from "temporal-polyfill";
-import { FIBONACCI, NUMBER } from "./number";
-⋮----
-export type TemporalValue = Temporal.ZonedDateTime | Temporal.PlainDateTime | Temporal.PlainDate;
-⋮----
-function ISO(date: string | Date): string
-⋮----
-export function TEMPORAL(date: string | Date | TemporalValue | null, timezone = TZ): Temporal.ZonedDateTime
-⋮----
-export function TEMPORAL_NOW(timezone = TZ): Temporal.ZonedDateTime
-⋮----
-export function TEMPORAL_PLAINDATE(date: string | Date | null, timezone = TZ): Temporal.PlainDate
-⋮----
-export function TEMPORAL_PLAINDATETIME(date: string | Date | null, timezone = TZ): Temporal.PlainDateTime
-⋮----
-export function INSTANT_NOW(): Temporal.Instant
-⋮----
-export type InstantInput =
-  | Temporal.Instant
-  | Temporal.ZonedDateTime
-  | Temporal.PlainDateTime
-  | Date
-  | number
-  | bigint
-  | string;
-⋮----
-export function INSTANT_FROM(input: InstantInput): Temporal.Instant
-⋮----
-export function TEMPORAL_PLAINDATE_REPRESENTATIVE(options: {
-  year?: number;
-  month?: number;
-  day?: number;
-}): Temporal.PlainDate
-⋮----
-export function TEMPORAL_DISPLAY_MONTH(
-  locale: Intl.LocalesArgument,
-  date: Temporal.PlainDate | Temporal.ZonedDateTime,
-): string
-⋮----
-export function TEMPORAL_TO_SQL(date: TemporalValue)
-⋮----
-export function TEMPORAL_PARTS(date: TemporalValue)
-⋮----
-export function TEMPORAL_PARTS_PADDED(date: TemporalValue)
-⋮----
-export type TemporalZonedDateTime = Temporal.ZonedDateTime;
-⋮----
-export function DURATION_FROM_SQL(interval: string): Temporal.Duration
-⋮----
-export function MIN_TEMPORAL_PD(...args: [Temporal.PlainDate, ...Temporal.PlainDate[]]): Temporal.PlainDate;
-export function MIN_TEMPORAL_PD(...args: Temporal.PlainDate[]): Temporal.PlainDate | null;
-export function MIN_TEMPORAL_PD(...args: Temporal.PlainDate[]): Temporal.PlainDate | null
-⋮----
-export function MAX_TEMPORAL_PD(...args: [Temporal.PlainDate, ...Temporal.PlainDate[]]): Temporal.PlainDate;
-export function MAX_TEMPORAL_PD(...args: Temporal.PlainDate[]): Temporal.PlainDate | null;
-export function MAX_TEMPORAL_PD(...args: Temporal.PlainDate[]): Temporal.PlainDate | null
-⋮----
-export type TemporalTruncateUnit = Temporal.DateTimeUnit;
-⋮----
-export function TEMPORAL_TRUNCATE<T extends TemporalValue>(date: T, truncate: TemporalTruncateUnit): T
-⋮----
-export type BaseBackoff = Temporal.Duration | Temporal.DurationLike | string;
-⋮----
-export function TEMPORAL_DURATION_SCALE(duration: Temporal.Duration, factor: number): Temporal.Duration
-⋮----
-export function FIBONACCI_BACKOFF(
-  attempts: number,
-  timestamp: Temporal.Instant,
-  base: Temporal.Duration | Temporal.DurationLike | string = { minutes: 1 },
-): Temporal.Instant
-````
-
 ## File: packages/utils/src/time.ts
 ````typescript
 import { default as ms, type StringValue } from "ms";
@@ -1174,19 +1083,9 @@ export function WHATSAPP_URL(phone: string, text?: string): URL
 }
 ````
 
-## File: scripts/repomix-skill-rename.js
-````javascript
-
-````
-
 ## File: graphql.config.ts
 ````typescript
 import type { IGraphQLConfig } from "graphql-config";
-````
-
-## File: repomix.config.ts
-````typescript
-import { defineConfig } from "repomix";
 ````
 
 ## File: tsconfig.json
@@ -1374,16 +1273,45 @@ args = [
 ]
 ````
 
+## File: .conductor/settings.toml
+````toml
+"$schema" = "https://conductor.build/schemas/settings.repo.schema.json"
+
+[scripts]
+archive = "WORKTREE_NAME=$CONDUCTOR_WORKSPACE_NAME WORKTREE_PROJECT=saas-template bash scripts/development/worktree-archive.sh"
+run = "pnpm run -w dev --filter={apps/platform} -- --port $CONDUCTOR_PORT"
+run_mode = "concurrent"
+setup = "WORKTREE_NAME=$CONDUCTOR_WORKSPACE_NAME WORKTREE_PORT=$CONDUCTOR_PORT WORKTREE_ROOT_PATH=$CONDUCTOR_ROOT_PATH WORKTREE_PROJECT=saas-template bash scripts/development/worktree-setup.sh"
+````
+
 ## File: apps/platform/app/.well-known/oauth-protected-resource/route.ts
 ````typescript
 import { metadataCorsOptionsRequestHandler, protectedResourceHandler } from "mcp-handler";
 ````
 
-## File: apps/platform/app/(app)/a/layout.tsx
+## File: apps/platform/app/(app)/a/[agency_slug]/team/page.tsx
 ````typescript
-import { FloatingChrome } from "~/components/floating-chrome";
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import type { Metadata } from "next";
+import { getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
+import { AFFILIATION_STATE } from "~/lib/agencies";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { type TeamAffiliate, TeamList } from "./team-list";
 ⋮----
-export default function AgencyLayout(props: LayoutProps<"/a">)
+export async function generateMetadata(): Promise<Metadata>
+⋮----
+export default async function AgencyTeamPage(props: PageProps<"/a/[agency_slug]/team">)
+````
+
+## File: apps/platform/app/(app)/a/[agency_slug]/layout.tsx
+````typescript
+import { notFound } from "next/navigation";
+import { OrderByDirection } from "~/generated/graphql/graphql";
+import { getViewerAgencies, getViewerAgencyBySlug } from "~/hooks/get-viewer-agencies";
+import { AgencyNav, type NavAgency } from "./agency-nav";
+⋮----
+export default async function AgencyShellLayout(props: LayoutProps<"/a/[agency_slug]">)
 ````
 
 ## File: apps/platform/app/(app)/agencies/create/page.tsx
@@ -1402,36 +1330,6 @@ export default async function AgencyCreatePage(props: PageProps<"/agencies/creat
 import { FloatingChrome } from "~/components/floating-chrome";
 ⋮----
 export default function AgenciesLayout(props: LayoutProps<"/agencies">)
-````
-
-## File: apps/platform/app/(app)/home/account/_components/sections.ts
-````typescript
-import { Bell, Globe, Monitor, ShieldCheck, Trash2, User } from "lucide-react";
-import type { ComponentType } from "react";
-import { ROUTE_PATH } from "~/lib/route";
-⋮----
-export type AccountSectionId = "profile" | "security" | "connections" | "sessions" | "notifications" | "danger";
-⋮----
-export type AccountGroupKey = "account" | "security_group" | "danger_zone" | "preferences";
-⋮----
-export type AccountLabelKey =
-  | "nav_profile"
-  | "nav_security"
-  | "nav_connections"
-  | "nav_sessions"
-  | "nav_notifications"
-  | "nav_danger";
-⋮----
-export type AccountSection = {
-  id: AccountSectionId;
-  labelKey: AccountLabelKey;
-  groupKey: AccountGroupKey;
-  Icon: ComponentType<{ size?: number; className?: string }>;
-  danger?: boolean;
-  todo?: boolean;
-};
-⋮----
-export function ACCOUNT_SECTION_PATH(id: AccountSectionId): (typeof ACCOUNT_SECTION_PATHS)[AccountSectionId]
 ````
 
 ## File: apps/platform/app/(app)/home/account/danger/delete-account-dialog.tsx
@@ -1456,27 +1354,6 @@ import { useRosetta } from "~/lib/i18n.client";
 function onOpenChange(next: boolean)
 ⋮----
 placeholder=
-````
-
-## File: apps/platform/app/(app)/home/account/danger/page.tsx
-````typescript
-import { getRosetta } from "~/lib/i18n.server";
-import { DeleteAccountDialog } from "./delete-account-dialog";
-````
-
-## File: apps/platform/app/(app)/home/account/notifications/page.tsx
-````typescript
-import { getRosetta } from "~/lib/i18n.server";
-import { ContactsManage } from "./contacts-manage";
-import { NotificationsMatrix } from "./notifications-matrix";
-import { PushPermission } from "./push-permission";
-````
-
-## File: apps/platform/app/(app)/home/account/notifications/push-permission.tsx
-````typescript
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { usePushPermission } from "~/hooks/use-push-permission";
-import { useRosetta } from "~/lib/i18n.client";
 ````
 
 ## File: apps/platform/app/(app)/home/account/security/email-form.tsx
@@ -1572,6 +1449,33 @@ import { getServerLocale } from "~/lib/i18n.server";
 export async function generateMetadata(props: PageProps<"/t/[tenant_slug]/[organization_id]/inbox">)
 ````
 
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/onboarding/onboarding-banner.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { ArrowRight, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { getViewerTenantBySlugAssert } from "~/hooks/get-viewer-tenants";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { TENANT_COUNT_DONE, TENANT_ONBOARDING_INCOMPLETE, TENANT_STEP_ORDER } from "./state";
+import { getTenantOnboardingState } from "./state.server";
+⋮----
+href=
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/onboarding/page.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getViewerTenantBySlugAssert } from "~/hooks/get-viewer-tenants";
+import { getRosetta } from "~/lib/i18n.server";
+import { OnboardingChecklist } from "./onboarding-checklist";
+import { getTenantOnboardingState } from "./state.server";
+⋮----
+export async function generateMetadata(): Promise<Metadata>
+````
+
 ## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/organizations/create/create-form.tsx
 ````typescript
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -1594,19 +1498,6 @@ import { ROUTE, ROUTE_HREF } from "~/lib/route";
 import { type CreateOrganizationValues, createOrganizationSchema } from "./schemas";
 ````
 
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/organizations/create/page.tsx
-````typescript
-import { Building2 } from "lucide-react";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getViewerTenantBySlug } from "~/hooks/get-viewer-tenants";
-import { getRosetta } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { CreateOrganizationForm } from "./create-form";
-⋮----
-export async function generateMetadata(): Promise<Metadata>
-````
-
 ## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/organizations/create/schemas.ts
 ````typescript
 import { SLUG_REGEX } from "@packages/utils/slug";
@@ -1615,47 +1506,37 @@ import { z } from "zod";
 export type CreateOrganizationValues = z.infer<typeof createOrganizationSchema>;
 ````
 
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/external-access/external-access.tsx
-````typescript
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@packages/ui-common/shadcn/components/ui/select";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { INITIALS_OF } from "@packages/utils/string";
-import { Ban, Building2, Eye, Globe, Lock, Plus, Users } from "lucide-react";
-import { useState, useTransition } from "react";
-import { useRosetta } from "~/lib/i18n.client";
-import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
-import { actionGrantAgencyAccess, actionRevokeAgencyAccess } from "./actions";
-⋮----
-export type ExternalAccessAgency = {
-  agency_id: string;
-  agency_name: string;
-  agency_slug: string;
-  active_affiliates: number;
-  is_global: boolean;
-};
-⋮----
-function grant()
-⋮----
-function revoke()
-⋮----
-<Users size=
-⋮----
-className=
-````
-
 ## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/schemas.ts
 ````typescript
 import { z } from "zod";
 ⋮----
 export type InviteMemberValues = z.infer<typeof inviteMemberSchema>;
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/tenant/general/page.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import type { Metadata } from "next";
+import { getViewerTenantBySlugAssert } from "~/hooks/get-viewer-tenants";
+import { getRosetta } from "~/lib/i18n.server";
+import { TenantGeneralSettings } from "./tenant-general-settings";
+⋮----
+export async function generateMetadata(): Promise<Metadata>
+⋮----
+export default async function TenantGeneralSettingsPage(
+  props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/tenant/general">,
+)
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/tenant/layout.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { notFound } from "next/navigation";
+import { getViewerTenantBySlugAssert } from "~/hooks/get-viewer-tenants";
+⋮----
+export default async function TenantSettingsLayout(
+  props: LayoutProps<"/t/[tenant_slug]/[organization_id]/settings/tenant">,
+)
 ````
 
 ## File: apps/platform/app/(app)/t/[tenant_slug]/layout.tsx
@@ -1808,17 +1689,28 @@ type FaqEntry = { question: string; answer: string };
 function FORMAT_PRICE(value: number): string
 ````
 
-## File: apps/platform/app/api/[transport]/route.ts
+## File: apps/platform/app/api/v1/organizations/[organization_id]/avatar/route.ts
 ````typescript
-import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import { createClient } from "@supabase/supabase-js";
-import { createMcpHandler, withMcpAuth } from "mcp-handler";
-import { debug } from "~/lib/debug";
-import { registerTools } from "~/lib/mcp/register";
-⋮----
-function createAnonClientForValidation()
-⋮----
-async function verifyToken(req: Request, bearerToken?: string): Promise<AuthInfo | undefined>
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { createZodRoute } from "next-zod-route";
+import { z } from "zod";
+import { streamPublicAvatar } from "~/lib/avatar";
+````
+
+## File: apps/platform/app/api/v1/profiles/[profile_id]/avatar/route.ts
+````typescript
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { createZodRoute } from "next-zod-route";
+import { z } from "zod";
+import { streamPublicAvatar } from "~/lib/avatar";
+````
+
+## File: apps/platform/app/api/v1/tenants/[tenant_id]/avatar/route.ts
+````typescript
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { createZodRoute } from "next-zod-route";
+import { z } from "zod";
+import { streamPublicAvatar } from "~/lib/avatar";
 ````
 
 ## File: apps/platform/app/auth/_components/auth-back-link.tsx
@@ -1842,15 +1734,6 @@ export function AuthCard(
 className=
 ````
 
-## File: apps/platform/app/auth/_components/auth-divider.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-⋮----
-export function AuthDivider(
-⋮----
-className=
-````
-
 ## File: apps/platform/app/auth/_components/auth-icons.tsx
 ````typescript
 type MarkProps = { size?: number; className?: string };
@@ -1860,15 +1743,6 @@ export function GoogleMark(
 export function MicrosoftMark(
 ⋮----
 export function LinkedInMark(
-````
-
-## File: apps/platform/app/auth/_components/document-labels.ts
-````typescript
-type DocumentKind = "nin" | "passport";
-⋮----
-export function DOCUMENT_VALUE_LABEL(country: string, kind: DocumentKind): string
-⋮----
-export function DOCUMENT_VALUE_PLACEHOLDER(country: string, kind: DocumentKind): string
 ````
 
 ## File: apps/platform/app/auth/document/accept/accept-signup-form.tsx
@@ -1926,16 +1800,6 @@ import { AuthBackLink } from "../_components/auth-back-link";
 import { AuthCard } from "../_components/auth-card";
 import { AuthHeader } from "../_components/auth-header";
 import { DocumentStepForm } from "./document-step-form";
-````
-
-## File: apps/platform/app/auth/document/schemas.ts
-````typescript
-import { RUT_NORMALIZE, RUT_VALIDATE } from "@packages/utils/rut";
-import { z } from "zod";
-⋮----
-export type CheckDocumentValues = z.infer<typeof checkDocumentSchema>;
-⋮----
-export type VerifyLoginOtpValues = z.infer<typeof verifyLoginOtpSchema>;
 ````
 
 ## File: apps/platform/app/auth/email/page.tsx
@@ -2062,37 +1926,6 @@ type CodeValues = z.infer<typeof codeSchema>;
 placeholder=
 ````
 
-## File: apps/platform/app/auth/onboarding/email/page.tsx
-````typescript
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { AuthCard } from "../../_components/auth-card";
-import { AuthHeader } from "../../_components/auth-header";
-import { StepShell } from "../_components/step-shell";
-import { getViewerOnboardingState } from "../state.server";
-import { EmailForm } from "./email-form";
-````
-
-## File: apps/platform/app/auth/onboarding/passkey/page.tsx
-````typescript
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { AuthCard } from "../../_components/auth-card";
-import { AuthHeader } from "../../_components/auth-header";
-import { StepShell } from "../_components/step-shell";
-import { getViewerOnboardingState } from "../state.server";
-import { PasskeyForm } from "./passkey-form";
-````
-
-## File: apps/platform/app/auth/onboarding/password/page.tsx
-````typescript
-import { IdentityChip } from "~/components/identity/chips";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { AuthCard } from "../../_components/auth-card";
-import { AuthHeader } from "../../_components/auth-header";
-import { StepShell } from "../_components/step-shell";
-import { getViewerOnboardingState } from "../state.server";
-import { PasswordForm } from "./password-form";
-````
-
 ## File: apps/platform/app/auth/onboarding/password/password-form.tsx
 ````typescript
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -2112,16 +1945,6 @@ function STRENGTH_SCORE(pw: string): number
 type Values = z.infer<typeof schema>;
 ````
 
-## File: apps/platform/app/auth/onboarding/phone/page.tsx
-````typescript
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { AuthCard } from "../../_components/auth-card";
-import { AuthHeader } from "../../_components/auth-header";
-import { StepShell } from "../_components/step-shell";
-import { getViewerOnboardingState } from "../state.server";
-import { PhoneForm } from "./phone-form";
-````
-
 ## File: apps/platform/app/auth/onboarding/phone/phone-form.tsx
 ````typescript
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -2139,17 +1962,6 @@ import { useRosetta } from "~/lib/i18n.client";
 type PhoneValues = z.infer<typeof phoneSchema>;
 ⋮----
 type CodeValues = z.infer<typeof codeSchema>;
-````
-
-## File: apps/platform/app/auth/onboarding/profile/page.tsx
-````typescript
-import { ProfileAvatarControls } from "~/components/profile-avatar-controls";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { AuthCard } from "../../_components/auth-card";
-import { AuthHeader } from "../../_components/auth-header";
-import { StepShell } from "../_components/step-shell";
-import { getViewerOnboardingState } from "../state.server";
-import { ProfileForm } from "./profile-form";
 ````
 
 ## File: apps/platform/app/auth/onboarding/actions.ts
@@ -2347,6 +2159,40 @@ import type { SupportedLocale } from "~/lib/i18n";
 import { getServerLocale } from "~/lib/i18n.server";
 ````
 
+## File: apps/platform/components/dev-env-console.tsx
+````typescript
+import { useEffect } from "react";
+⋮----
+export function DevEnvConsole(
+````
+
+## File: apps/platform/components/entity-avatar.tsx
+````typescript
+import { Avatar, AvatarFallback, AvatarImage } from "@packages/ui-common/shadcn/components/ui/avatar";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
+import { INITIALS_OF } from "@packages/utils/string";
+import type { ComponentProps } from "react";
+⋮----
+export type AvatarEntity = "organizations" | "tenants" | "profiles" | "agencies";
+⋮----
+export function EntityAvatar({
+  entity,
+  entityId,
+  name,
+  shape = "square",
+  className,
+  ...props
+}: {
+  entity: AvatarEntity;
+  entityId: string | number;
+  name: string;
+  shape?: "circle" | "square";
+} & ComponentProps<typeof Avatar>)
+⋮----
+className=
+````
+
 ## File: apps/platform/components/entity-logo-controls.tsx
 ````typescript
 import { getSupabaseClient } from "@packages/supabase/client.browser";
@@ -2377,50 +2223,115 @@ import type { Thing, WithContext } from "schema-dts";
 export function JsonLd(
 ````
 
-## File: apps/platform/hooks/use-device.ts
+## File: apps/platform/components/markdown.tsx
 ````typescript
-import { useMemo } from "react";
+import { IS_EXTERNAL } from "@packages/utils/url";
+import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import { UNSAFE_ROUTE } from "~/lib/route";
 ⋮----
-type DeviceType = "mobile" | "tablet" | "desktop";
+function MarkdownA(
 ⋮----
-interface UseDevice {
-  type: DeviceType;
-  isMobile: boolean;
-  isTablet: boolean;
-  isDesktop: boolean;
-}
+return (
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    );
 ⋮----
-export function useDevice(): UseDevice
+return <Link href=
+⋮----
+export function Markdown(
 ````
 
-## File: apps/platform/hooks/use-intl.ts
+## File: apps/platform/components/status-badge.tsx
 ````typescript
-import { useMemo } from "react";
-import { useLocaleParam } from "~/hooks/use-locale-param";
+import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import useSWR from "swr";
+import { useRosetta } from "~/lib/i18n.client";
 ⋮----
-export function useIntlDateTimeFormat(options?: Intl.DateTimeFormatOptions): Intl.DateTimeFormat
-⋮----
-export function useIntlNumberFormat(options?: Intl.NumberFormatOptions): Intl.NumberFormat
-⋮----
-export function useIntlRelativeTimeFormat(options?: Intl.RelativeTimeFormatOptions): Intl.RelativeTimeFormat
-⋮----
-export function useIntlListFormat(options?: Intl.ListFormatOptions): Intl.ListFormat
-⋮----
-export function useIntlPluralRules(options?: Intl.PluralRulesOptions): Intl.PluralRules
-⋮----
-export function useIntlCollator(options?: Intl.CollatorOptions): Intl.Collator
-⋮----
-export function useIntlSegmenter(options?: Intl.SegmenterOptions): Intl.Segmenter
-⋮----
-export function useIntlDisplayNames(options: Intl.DisplayNamesOptions): Intl.DisplayNames
+async function FETCH_HEALTH(url: string): Promise<boolean>
 ````
 
-## File: apps/platform/hooks/use-locale-param.ts
-````typescript
-import { DEFAULT_LOCALE, IS_SUPPORTED_LOCALE, type SupportedLocale } from "~/lib/i18n";
-import { useLocale } from "~/lib/i18n.client";
-⋮----
-export function useLocaleParam(): SupportedLocale
+## File: apps/platform/content/legal/en/cookies.md
+````markdown
+# Cookie policy
+
+_Last updated: May 26, 2026_
+
+SaaS Template uses session cookies for authentication and to remember your locale preference. We do not use third-party tracking cookies. The final text will be published before the production launch.
+````
+
+## File: apps/platform/content/legal/en/privacy.md
+````markdown
+# Privacy policy
+
+_Last updated: May 26, 2026_
+
+SaaS Template processes personal data under the framework of Law 21.719 (Chile). This policy will describe what data we collect, for what purpose, the rights of the data subject, and the procedures to exercise them. The final text will be published before the production launch.
+````
+
+## File: apps/platform/content/legal/en/terms.md
+````markdown
+# Terms of service
+
+_Last updated: May 26, 2026_
+
+This document describes the rules for using the SaaS Template platform, the mutual obligations between SaaS Template and its customers (companies and workers), and liability limits. The final text will be published before the production launch.
+````
+
+## File: apps/platform/content/legal/es/cookies.md
+````markdown
+# Política de cookies
+
+_Última actualización: 26 de mayo de 2026_
+
+SaaS Template usa cookies de sesión para autenticación y para guardar tu preferencia de idioma. No usamos cookies de tracking de terceros. El texto definitivo se publicará antes del lanzamiento a producción.
+````
+
+## File: apps/platform/content/legal/es/privacy.md
+````markdown
+# Política de privacidad
+
+_Última actualización: 26 de mayo de 2026_
+
+SaaS Template procesa datos personales bajo el marco de la Ley 21.719 (Chile). Esta política describirá qué datos recolectamos, con qué finalidad, los derechos del titular y los procedimientos para ejercerlos. El texto definitivo se publicará antes del lanzamiento a producción.
+````
+
+## File: apps/platform/content/legal/es/terms.md
+````markdown
+# Términos de servicio
+
+_Última actualización: 26 de mayo de 2026_
+
+Este documento describe las reglas de uso de la plataforma SaaS Template, las obligaciones recíprocas entre SaaS Template y sus clientes (empresas y trabajadores), y los límites de responsabilidad. El texto definitivo se publicará antes del lanzamiento a producción.
+````
+
+## File: apps/platform/content/legal/pt/cookies.md
+````markdown
+# Política de cookies
+
+_Última atualização: 26 de maio de 2026_
+
+A SaaS Template usa cookies de sessão para autenticação e para lembrar a sua preferência de idioma. Não usamos cookies de rastreamento de terceiros. O texto definitivo será publicado antes do lançamento em produção.
+````
+
+## File: apps/platform/content/legal/pt/privacy.md
+````markdown
+# Política de privacidade
+
+_Última atualização: 26 de maio de 2026_
+
+A SaaS Template processa dados pessoais sob o marco da Lei 21.719 (Chile). Esta política descreverá quais dados coletamos, com qual finalidade, os direitos do titular e os procedimentos para exercê-los. O texto definitivo será publicado antes do lançamento em produção.
+````
+
+## File: apps/platform/content/legal/pt/terms.md
+````markdown
+# Termos de serviço
+
+_Última atualização: 26 de maio de 2026_
+
+Este documento descreve as regras de uso da plataforma SaaS Template, as obrigações recíprocas entre a SaaS Template e seus clientes (empresas e trabalhadores), e os limites de responsabilidade. O texto definitivo será publicado antes do lançamento em produção.
 ````
 
 ## File: apps/platform/lib/conversations/channel-sender-email.ts
@@ -2512,12 +2423,43 @@ import { URL_NEW } from "@packages/utils/url";
 export function createGraphyMcp(accessToken?: string): GraphyClientSupabase
 ````
 
-## File: apps/platform/lib/graphy/graphy.server.ts
+## File: apps/platform/lib/mcp/tools/agency-admin.ts
 ````typescript
-import { GraphyClientSupabase } from "@packages/graphy/graphy";
-import { getSupabaseServerSession } from "@packages/supabase/client.server";
-import { URL_NEW } from "@packages/utils/url";
-import { cache } from "react";
+import { z } from "zod";
+import { gql } from "~/generated/graphql";
+import { debug } from "~/lib/debug";
+import { getGraphyFromMcpAssert } from "~/lib/mcp/clients";
+import { type InferArgs, type McpContext, McpTool, type McpToolStream } from "~/lib/mcp/tool";
+⋮----
+function IS_DUPLICATE(message: string): boolean
+⋮----
+type OrgAccessArgs = InferArgs<typeof OrgAccessSchema>;
+⋮----
+export class GrantAgencyOrgAccessTool extends McpTool<typeof OrgAccessSchema>
+⋮----
+async *handle(args: OrgAccessArgs, ctx: McpContext): McpToolStream
+⋮----
+export class RevokeAgencyOrgAccessTool extends McpTool<typeof OrgAccessSchema>
+⋮----
+type InviteArgs = InferArgs<typeof InviteSchema>;
+⋮----
+export class InviteAffiliateTool extends McpTool<typeof InviteSchema>
+⋮----
+async *handle(args: InviteArgs, ctx: McpContext): McpToolStream
+⋮----
+type UpdateAffiliateArgs = InferArgs<typeof UpdateAffiliateSchema>;
+⋮----
+export class UpdateAffiliateTool extends McpTool<typeof UpdateAffiliateSchema>
+⋮----
+async *handle(args: UpdateAffiliateArgs, ctx: McpContext): McpToolStream
+⋮----
+type AgencyMemberPermArgs = InferArgs<typeof AgencyMemberPermSchema>;
+⋮----
+export class GrantAgencyMemberPermissionTool extends McpTool<typeof AgencyMemberPermSchema>
+⋮----
+async *handle(args: AgencyMemberPermArgs, ctx: McpContext): McpToolStream
+⋮----
+export class RevokeAgencyMemberPermissionTool extends McpTool<typeof AgencyMemberPermSchema>
 ````
 
 ## File: apps/platform/lib/mcp/tools/members.ts
@@ -2534,7 +2476,7 @@ export class ListOrganizationMembersTool extends McpTool<typeof ListOrganization
 async *handle(args: ListOrganizationMembersArgs, ctx: McpContext): McpToolStream
 ````
 
-## File: apps/platform/lib/mcp/tools/profile.ts
+## File: apps/platform/lib/mcp/tools/permissions.ts
 ````typescript
 import { z } from "zod";
 import { gql } from "~/generated/graphql";
@@ -2542,11 +2484,86 @@ import { debug } from "~/lib/debug";
 import { getGraphyFromMcpAssert } from "~/lib/mcp/clients";
 import { type InferArgs, type McpContext, McpTool, type McpToolStream } from "~/lib/mcp/tool";
 ⋮----
-type UpdateProfileArgs = InferArgs<typeof UpdateProfileSchema>;
+function IS_DUPLICATE(message: string): boolean
 ⋮----
-export class UpdateProfileTool extends McpTool<typeof UpdateProfileSchema>
+type GrantArgs = InferArgs<typeof GrantSchema>;
 ⋮----
-async *handle(args: UpdateProfileArgs, ctx: McpContext): McpToolStream
+export class GrantMemberPermissionTool extends McpTool<typeof GrantSchema>
+⋮----
+async *handle(args: GrantArgs, ctx: McpContext): McpToolStream
+⋮----
+type RevokeArgs = InferArgs<typeof RevokeSchema>;
+⋮----
+export class RevokeMemberPermissionTool extends McpTool<typeof RevokeSchema>
+⋮----
+async *handle(args: RevokeArgs, ctx: McpContext): McpToolStream
+⋮----
+type SetArgs = InferArgs<typeof SetSchema>;
+⋮----
+export class SetMemberPermissionsTool extends McpTool<typeof SetSchema>
+⋮----
+async *handle(args: SetArgs, ctx: McpContext): McpToolStream
+⋮----
+type StatusArgs = InferArgs<typeof StatusSchema>;
+⋮----
+export class UpdateMemberStatusTool extends McpTool<typeof StatusSchema>
+⋮----
+async *handle(args: StatusArgs, ctx: McpContext): McpToolStream
+````
+
+## File: apps/platform/lib/mcp/tools/presets.ts
+````typescript
+import type { VariablesOf } from "@graphql-typed-document-node/core";
+import { z } from "zod";
+import { gql } from "~/generated/graphql";
+import { debug } from "~/lib/debug";
+import { getGraphyFromMcpAssert } from "~/lib/mcp/clients";
+import { type InferArgs, type McpContext, McpTool, type McpToolStream } from "~/lib/mcp/tool";
+⋮----
+type CreateArgs = InferArgs<typeof CreateSchema>;
+⋮----
+export class CreatePresetTool extends McpTool<typeof CreateSchema>
+⋮----
+async *handle(args: CreateArgs, ctx: McpContext): McpToolStream
+⋮----
+type UpdateArgs = InferArgs<typeof UpdateSchema>;
+⋮----
+export class UpdatePresetTool extends McpTool<typeof UpdateSchema>
+⋮----
+async *handle(args: UpdateArgs, ctx: McpContext): McpToolStream
+⋮----
+type DeleteArgs = InferArgs<typeof DeleteSchema>;
+⋮----
+export class DeletePresetTool extends McpTool<typeof DeleteSchema>
+⋮----
+async *handle(args: DeleteArgs, ctx: McpContext): McpToolStream
+````
+
+## File: apps/platform/lib/mcp/tools/settings.ts
+````typescript
+import { z } from "zod";
+import { gql } from "~/generated/graphql";
+import { debug } from "~/lib/debug";
+import { getGraphyFromMcpAssert } from "~/lib/mcp/clients";
+import { type InferArgs, type McpContext, McpTool, type McpToolStream } from "~/lib/mcp/tool";
+⋮----
+type RenameTenantArgs = InferArgs<typeof RenameTenantSchema>;
+⋮----
+export class RenameTenantTool extends McpTool<typeof RenameTenantSchema>
+⋮----
+async *handle(args: RenameTenantArgs, ctx: McpContext): McpToolStream
+⋮----
+type RenameOrgArgs = InferArgs<typeof RenameOrgSchema>;
+⋮----
+export class RenameOrganizationTool extends McpTool<typeof RenameOrgSchema>
+⋮----
+async *handle(args: RenameOrgArgs, ctx: McpContext): McpToolStream
+⋮----
+type FinishOnboardingArgs = InferArgs<typeof FinishOnboardingSchema>;
+⋮----
+export class FinishTenantOnboardingTool extends McpTool<typeof FinishOnboardingSchema>
+⋮----
+async *handle(args: FinishOnboardingArgs, ctx: McpContext): McpToolStream
 ````
 
 ## File: apps/platform/lib/mcp/tools/tenants.ts
@@ -2592,19 +2609,6 @@ export function getGraphyFromMcpAssert(ctx: McpContext): ReturnType<typeof creat
 export function getSupabaseFromMcp(ctx: McpContext): ReturnType<typeof createSupabaseMcpClient>
 ⋮----
 export function getSupabaseFromMcpAssert(ctx: McpContext): ReturnType<typeof createSupabaseMcpClient>
-````
-
-## File: apps/platform/lib/mcp/register.ts
-````typescript
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { debug } from "~/lib/debug";
-import type { McpTool } from "~/lib/mcp/tool";
-import { ListOrganizationMembersTool } from "~/lib/mcp/tools/members";
-import { UpdateProfileTool } from "~/lib/mcp/tools/profile";
-import { ListOrganizationsTool, ListTenantsTool } from "~/lib/mcp/tools/tenants";
-import { WhoamiTool } from "~/lib/mcp/tools/whoami";
-⋮----
-export function registerTools(server: McpServer): void
 ````
 
 ## File: apps/platform/lib/mcp/tool.ts
@@ -2686,6 +2690,13 @@ import { APP_HOST } from "~/lib/constants";
 export async function isApexHost(): Promise<boolean>
 ````
 
+## File: apps/platform/lib/avatar.ts
+````typescript
+import { NextResponse } from "next/server";
+⋮----
+export async function streamPublicAvatar(src: string | null | undefined): Promise<NextResponse>
+````
+
 ## File: apps/platform/lib/debug.ts
 ````typescript
 import { CREATE_DEBUGGER } from "@packages/debug/index";
@@ -2721,13 +2732,6 @@ import type { ClientPresetConfig } from "@graphql-codegen/client-preset";
 ## File: apps/platform/instrumentation.ts
 ````typescript
 export async function register()
-````
-
-## File: apps/platform/vitest.config.ts
-````typescript
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
 ````
 
 ## File: docs/notifications-system-plan.md
@@ -3346,210 +3350,6 @@ export type GraphyHookMutationState<TData, TVariables> = {
 export function useGraphyMutation<TData, TVariables>(mutation: GraphyFetchGraphQLQuery<TData, TVariables>["query"])
 ````
 
-## File: packages/intl/src/intl.ts
-````typescript
-import { RosettaImpl } from "@packages/rosetta/rosetta";
-import type { Maybe } from "@packages/utils/maybe";
-import { FORMAT_CURRENCY_CLF, FORMAT_CURRENCY_CLP, IS_FINITE, NUMBER } from "@packages/utils/number";
-import { SPACE_NON_BREAKING } from "@packages/utils/string";
-import { DURATION_FROM_SQL, TEMPORAL, type Temporal, TZ } from "@packages/utils/temporal";
-⋮----
-export class IntlNumberParser
-⋮----
-constructor(locale: string, options?: Intl.NumberFormatOptions)
-⋮----
-public parse(string: string): number
-⋮----
-str = str.replace(this.group, ""); // TODO: not sure about this "if"
-⋮----
-export class IntlUniversalFormatter
-⋮----
-constructor(public readonly locale: string)
-⋮----
-public formatPCT(
-    input: string | number | bigint | Intl.StringNumericLiteral,
-    digits?: number,
-    options?: Intl.NumberFormatOptions,
-): string
-⋮----
-public formatPCTRange(
-    inputs: (string | number | bigint | Intl.StringNumericLiteral)[],
-    digits?: number,
-    options?: Intl.NumberFormatOptions,
-): string
-⋮----
-public formatNumber(
-    input: string | number | bigint | Intl.StringNumericLiteral,
-    options?: Intl.NumberFormatOptions,
-): string
-⋮----
-public formatDate(
-    input: Temporal.PlainDate,
-    options: Intl.DateTimeFormatOptions = {
-      dateStyle: "long",
-    },
-): string
-⋮----
-public formatDateTime(
-    input: Date | Temporal.ZonedDateTime | string,
-    options: Intl.DateTimeFormatOptions = {
-      dateStyle: "long",
-      timeStyle: "short",
-      hour12: false,
-    },
-): string
-⋮----
-public formatTokens(input: string | number | bigint | Intl.StringNumericLiteral, options?: Intl.NumberFormatOptions)
-⋮----
-public formatMoney(
-    input: string | number | bigint | Intl.StringNumericLiteral,
-    currency: "USD" | "EUR" | "CLP" | "CLF" | `U${string}` | string | undefined | null,
-    options?: Intl.NumberFormatOptions | null,
-): string
-⋮----
-public formatMoneyToParts(
-    input: string | number | bigint | Intl.StringNumericLiteral,
-    currency: "USD" | "EUR" | "CLP" | "CLF" | `U${string}` | string | undefined | null,
-    options?: Intl.NumberFormatOptions | null,
-): Intl.NumberFormatPart[]
-⋮----
-protected formatMoneyFormatter(
-    input: string | number | bigint | Intl.StringNumericLiteral,
-    currency: "USD" | "EUR" | "CLP" | "CLF" | `U${string}` | string | undefined | null,
-    options?: Intl.NumberFormatOptions | null,
-):
-⋮----
-public formatRelativeTime(
-    value: number,
-    unit: Intl.RelativeTimeFormatUnit,
-    options?: Intl.RelativeTimeFormatOptions,
-): string
-⋮----
-public formatDisplayName(code: string, options: Intl.DisplayNamesOptions): string
-⋮----
-public formatList(list: Iterable<string>, options?: Intl.ListFormatOptions): string
-⋮----
-public formatInterval(interval: string, options?: IntlDurationFormatOptions): string
-⋮----
-public formatIntervalRange(
-    start: Date | string | Temporal.ZonedDateTime | Temporal.PlainDateTime,
-    end: Date | string | Temporal.ZonedDateTime | Temporal.PlainDateTime,
-    options?: IntlDurationFormatOptions,
-): string
-⋮----
-public formatDuration(duration: Temporal.Duration, options?: IntlDurationFormatOptions): string
-⋮----
-export type IntlNumberFormatPatchedOptions = Intl.NumberFormatOptions;
-⋮----
-export class IntlNumberFormatPatched implements Intl.NumberFormat
-⋮----
-public constructor(
-    locale: string,
-    private readonly options?: IntlNumberFormatPatchedOptions,
-)
-⋮----
-return this.wrapped.format(value).replace(SPACE, "").replace(" ", ""); // remove space
-⋮----
-/**
-   * Format a value if it is a number or bigint, on nil value returns undefined.
-   */
-public formatLoose(value: number | bigint | Intl.StringNumericLiteral): string;
-public formatLoose(value: Maybe<never>): undefined;
-public formatLoose(value: Maybe<number | bigint | Intl.StringNumericLiteral>): string | undefined;
-public formatLoose(value: Maybe<number | bigint | Intl.StringNumericLiteral>): string | undefined
-⋮----
-export type IntlDurationFormatOptions = {
-  localeMatcher?: "best fit" | "lookup";
-  numberingSystem?: string;
-  style?: "long" | "short" | "narrow" | "digital";
-  years?: "long" | "short" | "narrow";
-  yearsDisplay?: "always" | "auto";
-  months?: "long" | "short" | "narrow";
-  monthsDisplay?: "always" | "auto";
-  weeks?: "long" | "short" | "narrow";
-  weeksDisplay?: "always" | "auto";
-  days?: "long" | "short" | "narrow";
-  daysDisplay?: "always" | "auto";
-  hours?: "long" | "short" | "narrow" | "numeric" | "2-digit";
-  hoursDisplay?: "always" | "auto";
-  minutes?: "long" | "short" | "narrow" | "numeric" | "2-digit";
-  minutesDisplay?: "always" | "auto";
-  seconds?: "long" | "short" | "narrow" | "numeric" | "2-digit";
-  secondsDisplay?: "always" | "auto";
-  milliseconds?: "long" | "short" | "narrow" | "numeric";
-  millisecondsDisplay?: "always" | "auto";
-  microseconds?: "long" | "short" | "narrow" | "numeric";
-  microsecondsDisplay?: "always" | "auto";
-  nanoseconds?: "long" | "short" | "narrow" | "numeric";
-  nanosecondsDisplay?: "always" | "auto";
-  fractionalDigits?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-};
-⋮----
-export class IntlDurationFormatPatched
-⋮----
-constructor(
-⋮----
-public format(duration: Temporal.Duration): string
-⋮----
-function getUnitStyle(unit: keyof IntlDurationFormatOptions): "long" | "short" | "narrow" | "numeric" | "2-digit"
-⋮----
-function shouldDisplay(value: number, display?: "always" | "auto"): boolean
-⋮----
-function formatUnit(
-      value: number,
-      unit: Intl.RelativeTimeFormatUnit,
-      unitStyle: "long" | "short" | "narrow",
-): string
-⋮----
-function getUnitName(
-      value: number,
-      unit: Intl.RelativeTimeFormatUnit,
-      baseStyle: "long" | "short" | "narrow" | "2-digit",
-): string
-⋮----
-// Helper to format numeric values (for digital style)
-function formatNumeric(value: number, pad: number = 2): string
-````
-
-## File: packages/intl/package.json
-````json
-{
-  "name": "@packages/intl",
-  "version": "0.0.0",
-  "private": true,
-  "sideEffects": false,
-  "exports": {
-    "./*": "./src/*.ts"
-  },
-  "scripts": {
-    "build:dry": "tsc --noEmit",
-    "format": "biome check --diagnostic-level=error ."
-  },
-  "dependencies": {
-    "@packages/rosetta": "workspace:*",
-    "@packages/utils": "workspace:*"
-  },
-  "devDependencies": {
-    "@packages/typescript-config": "workspace:*",
-    "@types/node": "^24.12.4",
-    "typescript": "^6.0.3"
-  }
-}
-````
-
-## File: packages/intl/tsconfig.json
-````json
-{
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "@packages/typescript-config/react-library.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src"
-  },
-  "include": ["src"]
-}
-````
-
 ## File: packages/kapso/src/client.ts
 ````typescript
 import type { KapsoToolResponse } from "./types.ts";
@@ -3614,19 +3414,6 @@ import { useMemo } from "react";
 export function useCookieStore(): CookieStoreLike
 ````
 
-## File: packages/react-hooks/src/use-keyboard-shortcut.ts
-````typescript
-import { useEffect, useRef } from "react";
-⋮----
-export function useKeyboardShortcut(
-  key: string,
-  handler: () => void,
-  { mod = false, enabled = true }: { mod?: boolean; enabled?: boolean } = {},
-)
-⋮----
-const onKey = (event: KeyboardEvent) =>
-````
-
 ## File: packages/react-hooks/src/use-mounted.ts
 ````typescript
 import { useEffect, useState } from "react";
@@ -3661,6 +3448,27 @@ export function useMounted(): boolean
 </html>
 ````
 
+## File: packages/react-pdf/src/templates/helloworld.tsx
+````typescript
+import { LocaleProvider, useRosetta } from "@packages/rosetta/use-rosetta";
+import { Document, Link, Page, Text, View } from "@react-pdf/renderer";
+import { tw } from "../lib/tw";
+⋮----
+export interface HelloWorldTemplateProps {
+  locale?: string;
+}
+⋮----
+export function HelloWorldTemplate(
+⋮----
+<Text style=
+⋮----
+<View style=
+⋮----
+<View key=
+⋮----
+style=
+````
+
 ## File: packages/react-pdf/src/templates/markdown-demo.tsx
 ````typescript
 import { Document, Page } from "@react-pdf/renderer";
@@ -3668,6 +3476,30 @@ import { Markdown } from "../components/markdown";
 import { tw } from "../lib/tw";
 ⋮----
 export function MarkdownDemoTemplate()
+````
+
+## File: packages/rosetta/src/use-rosetta.tsx
+````typescript
+import { type RosettaDict, RosettaImpl, type RosettaOptions } from "@packages/rosetta/rosetta";
+import React, { useContext, useMemo } from "react";
+⋮----
+export function LocaleProvider(
+⋮----
+export function RosettaProvider<T>({
+  dict,
+  options,
+  locale,
+  ...props
+}: {
+  children: React.ReactNode;
+  dict: RosettaDict<T>;
+  options?: RosettaOptions;
+  locale?: string;
+})
+⋮----
+export function useRosetta<T>(dict?: RosettaDict<T>, options?: RosettaOptions): RosettaImpl<T>
+⋮----
+export function withRosettaLocales<T>(dict: RosettaDict<T>, options?: RosettaOptions)
 ````
 
 ## File: packages/supabase/src/client.mcp.ts
@@ -3725,29 +3557,42 @@ export function useSupabase()
 export function useSupabaseUser()
 ````
 
-## File: packages/supabase/supabase/tests/README.md
-````markdown
-# Database tests (pgTAP)
+## File: packages/supabase/supabase/templates/confirmation.html
+````html
+<h2>Confirma tu correo</h2>
+<p>Sigue este enlace para confirmar tu cuenta en SaaS Template:</p>
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next={{ .RedirectTo }}">Confirmar correo</a></p>
+<p>O ingresa el código: <strong>{{ .Token }}</strong></p>
+````
 
-These tests run inside Postgres via [pgTAP](https://pgtap.org/) and verify SQL-layer behavior: RLS policies, security-definer functions (`viewer_*`), triggers, and the JWT-issuing hook (`user_auth_hook`). The runner is `supabase test db`, which spawns `pg_prove` in Docker and points it at the local DB.
+## File: packages/supabase/supabase/templates/email_change.html
+````html
+<h2>Confirma tu nuevo correo</h2>
+<p>Sigue este enlace para confirmar el cambio de correo en SaaS Template:</p>
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next={{ .RedirectTo }}">Confirmar cambio</a></p>
+<p>O ingresa el código: <strong>{{ .Token }}</strong></p>
+````
 
-## Running
+## File: packages/supabase/supabase/templates/magic_link.html
+````html
+<h2>Tu enlace para iniciar sesión</h2>
+<p>Sigue este enlace para entrar a SaaS Template:</p>
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next={{ .RedirectTo }}">Iniciar sesión</a></p>
+<p>O ingresa el código: <strong>{{ .Token }}</strong></p>
+````
 
-Bring Supabase up first (`pnpm db:start`), then from the repo root:
-
-```
-pnpm test:db
-```
-
-The tests run against the same local DB as `pnpm dev` and the seed (`packages/supabase/supabase/seed.sql`). Each test file wraps itself in `begin; … rollback;` so it leaves no trace — running tests is safe even with the dev app open.
-
-## Conventions
-
-- One concern per file; name with `<topic>.test.sql`.
-- Wrap the whole file in `begin; … rollback;`. Never commit.
-- Mock the caller's JWT with `set local request.jwt.claims to '…'::jsonb::text;` AND `set local role authenticated;`. **Without `set local role`, you remain `postgres` and RLS is bypassed silently — your test will pass for the wrong reason.**
-- Reuse the seeded users (`alice@humane.test` = `00000000-0000-0000-0000-00000000a11c`, `bob@humane.test` = `00000000-0000-0000-0000-00000000b00b`). If you need a third user, insert with a UUID outside the seed range so re-runs are idempotent.
-- Use `select plan(N);` up top and `select * from finish();` at the bottom.
+## File: packages/ui-common/src/shadcn/components/ui/badge.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { cva, type VariantProps } from "class-variance-authority";
+import { Slot } from "radix-ui";
+⋮----
+function Badge({
+  className,
+  variant = "default",
+  asChild = false,
+  ...props
+}: React.ComponentProps<"span"> & VariantProps<typeof badgeVariants> &
 ````
 
 ## File: packages/ui-common/src/shadcn/components/ui/button.tsx
@@ -3778,6 +3623,59 @@ import { Collapsible as CollapsiblePrimitive } from "radix-ui";
 function CollapsibleTrigger(
 ⋮----
 function CollapsibleContent(
+````
+
+## File: packages/ui-common/src/shadcn/components/ui/dialog.tsx
+````typescript
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { XIcon } from "lucide-react";
+import { Dialog as DialogPrimitive } from "radix-ui";
+⋮----
+className=
+````
+
+## File: packages/ui-common/src/shadcn/components/ui/dropdown-menu.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { CheckIcon, ChevronRightIcon } from "lucide-react";
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
+⋮----
+function DropdownMenu(
+⋮----
+function DropdownMenuPortal(
+⋮----
+function DropdownMenuTrigger(
+⋮----
+function DropdownMenuContent({
+  className,
+  align = "start",
+  sideOffset = 4,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Content>)
+⋮----
+function DropdownMenuItem({
+  className,
+  inset,
+  variant = "default",
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & {
+  inset?: boolean;
+  variant?: "default" | "destructive";
+})
+⋮----
+className=
+⋮----
+function DropdownMenuRadioGroup(
+⋮----
+function DropdownMenuRadioItem({
+  className,
+  children,
+  inset,
+  ...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem> & {
+  inset?: boolean;
+})
 ````
 
 ## File: packages/ui-common/src/shadcn/components/ui/input.tsx
@@ -4030,6 +3928,71 @@ public constructor(
 public static async from<T = unknown>(response: Response, options?: ErrorOptions): Promise<ErrorFetch<T>>
 ````
 
+## File: packages/utils/src/headers.ts
+````typescript
+import { URL_NEW } from "./url";
+⋮----
+export function HOST_FROM_HEADERS(hdrs:
+````
+
+## File: packages/utils/src/iterators.ts
+````typescript
+import { BOOLEAN } from "./boolean";
+import type { Maybe } from "./maybe";
+import { IS_NILL } from "./nil";
+⋮----
+export function IDENTITY<T>(val: T): T
+export function SHALLOW_COMPARE<T>(a: T, b: T): boolean
+⋮----
+export function EVERY<T>(iterable: Iterable<T>, fn: (value: T, index: number, obj: Iterable<T>) => any): boolean
+export function SOME<T>(iterable: Iterable<T>, fn: (value: T, index: number, obj: Iterable<T>) => any): boolean
+⋮----
+export function IS_INTERSECTION<T>(
+  iterableA: Iterable<T>,
+  iterableB: Iterable<T>,
+  fn: (a: T, b: T) => any = SHALLOW_COMPARE,
+): boolean
+⋮----
+export function FIND<T>(
+  iterable: Iterable<T>,
+  fn: (value: T, index: number, iterable: Iterable<T>) => unknown,
+): T | undefined
+⋮----
+export function REDUCE<T, U>(
+  iterable: Iterable<T>,
+  fn: (previousValue: U, currentValue: T, currentIndex: number, iterable: Iterable<T>) => U,
+  initialValue: U,
+): U
+⋮----
+export function AT<V>(iterable: Iterable<V>, position = 0): V | undefined
+⋮----
+export function FIRST<V>(iterable: Iterable<V>): V | undefined
+export function LAST<V>(iterable: Iterable<V>): V | undefined
+⋮----
+export function COUNT<V>(yieldable: Iterable<V>): number
+⋮----
+export function IS_GT<V extends number | bigint>(a: V, b: V): boolean
+export function IS_LT<V extends number | bigint>(a: V, b: V): boolean
+export function IS_GTE<V extends number | bigint>(a: V, b: V): boolean
+export function IS_LTE<V extends number | bigint>(a: V, b: V): boolean
+⋮----
+export function INITIAL_SET<T>(): Set<T>
+⋮----
+export function COMPARE_SETS<T>(a: Set<T>, b: Set<T>)
+⋮----
+type ObjectEntry<T> = {
+  [K in keyof T]: readonly [K, T[K]];
+}[keyof T];
+⋮----
+type ObjectEntryKV<T> = {
+  [K in keyof T]: { key: K; value: T[K] };
+}[keyof T];
+⋮----
+export function OBJECT_PREFIX<T extends
+⋮----
+export function ARRAY_FORCED<T>(singleOrArray: T | T[] | null | undefined): T[]
+````
+
 ## File: packages/utils/src/json.ts
 ````typescript
 import { IS_STRING } from "./string";
@@ -4084,6 +4047,155 @@ public async flush(): Promise<T[]>
 public async mapArray<In>(array: In[], fn: (element: In, index: number, array: In[]) => Promise<T>): Promise<T[]>
 ````
 
+## File: packages/utils/src/temporal.ts
+````typescript
+import { Temporal } from "temporal-polyfill";
+import { FIBONACCI, NUMBER } from "./number";
+⋮----
+export type TemporalValue = Temporal.ZonedDateTime | Temporal.PlainDateTime | Temporal.PlainDate;
+⋮----
+function ISO(date: string | Date): string
+⋮----
+export function TEMPORAL(date: string | Date | TemporalValue | null, timezone = TZ): Temporal.ZonedDateTime
+⋮----
+export function TEMPORAL_NOW(timezone = TZ): Temporal.ZonedDateTime
+⋮----
+export function TEMPORAL_PLAINDATE(date: string | Date | null, timezone = TZ): Temporal.PlainDate
+⋮----
+export function TEMPORAL_PLAINDATETIME(date: string | Date | null, timezone = TZ): Temporal.PlainDateTime
+⋮----
+export function INSTANT_NOW(): Temporal.Instant
+⋮----
+export type InstantInput =
+  | Temporal.Instant
+  | Temporal.ZonedDateTime
+  | Temporal.PlainDateTime
+  | Date
+  | number
+  | bigint
+  | string;
+⋮----
+export function INSTANT_FROM(input: InstantInput): Temporal.Instant
+⋮----
+export function TEMPORAL_PLAINDATE_REPRESENTATIVE(options: {
+  year?: number;
+  month?: number;
+  day?: number;
+}): Temporal.PlainDate
+⋮----
+export function TEMPORAL_DISPLAY_MONTH(
+  locale: Intl.LocalesArgument,
+  date: Temporal.PlainDate | Temporal.ZonedDateTime,
+): string
+⋮----
+export function TEMPORAL_TO_SQL(date: TemporalValue)
+⋮----
+export function TEMPORAL_PARTS(date: TemporalValue)
+⋮----
+export function TEMPORAL_PARTS_PADDED(date: TemporalValue)
+⋮----
+export type TemporalZonedDateTime = Temporal.ZonedDateTime;
+⋮----
+export function DURATION_FROM_SQL(interval: string): Temporal.Duration
+⋮----
+export function MIN_TEMPORAL_PD(...args: [Temporal.PlainDate, ...Temporal.PlainDate[]]): Temporal.PlainDate;
+export function MIN_TEMPORAL_PD(...args: Temporal.PlainDate[]): Temporal.PlainDate | null;
+export function MIN_TEMPORAL_PD(...args: Temporal.PlainDate[]): Temporal.PlainDate | null
+⋮----
+export function MAX_TEMPORAL_PD(...args: [Temporal.PlainDate, ...Temporal.PlainDate[]]): Temporal.PlainDate;
+export function MAX_TEMPORAL_PD(...args: Temporal.PlainDate[]): Temporal.PlainDate | null;
+export function MAX_TEMPORAL_PD(...args: Temporal.PlainDate[]): Temporal.PlainDate | null
+⋮----
+export type TemporalTruncateUnit = Temporal.DateUnit | Temporal.TimeUnit;
+⋮----
+export function TEMPORAL_TRUNCATE<T extends TemporalValue>(date: T, truncate: TemporalTruncateUnit): T
+⋮----
+export type BaseBackoff = Temporal.Duration | Temporal.DurationLike | string;
+⋮----
+export function TEMPORAL_DURATION_SCALE(duration: Temporal.Duration, factor: number): Temporal.Duration
+⋮----
+export function FIBONACCI_BACKOFF(
+  attempts: number,
+  timestamp: Temporal.Instant,
+  base: Temporal.Duration | Temporal.DurationLike | string = { minutes: 1 },
+): Temporal.Instant
+````
+
+## File: scripts/development/exe-dev-setup.sh
+````bash
+set -e
+cd "$(git rev-parse --show-toplevel)"
+if [ -z "${EXE_HOST:-}" ]; then
+  HN="$(hostname | tr '[:upper:]' '[:lower:]')"
+  case "$HN" in
+    *.exe.xyz) EXE_HOST="$HN" ;;
+    *)         EXE_HOST="${HN}.exe.xyz" ;;
+  esac
+fi
+echo "→ exe.dev host: ${EXE_HOST}"
+BASE=3000
+APP_PORT=$((BASE + 0))
+STUDIO_PORT=$((BASE + 4))
+INSTANCE_KEY="exe-$(printf '%s' "$EXE_HOST" | tr -cd 'a-z0-9-' | cut -c1-40)"
+# Site URL embedded in auth emails / used as redirect allow-list base.
+export SUPABASE_AUTH_SITE_URL="https://${EXE_HOST}:${APP_PORT}"
+# --- Patch supabase/config.toml: ports into the 3000-range, project_id, redirect allow-list ---
+BASE=$BASE INSTANCE_KEY=$INSTANCE_KEY EXE_HOST=$EXE_HOST python3 - <<'PYEOF'
+import re, os
+base = int(os.environ['BASE'])
+instance_key = os.environ['INSTANCE_KEY']
+exe_host = os.environ['EXE_HOST']
+path = 'packages/supabase/supabase/config.toml'
+with open(path) as f:
+    lines = f.readlines()
+section = None
+out = []
+for line in lines:
+    m = re.match(r'^\[([a-z_.]+)\]\s*$', line)
+    if m:
+        section = m.group(1)
+    if re.match(r'^project_id\s*=', line):
+        line = f'project_id = "{instance_key}"\n'
+    elif section == 'api'       and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+1}\n'
+    elif section == 'db'        and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+2}\n'
+    elif section == 'db'        and re.match(r'^shadow_port\s*=', line): line = f'shadow_port = {base+3}\n'
+    elif section == 'studio'    and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+4}\n'
+    elif section == 'inbucket'  and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+5}\n'
+    elif section == 'analytics' and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+6}\n'
+    out.append(line)
+    # Add this VM's host to the auth redirect allow-list (idempotent vs the whole
+    # file, since config.toml is skip-worktree'd and this script re-runs). Sits right
+    # after the existing lvh.me entry so the local default keeps working too.
+    redirect = f'  "https://{exe_host}:*/**",\n'
+    already = any(f'"https://{exe_host}:*/**"' in l for l in lines)
+    if '"https://lvh.me:*/**"' in line and not already:
+        out.append(redirect)
+with open(path, 'w') as f:
+    f.writelines(out)
+print(f"config.toml patched: project={instance_key} API:{base+1} DB:{base+2} Studio:{base+4}")
+print(f"  redirect allow-list += https://{exe_host}:*/**")
+PYEOF
+# Per-VM port/project edits are intentional; keep them out of `git status`.
+git update-index --skip-worktree packages/supabase/supabase/config.toml || true
+# --- Start Supabase (fresh project_id => migrations + seed applied on init) ---
+RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$RUNNING" -gt 0 ]; then
+  echo "Supabase ${INSTANCE_KEY} already running, skipping db:start"
+else
+  PORT=$BASE pnpm db:start
+fi
+EXE_HOST=$EXE_HOST PORT=$BASE pnpm run -w db:env:development
+cat <<EOF
+✅ exe.dev dev environment ready.
+  App     →  https://${EXE_HOST}:${APP_PORT}      (run: pnpm --filter @apps/platform dev:exe)
+  Studio  →  https://${EXE_HOST}:${STUDIO_PORT}
+  Mailbox →  https://${EXE_HOST}:$((BASE + 5))
+Ports are PRIVATE by default (only users with VM access, logged into exe.dev).
+To expose the app publicly:  ssh exe.dev share set-public ${EXE_HOST%%.*} && ssh exe.dev share port ${EXE_HOST%%.*} ${APP_PORT}
+Raw psql (proxy is HTTP-only): ssh -L 5432:localhost:$((BASE + 2)) ${EXE_HOST} -l exedev
+EOF
+````
+
 ## File: scripts/development/https-setup.sh
 ````bash
 set -euo pipefail
@@ -4095,7 +4207,7 @@ if ! command -v mkcert >/dev/null 2>&1; then
   exit 1
 fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CERT_DIR="$SCRIPT_DIR/../../apps/platform/certs"
+CERT_DIR="$SCRIPT_DIR/../../apps/platform/certificates"
 mkdir -p "$CERT_DIR"
 echo "==> Installing mkcert root CA (idempotent)…"
 mkcert -install
@@ -4105,8 +4217,131 @@ mkcert \
   -cert-file "$CERT_DIR/lvh.me-cert.pem" \
   lvh.me localhost 127.0.0.1
 echo
-echo "✅ Certs written to apps/platform/certs/"
+echo "✅ Certs written to apps/platform/certificates/"
 echo "   Run 'pnpm dev' and open https://lvh.me:7003"
+````
+
+## File: scripts/development/local-setup.sh
+````bash
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+if [ -n "${CONDUCTOR_PORT:-}" ]; then
+  echo "CONDUCTOR_PORT set → use the Conductor flow (worktree-setup.sh), not local-setup.sh." >&2
+  exit 1
+fi
+if [ -n "${EXE_HOST:-}" ]; then
+  echo "EXE_HOST set → use exe-dev-setup.sh, not local-setup.sh." >&2
+  exit 1
+fi
+if [ -f apps/platform/certs/lvh.me-key.pem ] && [ -f apps/platform/certs/lvh.me-cert.pem ]; then
+  echo "✓ TLS certs present"
+else
+  echo "→ generating local TLS certs (mkcert)…"
+  bash scripts/development/https-setup.sh
+fi
+PROJECT="$(sed -n 's/^project_id[[:space:]]*=[[:space:]]*"\(.*\)".*/\1/p' packages/supabase/supabase/config.toml | head -1)"
+RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${PROJECT}" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$RUNNING" -gt 0 ]; then
+  echo "✓ Supabase '${PROJECT}' already running"
+else
+  echo "→ starting Supabase '${PROJECT}'…"
+  pnpm db:start
+fi
+echo "→ writing .env.development.local…"
+pnpm run -w db:env:development
+cat <<'EOF'
+✅ Local dev environment ready. Start the app with:
+   pnpm dev
+EOF
+````
+
+## File: scripts/repomix-skill-rename.mjs
+````javascript
+// Rewrites the project name in the generated `codebase` reference skill.
+//
+// repomix's local `--skill-generate` has no way to set the project name: it
+// always uses `toTitleCase(basename(cwd))` (see repomix `skillUtils.ts`
+// `generateProjectName`). In a Conductor worktree the cwd is the ephemeral
+// instance name (e.g. "karachi-v2"), so the skill leaks "Karachi V2" into its
+// frontmatter description and H1 instead of the real project name.
+//
+// There is no `--skill-project-name` CLI flag (the `skillProjectName` field is
+// wired only for the remote-URL path), so we fix it after generation: read the
+// name repomix actually emitted, then replace every occurrence with the
+// canonical display name across the skill files.
+⋮----
+// Canonical display name — must match the AGENTS.md title, not the folder/worktree.
+⋮----
+// Extract the name repomix generated from the description template
+// (`generateSkillDescription` in repomix `skillUtils.ts`).
+⋮----
+continue; // references/* set may vary by repomix version
+````
+
+## File: scripts/skills-setup.mjs
+````javascript
+/**
+ * Materializes skills into the agent stores on install — no network, no cloning.
+ *
+ * Sources are committed: first-party `my-*` + `codebase` in `skills/`, vendored
+ * third-party in `skills-third-party/`. Each is symlinked into both agent stores
+ * (`.agents/skills/` for Codex/Cursor/Copilot/OpenCode/Zed, `.claude/skills/` for
+ * Claude Code), which stay gitignored. Also seeds `.env.local` from `.env.example`.
+ *
+ * We vendor third-party skills (committed) instead of `skills experimental_install`
+ * because that clones every repo serially — slow. Refresh them with the `skills`
+ * CLI and copy the result back into `skills-third-party/` (see AGENTS.md).
+ *
+ * TODO: once `skills install` is stable (no `experimental_` prefix) and clones in
+ * parallel / fast enough, reconsider dropping the vendored `skills-third-party/`
+ * and restoring third-party from `skills-lock.json` at install instead.
+ *
+ * Usage: pnpm skills:install (runs automatically via postinstall)
+ */
+⋮----
+// Seed .env.local once — never clobber an existing one.
+⋮----
+continue; // source dir may not exist (e.g. no third-party yet)
+⋮----
+await fs.rm(link, { recursive: true, force: true }); // replace stale symlink or copy
+⋮----
+// ponytail: cheap self-check — a broken target means the symlink web is wrong.
+````
+
+## File: skills/my-pr-quick/SKILL.md
+````markdown
+---
+name: my-pr-quick
+description: Use when the user wants a fast PR (e.g. /pr-quick, "haz un PR rápido") and you must NOT burn tokens reading full diffs.
+---
+
+# PR Quick
+
+**Rule: never read full diffs or files.** Use only `git status --short` + `git diff --stat` — that's enough to write the commit and PR.
+
+```bash
+git status --short && git diff --stat && git branch --show-current
+# if on main: git checkout -b <type>/<kebab-desc>
+git add -A
+git commit -m "$(cat <<'EOF'
+feat(scope): imperative summary
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+EOF
+)"
+git push -u origin HEAD
+gh pr create --title "<commit subject>" --body "$(cat <<'EOF'
+## Summary
+- one bullet per change (from --stat)
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
+```
+
+Paste the PR URL. Done.
+
+Red flag: about to run full `git diff` or `Read` a file → stop, use `--stat`.
 ````
 
 ## File: skills/my-react-email/SKILL.md
@@ -4478,186 +4713,57 @@ psql "$DATABASE_URL" -f path/to/file.sql
 }
 ````
 
-## File: pnpm-workspace.yaml
-````yaml
-packages:
-  - "apps/*"
-  - "packages/*"
-overrides:
-  zod: "^4.4.3"
-onlyBuiltDependencies:
-  - "@parcel/watcher"
-  - "@vercel/speed-insights"
-  - esbuild
-  - sharp
-  - supabase
-````
-
-## File: turbo.json
-````json
-{
-  "$schema": "./node_modules/turbo/schema.json",
-  "globalDependencies": ["package.json", "pnpm-workspace.yaml", ".env.local"],
-  "ui": "stream",
-  "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**", "build/**"],
-      "inputs": ["$TURBO_DEFAULT$", ".env.*local"]
-    },
-    "test": {
-      "outputs": ["coverage/**", "test-results/**"],
-      "inputs": ["$TURBO_DEFAULT$"]
-    },
-    "format": {
-      "outputs": []
-    },
-    "generate": {
-      "outputs": []
-    },
-    "build:dry": {
-      "dependsOn": ["^build:dry"],
-      "outputs": [],
-      "inputs": ["$TURBO_DEFAULT$"]
-    },
-    "generate:graphql": {
-      "dependsOn": ["@packages/supabase#generate:graphql:schema"],
-      "cache": false,
-      "outputs": ["generated/graphql/**"]
-    },
-    "generate:graphql:schema": {
-      "cache": false,
-      "outputs": ["generated/graphql/graphql.schema.json", "generated/graphql/graphql.schema.graphql"]
-    },
-    "generate:types": {
-      "cache": false,
-      "outputs": ["src/types.ts"]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "dev:debug": {
-      "cache": false,
-      "persistent": true
-    }
-  }
-}
-````
-
-## File: apps/platform/app/(app)/a/[agency_slug]/inbox/[conversation_id]/page.tsx
+## File: apps/platform/app/(app)/a/[agency_slug]/access/page.tsx
 ````typescript
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { actionMarkRead } from "~/components/inbox/actions";
-import { ConversationThread } from "~/components/inbox/conversation-thread";
-import { SCOPE_INBOX_HREF, SCOPE_RPC_ARGS } from "~/components/inbox/scope";
-import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
-import { ROSETTA } from "~/lib/i18n";
-import { getServerLocale } from "~/lib/i18n.server";
-⋮----
-export async function generateMetadata(
-  props: PageProps<"/a/[agency_slug]/inbox/[conversation_id]">,
-): Promise<Metadata>
-````
-
-## File: apps/platform/app/(app)/a/[agency_slug]/inbox/page.tsx
-````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import { SINGLE } from "@packages/utils/array";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { InboxList } from "~/components/inbox/inbox-list";
-import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
-import { ROSETTA } from "~/lib/i18n";
-import { getServerLocale } from "~/lib/i18n.server";
-⋮----
-export async function generateMetadata(props: PageProps<"/a/[agency_slug]/inbox">): Promise<Metadata>
-````
-
-## File: apps/platform/app/(app)/a/[agency_slug]/tickets/[ticket_id]/page.tsx
-````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
-import { getRosetta } from "~/lib/i18n.server";
-import { type ConversationMessage, TicketDetail, type TicketDetailData } from "./ticket-detail";
-⋮----
-export async function generateMetadata(props: PageProps<"/a/[agency_slug]/tickets/[ticket_id]">): Promise<Metadata>
-⋮----
-export default async function AgencyTicketDetailPage(props: PageProps<"/a/[agency_slug]/tickets/[ticket_id]">)
-````
-
-## File: apps/platform/app/(app)/a/[agency_slug]/tickets/[ticket_id]/ticket-detail.tsx
-````typescript
-import type { Database } from "@packages/supabase/types";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Textarea } from "@packages/ui-common/shadcn/components/ui/textarea";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { AlertTriangle, ArrowLeft, Building2, CheckCircle2, Info, MessageCircle, Send, User } from "lucide-react";
-import Link from "next/link";
-import type { ElementType } from "react";
-import { useRef, useState, useTransition } from "react";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE } from "~/lib/route";
-import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
-import { actionClaimTicket, actionPostMessage, actionResolveTicket } from "../actions";
+import { INITIALS_OF } from "@packages/utils/string";
+import { Building2, Eye, Globe } from "lucide-react";
+import type { Metadata } from "next";
+import { getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
+import { getRosetta } from "~/lib/i18n.server";
 ⋮----
-export type ConversationMessage = {
-  conversation_message_id: string;
-  conversation_id: string;
-  message_author: string;
-  message_body: string | null;
-  message_direction: string;
-  message_created_at: string;
-  message_priority: Database["public"]["Enums"]["notification_priority"] | null;
-  message_channel: Database["public"]["Enums"]["message_channel"] | null;
-};
+type AccessOrg = { organization_id: number; organization_name: string; organization_slug: string | null };
 ⋮----
-export type TicketDetailData = {
-  ticket_id: string;
-  ticket_subject: string;
-  ticket_status: Database["public"]["Enums"]["ticket_status"];
-  ticket_priority: Database["public"]["Enums"]["notification_priority"];
-  ticket_claimed_at: string | null;
-  ticket_resolved_at: string | null;
-  ticket_created_at: string;
-  assigned_profile_id: string | null;
-  assigned_agency_id: string | null;
-  organization_id: number | null;
-  tenant_id: number;
-  conversation_id: string;
-  organization_name: string | null;
-  organization_slug: string | null;
-  tenant_name: string | null;
-  tenant_slug: string | null;
-  agency_id: string;
-  agency_slug: string;
-  agency_name: string;
-  messages: ConversationMessage[];
-};
+export async function generateMetadata(): Promise<Metadata>
 ⋮----
-function handleClaim()
-⋮----
-function handleReply()
-⋮----
-function handleResolve()
-⋮----
-aria-label=
-⋮----
-onClick=
-⋮----
-setShowResolveForm(false);
-setResolveNote("");
-⋮----
-<div className=
+<AccessPill global label=
 ⋮----
 className=
+````
+
+## File: apps/platform/app/(app)/a/[agency_slug]/team/team-list.tsx
+````typescript
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { INITIALS_OF } from "@packages/utils/string";
+import { BadgeCheck, Ban, Hourglass, type LucideIcon, RefreshCw, ShieldCheck, UserPlus, X } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+import { useState, useTransition } from "react";
+import type { AffiliationState } from "~/lib/agencies";
+import { useRosetta } from "~/lib/i18n.client";
+import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
+import { actionUpdateAffiliateMembership } from "../actions";
+⋮----
+export type TeamAffiliate = {
+  agency_membership_id: number;
+  profile_id: string;
+  state: AffiliationState;
+  name: string;
+  email: string | null;
+  is_self: boolean;
+};
+⋮----
+type Translate = ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"];
+⋮----
+function run(operation: "revoke" | "reactivate")
+⋮----
+className=
+⋮----
+/** Inline status pill scoped to the team list. */
+⋮----
+<span className=
 ````
 
 ## File: apps/platform/app/(app)/a/[agency_slug]/tickets/actions.ts
@@ -4670,223 +4776,126 @@ import { getRosetta } from "~/lib/i18n.server";
 import { authedAction } from "~/lib/safe-action.server";
 ````
 
-## File: apps/platform/app/(app)/a/[agency_slug]/tickets/page.tsx
+## File: apps/platform/app/(app)/a/layout.tsx
 ````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
-import { getRosetta } from "~/lib/i18n.server";
-import { type PoolTicket, TicketPool } from "./ticket-pool";
-⋮----
-export async function generateMetadata(props: PageProps<"/a/[agency_slug]/tickets">): Promise<Metadata>
-⋮----
-export default async function AgencyTicketsPage(props: PageProps<"/a/[agency_slug]/tickets">)
+export default function AgencyLayout(props: LayoutProps<"/a">)
 ````
 
-## File: apps/platform/app/(app)/a/[agency_slug]/tickets/ticket-pool.tsx
+## File: apps/platform/app/(app)/home/account/_components/sections.ts
 ````typescript
-import type { Database } from "@packages/supabase/types";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@packages/ui-common/shadcn/components/ui/tabs";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import {
-  AlertTriangle,
-  ArrowRight,
-  Building2,
-  CheckCircle2,
-  ChevronRight,
-  CircleDot,
-  Clock,
-  Hourglass,
-  Inbox,
-  Info,
-  type LucideIcon,
-} from "lucide-react";
-import Link from "next/link";
-import { useState, useTransition } from "react";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE } from "~/lib/route";
-import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
-import { actionClaimTicket } from "./actions";
+import { Bell, Globe, Languages, Monitor, Palette, ShieldCheck, Trash2, User } from "lucide-react";
+import type { ComponentType } from "react";
+import { ROUTE_PATH } from "~/lib/route";
 ⋮----
-export type PoolTicket = {
-  ticket_id: string;
-  ticket_subject: string;
-  ticket_status: Database["public"]["Enums"]["ticket_status"];
-  ticket_priority: Database["public"]["Enums"]["notification_priority"];
-  ticket_claimed_at: string | null;
-  ticket_resolved_at: string | null;
-  ticket_created_at: string;
-  assigned_profile_id: string | null;
-  assigned_agency_id: string | null;
-  organization_id: number | null;
-  tenant_id: number;
-  conversation_id: string;
-  organization_name: string | null;
-  organization_slug: string | null;
-  tenant_name: string | null;
-  tenant_slug: string | null;
+export type AccountSectionId =
+  | "profile"
+  | "security"
+  | "connections"
+  | "sessions"
+  | "notifications"
+  | "theme"
+  | "language"
+  | "danger";
+⋮----
+export type AccountGroupKey = "account" | "security_group" | "danger_zone" | "preferences";
+⋮----
+export type AccountLabelKey =
+  | "nav_profile"
+  | "nav_security"
+  | "nav_connections"
+  | "nav_sessions"
+  | "nav_notifications"
+  | "nav_theme"
+  | "nav_language"
+  | "nav_danger";
+⋮----
+export type AccountSection = {
+  id: AccountSectionId;
+  labelKey: AccountLabelKey;
+  groupKey: AccountGroupKey;
+  Icon: ComponentType<{ size?: number; className?: string }>;
+  danger?: boolean;
+  todo?: boolean;
 };
 ⋮----
-type StatusFilter = "open" | "claimed" | "in_progress" | "resolved" | "closed" | "all";
-⋮----
-href=
-⋮----
-function handleClaim()
-⋮----
-className=
+export function ACCOUNT_SECTION_PATH(id: AccountSectionId): (typeof ACCOUNT_SECTION_PATHS)[AccountSectionId]
 ````
 
-## File: apps/platform/app/(app)/a/[agency_slug]/actions.ts
+## File: apps/platform/app/(app)/home/account/danger/page.tsx
 ````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { z } from "zod";
-import { debug } from "~/lib/debug";
 import { getRosetta } from "~/lib/i18n.server";
-import { authedAction } from "~/lib/safe-action.server";
+import { DeleteAccountDialog } from "./delete-account-dialog";
 ````
 
-## File: apps/platform/app/(app)/home/_components/user-menu.tsx
+## File: apps/platform/app/(app)/home/account/language/page.tsx
 ````typescript
-import { INITIALS_OF } from "@packages/utils/string";
-import { ChevronDown } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE } from "~/lib/route";
-⋮----
-href=
+import { LocaleToggle } from "~/components/locale-toggle";
+import { getRosetta } from "~/lib/i18n.server";
 ````
 
-## File: apps/platform/app/(app)/home/account/_components/sidebar.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE } from "~/lib/route";
-import { ACCOUNT_SECTION_PATH, ACCOUNT_SECTIONS, type AccountGroupKey, type AccountSectionId } from "./sections";
-⋮----
-function ACTIVE_SECTION(pathname: string): AccountSectionId
-⋮----
-className=
-````
-
-## File: apps/platform/app/(app)/home/account/notifications/contacts-manage.tsx
+## File: apps/platform/app/(app)/home/account/notifications/notifications-channels.tsx
 ````typescript
 import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
-import type { Database } from "@packages/supabase/types";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Input } from "@packages/ui-common/shadcn/components/ui/input";
-import { useEffect, useState } from "react";
-import { debug } from "~/lib/debug";
-import { useRosetta } from "~/lib/i18n.client";
-⋮----
-type MessageChannel = Database["public"]["Enums"]["message_channel"];
-type ContactRow = Database["public"]["Tables"]["profile_contacts"]["Row"];
-⋮----
-function ADD_FORM_ID(channel: MessageChannel): string
-⋮----
-function loadContacts()
-⋮----
-function startAdding(channel: MessageChannel)
-⋮----
-function cancelAdding()
-⋮----
-async function submitContact()
-⋮----
-async function deleteContact(contactId: string)
-⋮----
-onClick=
-⋮----
-aria-label=
-⋮----
-id=
-````
-
-## File: apps/platform/app/(app)/home/account/notifications/notifications-matrix.tsx
-````typescript
-import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
-import type { Database } from "@packages/supabase/types";
 import { Switch } from "@packages/ui-common/shadcn/components/ui/switch";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { debug } from "~/lib/debug";
 import { useRosetta } from "~/lib/i18n.client";
 ⋮----
 type PrefChannel = "email" | "web_push" | "whatsapp" | "sms";
-type TopicRow = Database["public"]["Tables"]["conversation_topics"]["Row"];
 ⋮----
-type PrefMap = Map<string, Map<PrefChannel, boolean>>;
-⋮----
-function PREF_KEY(slug: string, channel: PrefChannel): string
-⋮----
-function IS_ENABLED(prefs: PrefMap, slug: string, channel: PrefChannel): boolean
+function CHANNEL_ON(disabled: Set<PrefChannel>, channel: PrefChannel): boolean
 ⋮----
 async function fetch()
 ⋮----
 function scheduleFlush()
 ⋮----
-function onChannelToggle(slug: string, channel: PrefChannel, next: boolean)
+function onChannelToggle(channel: PrefChannel, next: boolean)
 ⋮----
-function onSilence(slug: string)
-⋮----
-function isSilent(slug: string): boolean
-⋮----
-className=
+onCheckedChange=
 ````
 
-## File: apps/platform/app/(app)/home/account/profile/page.tsx
+## File: apps/platform/app/(app)/home/account/notifications/push-permission.tsx
 ````typescript
-import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
-import { redirect } from "next/navigation";
-import { ProfileAvatarControls } from "~/components/profile-avatar-controls";
-import { getRosetta } from "~/lib/i18n.server";
-import { ProfileForm } from "./profile-form";
-````
-
-## File: apps/platform/app/(app)/home/account/profile/profile-form.tsx
-````typescript
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useGraphyMutation } from "@packages/graphy/react";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Input } from "@packages/ui-common/shadcn/components/ui/input";
-import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { gql } from "~/generated/graphql";
+import { usePushPermission } from "~/hooks/use-push-permission";
 import { useRosetta } from "~/lib/i18n.client";
-⋮----
-type Values = z.infer<typeof schema>;
 ````
 
-## File: apps/platform/app/(app)/home/account/security/page.tsx
+## File: apps/platform/app/(app)/home/account/security/email/page.tsx
+````typescript
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { redirect } from "next/navigation";
+import { getRosetta } from "~/lib/i18n.server";
+import { EmailForm } from "../email-form";
+````
+
+## File: apps/platform/app/(app)/home/account/security/passkeys/page.tsx
 ````typescript
 import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { ArrowRight, Check, Fingerprint, IdCard, Lock, Mail, Phone } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getRosetta } from "~/lib/i18n.server";
-import { UNSAFE_ROUTE } from "~/lib/route";
-import { EmailForm } from "./email-form";
-import { PasskeysList } from "./passkeys-list";
-import { PasswordForm } from "./password-form";
-import { PhoneForm } from "./phone-form";
-⋮----
-desc=
-⋮----
-doneLabel=
+import { ROUTE } from "~/lib/route";
+import { PasskeysList } from "../passkeys-list";
 ⋮----
 href=
+````
+
+## File: apps/platform/app/(app)/home/account/security/password/page.tsx
+````typescript
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { redirect } from "next/navigation";
+import { getRosetta } from "~/lib/i18n.server";
+import { PasswordForm } from "../password-form";
+````
+
+## File: apps/platform/app/(app)/home/account/security/phone/page.tsx
+````typescript
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { redirect } from "next/navigation";
+import { getRosetta } from "~/lib/i18n.server";
+import { PhoneForm } from "../phone-form";
 ````
 
 ## File: apps/platform/app/(app)/home/account/security/passkeys-list.tsx
@@ -4910,29 +4919,10 @@ function FORMAT_DATE(value: string | null | undefined): string
 function onDelete(id: string)
 ````
 
-## File: apps/platform/app/(app)/home/account/sessions/page.tsx
+## File: apps/platform/app/(app)/home/account/theme/page.tsx
 ````typescript
-import { getSupabaseServerSession } from "@packages/supabase/client.server";
-import { SUPABASE_JWT_DECODE_PAYLOAD } from "@packages/supabase/jwt";
-import { gql } from "~/generated/graphql";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { ThemeToggle } from "~/components/theme-toggle";
 import { getRosetta } from "~/lib/i18n.server";
-import { SessionsSection, type SessionsSectionSessionFragmentType } from "./sessions-section";
-````
-
-## File: apps/platform/app/(app)/home/account/layout.tsx
-````typescript
-import { getSupabaseServerUser } from "@packages/supabase/client.server";
-import { Logo } from "@packages/ui-common/logo";
-import { INITIALS_OF } from "@packages/utils/string";
-import { ArrowLeft, ChevronDown } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getRosetta } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { AccountMobileNav, AccountSidebar } from "./_components/sidebar";
-⋮----
-href=
 ````
 
 ## File: apps/platform/app/(app)/home/inbox/page.tsx
@@ -4945,25 +4935,6 @@ import { ROSETTA } from "~/lib/i18n";
 import { getServerLocale } from "~/lib/i18n.server";
 ⋮----
 export async function generateMetadata(props: PageProps<"/home/inbox">)
-````
-
-## File: apps/platform/app/(app)/home/invites/[invite_id]/page.tsx
-````typescript
-import { Logo } from "@packages/ui-common/logo";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { SINGLE } from "@packages/utils/array";
-import { INITIALS_OF } from "@packages/utils/string";
-import { ArrowRight, Check, X } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { getRosetta } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-⋮----
-type AcceptState = "valid" | "loggedout" | "expired" | "claimed" | "rejected";
-⋮----
-export async function generateMetadata(props: PageProps<"/home/invites/[invite_id]">): Promise<Metadata>
-⋮----
-<Link href=
 ````
 
 ## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/inbox/[conversation_id]/page.tsx
@@ -4982,79 +4953,57 @@ export async function generateMetadata(
 ): Promise<Metadata>
 ````
 
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/billing/page.tsx
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/onboarding/state.server.ts
 ````typescript
-import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { Copy, Download, Mail } from "lucide-react";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+import type { TenantOnboardingState } from "./state";
+⋮----
+export async function getTenantOnboardingState(tenant_id: number): Promise<TenantOnboardingState>
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/onboarding/state.ts
+````typescript
+export type TenantOnboardingStepId = "tenant_logo" | "first_member";
+export type TenantOnboardingStepStatus = "pending" | "done";
+⋮----
+export type TenantOnboardingState = {
+  tenant_id: number;
+  tenant_onboarded_at: string | null;
+  steps: Record<TenantOnboardingStepId, TenantOnboardingStepStatus>;
+};
+⋮----
+export function TENANT_COUNT_DONE(steps: TenantOnboardingState["steps"]): number
+⋮----
+export function TENANT_ONBOARDING_INCOMPLETE(state: TenantOnboardingState): boolean
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/organizations/create/page.tsx
+````typescript
+import { Building2 } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-⋮----
-type InvoiceStatus = "paid" | "refunded" | "failed";
-type Invoice = { id: string; date: string; amount: string; status: InvoiceStatus };
-⋮----
-export async function generateMetadata(
-  props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/billing">,
-): Promise<Metadata>
-````
-
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/external-access/actions.ts
-````typescript
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
-import { debug } from "~/lib/debug";
+import { getViewerTenantBySlug } from "~/hooks/get-viewer-tenants";
 import { getRosetta } from "~/lib/i18n.server";
-import { authedAction } from "~/lib/safe-action.server";
+import { ROUTE } from "~/lib/route";
+import { CreateOrganizationForm } from "./create-form";
 ⋮----
-type GrantAgencyAccessValues = z.infer<typeof grantAgencyAccessSchema>;
-⋮----
-type RevokeAgencyAccessValues = z.infer<typeof revokeAgencyAccessSchema>;
+export async function generateMetadata(): Promise<Metadata>
 ````
 
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/general/general-settings.tsx
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/tenant/general/tenant-general-settings.tsx
 ````typescript
-import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
+import { useGraphyMutation } from "@packages/graphy/react";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@packages/ui-common/shadcn/components/ui/select";
-import { Switch } from "@packages/ui-common/shadcn/components/ui/switch";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { Check, Globe, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { EntityLogoControls } from "~/components/entity-logo-controls";
+import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
 ⋮----
-type Access = "none" | "viewer" | "editor";
-⋮----
-type DomainRow = { domain: string; verified: boolean; meta: string };
-⋮----
-className=
-````
-
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/actions.ts
-````typescript
-import { randomBytes } from "node:crypto";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { debug } from "~/lib/debug";
-import { getRosetta } from "~/lib/i18n.server";
-import { captureMemberInvited } from "~/lib/posthog/events.server";
-import { authedAction } from "~/lib/safe-action.server";
-import { inviteMemberSchema } from "./schemas";
-⋮----
-function GENERATE_INVITATION_TOKEN(): string
+async function onSave()
 ````
 
 ## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/layout.tsx
@@ -5069,88 +5018,6 @@ import { getServerLocale } from "~/lib/i18n.server";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 ⋮----
 export default async function SettingsIndexPage(props: PageProps<"/t/[tenant_slug]/[organization_id]/settings">)
-````
-
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/dashboard-overview.tsx
-````typescript
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Card } from "@packages/ui-common/shadcn/components/ui/card";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import {
-  ArrowUpRight,
-  Box,
-  Circle,
-  CircleCheck,
-  FileText,
-  LayoutPanelLeft,
-  type LucideIcon,
-  Plus,
-  TrendingDown,
-  TrendingUp,
-  Users,
-} from "lucide-react";
-import type { Route } from "next";
-import Link from "next/link";
-import { useState } from "react";
-import { useRosetta } from "~/lib/i18n.client";
-⋮----
-type Period = "today" | "week" | "month";
-⋮----
-type StatKey = "members" | "projects" | "documents" | "storage";
-type Stat = {
-  key: StatKey;
-  value: string;
-  delta?: string;
-  up?: boolean;
-  subKey?: "storage_sub";
-  progress?: number;
-  Icon: LucideIcon;
-};
-⋮----
-type VerbKey = "invited" | "published" | "commented" | "joined" | "integration";
-type ActivityItem = { who: string; verb: VerbKey; target: string; time: string; initials: string; tone: string };
-⋮----
-type RoleKey = "owner" | "admin" | "editor" | "viewer";
-type TeamMember = { name: string; role: RoleKey; initials: string; you: boolean; tone: string };
-⋮----
-type ChecklistKey = "org" | "team" | "project" | "integration";
-type ChecklistStep = { key: ChecklistKey; done: boolean };
-⋮----
-sub=
-⋮----
-<CardHeading title=
-⋮----
-className=
-````
-
-## File: apps/platform/app/(app)/tenants/create/page.tsx
-````typescript
-import { Logo } from "@packages/ui-common/logo";
-import { Building2 } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { getRosetta } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { CreateTenantForm } from "./create-form";
-⋮----
-export async function generateMetadata(props: PageProps<"/tenants/create">): Promise<Metadata>
-````
-
-## File: apps/platform/app/(marketing)/legal/_components/sidebar.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ROUTE } from "~/lib/route";
-⋮----
-type LegalLocale = "es" | "en" | "pt";
-type LegalSection = "terms" | "privacy" | "cookies" | "dpa" | "security";
-⋮----
-function toLegalLocale(locale: string): LegalLocale
-⋮----
-export function LegalSidebar()
-⋮----
-className=
 ````
 
 ## File: apps/platform/app/(marketing)/legal/[section]/page.tsx
@@ -5182,70 +5049,11 @@ export async function generateMetadata(props: PageProps<"/legal/[section]">): Pr
 <Link href=
 ````
 
-## File: apps/platform/app/(marketing)/mcp/page.tsx
+## File: apps/platform/app/api/[transport]/route.ts
 ````typescript
-import { getSupabaseServerUser } from "@packages/supabase/client.server";
-import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
-import { Card, CardContent } from "@packages/ui-common/shadcn/components/ui/card";
-import { URL_NEW } from "@packages/utils/url";
-import { KeyRound, Plug, ShieldCheck, Terminal } from "lucide-react";
-import type { Metadata } from "next";
-import type { WebPage, WithContext } from "schema-dts";
-import { JsonLd } from "~/components/json-ld";
-import { APP_URL } from "~/lib/constants";
-import { getRosetta } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { McpPromptCta } from "./mcp-prompt-cta";
-⋮----
-export async function generateMetadata(props: PageProps<"/mcp">): Promise<Metadata>
-````
-
-## File: apps/platform/app/(marketing)/contact-booking.tsx
-````typescript
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { ArrowRight, Mail } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import { ROUTE } from "~/lib/route";
-⋮----
-type ContactBookingProps = {
-  locale: string;
-  labels: { week: string; timezone: string; book: string; write: string };
-  days: string[];
-};
-⋮----
-className=
-⋮----
-<Link href=
-````
-
-## File: apps/platform/app/(marketing)/page.tsx
-````typescript
-import { getSupabaseServerUser } from "@packages/supabase/client.server";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@packages/ui-common/shadcn/components/ui/accordion";
-import { Avatar, AvatarFallback } from "@packages/ui-common/shadcn/components/ui/avatar";
-import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Card, CardContent } from "@packages/ui-common/shadcn/components/ui/card";
-import { INITIALS_OF } from "@packages/utils/string";
-import { URL_NEW } from "@packages/utils/url";
-import { ArrowRight, Check, Sparkles } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-import type { Organization, WebSite, WithContext } from "schema-dts";
-import { JsonLd } from "~/components/json-ld";
-import { APP_URL } from "~/lib/constants";
-import { getRosetta } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { ContactBooking } from "./contact-booking";
-⋮----
-export async function generateMetadata(props: PageProps<"/">): Promise<Metadata>
+import { createMcpHandler, withMcpAuth } from "mcp-handler";
+import { registerTools } from "~/lib/mcp/register";
+import { mcpTokenVerify } from "~/lib/mcp/token";
 ````
 
 ## File: apps/platform/app/api/inbound/email/route.ts
@@ -5361,6 +5169,23 @@ async function resolveChannelContact(
 type MessageChannel = "in_app" | "email" | "web_push" | "whatsapp" | "sms";
 ````
 
+## File: apps/platform/app/api/v1/agencies/[agency_id]/avatar/route.ts
+````typescript
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { createZodRoute } from "next-zod-route";
+import { z } from "zod";
+import { streamPublicAvatar } from "~/lib/avatar";
+````
+
+## File: apps/platform/app/auth/_components/auth-divider.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+⋮----
+export function AuthDivider(
+⋮----
+className=
+````
+
 ## File: apps/platform/app/auth/_components/auth-header.tsx
 ````typescript
 import { Logo } from "@packages/ui-common/logo";
@@ -5372,6 +5197,23 @@ import { ROUTE } from "~/lib/route";
 <Link href=
 ⋮----
 <h1 className=
+````
+
+## File: apps/platform/app/auth/_components/document-labels.ts
+````typescript
+import { RUT_FORMAT, RUT_NORMALIZE } from "@packages/utils/rut";
+⋮----
+type DocumentKind = "nin" | "passport";
+⋮----
+function IS_KNOWN_FORMAT(country: string, kind: DocumentKind): boolean
+⋮----
+export function DOCUMENT_VALUE_LABEL(country: string, kind: DocumentKind): string
+⋮----
+export function DOCUMENT_VALUE_PLACEHOLDER(country: string, kind: DocumentKind): string
+⋮----
+export function NORMALIZE_DOCUMENT(country: string, kind: DocumentKind, raw: string): string
+⋮----
+export function FORMAT_DOCUMENT(country: string, kind: DocumentKind, value: string): string
 ````
 
 ## File: apps/platform/app/auth/_components/document-triplet-fields.tsx
@@ -5419,46 +5261,6 @@ function handleChange(next: string)
 function handlePaste(event: React.ClipboardEvent<HTMLInputElement>)
 ````
 
-## File: apps/platform/app/auth/_components/passkey-sign-in-button.tsx
-````typescript
-import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Fingerprint } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
-⋮----
-function RESOLVE_TARGET(next: string): string
-⋮----
-export function PasskeySignInButton(
-⋮----
-function onClick()
-````
-
-## File: apps/platform/app/auth/callback/route.ts
-````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { type NextRequest, NextResponse } from "next/server";
-import { RESOLVE_AUTH_NEXT } from "~/lib/auth-next";
-import { debug } from "~/lib/debug";
-import { captureUserSignedIn } from "~/lib/posthog/events.server";
-⋮----
-export async function GET(request: NextRequest, ctx: RouteContext<"/auth/callback">)
-````
-
-## File: apps/platform/app/auth/confirm/route.ts
-````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import type { EmailOtpType } from "@supabase/supabase-js";
-import { type NextRequest, NextResponse } from "next/server";
-import { RESOLVE_AUTH_NEXT } from "~/lib/auth-next";
-import { debug } from "~/lib/debug";
-⋮----
-function IS_ALLOWED_TYPE(value: string | null): value is EmailOtpType
-⋮----
-export async function GET(request: NextRequest, ctx: RouteContext<"/auth/confirm">)
-````
-
 ## File: apps/platform/app/auth/document/accept/actions.ts
 ````typescript
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
@@ -5470,37 +5272,14 @@ import { action } from "~/lib/safe-action.server";
 import { sendOtpSchema, verifyOtpSchema } from "./schemas";
 ````
 
-## File: apps/platform/app/auth/document/actions.ts
+## File: apps/platform/app/auth/document/schemas.ts
 ````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import { redirect } from "next/navigation";
-import { debug } from "~/lib/debug";
-import { action } from "~/lib/safe-action.server";
-import { checkDocumentSchema, verifyLoginOtpSchema } from "./schemas";
+import { RUT_NORMALIZE, RUT_VALIDATE } from "@packages/utils/rut";
+import { z } from "zod";
 ⋮----
-type CheckDocumentResult =
-  | { kind: "error"; reason: "send_otp_failed"; message?: string }
-  | { kind: "redirect_signup"; country: string; doc_kind: "nin" | "passport"; value: string }
-  | { kind: "login"; channel: "sms" | "email"; contact: string; masked: string }
-  | { kind: "redirect_accept"; invitation_token: string }
-  | {
-      kind: "pick_invite";
-      invites: Array<{
-        organization_membership_id: number;
-        invitation_token: string;
-        organization_id: number;
-        organization_name: string;
-        tenant_id: number;
-        tenant_slug: string;
-        tenant_name: string;
-        invitation_expires_at: string | null;
-      }>;
-    };
+export type CheckDocumentValues = z.infer<typeof checkDocumentSchema>;
 ⋮----
-function maskPhone(phone: string): string
-⋮----
-function maskEmail(email: string): string
+export type VerifyLoginOtpValues = z.infer<typeof verifyLoginOtpSchema>;
 ````
 
 ## File: apps/platform/app/auth/email/actions.ts
@@ -5510,19 +5289,6 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
 import { action, formAction } from "~/lib/safe-action.server";
-````
-
-## File: apps/platform/app/auth/error/page.tsx
-````typescript
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { SINGLE } from "@packages/utils/array";
-import { TriangleAlert } from "lucide-react";
-import Link from "next/link";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { AuthCard } from "../_components/auth-card";
-⋮----
-<Link href=
 ````
 
 ## File: apps/platform/app/auth/logout/actions.ts
@@ -5536,15 +5302,24 @@ import { action } from "~/lib/safe-action.server";
 export async function signOutForm(_: FormData)
 ````
 
-## File: apps/platform/app/auth/onboarding/document/page.tsx
+## File: apps/platform/app/auth/onboarding/email/page.tsx
 ````typescript
-import { getCountries } from "~/hooks/get-countries";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { AuthCard } from "../../_components/auth-card";
 import { AuthHeader } from "../../_components/auth-header";
 import { StepShell } from "../_components/step-shell";
 import { getViewerOnboardingState } from "../state.server";
-import { DocumentForm } from "./document-form";
+import { EmailForm } from "./email-form";
+````
+
+## File: apps/platform/app/auth/onboarding/passkey/page.tsx
+````typescript
+import { getRosetta } from "~/lib/i18n.server";
+import { AuthCard } from "../../_components/auth-card";
+import { AuthHeader } from "../../_components/auth-header";
+import { StepShell } from "../_components/step-shell";
+import { getViewerOnboardingState } from "../state.server";
+import { PasskeyForm } from "./passkey-form";
 ````
 
 ## File: apps/platform/app/auth/onboarding/passkey/passkey-form.tsx
@@ -5562,35 +5337,36 @@ import { ROUTE, ROUTE_HREF } from "~/lib/route";
 function onEnroll()
 ````
 
-## File: apps/platform/app/auth/onboarding/profile/profile-form.tsx
+## File: apps/platform/app/auth/onboarding/password/page.tsx
 ````typescript
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useGraphyMutation } from "@packages/graphy/react";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Input } from "@packages/ui-common/shadcn/components/ui/input";
-import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { ArrowRight } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { gql } from "~/generated/graphql";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE, ROUTE_HREF } from "~/lib/route";
-⋮----
-type Values = z.infer<typeof schema>;
+import { IdentityChip } from "~/components/identity/chips";
+import { getRosetta } from "~/lib/i18n.server";
+import { AuthCard } from "../../_components/auth-card";
+import { AuthHeader } from "../../_components/auth-header";
+import { StepShell } from "../_components/step-shell";
+import { getViewerOnboardingState } from "../state.server";
+import { PasswordForm } from "./password-form";
 ````
 
-## File: apps/platform/app/auth/onboarding/state.server.ts
+## File: apps/platform/app/auth/onboarding/phone/page.tsx
 ````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { redirect } from "next/navigation";
-import { METHOD_ORDER, type OnboardingMethodStatus, type OnboardingState } from "./state";
-⋮----
-export async function getViewerOnboardingState(): Promise<OnboardingState>
-⋮----
-export function ASSERT_KNOWN_METHOD(id: string): id is (typeof METHOD_ORDER)[number]
+import { getRosetta } from "~/lib/i18n.server";
+import { AuthCard } from "../../_components/auth-card";
+import { AuthHeader } from "../../_components/auth-header";
+import { StepShell } from "../_components/step-shell";
+import { getViewerOnboardingState } from "../state.server";
+import { PhoneForm } from "./phone-form";
+````
+
+## File: apps/platform/app/auth/onboarding/profile/page.tsx
+````typescript
+import { ProfileAvatarControls } from "~/components/profile-avatar-controls";
+import { getRosetta } from "~/lib/i18n.server";
+import { AuthCard } from "../../_components/auth-card";
+import { AuthHeader } from "../../_components/auth-header";
+import { StepShell } from "../_components/step-shell";
+import { getViewerOnboardingState } from "../state.server";
+import { ProfileForm } from "./profile-form";
 ````
 
 ## File: apps/platform/app/auth/phone/actions.ts
@@ -5602,57 +5378,18 @@ import { AUTH_EXPOSE_ACCOUNT_EXISTENCE } from "~/lib/constants";
 import { action, formAction } from "~/lib/safe-action.server";
 ````
 
-## File: apps/platform/app/auth/phone/phone-step-form.tsx
+## File: apps/platform/app/auth/router/page.tsx
 ````typescript
-import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { ArrowRight, MessageCircle, Smartphone } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
-import { OtpField } from "../_components/otp-field";
-⋮----
-type Channel = "sms" | "whatsapp";
-⋮----
-type Props = {
-  phone: string;
-  next: string;
-  channels: Channel[];
-};
-⋮----
-function RESOLVE_TARGET(next: string): string
-⋮----
-function onSend(channel: Channel)
-⋮----
-function onVerify(e: React.FormEvent)
-````
-
-## File: apps/platform/app/auth/recover/page.tsx
-````typescript
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { KeyRound, Mail } from "lucide-react";
-import Link from "next/link";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { AuthBackLink } from "../_components/auth-back-link";
-import { AuthCard } from "../_components/auth-card";
-⋮----
-<Link href=
-````
-
-## File: apps/platform/app/auth/success/page.tsx
-````typescript
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { getSupabaseServerUserRedirect } from "@packages/supabase/client.server";
 import { SINGLE } from "@packages/utils/array";
-import { ArrowRight, Check } from "lucide-react";
-import Link from "next/link";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { AuthCard } from "../_components/auth-card";
+import { HOST_FROM_HEADERS } from "@packages/utils/headers";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { RESOLVE_AUTH_NEXT } from "~/lib/auth-next";
+import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
+import { getViewerOnboardingState } from "../onboarding/state.server";
 ⋮----
-<Link href=
+export default async function AuthRouterPage(props: PageProps<"/auth/router">)
 ````
 
 ## File: apps/platform/app/auth/actions.ts
@@ -5689,6 +5426,15 @@ import { AuthHeader } from "./_components/auth-header";
 import { OAuthSection } from "./_components/oauth-section";
 ````
 
+## File: apps/platform/app/health/route.ts
+````typescript
+import { NextResponse } from "next/server";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+⋮----
+export async function GET(req: Request, ctx: RouteContext<"/health">)
+````
+
 ## File: apps/platform/components/inbox/actions.ts
 ````typescript
 import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
@@ -5701,132 +5447,39 @@ export async function actionArchive(conversation_id: string): Promise<void>
 export async function actionPostMessage(conversation_id: string, body: string): Promise<string>
 ````
 
-## File: apps/platform/components/inbox/conversation-thread.tsx
+## File: apps/platform/components/shell/mobile-sheet.tsx
 ````typescript
-import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Textarea } from "@packages/ui-common/shadcn/components/ui/textarea";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { Archive, ArrowLeft, MessageSquare, Send } from "lucide-react";
-import type { Route } from "next";
-import Link from "next/link";
-import { useRef, useState } from "react";
-import { useRosetta } from "~/lib/i18n.client";
-import { actionArchive, actionPostMessage } from "./actions";
+import { X } from "lucide-react";
+import type { ReactNode } from "react";
+import { useEffect } from "react";
 ⋮----
-type Message = {
-  conversation_message_id: string;
-  message_body: string | null;
-  message_direction: string;
-  message_author: string;
-  message_channel: string | null;
-  message_priority: string | null;
-  message_created_at: string;
-  message_read_at: string | null;
-};
+export function Scrim(
 ⋮----
-function CHANNEL_LABEL(channel: string | null, t: ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"]): string
+function onKey(event: KeyboardEvent)
+````
+
+## File: apps/platform/components/floating-chrome.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import type { ComponentProps } from "react";
+import { LocaleToggle } from "~/components/locale-toggle";
+import { ThemeToggle } from "~/components/theme-toggle";
 ⋮----
-function PRIORITY_LABEL(priority: string | null, t: ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"]): string
-⋮----
-function PRIORITY_VARIANT(priority: string | null): "default" | "secondary" | "destructive" | "outline"
-⋮----
-async function handleSend()
-⋮----
-async function handleArchive()
-⋮----
-function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>)
-⋮----
-<Link href=
+export function FloatingChrome(
 ⋮----
 <div className=
-⋮----
-className=
-⋮----
-<Badge variant=
 ````
 
-## File: apps/platform/components/inbox/scope.ts
+## File: apps/platform/components/graphy-provider.tsx
 ````typescript
-import type { Route } from "next";
-import { ROUTE } from "~/lib/route";
+import { GraphyClientSupabase } from "@packages/graphy/graphy";
+import { GraphyProvider } from "@packages/graphy/react";
+import { useSupabase } from "@packages/supabase/react";
+import { URL_NEW } from "@packages/utils/url";
+import { useEffect, useMemo, useState } from "react";
 ⋮----
-export type InboxScope =
-  | { kind: "personal" }
-  | { kind: "organization"; tenant_slug: string; organization_id: number }
-  | { kind: "agency"; agency_slug: string; agency_id: string };
-⋮----
-export function SCOPE_RPC_ARGS(scope: InboxScope):
-⋮----
-export function SCOPE_INBOX_HREF(scope: InboxScope): Route
-⋮----
-export function SCOPE_DETAIL_HREF(scope: InboxScope, conversation_id: string): Route
-````
-
-## File: apps/platform/components/shell/nav-tree.ts
-````typescript
-import { CreditCard, ExternalLink, Home, type LucideIcon, Settings, Users } from "lucide-react";
-import type { Route } from "next";
-import { ROUTE, ROUTE_HREF } from "~/lib/route";
-⋮----
-export type NavLeaf = {
-  id: string;
-  label: string;
-  href: Route;
-  path: string;
-  Icon: LucideIcon;
-  badge?: number;
-  exact?: boolean;
-};
-⋮----
-export type NavGroup = {
-  id: string;
-  label: string;
-  Icon: LucideIcon;
-  defaultOpen?: boolean;
-  children: NavLeaf[];
-};
-⋮----
-export type NavItem = NavLeaf | NavGroup;
-⋮----
-export type NavLabels = {
-  navHome: string;
-  navSettings: string;
-  navGeneral: string;
-  navMembers: string;
-  navBilling: string;
-  navExternalAccess: string;
-};
-⋮----
-export function IS_NAV_GROUP(item: NavItem): item is NavGroup
-⋮----
-export function BUILD_NAV_TREE(tenant_slug: string, organization_id: number, labels: NavLabels): NavItem[]
-⋮----
-export function LEAF_IS_ACTIVE(pathname: string, leaf: NavLeaf): boolean
-⋮----
-export function GROUP_CONTAINS_ACTIVE(pathname: string, group: NavGroup): boolean
-⋮----
-export function PICK_ACTIVE_LEAF_ID(items: NavItem[], pathname: string): string | null
-````
-
-## File: apps/platform/components/markdown.tsx
-````typescript
-import { IS_EXTERNAL } from "@packages/utils/url";
-import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-import { UNSAFE_ROUTE } from "~/lib/route";
-⋮----
-function MarkdownA(
-⋮----
-return (
-      <a href={href} target="_blank" rel="noopener noreferrer">
-        {children}
-      </a>
-    );
-⋮----
-return <Link href=
-⋮----
-export function Markdown(
+export function GraphyClientProvider(
 ````
 
 ## File: apps/platform/components/posthog-provider.tsx
@@ -5851,88 +5504,20 @@ export function usePwaRegister()
 export function PwaRegister()
 ````
 
-## File: apps/platform/content/legal/en/cookies.md
-````markdown
-# Cookie policy
-
-_Last updated: May 26, 2026_
-
-SaaS Template uses session cookies for authentication and to remember your locale preference. We do not use third-party tracking cookies. The final text will be published before the production launch.
+## File: apps/platform/hooks/get-countries.ts
+````typescript
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
+import { cache } from "react";
+import { gql } from "~/generated/graphql";
+import { FilterIs, OrderByDirection } from "~/generated/graphql/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+⋮----
+export type CountryGetFragmentType = ResultOf<typeof CountryGetFragment>;
+⋮----
+type CountriesGetVars = VariablesOf<typeof CountriesGet>;
 ````
 
-## File: apps/platform/content/legal/en/privacy.md
-````markdown
-# Privacy policy
-
-_Last updated: May 26, 2026_
-
-SaaS Template processes personal data under the framework of Law 21.719 (Chile). This policy will describe what data we collect, for what purpose, the rights of the data subject, and the procedures to exercise them. The final text will be published before the production launch.
-````
-
-## File: apps/platform/content/legal/en/terms.md
-````markdown
-# Terms of service
-
-_Last updated: May 26, 2026_
-
-This document describes the rules for using the SaaS Template platform, the mutual obligations between SaaS Template and its customers (companies and workers), and liability limits. The final text will be published before the production launch.
-````
-
-## File: apps/platform/content/legal/es/cookies.md
-````markdown
-# Política de cookies
-
-_Última actualización: 26 de mayo de 2026_
-
-SaaS Template usa cookies de sesión para autenticación y para guardar tu preferencia de idioma. No usamos cookies de tracking de terceros. El texto definitivo se publicará antes del lanzamiento a producción.
-````
-
-## File: apps/platform/content/legal/es/privacy.md
-````markdown
-# Política de privacidad
-
-_Última actualización: 26 de mayo de 2026_
-
-SaaS Template procesa datos personales bajo el marco de la Ley 21.719 (Chile). Esta política describirá qué datos recolectamos, con qué finalidad, los derechos del titular y los procedimientos para ejercerlos. El texto definitivo se publicará antes del lanzamiento a producción.
-````
-
-## File: apps/platform/content/legal/es/terms.md
-````markdown
-# Términos de servicio
-
-_Última actualización: 26 de mayo de 2026_
-
-Este documento describe las reglas de uso de la plataforma SaaS Template, las obligaciones recíprocas entre SaaS Template y sus clientes (empresas y trabajadores), y los límites de responsabilidad. El texto definitivo se publicará antes del lanzamiento a producción.
-````
-
-## File: apps/platform/content/legal/pt/cookies.md
-````markdown
-# Política de cookies
-
-_Última atualização: 26 de maio de 2026_
-
-A SaaS Template usa cookies de sessão para autenticação e para lembrar a sua preferência de idioma. Não usamos cookies de rastreamento de terceiros. O texto definitivo será publicado antes do lançamento em produção.
-````
-
-## File: apps/platform/content/legal/pt/privacy.md
-````markdown
-# Política de privacidade
-
-_Última atualização: 26 de maio de 2026_
-
-A SaaS Template processa dados pessoais sob o marco da Lei 21.719 (Chile). Esta política descreverá quais dados coletamos, com qual finalidade, os direitos do titular e os procedimentos para exercê-los. O texto definitivo será publicado antes do lançamento em produção.
-````
-
-## File: apps/platform/content/legal/pt/terms.md
-````markdown
-# Termos de serviço
-
-_Última atualização: 26 de maio de 2026_
-
-Este documento descreve as regras de uso da plataforma SaaS Template, as obrigações recíprocas entre a SaaS Template e seus clientes (empresas e trabalhadores), e os limites de responsabilidade. O texto definitivo será publicado antes do lançamento em produção.
-````
-
-## File: apps/platform/hooks/get-viewer-agencies.ts
+## File: apps/platform/hooks/get-viewer-organizations.ts
 ````typescript
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { notFound } from "next/navigation";
@@ -5940,13 +5525,68 @@ import { cache } from "react";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 ⋮----
-export type ViewerAgencyGetFragmentType = ResultOf<typeof ViewerAgencyGetFragment>;
+export type ViewerOrganizationGetFragmentType = ResultOf<typeof ViewerOrganizationGetFragment>;
 ⋮----
-type ViewerAgenciesGetVars = VariablesOf<typeof ViewerAgenciesGet>;
+type ViewerOrganizationsGetVars = VariablesOf<typeof ViewerOrganizationsGet>;
 ⋮----
-export async function getViewerAgencyByIdAssert(agency_id: string)
+export async function getViewerOrganizationByIdAssert(organization_id: number)
 ⋮----
-export async function getViewerAgencyBySlugAssert(agency_slug: string)
+export async function getViewerOrganizationBySlugAssert(organization_slug: string)
+````
+
+## File: apps/platform/hooks/get-viewer-tenants.ts
+````typescript
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
+import { notFound } from "next/navigation";
+import { cache } from "react";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+⋮----
+export type ViewerTenantGetFragmentType = ResultOf<typeof ViewerTenantGetFragment>;
+⋮----
+type ViewerTenantsGetVars = VariablesOf<typeof ViewerTenantsGet>;
+⋮----
+export async function getViewerTenantByIdAssert(tenant_id: number)
+⋮----
+export async function getViewerTenantBySlugAssert(tenant_slug: string)
+````
+
+## File: apps/platform/hooks/use-countries.ts
+````typescript
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
+import { useGraphyQuery } from "@packages/graphy/react";
+import type { SWRConfiguration } from "swr";
+import { gql } from "~/generated/graphql";
+import { FilterIs, OrderByDirection } from "~/generated/graphql/graphql";
+⋮----
+export type CountryHookUseFragmentType = ResultOf<typeof CountryHookUseFragment>;
+⋮----
+type CountriesUseData = ResultOf<typeof CountriesUse>;
+type CountriesUseVars = VariablesOf<typeof CountriesUse>;
+⋮----
+export function useCountries(options?: CountriesUseVars, config?: SWRConfiguration<CountriesUseData>)
+````
+
+## File: apps/platform/hooks/use-intl.ts
+````typescript
+import { useMemo } from "react";
+import { useLocale } from "~/lib/i18n.client";
+⋮----
+export function useIntlDateTimeFormat(options?: Intl.DateTimeFormatOptions): Intl.DateTimeFormat
+⋮----
+export function useIntlNumberFormat(options?: Intl.NumberFormatOptions): Intl.NumberFormat
+⋮----
+export function useIntlRelativeTimeFormat(options?: Intl.RelativeTimeFormatOptions): Intl.RelativeTimeFormat
+⋮----
+export function useIntlListFormat(options?: Intl.ListFormatOptions): Intl.ListFormat
+⋮----
+export function useIntlPluralRules(options?: Intl.PluralRulesOptions): Intl.PluralRules
+⋮----
+export function useIntlCollator(options?: Intl.CollatorOptions): Intl.Collator
+⋮----
+export function useIntlSegmenter(options?: Intl.SegmenterOptions): Intl.Segmenter
+⋮----
+export function useIntlDisplayNames(options: Intl.DisplayNamesOptions): Intl.DisplayNames
 ````
 
 ## File: apps/platform/hooks/use-onboarding.ts
@@ -5971,7 +5611,7 @@ async function sendPhoneOtp(phone: string)
 async function verifyPhoneOtp(phone: string, token: string)
 ````
 
-## File: apps/platform/hooks/use-viewer-agencies.ts
+## File: apps/platform/hooks/use-viewer-organizations.ts
 ````typescript
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { useGraphyQuery } from "@packages/graphy/react";
@@ -5979,18 +5619,64 @@ import { useSupabaseUser } from "@packages/supabase/react";
 import type { SWRConfiguration } from "swr";
 import { gql } from "~/generated/graphql";
 ⋮----
-export type ViewerAgencyUseFragmentType = ResultOf<typeof ViewerAgencyUseFragment>;
+export type ViewerOrganizationUseFragmentType = ResultOf<typeof ViewerOrganizationUseFragment>;
 ⋮----
-type ViewerAgenciesUseData = ResultOf<typeof ViewerAgenciesUse>;
-type ViewerAgenciesUseVars = VariablesOf<typeof ViewerAgenciesUse>;
-type ViewerAgencyByIdUseData = ResultOf<typeof ViewerAgencyByIdUse>;
-type ViewerAgencyBySlugUseData = ResultOf<typeof ViewerAgencyBySlugUse>;
+type ViewerOrganizationsUseData = ResultOf<typeof ViewerOrganizationsUse>;
+type ViewerOrganizationsUseVars = VariablesOf<typeof ViewerOrganizationsUse>;
+type ViewerOrganizationByIdUseData = ResultOf<typeof ViewerOrganizationByIdUse>;
+type ViewerOrganizationBySlugUseData = ResultOf<typeof ViewerOrganizationBySlugUse>;
 ⋮----
-export function useViewerAgencies(options?: ViewerAgenciesUseVars, config?: SWRConfiguration<ViewerAgenciesUseData>)
+export function useViewerOrganizations(
+  options?: ViewerOrganizationsUseVars,
+  config?: SWRConfiguration<ViewerOrganizationsUseData>,
+)
 ⋮----
-export function useViewerAgencyById(agency_id: string, config?: SWRConfiguration<ViewerAgencyByIdUseData>)
+export function useViewerOrganization(
+  organization_id: number,
+  config?: SWRConfiguration<ViewerOrganizationByIdUseData>,
+)
 ⋮----
-export function useViewerAgencyBySlug(agency_slug: string, config?: SWRConfiguration<ViewerAgencyBySlugUseData>)
+export function useViewerOrganizationBySlug(
+  organization_slug: string,
+  config?: SWRConfiguration<ViewerOrganizationBySlugUseData>,
+)
+````
+
+## File: apps/platform/hooks/use-viewer-profile.ts
+````typescript
+import type { ResultOf } from "@graphql-typed-document-node/core";
+import { useGraphyQuery } from "@packages/graphy/react";
+import { useSupabaseUser } from "@packages/supabase/react";
+import type { SWRConfiguration } from "swr";
+import { gql } from "~/generated/graphql";
+⋮----
+export type ViewerProfileUseFragmentType = ResultOf<typeof ViewerProfileUseFragment>;
+⋮----
+type ViewerProfileUseData = ResultOf<typeof ViewerProfileUse>;
+⋮----
+export function useViewerProfile(config?: SWRConfiguration<ViewerProfileUseData>)
+````
+
+## File: apps/platform/hooks/use-viewer-tenants.ts
+````typescript
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
+import { useGraphyQuery } from "@packages/graphy/react";
+import { useSupabaseUser } from "@packages/supabase/react";
+import type { SWRConfiguration } from "swr";
+import { gql } from "~/generated/graphql";
+⋮----
+export type ViewerTenantUseFragmentType = ResultOf<typeof ViewerTenantUseFragment>;
+⋮----
+type ViewerTenantsUseData = ResultOf<typeof ViewerTenantsUse>;
+type ViewerTenantsUseVars = VariablesOf<typeof ViewerTenantsUse>;
+type ViewerTenantByIdUseData = ResultOf<typeof ViewerTenantByIdUse>;
+type ViewerTenantBySlugUseData = ResultOf<typeof ViewerTenantBySlugUse>;
+⋮----
+export function useViewerTenants(options?: ViewerTenantsUseVars, config?: SWRConfiguration<ViewerTenantsUseData>)
+⋮----
+export function useViewerTenantById(tenant_id: number, config?: SWRConfiguration<ViewerTenantByIdUseData>)
+⋮----
+export function useViewerTenantBySlug(tenant_slug: string, config?: SWRConfiguration<ViewerTenantBySlugUseData>)
 ````
 
 ## File: apps/platform/lib/conversations/agent/agent-loop.ts
@@ -5999,6 +5685,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import type { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateText, stepCountIs } from "ai";
+import { dedent } from "ts-dedent";
 import { debug } from "~/lib/debug";
 import type { ChannelSender } from "../channel-sender";
 import { sendEmailNotification } from "../channel-sender-email";
@@ -6065,56 +5752,70 @@ import type { ChannelSender, ChannelSenderInput, ChannelSenderResult } from "./c
 function ensureVapidConfigured(): boolean
 ````
 
-## File: apps/platform/lib/conversations/inbound-resolver.ts
+## File: apps/platform/lib/graphy/graphy.service.ts
 ````typescript
-import type { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { GraphyClientSupabase } from "@packages/graphy/graphy";
+import { ENV } from "@packages/utils/env";
+import { URL_NEW } from "@packages/utils/url";
+import { cache } from "react";
+````
+
+## File: apps/platform/lib/mcp/tools/profile.ts
+````typescript
+import { z } from "zod";
+import { gql } from "~/generated/graphql";
+import { debug } from "~/lib/debug";
+import { getGraphyFromMcpAssert } from "~/lib/mcp/clients";
+import { type InferArgs, type McpContext, McpTool, type McpToolStream } from "~/lib/mcp/tool";
+⋮----
+type UpdateProfileArgs = InferArgs<typeof UpdateProfileSchema>;
+⋮----
+export class UpdateProfileTool extends McpTool<typeof UpdateProfileSchema>
+⋮----
+async *handle(args: UpdateProfileArgs, ctx: McpContext): McpToolStream
+````
+
+## File: apps/platform/lib/mcp/register.ts
+````typescript
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { debug } from "~/lib/debug";
+import type { McpTool } from "~/lib/mcp/tool";
+import {
+  GrantAgencyMemberPermissionTool,
+  GrantAgencyOrgAccessTool,
+  InviteAffiliateTool,
+  RevokeAgencyMemberPermissionTool,
+  RevokeAgencyOrgAccessTool,
+  UpdateAffiliateTool,
+} from "~/lib/mcp/tools/agency-admin";
+import { ListOrganizationMembersTool } from "~/lib/mcp/tools/members";
+import {
+  GrantMemberPermissionTool,
+  RevokeMemberPermissionTool,
+  SetMemberPermissionsTool,
+  UpdateMemberStatusTool,
+} from "~/lib/mcp/tools/permissions";
+import { CreatePresetTool, DeletePresetTool, UpdatePresetTool } from "~/lib/mcp/tools/presets";
+import { UpdateProfileTool } from "~/lib/mcp/tools/profile";
+import { FinishTenantOnboardingTool, RenameOrganizationTool, RenameTenantTool } from "~/lib/mcp/tools/settings";
+import { ListOrganizationsTool, ListTenantsTool } from "~/lib/mcp/tools/tenants";
+import { WhoamiTool } from "~/lib/mcp/tools/whoami";
+⋮----
+export function registerTools(server: McpServer): void
+````
+
+## File: apps/platform/lib/mcp/token.ts
+````typescript
+import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
+import { HOST_FROM_HEADERS } from "@packages/utils/headers";
+import { ARRAY_FORCED } from "@packages/utils/iterators";
+import { createClient } from "@supabase/supabase-js";
+import { createRemoteJWKSet, decodeJwt, jwtVerify } from "jose";
 import { debug } from "~/lib/debug";
 ⋮----
-export type InboundChannel = "email" | "whatsapp" | "sms";
+function createAnonClientForValidation()
 ⋮----
-export interface InboundParams {
-  channel: InboundChannel;
-  senderAddress: string;
-  replyToken: string | null;
-  providerMessageId: string;
-  body: string;
-  rawPayload: Record<string, unknown>;
-  signatureVerified: boolean;
-}
-⋮----
-export interface InboundContext {
-  conversationMessageId: string;
-  conversationId: string;
-  profileId: string;
-  organizationId: number | null;
-  agencyId: string | null;
-  tenantId: number | null;
-  alreadyResolved: boolean;
-  idempotencyKey: string;
-  threadMessages: Array<{
-    role: "user" | "assistant";
-    content: string;
-  }>;
-  channel: InboundChannel;
-  body: string;
-}
-⋮----
-export interface InboundRejection {
-  reason: "sender_not_verified" | "conversation_not_found" | "no_membership" | "error";
-  detail: string;
-}
-⋮----
-export type ResolveInboundResult = { ok: true; ctx: InboundContext } | { ok: false; rejection: InboundRejection };
-⋮----
-export async function resolveInbound(
-  admin: ReturnType<typeof createSupabaseServiceRoleClient>,
-  params: InboundParams,
-): Promise<ResolveInboundResult>
-⋮----
-type MessageChannel = "in_app" | "email" | "web_push" | "whatsapp" | "sms";
-⋮----
-// system/agent outbound = assistant; user inbound = user
+export async function mcpTokenVerify(req: Request, bearerToken?: string): Promise<AuthInfo | undefined>
 ````
 
 ## File: apps/platform/lib/agencies.ts
@@ -6181,6 +5882,26 @@ export class ErrorSafeActionEmpty extends ErrorSafeAction
 public constructor()
 ````
 
+## File: apps/platform/playwright.config.ts
+````typescript
+import fs from "node:fs";
+import path from "node:path";
+import { defineConfig, devices } from "@playwright/test";
+⋮----
+/**
+ * Base URL for E2E tests, resolved from environment variables.
+ * Conductor assigns `PORT` per parallel instance; E2E suite must read the same value.
+ * Matches dev script port resolution in `apps/platform/package.json` (`--port ${PORT:-7003}`).
+ */
+````
+
+## File: apps/platform/vitest.config.ts
+````typescript
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig } from "vitest/config";
+````
+
 ## File: packages/api-ip/src/geo.ts
 ````typescript
 import DataLoader from "dataloader";
@@ -6219,6 +5940,242 @@ private static async batch(ips: readonly string[]): Promise<(IpApiResult | null)
 }
 ````
 
+## File: packages/intl/src/intl.ts
+````typescript
+import { RosettaImpl } from "@packages/rosetta/rosetta";
+import type { Maybe } from "@packages/utils/maybe";
+import { FORMAT_CURRENCY_CLF, FORMAT_CURRENCY_CLP, IS_FINITE, NUMBER } from "@packages/utils/number";
+import { SPACE_NON_BREAKING } from "@packages/utils/string";
+import { DURATION_FROM_SQL, TEMPORAL, type Temporal, TZ } from "@packages/utils/temporal";
+⋮----
+function TO_ZONED(value: Date | string | Temporal.ZonedDateTime | Temporal.PlainDateTime): Temporal.ZonedDateTime
+⋮----
+export class IntlNumberParser
+⋮----
+constructor(locale: string, options?: Intl.NumberFormatOptions)
+⋮----
+public parse(string: string): number
+⋮----
+str = str.replace(this.group, ""); // TODO: not sure about this "if"
+⋮----
+export class IntlUniversalFormatter
+⋮----
+constructor(public readonly locale: string)
+⋮----
+public formatPCT(
+    input: string | number | bigint | Intl.StringNumericLiteral,
+    digits?: number,
+    options?: Intl.NumberFormatOptions,
+): string
+⋮----
+public formatPCTRange(
+    inputs: (string | number | bigint | Intl.StringNumericLiteral)[],
+    digits?: number,
+    options?: Intl.NumberFormatOptions,
+): string
+⋮----
+public formatNumber(
+    input: string | number | bigint | Intl.StringNumericLiteral,
+    options?: Intl.NumberFormatOptions,
+): string
+⋮----
+public formatDate(
+    input: Temporal.PlainDate,
+    options: Intl.DateTimeFormatOptions = {
+      dateStyle: "long",
+    },
+): string
+⋮----
+public formatDateTime(
+    input: Date | Temporal.ZonedDateTime | string,
+    options: Intl.DateTimeFormatOptions = {
+      dateStyle: "long",
+      timeStyle: "short",
+      hour12: false,
+    },
+): string
+⋮----
+public formatTokens(input: string | number | bigint | Intl.StringNumericLiteral, options?: Intl.NumberFormatOptions)
+⋮----
+public formatMoney(
+    input: string | number | bigint | Intl.StringNumericLiteral,
+    currency: "USD" | "EUR" | "CLP" | "CLF" | `U${string}` | string | undefined | null,
+    options?: Intl.NumberFormatOptions | null,
+): string
+⋮----
+public formatMoneyToParts(
+    input: string | number | bigint | Intl.StringNumericLiteral,
+    currency: "USD" | "EUR" | "CLP" | "CLF" | `U${string}` | string | undefined | null,
+    options?: Intl.NumberFormatOptions | null,
+): Intl.NumberFormatPart[]
+⋮----
+protected formatMoneyFormatter(
+    input: string | number | bigint | Intl.StringNumericLiteral,
+    currency: "USD" | "EUR" | "CLP" | "CLF" | `U${string}` | string | undefined | null,
+    options?: Intl.NumberFormatOptions | null,
+):
+⋮----
+public formatRelativeTime(
+    value: number,
+    unit: Intl.RelativeTimeFormatUnit,
+    options?: Intl.RelativeTimeFormatOptions,
+): string
+⋮----
+public formatDisplayName(code: string, options: Intl.DisplayNamesOptions): string
+⋮----
+public formatList(list: Iterable<string>, options?: Intl.ListFormatOptions): string
+⋮----
+public formatInterval(interval: string, options?: IntlDurationFormatOptions): string
+⋮----
+public formatIntervalRange(
+    start: Date | string | Temporal.ZonedDateTime | Temporal.PlainDateTime,
+    end: Date | string | Temporal.ZonedDateTime | Temporal.PlainDateTime,
+    options?: IntlDurationFormatOptions,
+): string
+⋮----
+public formatDuration(duration: Temporal.Duration, options?: IntlDurationFormatOptions): string
+⋮----
+export type IntlNumberFormatPatchedOptions = Intl.NumberFormatOptions;
+⋮----
+export class IntlNumberFormatPatched implements Intl.NumberFormat
+⋮----
+public constructor(
+    locale: string,
+    private readonly options?: IntlNumberFormatPatchedOptions,
+)
+⋮----
+return this.wrapped.format(value).replace(SPACE, "").replace(" ", ""); // remove space
+⋮----
+/**
+   * Format a value if it is a number or bigint, on nil value returns undefined.
+   */
+public formatLoose(value: number | bigint | Intl.StringNumericLiteral): string;
+public formatLoose(value: Maybe<never>): undefined;
+public formatLoose(value: Maybe<number | bigint | Intl.StringNumericLiteral>): string | undefined;
+public formatLoose(value: Maybe<number | bigint | Intl.StringNumericLiteral>): string | undefined
+⋮----
+export type IntlDurationFormatOptions = {
+  localeMatcher?: "best fit" | "lookup";
+  numberingSystem?: string;
+  style?: "long" | "short" | "narrow" | "digital";
+  years?: "long" | "short" | "narrow";
+  yearsDisplay?: "always" | "auto";
+  months?: "long" | "short" | "narrow";
+  monthsDisplay?: "always" | "auto";
+  weeks?: "long" | "short" | "narrow";
+  weeksDisplay?: "always" | "auto";
+  days?: "long" | "short" | "narrow";
+  daysDisplay?: "always" | "auto";
+  hours?: "long" | "short" | "narrow" | "numeric" | "2-digit";
+  hoursDisplay?: "always" | "auto";
+  minutes?: "long" | "short" | "narrow" | "numeric" | "2-digit";
+  minutesDisplay?: "always" | "auto";
+  seconds?: "long" | "short" | "narrow" | "numeric" | "2-digit";
+  secondsDisplay?: "always" | "auto";
+  milliseconds?: "long" | "short" | "narrow" | "numeric";
+  millisecondsDisplay?: "always" | "auto";
+  microseconds?: "long" | "short" | "narrow" | "numeric";
+  microsecondsDisplay?: "always" | "auto";
+  nanoseconds?: "long" | "short" | "narrow" | "numeric";
+  nanosecondsDisplay?: "always" | "auto";
+  fractionalDigits?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+};
+⋮----
+export class IntlDurationFormatPatched
+⋮----
+constructor(
+⋮----
+public format(duration: Temporal.Duration): string
+⋮----
+function getUnitStyle(unit: keyof IntlDurationFormatOptions): "long" | "short" | "narrow" | "numeric" | "2-digit"
+⋮----
+function shouldDisplay(value: number, display?: "always" | "auto"): boolean
+⋮----
+function formatUnit(
+      value: number,
+      unit: Intl.RelativeTimeFormatUnit,
+      unitStyle: "long" | "short" | "narrow",
+): string
+⋮----
+function getUnitName(
+      value: number,
+      unit: Intl.RelativeTimeFormatUnit,
+      baseStyle: "long" | "short" | "narrow" | "2-digit",
+): string
+⋮----
+// Helper to format numeric values (for digital style)
+function formatNumeric(value: number, pad: number = 2): string
+````
+
+## File: packages/intl/package.json
+````json
+{
+  "name": "@packages/intl",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "build:dry": "tsc --noEmit",
+    "format": "biome check --diagnostic-level=error ."
+  },
+  "dependencies": {
+    "@packages/rosetta": "workspace:*",
+    "@packages/utils": "workspace:*",
+    "temporal-polyfill": "^1.0.1"
+  },
+  "devDependencies": {
+    "@packages/typescript-config": "workspace:*",
+    "@types/node": "^24.12.4",
+    "typescript": "^6.0.3"
+  }
+}
+````
+
+## File: packages/intl/tsconfig.json
+````json
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@packages/typescript-config/react-library.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "module": "preserve",
+    "moduleResolution": "bundler"
+  },
+  "include": ["src"]
+}
+````
+
+## File: packages/react-email/src/templates/welcome_email.tsx
+````typescript
+import { LocaleProvider, useLocale, useRosetta } from "@packages/rosetta/use-rosetta";
+import {
+  Body,
+  Button,
+  Container,
+  Head,
+  Heading,
+  Hr,
+  Html,
+  Preview,
+  Section,
+  Tailwind,
+  Text,
+} from "@react-email/components";
+⋮----
+export interface WelcomeEmailProps {
+  empleadoNombre: string;
+  empresaNombre: string;
+  loginUrl: string;
+  locale?: string;
+}
+⋮----
+export function WelcomeEmail(
+````
+
 ## File: packages/react-hooks/src/use-state-cookie.ts
 ````typescript
 import { useCallback, useRef, useState } from "react";
@@ -6238,122 +6195,30 @@ export function useStateCookie<T>(
 ): [T, (next: T | ((prev: T) => T)) => void]
 ````
 
-## File: packages/react-pdf/src/templates/helloworld.tsx
+## File: packages/rosetta/src/locale-config.ts
 ````typescript
-import { LocaleProvider, useRosetta } from "@packages/rosetta/use-rosetta";
-import { Document, Link, Page, Text, View } from "@react-pdf/renderer";
-import { tw } from "../lib/tw";
+import { BOOLEAN } from "@packages/utils/boolean";
 ⋮----
-export interface HelloWorldTemplateProps {
-  locale?: string;
-}
-⋮----
-export function HelloWorldTemplate(
-⋮----
-<Text style=
-⋮----
-<View style=
-⋮----
-<View key=
-⋮----
-style=
-````
-
-## File: packages/rosetta/src/rosetta.ts
-````typescript
-import { ErrorExtendable } from "@packages/utils/errors";
-import dlv from "dlv";
-import tmpl from "templite";
-⋮----
-type Key = string | number | bigint | symbol;
-⋮----
-type PropType<T, Path extends Key> = string extends Path
-  ? unknown
-  : Path extends keyof T
-    ? T[Path]
-    : Path extends `${infer K}.${infer R}`
-      ? K extends keyof T
-        ? PropType<T[K], R>
-        : unknown
-      : unknown;
-⋮----
-type ResolvePropType<T, Path extends Key> =
-  PropType<T, Path> extends (...args: any[]) => infer R ? R : PropType<T, Path>;
-⋮----
-type Join<T extends unknown[], D extends string> = T extends []
-  ? ""
-  : T extends [string | number | boolean | bigint]
-    ? `${T[0]}`
-    : T extends [string | number | boolean | bigint, ...infer U]
-      ? `${T[0]}${D}${Join<U, D>}`
-      : string;
-⋮----
-type DeepPartial<T> = {
-  [K in keyof T]?: T[K] extends readonly any[] ? T[K] : T[K] extends object ? DeepPartial<T[K]> : T[K];
+type LanguageEntry<T extends string> = {
+  readonly tag: T;
+  readonly label: string;
 };
 ⋮----
-export interface RosettaOptions {
-  strict?: boolean;
-}
+export class LocaleConfig<L extends string>
 ⋮----
-export type RosettaDict<T> = Record<string, DeepPartial<T>>;
-⋮----
-export class RosettaImpl<T>
-⋮----
-protected constructor(
-    public readonly tree: Map<string, T>,
-    public readonly locale: string,
-    public readonly options: RosettaOptions = {},
-)
-⋮----
-public static fromDictionary<T>(dict: RosettaDict<T>, locale: string, options?: RosettaOptions): RosettaImpl<T>
-⋮----
-public get TError()
-⋮----
-type TParams = Parameters<typeof t>;
-⋮----
-constructor(key: TParams[0], params?: TParams[1], cause?: unknown)
-⋮----
-function OBJECT_IS_PLAIN(value: unknown): value is Record<string, unknown>
-⋮----
-function OBJECT_EXPAND_DOTTED_KEYS(obj: Record<string, unknown>): Record<string, unknown>
-⋮----
-function OBJECT_MERGE_DEEP_INTO(
-  target: Record<string, unknown>,
-  source: Record<string, unknown>,
-): Record<string, unknown>
-⋮----
-function OBJECT_DEEP_CLONE(obj: Record<string, unknown>): Record<string, unknown>
-⋮----
-function MERGE_LOCALES(dict: Record<string, unknown>): Record<string, unknown>
-⋮----
-function RESOLVE_DICTIONARY_LOCALE(locale: string, keys: string[]): string
-⋮----
-function LOCALE_TAG_NORMALIZE(locale: string): string
-````
-
-## File: packages/rosetta/src/use-rosetta.tsx
-````typescript
-import { type RosettaDict, RosettaImpl, type RosettaOptions } from "@packages/rosetta/rosetta";
-import React, { useContext, useMemo } from "react";
-⋮----
-export function LocaleProvider(
-⋮----
-export function RosettaProvider<T>({
-  dict,
-  options,
-  locale,
-  ...props
-}: {
-  children: React.ReactNode;
-  dict: RosettaDict<T>;
-  options?: RosettaOptions;
-  locale?: string;
+constructor({
+    languages,
+    defaultLocale,
+    cookie = "NEXT_LOCALE",
+  }: {
+    readonly languages: readonly LanguageEntry<L>[];
+    defaultLocale: L;
+    cookie?: string;
 })
 ⋮----
-export function useRosetta<T>(dict?: RosettaDict<T>, options?: RosettaOptions): RosettaImpl<T>
+isSupported(value: unknown): value is L
 ⋮----
-export function withRosettaLocales<T>(dict: RosettaDict<T>, options?: RosettaOptions)
+extractFromPath(pathname: string):
 ````
 
 ## File: packages/supabase/src/metadata.ts
@@ -6361,30 +6226,6 @@ export function withRosettaLocales<T>(dict: RosettaDict<T>, options?: RosettaOpt
 import { z } from "zod";
 ⋮----
 export type AppMetadata = z.infer<typeof AppMetadataSchema>;
-````
-
-## File: packages/supabase/supabase/templates/confirmation.html
-````html
-<h2>Confirma tu correo</h2>
-<p>Sigue este enlace para confirmar tu cuenta en SaaS Template:</p>
-<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next={{ .RedirectTo }}">Confirmar correo</a></p>
-<p>O ingresa el código: <strong>{{ .Token }}</strong></p>
-````
-
-## File: packages/supabase/supabase/templates/email_change.html
-````html
-<h2>Confirma tu nuevo correo</h2>
-<p>Sigue este enlace para confirmar el cambio de correo en SaaS Template:</p>
-<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next={{ .RedirectTo }}">Confirmar cambio</a></p>
-<p>O ingresa el código: <strong>{{ .Token }}</strong></p>
-````
-
-## File: packages/supabase/supabase/templates/magic_link.html
-````html
-<h2>Tu enlace para iniciar sesión</h2>
-<p>Sigue este enlace para entrar a SaaS Template:</p>
-<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&next={{ .RedirectTo }}">Iniciar sesión</a></p>
-<p>O ingresa el código: <strong>{{ .Token }}</strong></p>
 ````
 
 ## File: packages/ui-common/src/shadcn/components/ui/accordion.tsx
@@ -6420,28 +6261,38 @@ import { Avatar as AvatarPrimitive } from "radix-ui";
 className=
 ````
 
-## File: packages/ui-common/src/shadcn/components/ui/badge.tsx
+## File: packages/ui-common/src/shadcn/components/ui/checkbox.tsx
 ````typescript
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { cva, type VariantProps } from "class-variance-authority";
-import { Slot } from "radix-ui";
+import { CheckIcon } from "lucide-react";
+import { Checkbox as CheckboxPrimitive } from "radix-ui";
 ⋮----
-function Badge({
-  className,
-  variant = "default",
-  asChild = false,
-  ...props
-}: React.ComponentProps<"span"> & VariantProps<typeof badgeVariants> &
+function Checkbox(
 ````
 
-## File: packages/ui-common/src/shadcn/components/ui/dialog.tsx
+## File: packages/ui-common/src/shadcn/components/ui/select.tsx
 ````typescript
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { XIcon } from "lucide-react";
-import { Dialog as DialogPrimitive } from "radix-ui";
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { Select as SelectPrimitive } from "radix-ui";
 ⋮----
+function SelectTrigger({
+  className,
+  size = "default",
+  children,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
+  size?: "sm" | "default";
+})
 className=
+⋮----
+function SelectLabel(
+⋮----
+function SelectItem(
+⋮----
+function SelectSeparator(
+⋮----
+function SelectScrollUpButton(
 ````
 
 ## File: packages/ui-common/src/shadcn/components/ui/sonner.tsx
@@ -6473,6 +6324,21 @@ function Switch({
 })
 ⋮----
 className=
+````
+
+## File: packages/ui-common/src/shadcn/components/ui/table.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+⋮----
+function Table(
+⋮----
+function TableHeader(
+⋮----
+function TableBody(
+⋮----
+className=
+⋮----
+<caption data-slot="table-caption" className=
 ````
 
 ## File: packages/ui-common/src/shadcn/components/ui/tabs.tsx
@@ -6612,79 +6478,6 @@ export function STRING_MAX(...args: string[]): string | null;
 export function STRING_MAX(...args: string[]): string | null
 ````
 
-## File: packages/utils/src/url.ts
-````typescript
-import type { Maybe } from "./maybe";
-⋮----
-export function IS_EMAIL(input: unknown): input is string
-⋮----
-export type URLParts = Pick<URL, (typeof URL_FIELDS)[number]>;
-⋮----
-export type ExtractURLSegments<S extends string> = S extends `${string}[${infer K}]${infer Rest}`
-  ? K | ExtractURLSegments<Rest>
-  : never;
-⋮----
-type ReplaceRecord<TUrl extends string | URL> = TUrl extends string
-  ? [ExtractURLSegments<TUrl>] extends [never]
-    ? Record<string, string | number>
-    : Partial<Record<ExtractURLSegments<TUrl>, string | number>>
-  : Record<string, string | number>;
-⋮----
-export function URL_NEW<const TUrl extends string | URL>(
-  url: TUrl,
-  base?: string | URL,
-  overwrite?: Partial<URLParts> & { params?: Record<string | number, any>; replace?: ReplaceRecord<TUrl> },
-)
-⋮----
-export interface URLFormatOptions {
-  protocol?: boolean;
-  hostname?: boolean;
-  port?: boolean;
-  pathname?: boolean;
-  search?: boolean;
-  hash?: boolean;
-}
-⋮----
-export function URL_FORMAT(url: URL, opts?: URLFormatOptions): string
-⋮----
-// TODO: add more
-⋮----
-// TODO: replace will only replace first occurrence.
-function HREF_FORMAT_REDUCER(acc: string, [key, value]: any[])
-⋮----
-/**
- * We use this to format href with dynamic params and query strings based on Next.js Link component.
- * When using query, any previous query string in the href will be removed and undefined/null values will be skipped.
- * @example
- * const path = FORMAT_HREF("/dashboard/[tenant]", { tenant: "foo" });
- * const pathWithQuery = FORMAT_HREF("/dashboard/[tenant]", { tenant: "foo" }, { ref: "bar" });
- */
-export function HREF_FORMAT(href: string, params?: Maybe<Record<string, any>>, query?: Maybe<Record<string, any>>)
-⋮----
-export function URL_UTM(
-  url: URL,
-  options: { source?: string; medium?: string; campaign?: string; content?: string },
-): URL
-⋮----
-export function EMAIL_NORMALIZE(
-  email: string,
-  { tags = "remove-all" }: { tags?: "keep" | "remove-gmail" | "remove-all" } = {},
-): string
-⋮----
-export function EMAIL_REMOVE_TAGS(email: string): string
-⋮----
-/**
- * Parses hash parameters from a URL object and returns them as a record.
- * @example
- * const url = new URL("https:
- * const params = URL_PARSE_HASH(url);
- * const object = Object.fromEntries(params.entries());
- */
-export function IS_EXTERNAL(href: string): boolean
-⋮----
-export function URL_PARSE_HASH(url: URL): URLSearchParams
-````
-
 ## File: scripts/development/worktree-archive.sh
 ````bash
 set -e
@@ -6796,267 +6589,311 @@ fi
 PORT=$WORKTREE_PORT pnpm run -w db:env:development
 ````
 
-## File: biome.jsonc
-````json
-{
-  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "root": true,
-  "files": {
-    "includes": [
-      "**/*.ts",
-      "**/*.tsx",
-      "**/*.js",
-      "**/*.jsx",
-      "**/*.mjs",
-      "**/*.cjs",
-      "**/*.json",
-      "**/*.jsonc",
-      "**/*.css",
-      "!**/node_modules",
-      "!**/.github",
-      "!**/.turbo",
-      "!**/.next",
-      "!**/.vercel",
-      "!**/.temp",
-      "!**/.claude/worktrees"
-    ]
-  },
-  "assist": {
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
-    }
-  },
-  "formatter": {
-    "enabled": true,
-    "lineWidth": 120,
-    "indentWidth": 2,
-    "indentStyle": "space"
-  },
-  "json": {
-    "formatter": {
-      "trailingCommas": "none"
-    }
-  },
-  "css": {
-    "parser": {
-      "tailwindDirectives": true
-    }
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "security": {
-        "noDangerouslySetInnerHtml": "warn"
-      },
-      "nursery": {
-        "noFloatingPromises": "error"
-      },
-      "a11y": {
-        "noStaticElementInteractions": "off",
-        "noNoninteractiveElementToInteractiveRole": "off",
-        "noRedundantAlt": "off",
-        "useAriaPropsSupportedByRole": "off",
-        "noRedundantRoles": "off",
-        "noSvgWithoutTitle": "off",
-        "useFocusableInteractive": "off",
-        "useKeyWithClickEvents": "off",
-        "useMediaCaption": "off",
-        "useSemanticElements": "off",
-        "useValidAnchor": "off",
-        "useValidAriaProps": "off",
-        "useAriaPropsForRole": "off"
-      },
-      "correctness": {
-        "noUnusedVariables": "off",
-        "noUnusedFunctionParameters": "off",
-        "noUnreachable": "off",
-        "useExhaustiveDependencies": "off"
-      },
-      "performance": {
-        "noAccumulatingSpread": "off",
-        "noImgElement": "off"
-      },
-      "complexity": {
-        "noBannedTypes": "warn",
-        "noForEach": "warn",
-        "noStaticOnlyClass": "off",
-        "noThisInStatic": "on",
-        "noUselessConstructor": "off",
-        "noUselessSwitchCase": "off",
-        "useLiteralKeys": "off",
-        "useOptionalChain": "off"
-      },
-      "style": {
-        "noNegationElse": "off",
-        "noNonNullAssertion": "off",
-        "noParameterAssign": "off",
-        "useExponentiationOperator": "off",
-        "noUselessElse": "off",
-        "noInferrableTypes": "off",
-        "useAsConstAssertion": "error",
-        "useEnumInitializers": "error",
-        "useSelfClosingElements": "error",
-        "useSingleVarDeclarator": "error",
-        "noUnusedTemplateLiteral": "error",
-        "useNumberNamespace": "error"
-      },
-      "suspicious": {
-        "noFallthroughSwitchClause": "warn",
-        "noRedeclare": "off",
-        "noAsyncPromiseExecutor": "off",
-        "noExplicitAny": "off",
-        "noArrayIndexKey": "off",
-        "noNonNullAssertedOptionalChain": "off",
-        "useIterableCallbackReturn": "off"
-      }
-    }
-  }
-}
+## File: pnpm-workspace.yaml
+````yaml
+packages:
+  - apps/*
+  - packages/*
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@vercel/speed-insights'
+  - core-js
+  - esbuild
+  - protobufjs
+  - sharp
+  - supabase
+overrides:
+  zod: ^4.4.3
 ````
 
-## File: skills-lock.json
-````json
-{
-  "version": 1,
-  "skills": {
-    "caveman": {
-      "source": "juliusbrussee/caveman",
-      "sourceType": "github",
-      "skillPath": "skills/caveman/SKILL.md",
-      "computedHash": "dfbf85749fd474feeb0bbe60c779795ecd5dbec0083299b56e68916bc3ddd8c9"
-    },
-    "find-skills": {
-      "source": "vercel-labs/skills",
-      "sourceType": "github",
-      "skillPath": "skills/find-skills/SKILL.md",
-      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
-    },
-    "frontend-design": {
-      "source": "anthropics/skills",
-      "sourceType": "github",
-      "skillPath": "skills/frontend-design/SKILL.md",
-      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
-    },
-    "integrate-whatsapp": {
-      "source": "gokapso/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/integrate-whatsapp/SKILL.md",
-      "computedHash": "acd8594565afb7b28c5490ce1d52fbb2fd99d998c2d500c70a8bbade56f710aa"
-    },
-    "shadcn": {
-      "source": "shadcn/ui",
-      "sourceType": "github",
-      "skillPath": "skills/shadcn/SKILL.md",
-      "computedHash": "80a6226e78f6d1fe464214ae0ef449d49d8ffaa3e7704f011e9b418c678ad4d1"
-    },
-    "vercel-react-best-practices": {
-      "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/react-best-practices/SKILL.md",
-      "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
-    },
-    "web-design-guidelines": {
-      "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/web-design-guidelines/SKILL.md",
-      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
-    }
-  }
-}
-````
-
-## File: apps/platform/app/(app)/a/[agency_slug]/agency-console.tsx
+## File: repomix.config.ts
 ````typescript
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@packages/ui-common/shadcn/components/ui/tabs";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { INITIALS_OF } from "@packages/utils/string";
+import { defineConfig } from "repomix";
+````
+
+## File: turbo.json
+````json
+{
+  "$schema": "./node_modules/turbo/schema.json",
+  "globalDependencies": ["package.json", "pnpm-workspace.yaml", ".env.local"],
+  "globalEnv": [
+    "__NEXT_EXPERIMENTAL_HTTPS",
+    "CONVERSATIONS_DRAIN_SECRET",
+    "DEBUG",
+    "EXE_HOST",
+    "KAPSO_API_KEY",
+    "KAPSO_WEBHOOK_SECRET",
+    "NEXT_RUNTIME",
+    "PORT",
+    "RESEND_API_KEY",
+    "RESEND_FROM",
+    "RESEND_INBOUND_DOMAIN",
+    "RESEND_WEBHOOK_SECRET",
+    "TWILIO_ACCOUNT_SID",
+    "TWILIO_AUTH_TOKEN",
+    "TWILIO_FROM",
+    "VAPID_PRIVATE_KEY",
+    "VAPID_PUBLIC_KEY",
+    "VAPID_SUBJECT"
+  ],
+  "ui": "stream",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**", "build/**"],
+      "inputs": ["$TURBO_DEFAULT$", ".env.*local"]
+    },
+    "test": {
+      "outputs": ["coverage/**", "test-results/**"],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "format": {
+      "outputs": []
+    },
+    "generate": {
+      "outputs": []
+    },
+    "build:dry": {
+      "dependsOn": ["^build:dry"],
+      "outputs": [],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "generate:graphql": {
+      "dependsOn": ["@packages/supabase#generate:graphql:schema"],
+      "cache": false,
+      "outputs": ["generated/graphql/**"]
+    },
+    "generate:graphql:schema": {
+      "cache": false,
+      "outputs": ["generated/graphql/graphql.schema.json", "generated/graphql/graphql.schema.graphql"]
+    },
+    "generate:types": {
+      "cache": false,
+      "outputs": ["src/types.ts"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:debug": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
+````
+
+## File: apps/platform/app/(app)/a/[agency_slug]/inbox/[conversation_id]/page.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { actionMarkRead } from "~/components/inbox/actions";
+import { ConversationThread } from "~/components/inbox/conversation-thread";
+import { SCOPE_INBOX_HREF, SCOPE_RPC_ARGS } from "~/components/inbox/scope";
+import { getViewerAgencyBySlug, getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
+import { ROSETTA } from "~/lib/i18n";
+import { getServerLocale } from "~/lib/i18n.server";
+⋮----
+export async function generateMetadata(
+  props: PageProps<"/a/[agency_slug]/inbox/[conversation_id]">,
+): Promise<Metadata>
+````
+
+## File: apps/platform/app/(app)/a/[agency_slug]/inbox/page.tsx
+````typescript
+import { SINGLE } from "@packages/utils/array";
+import type { Metadata } from "next";
+import { InboxList } from "~/components/inbox/inbox-list";
+import { getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
+import { ROSETTA } from "~/lib/i18n";
+import { getServerLocale } from "~/lib/i18n.server";
+⋮----
+export async function generateMetadata(props: PageProps<"/a/[agency_slug]/inbox">): Promise<Metadata>
+````
+
+## File: apps/platform/app/(app)/a/[agency_slug]/settings/page.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { EntityLogoControls } from "~/components/entity-logo-controls";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+⋮----
+export async function generateMetadata(): Promise<Metadata>
+⋮----
+href=
+````
+
+## File: apps/platform/app/(app)/a/[agency_slug]/tickets/[ticket_id]/page.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
+import { getRosetta } from "~/lib/i18n.server";
+import { type ConversationMessage, TicketDetail, type TicketDetailData } from "./ticket-detail";
+⋮----
+export async function generateMetadata(props: PageProps<"/a/[agency_slug]/tickets/[ticket_id]">): Promise<Metadata>
+⋮----
+export default async function AgencyTicketDetailPage(props: PageProps<"/a/[agency_slug]/tickets/[ticket_id]">)
+````
+
+## File: apps/platform/app/(app)/a/[agency_slug]/tickets/page.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import type { Metadata } from "next";
+import { getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
+import { getRosetta } from "~/lib/i18n.server";
+import { type PoolTicket, TicketPool } from "./ticket-pool";
+⋮----
+export async function generateMetadata(): Promise<Metadata>
+⋮----
+export default async function AgencyTicketsPage(props: PageProps<"/a/[agency_slug]/tickets">)
+````
+
+## File: apps/platform/app/(app)/a/[agency_slug]/agency-nav.tsx
+````typescript
 import {
-  BadgeCheck,
-  Ban,
-  Building2,
-  Eye,
-  Globe,
-  Hourglass,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@packages/ui-common/shadcn/components/ui/dropdown-menu";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import {
+  Check,
+  ChevronsUpDown,
+  House,
   Inbox,
   type LucideIcon,
-  RefreshCw,
+  Network,
   Settings,
   ShieldCheck,
-  UserPlus,
+  Ticket,
   Users,
-  X,
 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { usePathname } from "next/navigation";
+import { EntityAvatar } from "~/components/entity-avatar";
+import { LocaleToggle } from "~/components/locale-toggle";
 import { ConversationsBell } from "~/components/shell/conversations-bell";
-import type { AffiliationState } from "~/lib/agencies";
+import { ThemeToggle } from "~/components/theme-toggle";
 import { useRosetta } from "~/lib/i18n.client";
-import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
-import { actionUpdateAffiliateMembership } from "./actions";
+import { ROUTE } from "~/lib/route";
 ⋮----
-export type ConsoleAffiliate = {
-  agency_membership_id: number;
-  profile_id: string;
-  state: AffiliationState;
-  name: string;
-  email: string | null;
-  is_self: boolean;
-};
-⋮----
-export type ConsoleOrg = {
-  organization_id: number;
-  organization_name: string;
-  organization_slug: string | null;
-};
-⋮----
-export type ConsoleData = {
-  agency_id: string;
-  agency_name: string;
+export type NavAgency = {
+  agency_id: number;
   agency_slug: string;
-  disabled: boolean;
-  affiliates: ConsoleAffiliate[];
-  is_global: boolean;
-  orgs: ConsoleOrg[];
+  agency_name: string;
 };
 ⋮----
-type ConsoleTab = "team" | "access" | "profile" | "tickets";
+type AgencyTab = { key: string; href: Route; label: string; icon: LucideIcon; exact: boolean };
 ⋮----
-function run(operation: "revoke" | "reactivate")
 ⋮----
-className=
+<Link href=
 ⋮----
-/**
- * Access tab - read-only display of organization access.
- */
-⋮----
-<AccessPill global label=
-⋮----
-<Building2 size=
-⋮----
-<span className=
+<span>
 ````
 
-## File: apps/platform/app/(app)/a/[agency_slug]/page.tsx
+## File: apps/platform/app/(app)/home/_components/user-menu.tsx
 ````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { AFFILIATION_STATE } from "~/lib/agencies";
-import { getRosetta } from "~/lib/i18n.server";
+import { INITIALS_OF } from "@packages/utils/string";
+import { ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
-import { AgencyConsole, type ConsoleData } from "./agency-console";
 ⋮----
-export async function generateMetadata(props: PageProps<"/a/[agency_slug]">): Promise<Metadata>
+href=
+````
+
+## File: apps/platform/app/(app)/home/account/_components/sidebar.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE } from "~/lib/route";
+import { ACCOUNT_SECTION_PATH, ACCOUNT_SECTIONS, type AccountGroupKey, type AccountSectionId } from "./sections";
 ⋮----
-export default async function AgencyConsolePage(props: PageProps<"/a/[agency_slug]">)
+function ACTIVE_SECTION(pathname: string): AccountSectionId
 ⋮----
-ticketsHref=
+className=
+````
+
+## File: apps/platform/app/(app)/home/account/notifications/contacts-manage.tsx
+````typescript
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import type { Database } from "@packages/supabase/types";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { useEffect, useState } from "react";
+import { debug } from "~/lib/debug";
+import { useRosetta } from "~/lib/i18n.client";
+⋮----
+type MessageChannel = Database["public"]["Enums"]["message_channel"];
+type ContactRow = Database["public"]["Tables"]["profile_contacts"]["Row"];
+⋮----
+function ADD_FORM_ID(channel: MessageChannel): string
+⋮----
+function loadContacts()
+⋮----
+function startAdding(channel: MessageChannel)
+⋮----
+function cancelAdding()
+⋮----
+async function submitContact()
+⋮----
+async function deleteContact(contactId: string)
+⋮----
+onClick=
+⋮----
+aria-label=
+⋮----
+id=
+````
+
+## File: apps/platform/app/(app)/home/account/notifications/page.tsx
+````typescript
+import { getRosetta } from "~/lib/i18n.server";
+import { ContactsManage } from "./contacts-manage";
+import { NotificationsChannels } from "./notifications-channels";
+import { PushPermission } from "./push-permission";
+````
+
+## File: apps/platform/app/(app)/home/account/profile/profile-form.tsx
+````typescript
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useGraphyMutation } from "@packages/graphy/react";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { gql } from "~/generated/graphql";
+import { useRosetta } from "~/lib/i18n.client";
+⋮----
+type Values = z.infer<typeof schema>;
+````
+
+## File: apps/platform/app/(app)/home/account/sessions/page.tsx
+````typescript
+import { getSupabaseServerSession } from "@packages/supabase/client.server";
+import { SUPABASE_JWT_DECODE_PAYLOAD } from "@packages/supabase/jwt";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { getRosetta } from "~/lib/i18n.server";
+import { SessionsSection, type SessionsSectionSessionFragmentType } from "./sessions-section";
 ````
 
 ## File: apps/platform/app/(app)/home/account/sessions/sessions-section.tsx
@@ -7094,6 +6931,20 @@ function onSignOutOthers()
 <div className=
 ````
 
+## File: apps/platform/app/(app)/home/account/layout.tsx
+````typescript
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { Logo } from "@packages/ui-common/logo";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { AccountMobileNav, AccountSidebar } from "./_components/sidebar";
+⋮----
+href=
+````
+
 ## File: apps/platform/app/(app)/home/inbox/[conversation_id]/page.tsx
 ````typescript
 import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
@@ -7107,21 +6958,67 @@ import { getServerLocale } from "~/lib/i18n.server";
 export async function generateMetadata(props: PageProps<"/home/inbox/[conversation_id]">)
 ````
 
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/external-access/page.tsx
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/onboarding/onboarding-checklist.tsx
 ````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { IS_ACTIVE_MEMBERSHIP } from "~/lib/agencies";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { ExternalAccess, type ExternalAccessAgency } from "./external-access";
+import { useGraphyMutation } from "@packages/graphy/react";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ArrowRight, Check, ImageIcon, type LucideIcon, UserPlus } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { gql } from "~/generated/graphql";
+import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE } from "~/lib/route";
+import {
+  TENANT_COUNT_DONE,
+  TENANT_STEP_ORDER,
+  type TenantOnboardingStepId,
+  type TenantOnboardingStepStatus,
+} from "./state";
 ⋮----
-export async function generateMetadata(
-  props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/external-access">,
-): Promise<Metadata>
+async function onDismiss()
+⋮----
+className=
+⋮----
+<Link href=
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/external-access/external-access.tsx
+````typescript
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@packages/ui-common/shadcn/components/ui/select";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { INITIALS_OF } from "@packages/utils/string";
+import { Ban, Building2, Eye, Globe, Lock, Plus, Users } from "lucide-react";
+import { useState, useTransition } from "react";
+import { useRosetta } from "~/lib/i18n.client";
+import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
+import { actionGrantAgencyAccess, actionRevokeAgencyAccess } from "./actions";
+⋮----
+export type ExternalAccessAgency = {
+  agency_id: number;
+  agency_name: string;
+  agency_slug: string;
+  active_affiliates: number;
+  is_global: boolean;
+};
+⋮----
+function grant()
+⋮----
+function revoke()
+⋮----
+<Users size=
+⋮----
+className=
 ````
 
 ## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/general/page.tsx
@@ -7142,165 +7039,38 @@ export default async function OrganizationGeneralSettingsPage(
 )
 ````
 
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit/edit-form.tsx
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/actions.ts
 ````typescript
-import type { GraphyError } from "@packages/graphy/graphy";
-import { useGraphyMutation } from "@packages/graphy/react";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Checkbox } from "@packages/ui-common/shadcn/components/ui/checkbox";
-import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { ArrowRight, Check } from "lucide-react";
-import type { Route } from "next";
-import { useRouter } from "next/navigation";
-import { useOptimistic, useState, useTransition } from "react";
-import { gql } from "~/generated/graphql";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE_HREF } from "~/lib/route";
-import { PERMISSION_SLUG_WILDCARD } from "../../schemas";
+import { randomBytes } from "node:crypto";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { HOST_FROM_HEADERS } from "@packages/utils/headers";
+import { URL_NEW } from "@packages/utils/url";
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { debug } from "~/lib/debug";
+import { getRosetta } from "~/lib/i18n.server";
+import { captureMemberInvited } from "~/lib/posthog/events.server";
+import { authedAction } from "~/lib/safe-action.server";
+import { inviteMemberSchema } from "./schemas";
 ⋮----
-function MAP_PG_ERROR_KEY(err: GraphyError): "last_admin_protected" | "self_remove_blocked" | "save_failed"
-⋮----
-interface PermissionRow {
-  permission_id: string;
-  permission_description: string | null;
-}
-⋮----
-interface PresetRow {
-  permission_preset_id: number;
-  permission_preset_name: string;
-  permission_preset_slugs: (string | null)[] | null;
-  organization_id: number | null;
-}
-⋮----
-interface Props {
-  organization_membership_id: number;
-  permissions: PermissionRow[];
-  presets: PresetRow[];
-  grantedSlugs: string[];
-  membersHref: Route;
-}
-⋮----
-type OptimisticAction =
-  | { kind: "set_wildcard"; value: boolean }
-  | { kind: "set_permission"; permission_id: string; granted: boolean }
-  | { kind: "apply_preset"; slugs: string[] };
-⋮----
-function APPLY_OPTIMISTIC(state:
-⋮----
-async function writePermission(permission_id: string, granted: boolean): Promise<boolean>
-⋮----
-function togglePermission(permission_id: string, granted: boolean)
-⋮----
-function toggleWildcard(next: boolean)
-⋮----
-function applyPreset(preset: PresetRow)
-⋮----
-function removeMember()
-⋮----
-className=
-⋮----
-onCheckedChange=
+function GENERATE_INVITATION_TOKEN(): string
 ````
 
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/new/invite-form.tsx
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/tenant/domains/page.tsx
 ````typescript
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Input } from "@packages/ui-common/shadcn/components/ui/input";
-import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { ArrowRight, Check, Copy, FileText, Mail, MessageCircle, Phone, ShieldCheck } from "lucide-react";
-import type { Route } from "next";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { type DocumentTripletCountry, DocumentTripletFields } from "~/app/auth/_components/document-triplet-fields";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE, ROUTE_HREF } from "~/lib/route";
-import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
-import { actionInviteMember } from "../actions";
-import { type InviteMemberValues, inviteMemberSchema } from "../schemas";
-⋮----
-type InviteChannel = "email" | "phone" | "document";
-⋮----
-interface Props {
-  organization_id: number;
-  countries: DocumentTripletCountry[];
-  membersHref: Route;
-  locale: string;
-  tenantSlug: string;
-}
-⋮----
-function editHrefFor(organization_membership_id: number)
-⋮----
-<Copy size=
-⋮----
-<Button type="button" variant="ghost" onClick=
-⋮----
-onClick=
-⋮----
-className=
-````
-
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/pending-invitations.tsx
-````typescript
-import { useGraphyMutation } from "@packages/graphy/react";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { FileText, Mail, Phone, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useOptimistic, useState, useTransition } from "react";
-import { gql } from "~/generated/graphql";
-import { useIntlDateTimeFormat } from "~/hooks/use-intl";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE } from "~/lib/route";
-⋮----
-interface InvitationRow {
-  organization_membership_id: number;
-  invitation_email: string | null;
-  invitation_phone: string | null;
-  invitation_address_level0_id: string | null;
-  invitation_document_kind: string | null;
-  invitation_document_value: string | null;
-  invitation_permission_slugs: (string | null)[];
-  invitation_created_at: string;
-  invitation_expires_at: string | null;
-}
-⋮----
-interface Props {
-  invitations: InvitationRow[];
-  locale: string;
-  tenantSlug: string;
-  organizationId: number;
-}
-⋮----
-function INVITATION_LABEL(inv: InvitationRow): string
-⋮----
-function CHANNEL_OF(inv: InvitationRow): "email" | "phone" | "document"
-⋮----
-function cancel(inv: InvitationRow)
-⋮----
-href=
-⋮----
-<span className="shrink-0">
-````
-
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/page.tsx
-````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { Check, Globe, Plus } from "lucide-react";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { DashboardOverview } from "./dashboard-overview";
+import { getViewerTenantBySlugAssert } from "~/hooks/get-viewer-tenants";
+import { getRosetta } from "~/lib/i18n.server";
 ⋮----
-export async function generateMetadata(props: PageProps<"/t/[tenant_slug]/[organization_id]">): Promise<Metadata>
+type DomainRow = { domain: string; verified: boolean; meta: "domain_members" | "domain_dns" };
 ⋮----
-export default async function OrganizationHomePage(props: PageProps<"/t/[tenant_slug]/[organization_id]">)
+export async function generateMetadata(): Promise<Metadata>
+⋮----
+className=
 ````
 
 ## File: apps/platform/app/(app)/t/[tenant_slug]/page.tsx
@@ -7325,214 +7095,393 @@ import { ROUTE, ROUTE_HREF } from "~/lib/route";
 <Link href=
 ````
 
-## File: apps/platform/app/(marketing)/layout.tsx
+## File: apps/platform/app/(app)/tenants/create/page.tsx
+````typescript
+import { Logo } from "@packages/ui-common/logo";
+import { Building2 } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { CreateTenantForm } from "./create-form";
+⋮----
+export async function generateMetadata(props: PageProps<"/tenants/create">): Promise<Metadata>
+````
+
+## File: apps/platform/app/(marketing)/legal/_components/sidebar.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ROUTE } from "~/lib/route";
+⋮----
+type LegalLocale = "es" | "en" | "pt";
+type LegalSection = "terms" | "privacy" | "cookies" | "dpa" | "security";
+⋮----
+function toLegalLocale(locale: string): LegalLocale
+⋮----
+export function LegalSidebar()
+⋮----
+className=
+````
+
+## File: apps/platform/app/(marketing)/mcp/page.tsx
 ````typescript
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
-import { Logo } from "@packages/ui-common/logo";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { ArrowRight, Sparkles } from "lucide-react";
-import Link from "next/link";
-import { LocaleToggle } from "~/components/locale-toggle";
-import { ThemeToggle } from "~/components/theme-toggle";
+import { Card, CardContent } from "@packages/ui-common/shadcn/components/ui/card";
+import { URL_NEW } from "@packages/utils/url";
+import { KeyRound, Plug, ShieldCheck, Terminal } from "lucide-react";
+import type { Metadata } from "next";
+import type { WebPage, WithContext } from "schema-dts";
+import { JsonLd } from "~/components/json-ld";
 import { APP_URL } from "~/lib/constants";
 import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
+import { McpPromptCta } from "./mcp-prompt-cta";
 ⋮----
-href=
+export async function generateMetadata(props: PageProps<"/mcp">): Promise<Metadata>
 ````
 
-## File: apps/platform/app/auth/email/email-step-form.tsx
+## File: apps/platform/app/(marketing)/contact-booking.tsx
+````typescript
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ArrowRight, Mail } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { ROUTE } from "~/lib/route";
+⋮----
+type ContactBookingProps = {
+  locale: string;
+  labels: { week: string; timezone: string; book: string; write: string };
+  days: string[];
+};
+⋮----
+className=
+⋮----
+<Link href=
+````
+
+## File: apps/platform/app/(marketing)/page.tsx
+````typescript
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@packages/ui-common/shadcn/components/ui/accordion";
+import { Avatar, AvatarFallback } from "@packages/ui-common/shadcn/components/ui/avatar";
+import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Card, CardContent } from "@packages/ui-common/shadcn/components/ui/card";
+import { INITIALS_OF } from "@packages/utils/string";
+import { URL_NEW } from "@packages/utils/url";
+import { ArrowRight, Check, Sparkles } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import type { Organization, WebSite, WithContext } from "schema-dts";
+import { JsonLd } from "~/components/json-ld";
+import { APP_URL } from "~/lib/constants";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { ContactBooking } from "./contact-booking";
+⋮----
+export async function generateMetadata(props: PageProps<"/">): Promise<Metadata>
+````
+
+## File: apps/platform/app/auth/_components/passkey-sign-in-button.tsx
 ````typescript
 import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Fingerprint } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+export function PasskeySignInButton(
+⋮----
+function onClick()
+````
+
+## File: apps/platform/app/auth/callback/route.ts
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { type NextRequest, NextResponse } from "next/server";
+import { RESOLVE_AUTH_NEXT } from "~/lib/auth-next";
+import { debug } from "~/lib/debug";
+import { captureUserSignedIn } from "~/lib/posthog/events.server";
+⋮----
+export async function GET(request: NextRequest, ctx: RouteContext<"/auth/callback">)
+````
+
+## File: apps/platform/app/auth/confirm/route.ts
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import type { EmailOtpType } from "@supabase/supabase-js";
+import { type NextRequest, NextResponse } from "next/server";
+import { RESOLVE_AUTH_NEXT } from "~/lib/auth-next";
+import { debug } from "~/lib/debug";
+⋮----
+function IS_ALLOWED_TYPE(value: string | null): value is EmailOtpType
+⋮----
+export async function GET(request: NextRequest, ctx: RouteContext<"/auth/confirm">)
+````
+
+## File: apps/platform/app/auth/document/actions.ts
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { redirect } from "next/navigation";
+import { debug } from "~/lib/debug";
+import { action } from "~/lib/safe-action.server";
+import { checkDocumentSchema, verifyLoginOtpSchema } from "./schemas";
+⋮----
+type CheckDocumentResult =
+  | { kind: "error"; reason: "send_otp_failed"; message?: string }
+  | { kind: "redirect_signup"; country: string; doc_kind: "nin" | "passport"; value: string }
+  | { kind: "login"; channel: "sms" | "email"; contact: string; masked: string }
+  | { kind: "redirect_accept"; invitation_token: string }
+  | {
+      kind: "pick_invite";
+      invites: Array<{
+        organization_membership_id: number;
+        invitation_token: string;
+        organization_id: number;
+        organization_name: string;
+        tenant_id: number;
+        tenant_slug: string;
+        tenant_name: string;
+        invitation_expires_at: string | null;
+      }>;
+    };
+⋮----
+function maskPhone(phone: string): string
+⋮----
+function maskEmail(email: string): string
+````
+
+## File: apps/platform/app/auth/error/page.tsx
+````typescript
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { SINGLE } from "@packages/utils/array";
+import { TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { AuthCard } from "../_components/auth-card";
+⋮----
+<Link href=
+````
+
+## File: apps/platform/app/auth/onboarding/document/page.tsx
+````typescript
+import { getCountries } from "~/hooks/get-countries";
+import { getRosetta } from "~/lib/i18n.server";
+import { AuthCard } from "../../_components/auth-card";
+import { AuthHeader } from "../../_components/auth-header";
+import { StepShell } from "../_components/step-shell";
+import { getViewerOnboardingState } from "../state.server";
+import { DocumentForm } from "./document-form";
+````
+
+## File: apps/platform/app/auth/onboarding/profile/profile-form.tsx
+````typescript
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useGraphyMutation } from "@packages/graphy/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { ArrowRight, Eye, EyeOff, Fingerprint, KeyRound, Lock, Mail } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { notifyDevMailbox } from "~/lib/dev-mailbox-toast.client";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
-import { signInWithPasskey } from "~/lib/passkeys.client";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
+⋮----
+type Values = z.infer<typeof schema>;
+````
+
+## File: apps/platform/app/auth/onboarding/state.server.ts
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { redirect } from "next/navigation";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { METHOD_ORDER, type OnboardingMethodStatus, type OnboardingState } from "./state";
+⋮----
+export async function getViewerOnboardingState(): Promise<OnboardingState>
+⋮----
+export function ASSERT_KNOWN_METHOD(id: string): id is (typeof METHOD_ORDER)[number]
+````
+
+## File: apps/platform/app/auth/phone/phone-step-form.tsx
+````typescript
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { ArrowRight, MessageCircle, Smartphone } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE_HREF, UNSAFE_ROUTE } from "~/lib/route";
 import { OtpField } from "../_components/otp-field";
 ⋮----
+type Channel = "sms" | "whatsapp";
+⋮----
 type Props = {
-  email: string;
+  phone: string;
   next: string;
-  exists: boolean | null;
-  hasPasskey: boolean;
-  hasPassword: boolean;
+  channels: Channel[];
 };
 ⋮----
-function RESOLVE_TARGET(next: string): string
-⋮----
-function onMagicLink()
+function onSend(channel: Channel)
 ⋮----
 function onVerify(e: React.FormEvent)
-⋮----
-function verifyOtp(nextToken: string)
-⋮----
-function onOtpPasteComplete(nextToken: string)
-⋮----
-function onPassword(e: React.FormEvent)
-⋮----
-function onPasskey()
-⋮----
 ````
 
-## File: apps/platform/app/health/route.ts
+## File: apps/platform/app/auth/recover/page.tsx
 ````typescript
-import { NextResponse } from "next/server";
-import { gql } from "~/generated/graphql";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { KeyRound, Mail } from "lucide-react";
+import Link from "next/link";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { AuthBackLink } from "../_components/auth-back-link";
+import { AuthCard } from "../_components/auth-card";
 ⋮----
-export async function GET(req: Request, ctx: RouteContext<"/health">)
+<Link href=
 ````
 
-## File: apps/platform/components/inbox/inbox-list.tsx
+## File: apps/platform/app/auth/success/page.tsx
 ````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { SINGLE } from "@packages/utils/array";
+import { ArrowRight, Check } from "lucide-react";
+import Link from "next/link";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { AuthCard } from "../_components/auth-card";
+⋮----
+<Link href=
+````
+
+## File: apps/platform/components/inbox/conversation-thread.tsx
+````typescript
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Textarea } from "@packages/ui-common/shadcn/components/ui/textarea";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { Archive, Inbox, MessageSquare } from "lucide-react";
+import { Archive, ArrowLeft, MessageSquare, Send } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
-import { ScopeSelector } from "~/components/inbox/scope-selector";
-import { ROSETTA } from "~/lib/i18n";
-import { getServerLocale } from "~/lib/i18n.server";
-import { type InboxScope, SCOPE_DETAIL_HREF, SCOPE_INBOX_HREF, SCOPE_RPC_ARGS } from "./scope";
-⋮----
-className=
-````
-
-## File: apps/platform/components/inbox/scope-selector.tsx
-````typescript
-import type { ResultOf } from "@graphql-typed-document-node/core";
-import { useGraphyQuery } from "@packages/graphy/react";
-import { useSupabaseUser } from "@packages/supabase/react";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { Building2, ChevronDown, Globe, Landmark } from "lucide-react";
-import Link from "next/link";
 import { useRef, useState } from "react";
-import type { InboxScope } from "~/components/inbox/scope";
-import { SCOPE_INBOX_HREF } from "~/components/inbox/scope";
-import { Tip, useClickOutside } from "~/components/shell/atoms";
-import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
+import { actionArchive, actionPostMessage } from "./actions";
 ⋮----
-type ScopeOrg = {
-  organization_id: number;
-  organization_name: string;
-  tenant_slug: string;
+type Message = {
+  conversation_message_id: string;
+  message_body: string | null;
+  message_direction: string;
+  message_author: string;
+  message_channel: string | null;
+  message_priority: string | null;
+  message_created_at: string;
+  message_read_at: string | null;
 };
 ⋮----
-type ScopeAgency = {
-  agency_id: string;
-  agency_slug: string;
-  agency_name: string;
-};
+function CHANNEL_LABEL(channel: string | null, t: ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"]): string
 ⋮----
-function IS_SCOPE_ACTIVE(current: InboxScope, candidate: InboxScope): boolean
+function PRIORITY_LABEL(priority: string | null, t: ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"]): string
 ⋮----
-function SCOPE_LABEL(scope: InboxScope, t: Translate): string
+function PRIORITY_VARIANT(priority: string | null): "default" | "secondary" | "destructive" | "outline"
 ⋮----
-type Translate = (key: keyof typeof LOCALE_EN) => string;
+async function handleSend()
 ⋮----
-<Tip label=
+async function handleArchive()
 ⋮----
+function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>)
 ⋮----
-isActive=
-⋮----
-className=
+<Link href=
 ⋮----
 <div className=
+⋮----
+className=
+⋮----
+<Badge variant=
 ````
 
-## File: apps/platform/components/shell/app-sidebar.tsx
+## File: apps/platform/components/inbox/scope.ts
 ````typescript
-import { useDeviceInfo } from "@packages/react-hooks/use-device-info";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@packages/ui-common/shadcn/components/ui/collapsible";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuBadge,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  SidebarRail,
-  useSidebar,
-} from "@packages/ui-common/shadcn/components/ui/sidebar";
-import { ChevronRight, Search } from "lucide-react";
-import Link from "next/link";
-import { Kbd } from "~/components/shell/atoms";
-import { ConversationsBell } from "~/components/shell/conversations-bell";
-import {
-  BUILD_NAV_TREE,
-  GROUP_CONTAINS_ACTIVE,
-  IS_NAV_GROUP,
-  LEAF_IS_ACTIVE,
-  type NavGroup,
-  type NavLeaf,
-} from "~/components/shell/nav-tree";
-import { OrgSwitcher, type ShellOrganization, type ShellTenant } from "~/components/shell/org-switcher";
-import { ProfileMenu, type ShellViewer } from "~/components/shell/profile-menu";
-import { SettingsMenu } from "~/components/shell/settings-menu";
-import { useRosetta } from "~/lib/i18n.client";
+import type { Route } from "next";
 import { ROUTE } from "~/lib/route";
 ⋮----
-<SidebarMenuButton asChild isActive=
+export type InboxScope =
+  | { kind: "personal" }
+  | { kind: "organization"; tenant_slug: string; organization_id: number }
+  | { kind: "agency"; agency_slug: string; agency_id: number };
 ⋮----
-<Collapsible asChild defaultOpen=
+export function SCOPE_RPC_ARGS(scope: InboxScope):
 ⋮----
-<SidebarMenuSubButton asChild isActive=
+export function SCOPE_INBOX_HREF(scope: InboxScope): Route
+⋮----
+export function SCOPE_DETAIL_HREF(scope: InboxScope, conversation_id: string): Route
 ````
 
-## File: apps/platform/components/shell/mobile-sheet.tsx
+## File: apps/platform/components/shell/shell.tsx
 ````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { X } from "lucide-react";
+import { useKeyboardShortcut } from "@packages/react-hooks/use-keyboard-shortcut";
+import { SidebarInset, SidebarProvider } from "@packages/ui-common/shadcn/components/ui/sidebar";
+import { TooltipProvider } from "@packages/ui-common/shadcn/components/ui/tooltip";
+import { useIsMobile } from "@packages/ui-common/shadcn/hooks/use-mobile";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { useState } from "react";
+import { AppSidebar } from "~/components/shell/app-sidebar";
+import { CommandPalette } from "~/components/shell/command-palette";
+import { MobileNavDrawer } from "~/components/shell/mobile-nav-drawer";
+import {
+  MobileOrgSheet,
+  MobileProfileSheet,
+  MobileSearchSheet,
+  MobileSettingsSheet,
+} from "~/components/shell/mobile-sheets";
+import { MobileTopBar } from "~/components/shell/mobile-top-bar";
+import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
+import type { ShellViewer } from "~/components/shell/profile-menu";
 ⋮----
-export function Scrim(
+type MobileSheet = null | "search" | "org" | "profile" | "settings";
 ⋮----
-function onKey(event: KeyboardEvent)
-````
-
-## File: apps/platform/components/floating-chrome.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import type { ComponentProps } from "react";
-import { LocaleToggle } from "~/components/locale-toggle";
-import { ThemeToggle } from "~/components/theme-toggle";
+export function Shell({
+  locale,
+  tenant,
+  organizations,
+  current,
+  viewer,
+  defaultOpen,
+  children,
+}: {
+  locale: string;
+  tenant: ShellTenant;
+  organizations: ShellOrganization[];
+  current: ShellOrganization;
+  viewer: ShellViewer;
+  defaultOpen?: boolean;
+  children: ReactNode;
+})
 ⋮----
-export function FloatingChrome(
+onOpenPalette=
 ⋮----
-<div className=
-````
-
-## File: apps/platform/components/graphy-provider.tsx
-````typescript
-import { GraphyClientSupabase } from "@packages/graphy/graphy";
-import { GraphyProvider } from "@packages/graphy/react";
-import { useSupabase } from "@packages/supabase/react";
-import { URL_NEW } from "@packages/utils/url";
-import { useEffect, useMemo, useState } from "react";
+onSearch=
+onOrg=
+onProfile=
 ⋮----
-export function GraphyClientProvider(
+setDrawerOpen(false);
+setMobileSheet("org");
+⋮----
+setMobileSheet("settings");
 ````
 
 ## File: apps/platform/components/posthog-identify.tsx
@@ -7569,22 +7518,6 @@ async function install()
 function dismiss()
 ````
 
-## File: apps/platform/hooks/use-countries.ts
-````typescript
-import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
-import { useGraphyQuery } from "@packages/graphy/react";
-import type { SWRConfiguration } from "swr";
-import { gql } from "~/generated/graphql";
-import { FilterIs, OrderByDirection } from "~/generated/graphql/graphql";
-⋮----
-export type CountryHookUseFragmentType = ResultOf<typeof CountryHookUseFragment>;
-⋮----
-type CountriesUseData = ResultOf<typeof CountriesUse>;
-type CountriesUseVars = VariablesOf<typeof CountriesUse>;
-⋮----
-export function useCountries(options?: CountriesUseVars, config?: SWRConfiguration<CountriesUseData>)
-````
-
 ## File: apps/platform/hooks/use-push-permission.ts
 ````typescript
 import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
@@ -7601,27 +7534,94 @@ async function unsubscribe()
 function URL_BASE64_TO_UINT8ARRAY(base64String: string): Uint8Array
 ````
 
-## File: apps/platform/hooks/use-viewer-profile.ts
+## File: apps/platform/hooks/use-viewer-agencies.ts
 ````typescript
-import type { ResultOf } from "@graphql-typed-document-node/core";
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import { useGraphyQuery } from "@packages/graphy/react";
 import { useSupabaseUser } from "@packages/supabase/react";
 import type { SWRConfiguration } from "swr";
 import { gql } from "~/generated/graphql";
 ⋮----
-export type ViewerProfileUseFragmentType = ResultOf<typeof ViewerProfileUseFragment>;
+export type ViewerAgencyUseFragmentType = ResultOf<typeof ViewerAgencyUseFragment>;
 ⋮----
-type ViewerProfileUseData = ResultOf<typeof ViewerProfileUse>;
+type ViewerAgenciesUseData = ResultOf<typeof ViewerAgenciesUse>;
+type ViewerAgenciesUseVars = VariablesOf<typeof ViewerAgenciesUse>;
+type ViewerAgencyByIdUseData = ResultOf<typeof ViewerAgencyByIdUse>;
+type ViewerAgencyBySlugUseData = ResultOf<typeof ViewerAgencyBySlugUse>;
 ⋮----
-export function useViewerProfile(config?: SWRConfiguration<ViewerProfileUseData>)
+export function useViewerAgencies(options?: ViewerAgenciesUseVars, config?: SWRConfiguration<ViewerAgenciesUseData>)
+⋮----
+export function useViewerAgencyById(agency_id: number, config?: SWRConfiguration<ViewerAgencyByIdUseData>)
+⋮----
+export function useViewerAgencyBySlug(agency_slug: string, config?: SWRConfiguration<ViewerAgencyBySlugUseData>)
 ````
 
-## File: apps/platform/lib/graphy/graphy.service.ts
+## File: apps/platform/lib/conversations/inbound-resolver.ts
 ````typescript
-import { GraphyClientSupabase } from "@packages/graphy/graphy";
-import { ENV } from "@packages/utils/env";
-import { URL_NEW } from "@packages/utils/url";
-import { cache } from "react";
+import type { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { debug } from "~/lib/debug";
+⋮----
+export type InboundChannel = "email" | "whatsapp" | "sms";
+⋮----
+export interface InboundParams {
+  channel: InboundChannel;
+  senderAddress: string;
+  replyToken: string | null;
+  providerMessageId: string;
+  body: string;
+  rawPayload: Record<string, unknown>;
+  signatureVerified: boolean;
+}
+⋮----
+export interface InboundContext {
+  conversationMessageId: string;
+  conversationId: string;
+  profileId: string;
+  organizationId: number | null;
+  agencyId: number | null;
+  tenantId: number | null;
+  alreadyResolved: boolean;
+  idempotencyKey: string;
+  threadMessages: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }>;
+  channel: InboundChannel;
+  body: string;
+}
+⋮----
+export interface InboundRejection {
+  reason: "sender_not_verified" | "conversation_not_found" | "no_membership" | "error";
+  detail: string;
+}
+⋮----
+export type ResolveInboundResult = { ok: true; ctx: InboundContext } | { ok: false; rejection: InboundRejection };
+⋮----
+export async function resolveInbound(
+  admin: ReturnType<typeof createSupabaseServiceRoleClient>,
+  params: InboundParams,
+): Promise<ResolveInboundResult>
+⋮----
+type MessageChannel = "in_app" | "email" | "web_push" | "whatsapp" | "sms";
+⋮----
+// system/agent outbound = assistant; user inbound = user
+````
+
+## File: apps/platform/lib/i18n.ts
+````typescript
+import { LocaleConfig } from "@packages/rosetta/locale-config";
+import { type RosettaDict, RosettaImpl } from "@packages/rosetta/rosetta";
+⋮----
+export function ROSETTA<T>(dict: RosettaDict<T>, locale: string)
+⋮----
+export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+⋮----
+export function IS_SUPPORTED_LOCALE(value: unknown): value is SupportedLocale
+⋮----
+export function LOCALE_SUPPORTED_RESOLVE(value: unknown): SupportedLocale | null
+⋮----
+function LOCALE_TAG_NORMALIZE(locale: string): string
 ````
 
 ## File: apps/platform/lib/route.ts
@@ -7675,19 +7675,6 @@ export function ROUTE_HREF(route: AppRoute | Route): Route
 
 ````
 
-## File: apps/platform/playwright.config.ts
-````typescript
-import fs from "node:fs";
-import path from "node:path";
-import { defineConfig, devices } from "@playwright/test";
-⋮----
-/**
- * Base URL for E2E tests, resolved from environment variables.
- * Conductor assigns `PORT` per parallel instance; E2E suite must read the same value.
- * Matches dev script port resolution in `apps/platform/package.json` (`--port ${PORT:-7003}`).
- */
-````
-
 ## File: packages/debug/package.json
 ````json
 {
@@ -7711,509 +7698,6 @@ import { defineConfig, devices } from "@playwright/test";
     "@packages/typescript-config": "workspace:*",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.17",
-    "react": "^19.2.7",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
-  },
-  "peerDependencies": {
-    "react": "^19.0.0"
-  }
-}
-````
-
-## File: packages/react-email/src/templates/welcome_email.tsx
-````typescript
-import { LocaleProvider, useLocale, useRosetta } from "@packages/rosetta/use-rosetta";
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Preview,
-  Section,
-  Tailwind,
-  Text,
-} from "@react-email/components";
-⋮----
-export interface WelcomeEmailProps {
-  empleadoNombre: string;
-  empresaNombre: string;
-  loginUrl: string;
-  locale?: string;
-}
-⋮----
-export function WelcomeEmail(
-````
-
-## File: packages/rosetta/src/locale-config.ts
-````typescript
-import { BOOLEAN } from "@packages/utils/boolean";
-⋮----
-type LanguageEntry<T extends string> = {
-  readonly tag: T;
-  readonly label: string;
-};
-⋮----
-export class LocaleConfig<L extends string>
-⋮----
-constructor({
-    languages,
-    defaultLocale,
-    cookie = "NEXT_LOCALE",
-  }: {
-    readonly languages: readonly LanguageEntry<L>[];
-    defaultLocale: L;
-    cookie?: string;
-})
-⋮----
-isSupported(value: unknown): value is L
-⋮----
-extractFromPath(pathname: string):
-````
-
-## File: packages/supabase/src/client.middleware.ts
-````typescript
-import { type CookieOptions, createServerClient } from "@supabase/ssr";
-import { type NextRequest, NextResponse } from "next/server";
-import type { Database } from "./types.ts";
-⋮----
-export async function updateSession(request: NextRequest)
-⋮----
-getAll()
-setAll(cookiesToSet:
-````
-
-## File: packages/supabase/src/client.service.ts
-````typescript
-import { ENV } from "@packages/utils/env";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "./types.ts";
-⋮----
-export function createSupabaseServiceRoleClient()
-````
-
-## File: packages/ui-common/src/shadcn/components/ui/checkbox.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { CheckIcon } from "lucide-react";
-import { Checkbox as CheckboxPrimitive } from "radix-ui";
-⋮----
-function Checkbox(
-````
-
-## File: packages/ui-common/src/shadcn/components/ui/input-otp.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { OTPInput, OTPInputContext } from "input-otp";
-import { MinusIcon } from "lucide-react";
-⋮----
-containerClassName=
-className=
-````
-
-## File: packages/ui-common/src/shadcn/components/ui/select.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import { Select as SelectPrimitive } from "radix-ui";
-⋮----
-function SelectTrigger({
-  className,
-  size = "default",
-  children,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default";
-})
-className=
-⋮----
-function SelectLabel(
-⋮----
-function SelectItem(
-⋮----
-function SelectSeparator(
-⋮----
-function SelectScrollUpButton(
-````
-
-## File: packages/ui-common/src/shadcn/components/ui/table.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-⋮----
-function Table(
-⋮----
-function TableHeader(
-⋮----
-function TableBody(
-⋮----
-className=
-⋮----
-<caption data-slot="table-caption" className=
-````
-
-## File: apps/platform/app/(app)/home/account/connections/page.tsx
-````typescript
-import { getSupabaseServerUser } from "@packages/supabase/client.server";
-import { ButtonSpinner } from "@packages/ui-common/button-spinner";
-import { SINGLE } from "@packages/utils/array";
-import { redirect } from "next/navigation";
-import { OAUTH_PROVIDERS } from "~/app/auth/providers";
-import { getRosetta } from "~/lib/i18n.server";
-import { actionLinkProvider } from "../actions";
-⋮----
-pendingChildren=
-````
-
-## File: apps/platform/app/(app)/home/layout.tsx
-````typescript
-export default function HomeLayout(props: LayoutProps<"/home">)
-````
-
-## File: apps/platform/app/(app)/home/page.tsx
-````typescript
-import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
-import { Logo } from "@packages/ui-common/logo";
-import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
-import { INITIALS_OF } from "@packages/utils/string";
-import { ArrowRight, Plus, Sparkles } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { LocaleToggle } from "~/components/locale-toggle";
-import { ThemeToggle } from "~/components/theme-toggle";
-import { gql } from "~/generated/graphql";
-import { OrderByDirection } from "~/generated/graphql/graphql";
-import { getViewerAgencies } from "~/hooks/get-viewer-agencies";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
-import { getRosetta } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { COUNT_DONE, METHOD_ORDER } from "../../auth/onboarding/state";
-import { getViewerOnboardingState } from "../../auth/onboarding/state.server";
-import { UserMenu } from "./_components/user-menu";
-⋮----
-href=
-````
-
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/new/page.tsx
-````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
-import { ArrowLeft } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { getCountries } from "~/hooks/get-countries";
-import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { InviteMemberForm } from "./invite-form";
-⋮----
-export async function generateMetadata(
-  props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members/new">,
-): Promise<Metadata>
-````
-
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/page.tsx
-````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
-import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { INITIALS_OF } from "@packages/utils/string";
-import { ChevronRight, ShieldCheck, UserPlus } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { PendingInvitations } from "./pending-invitations";
-⋮----
-export async function generateMetadata(
-  props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members">,
-): Promise<Metadata>
-⋮----
-href=
-````
-
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/layout.tsx
-````typescript
-import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
-import { cookies } from "next/headers";
-import { notFound } from "next/navigation";
-import { Shell } from "~/components/shell/shell";
-import { getViewerOrganizationById, getViewerOrganizations } from "~/hooks/get-viewer-organizations";
-import { getViewerProfile } from "~/hooks/get-viewer-profile";
-import { getViewerTenantBySlug } from "~/hooks/get-viewer-tenants";
-import { getServerLocale } from "~/lib/i18n.server";
-⋮----
-export default async function OrganizationLayout({
-  children,
-  params,
-}: LayoutProps<"/t/[tenant_slug]/[organization_id]">)
-⋮----
-// shadcn SidebarProvider persists expanded/collapsed in the `sidebar_state` cookie; default open.
-````
-
-## File: apps/platform/app/auth/_components/oauth-section.tsx
-````typescript
-import { ButtonSpinner } from "@packages/ui-common/button-spinner";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { ChevronDown } from "lucide-react";
-import { useState } from "react";
-import { useRosetta } from "~/lib/i18n.client";
-import { signInWithOAuth } from "../actions";
-import { MAIN_OAUTH, MORE_OAUTH } from "../providers";
-⋮----
-aria-label=
-⋮----
-onClick=
-````
-
-## File: apps/platform/app/auth/document/document-step-form.tsx
-````typescript
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Input } from "@packages/ui-common/shadcn/components/ui/input";
-import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { RUT_FORMAT, RUT_NORMALIZE } from "@packages/utils/rut";
-import { ArrowRight, IdCard } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { useLocaleParam } from "~/hooks/use-locale-param";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE, ROUTE_HREF } from "~/lib/route";
-import { ErrorSafeAction } from "~/lib/safe-action.client";
-import { OtpField } from "../_components/otp-field";
-import { actionCheckDocument, actionVerifyDocumentLoginOtp } from "./actions";
-⋮----
-type DocKind = "nin" | "passport";
-⋮----
-type LoginState = { channel: "sms" | "email"; contact: string; masked: string };
-⋮----
-function onCheck(e: React.FormEvent)
-⋮----
-function onVerify(e: React.FormEvent)
-⋮----
-className=
-````
-
-## File: apps/platform/app/auth/onboarding/page.tsx
-````typescript
-import { ButtonSpinner } from "@packages/ui-common/button-spinner";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { ArrowRight, Check, Star } from "lucide-react";
-import Link from "next/link";
-import { AUTH_TWEAKS } from "~/lib/auth-tweaks";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { AuthCard } from "../_components/auth-card";
-import { METHOD_CATALOG } from "./_components/method-catalog";
-import { actionFinishOnboarding } from "./actions";
-import {
-  COUNT_DONE,
-  METHOD_ORDER,
-  ONBOARDING_METHOD_PATH,
-  type OnboardingMethodId,
-  type OnboardingMethodStatus,
-} from "./state";
-import { getViewerOnboardingState } from "./state.server";
-⋮----
-// TODO: overkill, AUTH_TWEAKS.OB_RECOMMENDED is always passkey. could be constant.
-⋮----
-className=
-⋮----
-<span className=
-⋮----
-````
-
-## File: apps/platform/app/robots.ts
-````typescript
-import type { MetadataRoute } from "next";
-import { isApexHost } from "~/lib/apex";
-import { APP_HOST } from "~/lib/constants";
-⋮----
-export default async function robots(): Promise<MetadataRoute.Robots>
-````
-
-## File: apps/platform/app/sitemap.ts
-````typescript
-import type { MetadataRoute } from "next";
-import { isApexHost } from "~/lib/apex";
-import { APP_URL } from "~/lib/constants";
-⋮----
-export default async function sitemap(): Promise<MetadataRoute.Sitemap>
-⋮----
-function PAGE(
-    path: string,
-    data: Omit<MetadataRoute.Sitemap[number], "url" | "alternates">,
-): MetadataRoute.Sitemap[number]
-````
-
-## File: apps/platform/components/profile-avatar-controls.tsx
-````typescript
-import type { ComponentProps } from "react";
-import { EntityLogoControls } from "~/components/entity-logo-controls";
-⋮----
-export function ProfileAvatarControls({
-  profileId,
-  name,
-  avatarSrc,
-  ...props
-}: {
-  profileId: string;
-  name: string;
-  avatarSrc: string | null;
-} & Omit<ComponentProps<typeof EntityLogoControls>, "bucket" | "ownerKey" | "name" | "src" | "shape">)
-````
-
-## File: apps/platform/hooks/get-countries.ts
-````typescript
-import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
-import { cache } from "react";
-import { gql } from "~/generated/graphql";
-import { FilterIs, OrderByDirection } from "~/generated/graphql/graphql";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
-⋮----
-export type CountryGetFragmentType = ResultOf<typeof CountryGetFragment>;
-⋮----
-type CountriesGetVars = VariablesOf<typeof CountriesGet>;
-````
-
-## File: apps/platform/hooks/use-locale-cookie.ts
-````typescript
-import { useStateCookie } from "@packages/react-hooks/use-state-cookie";
-import { useRouter } from "next/navigation";
-import { startTransition } from "react";
-import { LOCALE_COOKIE, type SupportedLocale } from "~/lib/i18n";
-import { useLocale } from "~/lib/i18n.client";
-⋮----
-export function useLocaleCookie()
-⋮----
-function selectLocale(next: SupportedLocale)
-````
-
-## File: apps/platform/hooks/use-viewer-organizations.ts
-````typescript
-import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
-import { useGraphyQuery } from "@packages/graphy/react";
-import { useSupabaseUser } from "@packages/supabase/react";
-import type { SWRConfiguration } from "swr";
-import { gql } from "~/generated/graphql";
-⋮----
-export type ViewerOrganizationUseFragmentType = ResultOf<typeof ViewerOrganizationUseFragment>;
-⋮----
-type ViewerOrganizationsUseData = ResultOf<typeof ViewerOrganizationsUse>;
-type ViewerOrganizationsUseVars = VariablesOf<typeof ViewerOrganizationsUse>;
-type ViewerOrganizationByIdUseData = ResultOf<typeof ViewerOrganizationByIdUse>;
-type ViewerOrganizationBySlugUseData = ResultOf<typeof ViewerOrganizationBySlugUse>;
-⋮----
-export function useViewerOrganizations(
-  options?: ViewerOrganizationsUseVars,
-  config?: SWRConfiguration<ViewerOrganizationsUseData>,
-)
-⋮----
-export function useViewerOrganization(
-  organization_id: number,
-  config?: SWRConfiguration<ViewerOrganizationByIdUseData>,
-)
-⋮----
-export function useViewerOrganizationBySlug(
-  organization_slug: string,
-  config?: SWRConfiguration<ViewerOrganizationBySlugUseData>,
-)
-````
-
-## File: apps/platform/hooks/use-viewer-tenants.ts
-````typescript
-import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
-import { useGraphyQuery } from "@packages/graphy/react";
-import { useSupabaseUser } from "@packages/supabase/react";
-import type { SWRConfiguration } from "swr";
-import { gql } from "~/generated/graphql";
-⋮----
-export type ViewerTenantUseFragmentType = ResultOf<typeof ViewerTenantUseFragment>;
-⋮----
-type ViewerTenantsUseData = ResultOf<typeof ViewerTenantsUse>;
-type ViewerTenantsUseVars = VariablesOf<typeof ViewerTenantsUse>;
-type ViewerTenantByIdUseData = ResultOf<typeof ViewerTenantByIdUse>;
-type ViewerTenantBySlugUseData = ResultOf<typeof ViewerTenantBySlugUse>;
-⋮----
-export function useViewerTenants(options?: ViewerTenantsUseVars, config?: SWRConfiguration<ViewerTenantsUseData>)
-⋮----
-export function useViewerTenantById(tenant_id: number, config?: SWRConfiguration<ViewerTenantByIdUseData>)
-⋮----
-export function useViewerTenantBySlug(tenant_slug: string, config?: SWRConfiguration<ViewerTenantBySlugUseData>)
-````
-
-## File: apps/platform/lib/auth-next.ts
-````typescript
-import { URL_NEW } from "@packages/utils/url";
-⋮----
-export function RESOLVE_AUTH_NEXT(raw: string | null, origin: string): string
-````
-
-## File: apps/platform/lib/i18n.server.ts
-````typescript
-import { match } from "@formatjs/intl-localematcher";
-import type { RosettaDict } from "@packages/rosetta/rosetta";
-import Negotiator from "negotiator";
-import { cookies } from "next/headers";
-import { notFound } from "next/navigation";
-import type { NextRequest } from "next/server";
-import {
-  DEFAULT_LOCALE,
-  IS_SUPPORTED_LOCALE,
-  LOCALE_COOKIE,
-  LOCALE_SUPPORTED_RESOLVE,
-  ROSETTA,
-  SUPPORTED_LOCALES,
-  type SupportedLocale,
-} from "./i18n";
-⋮----
-export async function getServerLocale(): Promise<SupportedLocale>
-⋮----
-export function assertLocale(value: unknown): asserts value is SupportedLocale
-⋮----
-export function LOCALE_FROM_REQUEST(request: NextRequest): SupportedLocale
-⋮----
-export function HEADER_ACCEPT_LANGUAGE_PARSE(header: string | null): SupportedLocale | null
-⋮----
-export async function getRosetta<T>(dict: RosettaDict<T>, locale?: string)
-````
-
-## File: packages/graphy/package.json
-````json
-{
-  "name": "@packages/graphy",
-  "version": "0.0.0",
-  "private": true,
-  "sideEffects": false,
-  "exports": {
-    "./react": "./src/react.tsx",
-    "./react-pagination": "./src/react-pagination.tsx",
-    "./*": "./src/*.ts"
-  },
-  "scripts": {
-    "build:dry": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests",
-    "format": "biome check --diagnostic-level=error ."
-  },
-  "dependencies": {
-    "@packages/debug": "workspace:*",
-    "@packages/utils": "workspace:*",
-    "swr": "^2.4.1"
-  },
-  "devDependencies": {
-    "@graphql-typed-document-node/core": "^3.2.0",
-    "@packages/typescript-config": "workspace:*",
-    "@types/node": "^24.12.4",
-    "@types/react": "^19.2.17",
-    "graphql": "^16.14.2",
     "react": "^19.2.7",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
@@ -8268,6 +7752,655 @@ export function COMPUTE_DEVICE_INFO(): DeviceInfo
 export function useDeviceInfo(): DeviceInfo | null
 ````
 
+## File: packages/rosetta/src/rosetta.ts
+````typescript
+import { ErrorExtendable } from "@packages/utils/errors";
+import dlv from "dlv";
+import tmpl from "templite";
+⋮----
+type Key = string | number | bigint | symbol;
+⋮----
+type PropType<T, Path extends Key> = string extends Path
+  ? unknown
+  : Path extends keyof T
+    ? T[Path]
+    : Path extends `${infer K}.${infer R}`
+      ? K extends keyof T
+        ? PropType<T[K], R>
+        : unknown
+      : unknown;
+⋮----
+type ResolvePropType<T, Path extends Key> =
+  PropType<T, Path> extends (...args: any[]) => infer R ? R : PropType<T, Path>;
+⋮----
+type Join<T extends unknown[], D extends string> = T extends []
+  ? ""
+  : T extends [string | number | boolean | bigint]
+    ? `${T[0]}`
+    : T extends [string | number | boolean | bigint, ...infer U]
+      ? `${T[0]}${D}${Join<U, D>}`
+      : string;
+⋮----
+type DeepPartial<T> = {
+  [K in keyof T]?: T[K] extends readonly any[] ? T[K] : T[K] extends object ? DeepPartial<T[K]> : T[K];
+};
+⋮----
+export interface RosettaOptions {
+  strict?: boolean;
+}
+⋮----
+export type RosettaDict<T> = Record<string, DeepPartial<T>>;
+⋮----
+export class RosettaImpl<T>
+⋮----
+protected constructor(
+    public readonly tree: Map<string, T>,
+    public readonly locale: string,
+    public readonly options: RosettaOptions = {},
+)
+⋮----
+public static fromDictionary<T>(dict: RosettaDict<T>, locale: string, options?: RosettaOptions): RosettaImpl<T>
+⋮----
+public get TError()
+⋮----
+type TParams = Parameters<typeof t>;
+⋮----
+constructor(key: TParams[0], params?: TParams[1], cause?: unknown)
+⋮----
+function OBJECT_IS_PLAIN(value: unknown): value is Record<string, unknown>
+⋮----
+function OBJECT_EXPAND_DOTTED_KEYS(obj: Record<string, unknown>): Record<string, unknown>
+⋮----
+function OBJECT_MERGE_DEEP_INTO(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>,
+): Record<string, unknown>
+⋮----
+function MERGE_LOCALES(dict: Record<string, unknown>): Record<string, unknown>
+⋮----
+function RESOLVE_DICTIONARY_LOCALE(locale: string, keys: string[]): string
+⋮----
+function LOCALE_TAG_NORMALIZE(locale: string): string
+````
+
+## File: packages/supabase/src/client.middleware.ts
+````typescript
+import { type CookieOptions, createServerClient } from "@supabase/ssr";
+import { type NextRequest, NextResponse } from "next/server";
+import type { Database } from "./types.ts";
+⋮----
+export async function updateSession(request: NextRequest)
+⋮----
+getAll()
+setAll(cookiesToSet:
+````
+
+## File: packages/supabase/src/client.service.ts
+````typescript
+import { ENV } from "@packages/utils/env";
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./types.ts";
+⋮----
+export function createSupabaseServiceRoleClient()
+````
+
+## File: packages/ui-common/src/shadcn/components/ui/input-otp.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { OTPInput, OTPInputContext } from "input-otp";
+import { MinusIcon } from "lucide-react";
+⋮----
+containerClassName=
+className=
+````
+
+## File: packages/utils/src/url.ts
+````typescript
+import type { Maybe } from "./maybe";
+⋮----
+export function IS_EMAIL(input: unknown): input is string
+⋮----
+export type URLParts = Pick<URL, (typeof URL_FIELDS)[number]>;
+⋮----
+export type ExtractURLSegments<S extends string> = S extends `${string}[${infer K}]${infer Rest}`
+  ? K | ExtractURLSegments<Rest>
+  : never;
+⋮----
+type ReplaceRecord<TUrl extends string | URL> = TUrl extends string
+  ? [ExtractURLSegments<TUrl>] extends [never]
+    ? Record<string, string | number>
+    : Partial<Record<ExtractURLSegments<TUrl>, string | number>>
+  : Record<string, string | number>;
+⋮----
+export function URL_NEW<const TUrl extends string | URL>(
+  url: TUrl,
+  base?: string | URL,
+  overwrite?: Partial<URLParts> & { params?: Record<string | number, any>; replace?: ReplaceRecord<TUrl> },
+)
+⋮----
+export interface URLFormatOptions {
+  protocol?: boolean;
+  hostname?: boolean;
+  port?: boolean;
+  pathname?: boolean;
+  search?: boolean;
+  hash?: boolean;
+}
+⋮----
+export function URL_FORMAT(url: URL, opts?: URLFormatOptions): string
+⋮----
+// TODO: add more
+⋮----
+// TODO: replace will only replace first occurrence.
+function HREF_FORMAT_REDUCER(acc: string, [key, value]: any[])
+⋮----
+/**
+ * We use this to format href with dynamic params and query strings based on Next.js Link component.
+ * When using query, any previous query string in the href will be removed and undefined/null values will be skipped.
+ * @example
+ * const path = FORMAT_HREF("/dashboard/[tenant]", { tenant: "foo" });
+ * const pathWithQuery = FORMAT_HREF("/dashboard/[tenant]", { tenant: "foo" }, { ref: "bar" });
+ */
+export function HREF_FORMAT(href: string, params?: Maybe<Record<string, any>>, query?: Maybe<Record<string, any>>)
+⋮----
+export function URL_UTM(
+  url: URL,
+  options: { source?: string; medium?: string; campaign?: string; content?: string },
+): URL
+⋮----
+export function EMAIL_NORMALIZE(
+  email: string,
+  { tags = "remove-all" }: { tags?: "keep" | "remove-gmail" | "remove-all" } = {},
+): string
+⋮----
+export function EMAIL_REMOVE_TAGS(email: string): string
+⋮----
+/**
+ * Parses hash parameters from a URL object and returns them as a record.
+ * @example
+ * const url = new URL("https:
+ * const params = URL_PARSE_HASH(url);
+ * const object = Object.fromEntries(params.entries());
+ */
+export function IS_EXTERNAL(href: string): boolean
+⋮----
+export function URL_PARSE_HASH(url: URL): URLSearchParams
+````
+
+## File: apps/platform/app/(app)/home/account/profile/page.tsx
+````typescript
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { redirect } from "next/navigation";
+import { ProfileAvatarControls } from "~/components/profile-avatar-controls";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { getRosetta } from "~/lib/i18n.server";
+import { ProfileForm } from "./profile-form";
+````
+
+## File: apps/platform/app/(app)/home/account/security/page.tsx
+````typescript
+import { createSupabaseServerClient, getSupabaseServerUser } from "@packages/supabase/client.server";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ArrowRight, Check, Fingerprint, IdCard, Lock, Mail, Phone } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getRosetta } from "~/lib/i18n.server";
+import { type AppRoute, ROUTE, UNSAFE_ROUTE } from "~/lib/route";
+⋮----
+desc=
+⋮----
+actionHref=
+⋮----
+actionLabel=
+⋮----
+className=
+⋮----
+<span className=
+⋮----
+href=
+````
+
+## File: apps/platform/app/(app)/home/invites/[invite_id]/page.tsx
+````typescript
+import { Logo } from "@packages/ui-common/logo";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { SINGLE } from "@packages/utils/array";
+import { INITIALS_OF } from "@packages/utils/string";
+import { ArrowRight, Check, X } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+⋮----
+type AcceptState = "valid" | "loggedout" | "expired" | "claimed" | "rejected";
+⋮----
+export async function generateMetadata(props: PageProps<"/home/invites/[invite_id]">): Promise<Metadata>
+⋮----
+<Link href=
+````
+
+## File: apps/platform/app/(app)/home/layout.tsx
+````typescript
+export default function HomeLayout(props: LayoutProps<"/home">)
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/external-access/actions.ts
+````typescript
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { debug } from "~/lib/debug";
+import { getRosetta } from "~/lib/i18n.server";
+import { authedAction } from "~/lib/safe-action.server";
+⋮----
+type GrantAgencyAccessValues = z.infer<typeof grantAgencyAccessSchema>;
+⋮----
+type RevokeAgencyAccessValues = z.infer<typeof revokeAgencyAccessSchema>;
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/new/invite-form.tsx
+````typescript
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ArrowRight, Check, Copy, FileText, Mail, MessageCircle, Phone, ShieldCheck } from "lucide-react";
+import type { Route } from "next";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { type DocumentTripletCountry, DocumentTripletFields } from "~/app/auth/_components/document-triplet-fields";
+import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
+import { ErrorSafeAction, ErrorSafeActionServer, ErrorSafeActionValidation } from "~/lib/safe-action.client";
+import { actionInviteMember } from "../actions";
+import { type InviteMemberValues, inviteMemberSchema } from "../schemas";
+⋮----
+type InviteChannel = "email" | "phone" | "document";
+⋮----
+interface Props {
+  organization_id: number;
+  countries: DocumentTripletCountry[];
+  membersHref: Route;
+  locale: string;
+  tenantSlug: string;
+}
+⋮----
+function editHrefFor(organization_membership_id: number)
+⋮----
+<Copy size=
+⋮----
+<Button type="button" variant="ghost" onClick=
+⋮----
+onClick=
+⋮----
+className=
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/pending-invitations.tsx
+````typescript
+import { useGraphyMutation } from "@packages/graphy/react";
+import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { FileText, Mail, Phone, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useOptimistic, useState, useTransition } from "react";
+import { gql } from "~/generated/graphql";
+import { FilterIs } from "~/generated/graphql/graphql";
+import { useIntlDateTimeFormat } from "~/hooks/use-intl";
+import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE } from "~/lib/route";
+⋮----
+interface InvitationRow {
+  organization_membership_id: number;
+  invitation_email: string | null;
+  invitation_phone: string | null;
+  invitation_address_level0_id: string | null;
+  invitation_document_kind: string | null;
+  invitation_document_value: string | null;
+  invitation_permission_slugs: (string | null)[];
+  invitation_created_at: string;
+  invitation_expires_at: string | null;
+}
+⋮----
+interface Props {
+  invitations: InvitationRow[];
+  locale: string;
+  tenantSlug: string;
+  organizationId: number;
+}
+⋮----
+function INVITATION_LABEL(inv: InvitationRow): string
+⋮----
+function CHANNEL_OF(inv: InvitationRow): "email" | "phone" | "document"
+⋮----
+function cancel(inv: InvitationRow)
+⋮----
+href=
+⋮----
+<span className="shrink-0">
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/dashboard-overview.tsx
+````typescript
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Card } from "@packages/ui-common/shadcn/components/ui/card";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import {
+  ArrowUpRight,
+  Box,
+  Circle,
+  CircleCheck,
+  FileText,
+  LayoutPanelLeft,
+  type LucideIcon,
+  Plus,
+  TrendingDown,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+import { useState } from "react";
+import { useRosetta } from "~/lib/i18n.client";
+⋮----
+type Period = "today" | "week" | "month";
+⋮----
+type StatKey = "members" | "projects" | "documents" | "storage";
+type Stat = {
+  key: StatKey;
+  value: string;
+  delta?: string;
+  up?: boolean;
+  subKey?: "storage_sub";
+  progress?: number;
+  Icon: LucideIcon;
+};
+⋮----
+type VerbKey = "invited" | "published" | "commented" | "joined" | "integration";
+type ActivityItem = { who: string; verb: VerbKey; target: string; time: string; initials: string; tone: string };
+⋮----
+type RoleKey = "owner" | "admin" | "editor" | "viewer";
+type TeamMember = { name: string; role: RoleKey; initials: string; you: boolean; tone: string };
+⋮----
+type ChecklistKey = "org" | "team" | "project" | "integration";
+type ChecklistStep = { key: ChecklistKey; done: boolean };
+⋮----
+sub=
+⋮----
+<CardHeading title=
+⋮----
+className=
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/page.tsx
+````typescript
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
+import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { DashboardOverview } from "./dashboard-overview";
+import { TenantOnboardingBanner } from "./onboarding/onboarding-banner";
+⋮----
+export async function generateMetadata(props: PageProps<"/t/[tenant_slug]/[organization_id]">): Promise<Metadata>
+⋮----
+export default async function OrganizationHomePage(props: PageProps<"/t/[tenant_slug]/[organization_id]">)
+````
+
+## File: apps/platform/app/auth/_components/oauth-section.tsx
+````typescript
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { useRosetta } from "~/lib/i18n.client";
+import { signInWithOAuth } from "../actions";
+import { MAIN_OAUTH, MORE_OAUTH } from "../providers";
+⋮----
+aria-label=
+⋮----
+onClick=
+````
+
+## File: apps/platform/app/robots.ts
+````typescript
+import type { MetadataRoute } from "next";
+import { isApexHost } from "~/lib/apex";
+import { APP_HOST } from "~/lib/constants";
+⋮----
+export default async function robots(): Promise<MetadataRoute.Robots>
+````
+
+## File: apps/platform/app/sitemap.ts
+````typescript
+import type { MetadataRoute } from "next";
+import { isApexHost } from "~/lib/apex";
+import { APP_URL } from "~/lib/constants";
+⋮----
+export default async function sitemap(): Promise<MetadataRoute.Sitemap>
+⋮----
+function PAGE(
+    path: string,
+    data: Omit<MetadataRoute.Sitemap[number], "url" | "alternates">,
+): MetadataRoute.Sitemap[number]
+````
+
+## File: apps/platform/components/inbox/inbox-list.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { Archive, Inbox, MessageSquare } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+import { ScopeSelector } from "~/components/inbox/scope-selector";
+import { ROSETTA } from "~/lib/i18n";
+import { getServerLocale } from "~/lib/i18n.server";
+import { type InboxScope, SCOPE_DETAIL_HREF, SCOPE_INBOX_HREF, SCOPE_RPC_ARGS } from "./scope";
+⋮----
+className=
+````
+
+## File: apps/platform/components/inbox/scope-selector.tsx
+````typescript
+import type { ResultOf } from "@graphql-typed-document-node/core";
+import { useGraphyQuery } from "@packages/graphy/react";
+import { useSupabaseUser } from "@packages/supabase/react";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { Building2, ChevronDown, Globe, Landmark } from "lucide-react";
+import Link from "next/link";
+import { useRef, useState } from "react";
+import type { InboxScope } from "~/components/inbox/scope";
+import { SCOPE_INBOX_HREF } from "~/components/inbox/scope";
+import { Tip, useClickOutside } from "~/components/shell/atoms";
+import { gql } from "~/generated/graphql";
+import { useRosetta } from "~/lib/i18n.client";
+⋮----
+type ScopeOrg = {
+  organization_id: number;
+  organization_name: string;
+  tenant_slug: string;
+};
+⋮----
+type ScopeAgency = {
+  agency_id: number;
+  agency_slug: string;
+  agency_name: string;
+};
+⋮----
+function IS_SCOPE_ACTIVE(current: InboxScope, candidate: InboxScope): boolean
+⋮----
+function SCOPE_LABEL(scope: InboxScope, t: Translate): string
+⋮----
+type Translate = (key: keyof typeof LOCALE_EN) => string;
+⋮----
+<Tip label=
+⋮----
+⋮----
+isActive=
+⋮----
+className=
+⋮----
+<div className=
+````
+
+## File: apps/platform/components/shell/nav-tree.ts
+````typescript
+import { Building2, ExternalLink, Globe, Home, type LucideIcon, Settings, Users } from "lucide-react";
+import type { Route } from "next";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
+⋮----
+export type NavLeaf = {
+  id: string;
+  label: string;
+  href: Route;
+  path: string;
+  Icon: LucideIcon;
+  badge?: number;
+  exact?: boolean;
+};
+⋮----
+export type NavGroup = {
+  id: string;
+  label: string;
+  Icon: LucideIcon;
+  defaultOpen?: boolean;
+  children: NavLeaf[];
+};
+⋮----
+export type NavItem = NavLeaf | NavGroup;
+⋮----
+export type NavLabels = {
+  navHome: string;
+  navOrganization: string;
+  navCompany: string;
+  navGeneral: string;
+  navMembers: string;
+  navExternalAccess: string;
+  navDomains: string;
+};
+⋮----
+export function IS_NAV_GROUP(item: NavItem): item is NavGroup
+⋮----
+export function BUILD_NAV_TREE(tenant_slug: string, organization_id: number, labels: NavLabels): NavItem[]
+⋮----
+export function LEAF_IS_ACTIVE(pathname: string, leaf: NavLeaf): boolean
+⋮----
+export function GROUP_CONTAINS_ACTIVE(pathname: string, group: NavGroup): boolean
+⋮----
+export function PICK_ACTIVE_LEAF_ID(items: NavItem[], pathname: string): string | null
+````
+
+## File: apps/platform/components/profile-avatar-controls.tsx
+````typescript
+import type { ComponentProps } from "react";
+import { EntityLogoControls } from "~/components/entity-logo-controls";
+⋮----
+export function ProfileAvatarControls({
+  profileId,
+  name,
+  avatarSrc,
+  ...props
+}: {
+  profileId: string;
+  name: string;
+  avatarSrc: string | null;
+} & Omit<ComponentProps<typeof EntityLogoControls>, "bucket" | "ownerKey" | "name" | "src" | "shape">)
+````
+
+## File: apps/platform/components/theme-toggle.tsx
+````typescript
+import { useMounted } from "@packages/react-hooks/use-mounted";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { Monitor, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import type { ComponentProps } from "react";
+import { useRosetta } from "~/lib/i18n.client";
+````
+
+## File: apps/platform/hooks/get-viewer-agencies.ts
+````typescript
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
+import { notFound } from "next/navigation";
+import { cache } from "react";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+⋮----
+export type ViewerAgencyGetFragmentType = ResultOf<typeof ViewerAgencyGetFragment>;
+⋮----
+type ViewerAgenciesGetVars = VariablesOf<typeof ViewerAgenciesGet>;
+⋮----
+export async function getViewerAgencyByIdAssert(agency_id: number)
+⋮----
+export async function getViewerAgencyBySlugAssert(agency_slug: string)
+````
+
+## File: apps/platform/hooks/get-viewer-profile.ts
+````typescript
+import type { ResultOf } from "@graphql-typed-document-node/core";
+import { redirect } from "next/navigation";
+import { cache } from "react";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+⋮----
+export type ViewerProfileGetFragmentType = ResultOf<typeof ViewerProfileGetFragment>;
+⋮----
+export async function getViewerProfileRedirect()
+````
+
+## File: apps/platform/hooks/use-locale-cookie.ts
+````typescript
+import { useStateCookie } from "@packages/react-hooks/use-state-cookie";
+import { useRouter } from "next/navigation";
+import { startTransition } from "react";
+import { LOCALE_COOKIE, type SupportedLocale } from "~/lib/i18n";
+import { useLocale } from "~/lib/i18n.client";
+⋮----
+export function useLocaleCookie()
+⋮----
+function selectLocale(next: SupportedLocale)
+````
+
+## File: apps/platform/lib/auth-next.ts
+````typescript
+import { URL_NEW } from "@packages/utils/url";
+⋮----
+export function RESOLVE_AUTH_NEXT(raw: string | null, origin: string): string
+````
+
+## File: apps/platform/lib/i18n.server.ts
+````typescript
+import { match } from "@formatjs/intl-localematcher";
+import type { RosettaDict } from "@packages/rosetta/rosetta";
+import Negotiator from "negotiator";
+import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
+import type { NextRequest } from "next/server";
+import {
+  DEFAULT_LOCALE,
+  IS_SUPPORTED_LOCALE,
+  LOCALE_COOKIE,
+  LOCALE_SUPPORTED_RESOLVE,
+  ROSETTA,
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from "./i18n";
+⋮----
+export async function getServerLocale(): Promise<SupportedLocale>
+⋮----
+export function assertLocale(value: unknown): asserts value is SupportedLocale
+⋮----
+export function LOCALE_FROM_REQUEST(request: NextRequest): SupportedLocale
+⋮----
+export function HEADER_ACCEPT_LANGUAGE_PARSE(header: string | null): SupportedLocale | null
+⋮----
+export async function getRosetta<T>(dict: RosettaDict<T>, locale?: string)
+````
+
 ## File: packages/react-hooks/package.json
 ````json
 {
@@ -8317,19 +8450,6 @@ export async function getSupabaseClientUser()
 export async function getSupabaseClientSession()
 ⋮----
 export async function getSupabaseClientUserMetadata(): Promise<AppMetadata | null>
-````
-
-## File: scripts/skills-setup.js
-````javascript
-async function symlink(target, source)
-⋮----
-async function removeLegacySymlink(source)
-⋮----
-async function restoreThirdPartySkills()
-⋮----
-async function initEnv()
-⋮----
-async function main()
 ````
 
 ## File: skills/my-proxy/SKILL.md
@@ -8557,82 +8677,6 @@ KAPSO_WEBHOOK_SECRET=
 # TWILIO_FROM=+1555XXXXXXX
 ````
 
-## File: .gitignore
-````
-# Dependencies
-node_modules/
-
-# Next.js
-.next/
-out/
-
-# Build outputs
-dist/
-build/
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Local TLS certs (mkcert-generated, machine-specific, never commit private keys)
-**/certs/
-
-# Turbo
-.turbo/
-
-# Vercel
-.vercel/
-
-# Supabase
-**/supabase/.branches
-**/supabase/.temp
-
-# Playwright
-**/test-results/
-**/playwright-report/
-**/playwright/.cache/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-
-# Editor
-.idea/
-*.swp
-*.swo
-
-# Playwright
-.playwright-mcp
-.claude/worktrees/
-
-# Agent skills — generated/installed, not committed.
-# Restored on `pnpm install` via postinstall: my-* symlinks by scripts/skills-setup.js,
-# third-party from skills-lock.json by `skills experimental_install`.
-# Source of truth: skills/ (my-* sources) + skills-lock.json (third-party pins).
-# .agents/skills/ is the universal store read by Codex, Cursor, Copilot, OpenCode, Zed.
-.agents/skills/
-.claude/skills/
-````
-
-## File: conductor.json
-````json
-{
-  "scripts": {
-    "setup": "WORKTREE_NAME=$CONDUCTOR_WORKSPACE_NAME WORKTREE_PORT=$CONDUCTOR_PORT WORKTREE_ROOT_PATH=$CONDUCTOR_ROOT_PATH WORKTREE_PROJECT=saas-template bash scripts/development/worktree-setup.sh",
-    "run": "pnpm run -w dev --filter={apps/platform} -- --port $CONDUCTOR_PORT",
-    "run:debug": "pnpm run -w dev:debug --filter={apps/platform} -- --port $CONDUCTOR_PORT",
-    "archive": "WORKTREE_NAME=$CONDUCTOR_WORKSPACE_NAME WORKTREE_PROJECT=saas-template bash scripts/development/worktree-archive.sh"
-  },
-  "runScriptMode": "concurrent"
-}
-````
-
 ## File: README.md
 ````markdown
 # SaaS Template
@@ -8703,89 +8747,267 @@ pnpm generate:types       # regenerate Supabase TS types
 `my-proxy` documents `apps/platform/proxy.ts`; it is not a residential/SOCKS proxy skill.
 ````
 
-## File: apps/platform/app/(app)/agencies/create/agency-create.tsx
+## File: apps/platform/app/(app)/a/[agency_slug]/tickets/[ticket_id]/ticket-detail.tsx
 ````typescript
-import { useGraphyMutation } from "@packages/graphy/react";
-import { ButtonSpinner } from "@packages/ui-common/button-spinner";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import type { Database } from "@packages/supabase/types";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Input } from "@packages/ui-common/shadcn/components/ui/input";
-import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { SLUGIFY } from "@packages/utils/slug";
-import { ArrowRight, Briefcase, Building2, Check, Eye, Plus, UserPlus } from "lucide-react";
+import { Textarea } from "@packages/ui-common/shadcn/components/ui/textarea";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { AlertTriangle, ArrowLeft, Building2, CheckCircle2, Info, MessageCircle, Send, User } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { gql } from "~/generated/graphql";
+import type { ElementType } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
+import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
+import { actionClaimTicket, actionPostMessage, actionResolveTicket } from "../actions";
 ⋮----
-type Stage = "form" | "created";
+export type ConversationMessage = {
+  conversation_message_id: string;
+  conversation_id: string;
+  message_author: string;
+  message_body: string | null;
+  message_direction: string;
+  message_created_at: string;
+  message_priority: Database["public"]["Enums"]["notification_priority"] | null;
+  message_channel: Database["public"]["Enums"]["message_channel"] | null;
+};
 ⋮----
-// Shared slug rule from @packages/utils, capped at 40 like the tenant-create flow.
+export type TicketDetailData = {
+  ticket_id: string;
+  ticket_subject: string;
+  ticket_status: Database["public"]["Enums"]["ticket_status"];
+  ticket_priority: Database["public"]["Enums"]["notification_priority"];
+  ticket_claimed_at: string | null;
+  ticket_resolved_at: string | null;
+  ticket_created_at: string;
+  assigned_profile_id: string | null;
+  assigned_agency_id: number | null;
+  organization_id: number | null;
+  tenant_id: number;
+  conversation_id: string;
+  organization_name: string | null;
+  organization_slug: string | null;
+  tenant_name: string | null;
+  tenant_slug: string | null;
+  agency_id: number;
+  agency_slug: string;
+  agency_name: string;
+  messages: ConversationMessage[];
+};
 ⋮----
-async function onSubmit(e: React.FormEvent<HTMLFormElement>)
+function handleClaim()
 ⋮----
-pendingChildren=
+function handleReply()
+⋮----
+function handleResolve()
+⋮----
+aria-label=
+⋮----
+onClick=
+⋮----
+setShowResolveForm(false);
+setResolveNote("");
+⋮----
+<div className=
+⋮----
+className=
 ````
 
-## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit/page.tsx
+## File: apps/platform/app/(app)/a/[agency_slug]/tickets/ticket-pool.tsx
+````typescript
+import type { Database } from "@packages/supabase/types";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@packages/ui-common/shadcn/components/ui/tabs";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  ChevronRight,
+  CircleDot,
+  Clock,
+  Hourglass,
+  Inbox,
+  Info,
+  type LucideIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { useState, useTransition } from "react";
+import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE } from "~/lib/route";
+import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
+import { actionClaimTicket } from "./actions";
+⋮----
+export type PoolTicket = {
+  ticket_id: string;
+  ticket_subject: string;
+  ticket_status: Database["public"]["Enums"]["ticket_status"];
+  ticket_priority: Database["public"]["Enums"]["notification_priority"];
+  ticket_claimed_at: string | null;
+  ticket_resolved_at: string | null;
+  ticket_created_at: string;
+  assigned_profile_id: string | null;
+  assigned_agency_id: number | null;
+  organization_id: number | null;
+  tenant_id: number;
+  conversation_id: string;
+  organization_name: string | null;
+  organization_slug: string | null;
+  tenant_name: string | null;
+  tenant_slug: string | null;
+};
+⋮----
+type StatusFilter = "open" | "claimed" | "in_progress" | "resolved" | "closed" | "all";
+⋮----
+function handleClaim()
+⋮----
+className=
+````
+
+## File: apps/platform/app/(app)/a/[agency_slug]/page.tsx
 ````typescript
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
-import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
-import { INITIALS_OF } from "@packages/utils/string";
-import { ArrowLeft, FileText, Mail, Phone, ShieldCheck } from "lucide-react";
-import type { Metadata, Route } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import type { ReactNode } from "react";
-import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-import { ROUTE } from "~/lib/route";
-import { EditPermissionsForm } from "./edit-form";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { Eye } from "lucide-react";
+import type { Metadata } from "next";
+import { getViewerAgencyBySlug, getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
+import { AFFILIATION_STATE } from "~/lib/agencies";
+import { getRosetta } from "~/lib/i18n.server";
 ⋮----
-function MEMBER_LABEL(row: {
-  profile_id: string | null;
-  profile_name_full: string | null;
-  email: string | null;
-  organization_membership_invite_email: string | null;
-  organization_membership_invite_phone: string | null;
-  organization_membership_invite_document_value: string | null;
-  organization_membership_invite_address_level0_id: string | null;
-}): string
-⋮----
-export async function generateMetadata(
-  props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit">,
-): Promise<Metadata>
+export async function generateMetadata(props: PageProps<"/a/[agency_slug]">): Promise<Metadata>
 ````
 
-## File: apps/platform/app/(app)/tenants/create/create-form.tsx
+## File: apps/platform/app/(app)/home/account/connections/page.tsx
 ````typescript
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useGraphyMutation } from "@packages/graphy/react";
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { ButtonSpinner } from "@packages/ui-common/button-spinner";
-import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { SINGLE } from "@packages/utils/array";
+import { redirect } from "next/navigation";
+import { OAUTH_PROVIDERS } from "~/app/auth/providers";
+import { getRosetta } from "~/lib/i18n.server";
+import { actionLinkProvider } from "../actions";
+⋮----
+pendingChildren=
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/general/general-settings.tsx
+````typescript
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@packages/ui-common/shadcn/components/ui/select";
+import { Switch } from "@packages/ui-common/shadcn/components/ui/switch";
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import { EntityLogoControls } from "~/components/entity-logo-controls";
+import { useRosetta } from "~/lib/i18n.client";
+⋮----
+type Access = "none" | "viewer" | "editor";
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit/edit-form.tsx
+````typescript
+import type { GraphyError } from "@packages/graphy/graphy";
+import { useGraphyMutation } from "@packages/graphy/react";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Checkbox } from "@packages/ui-common/shadcn/components/ui/checkbox";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { SLUGIFY } from "@packages/utils/slug";
-import { usePostHog } from "@posthog/next";
 import { ArrowRight, Check } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import type { Route } from "next";
+import { useRouter } from "next/navigation";
+import { useOptimistic, useState, useTransition } from "react";
 import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE, ROUTE_HREF } from "~/lib/route";
-import { type CreateTenantValues, createTenantSchema } from "./schemas";
+import { ROUTE_HREF } from "~/lib/route";
+import { PERMISSION_SLUG_WILDCARD } from "../../schemas";
 ⋮----
-type PlanId = "free" | "pro";
+function MAP_PG_ERROR_KEY(err: GraphyError): "last_admin_protected" | "self_remove_blocked" | "save_failed"
 ⋮----
-pendingChildren=
+interface PermissionRow {
+  permission_id: string;
+  permission_description: string | null;
+}
 ⋮----
-<Link href=
+interface PresetRow {
+  permission_preset_id: number;
+  permission_preset_name: string;
+  permission_preset_slugs: (string | null)[] | null;
+  organization_id: number | null;
+}
+⋮----
+interface Props {
+  organization_membership_id: number;
+  permissions: PermissionRow[];
+  presets: PresetRow[];
+  grantedSlugs: string[];
+  membersHref: Route;
+}
+⋮----
+type OptimisticAction =
+  | { kind: "set_wildcard"; value: boolean }
+  | { kind: "set_permission"; permission_id: string; granted: boolean }
+  | { kind: "apply_preset"; slugs: string[] };
+⋮----
+function APPLY_OPTIMISTIC(state:
+⋮----
+async function writePermission(permission_id: string, granted: boolean): Promise<boolean>
+⋮----
+function togglePermission(permission_id: string, granted: boolean)
+⋮----
+function toggleWildcard(next: boolean)
+⋮----
+function applyPreset(preset: PresetRow)
+⋮----
+function removeMember()
+⋮----
+className=
+⋮----
+onCheckedChange=
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/layout.tsx
+````typescript
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
+import { Shell } from "~/components/shell/shell";
+import { getViewerOrganizationById, getViewerOrganizations } from "~/hooks/get-viewer-organizations";
+import { getViewerProfile } from "~/hooks/get-viewer-profile";
+import { getViewerTenantBySlug } from "~/hooks/get-viewer-tenants";
+import { getServerLocale } from "~/lib/i18n.server";
+⋮----
+export default async function OrganizationLayout({
+  children,
+  params,
+}: LayoutProps<"/t/[tenant_slug]/[organization_id]">)
+⋮----
+// shadcn SidebarProvider persists expanded/collapsed in the `sidebar_state` cookie; default open.
+````
+
+## File: apps/platform/app/(marketing)/layout.tsx
+````typescript
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { Logo } from "@packages/ui-common/logo";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { ArrowRight, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { LocaleToggle } from "~/components/locale-toggle";
+import { StatusBadge } from "~/components/status-badge";
+import { ThemeToggle } from "~/components/theme-toggle";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+⋮----
+href=
 ````
 
 ## File: apps/platform/app/auth/_components/auth-entry-form.tsx
@@ -8813,6 +9035,43 @@ function onBlur()
 className=
 ⋮----
 <ButtonSpinner type="submit" pendingChildren=
+````
+
+## File: apps/platform/app/auth/email/email-step-form.tsx
+````typescript
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import { ArrowRight, Eye, EyeOff, Fingerprint, KeyRound, Lock, Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { notifyDevMailbox } from "~/lib/dev-mailbox-toast.client";
+import { useRosetta } from "~/lib/i18n.client";
+import { signInWithPasskey } from "~/lib/passkeys.client";
+import { OtpField } from "../_components/otp-field";
+⋮----
+type Props = {
+  email: string;
+  next: string;
+  exists: boolean | null;
+  hasPasskey: boolean;
+  hasPassword: boolean;
+};
+⋮----
+function onMagicLink()
+⋮----
+function onVerify(e: React.FormEvent)
+⋮----
+function verifyOtp(nextToken: string)
+⋮----
+function onOtpPasteComplete(nextToken: string)
+⋮----
+function onPassword(e: React.FormEvent)
+⋮----
+function onPasskey()
+⋮----
 ````
 
 ## File: apps/platform/app/llms.txt/route.ts
@@ -8848,155 +9107,63 @@ export function IdentityChip({
 } & ComponentProps<"div">)
 ````
 
-## File: apps/platform/components/shell/conversations-bell.tsx
+## File: apps/platform/components/shell/app-sidebar.tsx
+````typescript
+import { useDeviceInfo } from "@packages/react-hooks/use-device-info";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@packages/ui-common/shadcn/components/ui/collapsible";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarRail,
+  useSidebar,
+} from "@packages/ui-common/shadcn/components/ui/sidebar";
+import { ChevronRight, Search } from "lucide-react";
+import Link from "next/link";
+import { Kbd } from "~/components/shell/atoms";
+import { ConversationsBell } from "~/components/shell/conversations-bell";
+import {
+  BUILD_NAV_TREE,
+  GROUP_CONTAINS_ACTIVE,
+  IS_NAV_GROUP,
+  LEAF_IS_ACTIVE,
+  type NavGroup,
+  type NavLeaf,
+} from "~/components/shell/nav-tree";
+import { OrgSwitcher, type ShellOrganization, type ShellTenant } from "~/components/shell/org-switcher";
+import { ProfileMenu, type ShellViewer } from "~/components/shell/profile-menu";
+import { SettingsMenu } from "~/components/shell/settings-menu";
+import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE } from "~/lib/route";
+⋮----
+<SidebarMenuButton asChild isActive=
+⋮----
+<Collapsible asChild defaultOpen=
+⋮----
+<SidebarMenuSubButton asChild isActive=
+````
+
+## File: apps/platform/lib/passkeys.client.ts
 ````typescript
 import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { Bell, Inbox } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import type { InboxScope } from "~/components/inbox/scope";
-import { SCOPE_DETAIL_HREF, SCOPE_INBOX_HREF, SCOPE_RPC_ARGS } from "~/components/inbox/scope";
-import { Tip, useClickOutside } from "~/components/shell/atoms";
-import { useRosetta } from "~/lib/i18n.client";
+import { debug } from "~/lib/debug";
 ⋮----
-type RecentConversation = {
-  conversation_id: string;
-  conversation_subject: string | null;
-  conversation_status: string;
-  conversation_last_message_at: string;
-  organization_id: number | null;
-  agency_id: string | null;
-  tenant_id: number | null;
-  snippet: string | null;
-  unread: boolean;
-};
+export async function createPasskey()
 ⋮----
-async function fetchBellData(
-  supabase: ReturnType<typeof createSupabaseBrowserClient>,
-  scope: InboxScope,
-): Promise<
-⋮----
-async function refresh(supabase: ReturnType<typeof createSupabaseBrowserClient>)
-⋮----
-async function markAllRead()
-⋮----
-<Tip label=
-⋮----
-className=
-⋮----
-onClick=
-⋮----
-<div className=
-````
-
-## File: apps/platform/components/shell/shell.tsx
-````typescript
-import { useKeyboardShortcut } from "@packages/react-hooks/use-keyboard-shortcut";
-import { SidebarInset, SidebarProvider } from "@packages/ui-common/shadcn/components/ui/sidebar";
-import { TooltipProvider } from "@packages/ui-common/shadcn/components/ui/tooltip";
-import { useIsMobile } from "@packages/ui-common/shadcn/hooks/use-mobile";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
-import { useState } from "react";
-import { AppSidebar } from "~/components/shell/app-sidebar";
-import { CommandPalette } from "~/components/shell/command-palette";
-import { MobileNavDrawer } from "~/components/shell/mobile-nav-drawer";
-import {
-  MobileOrgSheet,
-  MobileProfileSheet,
-  MobileSearchSheet,
-  MobileSettingsSheet,
-} from "~/components/shell/mobile-sheets";
-import { MobileTopBar } from "~/components/shell/mobile-top-bar";
-import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
-import type { ShellViewer } from "~/components/shell/profile-menu";
-⋮----
-type MobileSheet = null | "search" | "org" | "profile" | "settings";
-⋮----
-export function Shell({
-  locale,
-  tenant,
-  organizations,
-  current,
-  viewer,
-  defaultOpen,
-  children,
-}: {
-  locale: string;
-  tenant: ShellTenant;
-  organizations: ShellOrganization[];
-  current: ShellOrganization;
-  viewer: ShellViewer;
-  defaultOpen?: boolean;
-  children: ReactNode;
-})
-⋮----
-onOpenPalette=
-⋮----
-onSearch=
-onOrg=
-onProfile=
-⋮----
-setDrawerOpen(false);
-setMobileSheet("org");
-⋮----
-setMobileSheet("settings");
-````
-
-## File: apps/platform/components/theme-toggle.tsx
-````typescript
-import { useMounted } from "@packages/react-hooks/use-mounted";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { Monitor, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import type { ComponentProps } from "react";
-import { useRosetta } from "~/lib/i18n.client";
-````
-
-## File: apps/platform/hooks/get-viewer-organizations.ts
-````typescript
-import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
-import { notFound } from "next/navigation";
-import { cache } from "react";
-import { gql } from "~/generated/graphql";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
-⋮----
-export type ViewerOrganizationGetFragmentType = ResultOf<typeof ViewerOrganizationGetFragment>;
-⋮----
-type ViewerOrganizationsGetVars = VariablesOf<typeof ViewerOrganizationsGet>;
-⋮----
-export async function getViewerOrganizationByIdAssert(organization_id: number)
-⋮----
-export async function getViewerOrganizationBySlugAssert(organization_slug: string)
-````
-
-## File: apps/platform/hooks/get-viewer-tenants.ts
-````typescript
-import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
-import { notFound } from "next/navigation";
-import { cache } from "react";
-import { gql } from "~/generated/graphql";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
-⋮----
-export type ViewerTenantGetFragmentType = ResultOf<typeof ViewerTenantGetFragment>;
-⋮----
-type ViewerTenantsGetVars = VariablesOf<typeof ViewerTenantsGet>;
-⋮----
-export async function getViewerTenantByIdAssert(tenant_id: number)
-⋮----
-export async function getViewerTenantBySlugAssert(tenant_slug: string)
-````
-
-## File: apps/platform/lib/constants.ts
-````typescript
-import { URL_NEW } from "@packages/utils/url";
-⋮----
-/**
- * Convenience: hostname (+ ":port" when applicable). Use for building absolute redirect
- * URLs server-side. On the client, prefer window.location.host — process.env.PORT is not
- * inlined into client bundles, so APP_HOST in browser-only paths will be missing the port.
- */
+export async function signInWithPasskey()
 ````
 
 ## File: apps/platform/lib/safe-action.server.ts
@@ -9018,89 +9185,76 @@ export function formAction<TInput>(run: (input: TInput) => Promise<unknown>, par
 @theme {
 ````
 
-## File: apps/platform/.env.example
+## File: packages/graphy/package.json
+````json
+{
+  "name": "@packages/graphy",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "exports": {
+    "./react": "./src/react.tsx",
+    "./react-pagination": "./src/react-pagination.tsx",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "build:dry": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "format": "biome check --diagnostic-level=error ."
+  },
+  "dependencies": {
+    "@packages/debug": "workspace:*",
+    "@packages/utils": "workspace:*",
+    "swr": "^2.4.1"
+  },
+  "devDependencies": {
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@packages/typescript-config": "workspace:*",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.17",
+    "graphql": "^17.0.1",
+    "react": "^19.2.7",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}
 ````
-# Supabase Local Development
-# Default values from `pnpm db:start`. Not secrets — only work locally.
-# Copy to apps/platform/.env.local and apps/tenant/.env.local
 
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54421
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
-
-# Cookie domain so the apex (lvh.me:7003) and any tenant subdomain ({slug}.lvh.me:7003) share the session.
-# `lvh.me` is a public DNS wildcard that resolves every name to 127.0.0.1 —
-# no /etc/hosts edits required. Browsers accept cookies on it because it has a real TLD.
-# Local dev: "lvh.me". Production: "example.com". Leave blank to fall back to host-only cookies.
-NEXT_PUBLIC_COOKIE_DOMAIN=lvh.me
-
-# The apex hostname for this deployment (no port — port comes from `PORT`, which the
-# dev script binds to via `--port ${PORT:-7003}` and Conductor assigns per parallel instance).
-# Local dev: "lvh.me". Production: "example.com".
-NEXT_PUBLIC_APEX_HOSTNAME=lvh.me
-
-# Dev-only mailbox (Inbucket from `pnpm db:start`). Surfaced as a "Development only"
-# link on the signup success state so you can grab the magic-link confirmation email
-# without leaving the browser. Leave blank in production.
-NEXT_PUBLIC_DEV_MAILBOX_URL=http://localhost:54424
-
-# Server-side log namespaces (diary via @packages/debug, wired in apps/platform/lib/debug.ts).
-# Default in dev shows everything under "platform:*". Narrow to a slice while debugging, e.g.
-#   DEBUG="platform:passkeys:*"
-#   DEBUG="platform:auth:*,-platform:auth:login"   # exclude noise with a leading "-"
-# Empty or unset = silent.
-DEBUG=platform:*
-
-# ------------------------------------------------------------
-# OAuth providers (read by supabase/config.toml on `pnpm db:start`)
-# Create credentials at the provider console; configure each callback as:
-#   http://127.0.0.1:54421/auth/v1/callback   (local)
-#   https://<project>.supabase.co/auth/v1/callback   (prod)
-# Leave any unused provider blank — `pnpm db:start` will skip it.
-# ------------------------------------------------------------
-
-# Google — https://console.cloud.google.com/apis/credentials
-SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=
-
-# Microsoft (Azure / Entra) — https://portal.azure.com (App registrations)
-SUPABASE_AUTH_EXTERNAL_AZURE_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_AZURE_SECRET=
-
-# LinkedIn — https://www.linkedin.com/developers/apps (use the OIDC product)
-SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_SECRET=
-
-# GitHub — https://github.com/settings/developers (OAuth Apps)
-SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=
-
-# Facebook — https://developers.facebook.com/apps
-SUPABASE_AUTH_EXTERNAL_FACEBOOK_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_FACEBOOK_SECRET=
-
-# ------------------------------------------------------------
-# Twilio (phone OTP for onboarding step + future MFA via SMS)
-# Flip [auth.sms.twilio].enabled = true in config.toml after filling these in.
-# https://console.twilio.com
-# ------------------------------------------------------------
-SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID=
-SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID=
-SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN=
-
-# ------------------------------------------------------------
-# OpenTelemetry (optional — traces exported only when set)
-# ------------------------------------------------------------
-# OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
-# OTEL_SERVICE_NAME=saas-template
-# OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=YOUR_API_KEY
-
-# ------------------------------------------------------------
-# PostHog (optional — analytics and feature flags)
-# Create a project at https://app.posthog.com and copy the key from Project Settings.
-# ------------------------------------------------------------
-# NEXT_PUBLIC_POSTHOG_KEY=phc_xxxxx
-# NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
+## File: packages/react-email/package.json
+````json
+{
+  "name": "@packages/react-email",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "dev": "PORT=${PORT:-7101} email dev --port ${PORT:-7101} --dir src/templates",
+    "build:dry": "tsc --noEmit",
+    "format": "biome check --diagnostic-level=error ."
+  },
+  "exports": {
+    "./templates/*": "./src/templates/*.tsx"
+  },
+  "dependencies": {
+    "@packages/rosetta": "workspace:*",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "2.0.9"
+  },
+  "devDependencies": {
+    "@packages/typescript-config": "workspace:*",
+    "@react-email/ui": "6.6.3",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.17",
+    "react-email": "^6.6.3",
+    "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}
 ````
 
 ## File: packages/react-pdf/package.json
@@ -9130,9 +9284,9 @@ SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN=
     "unified": "^11.0.5"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.7",
-    "@babel/preset-env": "^7.29.7",
-    "@babel/preset-react": "^7.29.7",
+    "@babel/core": "^8.0.1",
+    "@babel/preset-env": "^8.0.2",
+    "@babel/preset-react": "^8.0.1",
     "@packages/typescript-config": "workspace:*",
     "@react-pdf/types": "^2.11.1",
     "@types/node": "^24.12.4",
@@ -9144,7 +9298,7 @@ SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN=
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "style-loader": "^4.0.0",
-    "ts-loader": "^9.6.0",
+    "ts-loader": "^9.6.1",
     "typescript": "^6.0.3",
     "webpack": "^5.107.2",
     "webpack-cli": "^7.0.3",
@@ -9154,6 +9308,384 @@ SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN=
     "react": "^19.0.0"
   }
 }
+````
+
+## File: packages/rosetta/package.json
+````json
+{
+  "name": "@packages/rosetta",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "exports": {
+    "./locale-config": "./src/locale-config.ts",
+    "./rosetta": "./src/rosetta.ts",
+    "./use-rosetta": "./src/use-rosetta.tsx"
+  },
+  "scripts": {
+    "build:dry": "tsc --noEmit",
+    "format": "biome check --diagnostic-level=error .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@packages/utils": "workspace:*",
+    "dlv": "^1.1.3",
+    "templite": "^1.2.0"
+  },
+  "devDependencies": {
+    "@packages/typescript-config": "workspace:*",
+    "@types/dlv": "^1.1.5",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.17",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}
+````
+
+## File: packages/supabase/supabase/config.toml
+````toml
+# For detailed configuration reference documentation, visit:
+# https://supabase.com/docs/guides/local-development/cli/config
+# A string used to distinguish different Supabase projects on the same host. Defaults to the
+# working directory name when running `supabase init`.
+project_id = "saas-template-69d97f2e4667"
+
+[api]
+enabled = true
+# Port to use for the API URL.
+port = 55111
+# Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
+# endpoints. `public` is always included.
+schemas = ["public", "graphql_public", "protected"]
+# Extra schemas to add to the search_path of every request. `public` is always included.
+extra_search_path = ["public", "extensions"]
+# The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
+# for accidental or malicious requests.
+max_rows = 1000
+
+[api.tls]
+enabled = false
+
+[db]
+# Port to use for the local database URL.
+port = 55112
+# Port used by db diff command to initialize the shadow database.
+shadow_port = 55113
+# The database major version to use. This has to be the same as your remote database's. Run `SHOW
+# server_version;` on the remote database to check.
+major_version = 15
+
+[db.pooler]
+enabled = false
+# Port to use for the local connection pooler.
+port = 54429
+# Specifies when a server connection can be reused by other clients.
+# Configure one of the supported pooler modes: `transaction`, `session`.
+pool_mode = "transaction"
+# How many server connections to allow per user/database pair.
+default_pool_size = 20
+# Maximum number of client connections allowed.
+max_client_conn = 100
+
+[db.seed]
+# If enabled, seeds the database after migrations during a db reset.
+enabled = true
+# Specifies an ordered list of seed files to load during db reset.
+# Supports glob patterns relative to supabase directory. For example:
+# sql_paths = ['./seeds/*.sql', '../project-src/seeds/*-load-testing.sql']
+sql_paths = ['./seed.sql']
+
+[realtime]
+enabled = true
+# Bind realtime via either IPv4 or IPv6. (default: IPv4)
+# ip_version = "IPv6"
+# The maximum length in bytes of HTTP request headers. (default: 4096)
+# max_header_length = 4096
+
+[studio]
+enabled = false
+# Port to use for Supabase Studio.
+port = 55114
+# External URL of the API server that frontend connects to.
+api_url = "http://127.0.0.1"
+# OpenAI API Key to use for Supabase AI in the Supabase Studio.
+openai_api_key = "env(OPENAI_API_KEY)"
+
+# Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
+# are monitored, and you can view the emails that would have been sent from the web interface.
+[inbucket]
+enabled = true
+# Port to use for the email testing server web interface.
+port = 55115
+# Uncomment to expose additional ports for testing user applications that send emails.
+# smtp_port = 54325
+# pop3_port = 54326
+# admin_email = "admin@email.com"
+# sender_name = "Admin"
+
+[storage]
+enabled = true
+# The maximum file size allowed (e.g. "5MB", "500KB").
+file_size_limit = "50MiB"
+
+[storage.image_transformation]
+enabled = true
+
+# Uncomment to configure local storage buckets
+# [storage.buckets.images]
+# public = false
+# file_size_limit = "50MiB"
+# allowed_mime_types = ["image/png", "image/jpeg"]
+# objects_path = "./images"
+
+[auth]
+enabled = true
+# The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
+# in emails. Dev runs HTTPS (mkcert + Next --experimental-https) so WebAuthn has a secure context.
+# site_url is embedded in confirmation/recovery emails as a concrete URL, so it must be a
+# fully-resolved host:port. Conductor reassigns PORT per parallel instance; the npm scripts
+# (db:start / db:reset) inject SUPABASE_AUTH_SITE_URL from $PORT, defaulting to 7003.
+site_url = "env(SUPABASE_AUTH_SITE_URL)"
+# The allow-list uses wildcards. `*` matches any sequence of non-separator chars (separators
+# are `.` and `/` only — see https://supabase.com/docs/guides/auth/redirect-urls), so `:55000`
+# is covered. Apex on any dev port (tenant routing is path-based, no subdomains needed).
+additional_redirect_urls = [
+  "https://lvh.me:*/**",
+]
+# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
+jwt_expiry = 3600
+# If disabled, the refresh token will never expire.
+enable_refresh_token_rotation = true
+# Allows refresh tokens to be reused after expiry, up to the specified interval in seconds.
+# Requires enable_refresh_token_rotation = true.
+refresh_token_reuse_interval = 10
+# Allow/disallow new user signups to your project.
+enable_signup = true
+# Allow/disallow anonymous sign-ins to your project.
+enable_anonymous_sign_ins = false
+# Allow/disallow testing manual linking of accounts
+enable_manual_linking = true
+# Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
+minimum_password_length = 6
+# Passwords that do not meet the following requirements will be rejected as weak. Supported values
+# are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
+password_requirements = ""
+
+# OAuth 2.1 authorization server (GoTrue). Required for MCP clients to authenticate as the user.
+# When disabled, /.well-known/oauth-authorization-server returns "OAuth server is disabled" and
+# clients that rely on Dynamic Client Registration (e.g. Claude Code) fail to connect.
+# `authorization_url_path` is the in-app consent screen GoTrue redirects to (see app/oauth/consent).
+# `allow_dynamic_registration`: true = MCP clients self-register via RFC 7591 (dev); false = prod
+# (pre-register clients to prevent anonymous OAuth app creation). Set via env — see .env.example.
+[auth.oauth_server]
+enabled = true
+authorization_url_path = "/oauth/consent"
+allow_dynamic_registration = true
+
+[auth.email]
+# Allow/disallow new user signups via email to your project.
+enable_signup = true
+# If enabled, a user will be required to confirm any email change on both the old, and new email
+# addresses. If disabled, only the new email is required to confirm.
+double_confirm_changes = true
+# If enabled, users need to confirm their email address before signing in.
+enable_confirmations = true
+# If enabled, users will need to reauthenticate or have logged in recently to change their password.
+secure_password_change = false
+# Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
+max_frequency = "1s"
+# Number of characters used in the email OTP.
+otp_length = 6
+# Number of seconds before the email OTP expires (defaults to 1 hour).
+otp_expiry = 3600
+
+# Use a production-ready SMTP server
+# [auth.email.smtp]
+# host = "smtp.sendgrid.net"
+# port = 587
+# user = "apikey"
+# pass = "env(SENDGRID_API_KEY)"
+# admin_email = "admin@email.com"
+# sender_name = "Admin"
+
+# Custom templates use {{ .TokenHash }} and route through our app at /auth/confirm so the link
+# in the email lands on lvh.me (the app origin) instead of the GoTrue verify endpoint at 127.0.0.1.
+# The confirm route calls supabase.auth.verifyOtp({ token_hash, type }) and redirects to `next`.
+[auth.email.template.confirmation]
+subject = "Confirma tu correo en SaaS Template"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.magic_link]
+subject = "Tu enlace para iniciar sesión en SaaS Template"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.email_change]
+subject = "Confirma tu nuevo correo en SaaS Template"
+content_path = "./supabase/templates/email_change.html"
+
+[auth.sms]
+# Allow/disallow new user signups via SMS to your project.
+enable_signup = true
+# If enabled, users need to confirm their phone number before signing in.
+enable_confirmations = true
+# Template for sending OTP to users
+template = "Tu código de SaaS Template es {{ .Code }}"
+# Controls the minimum amount of time that must pass before sending another sms otp.
+max_frequency = "5s"
+
+# Pre-defined phone → OTP map for local development. Without a real SMS provider, gotrue logs
+# the OTP to docker logs but won't actually deliver. The test_otp map shortcuts that: any OTP
+# request to one of these numbers is "delivered" as the configured code. Uncomment and add the
+# numbers your team tests with.
+# [auth.sms.test_otp]
+# 56990511003 = "123456"
+
+# Configure logged in session timeouts.
+# [auth.sessions]
+# Force log out after the specified duration.
+# timebox = "24h"
+# Force log out if the user has been inactive longer than the specified duration.
+# inactivity_timeout = "8h"
+
+# This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/user_auth_hook"
+
+# Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
+# Flip enabled = true once the SUPABASE_AUTH_SMS_TWILIO_* vars are in .env.local. Without them
+# `pnpm db:start` will refuse to start, so we keep it disabled by default for local dev.
+[auth.sms.twilio]
+enabled = false
+account_sid = "env(SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID)"
+message_service_sid = "env(SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID)"
+# DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
+auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
+
+[auth.mfa]
+# Control how many MFA factors can be enrolled at once per user.
+max_enrolled_factors = 10
+
+# Control use of MFA via App Authenticator (TOTP)
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+# Configure Multi-factor-authentication via Phone Messaging
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
+otp_length = 6
+template = "Your code is {{ .Code }}"
+max_frequency = "5s"
+
+# Passkeys are not implemented via Supabase MFA — they're a custom SimpleWebAuthn-backed
+# flow with its own public.profile_webauthn_credentials / profile_webauthn_challenges tables. See
+# apps/platform/lib/passkeys.* (server actions, no dedicated routes).
+
+# Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
+# `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
+# `twitter`, `slack`, `spotify`, `workos`, `zoom`.
+[auth.external.apple]
+enabled = false
+client_id = ""
+# DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
+secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
+# Overrides the default auth redirectUrl.
+redirect_uri = ""
+# Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
+# or any other third-party OIDC providers.
+url = ""
+# If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
+skip_nonce_check = false
+
+# Flip enabled = true once you've added the credentials in .env.local.
+[auth.external.google]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+# Required for local sign in with Google (Google enforces nonce in prod, can't replay locally).
+skip_nonce_check = true
+
+[auth.external.azure]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_AZURE_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_AZURE_SECRET)"
+# For multi-tenant apps use "https://login.microsoftonline.com/common/v2.0".
+# For single-tenant, replace `common` with the Entra tenant id.
+url = "https://login.microsoftonline.com/common/v2.0"
+
+[auth.external.linkedin_oidc]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_SECRET)"
+
+[auth.external.github]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET)"
+
+[auth.external.facebook]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_FACEBOOK_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_FACEBOOK_SECRET)"
+
+# Use Firebase Auth as a third-party provider alongside Supabase Auth.
+[auth.third_party.firebase]
+enabled = false
+# project_id = "my-firebase-project"
+
+# Use Auth0 as a third-party provider alongside Supabase Auth.
+[auth.third_party.auth0]
+enabled = false
+# tenant = "my-auth0-tenant"
+# tenant_region = "us"
+
+# Use AWS Cognito (Amplify) as a third-party provider alongside Supabase Auth.
+[auth.third_party.aws_cognito]
+enabled = false
+# user_pool_id = "my-user-pool-id"
+# user_pool_region = "us-east-1"
+
+[edge_runtime]
+enabled = false
+# Configure one of the supported request policies: `oneshot`, `per_worker`.
+# Use `oneshot` for hot reload, or `per_worker` for load testing.
+policy = "oneshot"
+# Port to attach the Chrome inspector for debugging edge functions.
+inspector_port = 8183
+
+# Use these configurations to customize your Edge Function.
+# [functions.MY_FUNCTION_NAME]
+# enabled = true
+# verify_jwt = true
+# import_map = "./functions/MY_FUNCTION_NAME/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+# entrypoint = "./functions/MY_FUNCTION_NAME/index.ts"
+
+[analytics]
+enabled = false
+port = 55116
+# Configure one of the supported backends: `postgres`, `bigquery`.
+backend = "postgres"
+
+# Experimental features may be deprecated any time
+[experimental]
+# Configures Postgres storage engine to use OrioleDB (S3)
+orioledb_version = ""
+# Configures S3 bucket URL, eg. <bucket_name>.s3-<region>.amazonaws.com
+s3_host = "env(S3_HOST)"
+# Configures S3 bucket region, eg. us-east-1
+s3_region = "env(S3_REGION)"
+# Configures AWS_ACCESS_KEY_ID for S3 bucket
+s3_access_key = "env(S3_ACCESS_KEY)"
+# Configures AWS_SECRET_ACCESS_KEY for S3 bucket
+s3_secret_key = "env(S3_SECRET_KEY)"
 ````
 
 ## File: packages/utils/package.json
@@ -9182,113 +9714,9 @@ SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN=
     "@supabase/postgrest-js": "^2.108.2",
     "color-hash": "^2.0.2",
     "ms": "^2.1.3",
-    "temporal-polyfill": "^0.3.2"
+    "temporal-polyfill": "^1.0.1"
   }
 }
-````
-
-## File: skills/my-graphql-codegen/SKILL.md
-````markdown
----
-name: my-graphql-codegen
-description: Repository-specific two-stage GraphQL schema and operation code generation. Use after SQL/pg_graphql changes, GraphQL operation edits, generated type errors, or schema introspection failures.
----
-
-# GraphQL Codegen
-
-Two stages. Always use pnpm.
-
-## Files
-
-- Schema config: `packages/supabase/graphql.config.ts`
-- Schema outputs: `packages/supabase/generated/graphql/graphql.schema.{json,graphql}`
-- Operation config: `apps/platform/graphql.config.ts`
-- Operation outputs: `apps/platform/generated/graphql/**`
-
-## Normal workflow
-
-After SQL changes:
-
-```bash
-pnpm db:reset
-pnpm generate:types
-pnpm generate:graphql:schema
-pnpm --filter @apps/platform run generate:graphql
-```
-
-Schema-only local regeneration from checked-in JSON:
-
-```bash
-pnpm generate:graphql:schema:local
-```
-
-Operation-only changes (no SQL touched):
-
-```bash
-pnpm --filter @apps/platform run generate:graphql
-```
-
-Do not use npm, ad hoc output paths, or redirect generated output manually.
-
-> **Note:** `pnpm generate:graphql:platform` is NOT a valid root command — always use the
-> `--filter @apps/platform` form above.
-
-## Stage 1: schema
-
-`packages/supabase/graphql.config.ts` loads app env. Default introspects:
-
-```ts
-const href_graphql = `${NEXT_PUBLIC_SUPABASE_URL}/graphql/v1`;
-```
-
-with anon `apiKey`. It writes introspection JSON + sorted SDL. `--local` reads existing JSON;
-it does not introspect DB.
-
-**Prerequisite:** `apps/platform/.env.local` must exist with `NEXT_PUBLIC_SUPABASE_URL` and
-`NEXT_PUBLIC_SUPABASE_ANON_KEY`. The config loads env from that path via `@next/env`. If
-missing, URL resolves as `undefined` and introspection silently fails with "Unable to find any
-GraphQL type definitions for `undefined/graphql/v1`".
-
-If introspection suddenly returns empty/broken schema, inspect SQL names first. pg_graphql
-requires names matching `[_a-zA-Z0-9]`; hyphenated enum value can break entire schema.
-
-## Stage 2: operations
-
-Platform config reads schema JSON and scans:
-
-```ts
-documents: ["./{app,components,hooks,lib}/**/*.{graphql,ts,tsx}"]
-```
-
-Client preset settings matter:
-
-```ts
-{
-  fragmentMasking: false,
-  gqlTagName: "gql",
-  documentMode: "string",
-  strictScalars: true,
-  skipTypename: true,
-  dedupeFragments: true
-}
-```
-
-Scalars:
-
-- `Int`, `Float` -> `number`
-- `BigInt`, `BigFloat` -> `string`
-- `Cursor`, `Opaque`, `Time`, `Date`, `Datetime`, `UUID` -> `string`
-- `JSON` -> `string` in current config
-
-## Rules
-
-- Every operation name globally unique.
-- Import generated `gql` from `~/generated/graphql`.
-- Generated files are committed, never manually edited.
-- SQL schema change requires both Supabase types and GraphQL schema regeneration.
-- Operation change requires platform generation before typecheck.
-- If `gql("...")` returns `unknown`, operation text differs from generated registry. Regenerate.
-- Validate with `pnpm build:dry`.
 ````
 
 ## File: skills/my-graphy/SKILL.md
@@ -9572,70 +10000,569 @@ Relevant tests: `viewer_permissions`, `rls_memberships`, `membership_invariants`
 `permission_presets_validate`, `journey_escalation_attempts`.
 ````
 
-## File: apps/platform/components/system-message.tsx
+## File: .gitignore
+````
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Build outputs
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Per-worktree dev URL/port map (generated by pnpm db:env:development)
+.dev-env.md
+
+# Local TLS certs (mkcert-generated, machine-specific, never commit private keys)
+**/certificates/
+
+# Turbo
+.turbo/
+
+# Vercel
+.vercel/
+
+# Supabase
+**/supabase/.branches
+**/supabase/.temp
+
+# Playwright
+**/test-results/
+**/playwright-report/
+**/playwright/.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor
+.idea/
+*.swp
+*.swo
+
+# Playwright
+.playwright-mcp
+.claude/worktrees/
+
+# Agent skill stores — generated symlinks, not committed.
+# Rebuilt on `pnpm install` via postinstall (scripts/skills-setup.mjs): every dir
+# in skills/ (first-party) and skills-third-party/ (vendored) is symlinked here.
+# Source of truth: skills/ + skills-third-party/ (both committed).
+# .agents/skills/ is the universal store read by Codex, Cursor, Copilot, OpenCode, Zed.
+.agents/skills/
+agent/skills/
+.claude/skills/
+````
+
+## File: skills-lock.json
+````json
+{
+  "version": 1,
+  "skills": {
+    "caveman": {
+      "source": "juliusbrussee/caveman",
+      "sourceType": "github",
+      "skillPath": "skills/caveman/SKILL.md",
+      "computedHash": "1902fa0b569912d0c05736d8d98a72097d9b82719aac88c0c1d03bb546f9176d"
+    },
+    "codebase": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "307eb561d25575f5543a8f86fbf4ede14d793bab69ec42952cc8e9fb5973440e"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
+    },
+    "integrate-whatsapp": {
+      "source": "gokapso/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/integrate-whatsapp/SKILL.md",
+      "computedHash": "acd8594565afb7b28c5490ce1d52fbb2fd99d998c2d500c70a8bbade56f710aa"
+    },
+    "karpathy-guidelines": {
+      "source": "multica-ai/andrej-karpathy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/karpathy-guidelines/SKILL.md"
+    },
+    "my-auth": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "73579054f3516c54d06c4c780dd1578cb0ada0c5f2da01a18505e7f9e11426ab"
+    },
+    "my-graphql": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "05734408341dcf11e66c80088a667d29ef76406d490de276de19c549af6f1c2b"
+    },
+    "my-graphql-codegen": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "046943e6da5b6fbf251ea4041fa419306e942617cbb4e90ccf208a5e3662d5fe"
+    },
+    "my-graphy": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "681d8b924a96306dc1b52dc551e1ead5673e8b117971586c86b8860464738d74"
+    },
+    "my-i18n": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "aff4ee43fcd01ac799433a4ea1d21847a8e2e042b8f27cbbe1c540e61fc0c420"
+    },
+    "my-permissions": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "52bb4895847b36032372be2ee00e12714ae176444acbdb149ffb17fb9fd70b67"
+    },
+    "my-proxy": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "06e8fa802550ce4c8d90720a9df1da1e0690660cf6428e41fe1a76fe939ec675"
+    },
+    "my-react-email": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "918aab053edeb5c8112f722b2c699bbe394589f06bae777eac208bc0f2db9529"
+    },
+    "my-react-pdf": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "7d35ff51a21e115ac4a678d9927bf571c7caec4fd2b08d296ec71db541c1e853"
+    },
+    "my-supabase": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "1bcf79df6b74a1628110aa61e187b00471d912637eeaf852c0ed3598e9bd3937"
+    },
+    "my-supabase-codegen": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "c2e587ac302c16c23aec3c3dd4437e60c8bcd7a15e618e64d50bf4edf8a89c4f"
+    },
+    "my-supabase-react": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "3764287c3c7997f2bef6e2b69c8c13a5274cadb65b8e7f3d4627b2d4bfe1b130"
+    },
+    "ponytail": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail/SKILL.md",
+      "computedHash": "55e888f9d81f873068de13d44f4f963595aa2c2c6bb0f9024160bea79f756618"
+    },
+    "ponytail-audit": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail-audit/SKILL.md"
+    },
+    "ponytail-review": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail-review/SKILL.md"
+    },
+    "psql": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "0b9883674249303a60a52964b9a9b170ee40d65f80b2120a108338de467fee37"
+    },
+    "psql-query": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "737dfbf7866e81d489cb489bfeecb64284ab1bfc3b88b2a557f9d26b59c9a9f7"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "ac9d0d69caac7de1d1e5647f3db3bcd2f13af355d6b3a78780fbf7fc80e8dca0"
+    },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md"
+    },
+    "turborepo": {
+      "source": "vercel/turborepo",
+      "sourceType": "github",
+      "skillPath": "skills/turborepo/SKILL.md"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    }
+  }
+}
+````
+
+## File: apps/platform/app/(app)/a/[agency_slug]/actions.ts
 ````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { HOST_FROM_HEADERS } from "@packages/utils/headers";
+import { URL_NEW } from "@packages/utils/url";
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { z } from "zod";
+import { debug } from "~/lib/debug";
+import { getRosetta } from "~/lib/i18n.server";
+import { authedAction } from "~/lib/safe-action.server";
+````
+
+## File: apps/platform/app/(app)/home/page.tsx
+````typescript
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { Logo } from "@packages/ui-common/logo";
+import { ArrowRight, Plus, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { EntityAvatar } from "~/components/entity-avatar";
+import { LocaleToggle } from "~/components/locale-toggle";
+import { ThemeToggle } from "~/components/theme-toggle";
+import { gql } from "~/generated/graphql";
+import { OrderByDirection } from "~/generated/graphql/graphql";
+import { getViewerAgencies } from "~/hooks/get-viewer-agencies";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { COUNT_DONE, METHOD_ORDER } from "../../auth/onboarding/state";
+import { getViewerOnboardingState } from "../../auth/onboarding/state.server";
+import { UserMenu } from "./_components/user-menu";
+⋮----
+href=
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/external-access/page.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
+import { getRosetta } from "~/lib/i18n.server";
+import { ExternalAccess, type ExternalAccessAgency } from "./external-access";
+⋮----
+export async function generateMetadata(
+  props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/external-access">,
+): Promise<Metadata>
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/new/page.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getCountries } from "~/hooks/get-countries";
+import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
+import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { InviteMemberForm } from "./invite-form";
+⋮----
+export async function generateMetadata(
+  props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members/new">,
+): Promise<Metadata>
+````
+
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/page.tsx
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { INITIALS_OF } from "@packages/utils/string";
+import { ChevronRight, ShieldCheck, UserPlus } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
+import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { PendingInvitations } from "./pending-invitations";
+⋮----
+export async function generateMetadata(
+  props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members">,
+): Promise<Metadata>
+⋮----
+href=
+````
+
+## File: apps/platform/app/(app)/tenants/create/create-form.tsx
+````typescript
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useGraphyMutation } from "@packages/graphy/react";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { type LucideIcon, RotateCcw, Search, TriangleAlert, Wrench } from "lucide-react";
-import type { ComponentProps } from "react";
-import { useLocaleParam } from "~/hooks/use-locale-param";
+import { SLUGIFY } from "@packages/utils/slug";
+import { usePostHog } from "@posthog/next";
+import { ArrowRight, Check } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { gql } from "~/generated/graphql";
+import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
+import { type CreateTenantValues, createTenantSchema } from "./schemas";
 ⋮----
-type SystemKind = "notFound" | "error" | "maintenance";
+type PlanId = "free" | "pro";
 ⋮----
-type SystemDef = { code: string; Icon: LucideIcon };
+pendingChildren=
 ⋮----
-export function SystemMessage({
-  kind = "notFound",
-  reset,
-  className,
-  ...props
-}:
+<Link href=
+````
+
+## File: apps/platform/app/auth/document/document-step-form.tsx
+````typescript
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@packages/ui-common/shadcn/components/ui/select";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ArrowRight, IdCard } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { useCountries } from "~/hooks/use-countries";
+import { useLocale, useRosetta } from "~/lib/i18n.client";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
+import { ErrorSafeAction } from "~/lib/safe-action.client";
+import {
+  DOCUMENT_VALUE_LABEL,
+  DOCUMENT_VALUE_PLACEHOLDER,
+  FORMAT_DOCUMENT,
+  NORMALIZE_DOCUMENT,
+} from "../_components/document-labels";
+import { OtpField } from "../_components/otp-field";
+import { actionCheckDocument, actionVerifyDocumentLoginOtp } from "./actions";
+⋮----
+type DocKind = "nin" | "passport";
+⋮----
+type LoginState = { channel: "sms" | "email"; contact: string; masked: string };
+⋮----
+function onCheck(e: React.FormEvent)
+⋮----
+function onVerify(e: React.FormEvent)
+⋮----
+onValueChange=
 ⋮----
 className=
 ⋮----
-<Button variant="outline" className="h-9" onClick=
+setDoc(NORMALIZE_DOCUMENT(country, kind, e.target.value));
 ⋮----
-function RESOLVE_COPY(locale: string): Record<SystemKind, Copy>
+setDoc((current)
+⋮----
+placeholder=
 ````
 
-## File: apps/platform/hooks/get-viewer-profile.ts
+## File: apps/platform/app/auth/onboarding/page.tsx
 ````typescript
-import type { ResultOf } from "@graphql-typed-document-node/core";
-import { redirect } from "next/navigation";
-import { cache } from "react";
-import { gql } from "~/generated/graphql";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ArrowRight, Check, Star } from "lucide-react";
+import Link from "next/link";
+import { AUTH_TWEAKS } from "~/lib/auth-tweaks";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { AuthCard } from "../_components/auth-card";
+import { METHOD_CATALOG } from "./_components/method-catalog";
+import { actionFinishOnboarding } from "./actions";
+import {
+  COUNT_DONE,
+  METHOD_ORDER,
+  ONBOARDING_METHOD_PATH,
+  type OnboardingMethodId,
+  type OnboardingMethodStatus,
+} from "./state";
+import { getViewerOnboardingState } from "./state.server";
 ⋮----
-export type ViewerProfileGetFragmentType = ResultOf<typeof ViewerProfileGetFragment>;
+// TODO: overkill, AUTH_TWEAKS.OB_RECOMMENDED is always passkey. could be constant.
 ⋮----
-export async function getViewerProfileRedirect()
+className=
+⋮----
+<span className=
+⋮----
 ````
 
-## File: apps/platform/lib/i18n.ts
-````typescript
-import { LocaleConfig } from "@packages/rosetta/locale-config";
-import { type RosettaDict, RosettaImpl } from "@packages/rosetta/rosetta";
-⋮----
-export function ROSETTA<T>(dict: RosettaDict<T>, locale: string)
-⋮----
-export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-⋮----
-export function IS_SUPPORTED_LOCALE(value: unknown): value is SupportedLocale
-⋮----
-export function LOCALE_SUPPORTED_RESOLVE(value: unknown): SupportedLocale | null
-⋮----
-function LOCALE_TAG_NORMALIZE(locale: string): string
-````
-
-## File: apps/platform/lib/passkeys.client.ts
+## File: apps/platform/components/shell/conversations-bell.tsx
 ````typescript
 import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
-import { debug } from "~/lib/debug";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { Bell, Inbox } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import type { InboxScope } from "~/components/inbox/scope";
+import { SCOPE_DETAIL_HREF, SCOPE_INBOX_HREF, SCOPE_RPC_ARGS } from "~/components/inbox/scope";
+import { Tip, useClickOutside } from "~/components/shell/atoms";
+import { useRosetta } from "~/lib/i18n.client";
 ⋮----
-export async function createPasskey()
+type RecentConversation = {
+  conversation_id: string;
+  conversation_subject: string | null;
+  conversation_status: string;
+  conversation_last_message_at: string;
+  organization_id: number | null;
+  agency_id: number | null;
+  tenant_id: number | null;
+  snippet: string | null;
+  unread: boolean;
+};
 ⋮----
-export async function signInWithPasskey()
+async function fetchBellData(
+  supabase: ReturnType<typeof createSupabaseBrowserClient>,
+  scope: InboxScope,
+): Promise<
+⋮----
+async function refresh(supabase: ReturnType<typeof createSupabaseBrowserClient>)
+⋮----
+async function markAllRead()
+⋮----
+<Tip label=
+⋮----
+className=
+⋮----
+onClick=
+⋮----
+<div className=
+````
+
+## File: apps/platform/.env.example
+````
+# Supabase Local Development
+# Default values from `pnpm db:start`. Not secrets — only work locally.
+# Copy to apps/platform/.env.local and apps/tenant/.env.local
+
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54421
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+
+# Cookie domain so the apex (lvh.me:7003) and any tenant subdomain ({slug}.lvh.me:7003) share the session.
+# `lvh.me` is a public DNS wildcard that resolves every name to 127.0.0.1 —
+# no /etc/hosts edits required. Browsers accept cookies on it because it has a real TLD.
+# Local dev: "lvh.me". Production: "example.com". Leave blank to fall back to host-only cookies.
+NEXT_PUBLIC_COOKIE_DOMAIN=lvh.me
+
+# The apex hostname for this deployment (no port — port comes from `PORT`, which the
+# dev script binds to via `--port ${PORT:-7003}` and Conductor assigns per parallel instance).
+# Local dev: "lvh.me". Production: "example.com".
+NEXT_PUBLIC_APEX_HOSTNAME=lvh.me
+
+# Dev-only mailbox (Inbucket from `pnpm db:start`). Surfaced as a "Development only"
+# link on the signup success state so you can grab the magic-link confirmation email
+# without leaving the browser. Leave blank in production.
+NEXT_PUBLIC_DEV_MAILBOX_URL=http://localhost:54424
+
+# Server-side log namespaces (diary via @packages/debug, wired in apps/platform/lib/debug.ts).
+# Default in dev shows everything under "platform:*". Narrow to a slice while debugging, e.g.
+#   DEBUG="platform:passkeys:*"
+#   DEBUG="platform:auth:*,-platform:auth:login"   # exclude noise with a leading "-"
+# Empty or unset = silent.
+DEBUG=platform:*
+
+# ------------------------------------------------------------
+# OAuth providers (read by supabase/config.toml on `pnpm db:start`)
+# Create credentials at the provider console; configure each callback as:
+#   http://127.0.0.1:54421/auth/v1/callback   (local)
+#   https://<project>.supabase.co/auth/v1/callback   (prod)
+# Leave any unused provider blank — `pnpm db:start` will skip it.
+# ------------------------------------------------------------
+
+# Google — https://console.cloud.google.com/apis/credentials
+SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=
+SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=
+
+# Microsoft (Azure / Entra) — https://portal.azure.com (App registrations)
+SUPABASE_AUTH_EXTERNAL_AZURE_CLIENT_ID=
+SUPABASE_AUTH_EXTERNAL_AZURE_SECRET=
+
+# LinkedIn — https://www.linkedin.com/developers/apps (use the OIDC product)
+SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID=
+SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_SECRET=
+
+# GitHub — https://github.com/settings/developers (OAuth Apps)
+SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=
+SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=
+
+# Facebook — https://developers.facebook.com/apps
+SUPABASE_AUTH_EXTERNAL_FACEBOOK_CLIENT_ID=
+SUPABASE_AUTH_EXTERNAL_FACEBOOK_SECRET=
+
+# ------------------------------------------------------------
+# Twilio (phone OTP for onboarding step + future MFA via SMS)
+# Flip [auth.sms.twilio].enabled = true in config.toml after filling these in.
+# https://console.twilio.com
+# ------------------------------------------------------------
+SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID=
+SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID=
+SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN=
+
+# ------------------------------------------------------------
+# OpenTelemetry (optional — traces exported only when set)
+# ------------------------------------------------------------
+# OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
+# OTEL_SERVICE_NAME=saas-template
+# OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=YOUR_API_KEY
+
+# ------------------------------------------------------------
+# PostHog (optional — analytics and feature flags)
+# Create a project at https://app.posthog.com and copy the key from Project Settings.
+# ------------------------------------------------------------
+# NEXT_PUBLIC_POSTHOG_KEY=phc_xxxxx
+# NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
+
+# ------------------------------------------------------------
+# MCP OAuth — Dynamic Client Registration (RFC 7591)
+# Read by config.toml [auth.oauth_server].allow_dynamic_registration on `pnpm db:start`.
+# true  → MCP clients (Claude Code, etc.) can self-register in dev — required locally.
+# false → production default; pre-register clients via Supabase dashboard instead.
+# ------------------------------------------------------------
+SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=true
 ````
 
 ## File: apps/platform/next.config.ts
@@ -9647,76 +10574,6 @@ import type { NextConfig } from "next";
 import pkg from "~/package.json" with { type: "json" };
 ⋮----
 function LOCAL_HOSTNAME(): string | null
-````
-
-## File: packages/react-email/package.json
-````json
-{
-  "name": "@packages/react-email",
-  "version": "0.0.0",
-  "private": true,
-  "sideEffects": false,
-  "scripts": {
-    "dev": "PORT=${PORT:-7101} email dev --port ${PORT:-7101} --dir src/templates",
-    "build:dry": "tsc --noEmit",
-    "format": "biome check --diagnostic-level=error ."
-  },
-  "exports": {
-    "./templates/*": "./src/templates/*.tsx"
-  },
-  "dependencies": {
-    "@packages/rosetta": "workspace:*",
-    "@react-email/components": "^1.0.12",
-    "@react-email/render": "2.0.8"
-  },
-  "devDependencies": {
-    "@packages/typescript-config": "workspace:*",
-    "@react-email/ui": "6.6.0",
-    "@types/node": "^24.12.4",
-    "@types/react": "^19.2.17",
-    "react-email": "^6.6.0",
-    "typescript": "^6.0.3"
-  },
-  "peerDependencies": {
-    "react": "^19.0.0"
-  }
-}
-````
-
-## File: packages/rosetta/package.json
-````json
-{
-  "name": "@packages/rosetta",
-  "version": "0.0.0",
-  "private": true,
-  "sideEffects": false,
-  "exports": {
-    "./locale-config": "./src/locale-config.ts",
-    "./rosetta": "./src/rosetta.ts",
-    "./use-rosetta": "./src/use-rosetta.tsx"
-  },
-  "scripts": {
-    "build:dry": "tsc --noEmit",
-    "format": "biome check --diagnostic-level=error .",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@packages/utils": "workspace:*",
-    "dlv": "^1.1.3",
-    "templite": "^1.2.0"
-  },
-  "devDependencies": {
-    "@packages/typescript-config": "workspace:*",
-    "@types/dlv": "^1.1.5",
-    "@types/node": "^24.12.4",
-    "@types/react": "^19.2.17",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
-  },
-  "peerDependencies": {
-    "react": "^19.0.0"
-  }
-}
 ````
 
 ## File: packages/supabase/src/client.server.ts
@@ -9737,343 +10594,26 @@ export async function getSupabaseServerUserRedirect()
 export async function getSupabaseServerUserAssert()
 ````
 
-## File: packages/supabase/supabase/config.toml
-````toml
-# For detailed configuration reference documentation, visit:
-# https://supabase.com/docs/guides/local-development/cli/config
-# A string used to distinguish different Supabase projects on the same host. Defaults to the
-# working directory name when running `supabase init`.
-project_id = "saas-template-19ffd3541b88"
-
-[api]
-enabled = true
-# Port to use for the API URL.
-port = 55121
-# Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
-# endpoints. `public` is always included.
-schemas = ["public", "graphql_public", "protected"]
-# Extra schemas to add to the search_path of every request. `public` is always included.
-extra_search_path = ["public", "extensions"]
-# The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
-# for accidental or malicious requests.
-max_rows = 1000
-
-[api.tls]
-enabled = false
-
-[db]
-# Port to use for the local database URL.
-port = 55122
-# Port used by db diff command to initialize the shadow database.
-shadow_port = 55123
-# The database major version to use. This has to be the same as your remote database's. Run `SHOW
-# server_version;` on the remote database to check.
-major_version = 15
-
-[db.pooler]
-enabled = false
-# Port to use for the local connection pooler.
-port = 54429
-# Specifies when a server connection can be reused by other clients.
-# Configure one of the supported pooler modes: `transaction`, `session`.
-pool_mode = "transaction"
-# How many server connections to allow per user/database pair.
-default_pool_size = 20
-# Maximum number of client connections allowed.
-max_client_conn = 100
-
-[db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
-# Specifies an ordered list of seed files to load during db reset.
-# Supports glob patterns relative to supabase directory. For example:
-# sql_paths = ['./seeds/*.sql', '../project-src/seeds/*-load-testing.sql']
-sql_paths = ['./seed.sql']
-
-[realtime]
-enabled = true
-# Bind realtime via either IPv4 or IPv6. (default: IPv4)
-# ip_version = "IPv6"
-# The maximum length in bytes of HTTP request headers. (default: 4096)
-# max_header_length = 4096
-
-[studio]
-enabled = true
-# Port to use for Supabase Studio.
-port = 55124
-# External URL of the API server that frontend connects to.
-api_url = "http://127.0.0.1"
-# OpenAI API Key to use for Supabase AI in the Supabase Studio.
-openai_api_key = "env(OPENAI_API_KEY)"
-
-# Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
-# are monitored, and you can view the emails that would have been sent from the web interface.
-[inbucket]
-enabled = true
-# Port to use for the email testing server web interface.
-port = 55125
-# Uncomment to expose additional ports for testing user applications that send emails.
-# smtp_port = 54325
-# pop3_port = 54326
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
-
-[storage]
-enabled = true
-# The maximum file size allowed (e.g. "5MB", "500KB").
-file_size_limit = "50MiB"
-
-[storage.image_transformation]
-enabled = true
-
-# Uncomment to configure local storage buckets
-# [storage.buckets.images]
-# public = false
-# file_size_limit = "50MiB"
-# allowed_mime_types = ["image/png", "image/jpeg"]
-# objects_path = "./images"
-
-[auth]
-enabled = true
-# The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
-# in emails. Dev runs HTTPS (mkcert + Next --experimental-https) so WebAuthn has a secure context.
-# site_url is embedded in confirmation/recovery emails as a concrete URL, so it must be a
-# fully-resolved host:port. Conductor reassigns PORT per parallel instance; the npm scripts
-# (db:start / db:reset) inject SUPABASE_AUTH_SITE_URL from $PORT, defaulting to 7003.
-site_url = "env(SUPABASE_AUTH_SITE_URL)"
-# The allow-list uses wildcards. `*` matches any sequence of non-separator chars (separators
-# are `.` and `/` only — see https://supabase.com/docs/guides/auth/redirect-urls), so `:55000`
-# is covered. Apex on any dev port (tenant routing is path-based, no subdomains needed).
-additional_redirect_urls = [
-  "https://lvh.me:*/**",
-]
-# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
-jwt_expiry = 3600
-# If disabled, the refresh token will never expire.
-enable_refresh_token_rotation = true
-# Allows refresh tokens to be reused after expiry, up to the specified interval in seconds.
-# Requires enable_refresh_token_rotation = true.
-refresh_token_reuse_interval = 10
-# Allow/disallow new user signups to your project.
-enable_signup = true
-# Allow/disallow anonymous sign-ins to your project.
-enable_anonymous_sign_ins = false
-# Allow/disallow testing manual linking of accounts
-enable_manual_linking = true
-# Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
-minimum_password_length = 6
-# Passwords that do not meet the following requirements will be rejected as weak. Supported values
-# are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
-password_requirements = ""
-
-[auth.email]
-# Allow/disallow new user signups via email to your project.
-enable_signup = true
-# If enabled, a user will be required to confirm any email change on both the old, and new email
-# addresses. If disabled, only the new email is required to confirm.
-double_confirm_changes = true
-# If enabled, users need to confirm their email address before signing in.
-enable_confirmations = true
-# If enabled, users will need to reauthenticate or have logged in recently to change their password.
-secure_password_change = false
-# Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
-max_frequency = "1s"
-# Number of characters used in the email OTP.
-otp_length = 6
-# Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
-
-# Use a production-ready SMTP server
-# [auth.email.smtp]
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
-
-# Custom templates use {{ .TokenHash }} and route through our app at /auth/confirm so the link
-# in the email lands on lvh.me (the app origin) instead of the GoTrue verify endpoint at 127.0.0.1.
-# The confirm route calls supabase.auth.verifyOtp({ token_hash, type }) and redirects to `next`.
-[auth.email.template.confirmation]
-subject = "Confirma tu correo en SaaS Template"
-content_path = "./supabase/templates/confirmation.html"
-
-[auth.email.template.magic_link]
-subject = "Tu enlace para iniciar sesión en SaaS Template"
-content_path = "./supabase/templates/magic_link.html"
-
-[auth.email.template.email_change]
-subject = "Confirma tu nuevo correo en SaaS Template"
-content_path = "./supabase/templates/email_change.html"
-
-[auth.sms]
-# Allow/disallow new user signups via SMS to your project.
-enable_signup = true
-# If enabled, users need to confirm their phone number before signing in.
-enable_confirmations = true
-# Template for sending OTP to users
-template = "Tu código de SaaS Template es {{ .Code }}"
-# Controls the minimum amount of time that must pass before sending another sms otp.
-max_frequency = "5s"
-
-# Pre-defined phone → OTP map for local development. Without a real SMS provider, gotrue logs
-# the OTP to docker logs but won't actually deliver. The test_otp map shortcuts that: any OTP
-# request to one of these numbers is "delivered" as the configured code. Uncomment and add the
-# numbers your team tests with.
-# [auth.sms.test_otp]
-# 56990511003 = "123456"
-
-# Configure logged in session timeouts.
-# [auth.sessions]
-# Force log out after the specified duration.
-# timebox = "24h"
-# Force log out if the user has been inactive longer than the specified duration.
-# inactivity_timeout = "8h"
-
-# This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
-[auth.hook.custom_access_token]
-enabled = true
-uri = "pg-functions://postgres/public/user_auth_hook"
-
-# Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
-# Flip enabled = true once the SUPABASE_AUTH_SMS_TWILIO_* vars are in .env.local. Without them
-# `pnpm db:start` will refuse to start, so we keep it disabled by default for local dev.
-[auth.sms.twilio]
-enabled = false
-account_sid = "env(SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID)"
-message_service_sid = "env(SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID)"
-# DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
-auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
-
-[auth.mfa]
-# Control how many MFA factors can be enrolled at once per user.
-max_enrolled_factors = 10
-
-# Control use of MFA via App Authenticator (TOTP)
-[auth.mfa.totp]
-enroll_enabled = true
-verify_enabled = true
-
-# Configure Multi-factor-authentication via Phone Messaging
-[auth.mfa.phone]
-enroll_enabled = false
-verify_enabled = false
-otp_length = 6
-template = "Your code is {{ .Code }}"
-max_frequency = "5s"
-
-# Passkeys are not implemented via Supabase MFA — they're a custom SimpleWebAuthn-backed
-# flow with its own public.profile_webauthn_credentials / profile_webauthn_challenges tables. See
-# apps/platform/lib/passkeys.* (server actions, no dedicated routes).
-
-# Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
-# `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
-# `twitter`, `slack`, `spotify`, `workos`, `zoom`.
-[auth.external.apple]
-enabled = false
-client_id = ""
-# DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
-secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
-# Overrides the default auth redirectUrl.
-redirect_uri = ""
-# Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
-# or any other third-party OIDC providers.
-url = ""
-# If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
-skip_nonce_check = false
-
-# Flip enabled = true once you've added the credentials in .env.local.
-[auth.external.google]
-enabled   = false
-client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
-secret    = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
-# Required for local sign in with Google (Google enforces nonce in prod, can't replay locally).
-skip_nonce_check = true
-
-[auth.external.azure]
-enabled   = false
-client_id = "env(SUPABASE_AUTH_EXTERNAL_AZURE_CLIENT_ID)"
-secret    = "env(SUPABASE_AUTH_EXTERNAL_AZURE_SECRET)"
-# For multi-tenant apps use "https://login.microsoftonline.com/common/v2.0".
-# For single-tenant, replace `common` with the Entra tenant id.
-url = "https://login.microsoftonline.com/common/v2.0"
-
-[auth.external.linkedin_oidc]
-enabled   = false
-client_id = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID)"
-secret    = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_SECRET)"
-
-[auth.external.github]
-enabled   = false
-client_id = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID)"
-secret    = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET)"
-
-[auth.external.facebook]
-enabled   = false
-client_id = "env(SUPABASE_AUTH_EXTERNAL_FACEBOOK_CLIENT_ID)"
-secret    = "env(SUPABASE_AUTH_EXTERNAL_FACEBOOK_SECRET)"
-
-# Use Firebase Auth as a third-party provider alongside Supabase Auth.
-[auth.third_party.firebase]
-enabled = false
-# project_id = "my-firebase-project"
-
-# Use Auth0 as a third-party provider alongside Supabase Auth.
-[auth.third_party.auth0]
-enabled = false
-# tenant = "my-auth0-tenant"
-# tenant_region = "us"
-
-# Use AWS Cognito (Amplify) as a third-party provider alongside Supabase Auth.
-[auth.third_party.aws_cognito]
-enabled = false
-# user_pool_id = "my-user-pool-id"
-# user_pool_region = "us-east-1"
-
-[edge_runtime]
-enabled = true
-# Configure one of the supported request policies: `oneshot`, `per_worker`.
-# Use `oneshot` for hot reload, or `per_worker` for load testing.
-policy = "oneshot"
-# Port to attach the Chrome inspector for debugging edge functions.
-inspector_port = 8183
-
-# Use these configurations to customize your Edge Function.
-# [functions.MY_FUNCTION_NAME]
-# enabled = true
-# verify_jwt = true
-# import_map = "./functions/MY_FUNCTION_NAME/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-# entrypoint = "./functions/MY_FUNCTION_NAME/index.ts"
-
-[analytics]
-enabled = true
-port = 55126
-# Configure one of the supported backends: `postgres`, `bigquery`.
-backend = "postgres"
-
-# Experimental features may be deprecated any time
-[experimental]
-# Configures Postgres storage engine to use OrioleDB (S3)
-orioledb_version = ""
-# Configures S3 bucket URL, eg. <bucket_name>.s3-<region>.amazonaws.com
-s3_host = "env(S3_HOST)"
-# Configures S3 bucket region, eg. us-east-1
-s3_region = "env(S3_REGION)"
-# Configures AWS_ACCESS_KEY_ID for S3 bucket
-s3_access_key = "env(S3_ACCESS_KEY)"
-# Configures AWS_SECRET_ACCESS_KEY for S3 bucket
-s3_secret_key = "env(S3_SECRET_KEY)"
-````
-
-## File: scripts/development/env-setup.ts
-````typescript
-import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+## File: packages/ui-common/src/shadcn/globals.css
+````css
+@plugin "@tailwindcss/typography";
+⋮----
+@theme inline {
+⋮----
+@utility h-safe-top {
+⋮----
+@utility h-safe-bottom {
+⋮----
+:root {
+⋮----
+.dark {
+⋮----
+@layer base {
+⋮----
+* {
+body {
+⋮----
+button:not(:disabled),
 ````
 
 ## File: skills/my-auth/SKILL.md
@@ -10216,6 +10756,154 @@ Dev must use mkcert HTTPS (same requirement as before — WebAuthn requires secu
 - Service role only after caller validation; never expose key/client to browser.
 - Onboarding is page UX, not proxy hard gate.
 - Auth changes: run `pnpm test:db`; UI journeys: `pnpm test:e2e` with dev server.
+````
+
+## File: skills/my-graphql-codegen/SKILL.md
+````markdown
+---
+name: my-graphql-codegen
+description: Repository-specific two-stage GraphQL schema and operation code generation. Use after SQL/pg_graphql changes, GraphQL operation edits, generated type errors, or schema introspection failures.
+---
+
+# GraphQL Codegen
+
+Two stages. Always use pnpm.
+
+## Files
+
+- Schema config: `packages/supabase/graphql.config.ts`
+- Schema outputs: `packages/supabase/generated/graphql/graphql.schema.{json,graphql}`
+- Operation config: `apps/platform/graphql.config.ts`
+- Operation outputs: `apps/platform/generated/graphql/**`
+
+## Normal workflow
+
+After SQL changes:
+
+```bash
+pnpm db:reset
+pnpm generate:types
+pnpm generate:graphql:schema
+pnpm --filter @apps/platform run generate:graphql
+```
+
+Schema-only **reformat** from the checked-in JSON (no DB introspection):
+
+```bash
+pnpm generate:graphql:schema:local
+```
+
+> ⚠️ **`:local` will NOT pick up new DB objects.** It only re-emits the SDL from the
+> already-committed `graphql.schema.json`. If you just added/changed an RPC, table, or column and
+> run `:local`, the new GraphQL fields are silently missing and the matching `gql()` doc fails to
+> generate. After any schema change you must run the **live** `pnpm generate:graphql:schema` (it
+> introspects the running DB via the `/graphql/v1` HTTP endpoint), then `pnpm generate:types`.
+> Canonical order: `db:reset` → `generate:graphql:schema` → `generate:types` → operations.
+
+Operation-only changes (no SQL touched):
+
+```bash
+pnpm --filter @apps/platform run generate:graphql
+```
+
+Do not use npm, ad hoc output paths, or redirect generated output manually.
+
+> **Note:** `pnpm generate:graphql:platform` is NOT a valid root command — always use the
+> `--filter @apps/platform` form above.
+
+## Stage 1: schema
+
+`packages/supabase/graphql.config.ts` loads app env. Default introspects:
+
+```ts
+const href_graphql = `${NEXT_PUBLIC_SUPABASE_URL}/graphql/v1`;
+```
+
+with anon `apiKey`. It writes introspection JSON + sorted SDL. `--local` reads existing JSON;
+it does not introspect DB.
+
+**Prerequisite:** `apps/platform/.env.local` must exist with `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`. The config loads env from that path via `@next/env`. If
+missing, URL resolves as `undefined` and introspection silently fails with "Unable to find any
+GraphQL type definitions for `undefined/graphql/v1`".
+
+If introspection suddenly returns empty/broken schema, inspect SQL names first. pg_graphql
+requires names matching `[_a-zA-Z0-9]`; hyphenated enum value can break entire schema.
+
+## Exposing an RPC as a query / mutation
+
+pg_graphql surfaces a `public` function on `Query` or `Mutation` automatically — no comment
+directive needed. The rules that actually decide whether (and where) it shows up:
+
+- **Volatility picks the field's home.** `stable`/`immutable` → `Query`; `volatile` → `Mutation`.
+  Mark it **explicitly** `volatile` for a mutation (don't rely on the plpgsql default).
+- **Return shape.** To get a single typed row back (so callers can select its columns), return
+  `setof public.<table> rows 1` (the `viewer_*_create`/`_update` pattern). It appears as
+  `Mutation { viewerThing(arg1: …, arg2: …): <Table> }`; snake args become camelCase.
+- **Execute privilege = visibility.** pg_graphql includes a function only if the introspecting
+  role can `EXECUTE` it. The default grant is `EXECUTE` to `PUBLIC` (which already includes `anon`
+  and `authenticated`), so **do not add** `revoke … from public; grant … to anon, authenticated`
+  boilerplate — it's noise. These functions self-guard via an internal `viewer_*` permission
+  check, so PUBLIC execute is safe.
+- **Call it from the client**, not a pass-through Server Action — `useGraphyMutation(Doc)` (see
+  `my-graphy` / AGENTS.md "Client choice").
+
+**Verify exposure before building on it.** After `db:reset` + live `generate:graphql:schema`,
+grep the SDL:
+
+```bash
+rg 'viewerYourFn' packages/supabase/generated/graphql/graphql.schema.graphql
+```
+
+If it's missing there but you expect it, check pg_graphql directly in the DB (this reflects the
+truth regardless of the HTTP cache):
+
+```sql
+select graphql.resolve('{ __schema { mutationType { fields { name } } } }');
+```
+
+If the DB shows it but the regenerated SDL doesn't, you ran `:local` (cached JSON) or the
+PostgREST schema cache is stale — run the live `generate:graphql:schema` (or
+`notify pgrst, 'reload schema';` then regenerate). Only delete the old Server Action / wire the
+client once the field is present in the SDL.
+
+## Stage 2: operations
+
+Platform config reads schema JSON and scans:
+
+```ts
+documents: ["./{app,components,hooks,lib}/**/*.{graphql,ts,tsx}"]
+```
+
+Client preset settings matter:
+
+```ts
+{
+  fragmentMasking: false,
+  gqlTagName: "gql",
+  documentMode: "string",
+  strictScalars: true,
+  skipTypename: true,
+  dedupeFragments: true
+}
+```
+
+Scalars:
+
+- `Int`, `Float` -> `number`
+- `BigInt`, `BigFloat` -> `string`
+- `Cursor`, `Opaque`, `Time`, `Date`, `Datetime`, `UUID` -> `string`
+- `JSON` -> `string` in current config
+
+## Rules
+
+- Every operation name globally unique.
+- Import generated `gql` from `~/generated/graphql`.
+- Generated files are committed, never manually edited.
+- SQL schema change requires both Supabase types and GraphQL schema regeneration.
+- Operation change requires platform generation before typecheck.
+- If `gql("...")` returns `unknown`, operation text differs from generated registry. Regenerate.
+- Validate with `pnpm build:dry`.
 ````
 
 ## File: skills/my-i18n/SKILL.md
@@ -10823,46 +11511,146 @@ shape, remove channel on cleanup. Do not cast payload with `as any`.
   feature, auth API is needed, or current code already uses SDK.
 ````
 
-## File: apps/platform/app/auth/logout/page.tsx
+## File: apps/platform/app/(app)/agencies/create/agency-create.tsx
 ````typescript
-import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { useGraphyMutation } from "@packages/graphy/react";
 import { ButtonSpinner } from "@packages/ui-common/button-spinner";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { INITIALS_OF } from "@packages/utils/string";
-import { LogOut } from "lucide-react";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { Label } from "@packages/ui-common/shadcn/components/ui/label";
+import { SLUGIFY } from "@packages/utils/slug";
+import { ArrowRight, Briefcase, Building2, Check, Eye, Plus, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { getViewerProfileRedirect } from "~/hooks/get-viewer-profile";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { useState } from "react";
+import { gql } from "~/generated/graphql";
+import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
-import { AuthCard } from "../_components/auth-card";
-import { signOutForm } from "./actions";
+⋮----
+type Stage = "form" | "created";
+⋮----
+// Shared slug rule from @packages/utils, capped at 40 like the tenant-create flow.
+⋮----
+async function onSubmit(e: React.FormEvent<HTMLFormElement>)
+⋮----
+pendingChildren=
 ````
 
-## File: apps/platform/next-env.d.ts
+## File: apps/platform/app/(app)/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit/page.tsx
 ````typescript
-
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
+import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
+import { INITIALS_OF } from "@packages/utils/string";
+import { ArrowLeft, FileText, Mail, Phone, ShieldCheck } from "lucide-react";
+import type { Metadata, Route } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
+import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { EditPermissionsForm } from "./edit-form";
+⋮----
+function MEMBER_LABEL(row: {
+  profile_id: string | null;
+  profile_name_full: string | null;
+  email: string | null;
+  organization_membership_invite_email: string | null;
+  organization_membership_invite_phone: string | null;
+  organization_membership_invite_document_value: string | null;
+  organization_membership_invite_address_level0_id: string | null;
+}): string
+⋮----
+export async function generateMetadata(
+  props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit">,
+): Promise<Metadata>
 ````
 
-## File: packages/ui-common/src/shadcn/globals.css
-````css
-@plugin "@tailwindcss/typography";
+## File: apps/platform/components/shell/atoms.tsx
+````typescript
+import { Avatar, AvatarFallback } from "@packages/ui-common/shadcn/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@packages/ui-common/shadcn/components/ui/tooltip";
+import type { ComponentProps } from "react";
 ⋮----
-@theme inline {
+export function InitialsAvatar({
+  initials,
+  color,
+  style,
+  size = "default",
+  className,
+}: {
+  initials: string;
+  color?: string;
+  style?: Record<string, string>;
+  size?: "sm" | "default" | "lg" | "md";
+  className?: string;
+})
 ⋮----
-@utility h-safe-top {
+export function Tip({
+  label,
+  children,
+  disabled,
+  side,
+  className,
+  ...props
+}: {
+  label: string;
+  disabled?: boolean;
+  side?: "top" | "right" | "bottom" | "left";
+  className?: string;
+  children: React.ReactNode;
+} & ComponentProps<"span">)
+````
+
+## File: apps/platform/components/shell/mobile-top-bar.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
+import { INITIALS_OF } from "@packages/utils/string";
+import { ChevronDown, Menu, Search } from "lucide-react";
+import type { ComponentProps } from "react";
 ⋮----
-@utility h-safe-bottom {
+import { InitialsAvatar } from "~/components/shell/atoms";
+import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
+import type { ShellViewer } from "~/components/shell/profile-menu";
 ⋮----
-:root {
+initials=
+````
+
+## File: apps/platform/components/shell/settings-menu.tsx
+````typescript
+import { useMounted } from "@packages/react-hooks/use-mounted";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ArrowUpRight, ChevronDown, Globe, HelpCircle, Moon, Settings as SettingsIcon, Sun } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+import { useTheme } from "next-themes";
+import { useRef, useState, useTransition } from "react";
+import { Tip, useClickOutside } from "~/components/shell/atoms";
+import { useLocaleCookie } from "~/hooks/use-locale-cookie";
+import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
+import { useRosetta } from "~/lib/i18n.client";
 ⋮----
-.dark {
+<Tip label=
 ⋮----
-@layer base {
+className=
 ⋮----
-* {
-body {
+value=
+````
+
+## File: apps/platform/lib/constants.ts
+````typescript
+import { URL_NEW } from "@packages/utils/url";
 ⋮----
-button:not(:disabled),
+/**
+ * Convenience: hostname (+ ":port" when applicable). Use for building absolute redirect
+ * URLs server-side. On the client, prefer window.location.host — process.env.PORT is not
+ * inlined into client bundles, so APP_HOST in browser-only paths will be missing the port.
+ */
+⋮----
+export function DEV_ENV_SNAPSHOT(): Record<string, string>
 ````
 
 ## File: skills/my-graphql/SKILL.md
@@ -11124,55 +11912,241 @@ All steps required in order when changing SQL schema. Skipping `generate:graphql
 the SDL stale and codegen may silently pass with wrong field names.
 ````
 
-## File: apps/platform/components/shell/atoms.tsx
-````typescript
-import { Avatar, AvatarFallback } from "@packages/ui-common/shadcn/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@packages/ui-common/shadcn/components/ui/tooltip";
-import type { ComponentProps } from "react";
-⋮----
-export function InitialsAvatar({
-  initials,
-  color,
-  style,
-  size = "default",
-  className,
-}: {
-  initials: string;
-  color?: string;
-  style?: Record<string, string>;
-  size?: "sm" | "default" | "lg" | "md";
-  className?: string;
-})
-⋮----
-export function Tip({
-  label,
-  children,
-  disabled,
-  side,
-  className,
-  ...props
-}: {
-  label: string;
-  disabled?: boolean;
-  side?: "top" | "right" | "bottom" | "left";
-  className?: string;
-  children: React.ReactNode;
-} & ComponentProps<"span">)
+## File: biome.jsonc
+````json
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "root": true,
+  "files": {
+    "includes": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.mjs",
+      "**/*.cjs",
+      "**/*.json",
+      "**/*.jsonc",
+      "**/*.css",
+      "!**/node_modules",
+      "!**/.github",
+      "!**/.turbo",
+      "!**/.next",
+      "!**/.vercel",
+      "!**/.temp",
+      "!**/.agents",
+      "!**/.claude",
+      "!**/agent",
+      "!skills-third-party",
+      "!skills/codebase"
+    ]
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "lineWidth": 120,
+    "indentWidth": 2,
+    "indentStyle": "space"
+  },
+  "json": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "security": {
+        "noDangerouslySetInnerHtml": "warn"
+      },
+      "nursery": {
+        "noFloatingPromises": "error"
+      },
+      "a11y": {
+        "noStaticElementInteractions": "off",
+        "noNoninteractiveElementToInteractiveRole": "off",
+        "noRedundantAlt": "off",
+        "useAriaPropsSupportedByRole": "off",
+        "noRedundantRoles": "off",
+        "noSvgWithoutTitle": "off",
+        "useFocusableInteractive": "off",
+        "useKeyWithClickEvents": "off",
+        "useMediaCaption": "off",
+        "useSemanticElements": "off",
+        "useValidAnchor": "off",
+        "useValidAriaProps": "off",
+        "useAriaPropsForRole": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "off",
+        "noUnusedFunctionParameters": "off",
+        "noUnreachable": "off",
+        "useExhaustiveDependencies": "off",
+        // MCP tool `handle` methods are async generators by base-class contract
+        // (McpTool.handle: McpToolStream) so they can optionally stream progress via
+        // `yield`. Most just `return` a single result and never yield — intentional, not a bug.
+        "useYield": "off"
+      },
+      "performance": {
+        "noAccumulatingSpread": "off",
+        "noImgElement": "off"
+      },
+      "complexity": {
+        "noBannedTypes": "warn",
+        "noForEach": "warn",
+        "noStaticOnlyClass": "off",
+        "noThisInStatic": "on",
+        "noUselessConstructor": "off",
+        "noUselessSwitchCase": "off",
+        "useLiteralKeys": "off",
+        "useOptionalChain": "off"
+      },
+      "style": {
+        "noNegationElse": "off",
+        "noNonNullAssertion": "off",
+        "noParameterAssign": "off",
+        "useExponentiationOperator": "off",
+        "noUselessElse": "off",
+        "noInferrableTypes": "off",
+        "useAsConstAssertion": "error",
+        "useEnumInitializers": "error",
+        "useSelfClosingElements": "error",
+        "useSingleVarDeclarator": "error",
+        "noUnusedTemplateLiteral": "error",
+        "useNumberNamespace": "error"
+      },
+      "suspicious": {
+        "noFallthroughSwitchClause": "warn",
+        "noRedeclare": "off",
+        "noAsyncPromiseExecutor": "off",
+        "noExplicitAny": "off",
+        "noArrayIndexKey": "off",
+        "noNonNullAssertedOptionalChain": "off",
+        "useIterableCallbackReturn": "off"
+      }
+    }
+  }
+}
 ````
 
-## File: apps/platform/components/shell/mobile-top-bar.tsx
+## File: apps/platform/app/auth/logout/page.tsx
+````typescript
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { ButtonSpinner } from "@packages/ui-common/button-spinner";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { INITIALS_OF } from "@packages/utils/string";
+import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { getViewerProfileRedirect } from "~/hooks/get-viewer-profile";
+import { getRosetta } from "~/lib/i18n.server";
+import { ROUTE } from "~/lib/route";
+import { AuthCard } from "../_components/auth-card";
+import { signOutForm } from "./actions";
+````
+
+## File: apps/platform/components/locale-toggle.tsx
 ````typescript
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
-import { INITIALS_OF } from "@packages/utils/string";
-import { ChevronDown, Menu, Search } from "lucide-react";
 import type { ComponentProps } from "react";
+import { useTransition } from "react";
+import { useLocaleCookie } from "~/hooks/use-locale-cookie";
+import { LOCALE_LABEL, SUPPORTED_LOCALES, type SupportedLocale } from "~/lib/i18n";
+import { useRosetta } from "~/lib/i18n.client";
 ⋮----
-import { InitialsAvatar } from "~/components/shell/atoms";
-import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
-import type { ShellViewer } from "~/components/shell/profile-menu";
+function selectLocale(next: SupportedLocale)
 ⋮----
-initials=
+onClick=
+⋮----
+className=
+````
+
+## File: apps/platform/components/system-message.tsx
+````typescript
+import { Logo } from "@packages/ui-common/logo";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { type LucideIcon, RotateCcw, Search, TriangleAlert, Wrench } from "lucide-react";
+import type { ComponentProps } from "react";
+import { useLocale } from "~/lib/i18n.client";
+⋮----
+type SystemKind = "notFound" | "error" | "maintenance";
+⋮----
+type SystemDef = { code: string; Icon: LucideIcon };
+⋮----
+export function SystemMessage({
+  kind = "notFound",
+  reset,
+  className,
+  ...props
+}:
+⋮----
+className=
+⋮----
+<Button variant="outline" className="h-9" onClick=
+⋮----
+function RESOLVE_COPY(locale: string): Record<SystemKind, Copy>
+````
+
+## File: CLAUDE.md
+````markdown
+@AGENTS.md
+````
+
+## File: apps/platform/app/layout.tsx
+````typescript
+import { Toaster } from "@packages/ui-common/shadcn/components/ui/sonner";
+import { TooltipProvider } from "@packages/ui-common/shadcn/components/ui/tooltip";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import type { Metadata, Viewport } from "next";
+import { DevEnvConsole } from "~/components/dev-env-console";
+import { GraphyClientProvider } from "~/components/graphy-provider";
+import { PostHogIdentify } from "~/components/posthog-identify";
+import { PostHogProvider } from "~/components/posthog-provider";
+import { PwaRegister } from "~/components/pwa-register";
+import { ThemeProvider } from "~/components/theme-provider";
+import { APP_URL, DEV_ENV_SNAPSHOT, NODE_ENV } from "~/lib/constants";
+import { LocaleProvider } from "~/lib/i18n.client";
+import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+⋮----
+export async function generateMetadata(): Promise<Metadata>
+⋮----
+````
+
+## File: apps/platform/components/shell/org-switcher.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ArrowLeftRight, Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
+import Link from "next/link";
+import { useRef, useState } from "react";
+⋮----
+import { EntityAvatar } from "~/components/entity-avatar";
+import { Tip, useClickOutside } from "~/components/shell/atoms";
+import type { ViewerOrganizationUseFragmentType } from "~/hooks/use-viewer-organizations";
+import type { ViewerTenantUseFragmentType } from "~/hooks/use-viewer-tenants";
+import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE } from "~/lib/route";
+⋮----
+export type ShellOrganization = ViewerOrganizationUseFragmentType;
+export type ShellTenant = ViewerTenantUseFragmentType;
+⋮----
+className=
+⋮----
+onClick=
+⋮----
+href=
 ````
 
 ## File: packages/supabase/supabase/seed.sql
@@ -11336,16 +12310,26 @@ on conflict (provider_id, provider) do nothing;
 update public.profiles
   set profile_onboarded_at = current_timestamp
   where profile_id = '00000000-0000-0000-0000-0000000ca401';
-insert into public.agencies (agency_id, agency_name, agency_slug)
-values ('a0000000-0000-0000-0000-0000000000de', 'Demo Auditores', 'demo-auditores')
-on conflict (agency_id) do nothing;
+insert into public.agencies (agency_name, agency_slug)
+values ('Demo Auditores', 'demo-auditores')
+on conflict (agency_slug) do nothing;
 insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
 values
-  ('a0000000-0000-0000-0000-0000000000de', '00000000-0000-0000-0000-0000000ca401', current_timestamp),
-  ('a0000000-0000-0000-0000-0000000000de', '00000000-0000-0000-0000-00000000a11c', null)
+  ((select agency_id from public.agencies where agency_slug = 'demo-auditores'), '00000000-0000-0000-0000-0000000ca401', current_timestamp),
+  ((select agency_id from public.agencies where agency_slug = 'demo-auditores'), '00000000-0000-0000-0000-00000000a11c', null)
 on conflict (agency_id, profile_id) do nothing;
+insert into public.agency_membership_permissions (agency_membership_id, permission_id)
+values (
+  (select am.agency_membership_id
+   from public.agency_memberships am
+   join public.agencies a using (agency_id)
+   where a.agency_slug = 'demo-auditores'
+     and am.profile_id = '00000000-0000-0000-0000-0000000ca401'),
+  '*'
+)
+on conflict (agency_membership_id, permission_id) do nothing;
 insert into public.agencies_organizations_grants (agency_id, organization_id, permission_id)
-values ('a0000000-0000-0000-0000-0000000000de', 1, '*')
+values ((select agency_id from public.agencies where agency_slug = 'demo-auditores'), 1, '*')
 on conflict do nothing;
 insert into public.addresses_level0 (address_level0_id, address_level0_name, address_level0_emoji) values
   ('AF', 'Afghanistan', '🇦🇫'),
@@ -12024,105 +13008,23 @@ insert into public.addresses_level3 (address_level0_id, address_level1_id, addre
 on conflict (address_level0_id, address_level1_id, address_level2_id, address_level3_id) do nothing;
 ````
 
-## File: apps/platform/app/layout.tsx
+## File: scripts/development/env-setup.ts
 ````typescript
-import { Toaster } from "@packages/ui-common/shadcn/components/ui/sonner";
-import { TooltipProvider } from "@packages/ui-common/shadcn/components/ui/tooltip";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import type { Metadata, Viewport } from "next";
-import { GraphyClientProvider } from "~/components/graphy-provider";
-import { PostHogIdentify } from "~/components/posthog-identify";
-import { PostHogProvider } from "~/components/posthog-provider";
-import { PwaRegister } from "~/components/pwa-register";
-import { ThemeProvider } from "~/components/theme-provider";
-import { APP_URL } from "~/lib/constants";
-import { LocaleProvider } from "~/lib/i18n.client";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { execSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { dedent } from "ts-dedent";
 ⋮----
-export async function generateMetadata(): Promise<Metadata>
-````
-
-## File: apps/platform/components/shell/settings-menu.tsx
-````typescript
-import { useMounted } from "@packages/react-hooks/use-mounted";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { ArrowUpRight, ChevronDown, Globe, HelpCircle, Moon, Settings as SettingsIcon, Sun } from "lucide-react";
-import type { Route } from "next";
-import Link from "next/link";
-import { useTheme } from "next-themes";
-import { useRef, useState, useTransition } from "react";
-import { Tip, useClickOutside } from "~/components/shell/atoms";
-import { useLocaleCookie } from "~/hooks/use-locale-cookie";
-import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
-import { useRosetta } from "~/lib/i18n.client";
+// When running on an exe.dev VM, browser-facing URLs must use the VM's public host
+// `<vm>.exe.xyz` (TLS terminated by exe.dev's proxy, ports forwarded in 3000-9999) instead
+// of `127.0.0.1`/lvh.me. Set by exe-dev-setup.sh. Server-only URLs (DATABASE_URL) stay local
+// because the app runs ON the VM. See scripts/development/exe-dev-setup.sh.
 ⋮----
-<Tip label=
+function PUBLIC_URL(localUrl: string): string
 ⋮----
-className=
-⋮----
-value=
-````
-
-## File: apps/platform/components/locale-toggle.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import type { ComponentProps } from "react";
-import { useTransition } from "react";
-import { useLocaleCookie } from "~/hooks/use-locale-cookie";
-import { LOCALE_LABEL, SUPPORTED_LOCALES, type SupportedLocale } from "~/lib/i18n";
-import { useRosetta } from "~/lib/i18n.client";
-⋮----
-function selectLocale(next: SupportedLocale)
-⋮----
-onClick=
-⋮----
-className=
-````
-
-## File: CLAUDE.md
-````markdown
-@AGENTS.md
-````
-
-## File: apps/platform/components/shell/mobile-nav-drawer.tsx
-````typescript
-import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
-import { INITIALS_OF } from "@packages/utils/string";
-import { ArrowUpRight, ChevronsUpDown, HelpCircle, Settings as SettingsIcon, X } from "lucide-react";
-import Link from "next/link";
-⋮----
-import { InitialsAvatar } from "~/components/shell/atoms";
-import { Scrim } from "~/components/shell/mobile-sheet";
-import { BUILD_NAV_TREE, IS_NAV_GROUP, type NavLeaf, PICK_ACTIVE_LEAF_ID } from "~/components/shell/nav-tree";
-import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
-import type { ShellViewer } from "~/components/shell/profile-menu";
-import { useRosetta } from "~/lib/i18n.client";
-````
-
-## File: apps/platform/components/shell/org-switcher.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
-import { INITIALS_OF } from "@packages/utils/string";
-import { ArrowLeftRight, Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
-import Link from "next/link";
-import { useRef, useState } from "react";
-⋮----
-import { Tip, useClickOutside } from "~/components/shell/atoms";
-import type { ViewerOrganizationUseFragmentType } from "~/hooks/use-viewer-organizations";
-import type { ViewerTenantUseFragmentType } from "~/hooks/use-viewer-tenants";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE } from "~/lib/route";
-⋮----
-export type ShellOrganization = ViewerOrganizationUseFragmentType & { logoSrc?: string | null };
-export type ShellTenant = ViewerTenantUseFragmentType;
-⋮----
-className=
-⋮----
-onClick=
-⋮----
-href=
+// Mirror into apps/platform so graphql-codegen (via @next/env loadEnvConfig) picks up dynamic ports.
+// apps/platform/.env.local has default fallback values; this .env.development.local overrides them.
 ````
 
 ## File: packages/supabase/package.json
@@ -12134,9 +13036,9 @@ href=
   "sideEffects": false,
   "scripts": {
     "build:dry": "tsc --noEmit",
-    "db:start": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=\"https://lvh.me:${PORT:-7003}\" supabase start",
+    "db:start": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase start",
     "db:stop": "supabase stop",
-    "db:reset": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=\"https://lvh.me:${PORT:-7003}\" supabase db reset",
+    "db:reset": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase db reset",
     "db:status": "supabase status",
     "db:migrate:new": "supabase migration new",
     "db:migrate:up": "supabase migration up",
@@ -12161,7 +13063,7 @@ href=
     "@packages/utils": "workspace:*"
   },
   "devDependencies": {
-    "@graphql-codegen/cli": "^7.1.2",
+    "@graphql-codegen/cli": "^7.1.3",
     "@graphql-codegen/introspection": "^6.0.1",
     "@graphql-codegen/schema-ast": "^6.0.1",
     "@next/env": "^16.2.9",
@@ -12170,15 +13072,88 @@ href=
     "@supabase/supabase-js": "^2.108.2",
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.17",
-    "graphql": "^16.14.2",
+    "graphql": "^17.0.1",
     "next": "^16.2.9",
     "react": "^19.2.7",
-    "supabase": "^2.106.0",
+    "supabase": "^2.107.0",
     "swr": "^2.4.1",
     "typescript": "^6.0.3",
     "zod": "^4.4.3"
   }
 }
+````
+
+## File: apps/platform/components/shell/command-palette.tsx
+````typescript
+import { useKeyboardShortcut } from "@packages/react-hooks/use-keyboard-shortcut";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
+import { INITIALS_OF } from "@packages/utils/string";
+import { Building2, Circle, Home, type LucideIcon, Search, Settings, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+⋮----
+import { InitialsAvatar, Kbd } from "~/components/shell/atoms";
+import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
+import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
+⋮----
+type PaletteItem = {
+  id: string;
+  label: string;
+  hint?: string;
+  Icon?: LucideIcon;
+  orgInitials?: string;
+  orgColor?: Record<string, string>;
+  onSelect: () => void;
+};
+⋮----
+type PaletteGroup = {
+  heading: string;
+  items: PaletteItem[];
+};
+⋮----
+function onKey(event: KeyboardEvent)
+````
+
+## File: apps/platform/components/shell/mobile-nav-drawer.tsx
+````typescript
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
+import { INITIALS_OF } from "@packages/utils/string";
+import { ArrowUpRight, ChevronsUpDown, HelpCircle, Settings as SettingsIcon, X } from "lucide-react";
+import Link from "next/link";
+⋮----
+import { InitialsAvatar } from "~/components/shell/atoms";
+import { Scrim } from "~/components/shell/mobile-sheet";
+import { BUILD_NAV_TREE, IS_NAV_GROUP, type NavLeaf, PICK_ACTIVE_LEAF_ID } from "~/components/shell/nav-tree";
+import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
+import type { ShellViewer } from "~/components/shell/profile-menu";
+import { useRosetta } from "~/lib/i18n.client";
+````
+
+## File: apps/platform/components/shell/profile-menu.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { INITIALS_OF } from "@packages/utils/string";
+import { Bell, ChevronsUpDown, KeyRound, LogOut, User } from "lucide-react";
+import Link from "next/link";
+import { useRef, useState } from "react";
+⋮----
+import { InitialsAvatar, Tip, useClickOutside } from "~/components/shell/atoms";
+import type { ViewerProfileUseFragmentType } from "~/hooks/use-viewer-profile";
+import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE } from "~/lib/route";
+⋮----
+export type ShellViewer = ViewerProfileUseFragmentType & { email: string };
+⋮----
+className=
+⋮----
+href=
+````
+
+## File: apps/platform/next-env.d.ts
+````typescript
+
 ````
 
 ## File: packages/ui-common/package.json
@@ -12204,9 +13179,9 @@ href=
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "input-otp": "^1.4.2",
-    "lucide-react": "^1.18.0",
+    "lucide-react": "^1.21.0",
     "next-themes": "^0.4.6",
-    "radix-ui": "^1.5.0",
+    "radix-ui": "^1.6.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-safe-area": "^1.3.0"
@@ -12232,29 +13207,244 @@ href=
 }
 ````
 
-## File: apps/platform/components/shell/profile-menu.tsx
+## File: apps/platform/components/shell/mobile-sheets.tsx
 ````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { useMounted } from "@packages/react-hooks/use-mounted";
+import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
 import { INITIALS_OF } from "@packages/utils/string";
-import { Bell, ChevronsUpDown, CreditCard, KeyRound, LogOut, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Bell,
+  Check,
+  ChevronRight,
+  Globe,
+  HelpCircle,
+  Home,
+  KeyRound,
+  LogOut,
+  Monitor,
+  Moon,
+  Plus,
+  Search,
+  Settings as SettingsIcon,
+  Shield,
+  Sun,
+  User,
+  Users,
+  X,
+} from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
-import { useRef, useState } from "react";
-⋮----
-import { InitialsAvatar, Tip, useClickOutside } from "~/components/shell/atoms";
-import type { ViewerProfileUseFragmentType } from "~/hooks/use-viewer-profile";
+import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { InitialsAvatar } from "~/components/shell/atoms";
+import { Sheet } from "~/components/shell/mobile-sheet";
+import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
+import type { ShellViewer } from "~/components/shell/profile-menu";
+import { useLocaleCookie } from "~/hooks/use-locale-cookie";
+import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE } from "~/lib/route";
-⋮----
-export type ShellViewer = ViewerProfileUseFragmentType & { email: string };
-⋮----
-className=
+import { ROUTE, ROUTE_HREF } from "~/lib/route";
 ⋮----
 href=
+⋮----
+<span>
+⋮----
+function goTo(item: SearchItem)
+⋮----
+placeholder=
+````
+
+## File: package.json
+````json
+{
+  "name": "saas-template",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.20.0",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "preinstall": "npx --yes only-allow pnpm",
+    "postinstall": "pnpm skills:install",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:debug": "turbo run dev:debug",
+    "setup:local": "bash scripts/development/local-setup.sh",
+    "dev:local": "pnpm setup:local && pnpm dev",
+    "build:dry": "turbo run build:dry",
+    "generate": "turbo run generate",
+    "test": "turbo run test",
+    "test:db": "pnpm --filter @packages/supabase run test:db",
+    "test:e2e": "pnpm --filter @apps/platform run test:e2e",
+    "format": "turbo run format && biome check --diagnostic-level=error .",
+    "format:apply": "turbo run format -- --write && biome check --diagnostic-level=error --write .",
+    "format:apply-unsafe": "turbo run format -- --write --unsafe && biome check --diagnostic-level=error --write --unsafe .",
+    "db:start": "pnpm --filter @packages/supabase db:start",
+    "db:stop": "pnpm --filter @packages/supabase db:stop",
+    "db:reset": "pnpm --filter @packages/supabase db:reset",
+    "db:status": "pnpm --filter @packages/supabase db:status",
+    "db:env:development": "node --experimental-strip-types scripts/development/env-setup.ts",
+    "db:migrate:new": "pnpm --filter @packages/supabase db:migrate:new",
+    "db:migrate:up": "pnpm --filter @packages/supabase db:migrate:up",
+    "generate:types": "turbo run generate:types --filter=@packages/supabase",
+    "generate:graphql:schema": "pnpm --filter @packages/supabase run generate:graphql:schema",
+    "generate:graphql:schema:local": "pnpm --filter @packages/supabase run generate:graphql:schema:local",
+    "generate:graphql:platform": "pnpm --filter @apps/platform run generate:graphql",
+    "generate:repomix:skills": "repomix -c repomix.config.ts --skill-generate codebase --skill-output skills/codebase -f && node scripts/repomix-skill-rename.mjs",
+    "skills:install": "node scripts/skills-setup.mjs",
+    "typecheck:platform": "turbo run build:dry --filter=@apps/platform"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.0",
+    "@packages/typescript-config": "workspace:*",
+    "@types/qrcode-terminal": "^0.12.2",
+    "graphql": "^17.0.1",
+    "graphql-config": "^5.1.6",
+    "qrcode-terminal": "^0.12.0",
+    "repomix": "^1.15.0",
+    "skills": "1.5.12",
+    "ts-dedent": "^2.3.0",
+    "turbo": "^2.9.18",
+    "typescript": "^6.0.3"
+  },
+  "extensionDependencies": [
+    "ms-vscode.vscode-claude-sdk"
+  ]
+}
+````
+
+## File: apps/platform/package.json
+````json
+{
+  "name": "@apps/platform",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "postinstall": "NODE_ENV=development next typegen || true",
+    "dev": "next dev --turbo --experimental-https --experimental-https-key ./certificates/lvh.me-key.pem --experimental-https-cert ./certificates/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003}",
+    "dev:debug": "next dev --turbo --experimental-https --experimental-https-key ./certificates/lvh.me-key.pem --experimental-https-cert ./certificates/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003} --inspect",
+    "dev:exe": "next dev --turbo -H 0.0.0.0 --port ${PORT:-3000}",
+    "build": "next build",
+    "build:dry": "tsc --noEmit",
+    "start": "next start",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "format": "biome check --diagnostic-level=error .",
+    "generate:graphql": "graphql-codegen -c graphql.config.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.85",
+    "@formatjs/intl-localematcher": "^0.8.10",
+    "@hookform/resolvers": "^5.2.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@next/env": "^16.2.9",
+    "@opentelemetry/auto-instrumentations-node": "^0.77.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.219.0",
+    "@opentelemetry/sdk-node": "^0.219.0",
+    "@packages/api-ip": "workspace:*",
+    "@packages/debug": "workspace:*",
+    "@packages/graphy": "workspace:*",
+    "@packages/intl": "workspace:*",
+    "@packages/kapso": "workspace:*",
+    "@packages/react-email": "workspace:*",
+    "@packages/react-hooks": "workspace:*",
+    "@packages/react-pdf": "workspace:*",
+    "@packages/rosetta": "workspace:*",
+    "@packages/supabase": "workspace:*",
+    "@packages/ui-common": "workspace:*",
+    "@packages/utils": "workspace:*",
+    "@posthog/next": "^0.4.97",
+    "@react-email/render": "2.0.9",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.2",
+    "@types/ua-parser-js": "^0.7.39",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
+    "ai": "^6.0.208",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.21.0",
+    "jose": "^6.0.0",
+    "mcp-handler": "^1.1.0",
+    "negotiator": "^1.0.0",
+    "next": "16.2.9",
+    "next-safe-action": "^8.5.5",
+    "next-themes": "^0.4.6",
+    "next-zod-route": "^1.0.0",
+    "posthog-node": "^5.38.2",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-hook-form": "^7.80.0",
+    "react-markdown": "^10.1.0",
+    "resend": "^6.14.0",
+    "schema-dts": "^2.0.0",
+    "sonner": "^2.0.7",
+    "swr": "^2.4.1",
+    "ua-parser-js": "^2.0.10",
+    "web-push": "^3.6.7",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^7.1.3",
+    "@graphql-codegen/client-preset": "^6.0.1",
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@packages/typescript-config": "workspace:*",
+    "@playwright/test": "^1.61.0",
+    "@tailwindcss/postcss": "^4.3.1",
+    "@types/negotiator": "^0.6.4",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@types/web-push": "^3.6.4",
+    "graphql": "^17.0.1",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.3.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  }
+}
+````
+
+## File: apps/platform/proxy.ts
+````typescript
+import { updateSession } from "@packages/supabase/client.middleware";
+import { URL_NEW } from "@packages/utils/url";
+import { type NextRequest, NextResponse, userAgent } from "next/server";
+import { APEX_HOSTNAME, APP_HOST, PROXY_LOG_ENABLED } from "~/lib/constants";
+import { debug } from "~/lib/debug";
+import { LOCALE_COOKIE, LOCALE_SUPPORTED_RESOLVE, type SupportedLocale } from "~/lib/i18n";
+import { LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
+⋮----
+export async function proxy(request: NextRequest)
+⋮----
+function withLocale(response: NextResponse): NextResponse
+⋮----
+function isPublicPath(pathname: string): boolean
+⋮----
+function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse
+⋮----
+function isGlobalMetadataAssetPath(pathname: string): boolean
+⋮----
+async function setPostHogBootstrap(request: NextRequest, response: NextResponse): Promise<void>
 ````
 
 ## File: AGENTS.md
 ````markdown
 # SaaS Template — Multi-tenant SaaS Starter
+
+> **Required skills:**
+>
+> - `/codebase` — load the generated whole-monorepo reference before working anywhere in the repo.
+> - `/context7-mcp` — fetch current library/framework docs before writing code (training data goes stale).
+> - `/caveman` — ultra-compressed, token-efficient responses.
+> - `/ponytail` — laziest solution that actually works (YAGNI, stdlib before deps, shortest path).
+>
+> **Session start:** if `.env.development.local` exists at repo root, read the comments, we are in a worktree.
 
 ## What This Is
 
@@ -12353,13 +13543,15 @@ Reserved slugs seeded in `packages/supabase/supabase/seed.sql` and cached per-re
 
 ### Local Dev Ports
 
-| Service | Default port | URL |
-|---|---|---|
-| `apps/platform` | 7003 | https://lvh.me:7003 |
-| Supabase Studio | 7100 | http://localhost:7100 |
-| Supabase Inbucket (mailbox) | 54424 | http://localhost:54424 |
-| `packages/react-email` | 7101 | http://localhost:7101 |
-| `packages/react-pdf` | 7102 | http://localhost:7102 |
+| Module | Service | Default port | URL |
+|---|---|---|---|
+| `apps/platform` | Next.js main app | 7003 | https://lvh.me:7003 |
+| `packages/supabase` | Supabase Studio | 7100 | http://localhost:7100 |
+| `packages/supabase` | Supabase Inbucket (mailbox) | 54424 | http://localhost:54424 |
+| `packages/react-email` | React Email preview | 7101 | http://localhost:7101 |
+| `packages/react-pdf` | React PDF preview | 7102 | http://localhost:7102 |
+
+Table above = **bare-local default**. Conductor/exe.dev shift ports per worktree. See `.env.development.local` at repo root.
 
 `lvh.me` is public wildcard DNS resolving every name (apex + subdomain) to `127.0.0.1` — no `/etc/hosts` entries needed. Cookies scoped to `.lvh.me` so session crosses `lvh.me:7003` ↔ `{slug}.lvh.me:7003`.
 
@@ -12373,7 +13565,7 @@ TLS cert from [mkcert](https://github.com/FiloSottile/mkcert). One-time setup:
 bash scripts/development/https-setup.sh
 ```
 
-Runs `mkcert -install` and emits `apps/platform/certs/lvh.me-{cert,key}.pem` covering `lvh.me`, `*.lvh.me`, `localhost`, `127.0.0.1`. Dev script in `apps/platform/package.json` references those paths. `apps/platform/certs/` is gitignored (`**/certs/` in root `.gitignore`).
+Runs `mkcert -install` and emits `apps/platform/certificates/lvh.me-{cert,key}.pem` covering `lvh.me`, `*.lvh.me`, `localhost`, `127.0.0.1`. Dev script in `apps/platform/package.json` references those paths. `apps/platform/certificates/` is gitignored (`**/certificates/` in root `.gitignore`).
 
 Keep these aligned with HTTPS dev origin — flipping any to `http://` breaks OAuth callbacks and passkey verification:
 
@@ -12387,23 +13579,29 @@ After editing `config.toml`, restart Supabase (`pnpm db:stop && pnpm db:start`) 
 
 ## Skills
 
-Three kinds of skills, all materialized on `pnpm install` by `scripts/skills-setup.js` (postinstall). The generated dirs `.agents/skills/` and `.claude/skills/` are **gitignored** — never committed, always regenerated. Read relevant skill before working in that subsystem.
+Three kinds of skills, all **committed** and materialized on `pnpm install` by the `postinstall` script (`scripts/skills-setup.mjs`, exposed as `pnpm skills:install`). It symlinks every dir in `skills/` and `skills-third-party/` into both agent stores — no network, no cloning. The stores `.agents/skills/` and `.claude/skills/` are **gitignored** — pure generated symlinks, always rebuilt. Read relevant skill before working in that subsystem.
 
-- **First-party (`my-*`)** — sources committed in `skills/my-*`. The script symlinks them into `.agents/skills/` and `.claude/skills/`.
-- **Third-party** — pinned in `skills-lock.json` (committed), restored by the `skills` CLI (a devDependency). The script's restore step snapshots `skills-lock.json` and writes it back after, so installs never churn the committed lock.
-- **Generated codebase reference (`codebase`)** — `repomix --skill-generate` packs the whole monorepo into a Claude-loadable reference skill at `skills/codebase/` (committed source, registered in `SKILLS[]`, symlinked like the `my-*` skills). Regenerate with `pnpm generate:repomix:skills` after significant changes. **Generated — never hand-edit.** Exclusions (codegen, `**/generated/**`, `node_modules`, `.env*`, `pnpm-lock.yaml`, all tests/`**/certificates/**`/`**/*.pem`, and the skill itself to avoid recursive bloat) live in `repomix.config.ts`; secrets are stripped by repomix's `security` check.
+- **First-party (`my-*`)** — sources committed in `skills/my-*`.
+- **Third-party** — vendored (committed) in `skills-third-party/<name>`. We commit the files instead of cloning from `skills-lock.json` at install because the `skills` CLI clones every repo serially, which is slow. `skills-lock.json` (committed) stays as the provenance record (which upstream repo each came from) for refreshing.
+- **Generated codebase reference (`codebase`)** — `repomix --skill-generate` packs the whole monorepo into a LLM-loadable reference skill at `skills/codebase/` (committed source). Regenerate with `pnpm generate:repomix:skills` after significant changes. **Generated — never hand-edit.** Exclusions (codegen, `**/generated/**`, `node_modules`, `.env*`, `pnpm-lock.yaml`, all tests/`**/certificates/**`/`**/*.pem`, `skills-third-party/**`, and the skill itself to avoid recursive bloat) live in `repomix.config.ts`; secrets are stripped by repomix's `security` check.
 
-`.agents/skills/` is the **universal store** read directly by Codex, Cursor, GitHub Copilot, OpenCode, and Zed; `.claude/skills/` is Claude Code's. Source of truth = `skills/` (first-party) + `skills-lock.json` (third-party).
+`.agents/skills/` is the **universal store** read directly by Codex, Cursor, GitHub Copilot, OpenCode, and Zed; `.claude/skills/` is Claude Code's. Source of truth = `skills/` + `skills-third-party/` (both committed).
 
-Add a third-party skill (writes the file tree + records it in `skills-lock.json`):
+Add or refresh a third-party skill — fetch it, then vendor it:
 
 ```bash
-pnpm dlx skills add <registry-url> --skill <skill-name>
+# Use the github `owner/repo` shorthand, NOT the skills.sh share URL.
+# The CLI resolves a skill catalog from the repo; a skills.sh URL (e.g.
+# https://www.skills.sh/owner/repo/skill) has no /.well-known/agent-skills/
+# index.json and the add fails with "No skills found".
+pnpm dlx skills add <owner/repo> --skill <skill-name>   # e.g. dietrichgebert/ponytail --skill ponytail
+cp -R .agents/skills/<skill-name> skills-third-party/<skill-name>   # vendor the fetched files
+pnpm skills:install                                                 # re-link the stores
 ```
 
-Commit the resulting `skills-lock.json` change — the file tree itself is gitignored and reappears on the next `pnpm install`. Update pins with `pnpm dlx skills update`.
+Commit the `skills-third-party/<skill-name>` files (and the `skills-lock.json` provenance bump). Delete any stray `skills/<skill-name>` symlink the CLI drops.
 
-**Caveat:** `skills-lock.json` records the source repo, not a commit SHA, so restore re-clones each skill at upstream **HEAD** — `computedHash` is descriptive, not enforced. Third-party skills track latest, not a frozen version. Skills run with **full agent permissions** — review skill source before using in production.
+**Caveat:** vendored third-party skills are frozen at the commit you fetched — they do **not** track upstream. Re-run the steps above to update. Skills run with **full agent permissions** — review skill source before vendoring.
 
 ## Documentation
 
@@ -12496,7 +13694,7 @@ Every tenant-scoped data table carries denormalized `tenant_id int` (cheap to fi
 **Custom domain mapping (`public.tenant_domains`, many domains per tenant)** staged in schema, not yet wired into proxy — phase 2. `tenant_tier` (`free` / `pro` / `enterprise`) gates advanced features once billing exists.
 
 **Permissions (capability-based, not role-based):**
-- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs. Ships English admin capabilities only: `*`, `organization_manage`, `members_manage`, `presets_manage`. Reserved slug `*` is wildcard — membership holding `*` passes every permission check inside its organization. Used for tenant creator and other "full admin" grants without enumerating every slug.
+- `public.permissions(permission_id citext PK)` — catalog of atomic capability slugs. Ships English admin capabilities: `*`, `organization_manage` (org-level: name, logo, members, presets), `tenant_manage` (company/tenant-level: name, logo, billing, domains — distinct from `organization_manage`), `members_manage`, `presets_manage`. Reserved slug `*` is wildcard — membership holding `*` passes every permission check inside its organization (and, via the tenant helpers, every tenant check too). Used for tenant creator and other "full admin" grants without enumerating every slug.
 - `public.organization_membership_permissions(organization_membership_id, permission_id)` — explicit grants. Organization/profile derive through membership row. Composite PK prevents duplicate grants; deletion cascades from memberships.
 - `public.permission_presets(permission_preset_id, organization_id?, permission_preset_name, permission_preset_slugs[])` — UX-only named bundles; carries no enforcement. `organization_id IS NULL` = global preset. Seeded global presets: `Owner` / `Administrator` / `Member manager`. Trigger validates every slug.
 
@@ -12520,6 +13718,8 @@ Permission-backed (DB lookup, security definer; wildcard `*` honored):
 - `public.viewer_permission_org_ids(permission_id)` — orgs where caller has perm (or `*`). Use in RLS `IN`-subqueries.
 - `public.viewer_has_permission(organization_id, permission_id)` — boolean shortcut for single (org, perm) check.
 - `public.viewer_organization_membership_permissions()` — setof `(organization_id, permission_id)` for UI listing.
+- `public.viewer_permission_tenant_ids(permission_id)` — tenants where caller has perm (or `*`) on **any org in that tenant**. There is no tenant-membership table — tenant authority rides on org grants (the espejo org from `tenant_create` is where `tenant_manage` is granted by default). Use in RLS `IN`-subqueries.
+- `public.viewer_has_tenant_permission(tenant_id, permission_id)` — boolean shortcut for a single (tenant, perm) check. Gates the `tenants` UPDATE policy, the `tenants` storage bucket, the company settings layout, and the tenant onboarding RPCs.
 
 ## Critical Rules
 
@@ -12578,6 +13778,20 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/auth/callbac
 
 **Exception:** `page.tsx` or `layout.tsx` not `async` and not accessing `params` or `searchParams` — no typed props needed. But always make `async` if needing any server-side capability.
 
+### API route handlers — validate input with `next-zod-route`
+For `route.ts` handlers that consume dynamic path params, query, or a JSON body, validate with **`next-zod-route`** instead of hand-parsing — it returns 400 on bad input and hands the handler fully-typed `context.params` / `context.query` / `context.body`. The param schema keys must match the `[segment]` folder names. Use `z.guid()` (loose, version-agnostic — matches the DB's `internal.is_uuid`) for uuid path params, **not** `z.uuid()` (which rejects non-RFC-version uuids like the seed's). The handler may return any `Response` (e.g. a streamed image).
+
+```ts
+// app/api/v1/organizations/[organization_id]/avatar/route.ts
+export const GET = createZodRoute()
+  .params(z.object({ organization_id: z.coerce.number().int().positive() }))
+  .handler(async (_request, context) => {
+    return streamPublicAvatar(/* … context.params.organization_id … */);
+  });
+```
+
+Routes whose "invalid input" is a user-facing **redirect** (e.g. the auth `callback`/`confirm` flows redirecting to `/auth/error`) deliberately keep hand-parsing — next-zod-route's 400 doesn't fit that UX.
+
 ### Bracket notation for external data
 Reading properties off objects from outside program (GraphQL/REST responses, parsed JSON, file contents, webhook payloads, MCP tool results) → use bracket notation, not dot access.
 
@@ -12621,6 +13835,7 @@ Never pass dictionary object as props; never import or export `LOCALES` between 
 - **Server page** (`page.tsx`): define minimal `LOCALES` with only what `generateMetadata` needs (e.g. `title`, `subtitle`). Use `ROSETTA(LOCALES, locale)` from `~/lib/i18n`.
 - **Client component**: define full `LOCALES` at top of file. Use `useRosetta(LOCALES)` from `@packages/rosetta/use-rosetta` inside component — no `dict` prop.
 - Sub-components in same file can also call `useRosetta(LOCALES)` directly — `LOCALES` is module-scoped.
+- **Never pass the translator (`t`) or a `ReturnType<typeof useRosetta>` across a function/component boundary as an argument or prop.** Each component/sub-component calls `useRosetta(LOCALES)` itself (`LOCALES` is module-scoped, so it's free). Likewise, a helper that builds labelled data (tab descriptors, menu items) does **not** take `t` as a parameter — inline the build inside the component where `t` is already in scope, or have it return string *keys* and translate at the call site. A `t` parameter is the same anti-pattern as a `dict` prop.
 - Two files needing same key (e.g. `title`) → each duplicates it. No sharing.
 - **`LOCALE_ES` and `LOCALES` always at bottom of file**, after all component/function definitions. Data constants — keep imports and logic at top.
 
@@ -12671,8 +13886,16 @@ Action matches `rpcError.message` against LOCALES keys — never parse prose.
 **Client choice:**
 - **Service-role client** for RPCs requiring `caller_id` passed explicitly (service role has no JWT `sub`).
 - **Authenticated server client** for RPCs calling `viewer_profile_id()` internally (e.g., `actionRespondInvitation`).
-- **`useGraphyMutation` directly from client components** for viewer-scoped RPCs whose entire workflow is transactional SQL and which need no server-only API or secret. Do not add a pass-through Server Action.
-- **Creation RPC return shape:** `protected.*_create(profile_id, ...)` and `public.viewer_*_create(...)` return `setof public.<table> rows 1`, explicitly `volatile`. pg_graphql exposes the viewer function as a singular table object on `Mutation`, allowing callers to select the created row fields.
+- **`useGraphyMutation` directly from client components — the DEFAULT for viewer-scoped mutations.** If an RPC's entire workflow is transactional SQL, calls `viewer_*` helpers internally, and needs no server-only API or secret, expose it through pg_graphql and call it as a GraphQL mutation from the client. **Do NOT wrap it in a Server Action** — a pass-through `action*` that only forwards args to `.rpc()` is an anti-pattern (it adds a network hop, a file, and a serialization boundary for nothing). Reserve Server Actions for workflows that genuinely need the server: a secret/service-role, a non-DB side effect (`auth.admin.*`, email), or `redirect()`/cookie work. Renames, status toggles, onboarding step writes, soft-dismiss, etc. → GraphQL mutation, not an action.
+  ```tsx
+  // ❌ pass-through action — don't
+  export const actionRenameTenant = authedAction.inputSchema(...).action(({ ctx }) => ctx.supabase.rpc("viewer_tenant_update", ...));
+  // ✅ GraphQL mutation from the client component
+  const [, renameTenant] = useGraphyMutation(UpdateTenantNameMutation);
+  const { data, error } = await renameTenant({ tenant_id, tenant_name });
+  ```
+- **Mutating-RPC return shape + exposure:** viewer-scoped mutating RPCs (`public.viewer_*_create` / `_update` / etc.) return `setof public.<table> rows 1` and are explicitly `volatile` (volatility decides Query vs Mutation in pg_graphql). Leave the default `EXECUTE` grant — `public` already covers `anon`/`authenticated`, and the function self-guards via its internal `viewer_*` permission check, so the `revoke … from public; grant … to anon, authenticated` boilerplate is unnecessary noise. pg_graphql then exposes the function as a singular table object on `Mutation`.
+- **Regen workflow after adding/altering an RPC:** edit `schema.sql` → `pnpm db:reset` → `pnpm generate:graphql:schema` (live introspection — **not** `:local`, which only reformats the cached JSON and will silently miss new fields) → `pnpm generate:types`. Then write the `gql()` doc and run `pnpm generate:graphql:platform`.
 
 ### SQL / PL/pgSQL style
 
@@ -12786,7 +14009,7 @@ cd apps/platform && NODE_ENV=development pnpm exec next typegen
 Then `PageProps<"/new-route">` and the `AppRoutes` union pick up the new path and `build:dry` passes.
 
 ### File & Script Naming
-Use `noun-verb` order, not `verb-noun`: `skills-setup`, `alert-create`, `user-import`. Domain first, action second.
+Use `noun-verb` order, not `verb-noun`: `skill-rename`, `alert-create`, `user-import`. Domain first, action second.
 
 ### Commit Messages
 Conventional Commits with scope: `type(scope): description`
@@ -12820,259 +14043,6 @@ Guidelines:
 - Don't use tenant slug from reserved-route list (auth, home, tenants, health, …) — schema check in `apps/platform/app/(app)/tenants/create/schemas.ts` + `internal.reserved_slugs` is source of truth
 - Don't expect tenant / organization / agency / onboarding state in JWT — hook is pass-through, only `profile_id` (the `sub` claim) carried. Resolve from DB via `viewer_*` helpers or `getSupabaseServerUserMetadata()` from `@packages/supabase/client.server`
 - Don't put shadcn components in `apps/platform/` — they belong in `packages/ui-common/src/shadcn`
-````
-
-## File: package.json
-````json
-{
-  "name": "saas-template",
-  "private": true,
-  "type": "module",
-  "packageManager": "pnpm@10.20.0",
-  "engines": {
-    "node": "24.x"
-  },
-  "scripts": {
-    "preinstall": "npx --yes only-allow pnpm",
-    "postinstall": "node scripts/skills-setup.js",
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "dev:debug": "turbo run dev:debug",
-    "build:dry": "turbo run build:dry",
-    "generate": "turbo run generate",
-    "test": "turbo run test",
-    "test:db": "pnpm --filter @packages/supabase run test:db",
-    "test:e2e": "pnpm --filter @apps/platform run test:e2e",
-    "format": "turbo run format && biome check --diagnostic-level=error .",
-    "format:apply": "turbo run format -- --write && biome check --diagnostic-level=error --write .",
-    "format:apply-unsafe": "turbo run format -- --write --unsafe && biome check --diagnostic-level=error --write --unsafe .",
-    "db:start": "pnpm --filter @packages/supabase db:start",
-    "db:stop": "pnpm --filter @packages/supabase db:stop",
-    "db:reset": "pnpm --filter @packages/supabase db:reset",
-    "db:status": "pnpm --filter @packages/supabase db:status",
-    "db:env:development": "node --experimental-strip-types scripts/development/env-setup.ts",
-    "db:migrate:new": "pnpm --filter @packages/supabase db:migrate:new",
-    "db:migrate:up": "pnpm --filter @packages/supabase db:migrate:up",
-    "generate:types": "turbo run generate:types --filter=@packages/supabase",
-    "generate:graphql:schema": "pnpm --filter @packages/supabase run generate:graphql:schema",
-    "generate:graphql:schema:local": "pnpm --filter @packages/supabase run generate:graphql:schema:local",
-    "generate:graphql:platform": "pnpm --filter @apps/platform run generate:graphql",
-    "generate:repomix:skills": "repomix -c repomix.config.ts --skill-generate codebase --skill-output skills/codebase -f && node scripts/repomix-skill-rename.js",
-    "typecheck:platform": "turbo run build:dry --filter=@apps/platform"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.5.0",
-    "@packages/typescript-config": "workspace:*",
-    "@types/qrcode-terminal": "^0.12.2",
-    "graphql": "^16.14.2",
-    "graphql-config": "^5.1.6",
-    "qrcode-terminal": "^0.12.0",
-    "repomix": "^1.14.1",
-    "skills": "1.5.11",
-    "turbo": "^2.9.18",
-    "typescript": "^6.0.3"
-  },
-  "extensionDependencies": [
-    "ms-vscode.vscode-claude-sdk"
-  ]
-}
-````
-
-## File: apps/platform/components/shell/command-palette.tsx
-````typescript
-import { useKeyboardShortcut } from "@packages/react-hooks/use-keyboard-shortcut";
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
-import { INITIALS_OF } from "@packages/utils/string";
-import { Building2, Circle, Home, type LucideIcon, Search, Settings, Users } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-⋮----
-import { InitialsAvatar, Kbd } from "~/components/shell/atoms";
-import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE, ROUTE_HREF } from "~/lib/route";
-⋮----
-type PaletteItem = {
-  id: string;
-  label: string;
-  hint?: string;
-  Icon?: LucideIcon;
-  orgInitials?: string;
-  orgColor?: Record<string, string>;
-  onSelect: () => void;
-};
-⋮----
-type PaletteGroup = {
-  heading: string;
-  items: PaletteItem[];
-};
-⋮----
-function onKey(event: KeyboardEvent)
-````
-
-## File: apps/platform/components/shell/mobile-sheets.tsx
-````typescript
-import { useMounted } from "@packages/react-hooks/use-mounted";
-import { COLOR_HSL_FROM_STRING } from "@packages/utils/colors";
-import { INITIALS_OF } from "@packages/utils/string";
-import {
-  ArrowLeft,
-  Bell,
-  Check,
-  ChevronRight,
-  CreditCard,
-  Globe,
-  HelpCircle,
-  Home,
-  KeyRound,
-  LogOut,
-  Monitor,
-  Moon,
-  Plus,
-  Search,
-  Settings as SettingsIcon,
-  Shield,
-  Sun,
-  User,
-  Users,
-  X,
-} from "lucide-react";
-import type { Route } from "next";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
-import { useEffect, useRef, useState, useTransition } from "react";
-import { InitialsAvatar } from "~/components/shell/atoms";
-import { Sheet } from "~/components/shell/mobile-sheet";
-import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
-import type { ShellViewer } from "~/components/shell/profile-menu";
-import { useLocaleCookie } from "~/hooks/use-locale-cookie";
-import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE, ROUTE_HREF } from "~/lib/route";
-⋮----
-href=
-⋮----
-<span>
-⋮----
-function goTo(item: SearchItem)
-⋮----
-placeholder=
-````
-
-## File: apps/platform/package.json
-````json
-{
-  "name": "@apps/platform",
-  "version": "0.0.0",
-  "private": true,
-  "engines": {
-    "node": "24.x"
-  },
-  "scripts": {
-    "postinstall": "NODE_ENV=development next typegen || true",
-    "dev": "next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003}",
-    "dev:debug": "next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003} --inspect",
-    "build": "next build",
-    "build:dry": "tsc --noEmit",
-    "start": "next start",
-    "test": "vitest run",
-    "test:e2e": "playwright test",
-    "format": "biome check --diagnostic-level=error .",
-    "generate:graphql": "graphql-codegen -c graphql.config.ts"
-  },
-  "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.84",
-    "@formatjs/intl-localematcher": "^0.8.10",
-    "@hookform/resolvers": "^5.2.0",
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "@next/env": "^16.2.9",
-    "@opentelemetry/auto-instrumentations-node": "^0.77.0",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.219.0",
-    "@opentelemetry/sdk-node": "^0.219.0",
-    "@packages/api-ip": "workspace:*",
-    "@packages/debug": "workspace:*",
-    "@packages/graphy": "workspace:*",
-    "@packages/intl": "workspace:*",
-    "@packages/kapso": "workspace:*",
-    "@packages/react-email": "workspace:*",
-    "@packages/react-hooks": "workspace:*",
-    "@packages/react-pdf": "workspace:*",
-    "@packages/rosetta": "workspace:*",
-    "@packages/supabase": "workspace:*",
-    "@packages/ui-common": "workspace:*",
-    "@packages/utils": "workspace:*",
-    "@posthog/next": "^0.4.96",
-    "@react-email/render": "2.0.8",
-    "@supabase/ssr": "^0.12.0",
-    "@supabase/supabase-js": "^2.108.2",
-    "@types/ua-parser-js": "^0.7.39",
-    "@vercel/analytics": "^2.0.1",
-    "@vercel/speed-insights": "^2.0.0",
-    "ai": "^6.0.205",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.18.0",
-    "mcp-handler": "^1.1.0",
-    "negotiator": "^1.0.0",
-    "next": "16.2.9",
-    "next-safe-action": "^8.5.4",
-    "next-themes": "^0.4.6",
-    "posthog-node": "^5.37.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "react-hook-form": "^7.79.0",
-    "react-markdown": "^10.1.0",
-    "resend": "^6.12.4",
-    "schema-dts": "^2.0.0",
-    "sonner": "^2.0.7",
-    "swr": "^2.4.1",
-    "ua-parser-js": "^2.0.10",
-    "web-push": "^3.6.7",
-    "zod": "^4.4.3"
-  },
-  "devDependencies": {
-    "@graphql-codegen/cli": "^7.1.2",
-    "@graphql-codegen/client-preset": "^6.0.1",
-    "@graphql-typed-document-node/core": "^3.2.0",
-    "@packages/typescript-config": "workspace:*",
-    "@playwright/test": "^1.61.0",
-    "@tailwindcss/postcss": "^4.3.1",
-    "@types/negotiator": "^0.6.4",
-    "@types/node": "^24.12.4",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@types/web-push": "^3.6.4",
-    "graphql": "^16.14.2",
-    "postcss": "^8.5.15",
-    "tailwindcss": "^4.3.1",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
-  }
-}
-````
-
-## File: apps/platform/proxy.ts
-````typescript
-import { updateSession } from "@packages/supabase/client.middleware";
-import { URL_NEW } from "@packages/utils/url";
-import { type NextRequest, NextResponse, userAgent } from "next/server";
-import { APEX_HOSTNAME, APP_HOST, PROXY_LOG_ENABLED } from "~/lib/constants";
-import { debug } from "~/lib/debug";
-import { LOCALE_COOKIE, LOCALE_SUPPORTED_RESOLVE, type SupportedLocale } from "~/lib/i18n";
-import { LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
-⋮----
-export async function proxy(request: NextRequest)
-⋮----
-function withLocale(response: NextResponse): NextResponse
-⋮----
-function isPublicPath(pathname: string): boolean
-⋮----
-function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse
-⋮----
-function isGlobalMetadataAssetPath(pathname: string): boolean
-⋮----
-async function setPostHogBootstrap(request: NextRequest, response: NextResponse): Promise<void>
 ````
 
 ## File: packages/supabase/supabase/migrations/00000000000000_schema.sql
@@ -13448,6 +14418,10 @@ create table if not exists public.tenants (
   tenant_id serial primary key,
   tenant_slug extensions.citext not null unique check (internal.slug_reserved_validate(tenant_slug::text)),
   tenant_name text not null check (char_length(tenant_name) between 1 and 256),
+  -- Onboarding (extensible, resumable, soft nudge). Steps (logo set, first member invited) are
+  -- derivable — computed at read time from storage/memberships, never stored. `tenant_onboarded_at`
+  -- is set when the whole flow is dismissed/finished so the banner stops.
+  tenant_onboarded_at timestamptz,
   tenant_disabled_at timestamptz,
   tenant_created_at timestamptz not null default current_timestamp,
   tenant_updated_at timestamptz not null default current_timestamp
@@ -13488,6 +14462,30 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
   values (
     'organizations',
     'organizations',
+    true,
+    internal.convert_unit_byte(5, 'MiB'),
+    array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+  )
+  on conflict (id) do update set
+    public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  values (
+    'tenants',
+    'tenants',
+    true,
+    internal.convert_unit_byte(5, 'MiB'),
+    array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+  )
+  on conflict (id) do update set
+    public = excluded.public,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+  values (
+    'agencies',
+    'agencies',
     true,
     internal.convert_unit_byte(5, 'MiB'),
     array['image/png', 'image/jpeg', 'image/webp', 'image/gif']
@@ -13821,10 +14819,12 @@ create trigger permission_presets_trigger_validate_slugs
 -- Seed catalog (idempotent: ON CONFLICT skips). Add new slugs here, then re-run db:reset.
 insert into public.permissions (permission_id, permission_description) values
   ('*',                    'Wildcard: grants every permission within the organization (typical use: founder).'),
-  ('organization_manage',  'Edit the name, settings, and domains of the tenant/organization.'),
+  ('organization_manage',  'Edit the organization: name, logo, members, and presets.'),
+  ('tenant_manage',        'Edit the tenant (billing entity): name, logo, billing, and domains.'),
   ('members_manage',       'Invite, remove, and reassign permissions to members.'),
   ('presets_manage',       'Create and edit the organization''s permission presets.'),
-  ('tickets_manage',       'View, claim, and resolve support tickets on behalf of the organization.')
+  ('tickets_manage',       'View, claim, and resolve support tickets on behalf of the organization.'),
+  ('agency_members_manage','Manage the agency team: invite, revoke, reactivate affiliates and reassign their agency permissions.')
 on conflict (permission_id) do nothing;
 insert into public.permission_presets (organization_id, permission_preset_name, permission_preset_slugs) values
   (null, 'Owner',         array['*']::extensions.citext[]),
@@ -13832,7 +14832,7 @@ insert into public.permission_presets (organization_id, permission_preset_name, 
   (null, 'Member manager', array['members_manage']::extensions.citext[])
 on conflict do nothing;
 create table if not exists public.agencies (
-  agency_id uuid not null primary key default internal.uuid_generate_v7(),
+  agency_id serial primary key,
   agency_name text not null check (char_length(agency_name) between 1 and 100),
   agency_slug extensions.citext not null unique,
   agency_disabled_at timestamptz,
@@ -13845,7 +14845,7 @@ create trigger handle_agencies_updated_at
   for each row execute procedure extensions.moddatetime(agency_updated_at);
 create table if not exists public.agency_memberships (
   agency_membership_id serial primary key,
-  agency_id uuid not null references public.agencies (agency_id) on delete cascade,
+  agency_id int not null references public.agencies (agency_id) on delete cascade,
   profile_id uuid not null references public.profiles (profile_id) on delete cascade,
   agency_membership_accepted_at timestamptz,
   agency_membership_revoked_at timestamptz,
@@ -13861,7 +14861,7 @@ create trigger handle_agency_memberships_updated_at
   for each row execute procedure extensions.moddatetime(agency_membership_updated_at);
 create table if not exists public.agencies_organizations_grants (
   agencies_organizations_grant_id uuid not null primary key default internal.uuid_generate_v7(),
-  agency_id uuid not null references public.agencies (agency_id) on delete cascade,
+  agency_id int not null references public.agencies (agency_id) on delete cascade,
   organization_id int references public.organizations (organization_id) on delete cascade,
   permission_id extensions.citext not null references public.permissions (permission_id) on delete cascade,
   agencies_organizations_grant_created_at timestamptz not null default current_timestamp
@@ -13872,12 +14872,23 @@ create unique index if not exists agencies_organizations_grants_org_unique
 create unique index if not exists agencies_organizations_grants_global_unique
   on public.agencies_organizations_grants (agency_id, permission_id)
   where organization_id is null;
+create table if not exists public.agency_membership_permissions (
+  agency_membership_id int not null references public.agency_memberships (agency_membership_id) on delete cascade,
+  permission_id extensions.citext not null references public.permissions (permission_id) on delete cascade,
+  agency_membership_permission_created_at timestamptz not null default current_timestamp,
+  primary key (agency_membership_id, permission_id)
+);
+alter table public.agency_membership_permissions enable row level security;
+revoke all on table public.agency_membership_permissions from anon, authenticated;
+grant select, insert, update, delete on table public.agency_membership_permissions to anon, authenticated;
+grant select, insert, update, delete on table public.agency_membership_permissions to service_role;
 alter table public.agencies enable row level security;
 alter table public.agency_memberships enable row level security;
 alter table public.agencies_organizations_grants enable row level security;
 revoke all on table public.agencies from anon, authenticated;
 grant select on table public.agencies to anon, authenticated;
 grant select, insert, update, delete on table public.agencies to service_role;
+grant usage, select on sequence public.agencies_agency_id_seq to service_role;
 revoke all on table public.agency_memberships from anon, authenticated;
 grant select on table public.agency_memberships to anon, authenticated;
 grant select, insert, update, delete on table public.agency_memberships to service_role;
@@ -14064,6 +15075,51 @@ create or replace function public.viewer_has_permission(
         and (mp.permission_id = viewer_has_permission.permission_id or mp.permission_id = '*')
     );
   $$;
+-- Tenant-scoped permission helpers. There is no tenant-level membership table — tenant authority
+-- rides on the organization grants of the orgs inside the tenant (the espejo org created by
+-- protected.tenant_create is where `tenant_manage` is granted by default). Wildcard `*` is honored.
+create or replace function public.viewer_permission_tenant_ids(permission_id extensions.citext)
+  returns setof int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select distinct o.tenant_id
+    from public.organization_membership_permissions mp
+    join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
+    join public.organizations o on o.organization_id = m.organization_id
+    where m.profile_id = (select public.viewer_profile_id())
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null
+      and (mp.permission_id = viewer_permission_tenant_ids.permission_id or mp.permission_id = '*');
+  $$;
+create or replace function public.viewer_has_tenant_permission(
+  tenant_id int,
+  permission_id extensions.citext
+)
+  returns boolean
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select exists (
+      select 1
+      from public.organization_membership_permissions mp
+      join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
+      join public.organizations o on o.organization_id = m.organization_id
+      where o.tenant_id = viewer_has_tenant_permission.tenant_id
+        and m.profile_id = (select public.viewer_profile_id())
+        and m.organization_membership_accepted_at is not null
+        and m.organization_membership_revoked_at is null
+        and m.organization_membership_rejected_at is null
+        and (mp.permission_id = viewer_has_tenant_permission.permission_id or mp.permission_id = '*')
+    );
+  $$;
 create or replace function public.viewer_organization_membership_permissions()
   returns table (organization_id int, permission_id extensions.citext)
   stable
@@ -14084,7 +15140,7 @@ create or replace function public.viewer_organization_membership_permissions()
 -- viewer_agency_permission_org_ids / viewer_has_agency_permission / viewer_agency_tenant_ids
 -- use SECURITY DEFINER to bypass RLS on the grant tables they query.
 create or replace function public.viewer_agency_ids()
-  returns setof uuid
+  returns setof int
   stable
   security definer
   parallel safe
@@ -14179,7 +15235,7 @@ create or replace function public.viewer_agencies()
     from public.agencies a
     where a.agency_id in (select public.viewer_agency_ids());
   $$;
-create or replace function public.viewer_agency_by_id(agency_id uuid)
+create or replace function public.viewer_agency_by_id(agency_id int)
   returns setof public.agencies rows 1
   stable
   security definer
@@ -14207,21 +15263,101 @@ create or replace function public.viewer_agency_by_slug(agency_slug text)
       and a.agency_id in (select public.viewer_agency_ids())
     limit 1;
   $$;
--- ============================================================
--- RLS SELECT policies for agency tables (defined here because they
--- require viewer_agency_ids() and viewer_permission_org_ids() to exist first)
--- ============================================================
--- agencies: visible to affiliates of the agency.
+-- Team roster for an agency: every membership (accepted, pending, revoked,
+-- rejected) with the member's display name and login email. The plain
+create or replace function public.viewer_agency_team(agency_id int)
+  returns table (
+    agency_membership_id int,
+    profile_id uuid,
+    agency_membership_accepted_at timestamptz,
+    agency_membership_revoked_at timestamptz,
+    agency_membership_rejected_at timestamptz,
+    agency_membership_created_at timestamptz,
+    profile_name_full text,
+    email text
+  )
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select
+      m.agency_membership_id,
+      m.profile_id,
+      m.agency_membership_accepted_at,
+      m.agency_membership_revoked_at,
+      m.agency_membership_rejected_at,
+      m.agency_membership_created_at,
+      p.profile_name_full,
+      u.email::text
+    from public.agency_memberships m
+    join public.profiles p using (profile_id)
+    left join auth.users u on u.id = m.profile_id
+    where m.agency_id = viewer_agency_team.agency_id
+      and viewer_agency_team.agency_id in (select public.viewer_agency_ids())
+    order by m.agency_membership_created_at asc;
+  $$;
+-- External-access picker for an organization's admins: every enabled agency with
+create or replace function public.viewer_organization_external_agencies(organization_id int)
+  returns table (
+    agency_id int,
+    agency_name text,
+    agency_slug text,
+    active_affiliates int,
+    granted_here boolean,
+    is_global boolean
+  )
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select
+      a.agency_id,
+      a.agency_name,
+      a.agency_slug,
+      coalesce(m.active_count, 0)::int as active_affiliates,
+      coalesce(gh.granted, false) as granted_here,
+      coalesce(gg.granted, false) as is_global
+    from public.agencies a
+    left join lateral (
+      select count(*) as active_count
+      from public.agency_memberships am
+      where am.agency_id = a.agency_id
+        and am.agency_membership_accepted_at is not null
+        and am.agency_membership_revoked_at is null
+        and am.agency_membership_rejected_at is null
+    ) m on true
+    left join lateral (
+      select true as granted
+      from public.agencies_organizations_grants g
+      where g.agency_id = a.agency_id
+        and g.organization_id = viewer_organization_external_agencies.organization_id
+      limit 1
+    ) gh on true
+    left join lateral (
+      select true as granted
+      from public.agencies_organizations_grants g
+      where g.agency_id = a.agency_id
+        and g.organization_id is null
+        and g.permission_id = '*'
+      limit 1
+    ) gg on true
+    where a.agency_disabled_at is null
+      and public.viewer_has_permission(
+        viewer_organization_external_agencies.organization_id, 'organization_manage')
+    order by a.agency_name asc;
+  $$;
 drop policy if exists "agencies select by affiliates" on public.agencies;
 create policy "agencies select by affiliates"
   on public.agencies for select to authenticated
   using (agency_id in (select public.viewer_agency_ids()));
--- agency_memberships: each profile sees their own.
 drop policy if exists "agency_memberships select own" on public.agency_memberships;
 create policy "agency_memberships select own"
   on public.agency_memberships for select to authenticated
   using (profile_id = (select public.viewer_profile_id()));
--- agencies_organizations_grants: visible to affiliates or to orgs with organization_manage.
 drop policy if exists "agencies_organizations_grants select" on public.agencies_organizations_grants;
 create policy "agencies_organizations_grants select"
   on public.agencies_organizations_grants for select to authenticated
@@ -14229,6 +15365,140 @@ create policy "agencies_organizations_grants select"
     agency_id in (select public.viewer_agency_ids())
     or organization_id in (select public.viewer_permission_org_ids('organization_manage'))
   );
+create or replace function public.viewer_agency_team_permission_ids(permission_id extensions.citext)
+  returns setof int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select distinct m.agency_id
+    from public.agency_membership_permissions mp
+    join public.agency_memberships m on m.agency_membership_id = mp.agency_membership_id
+    join public.agencies a on a.agency_id = m.agency_id
+    where m.profile_id = (select public.viewer_profile_id())
+      and m.agency_membership_accepted_at is not null
+      and m.agency_membership_revoked_at is null
+      and m.agency_membership_rejected_at is null
+      and a.agency_disabled_at is null
+      and (mp.permission_id = viewer_agency_team_permission_ids.permission_id or mp.permission_id = '*');
+  $$;
+create or replace function public.viewer_has_agency_team_permission(
+  agency_id int,
+  permission_id extensions.citext
+)
+  returns boolean
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select viewer_has_agency_team_permission.agency_id in (
+      select public.viewer_agency_team_permission_ids(viewer_has_agency_team_permission.permission_id)
+    );
+  $$;
+-- Resolve a membership's agency, bypassing the own-row-only RLS on agency_memberships.
+create or replace function public.agency_id_of_membership(agency_membership_id int)
+  returns int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select m.agency_id
+    from public.agency_memberships m
+    where m.agency_membership_id = agency_id_of_membership.agency_membership_id;
+  $$;
+-- True iff the agency has at least one OTHER active affiliate holding
+-- `agency_members_manage` or `*`. Guards against removing the last team admin.
+create or replace function public.agency_has_other_active_admin(
+  _agency_id int,
+  _excluded_agency_membership_id int
+) returns boolean
+  language sql
+  stable
+  security definer
+  set search_path to ''
+as $$
+  select exists (
+    select 1
+    from public.agency_memberships m
+    join public.agency_membership_permissions mp on mp.agency_membership_id = m.agency_membership_id
+    where m.agency_id = _agency_id
+      and m.agency_membership_id <> _excluded_agency_membership_id
+      and m.agency_membership_accepted_at is not null
+      and m.agency_membership_revoked_at is null
+      and m.agency_membership_rejected_at is null
+      and mp.permission_id in ('agency_members_manage', '*')
+  );
+$$;
+revoke execute on function public.agency_has_other_active_admin(int, int) from public;
+grant execute on function public.agency_has_other_active_admin(int, int) to authenticated;
+create or replace function public.agency_membership_permissions_protect_last_admin()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path to ''
+as $$
+declare
+  _agency_id int;
+begin
+  if public.viewer_profile_id() is null then
+    return old;
+  elsif old.permission_id not in ('agency_members_manage', '*') then
+    return old;
+  end if;
+  select agency_id into _agency_id
+  from public.agency_memberships
+  where agency_membership_id = old.agency_membership_id;
+  if exists (
+    select 1 from public.agency_membership_permissions
+    where agency_membership_id = old.agency_membership_id
+      and permission_id in ('agency_members_manage', '*')
+      and permission_id <> old.permission_id
+  ) then
+    return old;
+  end if;
+  if not public.agency_has_other_active_admin(_agency_id, old.agency_membership_id) then
+    raise exception 'last_admin_protected'
+      using hint = 'cannot revoke the last admin permission in the agency';
+  end if;
+  return old;
+end;
+$$;
+drop trigger if exists agency_membership_permissions_trigger_protect_last_admin on public.agency_membership_permissions;
+create trigger agency_membership_permissions_trigger_protect_last_admin
+  before delete on public.agency_membership_permissions
+  for each row execute procedure public.agency_membership_permissions_protect_last_admin();
+drop policy if exists "agency_membership_permissions select by co-members" on public.agency_membership_permissions;
+create policy "agency_membership_permissions select by co-members"
+  on public.agency_membership_permissions for select
+  to authenticated
+  using (
+    public.agency_id_of_membership(agency_membership_id) in (select public.viewer_agency_ids())
+  );
+drop policy if exists "agency_membership_permissions write with agency_members_manage" on public.agency_membership_permissions;
+create policy "agency_membership_permissions write with agency_members_manage"
+  on public.agency_membership_permissions for all
+  to authenticated
+  using (
+    public.agency_id_of_membership(agency_membership_id)
+      in (select public.viewer_agency_team_permission_ids('agency_members_manage'))
+  )
+  with check (
+    public.agency_id_of_membership(agency_membership_id)
+      in (select public.viewer_agency_team_permission_ids('agency_members_manage'))
+  );
+grant insert, update, delete on table public.agencies_organizations_grants to anon, authenticated;
+drop policy if exists "agencies_organizations_grants write with organization_manage" on public.agencies_organizations_grants;
+create policy "agencies_organizations_grants write with organization_manage"
+  on public.agencies_organizations_grants for all
+  to authenticated
+  using (organization_id in (select public.viewer_permission_org_ids('organization_manage')))
+  with check (organization_id in (select public.viewer_permission_org_ids('organization_manage')));
 drop view if exists public.tenants_organizations_profiles;
 create view public.tenants_organizations_profiles as
   select
@@ -14413,16 +15683,12 @@ create policy "tenants select by members or agency affiliates"
   );
 drop policy if exists "tenants update by owner" on public.tenants;
 drop policy if exists "tenants update with organization_manage" on public.tenants;
-create policy "tenants update with organization_manage"
+drop policy if exists "tenants update with tenant_manage" on public.tenants;
+create policy "tenants update with tenant_manage"
   on public.tenants for update
   to authenticated
-  using (
-    exists (
-      select 1 from public.organizations o
-      where o.tenant_id = public.tenants.tenant_id
-        and o.organization_id in (select public.viewer_permission_org_ids('organization_manage'))
-    )
-  );
+  using (tenant_id in (select public.viewer_permission_tenant_ids('tenant_manage')))
+  with check (tenant_id in (select public.viewer_permission_tenant_ids('tenant_manage')));
 alter table public.organizations enable row level security;
 revoke all on table public.organizations from anon, authenticated;
 grant select, update on table public.organizations to anon, authenticated;
@@ -15079,6 +16345,51 @@ create or replace function public.viewer_organization_membership_reject(organiza
     end;
   $$;
 grant execute on function public.viewer_organization_membership_reject(int) to authenticated;
+create or replace function public.viewer_organization_membership_set_permissions(
+  organization_membership_id int,
+  permission_ids extensions.citext[]
+)
+  returns setof public.organization_membership_permissions
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _organization_id int;
+    begin
+      select m.organization_id into _organization_id
+        from public.organization_memberships m
+        where m.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id;
+      if _organization_id is null then
+        raise exception 'membership_not_found' using errcode = 'P0001';
+      elsif not public.viewer_has_permission(_organization_id, 'members_manage') then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+      if exists (
+        select 1 from unnest(viewer_organization_membership_set_permissions.permission_ids) as s(permission_id)
+        where not exists (select 1 from public.permissions p where p.permission_id = s.permission_id)
+      ) then
+        raise exception 'invalid_permission' using errcode = 'P0001';
+      end if;
+      insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+        select viewer_organization_membership_set_permissions.organization_membership_id, s.permission_id
+        from unnest(viewer_organization_membership_set_permissions.permission_ids) as s(permission_id)
+        where not exists (
+          select 1 from public.organization_membership_permissions existing
+          where existing.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id
+            and existing.permission_id = s.permission_id
+        );
+      delete from public.organization_membership_permissions mp
+        where mp.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id
+          and mp.permission_id <> all (viewer_organization_membership_set_permissions.permission_ids);
+      return query
+        select mp.*
+        from public.organization_membership_permissions mp
+        where mp.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id;
+    end;
+  $$;
+grant execute on function public.viewer_organization_membership_set_permissions(int, extensions.citext[]) to authenticated;
 create or replace function public.organization_memberships_pending_by_document(
   country text,
   kind public.profile_identity_document_kind,
@@ -15177,7 +16488,7 @@ create policy "public buckets: read avatars"
   on storage.objects for select
   to authenticated, anon
   using (
-    bucket_id in ('profiles', 'organizations')
+    bucket_id in ('profiles', 'organizations', 'tenants', 'agencies')
     and path_tokens[2] = 'avatar'
   );
 drop policy if exists "profiles bucket: own avatar" on storage.objects;
@@ -15210,6 +16521,38 @@ create policy "organizations bucket: organization_manage avatar"
     and path_tokens[1] ~ '^[0-9]+$'
     and path_tokens[1]::int in (select public.viewer_permission_org_ids('organization_manage'))
   );
+drop policy if exists "tenants bucket: tenant_manage avatar" on storage.objects;
+create policy "tenants bucket: tenant_manage avatar"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id = 'tenants'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_permission_tenant_ids('tenant_manage'))
+  )
+  with check (
+    bucket_id = 'tenants'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_permission_tenant_ids('tenant_manage'))
+  );
+drop policy if exists "agencies bucket: member avatar" on storage.objects;
+create policy "agencies bucket: member avatar"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id = 'agencies'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_agency_ids())
+  )
+  with check (
+    bucket_id = 'agencies'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_agency_ids())
+  );
 create or replace view public.storage_profiles
   with (security_invoker = on) as
   select
@@ -15227,7 +16570,7 @@ create or replace view public.storage_profiles
   from storage.objects as obj
   where obj.bucket_id = 'profiles'
     and internal.is_uuid(obj.path_tokens[1]);
-grant select on public.storage_profiles to authenticated, anon;
+grant select on public.storage_profiles to authenticated, anon, service_role;
 comment on view public.storage_profiles is e'@graphql({"primary_key_columns": ["storage_profile_id"], "foreign_keys": [{"local_name": "storage_profiles", "local_columns": ["profile_id"], "foreign_name": "profile", "foreign_schema": "public", "foreign_table": "profiles", "foreign_columns": ["profile_id"]}]})';
 create or replace view public.storage_organizations
   with (security_invoker = on) as
@@ -15246,8 +16589,46 @@ create or replace view public.storage_organizations
   from storage.objects as obj
   where obj.bucket_id = 'organizations'
     and obj.path_tokens[1] ~ '^[0-9]+$';
-grant select on public.storage_organizations to authenticated, anon;
+grant select on public.storage_organizations to authenticated, anon, service_role;
 comment on view public.storage_organizations is e'@graphql({"primary_key_columns": ["storage_organization_id"], "foreign_keys": [{"local_name": "storage_organizations", "local_columns": ["organization_id"], "foreign_name": "organization", "foreign_schema": "public", "foreign_table": "organizations", "foreign_columns": ["organization_id"]}]})';
+create or replace view public.storage_tenants
+  with (security_invoker = on) as
+  select
+    obj.id                                       as storage_tenant_id,
+    obj.bucket_id,
+    obj.name,
+    obj.path_tokens[1]::int                      as tenant_id,
+    obj.path_tokens[2]                           as folder,
+    obj.metadata->>'mimetype'                    as mimetype,
+    (obj.metadata->>'contentLength')::bigint     as content_length,
+    obj.metadata,
+    obj.created_at,
+    obj.updated_at,
+    '/storage/v1/object/public/' || obj.bucket_id || '/' || obj.name as src
+  from storage.objects as obj
+  where obj.bucket_id = 'tenants'
+    and obj.path_tokens[1] ~ '^[0-9]+$';
+grant select on public.storage_tenants to authenticated, anon, service_role;
+comment on view public.storage_tenants is e'@graphql({"primary_key_columns": ["storage_tenant_id"], "foreign_keys": [{"local_name": "storage_tenants", "local_columns": ["tenant_id"], "foreign_name": "tenant", "foreign_schema": "public", "foreign_table": "tenants", "foreign_columns": ["tenant_id"]}]})';
+create or replace view public.storage_agencies
+  with (security_invoker = on) as
+  select
+    obj.id                                       as storage_agency_id,
+    obj.bucket_id,
+    obj.name,
+    obj.path_tokens[1]::int                      as agency_id,
+    obj.path_tokens[2]                           as folder,
+    obj.metadata->>'mimetype'                    as mimetype,
+    (obj.metadata->>'contentLength')::bigint     as content_length,
+    obj.metadata,
+    obj.created_at,
+    obj.updated_at,
+    '/storage/v1/object/public/' || obj.bucket_id || '/' || obj.name as src
+  from storage.objects as obj
+  where obj.bucket_id = 'agencies'
+    and obj.path_tokens[1] ~ '^[0-9]+$';
+grant select on public.storage_agencies to authenticated, anon, service_role;
+comment on view public.storage_agencies is e'@graphql({"primary_key_columns": ["storage_agency_id"], "foreign_keys": [{"local_name": "storage_agencies", "local_columns": ["agency_id"], "foreign_name": "agency", "foreign_schema": "public", "foreign_table": "agencies", "foreign_columns": ["agency_id"]}]})';
 -- Sessions: list and revoke the viewer's own auth sessions.
 drop function if exists public.viewer_sessions();
 create or replace function public.viewer_sessions()
@@ -15322,8 +16703,13 @@ create or replace function protected.tenant_create(
       )
         values (_organization_id, $1, current_timestamp)
         returning organization_membership_id into _organization_membership_id;
+      -- Founder gets the org wildcard plus an explicit tenant_manage grant on the espejo org, so
+      -- tenant-level authority (viewer_permission_tenant_ids) is real and grantable, not only a
+      -- side effect of holding '*'.
       insert into public.organization_membership_permissions (organization_membership_id, permission_id)
-        values (_organization_membership_id, '*');
+        values
+          (_organization_membership_id, '*'),
+          (_organization_membership_id, 'tenant_manage');
       return next _tenant;
     end;
   $$;
@@ -15348,6 +16734,54 @@ create or replace function public.viewer_tenant_create(
   $$;
 revoke execute on function public.viewer_tenant_create(text, text) from public;
 grant execute on function public.viewer_tenant_create(text, text) to anon, authenticated;
+-- Rename a tenant. Exposed as a pg_graphql Mutation (setof rows 1, volatile) so client
+-- components can call it via useGraphyMutation instead of a pass-through Server Action.
+-- Gated by tenant_manage; the tenant_name length check on the column enforces 1..256.
+create or replace function public.viewer_tenant_update(
+  tenant_id    int,
+  tenant_name  text
+)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _tenant public.tenants;
+    begin
+      if not public.viewer_has_tenant_permission($1, 'tenant_manage') then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+      update public.tenants
+        set tenant_name = $2,
+            tenant_updated_at = current_timestamp
+        where public.tenants.tenant_id = $1
+        returning * into _tenant;
+      return next _tenant;
+    end;
+  $$;
+create or replace function public.viewer_tenant_onboarding_finish(tenant_id int)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _tenant public.tenants;
+    begin
+      if not public.viewer_has_tenant_permission($1, 'tenant_manage') then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+      update public.tenants
+        set tenant_onboarded_at = current_timestamp,
+            tenant_updated_at = current_timestamp
+        where public.tenants.tenant_id = $1
+        returning * into _tenant;
+      return next _tenant;
+    end;
+  $$;
 create or replace function protected.organization_create(
   profile_id         uuid,
   tenant_id          int,
@@ -15453,6 +16887,8 @@ create or replace function protected.agency_create(
       )
         values (_agency.agency_id, $1, current_timestamp)
         returning agency_membership_id into _agency_membership_id;
+      insert into public.agency_membership_permissions (agency_membership_id, permission_id)
+        values (_agency_membership_id, '*');
       return next _agency;
     end;
   $$;
@@ -15482,111 +16918,119 @@ grant execute on function public.viewer_agency_create(text, text) to anon, authe
 -- ============================================================
 -- Errors use SQLSTATE P0001 with a stable, locale-key message so callers
 -- can match the key without parsing prose.
--- Invite (upsert): called from actionInviteAffiliate after the caller resolves/creates
--- the auth user. Validates that the caller is an active affiliate, then upserts the
--- membership row atomically (insert on conflict → reset timestamps).
--- Granted to service_role because the auth-user resolution step happens server-side
--- and this RPC is always called from a trusted server action.
-create or replace function public.agency_membership_invite(
-  agency_id   uuid,
-  profile_id  uuid,
-  caller_id   uuid
+-- All three are viewer-scoped: the caller is resolved from the JWT via the agency
+-- team-permission helpers, so they run under the caller's own RLS context (callable
+drop function if exists public.agency_membership_invite(int, uuid, uuid);
+drop function if exists public.agency_membership_update(int, int, text, uuid);
+drop function if exists public.agency_membership_respond(int, text);
+create or replace function public.viewer_agency_membership_invite_by_email(
+  agency_id int,
+  email     text
 )
-  returns int
+  returns setof public.agency_memberships rows 1
   volatile
   security definer
   language plpgsql
   set search_path to ''
   as $$
     declare
-      _membership_id int;
+      _profile_id uuid;
+      _row        public.agency_memberships;
     begin
-      -- Caller must be an active affiliate.
-      if not exists (
-        select 1 from public.agency_memberships af
-        where af.agency_id = agency_membership_invite.agency_id
-          and af.profile_id = agency_membership_invite.caller_id
-          and af.agency_membership_accepted_at is not null
-          and af.agency_membership_revoked_at is null
-          and af.agency_membership_rejected_at is null
-      ) then
+      if not public.viewer_has_agency_team_permission(
+           viewer_agency_membership_invite_by_email.agency_id, 'agency_members_manage') then
         raise exception 'no_permission' using errcode = 'P0001';
       end if;
-      if not exists (select 1 from public.agencies a where a.agency_id = agency_membership_invite.agency_id) then
+      if not exists (
+        select 1 from public.agencies a
+        where a.agency_id = viewer_agency_membership_invite_by_email.agency_id
+      ) then
         raise exception 'agency_not_found' using errcode = 'P0001';
+      end if;
+      select u.id into _profile_id
+        from auth.users u
+        where lower(u.email) = lower(viewer_agency_membership_invite_by_email.email)
+        limit 1;
+      if _profile_id is null then
+        raise exception 'user_not_found' using errcode = 'P0001';
       end if;
       if exists (
         select 1 from public.agency_memberships af
-        where af.agency_id = agency_membership_invite.agency_id
-          and af.profile_id = agency_membership_invite.profile_id
+        where af.agency_id = viewer_agency_membership_invite_by_email.agency_id
+          and af.profile_id = _profile_id
           and af.agency_membership_accepted_at is not null
           and af.agency_membership_revoked_at is null
           and af.agency_membership_rejected_at is null
       ) then
         raise exception 'already_member' using errcode = 'P0001';
       end if;
-      insert into public.agency_memberships (agency_id, profile_id)
-        values (agency_membership_invite.agency_id, agency_membership_invite.profile_id)
-        on conflict (agency_id, profile_id) do update
-          set agency_membership_accepted_at = null,
-              agency_membership_revoked_at  = null,
-              agency_membership_rejected_at = null
-        returning agency_membership_id into _membership_id;
-      return _membership_id;
+      update public.agency_memberships
+        set agency_membership_accepted_at = null,
+            agency_membership_revoked_at  = null,
+            agency_membership_rejected_at = null
+        where public.agency_memberships.agency_id = viewer_agency_membership_invite_by_email.agency_id
+          and public.agency_memberships.profile_id = _profile_id
+        returning * into _row;
+      if not found then
+        insert into public.agency_memberships (agency_id, profile_id)
+          values (viewer_agency_membership_invite_by_email.agency_id, _profile_id)
+          returning * into _row;
+      end if;
+      return next _row;
     end;
   $$;
-grant execute on function public.agency_membership_invite(uuid, uuid, uuid) to service_role;
-create or replace function public.agency_membership_update(
+grant execute on function public.viewer_agency_membership_invite_by_email(int, text) to authenticated;
+create or replace function public.viewer_agency_membership_update(
   agency_membership_id int,
-  agency_id            uuid,
-  operation            text,
-  caller_id            uuid
+  operation            text
 )
-  returns int
+  returns setof public.agency_memberships rows 1
   volatile
   security definer
   language plpgsql
   set search_path to ''
   as $$
+    declare
+      _agency_id int;
+      _row       public.agency_memberships;
     begin
-      if agency_membership_update.operation not in ('revoke', 'reactivate') then
+      if viewer_agency_membership_update.operation not in ('revoke', 'reactivate') then
         raise exception 'invalid_operation' using errcode = 'P0001';
       end if;
-      if not exists (
-        select 1 from public.agency_memberships af
-        where af.agency_id = agency_membership_update.agency_id
-          and af.profile_id = agency_membership_update.caller_id
-          and af.agency_membership_accepted_at is not null
-          and af.agency_membership_revoked_at is null
-          and af.agency_membership_rejected_at is null
-      ) then
+      select m.agency_id into _agency_id
+        from public.agency_memberships m
+        where m.agency_membership_id = viewer_agency_membership_update.agency_membership_id;
+      if _agency_id is null then
+        raise exception 'membership_not_found' using errcode = 'P0001';
+      end if;
+      if not public.viewer_has_agency_team_permission(_agency_id, 'agency_members_manage') then
         raise exception 'no_permission' using errcode = 'P0001';
       end if;
-      if agency_membership_update.operation = 'revoke' then
+      if viewer_agency_membership_update.operation = 'revoke' then
+        if not public.agency_has_other_active_admin(_agency_id, viewer_agency_membership_update.agency_membership_id) then
+          raise exception 'last_admin_protected' using errcode = 'P0001';
+        end if;
         update public.agency_memberships
           set agency_membership_revoked_at = current_timestamp
-          where public.agency_memberships.agency_membership_id = agency_membership_update.agency_membership_id
-            and public.agency_memberships.agency_id = agency_membership_update.agency_id;
+          where public.agency_memberships.agency_membership_id = viewer_agency_membership_update.agency_membership_id
+          returning * into _row;
       else
         update public.agency_memberships
           set agency_membership_revoked_at  = null,
               agency_membership_rejected_at = null,
               agency_membership_accepted_at = current_timestamp
-          where public.agency_memberships.agency_membership_id = agency_membership_update.agency_membership_id
-            and public.agency_memberships.agency_id = agency_membership_update.agency_id;
+          where public.agency_memberships.agency_membership_id = viewer_agency_membership_update.agency_membership_id
+          returning * into _row;
       end if;
-      if not found then
-        raise exception 'membership_not_found' using errcode = 'P0001';
-      end if;
-      return agency_membership_update.agency_membership_id;
+      return next _row;
     end;
   $$;
-grant execute on function public.agency_membership_update(int, uuid, text, uuid) to service_role;
-create or replace function public.agency_membership_respond(
+grant execute on function public.viewer_agency_membership_update(int, text) to authenticated;
+create or replace function public.viewer_agency_membership_respond(
   agency_membership_id int,
   response             text
 )
-  returns int
+  returns setof public.agency_memberships rows 1
   volatile
   security definer
   language plpgsql
@@ -15596,38 +17040,38 @@ create or replace function public.agency_membership_respond(
       _caller_id uuid := public.viewer_profile_id();
       _row       public.agency_memberships;
     begin
-      if agency_membership_respond.response not in ('accept', 'reject') then
+      if viewer_agency_membership_respond.response not in ('accept', 'reject') then
         raise exception 'invalid_response' using errcode = 'P0001';
-      end if;
-      if _caller_id is null then
+      elsif _caller_id is null then
         raise exception 'not_authenticated' using errcode = 'P0001';
       end if;
-      select * into _row
-        from public.agency_memberships
-        where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id
-          and profile_id = _caller_id;
+      select m.* into _row
+        from public.agency_memberships m
+        where m.agency_membership_id = viewer_agency_membership_respond.agency_membership_id
+          and m.profile_id = _caller_id;
       if not found then
         raise exception 'invitation_not_found' using errcode = 'P0001';
-      end if;
-      if _row.agency_membership_revoked_at is not null
+      elsif _row.agency_membership_revoked_at is not null
          or _row.agency_membership_accepted_at is not null
          or _row.agency_membership_rejected_at is not null
       then
         raise exception 'invitation_not_pending' using errcode = 'P0001';
       end if;
-      if agency_membership_respond.response = 'accept' then
+      if viewer_agency_membership_respond.response = 'accept' then
         update public.agency_memberships
           set agency_membership_accepted_at = current_timestamp
-          where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id;
+          where public.agency_memberships.agency_membership_id = viewer_agency_membership_respond.agency_membership_id
+          returning * into _row;
       else
         update public.agency_memberships
           set agency_membership_rejected_at = current_timestamp
-          where public.agency_memberships.agency_membership_id = agency_membership_respond.agency_membership_id;
+          where public.agency_memberships.agency_membership_id = viewer_agency_membership_respond.agency_membership_id
+          returning * into _row;
       end if;
-      return agency_membership_respond.agency_membership_id;
+      return next _row;
     end;
   $$;
-grant execute on function public.agency_membership_respond(int, text) to authenticated;
+grant execute on function public.viewer_agency_membership_respond(int, text) to authenticated;
 do $$ begin
   create type public.message_channel as enum ('in_app', 'email', 'web_push', 'whatsapp', 'sms');
 exception when duplicate_object then null; end $$;
@@ -15639,7 +17083,7 @@ create table if not exists public.conversations (
   profile_id        uuid not null references public.profiles (profile_id) on delete cascade,
   tenant_id         int  references public.tenants (tenant_id) on delete cascade,
   organization_id   int  references public.organizations (organization_id) on delete cascade,
-  agency_id         uuid references public.agencies (agency_id) on delete cascade,
+  agency_id         int  references public.agencies (agency_id) on delete cascade,
   conversation_subject text check (char_length(conversation_subject) <= 200),
   conversation_kind   text not null default 'notification'
                         check (conversation_kind in ('notification', 'agent', 'support', 'system')),
@@ -15763,7 +17207,7 @@ create table if not exists public.agent_action_log (
   conversation_message_id uuid not null references public.conversation_messages (conversation_message_id) on delete cascade,
   profile_id uuid not null references public.profiles (profile_id),
   organization_id int references public.organizations (organization_id),
-  agency_id uuid references public.agencies (agency_id),
+  agency_id int references public.agencies (agency_id),
   tool_name text not null,
   tool_input jsonb not null default '{}',
   tool_output jsonb,
@@ -15779,7 +17223,7 @@ create table if not exists public.tickets (
   ticket_subject  text not null check (char_length(ticket_subject) between 1 and 200),
   ticket_status   public.ticket_status not null default 'open',
   ticket_priority public.notification_priority not null default 'medium',
-  assigned_agency_id  uuid references public.agencies (agency_id) on delete set null,
+  assigned_agency_id  int references public.agencies (agency_id) on delete set null,
   assigned_profile_id uuid references public.profiles (profile_id) on delete set null,
   ticket_claimed_at  timestamptz,
   ticket_resolved_at timestamptz,
@@ -15899,7 +17343,7 @@ create or replace function public.conversation_emit(
   payload              jsonb   default '{}',
   subject              text    default null,
   organization_id      int     default null,
-  agency_id            uuid    default null,
+  agency_id            int     default null,
   conversation_id      uuid    default null
 )
   returns table (out_conversation_id uuid, out_conversation_message_id uuid)
@@ -16038,7 +17482,7 @@ create or replace function public.conversation_emit(
       return query select _conv_id, _msg_id;
     end;
   $$;
-grant execute on function public.conversation_emit(uuid, extensions.citext, text, jsonb, text, int, uuid, uuid) to service_role;
+grant execute on function public.conversation_emit(uuid, extensions.citext, text, jsonb, text, int, int, uuid) to service_role;
 create or replace function public.conversation_post_user_message(
   conversation_id uuid,
   body            text,
@@ -16128,7 +17572,7 @@ grant execute on function public.conversation_archive(uuid) to authenticated;
 create or replace function public.viewer_conversations(
   include_archived  boolean default false,
   p_organization_id int     default null,
-  p_agency_id       uuid    default null,
+  p_agency_id       int     default null,
   p_scope           text    default null
 )
   returns setof public.conversations
@@ -16150,7 +17594,7 @@ create or replace function public.viewer_conversations(
       )
     order by c.conversation_last_message_at desc;
   $$;
-grant execute on function public.viewer_conversations(boolean, int, uuid, text) to authenticated;
+grant execute on function public.viewer_conversations(boolean, int, int, text) to authenticated;
 create or replace function public.viewer_conversation_messages(p_conversation_id uuid)
   returns setof public.conversation_messages
   stable
@@ -16185,7 +17629,7 @@ grant execute on function public.viewer_conversation_messages(uuid) to authentic
 --   'personal'     → organization_id IS NULL AND agency_id IS NULL
 create or replace function public.viewer_unread_count(
   p_organization_id int  default null,
-  p_agency_id       uuid default null,
+  p_agency_id       int  default null,
   p_scope           text default null
 )
   returns int
@@ -16209,7 +17653,7 @@ create or replace function public.viewer_unread_count(
         or (viewer_unread_count.p_scope = 'agency'        and c.agency_id = viewer_unread_count.p_agency_id)
       );
   $$;
-grant execute on function public.viewer_unread_count(int, uuid, text) to authenticated;
+grant execute on function public.viewer_unread_count(int, int, text) to authenticated;
 create or replace function public.agent_action_claim(
   idempotency_key         text,
   conversation_message_id uuid,
@@ -16366,7 +17810,7 @@ create or replace function public.ticket_claim(p_ticket_id uuid)
     declare
       _caller_id uuid := public.viewer_profile_id();
       _ticket    public.tickets%rowtype;
-      _agency_id uuid;
+      _agency_id int;
     begin
       if _caller_id is null then
         raise exception 'not_authenticated' using errcode = 'P0001';
@@ -16510,7 +17954,7 @@ create or replace function public.conversation_ingest_inbound(
     out_conversation_id         uuid,
     out_profile_id              uuid,
     out_organization_id         int,
-    out_agency_id               uuid,
+    out_agency_id               int,
     out_tenant_id               int,
     out_already_resolved        boolean
   )

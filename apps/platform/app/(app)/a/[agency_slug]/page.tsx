@@ -73,7 +73,7 @@ export default async function AgencyOverviewPage(props: PageProps<"/a/[agency_sl
               key={s.label}
               className="border-border bg-background flex flex-col gap-0.5 rounded-lg border px-3.5 py-3"
             >
-              <span className="text-muted-foreground truncate text-tiny font-semibold uppercase tracking-[0.04em]">
+              <span className="text-muted-foreground truncate text-tiny font-semibold uppercase tracking-wider">
                 {s.label}
               </span>
               <span className="text-foreground text-lg font-semibold leading-tight tracking-tight tabular-nums">

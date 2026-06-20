@@ -78,7 +78,7 @@ export function OnboardingChecklist({
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-6 py-8">
       <header className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">{t("eyebrow")}</span>
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">{t("eyebrow")}</span>
         <h1 className="text-foreground m-0 text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="text-muted-foreground m-0 text-sm leading-[1.55] text-pretty">
           {t("subtitle")} · {t("progress", { done, total })}

@@ -141,13 +141,13 @@ export default async function HomePage(props: PageProps<"/">) {
                       </span>
                     </div>
                     <div className="flex flex-col gap-1 rounded-md border border-border bg-muted/40 px-3 py-2.5">
-                      <span className="text-tiny font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                      <span className="text-tiny font-semibold uppercase tracking-wider text-muted-foreground">
                         {t("mock.taskLabel")}
                       </span>
                       <span className="text-sm/normal leading-snug">{t("mock.task")}</span>
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <span className="text-tiny font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                      <span className="text-tiny font-semibold uppercase tracking-wider text-muted-foreground">
                         {t("mock.stepsLabel")}
                       </span>
                       <ol className="flex flex-col gap-1.5">
@@ -200,7 +200,7 @@ export default async function HomePage(props: PageProps<"/">) {
 
         <section id="customers" className="border-y border-border bg-muted/25">
           <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10 sm:py-12">
-            <p className="text-center text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               {t("social.title")}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:gap-x-10">
@@ -217,7 +217,7 @@ export default async function HomePage(props: PageProps<"/">) {
         <section className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
             <div className="flex max-w-[44ch] flex-col gap-1.5">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 {t("stats.caption")}
               </span>
               <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("stats.title")}</h2>
@@ -244,7 +244,7 @@ export default async function HomePage(props: PageProps<"/">) {
 
         <section className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
           <div className="mb-8 flex max-w-[44ch] flex-col gap-2 sm:mb-10">
-            <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               {t("testimonials.tag")}
             </span>
             <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -274,7 +274,7 @@ export default async function HomePage(props: PageProps<"/">) {
         <section id="faq" className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
           <div className="grid gap-6 lg:grid-cols-2 lg:gap-10">
             <div className="flex flex-col gap-2.5">
-              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 {t("faq.tag")}
               </span>
               <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("faq.title")}</h2>
@@ -301,7 +301,7 @@ export default async function HomePage(props: PageProps<"/">) {
           <Card>
             <CardContent className="grid items-start gap-8 p-6 sm:p-8 md:grid-cols-2 md:gap-10 lg:p-10">
               <div className="flex min-w-0 flex-col gap-5">
-                <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                   {t("contact.tag")}
                 </span>
                 <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">{t("contact.title")}</h2>

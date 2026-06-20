@@ -2,16 +2,14 @@ import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { SINGLE } from "@packages/utils/array";
 import { ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 
 export default async function AuthSuccessPage(props: PageProps<"/auth/success">) {
-  const locale = await getServerLocale();
+  const { t } = await getRosetta(LOCALES);
   const sp = await props.searchParams;
   const name = SINGLE(sp["name"])?.trim();
-
-  const { t } = await getRosetta(LOCALES, locale);
 
   return (
     <AuthCard className="max-w-115">

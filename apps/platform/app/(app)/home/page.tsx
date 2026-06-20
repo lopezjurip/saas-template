@@ -84,7 +84,7 @@ export default async function HomePage(props: PageProps<"/home">) {
       <div className="flex flex-1 items-center justify-center px-6 pt-16 pb-24">
         <div className="flex w-full max-w-260 flex-col items-center gap-7 text-center">
           <div className="flex flex-col gap-1.5 text-center">
-            <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            <span className="text-tiny font-semibold uppercase tracking-widest text-muted-foreground">
               {t("badge")}
             </span>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">{greeting}</h1>
@@ -152,7 +152,7 @@ export default async function HomePage(props: PageProps<"/home">) {
 
           {agencyEdges.length > 0 && (
             <div className="flex w-full max-w-260 flex-col items-center gap-4">
-              <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground/60">
+              <span className="text-tiny font-semibold uppercase tracking-widest text-muted-foreground/60">
                 {t("agenciesLabel")}
               </span>
               <div className="flex flex-wrap justify-center gap-[22px]">

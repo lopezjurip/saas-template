@@ -3,7 +3,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { ArrowRight, Check, Star } from "lucide-react";
 import Link from "next/link";
 import { AUTH_TWEAKS } from "~/lib/auth-tweaks";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { AuthCard } from "../_components/auth-card";
 import { METHOD_CATALOG } from "./_components/method-catalog";
@@ -27,8 +27,7 @@ const STATUS_ORDER: Record<OnboardingMethodStatus, number> = {
 };
 
 export default async function OnboardingHubPage() {
-  const locale = await getServerLocale();
-  const { t } = await getRosetta(LOCALES, locale);
+  const { t } = await getRosetta(LOCALES);
   const methods = t("methods") as typeof LOCALE_ES.methods;
   const state = await getViewerOnboardingState();
   const firstName = state.profile_name_full?.trim().split(/\s+/)[0] || "";
@@ -54,9 +53,7 @@ export default async function OnboardingHubPage() {
         data-density={AUTH_TWEAKS.DENSITY}
       >
         <div className="flex flex-col gap-1.5">
-          <div className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            {t("eyebrow")}
-          </div>
+          <div className="text-tiny font-semibold uppercase tracking-widest text-muted-foreground">{t("eyebrow")}</div>
           <h1 className="m-0 text-2xl font-semibold tracking-tight text-foreground">
             {firstName ? t("heading_with_name", { name: firstName }) : t("heading")}
           </h1>
@@ -101,12 +98,12 @@ export default async function OnboardingHubPage() {
                       {methods[id].label}
                     </span>
                     {isRecommended && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-1.25 py-px text-tiny font-semibold uppercase tracking-[0.02em] text-background">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-1.25 py-px text-tiny font-semibold uppercase tracking-wide text-background">
                         <Star size={9} /> {t("badge_recommended")}
                       </span>
                     )}
                     {isDone && (
-                      <span className="inline-flex items-center gap-1 rounded-full border px-1.25 py-px text-tiny font-semibold uppercase tracking-[0.02em] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full border px-1.25 py-px text-tiny font-semibold uppercase tracking-wide text-muted-foreground">
                         <Check size={10} /> {t("badge_done")}
                       </span>
                     )}
