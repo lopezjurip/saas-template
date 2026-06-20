@@ -19,11 +19,12 @@
 - @biomejs/biome (2.5.0)
 - @packages/typescript-config (workspace:*)
 - @types/qrcode-terminal (^0.12.2)
-- graphql (^16.14.2)
+- graphql (^17.0.1)
 - graphql-config (^5.1.6)
 - qrcode-terminal (^0.12.0)
-- repomix (^1.14.1)
-- skills (1.5.11)
+- repomix (^1.15.0)
+- skills (1.5.12)
+- ts-dedent (^2.3.0)
 - turbo (^2.9.18)
 - typescript (^6.0.3)
 
@@ -31,8 +32,8 @@
 
 - tsconfig.json
 - turbo.json
-- biome.jsonc
 - .gitignore
+- biome.jsonc
 - package.json
 
 ## Tech Stack: apps/platform
@@ -49,7 +50,7 @@
 
 ### Dependencies
 
-- @ai-sdk/anthropic (^3.0.84)
+- @ai-sdk/anthropic (^3.0.85)
 - @formatjs/intl-localematcher (^0.8.10)
 - @hookform/resolvers (^5.2.0)
 - @modelcontextprotocol/sdk (^1.29.0)
@@ -69,27 +70,29 @@
 - @packages/supabase (workspace:*)
 - @packages/ui-common (workspace:*)
 - @packages/utils (workspace:*)
-- @posthog/next (^0.4.96)
-- @react-email/render (2.0.8)
+- @posthog/next (^0.4.97)
+- @react-email/render (2.0.9)
 - @supabase/ssr (^0.12.0)
 - @supabase/supabase-js (^2.108.2)
 - @types/ua-parser-js (^0.7.39)
 - @vercel/analytics (^2.0.1)
 - @vercel/speed-insights (^2.0.0)
-- ai (^6.0.205)
+- ai (^6.0.208)
 - clsx (^2.1.1)
-- lucide-react (^1.18.0)
+- lucide-react (^1.21.0)
+- jose (^6.0.0)
 - mcp-handler (^1.1.0)
 - negotiator (^1.0.0)
 - next (16.2.9)
-- next-safe-action (^8.5.4)
+- next-safe-action (^8.5.5)
 - next-themes (^0.4.6)
-- posthog-node (^5.37.1)
+- next-zod-route (^1.0.0)
+- posthog-node (^5.38.2)
 - react (^19.2.7)
 - react-dom (^19.2.7)
-- react-hook-form (^7.79.0)
+- react-hook-form (^7.80.0)
 - react-markdown (^10.1.0)
-- resend (^6.12.4)
+- resend (^6.14.0)
 - schema-dts (^2.0.0)
 - sonner (^2.0.7)
 - swr (^2.4.1)
@@ -99,7 +102,7 @@
 
 ### Dev Dependencies
 
-- @graphql-codegen/cli (^7.1.2)
+- @graphql-codegen/cli (^7.1.3)
 - @graphql-codegen/client-preset (^6.0.1)
 - @graphql-typed-document-node/core (^3.2.0)
 - @packages/typescript-config (workspace:*)
@@ -110,7 +113,7 @@
 - @types/react (^19.2.17)
 - @types/react-dom (^19.2.3)
 - @types/web-push (^3.6.4)
-- graphql (^16.14.2)
+- graphql (^17.0.1)
 - postcss (^8.5.15)
 - tailwindcss (^4.3.1)
 - typescript (^6.0.3)
@@ -199,7 +202,7 @@
 - @packages/typescript-config (workspace:*)
 - @types/node (^24.12.4)
 - @types/react (^19.2.17)
-- graphql (^16.14.2)
+- graphql (^17.0.1)
 - react (^19.2.7)
 - typescript (^6.0.3)
 - vitest (^4.1.9)
@@ -225,6 +228,7 @@
 
 - @packages/rosetta (workspace:*)
 - @packages/utils (workspace:*)
+- temporal-polyfill (^1.0.1)
 
 ### Dev Dependencies
 
@@ -272,15 +276,15 @@
 
 - @packages/rosetta (workspace:*)
 - @react-email/components (^1.0.12)
-- @react-email/render (2.0.8)
+- @react-email/render (2.0.9)
 
 ### Dev Dependencies
 
 - @packages/typescript-config (workspace:*)
-- @react-email/ui (6.6.0)
+- @react-email/ui (6.6.3)
 - @types/node (^24.12.4)
 - @types/react (^19.2.17)
-- react-email (^6.6.0)
+- react-email (^6.6.3)
 - typescript (^6.0.3)
 
 ### Configuration Files
@@ -340,9 +344,9 @@
 
 ### Dev Dependencies
 
-- @babel/core (^7.29.7)
-- @babel/preset-env (^7.29.7)
-- @babel/preset-react (^7.29.7)
+- @babel/core (^8.0.1)
+- @babel/preset-env (^8.0.2)
+- @babel/preset-react (^8.0.1)
 - @packages/typescript-config (workspace:*)
 - @react-pdf/types (^2.11.1)
 - @types/node (^24.12.4)
@@ -354,7 +358,7 @@
 - react (^19.2.7)
 - react-dom (^19.2.7)
 - style-loader (^4.0.0)
-- ts-loader (^9.6.0)
+- ts-loader (^9.6.1)
 - typescript (^6.0.3)
 - webpack (^5.107.2)
 - webpack-cli (^7.0.3)
@@ -412,7 +416,7 @@
 
 ### Dev Dependencies
 
-- @graphql-codegen/cli (^7.1.2)
+- @graphql-codegen/cli (^7.1.3)
 - @graphql-codegen/introspection (^6.0.1)
 - @graphql-codegen/schema-ast (^6.0.1)
 - @next/env (^16.2.9)
@@ -421,10 +425,10 @@
 - @supabase/supabase-js (^2.108.2)
 - @types/node (^24.12.4)
 - @types/react (^19.2.17)
-- graphql (^16.14.2)
+- graphql (^17.0.1)
 - next (^16.2.9)
 - react (^19.2.7)
-- supabase (^2.106.0)
+- supabase (^2.107.0)
 - swr (^2.4.1)
 - typescript (^6.0.3)
 - zod (^4.4.3)
@@ -459,9 +463,9 @@
 - class-variance-authority (^0.7.1)
 - clsx (^2.1.1)
 - input-otp (^1.4.2)
-- lucide-react (^1.18.0)
+- lucide-react (^1.21.0)
 - next-themes (^0.4.6)
-- radix-ui (^1.5.0)
+- radix-ui (^1.6.0)
 - sonner (^2.0.7)
 - tailwind-merge (^3.6.0)
 - tailwindcss-safe-area (^1.3.0)
@@ -502,7 +506,7 @@
 - @supabase/postgrest-js (^2.108.2)
 - color-hash (^2.0.2)
 - ms (^2.1.3)
-- temporal-polyfill (^0.3.2)
+- temporal-polyfill (^1.0.1)
 
 ### Dev Dependencies
 
