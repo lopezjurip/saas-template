@@ -1,5 +1,6 @@
 import { getSupabaseServerUserRedirect } from "@packages/supabase/client.server";
 import { SINGLE } from "@packages/utils/array";
+import { HOST_FROM_HEADERS } from "@packages/utils/headers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { RESOLVE_AUTH_NEXT } from "~/lib/auth-next";
@@ -25,10 +26,7 @@ export default async function AuthRouterPage(props: PageProps<"/auth/router">) {
   await getSupabaseServerUserRedirect();
 
   const sp = await props.searchParams;
-  const headerList = await headers();
-  const proto = headerList.get("x-forwarded-proto") ?? "https";
-  const host = headerList.get("host") ?? "";
-  const origin = `${proto}://${host}`;
+  const origin = HOST_FROM_HEADERS(await headers()).origin;
   const next = RESOLVE_AUTH_NEXT(SINGLE(sp["next"]) ?? null, origin);
 
   const state = await getViewerOnboardingState();

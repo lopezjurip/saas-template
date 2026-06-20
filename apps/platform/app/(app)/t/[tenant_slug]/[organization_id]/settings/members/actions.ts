@@ -3,6 +3,8 @@ import "server-only";
 
 import { randomBytes } from "node:crypto";
 import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { HOST_FROM_HEADERS } from "@packages/utils/headers";
+import { URL_NEW } from "@packages/utils/url";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { debug } from "~/lib/debug";
@@ -52,9 +54,7 @@ export const actionInviteMember = authedAction
       throw new TError("tenant_not_found");
     }
 
-    const headerList = await headers();
-    const proto = headerList.get("x-forwarded-proto") ?? "https";
-    const host = headerList.get("host") ?? "";
+    const base = HOST_FROM_HEADERS(await headers());
     const expires_at = new Date(Date.now() + INVITATION_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
     if (parsedInput.channel === "email") {
@@ -115,7 +115,7 @@ export const actionInviteMember = authedAction
         throw new TError("invite_failed");
       }
 
-      const acceptUrl = `${proto}://${host}/auth/document/accept?token=${encodeURIComponent(token)}`;
+      const acceptUrl = URL_NEW("/auth/document/accept", base, { params: { token } }).href;
 
       const invite = await admin.auth.admin.inviteUserByEmail(email, {
         redirectTo: acceptUrl,
@@ -178,7 +178,7 @@ export const actionInviteMember = authedAction
         throw new TError("invite_failed");
       }
 
-      const acceptUrl = `${proto}://${host}/auth/document/accept?token=${encodeURIComponent(token)}`;
+      const acceptUrl = URL_NEW("/auth/document/accept", base, { params: { token } }).href;
 
       revalidatePath(`/${tenant_slug}/${parsedInput["organization_id"]}/settings/members`);
       void captureMemberInvited(user.id, {
@@ -241,7 +241,7 @@ export const actionInviteMember = authedAction
       throw new TError("invite_failed");
     }
 
-    const acceptUrl = `${proto}://${host}/auth/document/accept?token=${encodeURIComponent(token)}`;
+    const acceptUrl = URL_NEW("/auth/document/accept", base, { params: { token } }).href;
 
     revalidatePath(`/${tenant_slug}/${parsedInput["organization_id"]}/settings/members`);
     await captureMemberInvited(user.id, {

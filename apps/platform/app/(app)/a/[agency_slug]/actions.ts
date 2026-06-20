@@ -3,6 +3,8 @@ import "server-only";
 
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
+import { HOST_FROM_HEADERS } from "@packages/utils/headers";
+import { URL_NEW } from "@packages/utils/url";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -50,10 +52,7 @@ export const actionInviteAffiliate = authedAction
     const match = existing.error ? undefined : existing.data.users.find((u) => u["email"]?.toLowerCase() === email);
 
     if (!match) {
-      const headerList = await headers();
-      const proto = headerList.get("x-forwarded-proto") ?? "https";
-      const host = headerList.get("host") ?? "";
-      const redirectTo = `${proto}://${host}/affiliate`;
+      const redirectTo = URL_NEW("/affiliate", HOST_FROM_HEADERS(await headers())).href;
       const invite = await admin.auth.admin.inviteUserByEmail(email, { redirectTo });
       if (invite.error || !invite.data.user) {
         log.error("[actionInviteAffiliate] inviteUserByEmail failed", {

@@ -46,12 +46,28 @@ type ReplaceRecord<TUrl extends string | URL> = TUrl extends string
   : Record<string, string | number>;
 
 /**
- * Throws detailed error.
- * To remove querystring set `search` to `""`.
- * `replace` substitutes `[key]` placeholders in pathname after URL construction.
- * When `url` is a string literal, `replace` keys are inferred from `[segment]` patterns.
+ * Builds a `URL` from `url` (+ optional `base`), then applies `overwrite` mutations.
+ * Throws a detailed error (including `url` and `base`) when construction fails.
+ *
+ * `overwrite` can:
+ * - Override any standard URL field (`hostname`, `port`, `protocol`, `pathname`, `search`, `hash`, …).
+ *   Set `search` to `""` to drop the querystring.
+ * - `replace`: substitute `[key]` placeholders in the pathname (values are URL-encoded).
+ *   When `url` is a string literal, the allowed `replace` keys are inferred from its `[segment]` patterns.
+ * - `params`: set/delete querystring entries. `null` deletes the key, `undefined` is skipped, anything else is set.
+ *
  * @example
- * URL_NEW("/[locale]/t/[tenant_slug]", base, { replace: { locale: "es-CL", tenant_slug: "acme" } })
+ * // Fill path placeholders -> "https://example.com/t/acme/42"
+ * URL_NEW("/t/[tenant_slug]/[organization_id]", "https://example.com", {
+ *   replace: { tenant_slug: "acme", organization_id: 42 },
+ * });
+ * @example
+ * // Set query params and force https -> "https://example.com/search?q=hello"
+ * const url = URL_NEW("http://example.com/search", undefined, {
+ *   protocol: "https:",
+ *   params: { q: "hello", page: null },
+ * });
+ * const href = url.href;
  */
 export function URL_NEW<const TUrl extends string | URL>(
   url: TUrl,
