@@ -68,6 +68,7 @@ console.log("[next.config.ts] environment: %O", {
   VERSION,
   NEXT_PUBLIC_SUPABASE_URL,
   hostname: hostname,
+  /** Conductor.build takes the last URL to show in 'Open' button. */
   localhost: `${PROTOCOL}://localhost:${PORT}`,
 });
 

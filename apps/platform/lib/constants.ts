@@ -38,3 +38,24 @@ export const DEBUG = process.env["DEBUG"];
 export const AUTH_EXPOSE_ACCOUNT_EXISTENCE = true; // process.env["AUTH_EXPOSE_ACCOUNT_EXISTENCE"] === "true";
 
 export const PROXY_LOG_ENABLED = false;
+
+/**
+ * Snapshot of dev-relevant env vars + computed URLs, gathered server-side (so it
+ * includes server-only values like PORT that aren't inlined into client bundles).
+ * Only NEXT_PUBLIC_* and non-secret computed values are included — never dumps the
+ * whole process.env, which would leak SUPABASE_SERVICE_ROLE_KEY etc. to the browser.
+ * @example DEV_ENV_SNAPSHOT() // { NODE_ENV: "development", APP_ORIGIN: "https://lvh.me:7003", ... }
+ */
+export function DEV_ENV_SNAPSHOT(): Record<string, string> {
+  const snapshot: Record<string, string> = {
+    NODE_ENV,
+    APP_ORIGIN: APP_URL.origin,
+    APP_HOST,
+    APEX_HOSTNAME,
+    APP_PORT,
+  };
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.startsWith("NEXT_PUBLIC_") && value) snapshot[key] = value;
+  }
+  return snapshot;
+}

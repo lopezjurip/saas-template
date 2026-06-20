@@ -125,6 +125,16 @@ minimum_password_length = 6
 # are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
 password_requirements = ""
 
+# OAuth 2.1 authorization server (GoTrue). Required for MCP clients to authenticate as the user.
+# When disabled, /.well-known/oauth-authorization-server returns "OAuth server is disabled" and
+# clients that rely on Dynamic Client Registration (e.g. Claude Code) fail to connect.
+# `authorization_url_path` is the in-app consent screen GoTrue redirects to (see app/oauth/consent).
+# `allow_dynamic_registration` lets MCP clients self-register via RFC 7591 (no pre-registered client).
+[auth.oauth_server]
+enabled = true
+authorization_url_path = "/oauth/consent"
+allow_dynamic_registration = true
+
 [auth.email]
 # Allow/disallow new user signups via email to your project.
 enable_signup = true

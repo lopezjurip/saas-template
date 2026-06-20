@@ -1,6 +1,26 @@
 {
   "$schema": "./node_modules/turbo/schema.json",
   "globalDependencies": ["package.json", "pnpm-workspace.yaml", ".env.local"],
+  "globalEnv": [
+    "__NEXT_EXPERIMENTAL_HTTPS",
+    "CONVERSATIONS_DRAIN_SECRET",
+    "DEBUG",
+    "EXE_HOST",
+    "KAPSO_API_KEY",
+    "KAPSO_WEBHOOK_SECRET",
+    "NEXT_RUNTIME",
+    "PORT",
+    "RESEND_API_KEY",
+    "RESEND_FROM",
+    "RESEND_INBOUND_DOMAIN",
+    "RESEND_WEBHOOK_SECRET",
+    "TWILIO_ACCOUNT_SID",
+    "TWILIO_AUTH_TOKEN",
+    "TWILIO_FROM",
+    "VAPID_PRIVATE_KEY",
+    "VAPID_PUBLIC_KEY",
+    "VAPID_SUBJECT"
+  ],
   "ui": "stream",
   "tasks": {
     "build": {

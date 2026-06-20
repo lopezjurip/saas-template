@@ -3,12 +3,13 @@ import { TooltipProvider } from "@packages/ui-common/shadcn/components/ui/toolti
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
+import { DevEnvConsole } from "~/components/dev-env-console";
 import { GraphyClientProvider } from "~/components/graphy-provider";
 import { PostHogIdentify } from "~/components/posthog-identify";
 import { PostHogProvider } from "~/components/posthog-provider";
 import { PwaRegister } from "~/components/pwa-register";
 import { ThemeProvider } from "~/components/theme-provider";
-import { APP_URL } from "~/lib/constants";
+import { APP_URL, DEV_ENV_SNAPSHOT, NODE_ENV } from "~/lib/constants";
 import { LocaleProvider } from "~/lib/i18n.client";
 import { getRosetta, getServerLocale } from "~/lib/i18n.server";
 import "~/styles/globals.css";
@@ -66,6 +67,7 @@ export default async function RootLayout(props: LayoutProps<"/">) {
           </PostHogProvider>
         </LocaleProvider>
         <PwaRegister />
+        {NODE_ENV === "development" && <DevEnvConsole data={DEV_ENV_SNAPSHOT()} />}
         <Analytics />
         <SpeedInsights />
       </body>
