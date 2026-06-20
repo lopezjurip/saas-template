@@ -86,7 +86,9 @@ if (hostname) {
 }
 
 const config: NextConfig = {
-  allowedDevOrigins: ["lvh.me"],
+  // On exe.dev the dev server is reached via https://<vm>.exe.xyz:<port>; the host must be
+  // allow-listed (env-setup.ts writes NEXT_PUBLIC_APEX_HOSTNAME=<vm>.exe.xyz there). Defaults to lvh.me.
+  allowedDevOrigins: [process.env["NEXT_PUBLIC_APEX_HOSTNAME"] ?? "lvh.me"],
   typedRoutes: true,
   transpilePackages: [
     "@packages/debug",

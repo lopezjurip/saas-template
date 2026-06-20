@@ -9,6 +9,7 @@
     "postinstall": "NODE_ENV=development next typegen || true",
     "dev": "next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003}",
     "dev:debug": "next dev --turbo --experimental-https --experimental-https-key ./certs/lvh.me-key.pem --experimental-https-cert ./certs/lvh.me-cert.pem -H ${HOST:-0.0.0.0} --port ${PORT:-7003} --inspect",
+    "dev:exe": "next dev --turbo -H 0.0.0.0 --port ${PORT:-3000}",
     "build": "next build",
     "build:dry": "tsc --noEmit",
     "start": "next start",

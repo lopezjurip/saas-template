@@ -40,20 +40,37 @@ const env: Record<string, string> = Object.fromEntries(
     }),
 );
 
-const SUPABASE_URL = env["API_URL"] ?? "http://127.0.0.1:54421";
 const SUPABASE_ANON_KEY = env["ANON_KEY"] ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = env["SERVICE_ROLE_KEY"] ?? "";
 const DATABASE_URL = env["DB_URL"] ?? "";
 
-const APEX_HOSTNAME = "lvh.me";
+// When running on an exe.dev VM, browser-facing URLs must use the VM's public host
+// `<vm>.exe.xyz` (TLS terminated by exe.dev's proxy, ports forwarded in 3000-9999) instead
+// of `127.0.0.1`/lvh.me. Set by exe-dev-setup.sh. Server-only URLs (DATABASE_URL) stay local
+// because the app runs ON the VM. See scripts/development/exe-dev-setup.sh.
+const EXE_HOST = process.env["EXE_HOST"];
+
+/** Rewrite a local `http://127.0.0.1:<port>` URL to the public `https://<exe-host>:<port>`. No-op locally. */
+function publicUrl(localUrl: string): string {
+  if (!EXE_HOST) return localUrl;
+  try {
+    const u = new URL(localUrl);
+    return `https://${EXE_HOST}${u.port ? `:${u.port}` : ""}`;
+  } catch {
+    return localUrl;
+  }
+}
+
+const SUPABASE_URL = publicUrl(env["API_URL"] ?? "http://127.0.0.1:54421");
+const APEX_HOSTNAME = EXE_HOST ?? "lvh.me";
 
 /** Environment variables for local development, including public and secret values. */
 const variables: Array<{ key: string; value: string; secret: boolean }> = [
   { key: "NEXT_PUBLIC_SUPABASE_URL", value: SUPABASE_URL, secret: false },
   { key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", value: SUPABASE_ANON_KEY, secret: false },
-  { key: "NEXT_PUBLIC_COOKIE_DOMAIN", value: "lvh.me", secret: false },
+  { key: "NEXT_PUBLIC_COOKIE_DOMAIN", value: APEX_HOSTNAME, secret: false },
   { key: "NEXT_PUBLIC_APEX_HOSTNAME", value: APEX_HOSTNAME, secret: false },
-  { key: "NEXT_PUBLIC_DEV_MAILBOX_URL", value: env["INBUCKET_URL"] ?? "http://localhost:54424", secret: false },
+  { key: "NEXT_PUBLIC_DEV_MAILBOX_URL", value: publicUrl(env["INBUCKET_URL"] ?? "http://localhost:54424"), secret: false },
   { key: "SUPABASE_SERVICE_ROLE_KEY", value: SUPABASE_SERVICE_ROLE_KEY, secret: true },
   { key: "DATABASE_URL", value: DATABASE_URL, secret: true },
 ];

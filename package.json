@@ -12,6 +12,8 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "dev:debug": "turbo run dev:debug",
+    "setup:local": "bash scripts/development/local-setup.sh",
+    "dev:local": "pnpm setup:local && pnpm dev",
     "build:dry": "turbo run build:dry",
     "generate": "turbo run generate",
     "test": "turbo run test",
