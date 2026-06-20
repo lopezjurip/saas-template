@@ -45,7 +45,7 @@ export default async function AcceptInvitePage(props: PageProps<"/home/invites/[
             <X size={22} />
           </span>
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-foreground m-0 text-lg font-semibold tracking-[-0.01em]">
+            <h1 className="text-foreground m-0 text-lg font-semibold">
               {state === "rejected" ? t("rejected_title") : t("expired_title")}
             </h1>
             <p className="text-muted-foreground m-0 text-sm leading-[1.55] text-pretty">
@@ -64,7 +64,7 @@ export default async function AcceptInvitePage(props: PageProps<"/home/invites/[
             <Check size={24} strokeWidth={2.25} />
           </span>
           <div className="flex flex-col gap-1.5">
-            <h1 className="text-foreground m-0 text-lg font-semibold tracking-[-0.01em]">
+            <h1 className="text-foreground m-0 text-lg font-semibold">
               {t("claimed_title", { org: ORG })}
             </h1>
             <p className="text-muted-foreground m-0 text-sm leading-[1.55] text-pretty">{t("claimed_desc")}</p>
@@ -82,15 +82,15 @@ export default async function AcceptInvitePage(props: PageProps<"/home/invites/[
               {INITIALS_OF(ORG)}
             </span>
             <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
                 {t("invitation")}
               </span>
-              <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">{ORG}</span>
+              <span className="text-foreground truncate text-sm font-semibold">{ORG}</span>
             </div>
           </div>
 
           <div className="flex flex-col gap-1">
-            <h1 className="text-foreground m-0 text-lg font-semibold tracking-[-0.01em] text-balance">
+            <h1 className="text-foreground m-0 text-lg font-semibold text-balance">
               {t("invited_title", { name: firstName })}
             </h1>
             <p className="text-muted-foreground m-0 text-sm/normal leading-normal text-pretty">
@@ -99,7 +99,7 @@ export default async function AcceptInvitePage(props: PageProps<"/home/invites/[
           </div>
 
           <div className="border-border bg-muted/35 flex flex-col gap-2 rounded-lg border px-3.5 py-3">
-            <span className="text-muted-foreground text-tiny font-semibold uppercase tracking-[0.07em]">
+            <span className="text-muted-foreground text-tiny font-semibold uppercase tracking-wider">
               {t("perms_title")}
             </span>
             <ul className="m-0 flex list-none flex-col gap-1 p-0">

@@ -23,7 +23,7 @@ export function UserMenu({ locale, name, email }: { locale: string; name: string
           className="absolute bottom-[calc(100%+8px)] left-0 flex w-55 flex-col gap-px rounded-md border bg-popover p-1 text-popover-foreground shadow-float"
         >
           <div className="flex items-center gap-2.5 px-2.5 pt-2 pb-1.5">
-            <span className="inline-flex size-8 items-center justify-center rounded-full bg-primary text-sm/normal font-semibold tracking-[-0.01em] text-primary-foreground">
+            <span className="inline-flex size-8 items-center justify-center rounded-full bg-primary text-sm/normal font-semibold text-primary-foreground">
               {INITIALS_OF(name || email)}
             </span>
             <span className="flex min-w-0 flex-col leading-[1.2]">
@@ -62,7 +62,7 @@ export function UserMenu({ locale, name, email }: { locale: string; name: string
         onClick={() => setOpen((o) => !o)}
         className="inline-flex items-center gap-2.5 rounded-full border bg-background py-1.5 pr-2.5 pl-1.5 text-foreground shadow-hairline hover:bg-accent"
       >
-        <span className="inline-flex size-7 items-center justify-center rounded-full bg-primary text-xs font-semibold tracking-[-0.01em] text-primary-foreground">
+        <span className="inline-flex size-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
           {INITIALS_OF(name || email)}
         </span>
         <span className="flex flex-col items-start pr-1.5 leading-[1.15]">

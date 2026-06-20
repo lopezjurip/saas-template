@@ -26,7 +26,7 @@ export default async function ConnectionsPage(props: PageProps<"/home/account/co
   return (
     <div className="flex max-w-[720px] flex-col gap-4.5">
       <header className="flex flex-col gap-1">
-        <span className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        <span className="text-tiny font-semibold uppercase tracking-widest text-muted-foreground">
           {t("breadcrumb")}
         </span>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("heading")}</h1>
@@ -58,7 +58,7 @@ export default async function ConnectionsPage(props: PageProps<"/home/account/co
                 <span className="inline-flex flex-wrap items-center gap-2 text-sm font-medium text-foreground">
                   <span>{p.label}</span>
                   {isLinked && (
-                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-tiny font-semibold uppercase tracking-[0.02em] text-emerald-600">
+                    <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-tiny font-semibold uppercase tracking-wide text-emerald-600">
                       {t("linked_badge")}
                     </span>
                   )}

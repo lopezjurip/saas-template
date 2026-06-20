@@ -95,7 +95,7 @@ export function DashboardOverview({ organizationName, membersHref }: { organizat
     <div className="@container px-5 py-5 @min-[900px]:px-8 @min-[900px]:py-7">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <div className="text-muted-foreground mb-1.5 text-xs font-semibold uppercase tracking-[0.09em]">
+          <div className="text-muted-foreground mb-1.5 text-xs font-semibold uppercase tracking-widest">
             {organizationName}
           </div>
           <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight @min-[900px]:text-2xl">
@@ -170,7 +170,7 @@ export function DashboardOverview({ organizationName, membersHref }: { organizat
 
           <Card className="p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-foreground m-0 text-sm font-semibold tracking-[-0.01em]">{t("setup_title")}</h2>
+              <h2 className="text-foreground m-0 text-sm font-semibold">{t("setup_title")}</h2>
               <span className="text-muted-foreground text-xs font-medium tabular-nums">
                 {doneCount}/{CHECKLIST.length}
               </span>
@@ -252,7 +252,7 @@ function OverviewStatCard({ stat, label, sub }: { stat: Stat; label: string; sub
 function CardHeading({ title, action }: { title: string; action: string }) {
   return (
     <div className="border-border flex h-12 items-center justify-between border-b px-4">
-      <h2 className="text-foreground m-0 text-sm font-semibold tracking-[-0.01em]">{title}</h2>
+      <h2 className="text-foreground m-0 text-sm font-semibold">{title}</h2>
       <button
         type="button"
         className="text-muted-foreground hover:bg-accent hover:text-foreground -mr-1.5 inline-flex cursor-pointer items-center gap-1 rounded-md border-0 bg-transparent px-1.5 py-1 text-xs"
@@ -308,7 +308,7 @@ function InitialsAvatar({ initials, tone, size }: { initials: string; tone: stri
       aria-hidden="true"
       style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}
       className={cn(
-        "inline-flex shrink-0 select-none items-center justify-center rounded-full font-semibold tracking-[-0.01em]",
+        "inline-flex shrink-0 select-none items-center justify-center rounded-full font-semibold",
         tone,
       )}
     >

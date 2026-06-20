@@ -56,7 +56,7 @@ export default async function NewMemberInvitePage(
         <ArrowLeft size={14} /> {t("back")}
       </Link>
       <header className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
           {organization["organizationName"]} · {t("eyebrow")}
         </span>
         <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("page_title")}</h1>

@@ -41,7 +41,7 @@ export function SystemMessage({
 
       <div className="flex max-w-105 flex-col items-center gap-5 text-center">
         <div className="relative inline-flex items-center justify-center">
-          <span className="text-muted/70 select-none font-mono text-8xl font-semibold leading-none tracking-[-0.04em]">
+          <span className="text-muted/70 select-none font-mono text-8xl font-semibold leading-none tracking-tighter">
             {code}
           </span>
           <span className="absolute inset-0 inline-flex items-center justify-center">

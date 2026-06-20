@@ -59,7 +59,7 @@ export function ExternalAccess({
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-[26px] px-6 py-8">
       <header className="flex flex-col gap-1.5">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
           {organizationName} · {t("eyebrow")}
         </span>
         <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("title")}</h1>
@@ -75,7 +75,7 @@ export function ExternalAccess({
       ) : null}
 
       <section className="flex flex-col gap-2.5">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
           {t("grant_heading")}
         </span>
         {available.length === 0 ? (
@@ -103,7 +103,7 @@ export function ExternalAccess({
 
       <section className="flex flex-col gap-2.5">
         <div className="flex min-h-7 items-center justify-between gap-2.5">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
             {t("with_access")}
           </span>
           <span className="text-muted-foreground text-xs tabular-nums">{withAccess.length}</span>
@@ -175,7 +175,7 @@ function AgencyAccessCard({
           {INITIALS_OF(agency.agency_name)}
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-foreground text-sm font-semibold tracking-[-0.01em]">{agency.agency_name}</span>
+          <span className="text-foreground text-sm font-semibold">{agency.agency_name}</span>
           <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
             {agency.is_global ? (
               <>

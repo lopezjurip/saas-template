@@ -150,7 +150,7 @@ export function NotificationsChannels() {
     return (
       <div className="flex flex-col gap-2.5">
         <div className="flex min-h-7 items-center gap-2.5">
-          <span className="text-muted-foreground text-xs font-semibold tracking-[0.06em] uppercase">
+          <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
             {t("section_title")}
           </span>
         </div>
@@ -168,7 +168,7 @@ export function NotificationsChannels() {
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex min-h-7 items-center gap-2.5">
-        <span className="text-muted-foreground text-xs font-semibold tracking-[0.06em] uppercase">
+        <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
           {t("section_title")}
         </span>
       </div>

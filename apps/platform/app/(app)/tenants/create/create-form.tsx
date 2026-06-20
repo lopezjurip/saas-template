@@ -159,7 +159,7 @@ export function CreateTenantForm() {
                     </span>
                   )}
                 </span>
-                <span className="text-sm font-semibold tracking-[-0.01em] text-foreground tabular-nums">
+                <span className="text-sm font-semibold text-foreground tabular-nums">
                   {p.price} <span className="text-xs font-normal text-muted-foreground">{p.per}</span>
                 </span>
                 <span className="text-xs leading-snug text-muted-foreground text-pretty">{p.blurb}</span>

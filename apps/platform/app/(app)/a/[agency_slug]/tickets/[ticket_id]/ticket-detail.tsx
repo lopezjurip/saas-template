@@ -330,7 +330,7 @@ function TicketPriorityBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-tiny font-semibold leading-[1.2] tracking-[0.01em]",
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-tiny font-semibold leading-[1.2]",
         styles[priority],
       )}
     >
