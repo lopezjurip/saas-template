@@ -1,13 +1,15 @@
 packages:
-  - "apps/*"
-  - "packages/*"
-
-overrides:
-  zod: "^4.4.3"
+  - apps/*
+  - packages/*
 
 onlyBuiltDependencies:
-  - "@parcel/watcher"
-  - "@vercel/speed-insights"
+  - '@parcel/watcher'
+  - '@vercel/speed-insights'
+  - core-js
   - esbuild
+  - protobufjs
   - sharp
   - supabase
+
+overrides:
+  zod: ^4.4.3

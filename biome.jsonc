@@ -18,7 +18,9 @@
       "!**/.next",
       "!**/.vercel",
       "!**/.temp",
-      "!**/.claude/worktrees"
+      "!**/.agents",
+      "!**/.claude",
+      "!**/agent"
     ]
   },
   "assist": {
