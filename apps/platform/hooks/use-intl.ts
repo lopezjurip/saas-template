@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useLocaleParam } from "~/hooks/use-locale-param";
+import { useLocale } from "~/lib/i18n.client";
 
 /**
  * Returns a memoized `Intl.DateTimeFormat` instance for the current locale.
@@ -10,7 +10,7 @@ import { useLocaleParam } from "~/hooks/use-locale-param";
  * fmt.format(new Date()); // "12 jun. 2026"
  */
 export function useIntlDateTimeFormat(options?: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
-  const locale = useLocaleParam();
+  const locale = useLocale();
   return useMemo(() => new Intl.DateTimeFormat(locale, options), [locale, options]);
 }
 
@@ -21,7 +21,7 @@ export function useIntlDateTimeFormat(options?: Intl.DateTimeFormatOptions): Int
  * fmt.format(1234.5); // "$1,234.50"
  */
 export function useIntlNumberFormat(options?: Intl.NumberFormatOptions): Intl.NumberFormat {
-  const locale = useLocaleParam();
+  const locale = useLocale();
   return useMemo(() => new Intl.NumberFormat(locale, options), [locale, options]);
 }
 
@@ -32,7 +32,7 @@ export function useIntlNumberFormat(options?: Intl.NumberFormatOptions): Intl.Nu
  * fmt.format(...RELATIVE_DATE_FORMAT(date)); // "hace 3 días"
  */
 export function useIntlRelativeTimeFormat(options?: Intl.RelativeTimeFormatOptions): Intl.RelativeTimeFormat {
-  const locale = useLocaleParam();
+  const locale = useLocale();
   return useMemo(() => new Intl.RelativeTimeFormat(locale, { numeric: "auto", ...options }), [locale, options]);
 }
 
@@ -43,7 +43,7 @@ export function useIntlRelativeTimeFormat(options?: Intl.RelativeTimeFormatOptio
  * fmt.format(["manzana", "pera", "uva"]); // "manzana, pera y uva"
  */
 export function useIntlListFormat(options?: Intl.ListFormatOptions): Intl.ListFormat {
-  const locale = useLocaleParam();
+  const locale = useLocale();
   return useMemo(() => new Intl.ListFormat(locale, options), [locale, options]);
 }
 
@@ -55,7 +55,7 @@ export function useIntlListFormat(options?: Intl.ListFormatOptions): Intl.ListFo
  * rules.select(2); // "other"
  */
 export function useIntlPluralRules(options?: Intl.PluralRulesOptions): Intl.PluralRules {
-  const locale = useLocaleParam();
+  const locale = useLocale();
   return useMemo(() => new Intl.PluralRules(locale, options), [locale, options]);
 }
 
@@ -66,7 +66,7 @@ export function useIntlPluralRules(options?: Intl.PluralRulesOptions): Intl.Plur
  * ["ñ", "n", "a"].sort(col.compare); // ["a", "n", "ñ"]
  */
 export function useIntlCollator(options?: Intl.CollatorOptions): Intl.Collator {
-  const locale = useLocaleParam();
+  const locale = useLocale();
   return useMemo(() => new Intl.Collator(locale, options), [locale, options]);
 }
 
@@ -77,7 +77,7 @@ export function useIntlCollator(options?: Intl.CollatorOptions): Intl.Collator {
  * [...seg.segment("hola mundo")].map(s => s.segment); // ["hola", " ", "mundo"]
  */
 export function useIntlSegmenter(options?: Intl.SegmenterOptions): Intl.Segmenter {
-  const locale = useLocaleParam();
+  const locale = useLocale();
   return useMemo(() => new Intl.Segmenter(locale, options), [locale, options]);
 }
 
@@ -88,6 +88,6 @@ export function useIntlSegmenter(options?: Intl.SegmenterOptions): Intl.Segmente
  * names.of("es"); // "español"
  */
 export function useIntlDisplayNames(options: Intl.DisplayNamesOptions): Intl.DisplayNames {
-  const locale = useLocaleParam();
+  const locale = useLocale();
   return useMemo(() => new Intl.DisplayNames(locale, options), [locale, options]);
 }

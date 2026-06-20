@@ -4,6 +4,15 @@ import { FORMAT_CURRENCY_CLF, FORMAT_CURRENCY_CLP, IS_FINITE, NUMBER } from "@pa
 import { SPACE_NON_BREAKING } from "@packages/utils/string";
 import { DURATION_FROM_SQL, TEMPORAL, type Temporal, TZ } from "@packages/utils/temporal";
 
+/**
+ * Coerce any accepted date input to a `Temporal.ZonedDateTime`. `PlainDateTime` is zoned with `TZ`.
+ * @example TO_ZONED(new Date()) // ZonedDateTime in TZ
+ */
+function TO_ZONED(value: Date | string | Temporal.ZonedDateTime | Temporal.PlainDateTime): Temporal.ZonedDateTime {
+  if (value instanceof Date || typeof value === "string") return TEMPORAL(value);
+  return "toZonedDateTime" in value ? value.toZonedDateTime(TZ) : value;
+}
+
 /** "CLF 100" to "100 UF". Untested in all browsers. */
 const RE_FORMAT_CURRENCY_CLF = true as boolean;
 
@@ -360,8 +369,10 @@ export class IntlUniversalFormatter {
     end: Date | string | Temporal.ZonedDateTime | Temporal.PlainDateTime,
     options?: IntlDurationFormatOptions,
   ): string {
-    const startZoned = start instanceof Date || typeof start === "string" ? TEMPORAL(start) : start;
-    const endZoned = end instanceof Date || typeof end === "string" ? TEMPORAL(end) : end;
+    // Normalize both ends to ZonedDateTime so `.until` is homogeneous — you can't diff a
+    // ZonedDateTime against a PlainDateTime. PlainDateTime inputs are zoned with TZ.
+    const startZoned = TO_ZONED(start);
+    const endZoned = TO_ZONED(end);
     const duration = startZoned.until(endZoned);
     return this.formatDuration(duration, options);
   }

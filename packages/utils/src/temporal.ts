@@ -277,7 +277,7 @@ export function MAX_TEMPORAL_PD(...args: Temporal.PlainDate[]): Temporal.PlainDa
   return args.reduce((a, b) => (Temporal.PlainDate.compare(a, b) > 0 ? a : b));
 }
 
-export type TemporalTruncateUnit = Temporal.DateTimeUnit;
+export type TemporalTruncateUnit = Temporal.DateUnit | Temporal.TimeUnit;
 
 /**
  * Remove up to the given unit. Returns a Temporal object.

@@ -3,7 +3,9 @@
   "extends": "@packages/typescript-config/react-library.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "module": "preserve",
+    "moduleResolution": "bundler"
   },
   "include": ["src"]
 }
