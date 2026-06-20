@@ -21,7 +21,7 @@ export function PushPermission() {
   return (
     <div className="flex flex-col gap-2.5">
       <div className="flex min-h-7 items-center gap-2.5">
-        <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t("section_title")}
         </span>
       </div>

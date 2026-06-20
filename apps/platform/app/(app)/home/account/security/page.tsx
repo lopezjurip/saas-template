@@ -25,7 +25,7 @@ export default async function SecurityPage(props: PageProps<"/home/account/secur
   return (
     <div className="flex max-w-[720px] flex-col gap-4.5">
       <header className="flex flex-col gap-1">
-        <span className="text-muted-foreground text-tiny font-semibold tracking-[0.08em] uppercase">
+        <span className="text-muted-foreground text-tiny font-semibold tracking-widest uppercase">
           {t("breadcrumb")}
         </span>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">{t("heading")}</h1>
@@ -142,7 +142,7 @@ function SecurityCard({
               {title}
             </span>
             {done && (
-              <span className="text-muted-foreground inline-flex items-center gap-1 rounded-full border px-[5px] py-px text-tiny font-semibold tracking-[0.02em] uppercase">
+              <span className="text-muted-foreground inline-flex items-center gap-1 rounded-full border px-[5px] py-px text-tiny font-semibold tracking-wide uppercase">
                 <Check size={10} /> {doneLabel}
               </span>
             )}

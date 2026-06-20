@@ -133,7 +133,7 @@ export default async function MembersAdminPage(
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-7 px-6 py-8">
       <header className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
             {organization["organizationName"]} · {t("eyebrow")}
           </span>
           <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("page_title")}</h1>
@@ -154,7 +154,7 @@ export default async function MembersAdminPage(
 
       <section className="flex flex-col gap-2.5">
         <div className="flex min-h-7 items-center justify-between gap-2.5">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
             {t("members_heading")}
           </span>
           <span className="text-muted-foreground text-xs tabular-nums">{activeRows.length}</span>
@@ -180,7 +180,7 @@ export default async function MembersAdminPage(
                     <span className="inline-flex min-w-0 items-center gap-2">
                       <span className="text-foreground truncate text-sm font-medium">{name}</span>
                       {m["is_self"] ? (
-                        <span className="bg-foreground text-background shrink-0 rounded-full px-1.5 py-0.5 text-tiny font-semibold uppercase leading-none tracking-[0.04em]">
+                        <span className="bg-foreground text-background shrink-0 rounded-full px-1.5 py-0.5 text-tiny font-semibold uppercase leading-none tracking-wider">
                           {t("self")}
                         </span>
                       ) : null}
@@ -210,7 +210,7 @@ export default async function MembersAdminPage(
 
       <section className="flex flex-col gap-2.5">
         <div className="flex min-h-7 items-center justify-between gap-2.5">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
             {t("pending_heading")}
           </span>
           <span className="text-muted-foreground text-xs tabular-nums">
@@ -251,7 +251,7 @@ export default async function MembersAdminPage(
 
 function MemberAvatar({ name }: { name: string }) {
   return (
-    <span className="bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold tracking-[-0.01em]">
+    <span className="bg-muted text-foreground inline-flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
       {INITIALS_OF(name)}
     </span>
   );

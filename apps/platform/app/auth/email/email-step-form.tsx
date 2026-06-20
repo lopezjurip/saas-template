@@ -203,7 +203,7 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
       )}
 
       {(showPasskey || showPasswordOption) && (
-        <div className="flex items-center gap-3 text-tiny font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        <div className="flex items-center gap-3 text-tiny font-medium uppercase tracking-widest text-muted-foreground">
           <span className="h-px flex-1 bg-border" />
           {t("divider_or")}
           <span className="h-px flex-1 bg-border" />

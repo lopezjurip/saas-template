@@ -33,7 +33,7 @@ export default async function CreateTenantPage(props: PageProps<"/tenants/create
           <span className="inline-flex size-11 items-center justify-center rounded-xl bg-muted text-foreground">
             <Building2 size={20} strokeWidth={2.25} />
           </span>
-          <h1 className="m-0 mt-1 text-xl/normal font-semibold tracking-[-0.01em] text-foreground">{t("heading")}</h1>
+          <h1 className="m-0 mt-1 text-xl/normal font-semibold text-foreground">{t("heading")}</h1>
           <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{t("subtitle")}</p>
         </div>
         <CreateTenantForm />

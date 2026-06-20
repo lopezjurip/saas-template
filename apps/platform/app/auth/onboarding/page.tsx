@@ -54,7 +54,7 @@ export default async function OnboardingHubPage() {
         data-density={AUTH_TWEAKS.DENSITY}
       >
         <div className="flex flex-col gap-1.5">
-          <div className="text-tiny font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <div className="text-tiny font-semibold uppercase tracking-widest text-muted-foreground">
             {t("eyebrow")}
           </div>
           <h1 className="m-0 text-2xl font-semibold tracking-tight text-foreground">
@@ -101,12 +101,12 @@ export default async function OnboardingHubPage() {
                       {methods[id].label}
                     </span>
                     {isRecommended && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-1.25 py-px text-tiny font-semibold uppercase tracking-[0.02em] text-background">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-1.25 py-px text-tiny font-semibold uppercase tracking-wide text-background">
                         <Star size={9} /> {t("badge_recommended")}
                       </span>
                     )}
                     {isDone && (
-                      <span className="inline-flex items-center gap-1 rounded-full border px-1.25 py-px text-tiny font-semibold uppercase tracking-[0.02em] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full border px-1.25 py-px text-tiny font-semibold uppercase tracking-wide text-muted-foreground">
                         <Check size={10} /> {t("badge_done")}
                       </span>
                     )}

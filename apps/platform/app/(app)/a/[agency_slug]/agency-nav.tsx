@@ -173,7 +173,7 @@ function AgencySwitcher({ agency, agencies }: { agency: NavAgency; agencies: Nav
             className="size-9 rounded-lg text-xs"
           />
           <span className="flex min-w-0 flex-col gap-px">
-            <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">
+            <span className="text-foreground truncate text-sm font-semibold">
               {agency.agency_name}
             </span>
             <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">

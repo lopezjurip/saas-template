@@ -76,7 +76,7 @@ export function AgencyCreate() {
 
       <div className="flex flex-col gap-6">
         <header className="flex flex-col gap-2">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
             {t("eyebrow")}
           </span>
           <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("title")}</h1>
@@ -158,7 +158,7 @@ export function AgencyCreate() {
                 <Check size={22} strokeWidth={2.5} />
               </span>
               <div className="flex flex-col gap-1">
-                <span className="text-foreground text-sm font-semibold tracking-[-0.01em]">{t("created_title")}</span>
+                <span className="text-foreground text-sm font-semibold">{t("created_title")}</span>
                 <span className="text-muted-foreground max-w-[44ch] text-xs leading-normal text-pretty">
                   <strong className="text-foreground font-medium">{name || t("created_fallback")}</strong>{" "}
                   {t("created_desc")}
@@ -171,18 +171,18 @@ export function AgencyCreate() {
                 <Building2 size={19} />
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="text-foreground truncate text-sm font-semibold tracking-[-0.01em]">
+                <span className="text-foreground truncate text-sm font-semibold">
                   {name || t("created_fallback")}
                 </span>
                 <code className="text-muted-foreground font-mono text-xs">{createdSlug}</code>
               </div>
-              <span className="text-muted-foreground bg-muted/60 border-border hidden items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-tiny font-medium leading-[1.2] tracking-[0.02em] sm:inline-flex">
+              <span className="text-muted-foreground bg-muted/60 border-border hidden items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-tiny font-medium leading-[1.2] tracking-wide sm:inline-flex">
                 <Eye size={11} /> {t("read_only_badge")}
               </span>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
                 {t("console_address")}
               </span>
               <div className="border-border bg-muted/40 flex items-center gap-2 rounded-md border px-3 py-2.5">

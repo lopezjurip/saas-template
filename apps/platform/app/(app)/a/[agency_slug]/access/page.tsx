@@ -59,7 +59,7 @@ export default async function AgencyAccessPage(props: PageProps<"/a/[agency_slug
 
           {isGlobal ? (
             <section className="flex flex-col gap-2.5">
-              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
                 {t("access_scope")}
               </span>
               <div className="flex items-start gap-3 rounded-lg border border-emerald-600/30 bg-emerald-500/6 px-3.5 py-3">
@@ -93,7 +93,7 @@ export default async function AgencyAccessPage(props: PageProps<"/a/[agency_slug
           ) : (
             <section className="flex flex-col gap-2.5">
               <div className="flex min-h-7 items-center justify-between gap-2.5">
-                <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+                <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
                   {t("access_group")}
                 </span>
                 <span className="text-muted-foreground text-xs tabular-nums">{orgs.length}</span>

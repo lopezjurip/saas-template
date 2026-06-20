@@ -109,7 +109,7 @@ export function InviteMemberForm({ organization_id, countries, membersHref, loca
         </div>
 
         <div className="flex flex-col gap-2">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.06em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
             {t("share_title")}
           </span>
           <div className="border-border bg-muted/40 flex items-center gap-2 rounded-md border p-1.5 pl-3">

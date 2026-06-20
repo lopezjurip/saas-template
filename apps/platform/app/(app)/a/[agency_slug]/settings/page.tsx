@@ -43,7 +43,7 @@ export default async function AgencySettingsPage(props: PageProps<"/a/[agency_sl
           <ArrowLeft size={14} /> {t("back")}
         </Link>
         <header className="flex flex-col gap-1.5">
-          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
+          <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
             {agency["agency_name"]} · {t("eyebrow")}
           </span>
           <h1 className="text-foreground m-0 text-xl font-semibold tracking-tight">{t("title")}</h1>

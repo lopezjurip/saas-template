@@ -41,7 +41,7 @@ export function ContactBooking({ locale, labels, days }: ContactBookingProps) {
                 active ? "border-foreground bg-foreground text-background" : "bg-background",
               )}
             >
-              <span className="text-tiny font-medium uppercase tracking-[0.04em] opacity-80">{day}</span>
+              <span className="text-tiny font-medium uppercase tracking-wider opacity-80">{day}</span>
               <span className="text-sm font-semibold tabular-nums">{DATES[index]}</span>
             </button>
           );

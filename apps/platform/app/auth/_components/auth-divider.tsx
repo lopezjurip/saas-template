@@ -5,7 +5,7 @@ export function AuthDivider({ children, className }: { children: React.ReactNode
   return (
     <div
       className={cn(
-        "flex items-center gap-3 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground",
+        "flex items-center gap-3 text-xs font-medium uppercase tracking-widest text-muted-foreground",
         className,
       )}
     >

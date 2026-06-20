@@ -152,7 +152,7 @@ export default async function OrganizationMembershipEditPage(
   return (
     <EditShell membersHref={membersHref} backLabel={t("back")}>
       <header className="flex flex-col gap-3">
-        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-[0.08em]">
+        <span className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
           {organization["organizationName"]} · {t("eyebrow")}
         </span>
         <div className="flex items-center gap-3">
@@ -160,14 +160,14 @@ export default async function OrganizationMembershipEditPage(
             className={
               isPending
                 ? "bg-muted text-muted-foreground border-border inline-flex size-11 shrink-0 items-center justify-center rounded-full border"
-                : "bg-muted text-foreground inline-flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold tracking-[-0.01em]"
+                : "bg-muted text-foreground inline-flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
             }
           >
             {isPending ? <ChannelIcon size={18} /> : INITIALS_OF(memberLabel)}
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="inline-flex min-w-0 items-center gap-2">
-              <h1 className="text-foreground m-0 truncate text-lg font-semibold tracking-[-0.01em]">{memberLabel}</h1>
+              <h1 className="text-foreground m-0 truncate text-lg font-semibold">{memberLabel}</h1>
               {isPending ? (
                 <Badge variant="outline" className="text-muted-foreground shrink-0">
                   {t("invitation_badge")}
