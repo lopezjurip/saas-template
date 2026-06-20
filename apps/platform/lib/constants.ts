@@ -21,7 +21,7 @@ export const APP_PORT = process.env["PORT"] || (NODE_ENV === "development" ? "70
  */
 export const APP_HOST = APP_PORT ? `${APEX_HOSTNAME}:${APP_PORT}` : APEX_HOSTNAME;
 
-const APP_URL_DEVELOPMENT = URL_NEW(`http://${APP_HOST}`);
+const APP_URL_DEVELOPMENT = URL_NEW(`https://${APP_HOST}`);
 const APP_URL_PRODUCTION = URL_NEW(`https://${APP_HOST}`);
 /** Full origin URL. Use for absolute URLs server-side (redirects, emails, OG tags). */
 export const APP_URL: URL = /*#__PURE__*/ NODE_ENV === "development" ? APP_URL_DEVELOPMENT : APP_URL_PRODUCTION;
