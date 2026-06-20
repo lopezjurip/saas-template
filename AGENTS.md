@@ -1,6 +1,11 @@
 # SaaS Template — Multi-tenant SaaS Starter
 
-> **Recommended skills:** run `/codebase` to load the generated whole-monorepo reference before working anywhere in the repo, and `/caveman` for ultra-compressed, token-efficient responses.
+> **Required skills:**
+>
+> - `/codebase` — load the generated whole-monorepo reference before working anywhere in the repo.
+> - `/context7-mcp` — fetch current library/framework docs before writing code (training data goes stale).
+> - `/caveman` — ultra-compressed, token-efficient responses.
+> - `/ponytail` — laziest solution that actually works (YAGNI, stdlib before deps, shortest path).
 
 ## What This Is
 
