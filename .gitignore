@@ -50,10 +50,11 @@ pnpm-debug.log*
 .playwright-mcp
 .claude/worktrees/
 
-# Agent skills — generated/installed, not committed.
-# Restored on `pnpm install` via postinstall: my-* symlinks by scripts/skills-setup.js,
-# third-party from skills-lock.json by `skills experimental_install`.
-# Source of truth: skills/ (my-* sources) + skills-lock.json (third-party pins).
+# Agent skill stores — generated symlinks, not committed.
+# Rebuilt on `pnpm install` via postinstall (scripts/skills-setup.mjs): every dir
+# in skills/ (first-party) and skills-third-party/ (vendored) is symlinked here.
+# Source of truth: skills/ + skills-third-party/ (both committed).
 # .agents/skills/ is the universal store read by Codex, Cursor, Copilot, OpenCode, Zed.
 .agents/skills/
+agent/skills/
 .claude/skills/

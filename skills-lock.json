@@ -5,7 +5,12 @@
       "source": "juliusbrussee/caveman",
       "sourceType": "github",
       "skillPath": "skills/caveman/SKILL.md",
-      "computedHash": "dfbf85749fd474feeb0bbe60c779795ecd5dbec0083299b56e68916bc3ddd8c9"
+      "computedHash": "1902fa0b569912d0c05736d8d98a72097d9b82719aac88c0c1d03bb546f9176d"
+    },
+    "codebase": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "307eb561d25575f5543a8f86fbf4ede14d793bab69ec42952cc8e9fb5973440e"
     },
     "find-skills": {
       "source": "vercel-labs/skills",
@@ -17,7 +22,7 @@
       "source": "anthropics/skills",
       "sourceType": "github",
       "skillPath": "skills/frontend-design/SKILL.md",
-      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
     },
     "integrate-whatsapp": {
       "source": "gokapso/agent-skills",
@@ -25,17 +30,87 @@
       "skillPath": "skills/integrate-whatsapp/SKILL.md",
       "computedHash": "acd8594565afb7b28c5490ce1d52fbb2fd99d998c2d500c70a8bbade56f710aa"
     },
+    "my-auth": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "73579054f3516c54d06c4c780dd1578cb0ada0c5f2da01a18505e7f9e11426ab"
+    },
+    "my-graphql": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "05734408341dcf11e66c80088a667d29ef76406d490de276de19c549af6f1c2b"
+    },
+    "my-graphql-codegen": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "046943e6da5b6fbf251ea4041fa419306e942617cbb4e90ccf208a5e3662d5fe"
+    },
+    "my-graphy": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "681d8b924a96306dc1b52dc551e1ead5673e8b117971586c86b8860464738d74"
+    },
+    "my-i18n": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "aff4ee43fcd01ac799433a4ea1d21847a8e2e042b8f27cbbe1c540e61fc0c420"
+    },
+    "my-permissions": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "52bb4895847b36032372be2ee00e12714ae176444acbdb149ffb17fb9fd70b67"
+    },
+    "my-proxy": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "06e8fa802550ce4c8d90720a9df1da1e0690660cf6428e41fe1a76fe939ec675"
+    },
+    "my-react-email": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "918aab053edeb5c8112f722b2c699bbe394589f06bae777eac208bc0f2db9529"
+    },
+    "my-react-pdf": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "7d35ff51a21e115ac4a678d9927bf571c7caec4fd2b08d296ec71db541c1e853"
+    },
+    "my-supabase": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "1bcf79df6b74a1628110aa61e187b00471d912637eeaf852c0ed3598e9bd3937"
+    },
+    "my-supabase-codegen": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "c2e587ac302c16c23aec3c3dd4437e60c8bcd7a15e618e64d50bf4edf8a89c4f"
+    },
+    "my-supabase-react": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "3764287c3c7997f2bef6e2b69c8c13a5274cadb65b8e7f3d4627b2d4bfe1b130"
+    },
     "ponytail": {
       "source": "dietrichgebert/ponytail",
       "sourceType": "github",
       "skillPath": "skills/ponytail/SKILL.md",
-      "computedHash": "15811786f0277b0b4effe6b72cb9f3eaedefd1fe28f43f20aed3d926c10a88b1"
+      "computedHash": "55e888f9d81f873068de13d44f4f963595aa2c2c6bb0f9024160bea79f756618"
+    },
+    "psql": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "0b9883674249303a60a52964b9a9b170ee40d65f80b2120a108338de467fee37"
+    },
+    "psql-query": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "737dfbf7866e81d489cb489bfeecb64284ab1bfc3b88b2a557f9d26b59c9a9f7"
     },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
       "skillPath": "skills/shadcn/SKILL.md",
-      "computedHash": "80a6226e78f6d1fe464214ae0ef449d49d8ffaa3e7704f011e9b418c678ad4d1"
+      "computedHash": "ac9d0d69caac7de1d1e5647f3db3bcd2f13af355d6b3a78780fbf7fc80e8dca0"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",

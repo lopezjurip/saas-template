@@ -8,7 +8,7 @@
   },
   "scripts": {
     "preinstall": "npx --yes only-allow pnpm",
-    "postinstall": "node scripts/skills-setup.js",
+    "postinstall": "pnpm skills:install",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "dev:debug": "turbo run dev:debug",
@@ -31,7 +31,8 @@
     "generate:graphql:schema": "pnpm --filter @packages/supabase run generate:graphql:schema",
     "generate:graphql:schema:local": "pnpm --filter @packages/supabase run generate:graphql:schema:local",
     "generate:graphql:platform": "pnpm --filter @apps/platform run generate:graphql",
-    "generate:repomix:skills": "repomix -c repomix.config.ts --skill-generate codebase --skill-output skills/codebase -f && node scripts/repomix-skill-rename.js",
+    "generate:repomix:skills": "repomix -c repomix.config.ts --skill-generate codebase --skill-output skills/codebase -f && node scripts/repomix-skill-rename.mjs",
+    "skills:install": "node scripts/skills-setup.mjs",
     "typecheck:platform": "turbo run build:dry --filter=@apps/platform"
   },
   "devDependencies": {
