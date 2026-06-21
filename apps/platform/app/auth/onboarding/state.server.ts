@@ -4,14 +4,7 @@ import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { redirect } from "next/navigation";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
-import { METHOD_ORDER, type OnboardingMethodStatus, type OnboardingState } from "./state";
-
-/**
- * Document doesn't have a backend yet — there's no `profile_identity_documents` row for the
- * user-supplied document, only the lookup helpers for staff invites. We treat it as always
- * "pending" so the chip stays clickable; the substep page will say "próximamente".
- */
-const DOCUMENT_STATUS: OnboardingMethodStatus = "pending";
+import { METHOD_ORDER, type OnboardingState } from "./state";
 
 /**
  * Viewer's profile and its latest avatar in a single round-trip. The avatar nests through the
@@ -47,9 +40,16 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
   }
 
   const graphy = await getGraphySession();
-  const [{ data: stateData }, { data: passkeyList }] = await Promise.all([
+  const [{ data: stateData }, { data: passkeyList }, { count: documentCount }] = await Promise.all([
     graphy.query({ query: ViewerOnboardingStateGet }),
     supabase.auth.passkey.list(),
+    // Own identity documents only — the select RLS policy also exposes managed employees' rows,
+    // so filter by profile_id to count just the viewer's.
+    supabase
+      .from("profile_identities")
+      .select("profile_identity_id", { count: "exact", head: true })
+      .eq("profile_id", user.id)
+      .is("profile_identity_disabled_at", null),
   ]);
 
   const profile = stateData?.["profile"] ?? null;
@@ -76,7 +76,7 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
       password: hasPassword ? "done" : "pending",
       phone: hasPhone ? "done" : "pending",
       email: hasEmail ? "done" : "pending",
-      document: DOCUMENT_STATUS,
+      document: (documentCount ?? 0) > 0 ? "done" : "pending",
       profile: hasName ? "done" : "pending",
     },
   };
