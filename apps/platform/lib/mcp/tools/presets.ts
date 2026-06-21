@@ -86,8 +86,8 @@ export class CreatePresetTool extends McpTool<typeof CreateSchema> {
 }
 
 const UpdatePresetMcpMutation = /*#__PURE__*/ gql(`
-  mutation UpdatePresetMcp($filter: PermissionPresetsFilter!, $set: PermissionPresetsUpdateInput!) {
-    updatePermissionPresetsCollection(filter: $filter, set: $set) {
+  mutation UpdatePresetMcp($filter: PermissionPresetsFilter!, $set: PermissionPresetsUpdateInput!, $atMost: Int! = 1000) {
+    updatePermissionPresetsCollection(filter: $filter, set: $set, atMost: $atMost) {
       affectedCount
     }
   }
@@ -145,8 +145,8 @@ export class UpdatePresetTool extends McpTool<typeof UpdateSchema> {
 }
 
 const DeletePresetMcpMutation = /*#__PURE__*/ gql(`
-  mutation DeletePresetMcp($filter: PermissionPresetsFilter!) {
-    deleteFromPermissionPresetsCollection(filter: $filter) {
+  mutation DeletePresetMcp($filter: PermissionPresetsFilter!, $atMost: Int! = 1000) {
+    deleteFromPermissionPresetsCollection(filter: $filter, atMost: $atMost) {
       affectedCount
     }
   }

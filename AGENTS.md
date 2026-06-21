@@ -375,6 +375,19 @@ Brackets mark "this shape is contractual with another system" — distinguishes 
 
 **Mock/fixture data counts as external.** Objects from `~/lib/*-mock.ts` (and any fixture standing in for DB rows / API responses) are contractual with future backend — read with brackets too (`agency["name"]`, `aff["email"]`, `org["slug"]`). Destructuring top-level is fine — `const { org } = item` — then bracket leaf reads: `org["name"]`.
 
+**pg_graphql connections (`edges`/`node`) — external too.** Bracket `["edges"]` / `["node"]` (never `.edges`/`.node`), iterate `["edges"]` once at the point of use, and **never** cast leaf reads (`as number`/`as string`) — the generated types already type them; use the value directly or `?? fallback` for nullables. No throwaway `.map(e => e.node).map().filter()` chains.
+
+```tsx
+// ✅ iterate edges in place, brackets, no casts, no intermediate arrays
+{data?.["presets"]?.["edges"].map((edge) => {
+  const p = edge["node"];
+  return <li key={p["permissionPresetId"]}>{p["permissionPresetName"]}</li>;
+})}
+
+// ❌ throwaway arrays + dot access + casts
+const presets = (data?.["presets"]?.edges ?? []).map((e) => e.node).map((p) => ({ id: p["permissionPresetId"] as number }));
+```
+
 ### Links — bare paths, never pass `locale`
 Locale is **not** a URL segment — the proxy resolves it from a cookie/header. So links are plain paths and **never** carry a locale. Do **not** pass `locale` into `ROUTE`/`ROUTE_HREF` (the helper strips it anyway — see `delete query["locale"]` in `apps/platform/lib/route.ts`), and do **not** thread `locale` / `localePrefix` / a pre-built `base` string from server `page.tsx` into a client component just to build hrefs.
 
@@ -459,6 +472,19 @@ Action matches `rpcError.message` against LOCALES keys — never parse prose.
   ```
 - **Mutating-RPC return shape + exposure:** viewer-scoped mutating RPCs (`public.viewer_*_create` / `_update` / etc.) return `setof public.<table> rows 1` and are explicitly `volatile` (volatility decides Query vs Mutation in pg_graphql). Leave the default `EXECUTE` grant — `public` already covers `anon`/`authenticated`, and the function self-guards via its internal `viewer_*` permission check, so the `revoke … from public; grant … to anon, authenticated` boilerplate is unnecessary noise. pg_graphql then exposes the function as a singular table object on `Mutation`.
 - **Regen workflow after adding/altering an RPC:** edit `schema.sql` → `pnpm db:reset` → `pnpm generate:graphql:schema` (live introspection — **not** `:local`, which only reformats the cached JSON and will silently miss new fields) → `pnpm generate:types`. Then write the `gql()` doc and run `pnpm generate:graphql:platform`.
+
+### GraphQL operations — `filter`/`orderBy`/`first`/`atMost` as variables
+
+Declare these as operation variables, never inline literals — extensible without editing the doc. Default them in the gql (`$orderBy: [TOrderBy!] = [{ field: AscNullsLast }]`, `$first: Int = 250`, `$atMost: Int! = 1000`) so call sites needn't pass them; enum literals are valid in defaults. Pass `filter` from TS when dynamic; for `is: NULL` import `{ FilterIs }` from `~/generated/graphql/graphql` (deep — index only re-exports `gql`). `atMost` is `Int!` in the SDL but runtime-optional, so the `= 1000` default keeps existing behavior overridable.
+
+```graphql
+query Foo($filter: TFilter, $orderBy: [TOrderBy!] = [{ field: AscNullsLast }], $first: Int = 250) {
+  tCollection(first: $first, filter: $filter, orderBy: $orderBy) { edges { node { id } } }
+}
+mutation Bar($filter: TFilter!, $set: TUpdateInput!, $atMost: Int! = 1000) {
+  updateTCollection(filter: $filter, set: $set, atMost: $atMost) { affectedCount }
+}
+```
 
 ### SQL / PL/pgSQL style
 

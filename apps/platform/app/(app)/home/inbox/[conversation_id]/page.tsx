@@ -18,11 +18,9 @@ export async function generateMetadata(props: PageProps<"/home/inbox/[conversati
     include_archived: true,
     ...SCOPE_RPC_ARGS(PERSONAL_SCOPE),
   });
-  const conv = (rows ?? []).find((r: Record<string, unknown>) => r["conversation_id"] === conversation_id) as
-    | Record<string, unknown>
-    | undefined;
+  const conv = (rows ?? []).find((r) => r["conversation_id"] === conversation_id);
 
-  const subject = (conv?.["conversation_subject"] as string | null) || t("defaultTitle");
+  const subject = conv?.["conversation_subject"] || t("defaultTitle");
   return { title: subject };
 }
 
@@ -44,15 +42,15 @@ export default async function ConversationPage(props: PageProps<"/home/inbox/[co
     supabase.rpc("viewer_conversation_messages", { p_conversation_id: conversation_id }),
   ]);
 
-  const convRows = (convsResult.data ?? []) as Array<Record<string, unknown>>;
+  const convRows = convsResult.data ?? [];
   const conv = convRows.find((r) => r["conversation_id"] === conversation_id);
   if (!conv) notFound();
 
-  const messages = (msgsResult.data ?? []) as Array<Record<string, unknown>>;
+  const messages = msgsResult.data ?? [];
 
   const unreadIds = messages
     .filter((m) => !m["message_read_at"] && m["message_direction"] !== "outbound")
-    .map((m) => m["conversation_message_id"] as string);
+    .map((m) => m["conversation_message_id"]);
   if (unreadIds.length > 0) {
     await actionMarkRead(unreadIds);
   }

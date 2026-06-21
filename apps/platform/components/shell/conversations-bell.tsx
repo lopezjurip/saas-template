@@ -40,17 +40,17 @@ async function fetchBellData(
     supabase.rpc("viewer_conversations", { include_archived: false, ...rpcArgs }),
   ]);
 
-  const unread = (countResult.data as number | null) ?? 0;
-  const rows = (convsResult.data ?? []) as Array<Record<string, unknown>>;
+  const unread = countResult.data ?? 0;
+  const rows = convsResult.data ?? [];
 
   const conversations: RecentConversation[] = rows.slice(0, 5).map((row) => ({
-    conversation_id: row["conversation_id"] as string,
-    conversation_subject: (row["conversation_subject"] as string | null) ?? null,
-    conversation_status: row["conversation_status"] as string,
-    conversation_last_message_at: row["conversation_last_message_at"] as string,
-    organization_id: (row["organization_id"] as number | null) ?? null,
-    agency_id: (row["agency_id"] as number | null) ?? null,
-    tenant_id: (row["tenant_id"] as number | null) ?? null,
+    conversation_id: row["conversation_id"],
+    conversation_subject: row["conversation_subject"] ?? null,
+    conversation_status: row["conversation_status"],
+    conversation_last_message_at: row["conversation_last_message_at"],
+    organization_id: row["organization_id"] ?? null,
+    agency_id: row["agency_id"] ?? null,
+    tenant_id: row["tenant_id"] ?? null,
     snippet: null,
     unread: false,
   }));

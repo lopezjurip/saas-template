@@ -20,8 +20,8 @@ import { ROUTE, ROUTE_HREF } from "~/lib/route";
  * on every render; we revalidate the next /auth/onboarding hit via router.push().
  */
 const OnboardingProfileFormUpdateNameMutation = /*#__PURE__*/ gql(`
-  mutation OnboardingProfileFormUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!) {
-    updateProfilesCollection(filter: $filter, set: $set) {
+  mutation OnboardingProfileFormUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!, $atMost: Int! = 1000) {
+    updateProfilesCollection(filter: $filter, set: $set, atMost: $atMost) {
       affectedCount
     }
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import type { Database } from "@packages/supabase/types";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Textarea } from "@packages/ui-common/shadcn/components/ui/textarea";
@@ -10,6 +11,9 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRosetta } from "~/lib/i18n.client";
 import { actionArchive, actionPostMessage } from "./actions";
+
+type ConversationRow = Database["public"]["Functions"]["viewer_conversations"]["Returns"][number];
+type MessageRow = Database["public"]["Functions"]["viewer_conversation_messages"]["Returns"][number];
 
 type Message = {
   conversation_message_id: string;
@@ -68,25 +72,14 @@ export function ConversationThread({
   backHref,
 }: {
   locale: string;
-  conversation: Record<string, unknown>;
-  initialMessages: Array<Record<string, unknown>>;
+  conversation: ConversationRow;
+  initialMessages: MessageRow[];
   viewerId: string;
   backHref: Route;
 }) {
   const { t } = useRosetta(LOCALES);
 
-  const [messages, setMessages] = useState<Message[]>(
-    initialMessages.map((m) => ({
-      conversation_message_id: m["conversation_message_id"] as string,
-      message_body: (m["message_body"] as string | null) ?? null,
-      message_direction: m["message_direction"] as string,
-      message_author: m["message_author"] as string,
-      message_channel: (m["message_channel"] as string | null) ?? null,
-      message_priority: (m["message_priority"] as string | null) ?? null,
-      message_created_at: m["message_created_at"] as string,
-      message_read_at: (m["message_read_at"] as string | null) ?? null,
-    })),
-  );
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [replyBody, setReplyBody] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -95,10 +88,10 @@ export function ConversationThread({
   const [isArchived, setIsArchived] = useState(conversation["conversation_status"] === "archived");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const conversationId = conversation["conversation_id"] as string;
-  const subject = (conversation["conversation_subject"] as string | null) || t("noSubject");
-  const orgId = conversation["organization_id"] as number | null;
-  const agencyId = conversation["agency_id"] as number | null;
+  const conversationId = conversation["conversation_id"];
+  const subject = conversation["conversation_subject"] || t("noSubject");
+  const orgId = conversation["organization_id"];
+  const agencyId = conversation["agency_id"];
   const scopeLabel = orgId ? t("scopeOrg") : agencyId ? t("scopeAgency") : t("scopePersonal");
 
   async function handleSend() {

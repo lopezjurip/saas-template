@@ -17,8 +17,8 @@ import { type InferArgs, type McpContext, McpTool, type McpToolStream } from "~/
 const log = debug("app:api:mcp:tools:profile");
 
 const UpdateProfileMcpMutation = /*#__PURE__*/ gql(`
-  mutation UpdateProfileMcp($filter: ProfilesFilter!, $set: ProfilesUpdateInput!) {
-    updateProfilesCollection(filter: $filter, set: $set) {
+  mutation UpdateProfileMcp($filter: ProfilesFilter!, $set: ProfilesUpdateInput!, $atMost: Int! = 1000) {
+    updateProfilesCollection(filter: $filter, set: $set, atMost: $atMost) {
       affectedCount
     }
   }

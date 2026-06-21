@@ -15,8 +15,8 @@ import { type InferArgs, type McpContext, McpTool, type McpToolStream } from "~/
 const log = debug("app:api:mcp:tools:settings");
 
 const UpdateTenantMcpMutation = /*#__PURE__*/ gql(`
-  mutation UpdateTenantMcp($filter: TenantsFilter!, $set: TenantsUpdateInput!) {
-    updateTenantsCollection(filter: $filter, set: $set) {
+  mutation UpdateTenantMcp($filter: TenantsFilter!, $set: TenantsUpdateInput!, $atMost: Int! = 1000) {
+    updateTenantsCollection(filter: $filter, set: $set, atMost: $atMost) {
       affectedCount
       records {
         tenantName
@@ -72,8 +72,8 @@ export class RenameTenantTool extends McpTool<typeof RenameTenantSchema> {
 }
 
 const UpdateOrganizationMcpMutation = /*#__PURE__*/ gql(`
-  mutation UpdateOrganizationMcp($filter: OrganizationsFilter!, $set: OrganizationsUpdateInput!) {
-    updateOrganizationsCollection(filter: $filter, set: $set) {
+  mutation UpdateOrganizationMcp($filter: OrganizationsFilter!, $set: OrganizationsUpdateInput!, $atMost: Int! = 1000) {
+    updateOrganizationsCollection(filter: $filter, set: $set, atMost: $atMost) {
       affectedCount
     }
   }

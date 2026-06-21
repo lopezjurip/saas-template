@@ -14,8 +14,8 @@ import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 
 const MembersPendingInvitationsCancelMutation = /*#__PURE__*/ gql(`
-  mutation MembersPendingInvitationsCancelMutation($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!) {
-    updateOrganizationMembershipsCollection(filter: $filter, set: $set) {
+  mutation MembersPendingInvitationsCancelMutation($filter: OrganizationMembershipsFilter!, $set: OrganizationMembershipsUpdateInput!, $atMost: Int! = 1000) {
+    updateOrganizationMembershipsCollection(filter: $filter, set: $set, atMost: $atMost) {
       affectedCount
     }
   }
