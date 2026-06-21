@@ -47,53 +47,22 @@ INSTANCE_KEY="exe-$(printf '%s' "$EXE_HOST" | tr -cd 'a-z0-9-' | cut -c1-40)"
 # Site URL embedded in auth emails / used as redirect allow-list base.
 export SUPABASE_AUTH_SITE_URL="https://${EXE_HOST}:${APP_PORT}"
 
-# --- Patch supabase/config.toml: ports into the 3000-range, project_id, redirect allow-list ---
-BASE=$BASE INSTANCE_KEY=$INSTANCE_KEY EXE_HOST=$EXE_HOST python3 - <<'PYEOF'
-import re, os
-
-base = int(os.environ['BASE'])
-instance_key = os.environ['INSTANCE_KEY']
-exe_host = os.environ['EXE_HOST']
-path = 'packages/supabase/supabase/config.toml'
-
-with open(path) as f:
-    lines = f.readlines()
-
-section = None
-out = []
-for line in lines:
-    m = re.match(r'^\[([a-z_.]+)\]\s*$', line)
-    if m:
-        section = m.group(1)
-
-    if re.match(r'^project_id\s*=', line):
-        line = f'project_id = "{instance_key}"\n'
-    elif section == 'api'       and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+1}\n'
-    elif section == 'db'        and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+2}\n'
-    elif section == 'db'        and re.match(r'^shadow_port\s*=', line): line = f'shadow_port = {base+3}\n'
-    elif section == 'studio'    and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+4}\n'
-    elif section == 'inbucket'  and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+5}\n'
-    elif section == 'analytics' and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+6}\n'
-
-    out.append(line)
-
-    # Add this VM's host to the auth redirect allow-list (idempotent vs the whole
-    # file, since config.toml is skip-worktree'd and this script re-runs). Sits right
-    # after the existing lvh.me entry so the local default keeps working too.
-    redirect = f'  "https://{exe_host}:*/**",\n'
-    already = any(f'"https://{exe_host}:*/**"' in l for l in lines)
-    if '"https://lvh.me:*/**"' in line and not already:
-        out.append(redirect)
-
-with open(path, 'w') as f:
-    f.writelines(out)
-
-print(f"config.toml patched: project={instance_key} API:{base+1} DB:{base+2} Studio:{base+4}")
-print(f"  redirect allow-list += https://{exe_host}:*/**")
-PYEOF
-
-# Per-VM port/project edits are intentional; keep them out of `git status`.
-git update-index --skip-worktree packages/supabase/supabase/config.toml || true
+# --- Write per-VM Supabase env (ports + project_id) ---
+# config.toml reads these via env() — no file patching needed.
+# redirect allow-list in config.toml covers *.exe.xyz:*/** statically.
+cat > packages/supabase/.env.supabase <<EOF
+SUPABASE_PROJECT_ID=${INSTANCE_KEY}
+SUPABASE_API_PORT=$((BASE+1))
+SUPABASE_DB_PORT=$((BASE+2))
+SUPABASE_SHADOW_PORT=$((BASE+3))
+SUPABASE_STUDIO_PORT=$((BASE+4))
+SUPABASE_INBUCKET_PORT=$((BASE+5))
+SUPABASE_ANALYTICS_PORT=$((BASE+6))
+SUPABASE_AUTH_SITE_URL=https://${EXE_HOST}:${BASE}
+SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=https://${EXE_HOST}:${BASE}
+SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=true
+EOF
+echo "Supabase env written: project=${INSTANCE_KEY} API:$((BASE+1)) DB:$((BASE+2)) Studio:$((BASE+4))"
 
 # --- Start Supabase (fresh project_id => migrations + seed applied on init) ---
 RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null | wc -l | tr -d ' ')
@@ -104,6 +73,7 @@ else
 fi
 
 # --- Generate env with exe.dev public URLs (env-setup.ts honors EXE_HOST) ---
+set -a; source packages/supabase/.env.supabase; set +a
 EXE_HOST=$EXE_HOST PORT=$BASE pnpm run -w db:env:development
 
 cat <<EOF

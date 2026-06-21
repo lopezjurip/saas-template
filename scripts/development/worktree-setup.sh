@@ -17,7 +17,7 @@ copy_if_exists() {
   fi
 }
 
-# --- Patch supabase/config.toml with workspace-specific ports and project_id ---
+# --- Write per-worktree Supabase env (ports + project_id) ---
 # Each worktree gets WORKTREE_PORT..WORKTREE_PORT+9 (10 ports):
 #   +0  Next.js app (used by run script)
 #   +1  Supabase API / Kong
@@ -41,42 +41,21 @@ fi
 
 export INSTANCE_KEY="${PROJECT_PREFIX}-${WS_HASH}"
 
-python3 - <<PYEOF
-import re, os, sys
-
-base = int(os.environ['BASE'])
-instance_key = os.environ['INSTANCE_KEY']
-path = 'packages/supabase/supabase/config.toml'
-
-with open(path) as f:
-    lines = f.readlines()
-
-section = None
-result = []
-for line in lines:
-    m = re.match(r'^\[([a-z_.]+)\]\s*$', line)
-    if m:
-        section = m.group(1)
-
-    if re.match(r'^project_id\s*=', line):
-        line = f'project_id = "{instance_key}"\n'
-    elif section == 'api'       and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+1}\n'
-    elif section == 'db'        and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+2}\n'
-    elif section == 'db'        and re.match(r'^shadow_port\s*=', line): line = f'shadow_port = {base+3}\n'
-    elif section == 'studio'    and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+4}\n'
-    elif section == 'inbucket'  and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+5}\n'
-    elif section == 'analytics' and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+6}\n'
-    result.append(line)
-
-with open(path, 'w') as f:
-    f.writelines(result)
-
-print(f"Supabase config patched: project={instance_key}")
-print(f"  API:{base+1}  DB:{base+2}  shadow:{base+3}  Studio:{base+4}  Inbucket:{base+5}  Analytics:{base+6}")
-PYEOF
-
-# Hide the patched config.toml from git status in this worktree (changes are intentional per-workspace)
-git update-index --skip-worktree packages/supabase/supabase/config.toml
+# config.toml reads ports/project_id via env() — write them here, gitignored.
+cat > packages/supabase/.env.supabase <<EOF
+SUPABASE_PROJECT_ID=${INSTANCE_KEY}
+SUPABASE_API_PORT=$((BASE+1))
+SUPABASE_DB_PORT=$((BASE+2))
+SUPABASE_SHADOW_PORT=$((BASE+3))
+SUPABASE_STUDIO_PORT=$((BASE+4))
+SUPABASE_INBUCKET_PORT=$((BASE+5))
+SUPABASE_ANALYTICS_PORT=$((BASE+6))
+SUPABASE_AUTH_SITE_URL=https://lvh.me:${WORKTREE_PORT}
+SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=https://lvh.me:${WORKTREE_PORT}
+SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}
+EOF
+echo "Supabase env written: project=${INSTANCE_KEY}"
+echo "  API:$((BASE+1))  DB:$((BASE+2))  shadow:$((BASE+3))  Studio:$((BASE+4))  Inbucket:$((BASE+5))  Analytics:$((BASE+6))"
 
 # --- Copy gitignored files from root workspace ---
 copy_if_exists "$WORKTREE_ROOT_PATH/.env.local" ./.env.local
@@ -116,4 +95,6 @@ else
 fi
 
 # Generate .env.development.local with the workspace-specific Supabase URLs
+# Source .env.supabase so env-setup.ts can read SUPABASE_STUDIO_PORT.
+set -a; source packages/supabase/.env.supabase; set +a
 PORT=$WORKTREE_PORT pnpm run -w db:env:development

@@ -18,8 +18,8 @@ const log = debug("app:home:account:notifications:contacts");
 
 type MessageChannel = Database["public"]["Enums"]["message_channel"];
 
-/** Channels that represent contacts in profile_contacts. */
-const CONTACT_CHANNELS: MessageChannel[] = ["email", "whatsapp", "sms"];
+/** Channels that represent contacts in profile_contacts. Email uses auth email — no separate contact needed. */
+const CONTACT_CHANNELS: MessageChannel[] = ["whatsapp", "sms"];
 
 const ProfileContactsManageQuery = /*#__PURE__*/ gql(`
   query ProfileContactsManageQuery(
@@ -104,16 +104,12 @@ export function ContactsManage() {
     }
 
     // Basic client-side validation
-    if (adding === "email" && !value.includes("@")) {
-      setError(t("error_invalid_email"));
-      return;
-    }
     if ((adding === "sms" || adding === "whatsapp") && !/^\+[1-9]\d{7,14}$/.test(value.replace(/[\s\-().]/g, ""))) {
       setError(t("error_invalid_phone"));
       return;
     }
 
-    const normalized = adding === "email" ? value.toLowerCase() : value.replace(/[\s\-().]/g, "");
+    const normalized = value.replace(/[\s\-().]/g, "");
 
     setSubmitting(true);
     setError(null);
@@ -152,7 +148,7 @@ export function ContactsManage() {
   }
 
   const CHANNEL_LABEL: Record<MessageChannel, string> = {
-    email: t("channel_email"),
+    email: "",
     sms: t("channel_sms"),
     whatsapp: t("channel_whatsapp"),
     in_app: "",
@@ -160,7 +156,7 @@ export function ContactsManage() {
   };
 
   const CHANNEL_PLACEHOLDER: Record<MessageChannel, string> = {
-    email: t("placeholder_email"),
+    email: "",
     sms: t("placeholder_phone"),
     whatsapp: t("placeholder_phone"),
     in_app: "",
@@ -246,7 +242,7 @@ export function ContactsManage() {
             <div className="flex gap-2">
               <Input
                 id={ADD_FORM_ID(adding)}
-                type={adding === "email" ? "email" : "tel"}
+                type="tel"
                 placeholder={CHANNEL_PLACEHOLDER[adding]}
                 value={inputValue}
                 onChange={(e) => {
@@ -286,10 +282,8 @@ export function ContactsManage() {
 
 const LOCALE_ES = {
   section_title: "Contactos",
-  channel_email: "Correo electrónico",
   channel_sms: "SMS",
   channel_whatsapp: "WhatsApp",
-  placeholder_email: "correo@ejemplo.com",
   placeholder_phone: "+56 9 1234 5678",
   verified: "Verificado",
   verification_coming_soon: "Pendiente de verificación",
@@ -299,7 +293,6 @@ const LOCALE_ES = {
   save: "Guardar",
   cancel: "Cancelar",
   error_empty: "El valor no puede estar vacío",
-  error_invalid_email: "Ingresa un correo válido",
   error_invalid_phone: "Ingresa un número en formato E.164 (ej: +56912345678)",
   error_duplicate: "Este contacto ya está registrado",
   error_generic: "No pudimos guardar el contacto",
@@ -307,10 +300,8 @@ const LOCALE_ES = {
 
 const LOCALE_EN: typeof LOCALE_ES = {
   section_title: "Contacts",
-  channel_email: "Email",
   channel_sms: "SMS",
   channel_whatsapp: "WhatsApp",
-  placeholder_email: "you@example.com",
   placeholder_phone: "+1 555 123 4567",
   verified: "Verified",
   verification_coming_soon: "Verification pending",
@@ -320,7 +311,6 @@ const LOCALE_EN: typeof LOCALE_ES = {
   save: "Save",
   cancel: "Cancel",
   error_empty: "Value cannot be empty",
-  error_invalid_email: "Enter a valid email address",
   error_invalid_phone: "Enter a number in E.164 format (e.g. +15551234567)",
   error_duplicate: "This contact is already registered",
   error_generic: "Could not save the contact",
@@ -328,10 +318,8 @@ const LOCALE_EN: typeof LOCALE_ES = {
 
 const LOCALE_PT: typeof LOCALE_ES = {
   section_title: "Contatos",
-  channel_email: "E-mail",
   channel_sms: "SMS",
   channel_whatsapp: "WhatsApp",
-  placeholder_email: "voce@exemplo.com",
   placeholder_phone: "+55 11 91234-5678",
   verified: "Verificado",
   verification_coming_soon: "Verificação pendente",
@@ -341,7 +329,6 @@ const LOCALE_PT: typeof LOCALE_ES = {
   save: "Salvar",
   cancel: "Cancelar",
   error_empty: "O valor não pode estar vazio",
-  error_invalid_email: "Insira um e-mail válido",
   error_invalid_phone: "Insira um número no formato E.164 (ex: +5511912345678)",
   error_duplicate: "Este contato já está registrado",
   error_generic: "Não foi possível salvar o contato",

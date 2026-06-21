@@ -35,13 +35,18 @@ else
   bash scripts/development/https-setup.sh
 fi
 
-# --- 2. Supabase (default project from config.toml) ---
-PROJECT="$(sed -n 's/^project_id[[:space:]]*=[[:space:]]*"\(.*\)".*/\1/p' packages/supabase/supabase/config.toml | head -1)"
-RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${PROJECT}" 2>/dev/null | wc -l | tr -d ' ')
+# --- 2. Supabase env file ---
+if [ ! -f packages/supabase/.env.supabase ]; then
+  echo "→ creating packages/supabase/.env.supabase from example…"
+  cp packages/supabase/.env.supabase.example packages/supabase/.env.supabase
+fi
+set -a; source packages/supabase/.env.supabase; set +a
+
+RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${SUPABASE_PROJECT_ID}" 2>/dev/null | wc -l | tr -d ' ')
 if [ "$RUNNING" -gt 0 ]; then
-  echo "✓ Supabase '${PROJECT}' already running"
+  echo "✓ Supabase '${SUPABASE_PROJECT_ID}' already running"
 else
-  echo "→ starting Supabase '${PROJECT}'…"
+  echo "→ starting Supabase '${SUPABASE_PROJECT_ID}'…"
   pnpm db:start
 fi
 

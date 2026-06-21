@@ -90,9 +90,7 @@ const lines = variables.map(({ key, value, secret }) => {
 const APP_PORT = process.env["PORT"] ?? "7003";
 const APP_URL = `https://${APEX_HOSTNAME}:${APP_PORT}`;
 const apiLocal = env["API_URL"] ?? "http://127.0.0.1:54421";
-const studioPort = readFileSync(join(SUPABASE_DIR, "supabase/config.toml"), "utf-8").match(
-  /\[studio\][\s\S]*?port\s*=\s*(\d+)/,
-)?.[1];
+const studioPort = process.env["SUPABASE_STUDIO_PORT"];
 const STUDIO_URL = studioPort ? PUBLIC_URL(apiLocal.replace(/:\d+/, `:${studioPort}`)) : "(unknown)";
 const MAILBOX_URL = PUBLIC_URL(env["INBUCKET_URL"] ?? env["MAILPIT_URL"] ?? "http://localhost:54424");
 
