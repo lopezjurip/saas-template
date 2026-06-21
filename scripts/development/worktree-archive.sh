@@ -22,14 +22,15 @@ if [ "$REF_COUNT" -gt 0 ]; then
 else
   rmdir "$REF_DIR" 2>/dev/null || true
 
-  # Stop workspace-specific Supabase containers
-  pnpm db:stop || true
+  # Tear down via `docker` directly (deterministic by label) — not `pnpm db:stop`,
+  # which fails silently in Conductor's non-interactive shell and leaks everything.
+  CIDS=$(docker ps -aq --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null)
+  [ -n "$CIDS" ] && docker rm -f $CIDS >/dev/null 2>&1 || true
 
-  # Remove Docker volumes for this workspace (disk cleanup)
-  if [ -n "$PROJECT" ]; then
-    docker volume ls -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" \
-      | xargs -r docker volume rm 2>/dev/null || true
-  fi
+  VOLS=$(docker volume ls -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null)
+  [ -n "$VOLS" ] && docker volume rm $VOLS >/dev/null 2>&1 || true
+
+  docker network rm "supabase_network_${INSTANCE_KEY}" >/dev/null 2>&1 || true
 fi
 
 # Remove node_modules
