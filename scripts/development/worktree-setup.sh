@@ -82,12 +82,12 @@ git update-index --skip-worktree packages/supabase/supabase/config.toml
 copy_if_exists "$WORKTREE_ROOT_PATH/.env.local" ./.env.local
 copy_if_exists "$WORKTREE_ROOT_PATH/apps/platform/.env.local" ./apps/platform/.env.local
 
-mkdir -p apps/platform/certs
-ROOT_CERT="$WORKTREE_ROOT_PATH/apps/platform/certs/lvh.me-cert.pem"
-ROOT_KEY="$WORKTREE_ROOT_PATH/apps/platform/certs/lvh.me-key.pem"
+mkdir -p apps/platform/certificates
+ROOT_CERT="$WORKTREE_ROOT_PATH/apps/platform/certificates/lvh.me-cert.pem"
+ROOT_KEY="$WORKTREE_ROOT_PATH/apps/platform/certificates/lvh.me-key.pem"
 if [ -f "$ROOT_CERT" ] && [ -f "$ROOT_KEY" ]; then
-  cp "$ROOT_CERT" ./apps/platform/certs/lvh.me-cert.pem
-  cp "$ROOT_KEY" ./apps/platform/certs/lvh.me-key.pem
+  cp "$ROOT_CERT" ./apps/platform/certificates/lvh.me-cert.pem
+  cp "$ROOT_KEY" ./apps/platform/certificates/lvh.me-key.pem
 else
   bash scripts/development/https-setup.sh
 fi

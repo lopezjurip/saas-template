@@ -8,7 +8,7 @@
 # this script does, idempotently.
 #
 # Steps (each skipped if already satisfied):
-#   1. mkcert TLS certs for lvh.me   (apps/platform/certs/) — needed by `next dev --experimental-https`
+#   1. mkcert TLS certs for lvh.me   (apps/platform/certificates/) — needed by `next dev --experimental-https`
 #   2. supabase start                (default ports from config.toml: API 54421, DB 54422, Studio 7200)
 #   3. .env.development.local        (from `supabase status`, via env-setup.ts)
 #
@@ -28,7 +28,7 @@ if [ -n "${EXE_HOST:-}" ]; then
 fi
 
 # --- 1. TLS certs (mkcert) ---
-if [ -f apps/platform/certs/lvh.me-key.pem ] && [ -f apps/platform/certs/lvh.me-cert.pem ]; then
+if [ -f apps/platform/certificates/lvh.me-key.pem ] && [ -f apps/platform/certificates/lvh.me-cert.pem ]; then
   echo "✓ TLS certs present"
 else
   echo "→ generating local TLS certs (mkcert)…"
