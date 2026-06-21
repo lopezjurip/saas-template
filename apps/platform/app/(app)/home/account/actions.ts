@@ -1,6 +1,7 @@
 "use server";
 import "server-only";
 
+import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -117,6 +118,42 @@ export const actionSetPassword = authedAction
       log.warn("session refresh failed after password change", { profile_id: user.id, error: refresh.error });
     }
     revalidatePath(`/${await getServerLocale()}/home/account/security`);
+  });
+
+const deleteAccountSchema = z.object({ password: z.string().min(1) });
+
+/**
+ * Permanently deletes the signed-in user's account. Re-verifies the current
+ * password on a stateless client, then cascade-deletes via service-role
+ * (`auth.users` → `profiles` → memberships → permissions), clears the cookie
+ * session, and redirects home. The last-admin triggers bypass service-role, so
+ * orphaning an org doesn't block the delete.
+ */
+export const actionDeleteAccount = authedAction
+  .inputSchema(deleteAccountSchema)
+  .action(async ({ parsedInput: { password }, ctx: { supabase, user } }) => {
+    const email = user["email"];
+    if (!email) {
+      throw new Error("Tu cuenta no tiene contraseña; no podemos verificar la eliminación");
+    }
+    // Verify the password on a throwaway client so we don't touch the cookie session.
+    const verifier = createSupabaseServiceRoleClient();
+    const { error: verifyError } = await verifier.auth.signInWithPassword({ email, password });
+    if (verifyError) {
+      log.info("delete account password check failed", { profile_id: user.id });
+      throw new Error("Contraseña incorrecta");
+    }
+
+    const admin = createSupabaseServiceRoleClient();
+    const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
+    if (deleteError) {
+      log.error("delete account failed", { profile_id: user.id, error: deleteError });
+      throw new Error("No pudimos eliminar la cuenta");
+    }
+
+    log.info("account deleted", { profile_id: user.id });
+    await supabase.auth.signOut({ scope: "local" });
+    redirect("/");
   });
 
 const linkProviderSchema = z.object({
