@@ -6,19 +6,18 @@ metadata:
   author: vercel
   version: "1.0.0"
 ---
-
 # Vercel React Best Practices
 
-Comprehensive performance optimization guide for React and Next.js applications, maintained by Vercel. Contains 70 rules across 8 categories, prioritized by impact to guide automated refactoring and code generation.
+Perf optimization guide for React/Next.js by Vercel. 70 rules, 8 categories, prioritized by impact.
 
 ## When to Apply
 
-Reference these guidelines when:
-- Writing new React components or Next.js pages
-- Implementing data fetching (client or server-side)
-- Reviewing code for performance issues
-- Refactoring existing React/Next.js code
-- Optimizing bundle size or load times
+Use when:
+- Writing React components or Next.js pages
+- Implementing data fetching
+- Reviewing code for perf
+- Refactoring React/Next.js code
+- Optimizing bundle/load times
 
 ## Rule Categories by Priority
 
@@ -37,7 +36,7 @@ Reference these guidelines when:
 
 ### 1. Eliminating Waterfalls (CRITICAL)
 
-- `async-cheap-condition-before-await` - Check cheap sync conditions before awaiting flags or remote values
+- `async-cheap-condition-before-await` - Check cheap sync conditions before awaiting flags/remote values
 - `async-defer-await` - Move await into branches where actually used
 - `async-parallel` - Use Promise.all() for independent operations
 - `async-dependencies` - Use better-all for partial dependencies
@@ -47,16 +46,16 @@ Reference these guidelines when:
 ### 2. Bundle Size Optimization (CRITICAL)
 
 - `bundle-barrel-imports` - Import directly, avoid barrel files
-- `bundle-analyzable-paths` - Prefer statically analyzable import and file-system paths to avoid broad bundles and traces
+- `bundle-analyzable-paths` - Prefer statically analyzable import/file-system paths to avoid broad bundles
 - `bundle-dynamic-imports` - Use next/dynamic for heavy components
 - `bundle-defer-third-party` - Load analytics/logging after hydration
-- `bundle-conditional` - Load modules only when feature is activated
+- `bundle-conditional` - Load modules only when feature activated
 - `bundle-preload` - Preload on hover/focus for perceived speed
 
 ### 3. Server-Side Performance (HIGH)
 
 - `server-auth-actions` - Authenticate server actions like API routes
-- `server-cache-react` - Use React.cache() for per-request deduplication
+- `server-cache-react` - Use React.cache() for per-request dedup
 - `server-cache-lru` - Use LRU cache for cross-request caching
 - `server-dedup-props` - Avoid duplicate serialization in RSC props
 - `server-hoist-static-io` - Hoist static I/O (fonts, logos) to module level
@@ -68,8 +67,8 @@ Reference these guidelines when:
 
 ### 4. Client-Side Data Fetching (MEDIUM-HIGH)
 
-- `client-swr-dedup` - Use SWR for automatic request deduplication
-- `client-event-listeners` - Deduplicate global event listeners
+- `client-swr-dedup` - Use SWR for auto request dedup
+- `client-event-listeners` - Dedup global event listeners
 - `client-passive-event-listeners` - Use passive listeners for scroll
 - `client-localstorage-schema` - Version and minimize localStorage data
 
@@ -131,19 +130,19 @@ Reference these guidelines when:
 
 ## How to Use
 
-Read individual rule files for detailed explanations and code examples:
+Read rule files for details + examples:
 
 ```
 rules/async-parallel.md
 rules/bundle-barrel-imports.md
 ```
 
-Each rule file contains:
-- Brief explanation of why it matters
-- Incorrect code example with explanation
-- Correct code example with explanation
-- Additional context and references
+Each rule file has:
+- Why it matters
+- Wrong code example
+- Right code example
+- Context + refs
 
 ## Full Compiled Document
 
-For the complete guide with all rules expanded: `AGENTS.md`
+Full guide: `AGENTS.md`

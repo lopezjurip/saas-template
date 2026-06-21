@@ -11,22 +11,23 @@ description: |
 metadata:
   version: 2.9.17-canary.1
 ---
+Comprimiendo el texto en caveman mode siguiendo las reglas del skill.
 
 # Turborepo Skill
 
-Build system for JavaScript/TypeScript monorepos. Turborepo caches task outputs and runs tasks in parallel based on dependency graph.
+Build system for JS/TS monorepos. Caches task outputs, runs tasks in parallel via dependency graph.
 
 ## IMPORTANT: Package Tasks, Not Root Tasks
 
 **Prefer package tasks over Root Tasks.**
 
-When creating tasks/scripts/pipelines, you MUST default to package tasks:
+When creating tasks/scripts/pipelines, default to package tasks:
 
-1. Add the script to each relevant package's `package.json`
-2. Register the task in root `turbo.json`
+1. Add script to each relevant package's `package.json`
+2. Register task in root `turbo.json`
 3. Root `package.json` only delegates via `turbo run <task>`
 
-**DO NOT** put task logic in root `package.json` when it can live in packages. This defeats Turborepo's parallelization.
+**DO NOT** put task logic in root `package.json` when it can live in packages. Defeats parallelization.
 
 ```json
 // DO THIS: Scripts in each package
@@ -74,11 +75,11 @@ When creating tasks/scripts/pipelines, you MUST default to package tasks:
 }
 ```
 
-Root Tasks (`//#taskname`) are ONLY for tasks that truly cannot exist in packages, such as Vitest Projects' `//#test`, repo-wide release scripts, or tooling that does not invoke `turbo` itself.
+Root Tasks (`//#taskname`) ONLY for tasks that truly cannot exist in packages, such as Vitest Projects' `//#test`, repo-wide release scripts, or tooling not invoking `turbo` itself.
 
 ## Secondary Rule: `turbo run` vs `turbo`
 
-**Always use `turbo run` when the command is written into code:**
+**Always use `turbo run` when command written into code:**
 
 ```json
 // package.json - ALWAYS "turbo run"
@@ -94,7 +95,7 @@ Root Tasks (`//#taskname`) are ONLY for tasks that truly cannot exist in package
 - run: turbo run build --affected
 ```
 
-**The shorthand `turbo <tasks>` is ONLY for one-off terminal commands** typed directly by humans or agents. Never write `turbo build` into package.json, CI, or scripts.
+**Shorthand `turbo <tasks>` ONLY for one-off terminal commands** typed directly by humans or agents. Never write `turbo build` into package.json, CI, or scripts.
 
 ## Quick Decision Trees
 
@@ -133,7 +134,7 @@ Run only what changed?
 └─ See all filter options → references/filtering/RULE.md
 ```
 
-**`--affected` is the primary way to run only changed packages.** It automatically compares against the default branch and includes dependents.
+**`--affected` is primary way to run only changed packages.** Auto-compares against default branch and includes dependents.
 
 ### "I want to filter packages"
 
@@ -219,7 +220,7 @@ Enforce boundaries?
 
 ### Using `turbo` Shorthand in Code
 
-**`turbo run` is recommended in package.json scripts and CI pipelines.** The shorthand `turbo <task>` is intended for interactive terminal use.
+**`turbo run` recommended in package.json scripts and CI pipelines.** Shorthand `turbo <task>` for interactive terminal use only.
 
 ```json
 // WRONG - using shorthand in package.json
@@ -291,7 +292,7 @@ Don't chain turbo tasks with `&&`. Let turbo orchestrate.
 
 ### `prebuild` Scripts That Manually Build Dependencies
 
-Scripts like `prebuild` that manually build other packages bypass Turborepo's dependency graph.
+`prebuild` scripts that manually build other packages bypass Turborepo's dependency graph.
 
 ```json
 // WRONG - manually building dependencies
@@ -303,13 +304,13 @@ Scripts like `prebuild` that manually build other packages bypass Turborepo's de
 }
 ```
 
-**However, the fix depends on whether workspace dependencies are declared:**
+**Fix depends on whether workspace dependencies are declared:**
 
-1. **If dependencies ARE declared** (e.g., `"@repo/types": "workspace:*"` in package.json), remove the `prebuild` script. Turbo's `dependsOn: ["^build"]` handles this automatically.
+1. **If dependencies ARE declared** (e.g., `"@repo/types": "workspace:*"` in package.json), remove `prebuild`. Turbo's `dependsOn: ["^build"]` handles this automatically.
 
-2. **If dependencies are NOT declared**, the `prebuild` exists because `^build` won't trigger without a dependency relationship. The fix is to:
-   - Add the dependency to package.json: `"@repo/types": "workspace:*"`
-   - Then remove the `prebuild` script
+2. **If dependencies are NOT declared**, `prebuild` exists because `^build` won't trigger without dependency relationship. Fix:
+   - Add dependency to package.json: `"@repo/types": "workspace:*"`
+   - Remove `prebuild` script
 
 ```json
 // CORRECT - declare dependency, let turbo handle build order
@@ -338,7 +339,7 @@ Scripts like `prebuild` that manually build other packages bypass Turborepo's de
 
 ### Overly Broad `globalDependencies`
 
-`globalDependencies` affects ALL tasks in ALL packages via the **global hash** — tasks cannot opt out of specific files, even with negation globs in `inputs`. Be specific.
+`globalDependencies` affects ALL tasks in ALL packages via **global hash** — tasks cannot opt out of specific files, even with negation globs in `inputs`. Be specific.
 
 ```json
 // WRONG - heavy hammer, affects all hashes
@@ -358,7 +359,7 @@ Scripts like `prebuild` that manually build other packages bypass Turborepo's de
 }
 ```
 
-With `futureFlags.globalConfiguration`, this problem is reduced because `global.inputs` files are folded into each task's inputs (not the global hash). Tasks can exclude specific files:
+With `futureFlags.globalConfiguration`, problem reduced because `global.inputs` files folded into each task's inputs (not global hash). Tasks can exclude specific files:
 
 ```json
 // BEST - global.inputs with per-task exclusion
@@ -378,7 +379,7 @@ With `futureFlags.globalConfiguration`, this problem is reduced because `global.
 
 ### Repetitive Task Configuration
 
-Look for repeated configuration across tasks that can be collapsed. Turborepo supports shared configuration patterns.
+Look for repeated config across tasks that can be collapsed. Turborepo supports shared config patterns.
 
 ```json
 // WRONG - repetitive env and inputs across tasks
@@ -418,16 +419,16 @@ Look for repeated configuration across tasks that can be collapsed. Turborepo su
 
 **When to use global vs task-level:**
 
-- `globalEnv` / `globalDependencies` - affects ALL tasks, use for truly shared config
-- Task-level `env` / `inputs` - use when only specific tasks need it
+- `globalEnv` / `globalDependencies` — affects ALL tasks, use for truly shared config
+- Task-level `env` / `inputs` — use when only specific tasks need it
 
 ### NOT an Anti-Pattern: Large `env` Arrays
 
-A large `env` array (even 50+ variables) is **not** a problem. It usually means the user was thorough about declaring their build's environment dependencies. Do not flag this as an issue.
+Large `env` array (even 50+ variables) is **not** a problem. Usually means thorough declaration of build's environment dependencies. Don't flag this.
 
 ### Using `--parallel` Flag
 
-The `--parallel` flag bypasses Turborepo's dependency graph. If tasks need parallel execution, configure `dependsOn` correctly instead.
+`--parallel` bypasses Turborepo's dependency graph. If tasks need parallel execution, configure `dependsOn` correctly instead.
 
 ```bash
 # WRONG - bypasses dependency graph
@@ -440,7 +441,7 @@ turbo run lint
 
 ### Package-Specific Task Overrides in Root turbo.json
 
-When multiple packages need different task configurations, use **Package Configurations** (`turbo.json` in each package) instead of cluttering root `turbo.json` with `package#task` overrides.
+When multiple packages need different task configs, use **Package Configurations** (`turbo.json` in each package) instead of cluttering root `turbo.json` with `package#task` overrides.
 
 ```json
 // WRONG - root turbo.json with many package-specific overrides
@@ -482,21 +483,21 @@ When multiple packages need different task configurations, use **Package Configu
 
 **Benefits of Package Configurations:**
 
-- Keeps configuration close to the code it affects
-- Root turbo.json stays clean and focused on base patterns
+- Config close to affected code
+- Root turbo.json stays clean, focused on base patterns
 - Easier to understand what's special about each package
 - Works with `$TURBO_EXTENDS$` to inherit + extend arrays
 
 **When to use `package#task` in root:**
 
-- Single package needs a unique dependency (e.g., `"deploy": { "dependsOn": ["web#build"] }`)
+- Single package needs unique dependency (e.g., `"deploy": { "dependsOn": ["web#build"] }`)
 - Temporary override while migrating
 
 See `references/configuration/RULE.md#package-configurations` for full details.
 
 ### Using `../` to Traverse Out of Package in `inputs`
 
-Don't use relative paths like `../` to reference files outside the package. Use `$TURBO_ROOT$` instead.
+Don't use relative paths like `../` to reference files outside package. Use `$TURBO_ROOT$` instead.
 
 ```json
 // WRONG - traversing out of package
@@ -520,11 +521,11 @@ Don't use relative paths like `../` to reference files outside the package. Use 
 
 ### Missing `outputs` for File-Producing Tasks
 
-**Before flagging missing `outputs`, check what the task actually produces:**
+**Before flagging missing `outputs`, check what task actually produces:**
 
-1. Read the package's script (e.g., `"build": "tsc"`, `"test": "vitest"`)
+1. Read package's script (e.g., `"build": "tsc"`, `"test": "vitest"`)
 2. Determine if it writes files to disk or only outputs to stdout
-3. Only flag if the task produces files that should be cached
+3. Only flag if task produces files that should be cached
 
 ```json
 // WRONG: build produces files but they're not cached
@@ -555,7 +556,7 @@ Common outputs by framework:
 
 **TypeScript `--noEmit` can still produce cache files:**
 
-When `incremental: true` in tsconfig.json, `tsc --noEmit` writes `.tsbuildinfo` files even without emitting JS. Check the tsconfig before assuming no outputs:
+When `incremental: true` in tsconfig.json, `tsc --noEmit` writes `.tsbuildinfo` files even without emitting JS. Check tsconfig before assuming no outputs:
 
 ```json
 // If tsconfig has incremental: true, tsc --noEmit produces cache files
@@ -570,7 +571,7 @@ When `incremental: true` in tsconfig.json, `tsc --noEmit` writes `.tsbuildinfo` 
 
 To determine correct outputs for TypeScript tasks:
 
-1. Check if `incremental` or `composite` is enabled in tsconfig
+1. Check if `incremental` or `composite` enabled in tsconfig
 2. Check `tsBuildInfoFile` for custom cache location (default: alongside `outDir` or in project root)
 3. If no incremental mode, `tsc --noEmit` produces no files
 
@@ -620,7 +621,7 @@ To determine correct outputs for TypeScript tasks:
 
 ### `.env` Files Not in Inputs
 
-Turbo does NOT load `.env` files - your framework does. But Turbo needs to know about changes:
+Turbo does NOT load `.env` files — your framework does. But Turbo needs to know about changes:
 
 ```json
 // WRONG: .env changes don't invalidate cache
@@ -645,7 +646,7 @@ Turbo does NOT load `.env` files - your framework does. But Turbo needs to know 
 
 ### Root `.env` File in Monorepo
 
-A `.env` file at the repo root is an anti-pattern — even for small monorepos or starter templates. It creates implicit coupling between packages and makes it unclear which packages depend on which variables.
+`.env` at repo root is anti-pattern — even for small monorepos or starter templates. Creates implicit coupling between packages, unclear which packages depend on which variables.
 
 ```
 // WRONG - root .env affects all packages implicitly
@@ -669,16 +670,16 @@ my-monorepo/
 **Problems with root `.env`:**
 
 - Unclear which packages consume which variables
-- All packages get all variables (even ones they don't need)
-- Cache invalidation is coarse-grained (root .env change invalidates everything)
-- Security risk: packages may accidentally access sensitive vars meant for others
+- All packages get all variables (even unneeded ones)
+- Cache invalidation coarse-grained (root .env change invalidates everything)
+- Security risk: packages may access sensitive vars meant for others
 - Bad habits start small — starter templates should model correct patterns
 
-**If you must share variables**, use `globalEnv` to be explicit about what's shared, and document why.
+**If must share variables**, use `globalEnv` to be explicit, and document why.
 
 ### Strict Mode Filtering CI Variables
 
-By default, Turborepo filters environment variables to only those in `env`/`globalEnv`. CI variables may be missing:
+By default, Turborepo filters env vars to only those in `env`/`globalEnv`. CI variables may be missing:
 
 ```json
 // If CI scripts need GITHUB_TOKEN but it's not in env:
@@ -754,11 +755,11 @@ import { Button } from "@repo/ui/button";
 }
 ```
 
-Add a `transit` task if you have tasks that need parallel execution with cache invalidation (see below).
+Add `transit` task if tasks need parallel execution with cache invalidation (see below).
 
 ### Dev Task with `^dev` Pattern (for `turbo watch`)
 
-A `dev` task with `dependsOn: ["^dev"]` and `persistent: false` in root turbo.json may look unusual but is **correct for `turbo watch` workflows**:
+`dev` task with `dependsOn: ["^dev"]` and `persistent: false` in root turbo.json may look unusual but is **correct for `turbo watch` workflows**:
 
 ```json
 // Root turbo.json
@@ -787,11 +788,11 @@ A `dev` task with `dependsOn: ["^dev"]` and `persistent: false` in root turbo.js
 
 - **Packages** (e.g., `@acme/db`, `@acme/validators`) have `"dev": "tsc"` — one-shot type generation that completes quickly
 - **Apps** override with `persistent: true` for actual dev servers (Next.js, etc.)
-- **`turbo watch`** re-runs the one-shot package `dev` scripts when source files change, keeping types in sync
+- **`turbo watch`** re-runs one-shot package `dev` scripts when source files change, keeping types in sync
 
 **Intended usage:** Run `turbo watch dev` (not `turbo run dev`). Watch mode re-executes one-shot tasks on file changes while keeping persistent tasks running.
 
-**Alternative pattern:** Use a separate task name like `prepare` or `generate` for one-shot dependency builds to make the intent clearer:
+**Alternative pattern:** Use separate task name like `prepare` or `generate` for one-shot dependency builds to make intent clearer:
 
 ```json
 {
@@ -813,14 +814,14 @@ A `dev` task with `dependsOn: ["^dev"]` and `persistent: false` in root turbo.js
 
 Some tasks can run in parallel (don't need built output from dependencies) but must invalidate cache when dependency source code changes.
 
-**The problem with `dependsOn: ["^taskname"]`:**
+**Problem with `dependsOn: ["^taskname"]`:**
 
 - Forces sequential execution (slow)
 
-**The problem with `dependsOn: []` (no dependencies):**
+**Problem with `dependsOn: []` (no dependencies):**
 
-- Allows parallel execution (fast)
-- But cache is INCORRECT - changing dependency source won't invalidate cache
+- Parallel execution (fast)
+- Cache INCORRECT — changing dependency source won't invalidate cache
 
 **Transit Nodes solve both:**
 
@@ -833,9 +834,9 @@ Some tasks can run in parallel (don't need built output from dependencies) but m
 }
 ```
 
-The `transit` task creates dependency relationships without matching any actual script, so tasks run in parallel with correct cache invalidation.
+`transit` task creates dependency relationships without matching any actual script, so tasks run in parallel with correct cache invalidation.
 
-**How to identify tasks that need this pattern:** Look for tasks that read source files from dependencies but don't need their build outputs.
+**How to identify tasks needing this pattern:** Look for tasks that read source files from dependencies but don't need their build outputs.
 
 ### With Environment Variables
 
@@ -853,7 +854,7 @@ The `transit` task creates dependency relationships without matching any actual 
 }
 ```
 
-With `futureFlags.globalConfiguration`, the same config moves global settings under `global` — and `.env` becomes a per-task input instead of a global hash input:
+With `futureFlags.globalConfiguration`, same config moves global settings under `global` — `.env` becomes per-task input instead of global hash input:
 
 ```json
 {
@@ -945,7 +946,7 @@ With `futureFlags.globalConfiguration`, the same config moves global settings un
 
 ## Source Documentation
 
-This skill is based on the official Turborepo documentation at:
+Skill based on official Turborepo docs:
 
-- Source: `apps/docs/content/docs/` in the Turborepo repository
+- Source: `apps/docs/content/docs/` in Turborepo repository
 - Live: https://turborepo.dev/docs

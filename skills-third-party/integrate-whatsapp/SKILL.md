@@ -2,14 +2,13 @@
 name: integrate-whatsapp
 description: "Connect WhatsApp to your product with Kapso: onboard customers with setup links, detect connections, receive events via webhooks, and send messages/templates/media. Also manage WhatsApp Flows (create/update/publish, data endpoints, encryption). Use when integrating WhatsApp end-to-end."
 ---
-
 # Integrate WhatsApp
 
 ## Setup
 
 Preferred path:
-- Kapso CLI installed and authenticated (`kapso login`)
-- Use `kapso status` to confirm project access before onboarding or messaging
+- Kapso CLI installed + authenticated (`kapso login`)
+- `kapso status` — confirm project access before onboard/messaging
 
 Fallback path:
 Env vars:
@@ -31,27 +30,27 @@ npm i
 
 Preferred onboarding path (CLI):
 
-1. Start onboarding: `kapso setup`
-2. If setup is blocked, resolve context with:
+1. Start: `kapso setup`
+2. If blocked, resolve context:
    - `kapso projects list`
    - `kapso projects use <project-id>`
    - `kapso customers list`
    - `kapso customers new --name "<customer-name>" --external-id <external-id>`
    - `kapso setup --customer <customer-id>`
-3. Complete the hosted onboarding URL
+3. Complete hosted onboarding URL
 4. Confirm connected numbers: `kapso whatsapp numbers list --output json`
-5. Resolve the exact number you want to operate: `kapso whatsapp numbers resolve --phone-number "<display-number>" --output json`
+5. Resolve target number: `kapso whatsapp numbers resolve --phone-number "<display-number>" --output json`
 
-Fallback onboarding flow (direct API):
+Fallback onboarding (direct API):
 
 1. Create customer: `POST /platform/v1/customers`
 2. Generate setup link: `POST /platform/v1/customers/:id/setup_links`
 3. Customer completes embedded signup
-4. Use `phone_number_id` to send messages and configure webhooks
+4. Use `phone_number_id` to send messages + configure webhooks
 
 Detect connection:
 - Project webhook `whatsapp.phone_number.created` (recommended)
-- Success redirect URL query params (use for frontend UX)
+- Success redirect URL query params (frontend UX)
 
 Recommended Kapso setup-link defaults:
 ```json
@@ -65,34 +64,34 @@ Recommended Kapso setup-link defaults:
 ```
 
 Notes:
-- `kapso setup` and `kapso whatsapp numbers new` use dedicated plus provisioning by default.
-- Keep `phone_number_country_isos`, `phone_number_area_code`, `language`, and redirect URLs as optional overrides.
+- `kapso setup` + `kapso whatsapp numbers new` use dedicated+provisioning by default.
+- `phone_number_country_isos`, `phone_number_area_code`, `language`, redirect URLs — optional overrides.
 
 - Platform API base: `/platform/v1`
 - Meta proxy base: `/meta/whatsapp/v24.0` (messaging, templates, media)
-- Use `phone_number_id` as the primary WhatsApp identifier
+- `phone_number_id` = primary WhatsApp identifier
 
 ## Receive events (webhooks)
 
-Use webhooks to receive:
+Webhooks receive:
 - Project events (connection lifecycle, workflow events)
 - Phone-number events (messages, conversations, delivery status)
 
 Scope rules:
-- **Project webhooks**: only project-level events (connection lifecycle, workflow events)
-- **Phone-number webhooks**: only WhatsApp message + conversation events for that `phone_number_id`
-- WhatsApp message/conversation events (`whatsapp.message.*`, `whatsapp.conversation.*`) are **phone-number only**
+- **Project webhooks**: project-level events only (connection lifecycle, workflow events)
+- **Phone-number webhooks**: WhatsApp message + conversation events for that `phone_number_id` only
+- `whatsapp.message.*`, `whatsapp.conversation.*` → **phone-number only**
 
-Create a webhook:
+Create webhook:
 - Project-level: `node scripts/create.js --scope project --url <https://...> --events <csv>`
 - Phone-number: `node scripts/create.js --phone-number-id <id> --url <https://...> --events <csv>`
 
-Common flags for create/update:
-- `--url <https://...>` - webhook destination
+Common flags (create/update):
+- `--url <https://...>` - destination
 - `--events <csv|json-array>` - event types (Kapso webhooks)
-- `--kind <kapso|meta>` - Kapso (event-based) vs raw Meta forwarding
+- `--kind <kapso|meta>` - event-based vs raw Meta forward
 - `--payload-version <v1|v2>` - payload format (`v2` recommended)
-- `--buffer-enabled <true|false>` - enable buffering for `whatsapp.message.received`
+- `--buffer-enabled <true|false>` - buffering for `whatsapp.message.received`
 - `--buffer-window-seconds <n>` - 1-60 seconds
 - `--max-buffer-size <n>` - 1-100
 - `--active <true|false>` - enable/disable
@@ -102,7 +101,7 @@ Test delivery:
 node scripts/test.js --webhook-id <id>
 ```
 
-Always verify signatures. See:
+Verify signatures. See:
 - `references/webhooks-overview.md`
 - `references/webhooks-reference.md`
 
@@ -110,12 +109,12 @@ Always verify signatures. See:
 
 ### Discover IDs first
 
-Two Meta IDs are needed for different operations:
+Two Meta IDs needed:
 
 | ID | Used for | How to discover |
 |----|----------|-----------------|
 | `business_account_id` (WABA) | Template CRUD | `kapso whatsapp numbers resolve --phone-number "<display-number>" --output json` or `node scripts/list-platform-phone-numbers.mjs` |
-| `phone_number_id` | Sending messages, media upload | `kapso whatsapp numbers resolve --phone-number "<display-number>" --output json` or `node scripts/list-platform-phone-numbers.mjs` |
+| `phone_number_id` | Send messages, media upload | `kapso whatsapp numbers resolve --phone-number "<display-number>" --output json` or `node scripts/list-platform-phone-numbers.mjs` |
 
 ### Operate with the CLI first
 
@@ -162,14 +161,14 @@ await client.messages.sendText({
 ### Send a template message
 
 1. Discover IDs: `node scripts/list-platform-phone-numbers.mjs`
-2. Draft template payload from `assets/template-utility-order-status-update.json`
+2. Draft payload from `assets/template-utility-order-status-update.json`
 3. Create: `node scripts/create-template.mjs --business-account-id <WABA_ID> --file <payload.json>`
 4. Check status: `node scripts/template-status.mjs --business-account-id <WABA_ID> --name <name>`
 5. Send: `node scripts/send-template.mjs --phone-number-id <ID> --file <send-payload.json>`
 
 ### Send an interactive message
 
-Interactive messages require an active 24-hour session window. For outbound notifications outside the window, use templates.
+Interactive messages need active 24hr session window. Outside window, use templates.
 
 1. Discover `phone_number_id`
 2. Pick payload from `assets/send-interactive-*.json`
@@ -177,23 +176,23 @@ Interactive messages require an active 24-hour session window. For outbound noti
 
 ### Read inbox data
 
-Preferred path:
+Preferred:
 - CLI: `kapso whatsapp messages ...`, `kapso whatsapp conversations ...`, `kapso whatsapp templates ...`
 
-Fallback path:
+Fallback:
 - Proxy: `GET /{phone_number_id}/messages`, `GET /{phone_number_id}/conversations`
 - SDK: `client.messages.query()`, `client.messages.get()`, `client.conversations.list()`, `client.conversations.get()`, `client.templates.get()`
 
 ### Embed the inbox
 
-Use Platform API inbox embeds when the user wants to place Kapso's inbox inside their own app.
+Use Platform API inbox embeds to place Kapso inbox inside own app.
 
 Create:
 - `POST /platform/v1/inbox_embeds`
 - Envelope: `inbox_embed`
 - Public scopes: `project`, `customer`, `phone_number`
-- `scope_id` is blank for `project`, a customer UUID for `customer`, and WhatsApp `phone_number_id` for `phone_number`
-- Create returns `token` and `embed_url` once. Store `embed_url`; list/get/update omit secrets.
+- `scope_id`: blank for `project`, customer UUID for `customer`, WhatsApp `phone_number_id` for `phone_number`
+- Create returns `token` + `embed_url` once. Store `embed_url`; list/get/update omit secrets.
 
 Example:
 ```json
@@ -220,21 +219,21 @@ Creation:
 - Use `parameter_format: "NAMED"` with `{{param_name}}` (preferred over positional)
 - Include examples when using variables in HEADER/BODY
 - Use `language` (not `language_code`)
-- Don't interleave QUICK_REPLY with URL/PHONE_NUMBER buttons
-- URL button variables must be at the end of the URL and use positional `{{1}}`
+- No interleave QUICK_REPLY with URL/PHONE_NUMBER buttons
+- URL button variables must be at end of URL, use positional `{{1}}`
 
 Send-time:
-- For NAMED templates, include `parameter_name` in header/body params
-- URL buttons need a `button` component with `sub_type: "url"` and `index`
-- Media headers use either `id` or `link` (never both)
+- NAMED templates: include `parameter_name` in header/body params
+- URL buttons need `button` component with `sub_type: "url"` + `index`
+- Media headers use `id` or `link` (never both)
 
 ## WhatsApp Flows
 
-Use Flows to build native WhatsApp forms. Read `references/whatsapp-flows-spec.md` before editing Flow JSON.
+Build native WhatsApp forms. Read `references/whatsapp-flows-spec.md` before editing Flow JSON.
 
 ### Create and publish a flow
 
-1. Create flow: `node scripts/create-flow.js --phone-number-id <id> --name <name>`
+1. Create: `node scripts/create-flow.js --phone-number-id <id> --name <name>`
 2. Update JSON: `node scripts/update-flow-json.js --flow-id <id> --json-file <path>`
 3. Publish: `node scripts/publish-flow.js --flow-id <id>`
 4. Test: `node scripts/send-test-flow.js --phone-number-id <id> --flow-id <id> --to <phone>`
@@ -248,14 +247,14 @@ Use Flows to build native WhatsApp forms. Read `references/whatsapp-flows-spec.m
 
 ### Flow JSON rules
 
-Static flows (no data endpoint):
+Static (no data endpoint):
 - Use `version: "7.3"`
-- `routing_model` and `data_api_version` are optional
+- `routing_model` + `data_api_version` optional
 - See `assets/sample-flow.json`
 
-Dynamic flows (with data endpoint):
+Dynamic (with data endpoint):
 - Use `version: "7.3"` with `data_api_version: "3.0"`
-- `routing_model` is required (defines valid screen transitions)
+- `routing_model` required (defines valid screen transitions)
 - See `assets/dynamic-flow.json`
 
 ### Data endpoint rules
@@ -275,15 +274,15 @@ async function handler(request, env) {
 }
 ```
 
-- Do not use `export` or `module.exports`
-- Completion uses `screen: "SUCCESS"` with `extension_message_response.params`
-- Do not include `endpoint_uri` or `data_channel_uri` (Kapso injects these)
+- No `export` or `module.exports`
+- Completion: `screen: "SUCCESS"` with `extension_message_response.params`
+- No `endpoint_uri` or `data_channel_uri` (Kapso injects these)
 
 ### Troubleshooting
 
-- Preview shows `"flow_token is missing"`: flow is dynamic without a data endpoint. Attach one and refresh.
-- Encryption setup errors: enable encryption in Settings for the phone number/WABA.
-- OAuthException 139000 (Integrity): WABA must be verified in Meta security center.
+- `"flow_token is missing"` in preview: dynamic flow without data endpoint — attach + refresh.
+- Encryption setup errors: enable encryption in Settings for phone number/WABA.
+- OAuthException 139000 (Integrity): verify WABA in Meta security center.
 
 ## Scripts
 
@@ -293,10 +292,10 @@ async function handler(request, env) {
 |--------|---------|
 | `list.js` | List webhooks |
 | `get.js` | Get webhook details |
-| `create.js` | Create a webhook |
-| `update.js` | Update a webhook |
-| `delete.js` | Delete a webhook |
-| `test.js` | Send a test event |
+| `create.js` | Create webhook |
+| `update.js` | Update webhook |
+| `delete.js` | Delete webhook |
+| `test.js` | Send test event |
 
 ### Messaging and templates
 
@@ -306,7 +305,7 @@ async function handler(request, env) {
 | `list-connected-numbers.mjs` | List WABA phone numbers | business_account_id |
 | `list-templates.mjs` | List templates (with filters) | business_account_id |
 | `template-status.mjs` | Check single template status | business_account_id |
-| `create-template.mjs` | Create a template | business_account_id |
+| `create-template.mjs` | Create template | business_account_id |
 | `update-template.mjs` | Update existing template | business_account_id |
 | `send-template.mjs` | Send template message | phone_number_id |
 | `send-interactive.mjs` | Send interactive message | phone_number_id |
@@ -317,19 +316,19 @@ async function handler(request, env) {
 | Script | Purpose |
 |--------|---------|
 | `list-flows.js` | List all flows |
-| `create-flow.js` | Create a new flow |
+| `create-flow.js` | Create flow |
 | `get-flow.js` | Get flow details |
 | `read-flow-json.js` | Read flow JSON |
 | `update-flow-json.js` | Update flow JSON (creates new version) |
-| `publish-flow.js` | Publish a flow |
+| `publish-flow.js` | Publish flow |
 | `get-data-endpoint.js` | Get data endpoint config |
 | `set-data-endpoint.js` | Create/update data endpoint code |
 | `deploy-data-endpoint.js` | Deploy data endpoint |
 | `register-data-endpoint.js` | Register data endpoint with Meta |
 | `get-encryption-status.js` | Check encryption status |
 | `setup-encryption.js` | Set up flow encryption |
-| `send-test-flow.js` | Send a test flow message |
-| `delete-flow.js` | Delete a flow |
+| `send-test-flow.js` | Send test flow message |
+| `delete-flow.js` | Delete flow |
 | `list-flow-responses.js` | List stored flow responses |
 | `list-function-logs.js` | List function logs |
 | `list-function-invocations.js` | List function invocations |
@@ -364,8 +363,8 @@ node scripts/openapi-explore.mjs --spec platform search "setup link"
 | `send-interactive-cta-url.json` | Interactive CTA URL message |
 | `send-interactive-location-request.json` | Location request message |
 | `send-interactive-catalog-message.json` | Catalog message |
-| `sample-flow.json` | Static flow example (no endpoint) |
-| `dynamic-flow.json` | Dynamic flow example (with endpoint) |
+| `sample-flow.json` | Static flow (no endpoint) |
+| `dynamic-flow.json` | Dynamic flow (with endpoint) |
 | `webhooks-example.json` | Webhook create/update payload example |
 
 ## References
@@ -376,15 +375,15 @@ node scripts/openapi-explore.mjs --spec platform search "setup link"
 - [references/detecting-whatsapp-connection.md](references/detecting-whatsapp-connection.md) - Connection detection methods
 - [references/webhooks-overview.md](references/webhooks-overview.md) - Webhook types, signature verification, retries
 - [references/webhooks-event-types.md](references/webhooks-event-types.md) - Available events
-- [references/webhooks-reference.md](references/webhooks-reference.md) - Webhook API and payload notes
+- [references/webhooks-reference.md](references/webhooks-reference.md) - Webhook API + payload notes
 - [references/templates-reference.md](references/templates-reference.md) - Template creation rules, components cheat sheet, send-time components
-- [references/whatsapp-api-reference.md](references/whatsapp-api-reference.md) - Meta proxy payloads for messages and conversations
-- [references/whatsapp-cloud-api-js.md](references/whatsapp-cloud-api-js.md) - SDK usage for sending and reading messages
+- [references/whatsapp-api-reference.md](references/whatsapp-api-reference.md) - Meta proxy payloads for messages + conversations
+- [references/whatsapp-cloud-api-js.md](references/whatsapp-cloud-api-js.md) - SDK usage for send/read messages
 - [references/whatsapp-flows-spec.md](references/whatsapp-flows-spec.md) - Flow JSON spec
 
 ## Related skills
 
-- `automate-whatsapp` - Workflows, agents, and automations
+- `automate-whatsapp` - Workflows, agents, automations
 - `observe-whatsapp` - Debugging, logs, health checks
 
 <!-- FILEMAP:BEGIN -->

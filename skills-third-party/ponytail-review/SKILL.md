@@ -9,9 +9,7 @@ description: >
   /ponytail-review. Complements correctness-focused review, this one only
   hunts complexity.
 ---
-
-Review diffs for unnecessary complexity. One line per finding: location, what
-to cut, what replaces it. The diff's best outcome is getting shorter.
+Review diffs for complexity. One line per finding: location, what to cut, replacement. Best outcome: shorter diff.
 
 ## Format
 
@@ -20,11 +18,11 @@ multi-file diffs.
 
 Tags:
 
-- `delete:` dead code, unused flexibility, speculative feature. Replacement: nothing.
-- `stdlib:` hand-rolled thing the standard library ships. Name the function.
-- `native:` dependency or code doing what the platform already does. Name the feature.
-- `yagni:` abstraction with one implementation, config nobody sets, layer with one caller.
-- `shrink:` same logic, fewer lines. Show the shorter form.
+- `delete:` dead code, unused flexibility, speculative feature. Nothing replaces it.
+- `stdlib:` hand-rolled thing stdlib ships. Name the function.
+- `native:` dep or code platform already does. Name the feature.
+- `yagni:` abstraction with one impl, config nobody sets, layer with one caller.
+- `shrink:` same logic, fewer lines. Show shorter form.
 
 ## Examples
 
@@ -43,15 +41,11 @@ considered whether all these validation rules are needed at this stage?"
 
 ## Scoring
 
-End with the only metric that matters: `net: -<N> lines possible.`
+End with only metric that matters: `net: -<N> lines possible.`
 
-If there is nothing to cut, say `Lean already. Ship.` and stop.
+Nothing to cut: say `Lean already. Ship.` and stop.
 
 ## Boundaries
 
-Scope: over-engineering and complexity only. Correctness bugs, security holes,
-and performance are explicitly out of scope. Route them to a normal review
-pass, not this one. A single smoke test or `assert`-based
-self-check is the ponytail minimum, not bloat, never flag it for deletion.
-Does not apply the fixes, only lists them.
+Scope: over-engineering/complexity only. Correctness bugs, security holes, perf out of scope — route to normal review. Single smoke test or `assert`-based self-check = ponytail minimum, not bloat, never flag for deletion. Lists findings only, no fixes.
 "stop ponytail-review" or "normal mode": revert to verbose review style.
