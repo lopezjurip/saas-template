@@ -30,6 +30,7 @@
   },
   "cSpell.language": "en,es-ES",
   "cSpell.words": [
+    "anthropics",
     "beforeinstallprompt",
     "claude",
     "codegen",
@@ -40,12 +41,14 @@
     "modelcontextprotocol",
     "noopener",
     "noreferrer",
+    "postgres",
     "posthog",
     "qrcode",
     "rosetta",
     "simplewebauthn",
     "supabase",
     "testid",
+    "turborepo",
     "webauthn",
     "whatsapp"
   ]

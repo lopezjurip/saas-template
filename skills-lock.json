@@ -7,6 +7,12 @@
       "skillPath": "skills/caveman/SKILL.md",
       "computedHash": "1902fa0b569912d0c05736d8d98a72097d9b82719aac88c0c1d03bb546f9176d"
     },
+    "caveman-compress": {
+      "source": "juliusbrussee/caveman",
+      "sourceType": "github",
+      "skillPath": "skills/caveman-compress/SKILL.md",
+      "computedHash": "1e9b3e2bf68b75dc0252c4328c8514bea79d4d8f7d7259da616ba7d12cad6865"
+    },
     "codebase": {
       "source": "./skills",
       "sourceType": "local",
@@ -33,12 +39,17 @@
     "karpathy-guidelines": {
       "source": "multica-ai/andrej-karpathy-skills",
       "sourceType": "github",
-      "skillPath": "skills/karpathy-guidelines/SKILL.md"
+      "skillPath": "skills/karpathy-guidelines/SKILL.md",
+      "computedHash": "41e8ca055bbde13d240776a14a076a59614057200340c243130a76ba4e64cac8"
     },
     "my-auth": {
       "source": "./skills",
       "sourceType": "local",
       "computedHash": "73579054f3516c54d06c4c780dd1578cb0ada0c5f2da01a18505e7f9e11426ab"
+    },
+    "my-conventions": {
+      "source": "./skills",
+      "sourceType": "local"
     },
     "my-graphql": {
       "source": "./skills",
@@ -64,6 +75,10 @@
       "source": "./skills",
       "sourceType": "local",
       "computedHash": "52bb4895847b36032372be2ee00e12714ae176444acbdb149ffb17fb9fd70b67"
+    },
+    "my-pr-quick": {
+      "source": "./skills",
+      "sourceType": "local"
     },
     "my-proxy": {
       "source": "./skills",
@@ -104,12 +119,14 @@
     "ponytail-audit": {
       "source": "dietrichgebert/ponytail",
       "sourceType": "github",
-      "skillPath": "skills/ponytail-audit/SKILL.md"
+      "skillPath": "skills/ponytail-audit/SKILL.md",
+      "computedHash": "8b8d72e6ff70b65b6c9518d470fcf29dc696eea93d28f3efa10fdcc60cbd696d"
     },
     "ponytail-review": {
       "source": "dietrichgebert/ponytail",
       "sourceType": "github",
-      "skillPath": "skills/ponytail-review/SKILL.md"
+      "skillPath": "skills/ponytail-review/SKILL.md",
+      "computedHash": "4646594fcd75455533f7ff1425f4f1c5ba0fa65f88241bf262b1c4fc275f049a"
     },
     "psql": {
       "source": "./skills",
@@ -130,17 +147,26 @@
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",
-      "skillPath": "skills/supabase/SKILL.md"
+      "skillPath": "skills/supabase/SKILL.md",
+      "computedHash": "d414d598b9428b3e851c4ce61898649906b19e55aa7415bb42a286bd9ca2ab32"
     },
     "supabase-postgres-best-practices": {
       "source": "supabase/agent-skills",
       "sourceType": "github",
-      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md"
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
+      "computedHash": "0d2c4857a7d6fdcd3fbc46e458fa4c497f029cab89a01548b3defce203003932"
     },
     "turborepo": {
       "source": "vercel/turborepo",
       "sourceType": "github",
-      "skillPath": "skills/turborepo/SKILL.md"
+      "skillPath": "skills/turborepo/SKILL.md",
+      "computedHash": "b7c3165ae67a2892d6195a5b2cba15c8d96341f5c64ddd0d3ce4225c94a2ae83"
+    },
+    "vercel-cli": {
+      "source": "vercel/vercel",
+      "sourceType": "github",
+      "skillPath": "skills/vercel-cli/SKILL.md",
+      "computedHash": "1e5e86ed5327851f2ab1ed08652c61cc9b194b904d7d44c2c74aa99ad3f5b919"
     },
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",

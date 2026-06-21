@@ -53,6 +53,16 @@ pnpm-debug.log*
 .playwright-mcp
 .claude/worktrees/
 
+# Skills — third-party vendored (committed), but runtime artifacts are not
+skills-third-party/**/__pycache__/
+skills-third-party/**/*.pyc
+skills-third-party/**/*.pyo
+skills-third-party/**/.pytest_cache/
+skills-third-party/**/.mypy_cache/
+skills-third-party/**/*.egg-info/
+skills-third-party/**/dist/
+skills-third-party/**/.ruff_cache/
+
 # Agent skill stores — generated symlinks, not committed.
 # Rebuilt on `pnpm install` via postinstall (scripts/skills-setup.mjs): every dir
 # in skills/ (first-party) and skills-third-party/ (vendored) is symlinked here.

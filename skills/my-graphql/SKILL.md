@@ -91,7 +91,14 @@ near-identical query in another file is fine and expected — colocation beats D
 `get-viewer-*` / `use-viewer-*` hook is justified ONLY when a page needs *just that one resource*
 on its own. The moment a page loads several resources, do NOT chain multiple hooks (that's N
 sequential round-trips) — write ONE colocated query that pulls everything in a single call.
-`get-viewer-*` / `use-viewer-*` files carry a ⚠️ banner saying exactly this.
+`get-viewer-*` / `use-viewer-*` files carry this exact ⚠️ banner at the top — copy it verbatim into
+any new such file (canonical example `apps/platform/hooks/use-viewer-profile.ts`):
+
+```ts
+// ⚠️ Shared viewer hook — use ONLY when component needs just this one resource alone.
+// Many resources? Do NOT stack get-viewer-*/use-viewer-* hooks (= N round-trips).
+// Write ONE colocated gql in that file, spread fragments, single call.
+```
 
 Pass-through TS wrappers around a single query are the same anti-pattern as pass-through Server
 Actions: don't add a `getX` helper that only forwards to `graphy.query`. The one legit in-file
@@ -173,6 +180,24 @@ For by-id / by-slug singular lookups expose `getViewerXByIdAssert` / `getViewerX
 variants that call `notFound()` when the record is missing.
 
 `agencyId` is UUID (`string`), not `int` — do not copy `int` signatures from tenant/org hooks.
+
+## Operation variables — `filter`/`orderBy`/`first`/`atMost`
+
+Declare these as operation variables, never inline literals — extensible without editing the doc.
+Default them in the gql so call sites needn't pass them (enum literals are valid in defaults):
+
+```graphql
+query Foo($filter: TFilter, $orderBy: [TOrderBy!] = [{ field: AscNullsLast }], $first: Int = 250) {
+  tCollection(first: $first, filter: $filter, orderBy: $orderBy) { edges { node { id } } }
+}
+mutation Bar($filter: TFilter!, $set: TUpdateInput!, $atMost: Int! = 1000) {
+  updateTCollection(filter: $filter, set: $set, atMost: $atMost) { affectedCount }
+}
+```
+
+Pass `filter` from TS when dynamic; for `is: NULL` import `{ FilterIs }` from
+`~/generated/graphql/graphql` (deep — the index only re-exports `gql`). `atMost` is `Int!` in the
+SDL but runtime-optional, so the `= 1000` default keeps existing behavior overridable.
 
 ## Naming
 
