@@ -2,21 +2,57 @@
 
 // Local component — used only in notifications/page.tsx
 
-import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import { isGraphyGraphQLError } from "@packages/graphy/graphy";
+import { useGraphyMutation, useGraphyQuery } from "@packages/graphy/react";
+import { useSupabaseUser } from "@packages/supabase/react";
 import type { Database } from "@packages/supabase/types";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { gql } from "~/generated/graphql";
+import type { MessageChannel as MessageChannelEnum } from "~/generated/graphql/graphql";
 import { debug } from "~/lib/debug";
 import { useRosetta } from "~/lib/i18n.client";
 
-const log = debug("app:[locale]:home:account:notifications:contacts");
+const log = debug("app:home:account:notifications:contacts");
 
 type MessageChannel = Database["public"]["Enums"]["message_channel"];
-type ContactRow = Database["public"]["Tables"]["profile_contacts"]["Row"];
 
 /** Channels that represent contacts in profile_contacts. */
 const CONTACT_CHANNELS: MessageChannel[] = ["email", "whatsapp", "sms"];
+
+const ProfileContactsManageQuery = /*#__PURE__*/ gql(`
+  query ProfileContactsManageQuery(
+    $orderBy: [ProfileContactsOrderBy!] = [{ profileContactCreatedAt: AscNullsLast }]
+  ) {
+    profileContactsCollection(orderBy: $orderBy) {
+      edges {
+        node {
+          profileContactId
+          messageChannel
+          contactValue
+          contactVerifiedAt
+        }
+      }
+    }
+  }
+`);
+
+const ProfileContactsManageInsertMutation = /*#__PURE__*/ gql(`
+  mutation ProfileContactsManageInsertMutation($objects: [ProfileContactsInsertInput!]!) {
+    insertIntoProfileContactsCollection(objects: $objects) {
+      affectedCount
+    }
+  }
+`);
+
+const ProfileContactsManageDeleteMutation = /*#__PURE__*/ gql(`
+  mutation ProfileContactsManageDeleteMutation($filter: ProfileContactsFilter!, $atMost: Int! = 1) {
+    deleteFromProfileContactsCollection(filter: $filter, atMost: $atMost) {
+      affectedCount
+    }
+  }
+`);
 
 function ADD_FORM_ID(channel: MessageChannel): string {
   return `contact-add-${channel}`;
@@ -32,32 +68,20 @@ function ADD_FORM_ID(channel: MessageChannel): string {
  */
 export function ContactsManage() {
   const { t } = useRosetta(LOCALES);
-  const [contacts, setContacts] = useState<ContactRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: user } = useSupabaseUser();
+  const {
+    data,
+    isLoading,
+    mutate: refetch,
+  } = useGraphyQuery(user ? { query: ProfileContactsManageQuery, variables: {} } : null);
+  const [, insertContact] = useGraphyMutation(ProfileContactsManageInsertMutation);
+  const [, deleteContactRow] = useGraphyMutation(ProfileContactsManageDeleteMutation);
+
   const [adding, setAdding] = useState<MessageChannel | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
-
-  function loadContacts() {
-    const supabase = createSupabaseBrowserClient();
-    supabase
-      .from("profile_contacts")
-      .select("*")
-      .order("profile_contact_created_at")
-      .then(({ data, error: err }) => {
-        if (err) {
-          log.error("[loadContacts] fetch failed", { error: err });
-        }
-        setContacts(data ?? []);
-        setLoading(false);
-      });
-  }
-
-  useEffect(function initialLoad() {
-    loadContacts();
-  }, []);
 
   function startAdding(channel: MessageChannel) {
     setAdding(channel);
@@ -72,7 +96,7 @@ export function ContactsManage() {
   }
 
   async function submitContact() {
-    if (!adding) return;
+    if (!adding || !user) return;
     const value = inputValue.trim();
     if (!value) {
       setError(t("error_empty"));
@@ -94,27 +118,17 @@ export function ContactsManage() {
     setSubmitting(true);
     setError(null);
 
-    const supabase = createSupabaseBrowserClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      setError(t("error_generic"));
-      setSubmitting(false);
-      return;
-    }
-
-    const { error: upsertError } = await supabase
-      .from("profile_contacts")
-      .insert({ message_channel: adding, contact_value: normalized, profile_id: user.id });
+    const { error: insertError } = await insertContact({
+      objects: [{ messageChannel: adding as MessageChannelEnum, contactValue: normalized, profileId: user.id }],
+    });
 
     setSubmitting(false);
 
-    if (upsertError) {
-      if (upsertError.code === "23505") {
+    if (insertError) {
+      if (isGraphyGraphQLError(insertError) && insertError.errors.some((e) => e.message.includes("duplicate"))) {
         setError(t("error_duplicate"));
       } else {
-        log.error("[submitContact] insert failed", { channel: adding, error: upsertError });
+        log.error("[submitContact] insert failed", { channel: adding, error: insertError });
         setError(t("error_generic"));
       }
       return;
@@ -122,18 +136,17 @@ export function ContactsManage() {
 
     setAdding(null);
     setInputValue("");
-    loadContacts();
+    await refetch();
   }
 
   async function deleteContact(contactId: string) {
     setDeleting(contactId);
-    const supabase = createSupabaseBrowserClient();
-    const { error: delError } = await supabase.from("profile_contacts").delete().eq("profile_contact_id", contactId);
+    const { error: delError } = await deleteContactRow({ filter: { profileContactId: { eq: contactId } } });
 
     if (delError) {
       log.error("[deleteContact] delete failed", { contactId, error: delError });
     } else {
-      setContacts((prev) => prev.filter((c) => c["profile_contact_id"] !== contactId));
+      await refetch();
     }
     setDeleting(null);
   }
@@ -154,7 +167,7 @@ export function ContactsManage() {
     web_push: "",
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex flex-col gap-2.5">
         <div className="flex min-h-7 items-center gap-2.5">
@@ -181,18 +194,19 @@ export function ContactsManage() {
 
       <div className="flex flex-col overflow-hidden rounded-md border bg-background">
         {/* Existing contacts */}
-        {contacts.map((contact) => {
-          const channel = contact["message_channel"] as MessageChannel;
-          const isVerified = Boolean(contact["contact_verified_at"]);
-          const isDeleting = deleting === contact["profile_contact_id"];
+        {data?.["profileContactsCollection"]?.["edges"].map((edge) => {
+          const contact = edge["node"];
+          const channel = contact["messageChannel"] as MessageChannel;
+          const isVerified = Boolean(contact["contactVerifiedAt"]);
+          const isDeleting = deleting === contact["profileContactId"];
 
           return (
             <div
-              key={contact["profile_contact_id"]}
+              key={contact["profileContactId"]}
               className="grid grid-cols-[1fr_auto] items-center gap-3.5 border-b px-4 py-3.5 last:border-b-0"
             >
               <div className="flex min-w-0 flex-col gap-[3px]">
-                <span className="text-sm font-medium text-foreground">{contact["contact_value"]}</span>
+                <span className="text-sm font-medium text-foreground">{contact["contactValue"]}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">{CHANNEL_LABEL[channel]}</span>
                   {isVerified ? (
@@ -211,7 +225,7 @@ export function ContactsManage() {
               <Button
                 size="xs"
                 variant="ghost"
-                onClick={() => deleteContact(contact["profile_contact_id"])}
+                onClick={() => deleteContact(contact["profileContactId"])}
                 disabled={isDeleting}
                 aria-label={t("remove")}
               >

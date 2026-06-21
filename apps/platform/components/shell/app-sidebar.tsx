@@ -60,10 +60,9 @@ import { ROUTE } from "~/lib/route";
  * palette, and the org/profile/settings/bell footer. Icon-collapsible; mobile is handled by the
  * shell's custom top bar + drawer (this component is rendered desktop-only).
  *
- * @example <AppSidebar locale={locale} tenant={tenant} ... activePath={pathname} onOpenPalette={open} />
+ * @example <AppSidebar tenant={tenant} ... activePath={pathname} onOpenPalette={open} />
  */
 export function AppSidebar({
-  locale,
   tenant,
   organizations,
   current,
@@ -71,7 +70,6 @@ export function AppSidebar({
   activePath,
   onOpenPalette,
 }: {
-  locale: string;
   tenant: ShellTenant;
   organizations: ShellOrganization[];
   current: ShellOrganization;
@@ -102,13 +100,7 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <OrgSwitcher
-          locale={locale}
-          tenant={tenant}
-          organizations={organizations}
-          current={current}
-          compact={collapsed}
-        />
+        <OrgSwitcher tenant={tenant} organizations={organizations} current={current} compact={collapsed} />
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -148,8 +140,8 @@ export function AppSidebar({
           compact={collapsed}
           placement="up"
         />
-        <SettingsMenu locale={locale} settingsHref={settingsHref} compact={collapsed} />
-        <ProfileMenu locale={locale} viewer={viewer} compact={collapsed} />
+        <SettingsMenu settingsHref={settingsHref} compact={collapsed} />
+        <ProfileMenu viewer={viewer} compact={collapsed} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -35,7 +35,6 @@ interface InvitationRow {
 
 interface Props {
   invitations: InvitationRow[];
-  locale: string;
   tenantSlug: string;
   organizationId: number;
 }
@@ -56,7 +55,7 @@ function CHANNEL_OF(inv: InvitationRow): "email" | "phone" | "document" {
   return "email";
 }
 
-export function PendingInvitations({ invitations, locale, tenantSlug, organizationId }: Props) {
+export function PendingInvitations({ invitations, tenantSlug, organizationId }: Props) {
   const { t } = useRosetta(LOCALES);
   const dateFormatter = useIntlDateTimeFormat({ day: "2-digit", month: "short" });
   const router = useRouter();

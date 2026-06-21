@@ -368,6 +368,24 @@ type Agencies implements Node {
   agencyName: String!
   agencySlug: String!
   agencyUpdatedAt: Datetime!
+  conversationsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ConversationsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ConversationsOrderBy!]
+  ): ConversationsConnection
   """Globally Unique Record Identifier"""
   nodeId: ID!
   storage_agencies(
@@ -749,7 +767,98 @@ input BooleanListFilter {
   overlaps: [Boolean!]
 }
 
+type ConversationMessages implements Node {
+  conversation: Conversations
+  conversationId: UUID!
+  conversationMessageId: UUID!
+  conversationTopicSlug: String
+  conversationTopics: ConversationTopics
+  messageAuthor: String!
+  messageBody: String
+  messageChannel: MessageChannel
+  messageCreatedAt: Datetime!
+  messageDirection: String!
+  messageIdempotencyKey: String
+  messagePayload: JSON!
+  messagePriority: NotificationPriority
+  messageReadAt: Datetime
+  messageSignatureVerified: Boolean!
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+}
+
+type ConversationMessagesConnection {
+  edges: [ConversationMessagesEdge!]!
+  pageInfo: PageInfo!
+  """The total number of records matching the `filter` criteria"""
+  totalCount: Int!
+}
+
+type ConversationMessagesEdge {
+  cursor: String!
+  node: ConversationMessages!
+}
+
+input ConversationMessagesFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [ConversationMessagesFilter!]
+  conversationId: UUIDFilter
+  conversationMessageId: UUIDFilter
+  conversationTopicSlug: StringFilter
+  messageAuthor: StringFilter
+  messageBody: StringFilter
+  messageChannel: MessageChannelFilter
+  messageCreatedAt: DatetimeFilter
+  messageDirection: StringFilter
+  messageIdempotencyKey: StringFilter
+  messagePriority: NotificationPriorityFilter
+  messageReadAt: DatetimeFilter
+  messageSignatureVerified: BooleanFilter
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: ConversationMessagesFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [ConversationMessagesFilter!]
+}
+
+input ConversationMessagesOrderBy {
+  conversationId: OrderByDirection
+  conversationMessageId: OrderByDirection
+  conversationTopicSlug: OrderByDirection
+  messageAuthor: OrderByDirection
+  messageBody: OrderByDirection
+  messageChannel: OrderByDirection
+  messageCreatedAt: OrderByDirection
+  messageDirection: OrderByDirection
+  messageIdempotencyKey: OrderByDirection
+  messagePriority: OrderByDirection
+  messageReadAt: OrderByDirection
+  messageSignatureVerified: OrderByDirection
+}
+
 type ConversationTopics implements Node {
+  conversationMessagesCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ConversationMessagesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ConversationMessagesOrderBy!]
+  ): ConversationMessagesConnection
   conversationTopicCreatedAt: Datetime!
   conversationTopicDescription: String!
   conversationTopicDisabledAt: Datetime
@@ -805,6 +914,102 @@ input ConversationTopicsOrderBy {
   conversationTopicPriority: OrderByDirection
   conversationTopicSlug: OrderByDirection
   conversationTopicUpdatedAt: OrderByDirection
+}
+
+type Conversations implements Node {
+  agency: Agencies
+  agencyId: Int
+  conversationCreatedAt: Datetime!
+  conversationId: UUID!
+  conversationKind: String!
+  conversationLastMessageAt: Datetime!
+  conversationMessagesCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ConversationMessagesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ConversationMessagesOrderBy!]
+  ): ConversationMessagesConnection
+  conversationResolution: JSON
+  conversationResolvedAt: Datetime
+  conversationResolvedChannel: MessageChannel
+  conversationStatus: String!
+  conversationSubject: String
+  conversationUpdatedAt: Datetime!
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  organization: Organizations
+  organizationId: Int
+  profile: Profiles
+  profileId: UUID!
+  tenant: Tenants
+  tenantId: Int
+}
+
+type ConversationsConnection {
+  edges: [ConversationsEdge!]!
+  pageInfo: PageInfo!
+  """The total number of records matching the `filter` criteria"""
+  totalCount: Int!
+}
+
+type ConversationsEdge {
+  cursor: String!
+  node: Conversations!
+}
+
+input ConversationsFilter {
+  agencyId: IntFilter
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [ConversationsFilter!]
+  conversationCreatedAt: DatetimeFilter
+  conversationId: UUIDFilter
+  conversationKind: StringFilter
+  conversationLastMessageAt: DatetimeFilter
+  conversationResolvedAt: DatetimeFilter
+  conversationResolvedChannel: MessageChannelFilter
+  conversationStatus: StringFilter
+  conversationSubject: StringFilter
+  conversationUpdatedAt: DatetimeFilter
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: ConversationsFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [ConversationsFilter!]
+  organizationId: IntFilter
+  profileId: UUIDFilter
+  tenantId: IntFilter
+}
+
+input ConversationsOrderBy {
+  agencyId: OrderByDirection
+  conversationCreatedAt: OrderByDirection
+  conversationId: OrderByDirection
+  conversationKind: OrderByDirection
+  conversationLastMessageAt: OrderByDirection
+  conversationResolvedAt: OrderByDirection
+  conversationResolvedChannel: OrderByDirection
+  conversationStatus: OrderByDirection
+  conversationSubject: OrderByDirection
+  conversationUpdatedAt: OrderByDirection
+  organizationId: OrderByDirection
+  profileId: OrderByDirection
+  tenantId: OrderByDirection
 }
 
 """
@@ -1012,6 +1217,15 @@ type Mutation {
     """Restricts the mutation's impact to records matching the criteria"""
     filter: PermissionPresetsFilter
   ): PermissionPresetsDeleteResponse!
+  """Deletes zero or more records from the `ProfileContacts` collection"""
+  deleteFromProfileContactsCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: ProfileContactsFilter
+  ): ProfileContactsDeleteResponse!
   """Deletes zero or more records from the `TenantDomains` collection"""
   deleteFromTenantDomainsCollection(
     """
@@ -1037,6 +1251,8 @@ type Mutation {
   insertIntoOrganizationMembershipsCollection(objects: [OrganizationMembershipsInsertInput!]!): OrganizationMembershipsInsertResponse
   """Adds one or more `PermissionPresets` records to the collection"""
   insertIntoPermissionPresetsCollection(objects: [PermissionPresetsInsertInput!]!): PermissionPresetsInsertResponse
+  """Adds one or more `ProfileContacts` records to the collection"""
+  insertIntoProfileContactsCollection(objects: [ProfileContactsInsertInput!]!): ProfileContactsInsertResponse
   """Adds one or more `ProfileIdentities` records to the collection"""
   insertIntoProfileIdentitiesCollection(objects: [ProfileIdentitiesInsertInput!]!): ProfileIdentitiesInsertResponse
   """Adds one or more `TenantDomains` records to the collection"""
@@ -1530,6 +1746,24 @@ type Organizations implements Node {
     """Sort order to apply to the collection"""
     orderBy: [AgenciesOrganizationsGrantsOrderBy!]
   ): AgenciesOrganizationsGrantsConnection
+  conversationsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ConversationsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ConversationsOrderBy!]
+  ): ConversationsConnection
   """Globally Unique Record Identifier"""
   nodeId: ID!
   organizationCreatedAt: Datetime!
@@ -1851,6 +2085,86 @@ input PermissionsOrderBy {
   permissionUpdatedAt: OrderByDirection
 }
 
+type ProfileContacts implements Node {
+  contactValue: String!
+  contactVerifiedAt: Datetime
+  messageChannel: MessageChannel!
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  profile: Profiles
+  profileContactCreatedAt: Datetime!
+  profileContactId: UUID!
+  profileContactUpdatedAt: Datetime!
+  profileId: UUID!
+}
+
+type ProfileContactsConnection {
+  edges: [ProfileContactsEdge!]!
+  pageInfo: PageInfo!
+  """The total number of records matching the `filter` criteria"""
+  totalCount: Int!
+}
+
+type ProfileContactsDeleteResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [ProfileContacts!]!
+}
+
+type ProfileContactsEdge {
+  cursor: String!
+  node: ProfileContacts!
+}
+
+input ProfileContactsFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [ProfileContactsFilter!]
+  contactValue: StringFilter
+  contactVerifiedAt: DatetimeFilter
+  messageChannel: MessageChannelFilter
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: ProfileContactsFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [ProfileContactsFilter!]
+  profileContactCreatedAt: DatetimeFilter
+  profileContactId: UUIDFilter
+  profileContactUpdatedAt: DatetimeFilter
+  profileId: UUIDFilter
+}
+
+input ProfileContactsInsertInput {
+  contactValue: String
+  contactVerifiedAt: Datetime
+  messageChannel: MessageChannel
+  profileContactCreatedAt: Datetime
+  profileContactId: UUID
+  profileContactUpdatedAt: Datetime
+  profileId: UUID
+}
+
+type ProfileContactsInsertResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [ProfileContacts!]!
+}
+
+input ProfileContactsOrderBy {
+  contactValue: OrderByDirection
+  contactVerifiedAt: OrderByDirection
+  messageChannel: OrderByDirection
+  profileContactCreatedAt: OrderByDirection
+  profileContactId: OrderByDirection
+  profileContactUpdatedAt: OrderByDirection
+  profileId: OrderByDirection
+}
+
 type ProfileIdentities implements Node {
   addressLevel0: AddressesLevel0
   addressLevel0Id: String!
@@ -1981,6 +2295,24 @@ type Profiles implements Node {
     """Sort order to apply to the collection"""
     orderBy: [AgencyMembershipsOrderBy!]
   ): AgencyMembershipsConnection
+  conversationsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ConversationsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ConversationsOrderBy!]
+  ): ConversationsConnection
   """Globally Unique Record Identifier"""
   nodeId: ID!
   organizationMembershipsCollection(
@@ -2001,6 +2333,24 @@ type Profiles implements Node {
     """Sort order to apply to the collection"""
     orderBy: [OrganizationMembershipsOrderBy!]
   ): OrganizationMembershipsConnection
+  profileContactsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ProfileContactsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ProfileContactsOrderBy!]
+  ): ProfileContactsConnection
   profileCreatedAt: Datetime!
   profileDisabledAt: Datetime
   profileId: UUID!
@@ -2260,6 +2610,25 @@ type Query {
   callerHasPermission(callerProfileId: UUID!, organizationId: Int!, permissionId: String!): Boolean
   clRutNormalize(value: String!): String
   clRutValidate(value: String!): Boolean
+  """A pagable collection of type `ConversationMessages`"""
+  conversationMessagesCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ConversationMessagesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ConversationMessagesOrderBy!]
+  ): ConversationMessagesConnection
   """A pagable collection of type `ConversationTopics`"""
   conversationTopicsCollection(
     """Query values in the collection after the provided cursor"""
@@ -2279,6 +2648,25 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [ConversationTopicsOrderBy!]
   ): ConversationTopicsConnection
+  """A pagable collection of type `Conversations`"""
+  conversationsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ConversationsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ConversationsOrderBy!]
+  ): ConversationsConnection
   emailExists(emailToCheck: String!): Boolean
   emailHasPassword(emailToCheck: String!): Boolean
   healthCurrentTimestamp: Datetime
@@ -2385,6 +2773,25 @@ type Query {
   phoneExists(defaultCode: String = "+56", phoneToCheck: String!): Boolean
   phoneHasPassword(defaultCode: String = "+56", phoneToCheck: String!): Boolean
   phoneNormalize(defaultCode: String = "+56", value: String!): String
+  """A pagable collection of type `ProfileContacts`"""
+  profileContactsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ProfileContactsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ProfileContactsOrderBy!]
+  ): ProfileContactsConnection
   """A pagable collection of type `ProfileIdentities`"""
   profileIdentitiesCollection(
     """Query values in the collection after the provided cursor"""
@@ -2576,6 +2983,48 @@ type Query {
   ): AgenciesConnection
   viewerAgencyById(agencyId: Int!): Agencies
   viewerAgencyBySlug(agencySlug: String!): Agencies
+  viewerConversationById(conversationId: UUID!): Conversations
+  viewerConversationMessages(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ConversationMessagesFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ConversationMessagesOrderBy!]
+    pConversationId: UUID!
+  ): ConversationMessagesConnection
+  viewerConversations(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ConversationsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    includeArchived: Boolean = false
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ConversationsOrderBy!]
+    pAgencyId: Int
+    pOrganizationId: Int
+    pScope: String
+  ): ConversationsConnection
   viewerHasAgencyPermission(organizationId: Int!, permissionId: String!): Boolean
   viewerHasAgencyTeamPermission(agencyId: Int!, permissionId: String!): Boolean
   viewerHasPermission(organizationId: Int!, permissionId: String!): Boolean
@@ -3053,6 +3502,24 @@ input TenantTierFilter {
 }
 
 type Tenants implements Node {
+  conversationsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: ConversationsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [ConversationsOrderBy!]
+  ): ConversationsConnection
   """Globally Unique Record Identifier"""
   nodeId: ID!
   organizationsCollection(

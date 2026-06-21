@@ -12,7 +12,7 @@ import { gql } from "~/generated/graphql";
 import { FilterIs } from "~/generated/graphql/graphql";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { PendingInvitations } from "./pending-invitations";
 
@@ -73,7 +73,6 @@ export default async function MembersAdminPage(
   const { tenant_slug, organization_id: organization_id_param } = await props.params;
 
   const { t } = await getRosetta(LOCALES);
-  const locale = await getServerLocale();
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
@@ -253,7 +252,6 @@ export default async function MembersAdminPage(
           </span>
         </div>
         <PendingInvitations
-          locale={locale}
           tenantSlug={tenant_slug}
           organizationId={organization_id}
           invitations={pendingOrganizationOrganizationMemberships.map((i) => ({

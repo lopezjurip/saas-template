@@ -15,7 +15,6 @@ import { useRosetta } from "~/lib/i18n.client";
 export function MobileNavDrawer({
   open,
   onClose,
-  locale,
   tenant,
   organization,
   viewer,
@@ -25,7 +24,6 @@ export function MobileNavDrawer({
 }: {
   open: boolean;
   onClose: () => void;
-  locale: string;
   tenant: ShellTenant;
   organization: ShellOrganization;
   viewer: ShellViewer;

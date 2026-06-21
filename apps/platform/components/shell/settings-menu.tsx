@@ -12,22 +12,14 @@ import { useLocaleCookie } from "~/hooks/use-locale-cookie";
 import { LOCALE_LABEL, SUPPORTED_LOCALES } from "~/lib/i18n";
 import { useRosetta } from "~/lib/i18n.client";
 
-export function SettingsMenu({
-  locale,
-  settingsHref,
-  compact,
-}: {
-  locale: string;
-  settingsHref: Route;
-  compact?: boolean;
-}) {
+export function SettingsMenu({ settingsHref, compact }: { settingsHref: Route; compact?: boolean }) {
   const { t } = useRosetta(LOCALES);
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false), open);
-  const [, setLocale] = useLocaleCookie();
+  const [locale, setLocale] = useLocaleCookie();
 
   const mounted = useMounted();
 

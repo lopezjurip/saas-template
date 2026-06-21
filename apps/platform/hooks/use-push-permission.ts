@@ -1,7 +1,8 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import { useSupabase } from "@packages/supabase/react";
 import { useEffect, useState } from "react";
+import { useViewerProfile } from "./use-viewer-profile";
 
 export type PushPermissionState = "default" | "granted" | "denied" | "unsupported" | "no_vapid";
 
@@ -18,8 +19,10 @@ export function usePushPermission() {
   const [permission, setPermission] = useState<PushPermissionState>("unsupported");
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const supabase = useSupabase();
+  const { data: { profile } = { ["profile"]: null } } = useViewerProfile();
 
-  useEffect(function checkInitialState() {
+  useEffect(() => {
     if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
       return;
     }
@@ -51,8 +54,9 @@ export function usePushPermission() {
     try {
       const result = await Notification.requestPermission();
       setPermission(result as PushPermissionState);
-
-      if (result !== "granted") return;
+      if (result !== "granted") {
+        return;
+      }
 
       const reg = await navigator.serviceWorker.ready;
 
@@ -73,17 +77,13 @@ export function usePushPermission() {
         throw new Error("Incomplete push subscription");
       }
 
-      const supabase = createSupabaseBrowserClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from("profile_push_subscriptions")
-        .upsert({ endpoint, p256dh, auth, profile_id: user.id }, { onConflict: "endpoint" });
-      if (!error) {
-        setSubscribed(true);
+      if (profile) {
+        const { error } = await supabase
+          .from("profile_push_subscriptions")
+          .upsert({ endpoint, p256dh, auth, profile_id: profile["profileId"] }, { onConflict: "endpoint" });
+        if (!error) {
+          setSubscribed(true);
+        }
       }
     } catch {
       // If subscribe fails, permission may still show as granted without sub
@@ -104,8 +104,14 @@ export function usePushPermission() {
       const endpoint = sub.endpoint;
       await sub.unsubscribe();
 
-      const supabase = createSupabaseBrowserClient();
-      await supabase.from("profile_push_subscriptions").delete().eq("endpoint", endpoint);
+      if (profile) {
+        await supabase
+          .from("profile_push_subscriptions")
+          .delete()
+          .eq("endpoint", endpoint)
+          .eq("profile_id", profile["profileId"])
+          .throwOnError();
+      }
       setSubscribed(false);
     } finally {
       setLoading(false);

@@ -13,7 +13,7 @@ import { ROUTE } from "~/lib/route";
 
 export type ShellViewer = ViewerProfileUseFragmentType & { email: string };
 
-export function ProfileMenu({ locale, viewer, compact }: { locale: string; viewer: ShellViewer; compact?: boolean }) {
+export function ProfileMenu({ viewer, compact }: { viewer: ShellViewer; compact?: boolean }) {
   const { t } = useRosetta(LOCALES);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);

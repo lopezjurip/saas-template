@@ -11,7 +11,7 @@ import { ROUTE } from "~/lib/route";
  * Bottom-left floating user pill seen on /home. Click expands a popover with
  * profile / settings / sign-out — these route to the matching /home/account sections.
  */
-export function UserMenu({ locale, name, email }: { locale: string; name: string; email: string }) {
+export function UserMenu({ name, email }: { name: string; email: string }) {
   const [open, setOpen] = useState(false);
   const { t } = useRosetta(LOCALES);
 

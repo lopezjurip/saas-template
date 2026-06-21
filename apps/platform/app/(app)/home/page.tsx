@@ -47,7 +47,7 @@ export default async function HomePage(props: PageProps<"/home">) {
   const user = await getSupabaseServerUser();
   if (!user) redirect(`/auth?next=${encodeURIComponent("/home")}`);
 
-  const { t, locale } = await getRosetta(LOCALES);
+  const { t } = await getRosetta(LOCALES);
 
   const graphy = await getGraphySession();
   const [{ data }, agenciesRes] = await Promise.all([
@@ -189,7 +189,7 @@ export default async function HomePage(props: PageProps<"/home">) {
         </div>
       </div>
 
-      <UserMenu locale={locale} name={state.profile_name_full} email={state.email ?? user["email"] ?? ""} />
+      <UserMenu name={state.profile_name_full} email={state.email ?? user["email"] ?? ""} />
     </div>
   );
 }

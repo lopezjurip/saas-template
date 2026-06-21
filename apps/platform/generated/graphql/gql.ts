@@ -13,12 +13,18 @@ import * as types from "./graphql";
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
+  "\n  query AgencyInboxConversationPageQuery($conversationId: UUID!) {\n    conversation: viewerConversationById(conversationId: $conversationId) {\n      ...ConversationThreadFragment\n    }\n  }\n": typeof types.AgencyInboxConversationPageQueryDocument;
   "\n  mutation AgencyCreateMutation($agency_name: String!, $agency_slug: String!) {\n    agency: viewerAgencyCreate(agencyName: $agency_name, agencySlug: $agency_slug) {\n      agencyId\n    }\n  }\n": typeof types.AgencyCreateMutationDocument;
+  "\n  query ProfileContactsManageQuery(\n    $orderBy: [ProfileContactsOrderBy!] = [{ profileContactCreatedAt: AscNullsLast }]\n  ) {\n    profileContactsCollection(orderBy: $orderBy) {\n      edges {\n        node {\n          profileContactId\n          messageChannel\n          contactValue\n          contactVerifiedAt\n        }\n      }\n    }\n  }\n": typeof types.ProfileContactsManageQueryDocument;
+  "\n  mutation ProfileContactsManageInsertMutation($objects: [ProfileContactsInsertInput!]!) {\n    insertIntoProfileContactsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n": typeof types.ProfileContactsManageInsertMutationDocument;
+  "\n  mutation ProfileContactsManageDeleteMutation($filter: ProfileContactsFilter!, $atMost: Int! = 1) {\n    deleteFromProfileContactsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": typeof types.ProfileContactsManageDeleteMutationDocument;
   '\n  query AccountProfilePageQuery {\n    profile: viewerProfile {\n      profileNameFull\n      avatar: storage_profiles(\n        filter: { folder: { eq: "avatar" } }\n        orderBy: [{ createdAt: DescNullsLast }]\n        first: 1\n      ) {\n        edges {\n          node {\n            src\n          }\n        }\n      }\n    }\n  }\n': typeof types.AccountProfilePageQueryDocument;
   "\n  mutation ProfileSectionUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!, $atMost: Int! = 1000) {\n    updateProfilesCollection(filter: $filter, set: $set, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": typeof types.ProfileSectionUpdateNameMutationDocument;
   "\n  query SessionsSectionPageQuery {\n    viewerSessions {\n      edges {\n        node {\n          ...SessionsSectionSessionFragment\n        }\n      }\n    }\n  }\n": typeof types.SessionsSectionPageQueryDocument;
   "\n  fragment SessionsSectionSessionFragment on UserSessions {\n    id\n    userAgent\n    ip\n    createdAt\n    refreshedAt\n    notAfter\n  }\n": typeof types.SessionsSectionSessionFragmentFragmentDoc;
+  "\n  query HomeInboxConversationPageQuery($conversationId: UUID!) {\n    conversation: viewerConversationById(conversationId: $conversationId) {\n      ...ConversationThreadFragment\n    }\n  }\n": typeof types.HomeInboxConversationPageQueryDocument;
   "\n  query HomePickerPageQuery {\n    viewerOrganizations(\n      filter: { organizationDisabledAt: { is: NULL } }\n      orderBy: [{ organizationName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organizationId\n          organizationName\n          organizationSlug\n          tenant {\n            tenantId\n            tenantSlug\n            tenantName\n          }\n        }\n      }\n    }\n  }\n": typeof types.HomePickerPageQueryDocument;
+  "\n  query OrgInboxConversationPageQuery($conversationId: UUID!) {\n    conversation: viewerConversationById(conversationId: $conversationId) {\n      ...ConversationThreadFragment\n    }\n  }\n": typeof types.OrgInboxConversationPageQueryDocument;
   "\n  mutation FinishTenantOnboardingMutation($tenant_id: Int!) {\n    tenant: viewerTenantOnboardingFinish(tenantId: $tenant_id) {\n      tenantId\n      tenantOnboardedAt\n    }\n  }\n": typeof types.FinishTenantOnboardingMutationDocument;
   '\n  query TenantOnboardingStateGet($tenant_id: Int!) {\n    tenant: viewerTenantById(tenantId: $tenant_id) {\n      tenantOnboardedAt\n      logo: storage_tenants(filter: { folder: { eq: "avatar" } }, first: 1) {\n        edges {\n          node {\n            storageTenantId\n          }\n        }\n      }\n      organizations: organizationsCollection {\n        edges {\n          node {\n            memberships: organizationMembershipsCollection {\n              totalCount\n            }\n          }\n        }\n      }\n    }\n  }\n': typeof types.TenantOnboardingStateGetDocument;
   "\n  mutation CreateOrganizationFormMutation($organization_name: String!, $organization_slug: String!, $tenant_id: Int!) {\n    organization: viewerOrganizationCreate(\n      organizationName: $organization_name\n      organizationSlug: $organization_slug\n      tenantId: $tenant_id\n    ) {\n      organizationId\n      organizationSlug\n    }\n  }\n": typeof types.CreateOrganizationFormMutationDocument;
@@ -34,6 +40,7 @@ type Documents = {
   "\n  mutation OnboardingProfileFormUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!, $atMost: Int! = 1000) {\n    updateProfilesCollection(filter: $filter, set: $set, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": typeof types.OnboardingProfileFormUpdateNameMutationDocument;
   '\n  query ViewerOnboardingStateGet {\n    profile: viewerProfile {\n      profileNameFull\n      profileOnboardedAt\n      avatar: storage_profiles(\n        filter: { folder: { eq: "avatar" } }\n        orderBy: [{ createdAt: DescNullsLast }]\n        first: 1\n      ) {\n        edges {\n          node {\n            src\n          }\n        }\n      }\n    }\n  }\n': typeof types.ViewerOnboardingStateGetDocument;
   "\n  query HealthQuery {\n    healthCurrentTimestamp\n  }\n": typeof types.HealthQueryDocument;
+  "\n  fragment ConversationThreadFragment on Conversations {\n    conversationId\n    conversationSubject\n    conversationStatus\n    organizationId\n    agencyId\n    messages: conversationMessagesCollection(first: 250, orderBy: [{ messageCreatedAt: AscNullsLast }]) {\n      edges {\n        node {\n          conversationMessageId\n          messageBody\n          messageDirection\n          messageAuthor\n          messageChannel\n          messagePriority\n          messageCreatedAt\n          messageReadAt\n        }\n      }\n    }\n  }\n": typeof types.ConversationThreadFragmentFragmentDoc;
   "\n  query ScopeSelectorOrgsQuery {\n    viewerOrganizations(\n      filter: { organizationDisabledAt: { is: NULL } }\n      orderBy: [{ organizationName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organizationId\n          organizationName\n          tenant {\n            tenantSlug\n          }\n        }\n      }\n    }\n  }\n": typeof types.ScopeSelectorOrgsQueryDocument;
   "\n  query ScopeSelectorAgenciesQuery {\n    agencies: viewerAgencies(\n      orderBy: [{ agencyName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          agencyId\n          agencySlug\n          agencyName\n        }\n      }\n    }\n  }\n": typeof types.ScopeSelectorAgenciesQueryDocument;
   "\n  query PostHogIdentify {\n    profile: viewerProfile {\n      profileId\n      profileNameFull\n      profileOnboardedAt\n      profileCreatedAt\n    }\n    tenants: viewerTenants {\n      edges {\n        node {\n          tenantId\n          tenantSlug\n          tenantTier\n          tenantCreatedAt\n        }\n      }\n    }\n    organizations: viewerOrganizations {\n      edges {\n        node {\n          organizationId\n          organizationName\n          tenantId\n        }\n      }\n    }\n  }\n": typeof types.PostHogIdentifyDocument;
@@ -90,8 +97,16 @@ type Documents = {
   "\n  query WhoamiMcp {\n    profile: viewerProfile {\n      profileId\n      profileNameFull\n      profileOnboardedAt\n      profileDisabledAt\n      profileCreatedAt\n      profileUpdatedAt\n    }\n  }\n": typeof types.WhoamiMcpDocument;
 };
 const documents: Documents = {
+  "\n  query AgencyInboxConversationPageQuery($conversationId: UUID!) {\n    conversation: viewerConversationById(conversationId: $conversationId) {\n      ...ConversationThreadFragment\n    }\n  }\n":
+    types.AgencyInboxConversationPageQueryDocument,
   "\n  mutation AgencyCreateMutation($agency_name: String!, $agency_slug: String!) {\n    agency: viewerAgencyCreate(agencyName: $agency_name, agencySlug: $agency_slug) {\n      agencyId\n    }\n  }\n":
     types.AgencyCreateMutationDocument,
+  "\n  query ProfileContactsManageQuery(\n    $orderBy: [ProfileContactsOrderBy!] = [{ profileContactCreatedAt: AscNullsLast }]\n  ) {\n    profileContactsCollection(orderBy: $orderBy) {\n      edges {\n        node {\n          profileContactId\n          messageChannel\n          contactValue\n          contactVerifiedAt\n        }\n      }\n    }\n  }\n":
+    types.ProfileContactsManageQueryDocument,
+  "\n  mutation ProfileContactsManageInsertMutation($objects: [ProfileContactsInsertInput!]!) {\n    insertIntoProfileContactsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n":
+    types.ProfileContactsManageInsertMutationDocument,
+  "\n  mutation ProfileContactsManageDeleteMutation($filter: ProfileContactsFilter!, $atMost: Int! = 1) {\n    deleteFromProfileContactsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n":
+    types.ProfileContactsManageDeleteMutationDocument,
   '\n  query AccountProfilePageQuery {\n    profile: viewerProfile {\n      profileNameFull\n      avatar: storage_profiles(\n        filter: { folder: { eq: "avatar" } }\n        orderBy: [{ createdAt: DescNullsLast }]\n        first: 1\n      ) {\n        edges {\n          node {\n            src\n          }\n        }\n      }\n    }\n  }\n':
     types.AccountProfilePageQueryDocument,
   "\n  mutation ProfileSectionUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!, $atMost: Int! = 1000) {\n    updateProfilesCollection(filter: $filter, set: $set, atMost: $atMost) {\n      affectedCount\n    }\n  }\n":
@@ -100,8 +115,12 @@ const documents: Documents = {
     types.SessionsSectionPageQueryDocument,
   "\n  fragment SessionsSectionSessionFragment on UserSessions {\n    id\n    userAgent\n    ip\n    createdAt\n    refreshedAt\n    notAfter\n  }\n":
     types.SessionsSectionSessionFragmentFragmentDoc,
+  "\n  query HomeInboxConversationPageQuery($conversationId: UUID!) {\n    conversation: viewerConversationById(conversationId: $conversationId) {\n      ...ConversationThreadFragment\n    }\n  }\n":
+    types.HomeInboxConversationPageQueryDocument,
   "\n  query HomePickerPageQuery {\n    viewerOrganizations(\n      filter: { organizationDisabledAt: { is: NULL } }\n      orderBy: [{ organizationName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organizationId\n          organizationName\n          organizationSlug\n          tenant {\n            tenantId\n            tenantSlug\n            tenantName\n          }\n        }\n      }\n    }\n  }\n":
     types.HomePickerPageQueryDocument,
+  "\n  query OrgInboxConversationPageQuery($conversationId: UUID!) {\n    conversation: viewerConversationById(conversationId: $conversationId) {\n      ...ConversationThreadFragment\n    }\n  }\n":
+    types.OrgInboxConversationPageQueryDocument,
   "\n  mutation FinishTenantOnboardingMutation($tenant_id: Int!) {\n    tenant: viewerTenantOnboardingFinish(tenantId: $tenant_id) {\n      tenantId\n      tenantOnboardedAt\n    }\n  }\n":
     types.FinishTenantOnboardingMutationDocument,
   '\n  query TenantOnboardingStateGet($tenant_id: Int!) {\n    tenant: viewerTenantById(tenantId: $tenant_id) {\n      tenantOnboardedAt\n      logo: storage_tenants(filter: { folder: { eq: "avatar" } }, first: 1) {\n        edges {\n          node {\n            storageTenantId\n          }\n        }\n      }\n      organizations: organizationsCollection {\n        edges {\n          node {\n            memberships: organizationMembershipsCollection {\n              totalCount\n            }\n          }\n        }\n      }\n    }\n  }\n':
@@ -131,6 +150,8 @@ const documents: Documents = {
   '\n  query ViewerOnboardingStateGet {\n    profile: viewerProfile {\n      profileNameFull\n      profileOnboardedAt\n      avatar: storage_profiles(\n        filter: { folder: { eq: "avatar" } }\n        orderBy: [{ createdAt: DescNullsLast }]\n        first: 1\n      ) {\n        edges {\n          node {\n            src\n          }\n        }\n      }\n    }\n  }\n':
     types.ViewerOnboardingStateGetDocument,
   "\n  query HealthQuery {\n    healthCurrentTimestamp\n  }\n": types.HealthQueryDocument,
+  "\n  fragment ConversationThreadFragment on Conversations {\n    conversationId\n    conversationSubject\n    conversationStatus\n    organizationId\n    agencyId\n    messages: conversationMessagesCollection(first: 250, orderBy: [{ messageCreatedAt: AscNullsLast }]) {\n      edges {\n        node {\n          conversationMessageId\n          messageBody\n          messageDirection\n          messageAuthor\n          messageChannel\n          messagePriority\n          messageCreatedAt\n          messageReadAt\n        }\n      }\n    }\n  }\n":
+    types.ConversationThreadFragmentFragmentDoc,
   "\n  query ScopeSelectorOrgsQuery {\n    viewerOrganizations(\n      filter: { organizationDisabledAt: { is: NULL } }\n      orderBy: [{ organizationName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organizationId\n          organizationName\n          tenant {\n            tenantSlug\n          }\n        }\n      }\n    }\n  }\n":
     types.ScopeSelectorOrgsQueryDocument,
   "\n  query ScopeSelectorAgenciesQuery {\n    agencies: viewerAgencies(\n      orderBy: [{ agencyName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          agencyId\n          agencySlug\n          agencyName\n        }\n      }\n    }\n  }\n":
@@ -245,8 +266,32 @@ const documents: Documents = {
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
+  source: "\n  query AgencyInboxConversationPageQuery($conversationId: UUID!) {\n    conversation: viewerConversationById(conversationId: $conversationId) {\n      ...ConversationThreadFragment\n    }\n  }\n",
+): typeof import("./graphql").AgencyInboxConversationPageQueryDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
   source: "\n  mutation AgencyCreateMutation($agency_name: String!, $agency_slug: String!) {\n    agency: viewerAgencyCreate(agencyName: $agency_name, agencySlug: $agency_slug) {\n      agencyId\n    }\n  }\n",
 ): typeof import("./graphql").AgencyCreateMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  query ProfileContactsManageQuery(\n    $orderBy: [ProfileContactsOrderBy!] = [{ profileContactCreatedAt: AscNullsLast }]\n  ) {\n    profileContactsCollection(orderBy: $orderBy) {\n      edges {\n        node {\n          profileContactId\n          messageChannel\n          contactValue\n          contactVerifiedAt\n        }\n      }\n    }\n  }\n",
+): typeof import("./graphql").ProfileContactsManageQueryDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  mutation ProfileContactsManageInsertMutation($objects: [ProfileContactsInsertInput!]!) {\n    insertIntoProfileContactsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n",
+): typeof import("./graphql").ProfileContactsManageInsertMutationDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  mutation ProfileContactsManageDeleteMutation($filter: ProfileContactsFilter!, $atMost: Int! = 1) {\n    deleteFromProfileContactsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n",
+): typeof import("./graphql").ProfileContactsManageDeleteMutationDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -275,8 +320,20 @@ export function gql(
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function gql(
+  source: "\n  query HomeInboxConversationPageQuery($conversationId: UUID!) {\n    conversation: viewerConversationById(conversationId: $conversationId) {\n      ...ConversationThreadFragment\n    }\n  }\n",
+): typeof import("./graphql").HomeInboxConversationPageQueryDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
   source: "\n  query HomePickerPageQuery {\n    viewerOrganizations(\n      filter: { organizationDisabledAt: { is: NULL } }\n      orderBy: [{ organizationName: AscNullsLast }]\n    ) {\n      edges {\n        node {\n          organizationId\n          organizationName\n          organizationSlug\n          tenant {\n            tenantId\n            tenantSlug\n            tenantName\n          }\n        }\n      }\n    }\n  }\n",
 ): typeof import("./graphql").HomePickerPageQueryDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  query OrgInboxConversationPageQuery($conversationId: UUID!) {\n    conversation: viewerConversationById(conversationId: $conversationId) {\n      ...ConversationThreadFragment\n    }\n  }\n",
+): typeof import("./graphql").OrgInboxConversationPageQueryDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -367,6 +424,12 @@ export function gql(
 export function gql(
   source: "\n  query HealthQuery {\n    healthCurrentTimestamp\n  }\n",
 ): typeof import("./graphql").HealthQueryDocument;
+/**
+ * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function gql(
+  source: "\n  fragment ConversationThreadFragment on Conversations {\n    conversationId\n    conversationSubject\n    conversationStatus\n    organizationId\n    agencyId\n    messages: conversationMessagesCollection(first: 250, orderBy: [{ messageCreatedAt: AscNullsLast }]) {\n      edges {\n        node {\n          conversationMessageId\n          messageBody\n          messageDirection\n          messageAuthor\n          messageChannel\n          messagePriority\n          messageCreatedAt\n          messageReadAt\n        }\n      }\n    }\n  }\n",
+): typeof import("./graphql").ConversationThreadFragmentFragmentDoc;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

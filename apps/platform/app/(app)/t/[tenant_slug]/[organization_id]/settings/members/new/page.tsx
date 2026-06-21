@@ -6,7 +6,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCountries } from "~/hooks/get-countries";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 import { InviteMemberForm } from "./invite-form";
 
@@ -23,7 +23,6 @@ export default async function NewMemberInvitePage(
   const { tenant_slug, organization_id: organization_id_param } = await props.params;
 
   const { t } = await getRosetta(LOCALES);
-  const locale = await getServerLocale();
 
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
@@ -69,7 +68,6 @@ export default async function NewMemberInvitePage(
           organization_id={organization_id}
           countries={countries}
           membersHref={membersHref}
-          locale={locale}
           tenantSlug={tenant_slug}
         />
       ) : (

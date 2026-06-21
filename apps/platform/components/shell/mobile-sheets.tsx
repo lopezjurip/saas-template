@@ -41,14 +41,12 @@ import { ROUTE, ROUTE_HREF } from "~/lib/route";
 export function MobileOrgSheet({
   open,
   onClose,
-  locale,
   tenant,
   organizations,
   current,
 }: {
   open: boolean;
   onClose: () => void;
-  locale: string;
   tenant: ShellTenant;
   organizations: ShellOrganization[];
   current: ShellOrganization;
@@ -109,12 +107,10 @@ export function MobileOrgSheet({
 export function MobileProfileSheet({
   open,
   onClose,
-  locale,
   viewer,
 }: {
   open: boolean;
   onClose: () => void;
-  locale: string;
   viewer: ShellViewer;
 }) {
   const { t } = useRosetta(LOCALES);
@@ -165,12 +161,12 @@ export function MobileProfileSheet({
   );
 }
 
-export function MobileSettingsSheet({ open, onClose, locale }: { open: boolean; onClose: () => void; locale: string }) {
+export function MobileSettingsSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useRosetta(LOCALES);
   const { theme, setTheme } = useTheme();
   const [pending, startTransition] = useTransition();
   const mounted = useMounted();
-  const [_, setLocale] = useLocaleCookie();
+  const [locale, setLocale] = useLocaleCookie();
 
   const themes = [
     { value: "light", label: t("themeLight"), Icon: Sun },
@@ -279,14 +275,12 @@ type SearchGroup = {
 export function MobileSearchSheet({
   open,
   onClose,
-  locale,
   tenant,
   organizations,
   current,
 }: {
   open: boolean;
   onClose: () => void;
-  locale: string;
   tenant: ShellTenant;
   organizations: ShellOrganization[];
   current: ShellOrganization;

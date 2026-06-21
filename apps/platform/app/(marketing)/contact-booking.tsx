@@ -11,12 +11,11 @@ const DATES = ["02", "03", "04", "05", "06"];
 const TIMESLOTS = ["09:30", "11:00", "13:30", "15:00", "16:30"];
 
 type ContactBookingProps = {
-  locale: string;
   labels: { week: string; timezone: string; book: string; write: string };
   days: string[];
 };
 
-export function ContactBooking({ locale, labels, days }: ContactBookingProps) {
+export function ContactBooking({ labels, days }: ContactBookingProps) {
   const [selectedDay, setSelectedDay] = useState(2);
   const [selectedSlot, setSelectedSlot] = useState("11:00");
 

@@ -1,39 +1,50 @@
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { actionMarkRead } from "~/components/inbox/actions";
 import { ConversationThread } from "~/components/inbox/conversation-thread";
-import { SCOPE_INBOX_HREF, SCOPE_RPC_ARGS } from "~/components/inbox/scope";
-import { getViewerAgencyBySlug, getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
+import { SCOPE_INBOX_HREF } from "~/components/inbox/scope";
+import { gql } from "~/generated/graphql";
+import { getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { ROSETTA } from "~/lib/i18n";
 import { getServerLocale } from "~/lib/i18n.server";
+
+// One colocated gql per file — conversation + its thread in a single round-trip. Do NOT reach
+// for a shared get-viewer-* hook here; spread the ConversationThreadFragment instead.
+const AgencyInboxConversationPageQuery = gql(`
+  query AgencyInboxConversationPageQuery($conversationId: UUID!) {
+    conversation: viewerConversationById(conversationId: $conversationId) {
+      ...ConversationThreadFragment
+    }
+  }
+`);
+
+// cache() dedupes the generateMetadata + render fetch into a single call for this request.
+const getConversation = cache(async (conversation_id: string) => {
+  const graphy = await getGraphySession();
+  const { data } = await graphy.query({
+    query: AgencyInboxConversationPageQuery,
+    variables: { conversationId: conversation_id },
+  });
+  return data?.["conversation"] ?? null;
+});
 
 export async function generateMetadata(
   props: PageProps<"/a/[agency_slug]/inbox/[conversation_id]">,
 ): Promise<Metadata> {
-  const { agency_slug, conversation_id } = await props.params;
+  const { conversation_id } = await props.params;
   const locale = await getServerLocale();
   const { t } = ROSETTA(LOCALES_META, locale);
 
-  const { data: agencyData } = await getViewerAgencyBySlug(agency_slug);
-  const agency = agencyData?.["agency"];
-  if (!agency) return { title: t("defaultTitle") };
-  const agency_id = agency["agencyId"];
-
-  const supabase = await createSupabaseServerClient();
-  const { data: rows } = await supabase.rpc("viewer_conversations", {
-    include_archived: true,
-    ...SCOPE_RPC_ARGS({ kind: "agency", agency_slug, agency_id }),
-  });
-  const conv = (rows ?? []).find((r) => r["conversation_id"] === conversation_id);
-
-  const subject = conv?.["conversation_subject"] || t("defaultTitle");
+  const conversation = await getConversation(conversation_id);
+  const subject = conversation?.["conversationSubject"] || t("defaultTitle");
   return { title: subject };
 }
 
 export default async function AgencyConversationPage(props: PageProps<"/a/[agency_slug]/inbox/[conversation_id]">) {
   const { agency_slug, conversation_id } = await props.params;
-  const locale = await getServerLocale();
 
   const supabase = await createSupabaseServerClient();
   const {
@@ -47,32 +58,21 @@ export default async function AgencyConversationPage(props: PageProps<"/a/[agenc
 
   const scope = { kind: "agency" as const, agency_slug, agency_id: agency["agencyId"] };
 
-  const [convsResult, msgsResult] = await Promise.all([
-    supabase.rpc("viewer_conversations", { include_archived: true, ...SCOPE_RPC_ARGS(scope) }),
-    supabase.rpc("viewer_conversation_messages", { p_conversation_id: conversation_id }),
-  ]);
+  const conversation = await getConversation(conversation_id);
+  if (!conversation) {
+    notFound();
+  }
 
-  const convRows = convsResult.data ?? [];
-  const conv = convRows.find((r) => r["conversation_id"] === conversation_id);
-  if (!conv) notFound();
-
-  const messages = msgsResult.data ?? [];
-
+  const messages = (conversation["messages"]?.["edges"] ?? []).map((edge) => edge["node"]);
   const unreadIds = messages
-    .filter((m) => !m["message_read_at"] && m["message_direction"] !== "outbound")
-    .map((m) => m["conversation_message_id"]);
+    .filter((m) => !m["messageReadAt"] && m["messageDirection"] !== "outbound")
+    .map((m) => m["conversationMessageId"]);
   if (unreadIds.length > 0) {
     await actionMarkRead(unreadIds);
   }
 
   return (
-    <ConversationThread
-      locale={locale}
-      conversation={conv}
-      initialMessages={messages}
-      viewerId={user?.id ?? ""}
-      backHref={SCOPE_INBOX_HREF(scope)}
-    />
+    <ConversationThread conversation={conversation} viewerId={user?.id ?? ""} backHref={SCOPE_INBOX_HREF(scope)} />
   );
 }
 

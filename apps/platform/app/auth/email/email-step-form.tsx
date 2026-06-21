@@ -1,6 +1,6 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import { useSupabase } from "@packages/supabase/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
@@ -8,10 +8,12 @@ import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { ArrowRight, Eye, EyeOff, Fingerprint, KeyRound, Lock, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { debug } from "~/lib/debug";
 import { notifyDevMailbox } from "~/lib/dev-mailbox-toast.client";
 import { useRosetta } from "~/lib/i18n.client";
-import { signInWithPasskey } from "~/lib/passkeys.client";
 import { OtpField } from "../_components/otp-field";
+
+const log = debug("forms:email-step-form");
 
 type Props = {
   email: string;
@@ -25,6 +27,7 @@ type Props = {
 export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: Props) {
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
+  const supabase = useSupabase();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -40,7 +43,6 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
   function onMagicLink() {
     setError(null);
     startTransition(async () => {
-      const supabase = createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -65,7 +67,6 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
   function verifyOtp(nextToken: string) {
     setError(null);
     startTransition(async () => {
-      const supabase = createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.verifyOtp({ email, token: nextToken, type: "email" });
       if (err) {
         setError(t("error_otp"));
@@ -86,7 +87,6 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const supabase = createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.signInWithPassword({ email, password });
       if (err) {
         setError(t("error_password"));
@@ -106,7 +106,11 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
           setError(t("error_no_passkey"));
           return;
         }
-        await signInWithPasskey();
+        const { error } = await supabase.auth.signInWithPasskey();
+        if (error) {
+          log.error("[signInWithPasskey] Failed to sign in with passkey", error);
+          throw error;
+        }
         router.push(`/auth/router?next=${encodeURIComponent(next)}`);
         router.refresh();
       } catch (err) {

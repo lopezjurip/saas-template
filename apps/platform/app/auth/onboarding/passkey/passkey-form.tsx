@@ -1,18 +1,21 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import { useSupabase } from "@packages/supabase/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Fingerprint } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { debug } from "~/lib/debug";
 import { useRosetta } from "~/lib/i18n.client";
-import { createPasskey } from "~/lib/passkeys.client";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
+
+const log = debug("app:forms:passkey");
 
 export function PasskeyForm({ email }: { email: string }) {
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
+  const supabase = useSupabase();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -24,8 +27,11 @@ export function PasskeyForm({ email }: { email: string }) {
           setError(t("error_no_support"));
           return;
         }
-        await createPasskey();
-        const supabase = createSupabaseBrowserClient();
+        const { error } = await supabase.auth.registerPasskey();
+        if (error) {
+          log.error("[createPasskey] Failed to register passkey", error);
+          throw error;
+        }
         await supabase.auth.refreshSession();
         router.push(ROUTE_HREF(ROUTE("/auth/onboarding")));
       } catch (e) {

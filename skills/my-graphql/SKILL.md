@@ -84,6 +84,52 @@ const HomePickerPageQuery = gql(`
 Reusable server query lives in `hooks/get-*.ts`; reusable client query in `hooks/use-*.ts`.
 Do not create generic query barrels.
 
+### One gql per file — colocate, don't stack shared hooks
+
+**Default: each page/route writes its OWN single `gql` query in its own file.** Duplicating a
+near-identical query in another file is fine and expected — colocation beats DRY here. A shared
+`get-viewer-*` / `use-viewer-*` hook is justified ONLY when a page needs *just that one resource*
+on its own. The moment a page loads several resources, do NOT chain multiple hooks (that's N
+sequential round-trips) — write ONE colocated query that pulls everything in a single call.
+`get-viewer-*` / `use-viewer-*` files carry a ⚠️ banner saying exactly this.
+
+Pass-through TS wrappers around a single query are the same anti-pattern as pass-through Server
+Actions: don't add a `getX` helper that only forwards to `graphy.query`. The one legit in-file
+helper is a `cache()`d fetch shared by `generateMetadata` + the page render — that dedupes the
+double-call into one round-trip per request.
+
+### Fragment lives on the component that renders the data
+
+When a (often client) component renders a record, export a fragment from THAT component file and
+have each page spread it into its own colocated query. The component derives its prop type from
+the fragment — no shared "view model" type, no `dict`/`t`-style prop threading.
+
+```tsx
+// components/inbox/conversation-thread.tsx  ("use client")
+export const ConversationThreadFragment = /*#__PURE__*/ gql(`
+  fragment ConversationThreadFragment on Conversations {
+    conversationId conversationStatus
+    messages: conversationMessagesCollection(first: 250, orderBy: [{ messageCreatedAt: AscNullsLast }]) {
+      edges { node { conversationMessageId messageBody messageCreatedAt } }
+    }
+  }
+`);
+export type ConversationThreadFragmentType = ResultOf<typeof ConversationThreadFragment>;
+export function ConversationThread({ conversation }: { conversation: ConversationThreadFragmentType }) { … }
+
+// app/(app)/home/inbox/[conversation_id]/page.tsx — its OWN query, spreads the fragment
+const HomeInboxConversationPageQuery = gql(`
+  query HomeInboxConversationPageQuery($conversationId: UUID!) {
+    conversation: viewerConversationById(conversationId: $conversationId) { ...ConversationThreadFragment }
+  }
+`);
+```
+
+`fragmentMasking: false` (see `graphql.config.ts`) → spread fields appear directly on the parent;
+`ResultOf<typeof Fragment>` is the unmasked shape. A page need not `import` the fragment const for
+the spread to resolve — codegen registers every `gql()` fragment globally and inlines it. UUID
+columns map to the `string` scalar, so a `uuid` param is `$x: UUID!` in the doc, `string` in TS.
+
 ## Reusable hook pattern (`get-*` / `use-*`)
 
 All `viewer*` collection hooks expose full pagination variables. Server hooks use
@@ -214,6 +260,11 @@ mutation CreateTenant($tenant_name: String!, $tenant_slug: String!) {
 - `volatile returns setof public.<table> rows 1` is exposed as a singular nullable
   `<Table>` object (not a connection). Preserve this SQL signature for create RPCs instead of
   returning only the primary-key scalar.
+- `stable returns setof public.<table> rows 1` is the same singular-object shape but on **Query**
+  — the canonical by-id read. Prefer it over `<Table>Collection(first: 1, filter: …)` when you
+  want a clean nullable object + relationship spread (no `edges[0].node`). Pattern: a `security
+  definer` SQL fn filtering `where … and profile_id = (select public.viewer_profile_id())`, e.g.
+  `viewer_conversation_by_id(conversation_id uuid)` → `viewerConversationById(conversationId: UUID!)`.
 - Relationships follow DB foreign keys; FK cardinality determines singular vs plural field name.
 
 ## SQL compatibility

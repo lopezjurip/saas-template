@@ -1,6 +1,6 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import { useSupabase } from "@packages/supabase/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -20,6 +20,7 @@ export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
   const { t } = useRosetta(LOCALES);
   const [error, setError] = useState<string | null>(null);
   const [deleting, startDelete] = useTransition();
+  const supabase = useSupabase();
   const dateFormatter = useIntlDateTimeFormat({ day: "2-digit", month: "short", year: "numeric" });
 
   function FORMAT_DATE(value: string | null | undefined): string {
@@ -30,7 +31,6 @@ export function PasskeysList({ passkeys }: { passkeys: Passkey[] }) {
   function onDelete(id: string) {
     setError(null);
     startDelete(async () => {
-      const supabase = createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.passkey.delete({ passkeyId: id });
       if (err) setError(t("error_delete"));
       else router.refresh();

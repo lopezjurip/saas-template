@@ -31,14 +31,12 @@ type PaletteGroup = {
 export function CommandPalette({
   open,
   onClose,
-  locale,
   tenant,
   organizations,
   current,
 }: {
   open: boolean;
   onClose: () => void;
-  locale: string;
   tenant: ShellTenant;
   organizations: ShellOrganization[];
   current: ShellOrganization;

@@ -1,6 +1,6 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import { useSupabase } from "@packages/supabase/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { ArrowRight, MessageCircle, Smartphone } from "lucide-react";
@@ -25,6 +25,7 @@ type Props = {
 export function PhoneStepForm({ phone, next, channels }: Props) {
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
+  const supabase = useSupabase();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [sentVia, setSentVia] = useState<Channel | null>(null);
@@ -33,7 +34,6 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
   function onSend(channel: Channel) {
     setError(null);
     startTransition(async () => {
-      const supabase = createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.signInWithOtp({
         phone,
         options: { shouldCreateUser: true, channel },
@@ -50,7 +50,6 @@ export function PhoneStepForm({ phone, next, channels }: Props) {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const supabase = createSupabaseBrowserClient();
       const { error: err } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
       if (err) {
         setError(t("error_otp"));

@@ -133,6 +133,29 @@ export type IntFilter = {
   neq?: number | null | undefined;
 };
 
+export enum MessageChannel {
+  Email = "email",
+  InApp = "in_app",
+  Sms = "sms",
+  WebPush = "web_push",
+  Whatsapp = "whatsapp",
+}
+
+/** Boolean expression comparing fields on type "MessageChannel" */
+export type MessageChannelFilter = {
+  eq?: MessageChannel | null | undefined;
+  in?: Array<MessageChannel> | null | undefined;
+  is?: FilterIs | null | undefined;
+  neq?: MessageChannel | null | undefined;
+};
+
+export enum NotificationPriority {
+  Critical = "critical",
+  High = "high",
+  Low = "low",
+  Medium = "medium",
+}
+
 /** Defines a per-field sorting order */
 export enum OrderByDirection {
   /** Ascending order, nulls first */
@@ -307,6 +330,43 @@ export type PermissionsOrderBy = {
   permissionUpdatedAt?: OrderByDirection | null | undefined;
 };
 
+export type ProfileContactsFilter = {
+  /** Returns true only if all its inner filters are true, otherwise returns false */
+  and?: Array<ProfileContactsFilter> | null | undefined;
+  contactValue?: StringFilter | null | undefined;
+  contactVerifiedAt?: DatetimeFilter | null | undefined;
+  messageChannel?: MessageChannelFilter | null | undefined;
+  nodeId?: IdFilter | null | undefined;
+  /** Negates a filter */
+  not?: ProfileContactsFilter | null | undefined;
+  /** Returns true if at least one of its inner filters is true, otherwise returns false */
+  or?: Array<ProfileContactsFilter> | null | undefined;
+  profileContactCreatedAt?: DatetimeFilter | null | undefined;
+  profileContactId?: UuidFilter | null | undefined;
+  profileContactUpdatedAt?: DatetimeFilter | null | undefined;
+  profileId?: UuidFilter | null | undefined;
+};
+
+export type ProfileContactsInsertInput = {
+  contactValue?: string | null | undefined;
+  contactVerifiedAt?: string | null | undefined;
+  messageChannel?: MessageChannel | null | undefined;
+  profileContactCreatedAt?: string | null | undefined;
+  profileContactId?: string | null | undefined;
+  profileContactUpdatedAt?: string | null | undefined;
+  profileId?: string | null | undefined;
+};
+
+export type ProfileContactsOrderBy = {
+  contactValue?: OrderByDirection | null | undefined;
+  contactVerifiedAt?: OrderByDirection | null | undefined;
+  messageChannel?: OrderByDirection | null | undefined;
+  profileContactCreatedAt?: OrderByDirection | null | undefined;
+  profileContactId?: OrderByDirection | null | undefined;
+  profileContactUpdatedAt?: OrderByDirection | null | undefined;
+  profileId?: OrderByDirection | null | undefined;
+};
+
 export enum ProfileIdentityDocumentKind {
   Nin = "nin",
   Passport = "passport",
@@ -432,12 +492,74 @@ export type UuidFilter = {
   neq?: string | null | undefined;
 };
 
+export type AgencyInboxConversationPageQueryQueryVariables = Exact<{
+  conversationId: string;
+}>;
+
+export type AgencyInboxConversationPageQueryQuery = {
+  conversation: {
+    conversationId: string;
+    conversationSubject: string | null;
+    conversationStatus: string;
+    organizationId: number | null;
+    agencyId: number | null;
+    messages: {
+      edges: Array<{
+        node: {
+          conversationMessageId: string;
+          messageBody: string | null;
+          messageDirection: string;
+          messageAuthor: string;
+          messageChannel: MessageChannel | null;
+          messagePriority: NotificationPriority | null;
+          messageCreatedAt: string;
+          messageReadAt: string | null;
+        };
+      }>;
+    } | null;
+  } | null;
+};
+
 export type AgencyCreateMutationMutationVariables = Exact<{
   agency_name: string;
   agency_slug: string;
 }>;
 
 export type AgencyCreateMutationMutation = { agency: { agencyId: number } | null };
+
+export type ProfileContactsManageQueryQueryVariables = Exact<{
+  orderBy?: Array<ProfileContactsOrderBy> | ProfileContactsOrderBy | null | undefined;
+}>;
+
+export type ProfileContactsManageQueryQuery = {
+  profileContactsCollection: {
+    edges: Array<{
+      node: {
+        profileContactId: string;
+        messageChannel: MessageChannel;
+        contactValue: string;
+        contactVerifiedAt: string | null;
+      };
+    }>;
+  } | null;
+};
+
+export type ProfileContactsManageInsertMutationMutationVariables = Exact<{
+  objects: Array<ProfileContactsInsertInput> | ProfileContactsInsertInput;
+}>;
+
+export type ProfileContactsManageInsertMutationMutation = {
+  insertIntoProfileContactsCollection: { affectedCount: number } | null;
+};
+
+export type ProfileContactsManageDeleteMutationMutationVariables = Exact<{
+  filter: ProfileContactsFilter;
+  atMost?: number;
+}>;
+
+export type ProfileContactsManageDeleteMutationMutation = {
+  deleteFromProfileContactsCollection: { affectedCount: number };
+};
 
 export type AccountProfilePageQueryQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -479,6 +601,34 @@ export type SessionsSectionSessionFragmentFragment = {
   notAfter: string | null;
 };
 
+export type HomeInboxConversationPageQueryQueryVariables = Exact<{
+  conversationId: string;
+}>;
+
+export type HomeInboxConversationPageQueryQuery = {
+  conversation: {
+    conversationId: string;
+    conversationSubject: string | null;
+    conversationStatus: string;
+    organizationId: number | null;
+    agencyId: number | null;
+    messages: {
+      edges: Array<{
+        node: {
+          conversationMessageId: string;
+          messageBody: string | null;
+          messageDirection: string;
+          messageAuthor: string;
+          messageChannel: MessageChannel | null;
+          messagePriority: NotificationPriority | null;
+          messageCreatedAt: string;
+          messageReadAt: string | null;
+        };
+      }>;
+    } | null;
+  } | null;
+};
+
 export type HomePickerPageQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type HomePickerPageQueryQuery = {
@@ -491,6 +641,34 @@ export type HomePickerPageQueryQuery = {
         tenant: { tenantId: number; tenantSlug: string; tenantName: string } | null;
       };
     }>;
+  } | null;
+};
+
+export type OrgInboxConversationPageQueryQueryVariables = Exact<{
+  conversationId: string;
+}>;
+
+export type OrgInboxConversationPageQueryQuery = {
+  conversation: {
+    conversationId: string;
+    conversationSubject: string | null;
+    conversationStatus: string;
+    organizationId: number | null;
+    agencyId: number | null;
+    messages: {
+      edges: Array<{
+        node: {
+          conversationMessageId: string;
+          messageBody: string | null;
+          messageDirection: string;
+          messageAuthor: string;
+          messageChannel: MessageChannel | null;
+          messagePriority: NotificationPriority | null;
+          messageCreatedAt: string;
+          messageReadAt: string | null;
+        };
+      }>;
+    } | null;
   } | null;
 };
 
@@ -672,6 +850,28 @@ export type ViewerOnboardingStateGetQuery = {
 export type HealthQueryQueryVariables = Exact<{ [key: string]: never }>;
 
 export type HealthQueryQuery = { healthCurrentTimestamp: string | null };
+
+export type ConversationThreadFragmentFragment = {
+  conversationId: string;
+  conversationSubject: string | null;
+  conversationStatus: string;
+  organizationId: number | null;
+  agencyId: number | null;
+  messages: {
+    edges: Array<{
+      node: {
+        conversationMessageId: string;
+        messageBody: string | null;
+        messageDirection: string;
+        messageAuthor: string;
+        messageChannel: MessageChannel | null;
+        messagePriority: NotificationPriority | null;
+        messageCreatedAt: string;
+        messageReadAt: string | null;
+      };
+    }>;
+  } | null;
+};
 
 export type ScopeSelectorOrgsQueryQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -1217,6 +1417,35 @@ export const SessionsSectionSessionFragmentFragmentDoc = new TypedDocumentString
     `,
   { fragmentName: "SessionsSectionSessionFragment" },
 ) as unknown as TypedDocumentString<SessionsSectionSessionFragmentFragment, unknown>;
+export const ConversationThreadFragmentFragmentDoc = new TypedDocumentString(
+  `
+    fragment ConversationThreadFragment on Conversations {
+  conversationId
+  conversationSubject
+  conversationStatus
+  organizationId
+  agencyId
+  messages: conversationMessagesCollection(
+    first: 250
+    orderBy: [{messageCreatedAt: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        conversationMessageId
+        messageBody
+        messageDirection
+        messageAuthor
+        messageChannel
+        messagePriority
+        messageCreatedAt
+        messageReadAt
+      }
+    }
+  }
+}
+    `,
+  { fragmentName: "ConversationThreadFragment" },
+) as unknown as TypedDocumentString<ConversationThreadFragmentFragment, unknown>;
 export const CountryGetFragmentFragmentDoc = new TypedDocumentString(
   `
     fragment CountryGetFragment on AddressesLevel0 {
@@ -1328,6 +1557,39 @@ export const ViewerTenantUseFragmentFragmentDoc = new TypedDocumentString(
     `,
   { fragmentName: "ViewerTenantUseFragment" },
 ) as unknown as TypedDocumentString<ViewerTenantUseFragmentFragment, unknown>;
+export const AgencyInboxConversationPageQueryDocument = new TypedDocumentString(`
+    query AgencyInboxConversationPageQuery($conversationId: UUID!) {
+  conversation: viewerConversationById(conversationId: $conversationId) {
+    ...ConversationThreadFragment
+  }
+}
+    fragment ConversationThreadFragment on Conversations {
+  conversationId
+  conversationSubject
+  conversationStatus
+  organizationId
+  agencyId
+  messages: conversationMessagesCollection(
+    first: 250
+    orderBy: [{messageCreatedAt: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        conversationMessageId
+        messageBody
+        messageDirection
+        messageAuthor
+        messageChannel
+        messagePriority
+        messageCreatedAt
+        messageReadAt
+      }
+    }
+  }
+}`) as unknown as TypedDocumentString<
+  AgencyInboxConversationPageQueryQuery,
+  AgencyInboxConversationPageQueryQueryVariables
+>;
 export const AgencyCreateMutationDocument = new TypedDocumentString(`
     mutation AgencyCreateMutation($agency_name: String!, $agency_slug: String!) {
   agency: viewerAgencyCreate(agencyName: $agency_name, agencySlug: $agency_slug) {
@@ -1335,6 +1597,40 @@ export const AgencyCreateMutationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<AgencyCreateMutationMutation, AgencyCreateMutationMutationVariables>;
+export const ProfileContactsManageQueryDocument = new TypedDocumentString(`
+    query ProfileContactsManageQuery($orderBy: [ProfileContactsOrderBy!] = [{profileContactCreatedAt: AscNullsLast}]) {
+  profileContactsCollection(orderBy: $orderBy) {
+    edges {
+      node {
+        profileContactId
+        messageChannel
+        contactValue
+        contactVerifiedAt
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<ProfileContactsManageQueryQuery, ProfileContactsManageQueryQueryVariables>;
+export const ProfileContactsManageInsertMutationDocument = new TypedDocumentString(`
+    mutation ProfileContactsManageInsertMutation($objects: [ProfileContactsInsertInput!]!) {
+  insertIntoProfileContactsCollection(objects: $objects) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<
+  ProfileContactsManageInsertMutationMutation,
+  ProfileContactsManageInsertMutationMutationVariables
+>;
+export const ProfileContactsManageDeleteMutationDocument = new TypedDocumentString(`
+    mutation ProfileContactsManageDeleteMutation($filter: ProfileContactsFilter!, $atMost: Int! = 1) {
+  deleteFromProfileContactsCollection(filter: $filter, atMost: $atMost) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<
+  ProfileContactsManageDeleteMutationMutation,
+  ProfileContactsManageDeleteMutationMutationVariables
+>;
 export const AccountProfilePageQueryDocument = new TypedDocumentString(`
     query AccountProfilePageQuery {
   profile: viewerProfile {
@@ -1381,6 +1677,39 @@ export const SessionsSectionPageQueryDocument = new TypedDocumentString(`
   refreshedAt
   notAfter
 }`) as unknown as TypedDocumentString<SessionsSectionPageQueryQuery, SessionsSectionPageQueryQueryVariables>;
+export const HomeInboxConversationPageQueryDocument = new TypedDocumentString(`
+    query HomeInboxConversationPageQuery($conversationId: UUID!) {
+  conversation: viewerConversationById(conversationId: $conversationId) {
+    ...ConversationThreadFragment
+  }
+}
+    fragment ConversationThreadFragment on Conversations {
+  conversationId
+  conversationSubject
+  conversationStatus
+  organizationId
+  agencyId
+  messages: conversationMessagesCollection(
+    first: 250
+    orderBy: [{messageCreatedAt: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        conversationMessageId
+        messageBody
+        messageDirection
+        messageAuthor
+        messageChannel
+        messagePriority
+        messageCreatedAt
+        messageReadAt
+      }
+    }
+  }
+}`) as unknown as TypedDocumentString<
+  HomeInboxConversationPageQueryQuery,
+  HomeInboxConversationPageQueryQueryVariables
+>;
 export const HomePickerPageQueryDocument = new TypedDocumentString(`
     query HomePickerPageQuery {
   viewerOrganizations(
@@ -1402,6 +1731,36 @@ export const HomePickerPageQueryDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<HomePickerPageQueryQuery, HomePickerPageQueryQueryVariables>;
+export const OrgInboxConversationPageQueryDocument = new TypedDocumentString(`
+    query OrgInboxConversationPageQuery($conversationId: UUID!) {
+  conversation: viewerConversationById(conversationId: $conversationId) {
+    ...ConversationThreadFragment
+  }
+}
+    fragment ConversationThreadFragment on Conversations {
+  conversationId
+  conversationSubject
+  conversationStatus
+  organizationId
+  agencyId
+  messages: conversationMessagesCollection(
+    first: 250
+    orderBy: [{messageCreatedAt: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        conversationMessageId
+        messageBody
+        messageDirection
+        messageAuthor
+        messageChannel
+        messagePriority
+        messageCreatedAt
+        messageReadAt
+      }
+    }
+  }
+}`) as unknown as TypedDocumentString<OrgInboxConversationPageQueryQuery, OrgInboxConversationPageQueryQueryVariables>;
 export const FinishTenantOnboardingMutationDocument = new TypedDocumentString(`
     mutation FinishTenantOnboardingMutation($tenant_id: Int!) {
   tenant: viewerTenantOnboardingFinish(tenantId: $tenant_id) {

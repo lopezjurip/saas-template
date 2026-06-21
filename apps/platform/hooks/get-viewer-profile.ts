@@ -1,3 +1,6 @@
+// ⚠️ Shared viewer hook — use ONLY when page needs just this one resource alone.
+// Many resources? Do NOT stack get-viewer-*/use-viewer-* hooks (= N round-trips).
+// Write ONE colocated gql in page file, spread fragments, single call.
 import "server-only";
 
 import type { ResultOf } from "@graphql-typed-document-node/core";
@@ -30,7 +33,7 @@ export const ViewerProfileGet = /*#__PURE__*/ gql(`
 /**
  * Fetches the authenticated viewer's profile via GraphQL (server-side).
  * @example
- * const { data: { profile } } = await getViewerProfile();
+ * const { data: { profile } = { ["profile"]: null } } = await getViewerProfile();
  */
 export const getViewerProfile = cache(async () => {
   const graphy = await getGraphySession();

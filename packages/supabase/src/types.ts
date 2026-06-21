@@ -1807,6 +1807,31 @@ export type Database = {
         Returns: number[];
       };
       viewer_agency_tenant_ids: { Args: never; Returns: number[] };
+      viewer_conversation_by_id: {
+        Args: { conversation_id: string };
+        Returns: {
+          agency_id: number | null;
+          conversation_created_at: string;
+          conversation_id: string;
+          conversation_kind: string;
+          conversation_last_message_at: string;
+          conversation_resolution: Json | null;
+          conversation_resolved_at: string | null;
+          conversation_resolved_channel: Database["public"]["Enums"]["message_channel"] | null;
+          conversation_status: string;
+          conversation_subject: string | null;
+          conversation_updated_at: string;
+          organization_id: number | null;
+          profile_id: string;
+          tenant_id: number | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "conversations";
+          isOneToOne: true;
+          isSetofReturn: true;
+        };
+      };
       viewer_conversation_messages: {
         Args: { p_conversation_id: string };
         Returns: {
