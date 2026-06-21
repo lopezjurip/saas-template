@@ -5,7 +5,7 @@
  * Sources are committed: first-party `my-*` + `codebase` in `skills/`, vendored
  * third-party in `skills-third-party/`. Each is symlinked into both agent stores
  * (`.agents/skills/` for Codex/Cursor/Copilot/OpenCode/Zed, `.claude/skills/` for
- * Claude Code), which stay gitignored. Also seeds `.env.local` from `.env.example`.
+ * Claude Code), which stay gitignored.
  *
  * We vendor third-party skills (committed) instead of `skills experimental_install`
  * because that clones every repo serially — slow. Refresh them with the `skills`
@@ -25,15 +25,6 @@ import { fileURLToPath } from "node:url";
 const rootDir = resolve(fileURLToPath(import.meta.url), "..", "..");
 const SOURCES = ["skills", "skills-third-party"];
 const STORES = [".agents/skills", ".claude/skills"];
-
-// Seed .env.local once — never clobber an existing one.
-const envLocal = join(rootDir, ".env.local");
-try {
-  await fs.access(envLocal);
-} catch {
-  await fs.copyFile(join(rootDir, ".env.example"), envLocal);
-  console.log("✓ Created .env.local from .env.example");
-}
 
 let linked = 0;
 for (const store of STORES) {

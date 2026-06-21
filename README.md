@@ -13,7 +13,6 @@ your own product; the infrastructure under `packages/*` is the part meant to be 
 ```bash
 pnpm install
 pnpm db:start                                       # starts local Supabase (Docker required)
-cp .env.example apps/platform/.env.local            # copy local-dev defaults
 bash scripts/development/https-setup.sh             # generate mkcert TLS certs (one-time)
 pnpm dev                                            # runs all apps and packages in parallel
 ```

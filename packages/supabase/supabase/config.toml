@@ -303,6 +303,14 @@ enabled = false
 # user_pool_id = "my-user-pool-id"
 # user_pool_region = "us-east-1"
 
+[auth.passkey]
+enabled = true
+
+[auth.webauthn]
+rp_display_name = "SaaS Template"
+rp_id = "env(NEXT_PUBLIC_APEX_HOSTNAME)"
+rp_origins = ["env(SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS)"]
+
 [edge_runtime]
 enabled = false
 # Configure one of the supported request policies: `oneshot`, `per_worker`.

@@ -85,15 +85,15 @@ REF_FILE="$REF_DIR/$(pwd | tr '/' '_')"
 mkdir -p "$REF_DIR"
 touch "$REF_FILE"
 
-# --- Start Supabase only if not already running ---
+# --- Start Supabase (stop first if already running for idempotency) ---
 RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null | wc -l | tr -d ' ')
 if [ "$RUNNING" -gt 0 ]; then
-  echo "Supabase ${INSTANCE_KEY} already running, skipping db:start"
-else
-  # Fresh project_id per workspace => fresh volume => `supabase start` applies
-  # migrations + seed.sql on init. No need for an extra `db:reset` afterwards.
-  PORT=$WORKTREE_PORT pnpm db:start
+  echo "Supabase ${INSTANCE_KEY} already running, stopping first..."
+  PORT=$WORKTREE_PORT pnpm db:stop
 fi
+# Fresh project_id per workspace => fresh volume => `supabase start` applies
+# migrations + seed.sql on init. No need for an extra `db:reset` afterwards.
+PORT=$WORKTREE_PORT pnpm db:start
 
 # Generate .env.development.local with full workspace-specific env (ports + app URLs).
 # Source both files so env-setup.ts can read SUPABASE_STUDIO_PORT and other overrides.
