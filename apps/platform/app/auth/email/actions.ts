@@ -12,7 +12,7 @@ const checkEmailSchema = z.object({
     .string()
     .min(1)
     .transform((v) => v.trim().toLowerCase()),
-  next: z.string().default("/"),
+  next: z.string().default("/auth/router"),
 });
 
 /**
@@ -52,5 +52,5 @@ const checkEmailRun = action.inputSchema(checkEmailSchema).action(async ({ parse
 
 export const checkEmail = formAction(checkEmailRun, (fd) => ({
   email: String(fd.get("email") ?? ""),
-  next: String(fd.get("next") ?? "/"),
+  next: String(fd.get("next") ?? "/auth/router"),
 }));

@@ -27,7 +27,9 @@ export default async function AuthRouterPage(props: PageProps<"/auth/router">) {
 
   const sp = await props.searchParams;
   const origin = HOST_FROM_HEADERS(await headers()).origin;
-  const next = RESOLVE_AUTH_NEXT(SINGLE(sp["next"]) ?? null, origin);
+  const rawNext = SINGLE(sp["next"]) ?? null;
+  // Self-reference guard: treat "/auth/router" as "no preference" to avoid a redirect loop.
+  const next = rawNext === "/auth/router" ? `${origin}/home` : RESOLVE_AUTH_NEXT(rawNext, origin);
 
   const state = await getViewerOnboardingState();
   if (!state.profile_onboarded_at) {

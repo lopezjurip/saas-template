@@ -11,7 +11,7 @@ type Channel = "sms" | "whatsapp";
 export default async function AuthPhonePage(props: PageProps<"/auth/phone">) {
   const sp = await props.searchParams;
   const phone = SINGLE(sp["value"]) ?? "";
-  const next = SINGLE(sp["next"]) ?? "/";
+  const next = SINGLE(sp["next"]) ?? "/auth/router";
   const errorCode = SINGLE(sp["error"]);
 
   if (errorCode === "invalid_phone" || !phone) {
