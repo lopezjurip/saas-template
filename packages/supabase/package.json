@@ -6,7 +6,7 @@
   "scripts": {
     "build:dry": "tsc --noEmit",
     "db:start": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase start",
-    "db:stop": "supabase stop",
+    "db:stop": "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase stop",
     "db:reset": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase db reset",
     "db:status": "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase status",
     "db:migrate:new": "supabase migration new",
