@@ -15,6 +15,14 @@ INSTANCE_KEY="${PROJECT_PREFIX}-${WS_HASH}"
 REF_DIR="$HOME/.worktree-refs/${INSTANCE_KEY}"
 REF_FILE="$REF_DIR/$(pwd | tr '/' '_')"
 rm -f "$REF_FILE"
+
+# Purge stale refs whose worktree directories no longer exist
+for _stale_ref in "$REF_DIR"/*; do
+  [ -f "$_stale_ref" ] || continue
+  _stale_dir=$(basename "$_stale_ref" | tr '_' '/')
+  [ -d "$_stale_dir" ] || rm -f "$_stale_ref"
+done
+
 REF_COUNT=$(ls "$REF_DIR" 2>/dev/null | wc -l | tr -d ' ')
 
 if [ "$REF_COUNT" -gt 0 ]; then
