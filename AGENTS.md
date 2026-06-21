@@ -486,6 +486,26 @@ mutation Bar($filter: TFilter!, $set: TUpdateInput!, $atMost: Int! = 1000) {
 }
 ```
 
+### GraphQL — one query per file; colocate fragments, don't stack shared hooks
+
+**Each page/route writes its OWN single `gql` in its own file.** Duplicating a near-identical query
+across files is fine — colocation beats DRY. A shared `get-viewer-*` / `use-viewer-*` hook is for
+when a page needs *just that one resource* alone; the moment a page loads several resources, do NOT
+chain multiple hooks (N sequential round-trips) — write ONE colocated query pulling everything in a
+single call. Those hook files carry a ⚠️ banner saying this. Don't add a pass-through TS wrapper that
+only forwards to `graphy.query` (same anti-pattern as a pass-through Server Action). The one legit
+in-file helper: a `cache()`d fetch shared by `generateMetadata` + the render to dedupe into one call.
+
+**Fragment lives on the component that renders the data.** Export a `*Fragment` from the (often
+client) component file; each page spreads it into its own query and the component derives its prop
+type from `ResultOf<typeof Fragment>` — no shared view-model type, no prop threading. `fragmentMasking`
+is off, so spread fields land directly on the parent and a page needn't `import` the fragment const
+for the spread to resolve. Canonical example: `ConversationThreadFragment` in
+`apps/platform/components/inbox/conversation-thread.tsx`, spread by the three `inbox/[conversation_id]`
+pages. For singular by-id reads prefer a `stable returns setof public.<table> rows 1` SQL fn (a
+Query singular object, e.g. `viewerConversationById`) over `…Collection(first: 1, filter: …)` — clean
+nullable object + relationship spread, no `edges[0].node`.
+
 ### SQL / PL/pgSQL style
 
 **Prefer `if / elsif` over consecutive `if … end if; if … end if;` blocks.** Consecutive guards waste lines and force reader to scan more `end if`s. Use `elsif` to chain, or combine with `or` when body is identical:
