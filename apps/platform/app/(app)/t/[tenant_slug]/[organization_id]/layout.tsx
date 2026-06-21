@@ -5,14 +5,12 @@ import { Shell } from "~/components/shell/shell";
 import { getViewerOrganizationById, getViewerOrganizations } from "~/hooks/get-viewer-organizations";
 import { getViewerProfile } from "~/hooks/get-viewer-profile";
 import { getViewerTenantBySlug } from "~/hooks/get-viewer-tenants";
-import { getServerLocale } from "~/lib/i18n.server";
 
 export default async function OrganizationLayout({
   children,
   params,
 }: LayoutProps<"/t/[tenant_slug]/[organization_id]">) {
   const { tenant_slug, organization_id: organization_id_param } = await params;
-  const locale = await getServerLocale();
   const organization_id = Number(organization_id_param);
   if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
 
@@ -43,14 +41,7 @@ export default async function OrganizationLayout({
   const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
 
   return (
-    <Shell
-      locale={locale}
-      tenant={tenant}
-      organizations={organizations}
-      current={current}
-      viewer={viewer}
-      defaultOpen={defaultOpen}
-    >
+    <Shell tenant={tenant} organizations={organizations} current={current} viewer={viewer} defaultOpen={defaultOpen}>
       {children}
     </Shell>
   );

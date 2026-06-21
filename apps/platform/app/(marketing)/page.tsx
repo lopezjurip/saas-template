@@ -321,7 +321,6 @@ export default async function HomePage(props: PageProps<"/">) {
                 <p className="font-mono text-xs text-muted-foreground">{t("contact.nospam")}</p>
               </div>
               <ContactBooking
-                locale={locale}
                 labels={{
                   week: t("contact.week"),
                   timezone: t("contact.timezone"),

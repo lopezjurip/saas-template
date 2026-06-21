@@ -1,3 +1,6 @@
+// ⚠️ Shared viewer hook — use ONLY when page needs just this one resource alone.
+// Many resources? Do NOT stack get-viewer-*/use-viewer-* hooks (= N round-trips).
+// Write ONE colocated gql in page file, spread fragments, single call.
 import "server-only";
 
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";

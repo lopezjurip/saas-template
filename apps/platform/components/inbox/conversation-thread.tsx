@@ -1,6 +1,6 @@
 "use client";
 
-import type { Database } from "@packages/supabase/types";
+import type { ResultOf } from "@graphql-typed-document-node/core";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Textarea } from "@packages/ui-common/shadcn/components/ui/textarea";
@@ -9,21 +9,50 @@ import { Archive, ArrowLeft, MessageSquare, Send } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { useRosetta } from "~/lib/i18n.client";
+import { gql } from "~/generated/graphql";
+import { useLocale, useRosetta } from "~/lib/i18n.client";
 import { actionArchive, actionPostMessage } from "./actions";
 
-type ConversationRow = Database["public"]["Functions"]["viewer_conversations"]["Returns"][number];
-type MessageRow = Database["public"]["Functions"]["viewer_conversation_messages"]["Returns"][number];
+/**
+ * Everything <ConversationThread/> renders: the conversation scalars plus its full message
+ * thread. Pages that mount the thread spread this fragment into their own colocated query —
+ * `...ConversationThreadFragment` — instead of going through a shared hook.
+ */
+export const ConversationThreadFragment = /*#__PURE__*/ gql(`
+  fragment ConversationThreadFragment on Conversations {
+    conversationId
+    conversationSubject
+    conversationStatus
+    organizationId
+    agencyId
+    messages: conversationMessagesCollection(first: 250, orderBy: [{ messageCreatedAt: AscNullsLast }]) {
+      edges {
+        node {
+          conversationMessageId
+          messageBody
+          messageDirection
+          messageAuthor
+          messageChannel
+          messagePriority
+          messageCreatedAt
+          messageReadAt
+        }
+      }
+    }
+  }
+`);
+
+export type ConversationThreadFragmentType = ResultOf<typeof ConversationThreadFragment>;
 
 type Message = {
-  conversation_message_id: string;
-  message_body: string | null;
-  message_direction: string;
-  message_author: string;
-  message_channel: string | null;
-  message_priority: string | null;
-  message_created_at: string;
-  message_read_at: string | null;
+  conversationMessageId: string;
+  messageBody: string | null;
+  messageDirection: string;
+  messageAuthor: string;
+  messageChannel: string | null;
+  messagePriority: string | null;
+  messageCreatedAt: string;
+  messageReadAt: string | null;
 };
 
 function CHANNEL_LABEL(channel: string | null, t: ReturnType<typeof useRosetta<typeof LOCALE_ES>>["t"]): string {
@@ -59,39 +88,37 @@ function PRIORITY_VARIANT(priority: string | null): "default" | "secondary" | "d
  * @example
  * <ConversationThread
  *   conversation={conv}
- *   initialMessages={msgs}
  *   viewerId={user.id}
  *   backHref={SCOPE_INBOX_HREF(scope)}
  * />
  */
 export function ConversationThread({
-  locale,
   conversation,
-  initialMessages,
   viewerId,
   backHref,
 }: {
-  locale: string;
-  conversation: ConversationRow;
-  initialMessages: MessageRow[];
+  conversation: ConversationThreadFragmentType;
   viewerId: string;
   backHref: Route;
 }) {
   const { t } = useRosetta(LOCALES);
+  const locale = useLocale();
 
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>(() =>
+    (conversation["messages"]?.["edges"] ?? []).map((edge) => edge["node"]),
+  );
   const [replyBody, setReplyBody] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
   const [archiveError, setArchiveError] = useState<string | null>(null);
-  const [isArchived, setIsArchived] = useState(conversation["conversation_status"] === "archived");
+  const [isArchived, setIsArchived] = useState(conversation["conversationStatus"] === "archived");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const conversationId = conversation["conversation_id"];
-  const subject = conversation["conversation_subject"] || t("noSubject");
-  const orgId = conversation["organization_id"];
-  const agencyId = conversation["agency_id"];
+  const conversationId = conversation["conversationId"];
+  const subject = conversation["conversationSubject"] || t("noSubject");
+  const orgId = conversation["organizationId"];
+  const agencyId = conversation["agencyId"];
   const scopeLabel = orgId ? t("scopeOrg") : agencyId ? t("scopeAgency") : t("scopePersonal");
 
   async function handleSend() {
@@ -102,16 +129,16 @@ export function ConversationThread({
 
     const optimisticId = `optimistic-${Date.now()}`;
     const optimisticMsg: Message = {
-      conversation_message_id: optimisticId,
-      message_body: body,
+      conversationMessageId: optimisticId,
+      messageBody: body,
       // The viewer's own reply persists as `inbound` (user → system); match it here so the
       // bubble doesn't flip sides on reload.
-      message_direction: "inbound",
-      message_author: viewerId,
-      message_channel: "in_app",
-      message_priority: null,
-      message_created_at: new Date().toISOString(),
-      message_read_at: null,
+      messageDirection: "inbound",
+      messageAuthor: viewerId,
+      messageChannel: "in_app",
+      messagePriority: null,
+      messageCreatedAt: new Date().toISOString(),
+      messageReadAt: null,
     };
     setMessages((prev) => [...prev, optimisticMsg]);
     setReplyBody("");
@@ -120,11 +147,11 @@ export function ConversationThread({
     try {
       const realId = await actionPostMessage(conversationId, body);
       setMessages((prev) =>
-        prev.map((m) => (m.conversation_message_id === optimisticId ? { ...m, conversation_message_id: realId } : m)),
+        prev.map((m) => (m.conversationMessageId === optimisticId ? { ...m, conversationMessageId: realId } : m)),
       );
     } catch {
       setSendError(t("sendError"));
-      setMessages((prev) => prev.filter((m) => m.conversation_message_id !== optimisticId));
+      setMessages((prev) => prev.filter((m) => m.conversationMessageId !== optimisticId));
       setReplyBody(body);
     } finally {
       setSending(false);
@@ -194,22 +221,22 @@ export function ConversationThread({
             {messages.map((msg) => {
               // Viewer-relative: `inbound` is the viewer's own message (right/primary, "me");
               // `outbound` is a notification sent to the viewer (left/muted, "them").
-              const isFromViewer = msg["message_direction"] === "inbound";
-              const isSystem = msg["message_direction"] === "system";
-              const timeStr = new Date(msg["message_created_at"]).toLocaleTimeString(locale, {
+              const isFromViewer = msg["messageDirection"] === "inbound";
+              const isSystem = msg["messageDirection"] === "system";
+              const timeStr = new Date(msg["messageCreatedAt"]).toLocaleTimeString(locale, {
                 hour: "2-digit",
                 minute: "2-digit",
               });
-              const dateStr = new Date(msg["message_created_at"]).toLocaleDateString(locale, {
+              const dateStr = new Date(msg["messageCreatedAt"]).toLocaleDateString(locale, {
                 month: "short",
                 day: "numeric",
               });
 
               if (isSystem) {
                 return (
-                  <div key={msg["conversation_message_id"]} className="flex justify-center">
+                  <div key={msg["conversationMessageId"]} className="flex justify-center">
                     <span className="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs">
-                      {msg["message_body"]}
+                      {msg["messageBody"]}
                     </span>
                   </div>
                 );
@@ -217,7 +244,7 @@ export function ConversationThread({
 
               return (
                 <div
-                  key={msg["conversation_message_id"]}
+                  key={msg["conversationMessageId"]}
                   className={cn("flex", isFromViewer ? "justify-end" : "justify-start")}
                 >
                   <div className={cn("max-w-[70%]", isFromViewer ? "items-end" : "items-start", "flex flex-col gap-1")}>
@@ -227,7 +254,7 @@ export function ConversationThread({
                         isFromViewer ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
                       )}
                     >
-                      {msg["message_body"]}
+                      {msg["messageBody"]}
                     </div>
                     <div
                       className={cn(
@@ -239,14 +266,14 @@ export function ConversationThread({
                       <span>
                         {dateStr} · {timeStr}
                       </span>
-                      {msg["message_channel"] && (
+                      {msg["messageChannel"] && (
                         <Badge variant="outline" className="text-tiny py-0">
-                          {CHANNEL_LABEL(msg["message_channel"], t)}
+                          {CHANNEL_LABEL(msg["messageChannel"], t)}
                         </Badge>
                       )}
-                      {msg["message_priority"] && msg["message_priority"] !== "normal" && (
-                        <Badge variant={PRIORITY_VARIANT(msg["message_priority"])} className="text-tiny py-0">
-                          {PRIORITY_LABEL(msg["message_priority"], t)}
+                      {msg["messagePriority"] && msg["messagePriority"] !== "normal" && (
+                        <Badge variant={PRIORITY_VARIANT(msg["messagePriority"])} className="text-tiny py-0">
+                          {PRIORITY_LABEL(msg["messagePriority"], t)}
                         </Badge>
                       )}
                     </div>

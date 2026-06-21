@@ -4006,7 +4006,9 @@ create trigger handle_tickets_updated_at
 alter table public.conversations enable row level security;
 
 revoke all on table public.conversations from anon, authenticated;
-grant select on table public.conversations to authenticated;
+-- `anon` grant is for pg_graphql schema visibility only; the select policy below is
+-- `to authenticated`, so anon matches no policy and sees zero rows (RLS default-deny).
+grant select on table public.conversations to anon, authenticated;
 grant select, insert, update, delete on table public.conversations to service_role;
 
 drop policy if exists "conversations select own" on public.conversations;
@@ -4020,7 +4022,9 @@ create policy "conversations select own"
 alter table public.conversation_messages enable row level security;
 
 revoke all on table public.conversation_messages from anon, authenticated;
-grant select on table public.conversation_messages to authenticated;
+-- `anon` grant is for pg_graphql schema visibility only (exposes the
+-- conversationMessagesCollection relationship); RLS below still default-denies anon rows.
+grant select on table public.conversation_messages to anon, authenticated;
 grant select, insert, update, delete on table public.conversation_messages to service_role;
 
 drop policy if exists "conversation_messages select own" on public.conversation_messages;
@@ -4087,6 +4091,8 @@ create policy "profile_topic_channels own"
 alter table public.profile_contacts enable row level security;
 
 revoke all on table public.profile_contacts from anon, authenticated;
+-- `anon` grant is for pg_graphql schema visibility only (introspection runs as anon); RLS below still gates every row to the owner.
+grant select, insert, delete on table public.profile_contacts to anon;
 grant select, insert, update, delete on table public.profile_contacts to authenticated;
 grant select, insert, update, delete on table public.profile_contacts to service_role;
 
@@ -4476,6 +4482,27 @@ create or replace function public.viewer_conversations(
   $$;
 
 grant execute on function public.viewer_conversations(boolean, int, int, text) to authenticated;
+
+-- viewer_conversation_by_id: single conversation owned by caller, by id.
+-- `setof ... rows 1` + stable → pg_graphql exposes it as the singular `viewerConversationById`
+-- Query object (not a connection). Pair with the conversationMessagesCollection relationship to
+-- fetch a conversation + its thread in one round-trip.
+create or replace function public.viewer_conversation_by_id(conversation_id uuid)
+  returns setof public.conversations rows 1
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select c.*
+    from public.conversations c
+    where c.conversation_id = viewer_conversation_by_id.conversation_id
+      and c.profile_id = (select public.viewer_profile_id())
+    limit 1;
+  $$;
+
+grant execute on function public.viewer_conversation_by_id(uuid) to authenticated;
 
 -- viewer_conversation_messages: thread messages for a conversation owned by caller.
 create or replace function public.viewer_conversation_messages(p_conversation_id uuid)

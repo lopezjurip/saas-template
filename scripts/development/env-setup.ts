@@ -20,6 +20,9 @@ const PLATFORM_ENV_PATH = join(ROOT, "apps/platform", TARGET_FILENAME);
 const CLAUDE_SETTINGS_DIR = join(ROOT, ".claude");
 const CLAUDE_SETTINGS_PATH = join(CLAUDE_SETTINGS_DIR, "settings.local.json");
 
+// config.toml decodes this bool on every supabase command; unset → "parse value as 'bool'".
+process.env["SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION"] ??= "true";
+
 let raw: string;
 try {
   raw = execSync("pnpm supabase status -o env", { cwd: SUPABASE_DIR, encoding: "utf-8" });

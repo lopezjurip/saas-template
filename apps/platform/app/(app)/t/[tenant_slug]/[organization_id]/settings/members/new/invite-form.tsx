@@ -34,11 +34,10 @@ interface Props {
   organization_id: number;
   countries: DocumentTripletCountry[];
   membersHref: Route;
-  locale: string;
   tenantSlug: string;
 }
 
-export function InviteMemberForm({ organization_id, countries, membersHref, locale, tenantSlug }: Props) {
+export function InviteMemberForm({ organization_id, countries, membersHref, tenantSlug }: Props) {
   function editHrefFor(organization_membership_id: number) {
     return ROUTE("/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit", {
       tenant_slug: tenantSlug,

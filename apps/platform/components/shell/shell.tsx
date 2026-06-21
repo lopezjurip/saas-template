@@ -23,7 +23,6 @@ import type { ShellViewer } from "~/components/shell/profile-menu";
 type MobileSheet = null | "search" | "org" | "profile" | "settings";
 
 export function Shell({
-  locale,
   tenant,
   organizations,
   current,
@@ -31,7 +30,6 @@ export function Shell({
   defaultOpen,
   children,
 }: {
-  locale: string;
   tenant: ShellTenant;
   organizations: ShellOrganization[];
   current: ShellOrganization;
@@ -55,7 +53,6 @@ export function Shell({
           (portaled to body when isMobile) from ever mounting — we use the custom drawer instead. */}
         {isMobile ? null : (
           <AppSidebar
-            locale={locale}
             tenant={tenant}
             organizations={organizations}
             current={current}
@@ -84,7 +81,6 @@ export function Shell({
         <CommandPalette
           open={paletteOpen}
           onClose={() => setPaletteOpen(false)}
-          locale={locale}
           tenant={tenant}
           organizations={organizations}
           current={current}
@@ -93,7 +89,6 @@ export function Shell({
         <MobileNavDrawer
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
-          locale={locale}
           tenant={tenant}
           organization={current}
           viewer={viewer}
@@ -111,7 +106,6 @@ export function Shell({
         <MobileSearchSheet
           open={mobileSheet === "search"}
           onClose={() => setMobileSheet(null)}
-          locale={locale}
           tenant={tenant}
           organizations={organizations}
           current={current}
@@ -119,18 +113,12 @@ export function Shell({
         <MobileOrgSheet
           open={mobileSheet === "org"}
           onClose={() => setMobileSheet(null)}
-          locale={locale}
           tenant={tenant}
           organizations={organizations}
           current={current}
         />
-        <MobileProfileSheet
-          open={mobileSheet === "profile"}
-          onClose={() => setMobileSheet(null)}
-          locale={locale}
-          viewer={viewer}
-        />
-        <MobileSettingsSheet open={mobileSheet === "settings"} onClose={() => setMobileSheet(null)} locale={locale} />
+        <MobileProfileSheet open={mobileSheet === "profile"} onClose={() => setMobileSheet(null)} viewer={viewer} />
+        <MobileSettingsSheet open={mobileSheet === "settings"} onClose={() => setMobileSheet(null)} />
       </SidebarProvider>
     </TooltipProvider>
   );

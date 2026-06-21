@@ -16,13 +16,11 @@ export type ShellOrganization = ViewerOrganizationUseFragmentType;
 export type ShellTenant = ViewerTenantUseFragmentType;
 
 export function OrgSwitcher({
-  locale,
   tenant,
   organizations,
   current,
   compact,
 }: {
-  locale: string;
   tenant: ShellTenant;
   organizations: ShellOrganization[];
   current: ShellOrganization;

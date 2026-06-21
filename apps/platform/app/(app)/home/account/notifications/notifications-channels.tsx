@@ -1,8 +1,9 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import { useSupabase } from "@packages/supabase/react";
 import { Switch } from "@packages/ui-common/shadcn/components/ui/switch";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useViewerProfile } from "~/hooks/use-viewer-profile";
 import { debug } from "~/lib/debug";
 import { useRosetta } from "~/lib/i18n.client";
 
@@ -33,16 +34,19 @@ function CHANNEL_ON(disabled: Set<PrefChannel>, channel: PrefChannel): boolean {
 export function NotificationsChannels() {
   const { t } = useRosetta(LOCALES);
   const [topicSlugs, setTopicSlugs] = useState<string[]>([]);
+
   // Channels that are explicitly disabled for at least one topic.
   const [disabledChannels, setDisabledChannels] = useState<Set<PrefChannel>>(new Set());
   const [loading, setLoading] = useState(true);
   const pendingRef = useRef<Map<string, { slug: string; channel: PrefChannel; enabled: boolean }>>(new Map());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const supabase = useSupabase();
+
+  const { data: { profile } = { ["profile"]: null } } = useViewerProfile();
 
   // Load topic slugs + existing prefs, then derive each channel's master state.
   useEffect(function loadData() {
     let cancelled = false;
-    const supabase = createSupabaseBrowserClient();
 
     async function fetch() {
       const [topicsRes, prefsRes] = await Promise.all([
@@ -87,18 +91,14 @@ export function NotificationsChannels() {
 
   // Flush pending upserts to DB in a single batched write.
   const flushPending = useCallback(async function flushPending() {
-    const supabase = createSupabaseBrowserClient();
+    if (!profile) return;
+
     const batch = Array.from(pendingRef.current.values());
     if (batch.length === 0) return;
     pendingRef.current.clear();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
     const rows = batch.map((item) => ({
-      profile_id: user.id,
+      profile_id: profile["profileId"],
       conversation_topic_slug: item.slug,
       message_channel: item.channel,
       enabled: item.enabled,

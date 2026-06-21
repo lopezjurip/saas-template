@@ -8,14 +8,14 @@
     "db:start": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase start",
     "db:stop": "supabase stop",
     "db:reset": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase db reset",
-    "db:status": "supabase status",
+    "db:status": "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase status",
     "db:migrate:new": "supabase migration new",
-    "db:migrate:up": "supabase migration up",
-    "generate:types": "supabase gen types --lang=typescript --local --schema public > src/types.ts",
+    "db:migrate:up": "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase migration up",
+    "generate:types": "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase gen types --lang=typescript --local --schema public > src/types.ts",
     "generate:graphql:schema": "graphql-codegen -c graphql.config.ts",
     "generate:graphql:schema:local": "graphql-codegen -c graphql.config.ts --local",
     "format": "biome check --diagnostic-level=error .",
-    "test:db": "supabase test db --local"
+    "test:db": "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase test db --local"
   },
   "exports": {
     "./*": "./src/*.ts"
