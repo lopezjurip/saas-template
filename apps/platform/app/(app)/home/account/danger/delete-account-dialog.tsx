@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
   Dialog,
@@ -14,8 +15,10 @@ import {
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
 import { Lock, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRosetta } from "~/lib/i18n.client";
+import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
+import { actionDeleteAccount } from "../actions";
 
 export function DeleteAccountDialog() {
   const { t } = useRosetta(LOCALES);
@@ -24,15 +27,27 @@ export function DeleteAccountDialog() {
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [password, setPassword] = useState("");
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
-  const canDelete = confirmation === confirmWord && password.length > 0;
+  const canDelete = confirmation === confirmWord && password.length > 0 && !pending;
 
   function onOpenChange(next: boolean) {
     setOpen(next);
     if (!next) {
       setConfirmation("");
       setPassword("");
+      setServerError(null);
     }
+  }
+
+  function onDelete() {
+    setServerError(null);
+    startTransition(async () => {
+      // Success redirects server-side (navigation in flight); only surface real errors.
+      const [, error] = await ErrorSafeAction.unwrap(actionDeleteAccount({ password }));
+      if (error instanceof ErrorSafeActionServer) setServerError(error.serverError);
+    });
   }
 
   return (
@@ -89,15 +104,20 @@ export function DeleteAccountDialog() {
               />
             </div>
           </div>
+          {serverError && (
+            <Alert variant="destructive">
+              <AlertDescription>{serverError}</AlertDescription>
+            </Alert>
+          )}
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">
+            <Button type="button" variant="outline" disabled={pending}>
               {t("cancel")}
             </Button>
           </DialogClose>
-          <Button type="button" variant="destructive" disabled={!canDelete}>
-            {t("delete_permanently")}
+          <Button type="button" variant="destructive" disabled={!canDelete} onClick={onDelete}>
+            {pending ? t("deleting") : t("delete_permanently")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -116,6 +136,7 @@ const LOCALE_ES = {
   label_password: "Contraseña actual",
   cancel: "Cancelar",
   delete_permanently: "Eliminar definitivamente",
+  deleting: "Eliminando…",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
@@ -129,6 +150,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
   label_password: "Current password",
   cancel: "Cancel",
   delete_permanently: "Delete permanently",
+  deleting: "Deleting…",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
@@ -142,6 +164,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   label_password: "Senha atual",
   cancel: "Cancelar",
   delete_permanently: "Excluir definitivamente",
+  deleting: "Excluindo…",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

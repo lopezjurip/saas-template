@@ -1,14 +1,41 @@
+import { getSupabaseServerUser } from "@packages/supabase/client.server";
+import { redirect } from "next/navigation";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { getRosetta } from "~/lib/i18n.server";
 import { DeleteAccountDialog } from "./delete-account-dialog";
 
+const DangerPageQuery = gql(`
+  query DangerPageQuery {
+    viewerOrganizations(filter: { organizationDisabledAt: { is: NULL } }) {
+      edges {
+        node {
+          organizationId
+        }
+      }
+    }
+  }
+`);
+
 export default async function DangerPage() {
+  const user = await getSupabaseServerUser();
+  if (!user) redirect("/auth?next=/home/account/danger");
+
+  const graphy = await getGraphySession();
+  const { data } = await graphy.query({ query: DangerPageQuery });
+  const orgCount = data?.["viewerOrganizations"]?.["edges"].length ?? 0;
+  const email = user["email"] ?? "";
+
   const { t } = await getRosetta(LOCALES);
 
   const DELETE_IMPACT = [
-    { text: t("impact_orgs_text"), strong: t("impact_orgs_strong"), tail: t("impact_orgs_tail") },
-    { text: t("impact_tokens_text"), strong: t("impact_tokens_strong"), tail: t("impact_tokens_tail") },
+    {
+      text: t("impact_orgs_text"),
+      strong: t(orgCount === 1 ? "impact_orgs_strong_one" : "impact_orgs_strong_many", { count: orgCount }),
+      tail: t("impact_orgs_tail"),
+    },
     { text: t("impact_sessions_text"), strong: t("impact_sessions_strong"), tail: t("impact_sessions_tail") },
-    { text: t("impact_email_text"), strong: t("impact_email_strong"), tail: t("impact_email_tail") },
+    { text: t("impact_email_text"), strong: email, tail: t("impact_email_tail") },
   ];
 
   return (
@@ -55,16 +82,13 @@ const LOCALE_ES = {
   warning_preamble: "Antes de continuar, ten en cuenta:",
   // impact items: text · strong · tail
   impact_orgs_text: "Sales de",
-  impact_orgs_strong: "3 organizaciones",
+  impact_orgs_strong_one: "{{count}} organización",
+  impact_orgs_strong_many: "{{count}} organizaciones",
   impact_orgs_tail: "donde tienes acceso.",
-  impact_tokens_text: "Tus",
-  impact_tokens_strong: "2 tokens activos",
-  impact_tokens_tail: "se invalidan en el momento.",
   impact_sessions_text: "Las sesiones en",
   impact_sessions_strong: "todos tus dispositivos",
   impact_sessions_tail: "se cierran.",
   impact_email_text: "El correo",
-  impact_email_strong: "juan@empresa.com",
   impact_email_tail: "queda libre para registrarse de nuevo en 30 días.",
   // footer
   deactivate_hint: "¿Solo necesitas un descanso? También puedes desactivar la cuenta temporalmente.",
@@ -78,16 +102,13 @@ const LOCALE_EN: typeof LOCALE_ES = {
   warning_title: "This cannot be undone.",
   warning_preamble: "Before continuing, keep in mind:",
   impact_orgs_text: "You will leave",
-  impact_orgs_strong: "3 organizations",
+  impact_orgs_strong_one: "{{count}} organization",
+  impact_orgs_strong_many: "{{count}} organizations",
   impact_orgs_tail: "you currently have access to.",
-  impact_tokens_text: "Your",
-  impact_tokens_strong: "2 active tokens",
-  impact_tokens_tail: "are invalidated immediately.",
   impact_sessions_text: "Sessions on",
   impact_sessions_strong: "all your devices",
   impact_sessions_tail: "are closed.",
   impact_email_text: "Your email",
-  impact_email_strong: "juan@empresa.com",
   impact_email_tail: "becomes available for new registrations after 30 days.",
   deactivate_hint: "Just need a break? You can also deactivate your account temporarily.",
 };
@@ -100,16 +121,13 @@ const LOCALE_PT: typeof LOCALE_ES = {
   warning_title: "Isso não pode ser desfeito.",
   warning_preamble: "Antes de continuar, considere:",
   impact_orgs_text: "Você sairá de",
-  impact_orgs_strong: "3 organizações",
+  impact_orgs_strong_one: "{{count}} organização",
+  impact_orgs_strong_many: "{{count}} organizações",
   impact_orgs_tail: "às quais tem acesso.",
-  impact_tokens_text: "Seus",
-  impact_tokens_strong: "2 tokens ativos",
-  impact_tokens_tail: "são invalidados imediatamente.",
   impact_sessions_text: "As sessões em",
   impact_sessions_strong: "todos os seus dispositivos",
   impact_sessions_tail: "são encerradas.",
   impact_email_text: "O e-mail",
-  impact_email_strong: "juan@empresa.com",
   impact_email_tail: "fica disponível para novo cadastro após 30 dias.",
   deactivate_hint: "Só precisa de uma pausa? Você também pode desativar a conta temporariamente.",
 };
