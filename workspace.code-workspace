@@ -1,5 +1,6 @@
 {
   "folders": [
+    { "name": "saas-template", "path": "." },
     { "name": "@apps/platform", "path": "apps/platform" },
     { "name": "@packages/debug", "path": "packages/debug" },
     { "name": "@packages/graphy", "path": "packages/graphy" },
@@ -13,6 +14,9 @@
     { "name": "@packages/ui-common", "path": "packages/ui-common" },
     { "name": "@packages/utils", "path": "packages/utils" }
   ],
+  "settings": {
+    "graphql-config.load.rootDir": "${workspaceFolder:saas-template}"
+  },
   "extensions": {
     "recommendations": [
       "biomejs.biome",

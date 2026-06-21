@@ -1,31 +1,25 @@
 import "server-only";
 
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { URL_NEW } from "@packages/utils/url";
 import { redirect } from "next/navigation";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { METHOD_ORDER, type OnboardingState } from "./state";
 
-/**
- * Viewer's profile and its latest avatar in a single round-trip. The avatar nests through the
- * `storage_profiles` relationship on Profiles (RLS-scoped), so onboarding reads everything it
- * needs with one GraphQL call instead of separate profile + storage queries.
- */
+const NEXT_PUBLIC_SUPABASE_URL = process.env["NEXT_PUBLIC_SUPABASE_URL"]!;
+
 const ViewerOnboardingStateGet = /*#__PURE__*/ gql(`
-  query ViewerOnboardingStateGet {
+  query ViewerOnboardingStateGet($email: String!) {
+    emailHasPassword(emailToCheck: $email)
     profile: viewerProfile {
       profileNameFull
       profileOnboardedAt
-      avatar: storage_profiles(
-        filter: { folder: { eq: "avatar" } }
-        orderBy: [{ createdAt: DescNullsLast }]
-        first: 1
-      ) {
-        edges {
-          node {
-            src
-          }
-        }
+      identity: profileIdentity {
+        profileIdentityId
+      }
+      avatar: profileStorageAvatar {
+        src
       }
     }
   }
@@ -33,36 +27,29 @@ const ViewerOnboardingStateGet = /*#__PURE__*/ gql(`
 
 export async function getViewerOnboardingState(): Promise<OnboardingState> {
   const supabase = await createSupabaseServerClient();
-  const { data: userResult } = await supabase.auth.getUser();
-  const user = userResult.user;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     redirect("/auth");
   }
 
   const graphy = await getGraphySession();
-  const [{ data: stateData }, { data: passkeyList }, { count: documentCount }] = await Promise.all([
-    graphy.query({ query: ViewerOnboardingStateGet }),
+  const [{ data }, { data: passkeyList }] = await Promise.all([
+    graphy.query({ query: ViewerOnboardingStateGet, variables: { email: user["email"] ?? "" } }),
     supabase.auth.passkey.list(),
-    // Own identity documents only — the select RLS policy also exposes managed employees' rows,
-    // so filter by profile_id to count just the viewer's.
-    supabase
-      .from("profile_identities")
-      .select("profile_identity_id", { count: "exact", head: true })
-      .eq("profile_id", user.id)
-      .is("profile_identity_disabled_at", null),
   ]);
 
-  const profile = stateData?.["profile"] ?? null;
-  const avatarSrc = profile?.["avatar"]?.["edges"]?.[0]?.["node"]?.["src"] ?? null;
+  const profile = data?.["profile"] ?? null;
+  const avatarSrc = profile?.["avatar"]?.["src"] ?? null;
 
-  const profile_name_full = profile?.["profileNameFull"] ?? "";
-  const profile_avatar_src = avatarSrc ? new URL(avatarSrc, process.env["NEXT_PUBLIC_SUPABASE_URL"]!).toString() : null;
-  const identities = user["identities"] ?? [];
-  const hasPassword = identities.some((i) => i["provider"] === "email");
-  const hasPasskey = (passkeyList?.length ?? 0) > 0;
+  const profile_name_full = profile ? profile["profileNameFull"] : null;
+  const profile_avatar_src = avatarSrc ? URL_NEW(avatarSrc, NEXT_PUBLIC_SUPABASE_URL).href : null;
+  const hasPassword = Boolean(data?.["emailHasPassword"]);
+  const hasPasskey = passkeyList ? passkeyList.length > 0 : false;
   const hasEmail = Boolean(user["email_confirmed_at"]);
   const hasPhone = Boolean(user["phone_confirmed_at"]);
-  const hasName = profile_name_full.trim().length >= 2;
+  const hasName = profile_name_full ? profile_name_full.trim().length >= 2 : false;
 
   return {
     profile_id: user.id,
@@ -76,7 +63,7 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
       password: hasPassword ? "done" : "pending",
       phone: hasPhone ? "done" : "pending",
       email: hasEmail ? "done" : "pending",
-      document: (documentCount ?? 0) > 0 ? "done" : "pending",
+      document: profile?.["identity"] ? "done" : "pending",
       profile: hasName ? "done" : "pending",
     },
   };

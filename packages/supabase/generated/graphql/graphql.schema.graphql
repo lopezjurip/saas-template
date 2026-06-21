@@ -2372,8 +2372,10 @@ type Profiles implements Node {
     """Sort order to apply to the collection"""
     orderBy: [ProfileIdentitiesOrderBy!]
   ): ProfileIdentitiesConnection
+  profileIdentity: ProfileIdentities
   profileNameFull: String
   profileOnboardedAt: Datetime
+  profileStorageAvatar: StorageProfiles
   profileUpdatedAt: Datetime!
   storage_profiles(
     """Query values in the collection after the provided cursor"""

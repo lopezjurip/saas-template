@@ -20,7 +20,7 @@ export type OnboardingState = {
   profile_id: string;
   email: string | null;
   phone: string | null;
-  profile_name_full: string;
+  profile_name_full: string | null;
   profile_avatar_src: string | null;
   profile_onboarded_at: string | null;
   methods: Record<OnboardingMethodId, OnboardingMethodStatus>;

@@ -292,6 +292,51 @@ mutation CreateTenant($tenant_name: String!, $tenant_slug: String!) {
   `viewer_conversation_by_id(conversation_id uuid)` → `viewerConversationById(conversationId: UUID!)`.
 - Relationships follow DB foreign keys; FK cardinality determines singular vs plural field name.
 
+### Computed relationships
+
+A SQL function whose first argument is a row type is exposed as a field on that type in GraphQL.
+Use `returns setof public.<table> rows 1` to get a singular nullable object (no `edges[0].node`
+unwrapping). Works for both tables and views.
+
+**Naming**: `public.profile_storage_avatar(this public.profiles)` → `profileStorageAvatar` on `Profiles`.
+
+**In GraphQL** — replaces a verbose collection query:
+
+```graphql
+# ❌ Before: collection with filter/orderBy + edges unwrap
+avatar: storage_profiles(
+  filter: { folder: { eq: "avatar" } }
+  orderBy: [{ createdAt: DescNullsLast }]
+  first: 1
+) {
+  edges { node { src } }
+}
+
+# ✅ After: computed relationship, plain object
+avatar: profileStorageAvatar {
+  src
+}
+```
+
+**SQL template** (full attribute rationale in `my-supabase`):
+
+```sql
+create or replace function public.<name>(this public.<parent_table>)
+  returns setof public.<child_table> rows 1
+  stable strict security invoker parallel safe
+  language sql set search_path to ''
+as $$
+  select * from public.<child_table>
+  where <fk_col> = this.<pk_col>
+    and <active_condition>
+  order by <pk_col> desc
+  limit 1;
+$$;
+grant execute on function public.<name>(public.<parent_table>) to anon, authenticated;
+```
+
+After adding: `generate:graphql:schema` → `generate:graphql`.
+
 ## SQL compatibility
 
 - No hyphens in identifiers or enum values. One invalid enum can break whole introspection.

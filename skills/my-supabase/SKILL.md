@@ -189,6 +189,45 @@ its own round-trip and transaction; a crash or race between them leaves the DB p
   expose it through pg_graphql and call it as a GraphQL mutation. Do NOT wrap it in a pass-through
   Server Action. (GraphQL exposure + return shape: see `my-graphql`.)
 
+## pg_graphql computed relationships
+
+Use a computed relationship to expose a related row as a single object field on a parent type,
+avoiding an extra SDK call. pg_graphql detects functions whose first argument is a row type.
+
+```sql
+create or replace function public.profile_identity(this public.profiles)
+  returns setof public.profile_identities rows 1
+  stable
+  strict
+  security invoker
+  parallel safe
+  language sql
+  set search_path to ''
+as $$
+  select *
+  from public.profile_identities
+  where profile_id = this.profile_id
+    and profile_identity_disabled_at is null
+  limit 1;
+$$;
+
+grant execute on function public.profile_identity(public.profiles) to anon, authenticated;
+```
+
+Works equally well for views — if the target is a `security_invoker` view (e.g. `storage_profiles`),
+the view's own RLS applies through the caller. Example: `profile_avatar` returns the latest avatar
+from the `storage_profiles` view with `folder = 'avatar' order by created_at desc limit 1`,
+replacing a verbose connection query (`edges[0].node.src`) with a plain object field (`avatar { src }`).
+
+Key attributes:
+- `rows 1` — tells pg_graphql to expose the result as a single object (not a connection).
+- `strict` — returns NULL automatically when `this` is NULL; no defensive null-check needed.
+- `security invoker` — runs as the calling user so RLS on the target table still applies; prefer over `security definer` unless you explicitly need to bypass RLS.
+- `parallel safe` — lets the planner parallelize queries that include this function.
+- Grant `execute` to `anon, authenticated` so pg_graphql can introspect and call it.
+
+After adding the function run `pnpm generate:graphql:schema` then `pnpm --filter @apps/platform run generate:graphql` to pick up the new field.
+
 ## Lifecycle/invariants
 
 Use constraints/triggers for facts that must survive every caller. Current schema protects
@@ -231,8 +270,10 @@ Without authenticated role, postgres bypasses RLS.
 
 ```bash
 pnpm db:reset
-pnpm generate:types
-pnpm generate:graphql:schema
-pnpm --filter @apps/platform run generate:graphql
+pnpm generate:types                               # Supabase TS types from DB
+pnpm generate:graphql:schema                      # GraphQL schema JSON/SDL from live DB
+pnpm --filter @apps/platform run generate:graphql # TS operation types from schema + operations
 pnpm test:db
 ```
+
+`generate:graphql:schema` must run before `generate:graphql` — the latter reads the schema JSON output of the former.
