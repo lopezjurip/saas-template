@@ -89,10 +89,28 @@ const lines = variables.map(({ key, value, secret }) => {
 
 const APP_PORT = process.env["PORT"] ?? "7003";
 const APP_URL = `https://${APEX_HOSTNAME}:${APP_PORT}`;
-const apiLocal = env["API_URL"] ?? "http://127.0.0.1:54421";
+const apiLocal = env["API_URL"] ?? "http://127.0.0.1:54321";
 const studioPort = process.env["SUPABASE_STUDIO_PORT"];
 const STUDIO_URL = studioPort ? PUBLIC_URL(apiLocal.replace(/:\d+/, `:${studioPort}`)) : "(unknown)";
-const MAILBOX_URL = PUBLIC_URL(env["INBUCKET_URL"] ?? env["MAILPIT_URL"] ?? "http://localhost:54424");
+const MAILBOX_URL = PUBLIC_URL(env["INBUCKET_URL"] ?? env["MAILPIT_URL"] ?? "http://localhost:54324");
+
+const SUPABASE_CLI_KEYS = [
+  "SUPABASE_PROJECT_ID",
+  "SUPABASE_SHADOW_PORT",
+  "SUPABASE_API_PORT",
+  "SUPABASE_DB_PORT",
+  "SUPABASE_STUDIO_PORT",
+  "SUPABASE_INBUCKET_PORT",
+  "SUPABASE_ANALYTICS_PORT",
+  "SUPABASE_AUTH_SITE_URL",
+  "SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS",
+  "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION",
+] as const;
+
+const supabaseCliLines = SUPABASE_CLI_KEYS
+  .map((k) => [k, process.env[k]] as const)
+  .filter(([, v]) => v !== undefined)
+  .map(([k, v]) => `${k}=${v}`);
 
 // Conductor/exe.dev assign ports at runtime; this is the source of truth.
 writeFileSync(
@@ -106,6 +124,8 @@ writeFileSync(
     # Supabase Studio: ${STUDIO_URL}
     # Mailbox:         ${MAILBOX_URL}
     # Database:        ${DATABASE_URL}
+
+    ${supabaseCliLines.join("\n")}
 
     ${lines.join("\n")}
   `,

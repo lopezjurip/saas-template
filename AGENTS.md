@@ -130,7 +130,7 @@ TLS cert from [mkcert](https://github.com/FiloSottile/mkcert). One-time setup: `
 
 Keep these aligned with the HTTPS dev origin — flipping any to `http://` breaks OAuth callbacks and passkey verification:
 
-- `WEBAUTHN_RELYING_PARTY_ORIGIN` (in `.env.example` + `apps/platform/.env.local`): `https://lvh.me:7003`
+- `WEBAUTHN_RELYING_PARTY_ORIGIN` (in `.env.development`): `https://lvh.me:7003`
 - `supabase/config.toml` `[auth].site_url`: `https://lvh.me:7003`
 - `supabase/config.toml` `[auth].additional_redirect_urls`: `https://lvh.me:7003/**` + `https://*.lvh.me:7003/**`
 

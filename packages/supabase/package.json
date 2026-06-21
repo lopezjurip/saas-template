@@ -5,17 +5,17 @@
   "sideEffects": false,
   "scripts": {
     "build:dry": "tsc --noEmit",
-    "db:start": "dotenvx run -f .env.supabase -- supabase start",
-    "db:stop": "dotenvx run -f .env.supabase -- supabase stop",
-    "db:reset": "dotenvx run -f .env.supabase -- supabase db reset",
-    "db:status": "dotenvx run -f .env.supabase -- supabase status",
+    "db:start": "dotenvx run -f ../../.env.development -f ../../.env.development.local -- supabase start",
+    "db:stop": "dotenvx run -f ../../.env.development -f ../../.env.development.local -- supabase stop",
+    "db:reset": "dotenvx run -f ../../.env.development -f ../../.env.development.local -- supabase db reset",
+    "db:status": "dotenvx run -f ../../.env.development -f ../../.env.development.local -- supabase status",
     "db:migrate:new": "supabase migration new",
-    "db:migrate:up": "dotenvx run -f .env.supabase -- supabase migration up",
-    "generate:types": "dotenvx run -f .env.supabase -- supabase gen types --lang=typescript --local --schema public > src/types.ts",
+    "db:migrate:up": "dotenvx run -f ../../.env.development -f ../../.env.development.local -- supabase migration up",
+    "generate:types": "dotenvx run -f ../../.env.development -f ../../.env.development.local -- supabase gen types --lang=typescript --local --schema public > src/types.ts",
     "generate:graphql:schema": "graphql-codegen -c graphql.config.ts",
     "generate:graphql:schema:local": "graphql-codegen -c graphql.config.ts --local",
     "format": "biome check --diagnostic-level=error .",
-    "test:db": "dotenvx run -f .env.supabase -- supabase test db --local"
+    "test:db": "dotenvx run -f ../../.env.development -f ../../.env.development.local -- supabase test db --local"
   },
   "exports": {
     "./*": "./src/*.ts"

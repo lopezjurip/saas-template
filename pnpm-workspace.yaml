@@ -2,6 +2,16 @@ packages:
   - apps/*
   - packages/*
 
+allowBuilds:
+  core-js: false
+  esbuild: false
+  protobufjs: false
+  sharp: false
+
+minimumReleaseAgeExclude:
+  - '@dotenvx/dotenvx@1.75.1'
+  - '@dotenvx/primitives@0.8.0'
+
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@vercel/speed-insights'

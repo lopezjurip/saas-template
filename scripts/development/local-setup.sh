@@ -35,12 +35,11 @@ else
   bash scripts/development/https-setup.sh
 fi
 
-# --- 2. Supabase env file ---
-if [ ! -f packages/supabase/.env.supabase ]; then
-  echo "→ creating packages/supabase/.env.supabase from example…"
-  cp packages/supabase/.env.supabase.example packages/supabase/.env.supabase
+# --- 2. Source env (defaults from .env.development, overrides from .env.development.local) ---
+set -a; source .env.development; set +a
+if [ -f .env.development.local ]; then
+  set -a; source .env.development.local; set +a
 fi
-set -a; source packages/supabase/.env.supabase; set +a
 
 RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${SUPABASE_PROJECT_ID}" 2>/dev/null | wc -l | tr -d ' ')
 if [ "$RUNNING" -gt 0 ]; then

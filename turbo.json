@@ -1,6 +1,13 @@
 {
   "$schema": "./node_modules/turbo/schema.json",
-  "globalDependencies": ["package.json", "pnpm-workspace.yaml", ".env.local"],
+  "globalDependencies": [
+    "package.json",
+    "pnpm-workspace.yaml",
+    ".env.local",
+    ".env.development",
+    ".env.development.local",
+    ".env"
+  ],
   "globalEnv": [
     "__NEXT_EXPERIMENTAL_HTTPS",
     "CONVERSATIONS_DRAIN_SECRET",
