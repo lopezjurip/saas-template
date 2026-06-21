@@ -139,6 +139,56 @@ create or replace function public.viewer_tenant_create(
 - Revoke protected execution from `public`; grant it only to trusted server roles.
 - Grant the viewer wrapper to `anon, authenticated` when pg_graphql needs anon visibility.
 
+## plpgsql style
+
+Prefer `if / elsif` over consecutive `if … end if; if … end if;` blocks. Consecutive guards
+waste lines and force the reader to scan more `end if`s. Chain with `elsif`, or combine with `or`
+when the body is identical:
+
+```sql
+-- ❌ Two separate blocks
+if public.viewer_profile_id() is null then
+  return old;
+end if;
+if old.permission_id not in ('members_manage', '*') then
+  return old;
+end if;
+
+-- ✅ Single block, elsif
+if public.viewer_profile_id() is null then
+  return old;
+elsif old.permission_id not in ('members_manage', '*') then
+  return old;
+end if;
+
+-- ✅ Same action → combine with `or`
+if old.organization_membership_revoked_at is not null or new.organization_membership_revoked_at is null then
+  return new;
+end if;
+```
+
+## Multi-step DB writes must be a single RPC
+
+Never sequence multiple `.from().insert()` / `.update()` for one logical operation — each call is
+its own round-trip and transaction; a crash or race between them leaves the DB partial. Write one
+`security definer` plpgsql function doing read-check + write atomically, call via `.rpc()`.
+
+- DB mutations (insert, update, upsert, permission checks) → SQL RPC, `security definer`.
+- External side effects (`auth.admin.*`, GoTrue user creation, email send) → stay in the action; can't be transactional.
+- RPCs raise with a stable locale key as the message; the action matches `rpcError.message` against
+  LOCALES keys — never parse prose:
+  ```sql
+  raise exception 'already_member' using errcode = 'P0001';
+  ```
+
+**Client choice** (which client calls the RPC):
+- **Service-role client** — RPCs requiring `caller_id` passed explicitly (service role has no JWT `sub`).
+- **Authenticated server client** — RPCs calling `viewer_profile_id()` internally (e.g. `actionRespondInvitation`).
+- **`useGraphyMutation` from the client component — DEFAULT for viewer-scoped mutations.** If the whole
+  workflow is transactional SQL, calls `viewer_*` internally, and needs no server-only API/secret,
+  expose it through pg_graphql and call it as a GraphQL mutation. Do NOT wrap it in a pass-through
+  Server Action. (GraphQL exposure + return shape: see `my-graphql`.)
+
 ## Lifecycle/invariants
 
 Use constraints/triggers for facts that must survive every caller. Current schema protects

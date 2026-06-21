@@ -129,10 +129,24 @@ export function Template({ locale = "es-CL", ...props }: Props) {
 Provider and consumer must be separate components; provider value is unavailable in same
 component render.
 
+## File ownership — never pass dictionaries or `t`
+
+Each file is the sole owner of its strings. Never import/export `LOCALES` between files; two files
+needing the same key each duplicate it (colocation beats DRY).
+
+- **Never pass the dictionary object as a prop.** A server page builds no `dict` to hand a client child.
+- **Never pass the translator (`t`) or a `ReturnType<typeof useRosetta>` across a function/component
+  boundary** as an argument or prop. Each component/sub-component calls `useRosetta(LOCALES)` itself
+  (`LOCALES` is module-scoped, so it's free). A helper that builds labelled data (tab descriptors,
+  menu items) does **not** take `t` — inline the build where `t` is in scope, or return string *keys*
+  and translate at the call site. A `t` parameter is the same anti-pattern as a `dict` prop.
+- **`LOCALE_ES` and `LOCALES` go at the bottom of the file**, after all component/function
+  definitions. They are data constants — keep imports and logic at the top.
+
 ## Rules
 
 - User-facing strings belong in dictionaries except deliberate prototypes.
 - Keep dictionaries near sole consumer.
-- Use `IS_SUPPORTED_LOCALE` before trusting route locale when needed.
+- Avoid `IS_SUPPORTED_LOCALE`, trust Rosetta.
 - HTML `lang` uses BCP47 mapping from `LOCALE_TO_BCP47` when full tag needed.
 - `generateStaticParams` for locale-parameterized pages must include `locale`: `SUPPORTED_LOCALES.flatMap(locale => items.map(item => ({ locale, ...item })))`.

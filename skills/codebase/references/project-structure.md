@@ -21,7 +21,7 @@ apps/
               page.tsx (15 lines)
             inbox/
               [conversation_id]/
-                page.tsx (13 lines)
+                page.tsx (16 lines)
               page.tsx (8 lines)
             settings/
               page.tsx (12 lines)
@@ -42,7 +42,7 @@ apps/
           layout.tsx (1 lines)
         agencies/
           create/
-            agency-create.tsx (21 lines)
+            agency-create.tsx (28 lines)
             page.tsx (7 lines)
           layout.tsx (3 lines)
         home/
@@ -55,13 +55,13 @@ apps/
             connections/
               page.tsx (9 lines)
             danger/
-              delete-account-dialog.tsx (20 lines)
-              page.tsx (2 lines)
+              delete-account-dialog.tsx (27 lines)
+              page.tsx (6 lines)
             language/
-              page.tsx (2 lines)
+              page.tsx (10 lines)
             notifications/
-              contacts-manage.tsx (28 lines)
-              notifications-channels.tsx (17 lines)
+              contacts-manage.tsx (29 lines)
+              notifications-channels.tsx (18 lines)
               page.tsx (4 lines)
               push-permission.tsx (3 lines)
             profile/
@@ -85,13 +85,13 @@ apps/
               page.tsx (6 lines)
               sessions-section.tsx (31 lines)
             theme/
-              page.tsx (2 lines)
-            actions.ts (9 lines)
+              page.tsx (9 lines)
+            actions.ts (10 lines)
             layout.tsx (10 lines)
             page.tsx (3 lines)
           inbox/
             [conversation_id]/
-              page.tsx (9 lines)
+              page.tsx (12 lines)
             page.tsx (8 lines)
           invites/
             [invite_id]/
@@ -103,7 +103,7 @@ apps/
             [organization_id]/
               inbox/
                 [conversation_id]/
-                  page.tsx (12 lines)
+                  page.tsx (19 lines)
                 page.tsx (8 lines)
               onboarding/
                 onboarding-banner.tsx (10 lines)
@@ -128,13 +128,13 @@ apps/
                   [organization_membership_id]/
                     edit/
                       edit-form.tsx (58 lines)
-                      page.tsx (28 lines)
+                      page.tsx (31 lines)
                   new/
-                    invite-form.tsx (37 lines)
+                    invite-form.tsx (36 lines)
                     page.tsx (15 lines)
                   actions.ts (13 lines)
-                  page.tsx (20 lines)
-                  pending-invitations.tsx (41 lines)
+                  page.tsx (27 lines)
+                  pending-invitations.tsx (40 lines)
                   schemas.ts (3 lines)
                 tenant/
                   domains/
@@ -146,7 +146,7 @@ apps/
                 layout.tsx (1 lines)
                 page.tsx (5 lines)
               dashboard-overview.tsx (48 lines)
-              layout.tsx (15 lines)
+              layout.tsx (14 lines)
               page.tsx (11 lines)
             layout.tsx (4 lines)
             page.tsx (18 lines)
@@ -173,7 +173,7 @@ apps/
         pricing/
           page.tsx (11 lines)
           pricing-client.tsx (55 lines)
-        contact-booking.tsx (16 lines)
+        contact-booking.tsx (15 lines)
         layout.tsx (12 lines)
         page.tsx (24 lines)
       api/
@@ -219,7 +219,7 @@ apps/
           document-triplet-fields.tsx (30 lines)
           oauth-section.tsx (11 lines)
           otp-field.tsx (7 lines)
-          passkey-sign-in-button.tsx (8 lines)
+          passkey-sign-in-button.tsx (9 lines)
         callback/
           route.ts (7 lines)
         confirm/
@@ -242,7 +242,7 @@ apps/
         error/
           page.tsx (9 lines)
         logout/
-          actions.ts (7 lines)
+          actions.ts (8 lines)
           page.tsx (11 lines)
         onboarding/
           _actions/
@@ -254,7 +254,7 @@ apps/
             ob-progress.tsx (12 lines)
             step-shell.tsx (9 lines)
           document/
-            document-form.tsx (18 lines)
+            document-form.tsx (21 lines)
             page.tsx (7 lines)
           email/
             email-form.tsx (17 lines)
@@ -317,8 +317,8 @@ apps/
         chips.tsx (17 lines)
       inbox/
         actions.ts (8 lines)
-        conversation-thread.tsx (41 lines)
-        inbox-list.tsx (12 lines)
+        conversation-thread.tsx (45 lines)
+        inbox-list.tsx (15 lines)
         scope-selector.tsx (39 lines)
         scope.ts (13 lines)
       shell/
@@ -334,7 +334,7 @@ apps/
         org-switcher.tsx (20 lines)
         profile-menu.tsx (16 lines)
         settings-menu.tsx (17 lines)
-        shell.tsx (50 lines)
+        shell.tsx (48 lines)
       dev-env-console.tsx (3 lines)
       entity-avatar.tsx (23 lines)
       entity-logo-controls.tsx (19 lines)
@@ -376,7 +376,7 @@ apps/
       use-intl.ts (18 lines)
       use-locale-cookie.ts (9 lines)
       use-onboarding.ts (18 lines)
-      use-push-permission.ts (12 lines)
+      use-push-permission.ts (13 lines)
       use-viewer-agencies.ts (18 lines)
       use-viewer-organizations.ts (27 lines)
       use-viewer-profile.ts (11 lines)
@@ -427,7 +427,6 @@ apps/
       i18n.client.ts (0 lines)
       i18n.server.ts (25 lines)
       i18n.ts (12 lines)
-      passkeys.client.ts (6 lines)
       route.ts (42 lines)
       safe-action.client.ts (26 lines)
       safe-action.server.ts (8 lines)
@@ -544,7 +543,7 @@ packages/
       react.ts (7 lines)
     supabase/
       migrations/
-        00000000000000_schema.sql (4082 lines)
+        00000000000000_schema.sql (4099 lines)
       templates/
         confirmation.html (4 lines)
         email_change.html (4 lines)
@@ -663,21 +662,23 @@ scripts/
     exe-dev-setup.sh (71 lines)
     https-setup.sh (21 lines)
     local-setup.sh (30 lines)
-    worktree-archive.sh (24 lines)
+    worktree-archive.sh (29 lines)
     worktree-setup.sh (79 lines)
   repomix-skill-rename.mjs (19 lines)
   skills-setup.mjs (26 lines)
 skills/
   my-auth/
     SKILL.md (138 lines)
+  my-conventions/
+    SKILL.md (212 lines)
   my-graphql/
-    SKILL.md (255 lines)
+    SKILL.md (331 lines)
   my-graphql-codegen/
     SKILL.md (144 lines)
   my-graphy/
     SKILL.md (141 lines)
   my-i18n/
-    SKILL.md (138 lines)
+    SKILL.md (152 lines)
   my-permissions/
     SKILL.md (132 lines)
   my-pr-quick/
@@ -689,7 +690,7 @@ skills/
   my-react-pdf/
     SKILL.md (102 lines)
   my-supabase/
-    SKILL.md (188 lines)
+    SKILL.md (238 lines)
   my-supabase-codegen/
     SKILL.md (126 lines)
   my-supabase-react/
@@ -697,9 +698,9 @@ skills/
   psql-query/
     SKILL.md (138 lines)
 .env.example (130 lines)
-.gitignore (63 lines)
+.gitignore (73 lines)
 .mcp.json (8 lines)
-AGENTS.md (608 lines)
+AGENTS.md (249 lines)
 biome.jsonc (125 lines)
 CLAUDE.md (1 lines)
 graphql.config.ts (1 lines)
@@ -707,7 +708,7 @@ package.json (56 lines)
 pnpm-workspace.yaml (13 lines)
 README.md (66 lines)
 repomix.config.ts (1 lines)
-skills-lock.json (158 lines)
+skills-lock.json (184 lines)
 tsconfig.json (6 lines)
 turbo.json (68 lines)
 workspace.code-workspace (27 lines)

@@ -9,19 +9,18 @@ metadata:
   date: January 2026
   abstract: Comprehensive Postgres performance optimization guide for developers using Supabase and Postgres. Contains performance rules across 8 categories, prioritized by impact from critical (query performance, connection management) to incremental (advanced features). Each rule includes detailed explanations, incorrect vs. correct SQL examples, query plan analysis, and specific performance metrics to guide automated optimization and code generation.
 ---
-
 # Supabase Postgres Best Practices
 
-Comprehensive performance optimization guide for Postgres, maintained by Supabase. Contains rules across 8 categories, prioritized by impact to guide automated query optimization and schema design.
+Perf optimization guide for Postgres by Supabase. 8 rule categories, prioritized by impact. Guides automated query optimization + schema design.
 
 ## When to Apply
 
-Reference these guidelines when:
+Use when:
 - Writing SQL queries or designing schemas
 - Implementing indexes or query optimization
-- Reviewing database performance issues
+- Reviewing DB perf issues
 - Configuring connection pooling or scaling
-- Optimizing for Postgres-specific features
+- Optimizing Postgres-specific features
 - Working with Row-Level Security (RLS)
 
 ## Rule Categories by Priority
@@ -39,7 +38,7 @@ Reference these guidelines when:
 
 ## How to Use
 
-Read individual rule files for detailed explanations and SQL examples:
+Read rule files for explanations + SQL examples:
 
 ```
 references/query-missing-indexes.md
@@ -47,12 +46,12 @@ references/query-partial-indexes.md
 references/_sections.md
 ```
 
-Each rule file contains:
-- Brief explanation of why it matters
-- Incorrect SQL example with explanation
-- Correct SQL example with explanation
+Each rule file has:
+- Why it matters
+- Bad SQL example + explanation
+- Good SQL example + explanation
 - Optional EXPLAIN output or metrics
-- Additional context and references
+- Extra context + references
 - Supabase-specific notes (when applicable)
 
 ## References
