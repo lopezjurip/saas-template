@@ -8,7 +8,7 @@ import { DocumentStepForm } from "./document-step-form";
 export default async function AuthDocumentPage(props: PageProps<"/auth/document">) {
   const sp = await props.searchParams;
   const value = SINGLE(sp["value"]) ?? "";
-  const next = SINGLE(sp["next"]) ?? "/";
+  const next = SINGLE(sp["next"]) ?? "/auth/router";
 
   const { t } = await getRosetta(LOCALES);
 

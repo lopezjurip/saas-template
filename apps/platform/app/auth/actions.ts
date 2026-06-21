@@ -15,7 +15,7 @@ const log = debug("auth");
 
 const signInWithOAuthSchema = z.object({
   provider: z.enum(OAUTH_PROVIDER_IDS),
-  next: z.string().default("/"),
+  next: z.string().default("/auth/router"),
 });
 
 /**
@@ -51,7 +51,7 @@ export async function signInWithOAuth(formData: FormData) {
   }
   await signInWithOAuthRun({
     provider,
-    next: String(formData.get("next") ?? "/"),
+    next: String(formData.get("next") ?? "/auth/router"),
   });
 }
 
@@ -133,7 +133,7 @@ async function continueWithDocument(value: string, next: string): Promise<never>
  * `email | phone | document` filled; we route to the right per-method check action.
  */
 export async function actionContinueAuth(formData: FormData): Promise<never> {
-  const next = String(formData.get("next") ?? "/");
+  const next = String(formData.get("next") ?? "/auth/router");
   const email = String(formData.get("email") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const document = String(formData.get("document") ?? "").trim();

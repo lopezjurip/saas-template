@@ -9,7 +9,7 @@ import { EmailStepForm } from "./email-step-form";
 export default async function AuthEmailPage(props: PageProps<"/auth/email">) {
   const sp = await props.searchParams;
   const email = SINGLE(sp["value"]) ?? "";
-  const next = SINGLE(sp["next"]) ?? "/";
+  const next = SINGLE(sp["next"]) ?? "/auth/router";
   const errorCode = SINGLE(sp["error"]);
 
   // Invalid/empty value or arriving without a value → bounce to the entry.

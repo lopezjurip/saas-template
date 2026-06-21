@@ -12,7 +12,7 @@ const checkPhoneSchema = z.object({
     .string()
     .min(1)
     .transform((v) => v.trim()),
-  next: z.string().default("/"),
+  next: z.string().default("/auth/router"),
 });
 
 /**
@@ -68,5 +68,5 @@ const checkPhoneRun = action.inputSchema(checkPhoneSchema).action(async ({ parse
 
 export const checkPhone = formAction(checkPhoneRun, (fd) => ({
   phone: String(fd.get("phone") ?? ""),
-  next: String(fd.get("next") ?? "/"),
+  next: String(fd.get("next") ?? "/auth/router"),
 }));

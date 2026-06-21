@@ -8,7 +8,7 @@ import { OAuthSection } from "./_components/oauth-section";
 
 export default async function AuthPage(props: PageProps<"/auth">) {
   const sp = await props.searchParams;
-  const next = SINGLE(sp["next"]) ?? "/";
+  const next = SINGLE(sp["next"]) ?? "/auth/router";
   const errorCode = SINGLE(sp["error"]);
 
   const { t } = await getRosetta(LOCALES);
