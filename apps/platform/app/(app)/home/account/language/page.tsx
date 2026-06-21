@@ -1,8 +1,19 @@
-import { LocaleToggle } from "~/components/locale-toggle";
-import { getRosetta } from "~/lib/i18n.server";
+"use client";
 
-export default async function AccountLanguagePage(props: PageProps<"/home/account/language">) {
-  const { t } = await getRosetta(LOCALES);
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@packages/ui-common/shadcn/components/ui/select";
+import { useLocaleCookie } from "~/hooks/use-locale-cookie";
+import { LOCALE_LABEL, SUPPORTED_LOCALES, type SupportedLocale } from "~/lib/i18n";
+import { useRosetta } from "~/lib/i18n.client";
+
+export default function AccountLanguagePage() {
+  const { t } = useRosetta(LOCALES);
+  const [current, setLocale] = useLocaleCookie();
 
   return (
     <div className="flex max-w-[720px] flex-col gap-4.5">
@@ -14,7 +25,18 @@ export default async function AccountLanguagePage(props: PageProps<"/home/accoun
         <p className="text-muted-foreground text-sm/normal leading-relaxed text-pretty">{t("description")}</p>
       </header>
 
-      <LocaleToggle />
+      <Select value={current} onValueChange={(v) => setLocale(v as SupportedLocale)}>
+        <SelectTrigger className="w-48">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {SUPPORTED_LOCALES.map((locale) => (
+            <SelectItem key={locale} value={locale}>
+              {LOCALE_LABEL[locale]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -25,16 +47,16 @@ const LOCALE_ES = {
   description: "Elige el idioma de la interfaz. Se aplica de inmediato en todos tus dispositivos.",
 };
 
-const LOCALE_EN: typeof LOCALE_ES = {
-  breadcrumb: "Preferences · Language",
-  heading: "Language",
-  description: "Choose the interface language. It applies right away across your devices.",
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    breadcrumb: "Preferences · Language",
+    heading: "Language",
+    description: "Choose the interface language. It applies right away across your devices.",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    breadcrumb: "Preferências · Idioma",
+    heading: "Idioma",
+    description: "Escolha o idioma da interface. É aplicado imediatamente em todos os seus dispositivos.",
+  } satisfies typeof LOCALE_ES,
 };
-
-const LOCALE_PT: typeof LOCALE_ES = {
-  breadcrumb: "Preferências · Idioma",
-  heading: "Idioma",
-  description: "Escolha o idioma da interface. É aplicado imediatamente em todos os seus dispositivos.",
-};
-
-const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

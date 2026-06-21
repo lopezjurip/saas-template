@@ -1,8 +1,18 @@
-import { ThemeToggle } from "~/components/theme-toggle";
-import { getRosetta } from "~/lib/i18n.server";
+"use client";
 
-export default async function AccountThemePage(props: PageProps<"/home/account/theme">) {
-  const { t } = await getRosetta(LOCALES);
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@packages/ui-common/shadcn/components/ui/select";
+import { useTheme } from "next-themes";
+import { useRosetta } from "~/lib/i18n.client";
+
+export default function AccountThemePage() {
+  const { t } = useRosetta(LOCALES);
+  const { theme, setTheme } = useTheme();
 
   return (
     <div className="flex max-w-[720px] flex-col gap-4.5">
@@ -14,7 +24,16 @@ export default async function AccountThemePage(props: PageProps<"/home/account/t
         <p className="text-muted-foreground text-sm/normal leading-relaxed text-pretty">{t("description")}</p>
       </header>
 
-      <ThemeToggle />
+      <Select value={theme ?? "system"} onValueChange={setTheme}>
+        <SelectTrigger className="w-48">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="light">{t("light")}</SelectItem>
+          <SelectItem value="system">{t("system")}</SelectItem>
+          <SelectItem value="dark">{t("dark")}</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -23,18 +42,27 @@ const LOCALE_ES = {
   breadcrumb: "Preferencias · Tema",
   heading: "Tema",
   description: "Claro, oscuro o según tu sistema. El cambio se aplica al instante.",
+  light: "Claro",
+  system: "Sistema",
+  dark: "Oscuro",
 };
 
-const LOCALE_EN: typeof LOCALE_ES = {
-  breadcrumb: "Preferences · Theme",
-  heading: "Theme",
-  description: "Light, dark, or follow your system. The change applies instantly.",
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    breadcrumb: "Preferences · Theme",
+    heading: "Theme",
+    description: "Light, dark, or follow your system. The change applies instantly.",
+    light: "Light",
+    system: "System",
+    dark: "Dark",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    breadcrumb: "Preferências · Tema",
+    heading: "Tema",
+    description: "Claro, escuro ou conforme o seu sistema. A mudança é aplicada na hora.",
+    light: "Claro",
+    system: "Sistema",
+    dark: "Escuro",
+  } satisfies typeof LOCALE_ES,
 };
-
-const LOCALE_PT: typeof LOCALE_ES = {
-  breadcrumb: "Preferências · Tema",
-  heading: "Tema",
-  description: "Claro, escuro ou conforme o seu sistema. A mudança é aplicada na hora.",
-};
-
-const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };
