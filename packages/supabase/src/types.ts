@@ -1,3 +1,8 @@
+[38
+2;
+236;
+213;
+63m⟐ injected env (43) from ../../.env.development, ../../.env.development.local[39m
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
@@ -1626,6 +1631,25 @@ export type Database = {
       phone_normalize: {
         Args: { default_code?: string; value: string };
         Returns: string;
+      };
+      profile_identity: {
+        Args: { this: Database["public"]["Tables"]["profiles"]["Row"] };
+        Returns: {
+          address_level0_id: string;
+          profile_id: string;
+          profile_identity_created_at: string;
+          profile_identity_disabled_at: string | null;
+          profile_identity_document_kind: Database["public"]["Enums"]["profile_identity_document_kind"];
+          profile_identity_document_value: string;
+          profile_identity_id: string;
+          profile_identity_updated_at: string;
+        };
+        SetofOptions: {
+          from: "profiles";
+          to: "profile_identities";
+          isOneToOne: true;
+          isSetofReturn: true;
+        };
       };
       profile_identity_resolve: {
         Args: {

@@ -2700,6 +2700,28 @@ create or replace function public.profile_identity_resolve(
 
 grant execute on function public.profile_identity_resolve(text, public.profile_identity_document_kind, text) to anon, authenticated;
 
+-- Computed relationship: exposes a profile's first active identity document via pg_graphql
+-- (viewerProfile.profileIdentity). Used by onboarding to check document completion in a
+-- single GraphQL round-trip without a separate Supabase SDK count query.
+create or replace function public.profile_identity(this public.profiles)
+  returns setof public.profile_identities rows 1
+  stable
+  language sql
+  strict
+  security invoker
+  parallel safe
+  set search_path to ''
+as $$
+  select *
+  from public.profile_identities
+  where profile_id = this.profile_id
+    and profile_identity_disabled_at is null
+  order by profile_identity_id desc
+  limit 1;
+$$;
+
+grant execute on function public.profile_identity(public.profiles) to anon, authenticated;
+
 -- ============================================================
 -- tenant tier + custom domains
 -- ============================================================
@@ -3172,6 +3194,27 @@ grant select on public.storage_profiles to authenticated, anon, service_role;
 -- the PARENT type (here `profiles`) returning a collection back; `foreign_name` is the
 -- field name on this view (`storage_profiles`) returning the single parent row.
 comment on view public.storage_profiles is e'@graphql({"primary_key_columns": ["storage_profile_id"], "foreign_keys": [{"local_name": "storage_profiles", "local_columns": ["profile_id"], "foreign_name": "profile", "foreign_schema": "public", "foreign_table": "profiles", "foreign_columns": ["profile_id"]}]})';
+
+-- Computed relationship: exposes the viewer's latest avatar as a single object on Profile,
+-- replacing the verbose storage_profiles collection query with a simple `profileAvatar { src }`.
+create or replace function public.profile_storage_avatar(this public.profiles)
+  returns setof public.storage_profiles rows 1
+  stable
+  strict
+  security invoker
+  parallel safe
+  language sql
+  set search_path to ''
+as $$
+  select *
+  from public.storage_profiles
+  where profile_id = this.profile_id
+    and folder = 'avatar'
+  order by created_at desc
+  limit 1;
+$$;
+
+grant execute on function public.profile_storage_avatar(public.profiles) to anon, authenticated;
 
 create or replace view public.storage_organizations
   with (security_invoker = on) as
