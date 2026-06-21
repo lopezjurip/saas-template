@@ -25,11 +25,11 @@ process.env["SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION"] ??= "true";
 
 let raw: string;
 try {
-  raw = execSync("pnpm supabase status -o env", { cwd: SUPABASE_DIR, encoding: "utf-8" });
+  raw = execSync("pnpm db:status:env", { cwd: SUPABASE_DIR, encoding: "utf-8" });
 } catch {
-  console.warn("Failed to get supabase status. Is the DB running? will run: pnpm db:start");
-  raw = execSync("pnpm db:start -o env", { cwd: SUPABASE_DIR, encoding: "utf-8" });
-  process.exit(1);
+  console.warn("Supabase not running, starting it now...");
+  execSync("pnpm db:start", { cwd: SUPABASE_DIR, stdio: "inherit" });
+  raw = execSync("pnpm db:status:env", { cwd: SUPABASE_DIR, encoding: "utf-8" });
 }
 
 const env: Record<string, string> = Object.fromEntries(
