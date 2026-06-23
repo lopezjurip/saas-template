@@ -7,6 +7,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { INITIALS_OF } from "@packages/utils/string";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type ComponentProps, useRef, useState } from "react";
+import { useRosetta } from "~/hooks/use-rosetta";
 
 const LOGO_ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 const LOGO_MAX_SIZE = 5 * 1024 * 1024;
@@ -44,7 +45,7 @@ export function EntityLogoControls({
   name,
   src,
   shape = "circle",
-  helpText = "Usa una imagen cuadrada. Si no subes una, seguimos mostrando las iniciales.",
+  helpText,
   className,
   ...props
 }: {
@@ -57,6 +58,8 @@ export function EntityLogoControls({
   helpText?: string;
 } & ComponentProps<"div">) {
   const router = useRouter();
+  const r = useRosetta(LOCALES);
+  const effectiveHelpText = helpText ?? r.t("helpText.default");
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -74,11 +77,11 @@ export function EntityLogoControls({
       return;
     }
     if (!LOGO_ALLOWED_MIME_TYPES.has(file.type)) {
-      setServerError("Solo aceptamos PNG, JPEG, WebP o GIF.");
+      setServerError(r.t("error.invalidType"));
       return;
     }
     if (file.size > LOGO_MAX_SIZE) {
-      setServerError("La imagen no puede superar 5 MiB.");
+      setServerError(r.t("error.tooLarge"));
       return;
     }
 
@@ -117,7 +120,7 @@ export function EntityLogoControls({
 
       router.refresh();
     } catch (error) {
-      setServerError(error instanceof Error ? error.message : "No pudimos subir la imagen.");
+      setServerError(error instanceof Error ? error.message : r.t("error.uploadFailed"));
     } finally {
       setBusy(false);
     }
@@ -149,7 +152,7 @@ export function EntityLogoControls({
       }
       router.refresh();
     } catch (error) {
-      setServerError(error instanceof Error ? error.message : "No pudimos quitar la imagen.");
+      setServerError(error instanceof Error ? error.message : r.t("error.removeFailed"));
     } finally {
       setBusy(false);
     }
@@ -180,7 +183,7 @@ export function EntityLogoControls({
             onChange={handleUpload}
           />
           <Button type="button" variant="outline" size="sm" disabled={busy} onClick={triggerUpload}>
-            {busy ? "Procesando…" : src ? "Cambiar imagen" : "Subir imagen"}
+            {busy ? r.t("button.processing") : src ? r.t("button.change") : r.t("button.upload")}
           </Button>
           <Button
             type="button"
@@ -190,12 +193,53 @@ export function EntityLogoControls({
             className="text-muted-foreground"
             onClick={handleRemove}
           >
-            {busy ? "Quitando…" : "Quitar"}
+            {busy ? r.t("button.removing") : r.t("button.remove")}
           </Button>
         </div>
       </div>
-      <p className="text-muted-foreground text-xs leading-snug">{helpText}</p>
+      <p className="text-muted-foreground text-xs leading-snug">{effectiveHelpText}</p>
       {serverError && <p className="text-destructive text-xs leading-snug">{serverError}</p>}
     </div>
   );
 }
+
+const LOCALE_ES = {
+  "helpText.default": "Usa una imagen cuadrada. Si no subes una, seguimos mostrando las iniciales.",
+  "error.invalidType": "Solo aceptamos PNG, JPEG, WebP o GIF.",
+  "error.tooLarge": "La imagen no puede superar 5 MiB.",
+  "error.uploadFailed": "No pudimos subir la imagen.",
+  "error.removeFailed": "No pudimos quitar la imagen.",
+  "button.processing": "Procesando…",
+  "button.change": "Cambiar imagen",
+  "button.upload": "Subir imagen",
+  "button.removing": "Quitando…",
+  "button.remove": "Quitar",
+};
+
+const LOCALES = {
+  es: LOCALE_ES,
+  en: {
+    "helpText.default": "Use a square image. If you don't upload one, we'll keep showing the initials.",
+    "error.invalidType": "We only accept PNG, JPEG, WebP or GIF.",
+    "error.tooLarge": "The image cannot exceed 5 MiB.",
+    "error.uploadFailed": "We couldn't upload the image.",
+    "error.removeFailed": "We couldn't remove the image.",
+    "button.processing": "Processing…",
+    "button.change": "Change image",
+    "button.upload": "Upload image",
+    "button.removing": "Removing…",
+    "button.remove": "Remove",
+  } satisfies typeof LOCALE_ES,
+  pt: {
+    "helpText.default": "Use uma imagem quadrada. Se não enviar uma, continuaremos mostrando as iniciais.",
+    "error.invalidType": "Só aceitamos PNG, JPEG, WebP ou GIF.",
+    "error.tooLarge": "A imagem não pode ultrapassar 5 MiB.",
+    "error.uploadFailed": "Não conseguimos enviar a imagem.",
+    "error.removeFailed": "Não conseguimos remover a imagem.",
+    "button.processing": "Processando…",
+    "button.change": "Alterar imagem",
+    "button.upload": "Enviar imagem",
+    "button.removing": "Removendo…",
+    "button.remove": "Remover",
+  } satisfies typeof LOCALE_ES,
+};
