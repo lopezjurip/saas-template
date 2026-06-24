@@ -1,0 +1,21 @@
+{
+  "$schema": "https://paseo.sh/schemas/paseo.json.v1.json",
+  "worktree": {
+    "setup": "WORKTREE_NAME=$PASEO_BRANCH_NAME WORKTREE_PORT=$PASEO_WORKTREE_PORT WORKTREE_ROOT_PATH=$PASEO_SOURCE_CHECKOUT_PATH WORKTREE_PROJECT=saas-template bash scripts/development/worktree-setup.sh",
+    "teardown": "WORKTREE_NAME=$PASEO_BRANCH_NAME WORKTREE_PROJECT=saas-template bash scripts/development/worktree-archive.sh"
+  },
+  "scripts": {
+    "platform": {
+      "type": "service",
+      "command": "pnpm run -w dev --filter={apps/platform} -- --port $PASEO_WORKTREE_PORT"
+    },
+    "react-email": {
+      "type": "service",
+      "command": "PORT=$(($PASEO_WORKTREE_PORT+7)) pnpm run -w dev --filter={packages/react-email}"
+    },
+    "react-pdf": {
+      "type": "service",
+      "command": "PORT=$(($PASEO_WORKTREE_PORT+8)) pnpm run -w dev --filter={packages/react-pdf}"
+    }
+  }
+}
