@@ -48,7 +48,7 @@ const CheckTenantPermissionQuery = gql(`
 `);
 
 const InsertSsoProviderMutation = gql(`
-  mutation InsertSsoProvider($tenantId: BigInt!, $ssoProviderId: String!, $label: String!, $domains: JSON!, $enabled: Boolean!) {
+  mutation InsertSsoProvider($tenantId: Int!, $ssoProviderId: String!, $label: String!, $domains: [String]!, $enabled: Boolean!) {
     insertIntoTenantSsoProvidersCollection(objects: [{
       tenantId: $tenantId
       ssoProviderId: $ssoProviderId
@@ -62,7 +62,7 @@ const InsertSsoProviderMutation = gql(`
 `);
 
 const DeleteSsoProviderMutation = gql(`
-  mutation DeleteSsoProvider($tenantId: BigInt!, $ssoProviderId: String!) {
+  mutation DeleteSsoProvider($tenantId: Int!, $ssoProviderId: String!) {
     deleteFromTenantSsoProvidersCollection(
       filter: { tenantId: { eq: $tenantId }, ssoProviderId: { eq: $ssoProviderId } }
       atMost: 1
@@ -104,10 +104,10 @@ export const actionSSOProviderCreate = authedAction.inputSchema(createSchema).ac
   await graphyAdmin.mutate({
     query: InsertSsoProviderMutation,
     variables: {
-      tenantId: String(parsedInput["tenant_id"]),
+      tenantId: parsedInput["tenant_id"],
       ssoProviderId: provider["id"],
       label: parsedInput["label"],
-      domains: JSON.stringify(domains),
+      domains,
       enabled: true,
     },
   });
@@ -138,7 +138,7 @@ export const actionSSOProviderDelete = authedAction.inputSchema(deleteSchema).ac
   await graphyAdmin.mutate({
     query: DeleteSsoProviderMutation,
     variables: {
-      tenantId: String(parsedInput["tenant_id"]),
+      tenantId: parsedInput["tenant_id"],
       ssoProviderId: parsedInput["sso_provider_id"],
     },
   });

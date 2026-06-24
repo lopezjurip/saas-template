@@ -95,7 +95,7 @@ select is(
 reset role;
 
 -- ============================================================
--- viewer_conversations / viewer_conversation_messages / viewer_unread_count
+-- viewer_conversations_collection / viewer_conversation_messages_collection / viewer_unread_count
 -- ============================================================
 
 set local role authenticated;
@@ -107,20 +107,20 @@ set local request.jwt.claims to '{
 select ok(
   (
     select count(*)::int >= 1
-    from public.viewer_conversations()
+    from public.viewer_conversations_collection()
     where conversation_id = (select conversation_id from _c_ids)
   ),
-  'viewer_conversations includes Alice test conversation'
+  'viewer_conversations_collection includes Alice test conversation'
 );
 
 select ok(
   (
     select count(*)::int >= 1
-    from public.viewer_conversation_messages(
+    from public.viewer_conversation_messages_collection(
       (select conversation_id from _c_ids)
     )
   ),
-  'viewer_conversation_messages returns thread messages for owned conversation'
+  'viewer_conversation_messages_collection returns thread messages for owned conversation'
 );
 
 select ok(
@@ -217,20 +217,20 @@ select is(
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations()
+    from public.viewer_conversations_collection()
     where conversation_id = (select conversation_id from _c_ids)
   ),
   0,
-  'viewer_conversations excludes archived test conversation by default'
+  'viewer_conversations_collection excludes archived test conversation by default'
 );
 
 select ok(
   (
     select count(*)::int >= 1
-    from public.viewer_conversations(true)
+    from public.viewer_conversations_collection(true)
     where conversation_id = (select conversation_id from _c_ids)
   ),
-  'viewer_conversations includes archived when include_archived = true'
+  'viewer_conversations_collection includes archived when include_archived = true'
 );
 
 reset role;

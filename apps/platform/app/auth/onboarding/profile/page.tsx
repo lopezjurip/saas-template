@@ -17,12 +17,12 @@ export default async function OnboardingProfilePage() {
         <StepShell methods={state.methods} current="profile" title={t("title")} subtitle={t("subtitle")}>
           <ProfileAvatarControls
             profileId={state.profile_id}
-            name={state.profile_name_full}
+            name={state.profile_name_full ?? ""}
             avatarSrc={state.profile_avatar_src}
           />
           <ProfileForm
             profile_id={state.profile_id}
-            defaultName={state.profile_name_full}
+            defaultName={state.profile_name_full ?? ""}
             identityValue={state.email ?? state.phone ?? ""}
           />
         </StepShell>

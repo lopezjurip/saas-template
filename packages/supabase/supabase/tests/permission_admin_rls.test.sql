@@ -1,6 +1,6 @@
 -- Public-SDK + RLS permission administration that MCP relies on:
 --   1. agencies_organizations_grants write policy (the ORG side, gated by organization_manage)
---   2. viewer_organization_membership_set_permissions (atomic preset apply, gated by members_manage)
+--   2. viewer_organization_membership_set_permissions_collection (atomic preset apply, gated by members_manage)
 -- Seed (seed.sql):
 --   Alice (a11c): org 1 wildcard '*' (so organization_manage + members_manage), org 2 presets_manage.
 --   Bob   (b00b): org 1 presets_manage only.
@@ -66,9 +66,9 @@ select throws_ok(
   'a member without organization_manage cannot grant agency access'
 );
 
--- viewer_organization_membership_set_permissions requires members_manage.
+-- viewer_organization_membership_set_permissions_collection requires members_manage.
 select throws_ok(
-  $$ select public.viewer_organization_membership_set_permissions((select bob_org1 from _g), array['members_manage']::extensions.citext[]) $$,
+  $$ select public.viewer_organization_membership_set_permissions_collection((select bob_org1 from _g), array['members_manage']::extensions.citext[]) $$,
   'P0001',
   'no_permission',
   'a member without members_manage cannot set permissions'
@@ -77,21 +77,21 @@ select throws_ok(
 reset role;
 
 -- ============================================================
--- viewer_organization_membership_set_permissions — Alice (wildcard → members_manage)
+-- viewer_organization_membership_set_permissions_collection — Alice (wildcard → members_manage)
 -- ============================================================
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-00000000a11c"}';
 
 -- Clearing the org's last admin is blocked (Bob is not an admin yet).
 select throws_ok(
-  $$ select public.viewer_organization_membership_set_permissions((select alice_org1 from _g), array['presets_manage']::extensions.citext[]) $$,
+  $$ select public.viewer_organization_membership_set_permissions_collection((select alice_org1 from _g), array['presets_manage']::extensions.citext[]) $$,
   'P0001',
   'last_admin_protected',
   'dropping the last admin''s wildcard via set_permissions is blocked'
 );
 
 select lives_ok(
-  $$ select public.viewer_organization_membership_set_permissions((select bob_org1 from _g), array['members_manage']::extensions.citext[]) $$,
+  $$ select public.viewer_organization_membership_set_permissions_collection((select bob_org1 from _g), array['members_manage']::extensions.citext[]) $$,
   'an admin can replace another member''s permission set'
 );
 
@@ -104,7 +104,7 @@ select set_eq(
 
 -- Swapping one admin slug for another does NOT trip the last-admin trigger (grant-before-revoke).
 select lives_ok(
-  $$ select public.viewer_organization_membership_set_permissions((select alice_org1 from _g), array['members_manage']::extensions.citext[]) $$,
+  $$ select public.viewer_organization_membership_set_permissions_collection((select alice_org1 from _g), array['members_manage']::extensions.citext[]) $$,
   'swapping wildcard for members_manage on the last admin is allowed (no lockout)'
 );
 

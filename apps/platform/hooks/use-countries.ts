@@ -55,7 +55,7 @@ export function useCountries(options?: CountriesUseVars, config?: SWRConfigurati
       query: CountriesUse,
       variables: {
         first: 250,
-        filter: { addressLevel0DisabledAt: { is: FilterIs.Null } },
+        filter: { addressLevel0DeletedAt: { is: FilterIs.Null } },
         orderBy: [{ addressLevel0Name: OrderByDirection.AscNullsLast }],
         ...options,
       },

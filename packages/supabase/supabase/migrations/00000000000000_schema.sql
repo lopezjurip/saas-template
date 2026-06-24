@@ -762,7 +762,7 @@ create or replace function internal.profile_identity_value_normalize(
 --   REVOKED   revoked_at is not null   (terminal — admin removed)
 --
 -- For PENDING rows, at least one identifier (email / phone / document triplet) must be set
--- so the invitee can match it via viewer_organization_membership_pending(). The shareable accept link
+-- so the invitee can match it via viewer_organization_membership_pending_collection(). The shareable accept link
 -- carries organization_membership_invite_token (random opaque) + expires_at TTL.
 create table if not exists public.organization_memberships (
   organization_membership_id serial primary key,
@@ -859,7 +859,7 @@ create index if not exists organization_memberships_profile_active_idx
     and organization_membership_revoked_at is null
     and organization_membership_rejected_at is null;
 
--- Lookups for viewer_organization_membership_pending: scan by identifier.
+-- Lookups for viewer_organization_membership_pending_collection: scan by identifier.
 create index if not exists organization_memberships_invite_email_pending_idx
   on public.organization_memberships (organization_membership_invite_email)
   where profile_id is null
@@ -1229,7 +1229,7 @@ grant execute on function public.phone_has_password(text, text) to anon, authent
 --
 -- Convenience over the join:
 --   tenants_organizations_profiles (view)  : active tenant-org organization_memberships for the viewer
---   viewer_tenants() / viewer_organizations() / viewer_tenant_by_id() / viewer_tenant_by_slug() / viewer_organization_by_id()
+--   viewer_tenants_collection() / viewer_organizations_collection() / viewer_tenant_by_id() / viewer_tenant_by_slug() / viewer_organization_by_id()
 
 create or replace function public.viewer_profile(strict boolean default false)
   returns setof public.profiles rows 1
@@ -1527,7 +1527,7 @@ create or replace function public.viewer_agency_tenant_ids()
     );
   $$;
 
-create or replace function public.viewer_agencies()
+create or replace function public.viewer_agencies_collection()
   returns setof public.agencies
   stable
   security definer
@@ -1610,6 +1610,26 @@ create or replace function public.viewer_agency_team(agency_id int)
       and viewer_agency_team.agency_id in (select public.viewer_agency_ids())
     order by m.agency_membership_created_at asc;
   $$;
+
+-- Returns the full agency_memberships rows (not an anonymous table) so that
+-- pg_graphql exposes it as AgencyMembershipsConnection on Query. The plain
+-- `agency_memberships select own` RLS only exposes the caller's own row; this
+-- security-definer hop mirrors viewer_agency_team's gate but returns the named
+-- table type so GraphQL can traverse it.
+create or replace function public.viewer_agency_memberships(agency_id int)
+  returns setof public.agency_memberships
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+as $$
+  select m.*
+  from public.agency_memberships m
+  where m.agency_id = viewer_agency_memberships.agency_id
+    and viewer_agency_memberships.agency_id in (select public.viewer_agency_ids())
+  order by m.agency_membership_created_at asc;
+$$;
 
 -- External-access picker for an organization's admins: every enabled agency with
 -- its active-affiliate count and whether it is already granted access to THIS org
@@ -1865,7 +1885,7 @@ create policy "agencies_organizations_grants write with organization_manage"
 -- Active tenant-org organization_memberships for the current viewer.
 -- Runs as view owner (postgres), bypassing RLS; scoped to the caller
 -- via viewer_profile_id(). Null uid → no rows (safe for unauthenticated).
--- Used by viewer_tenants/viewer_organizations family below.
+-- Used by viewer_tenants_collection/viewer_organizations_collection family below.
 drop view if exists public.tenants_organizations_profiles;
 create view public.tenants_organizations_profiles as
   select
@@ -1915,7 +1935,7 @@ grant select on public.user_sessions to anon, authenticated;
 
 comment on view public.user_sessions is e'@graphql({"primary_key_columns": ["id"]})';
 
-create or replace function public.viewer_sessions()
+create or replace function public.viewer_sessions_collection()
   returns setof public.user_sessions
   stable
   security definer
@@ -1939,7 +1959,7 @@ create or replace function public.revoke_session(session_id auth.sessions.id%typ
       and s.user_id = auth.uid();
   $$;
 
-create or replace function public.viewer_tenants()
+create or replace function public.viewer_tenants_collection()
   returns setof public.tenants
   stable
   security definer
@@ -1952,7 +1972,7 @@ create or replace function public.viewer_tenants()
     where t.tenant_id in (select tenant_id from public.tenants_organizations_profiles);
   $$;
 
-create or replace function public.viewer_organizations()
+create or replace function public.viewer_organizations_collection()
   returns setof public.organizations
   stable
   security definer
@@ -2009,6 +2029,23 @@ create or replace function public.viewer_organization_by_id(organization_id int)
       and o.organization_id in (select organization_id from public.tenants_organizations_profiles)
     limit 1;
   $$;
+
+create or replace function public.viewer_organization_membership_by_id(organization_membership_id int)
+  returns setof public.organization_memberships rows 1
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select m.*
+    from public.organization_memberships m
+    where m.organization_membership_id = viewer_organization_membership_by_id.organization_membership_id
+      and m.organization_id in (select public.viewer_organization_ids())
+    limit 1;
+  $$;
+
+grant execute on function public.viewer_organization_membership_by_id(int) to authenticated;
 
 -- ============================================================
 -- profiles SELECT policy (now that organization_memberships exists)
@@ -2896,8 +2933,11 @@ create trigger handle_tenant_sso_providers_updated_at
 alter table public.tenant_sso_providers enable row level security;
 
 revoke all on table public.tenant_sso_providers from anon, authenticated;
--- Reads via RLS; writes go through service-role server actions only.
-grant select on table public.tenant_sso_providers to authenticated;
+-- Reads via RLS; writes go through service-role server actions only. RLS has no insert/delete
+-- policy, so anon/authenticated are blocked from writes; the grants below only expose the ops to
+-- pg_graphql (which introspects as anon). service_role bypasses RLS for the actual writes.
+grant select, insert, delete on table public.tenant_sso_providers to anon, authenticated;
+grant select, insert, delete on table public.tenant_sso_providers to service_role;
 
 drop policy if exists "tenant_sso_providers select by members" on public.tenant_sso_providers;
 create policy "tenant_sso_providers select by members"
@@ -2936,7 +2976,7 @@ grant execute on function public.email_domain_has_sso(text) to anon, authenticat
 -- auth.users, or any profile_identities row) matches the invite identifier. Uses
 -- SECURITY DEFINER so we can read auth.users + bypass the row-level filter on
 -- organization_memberships that hides un-claimed invites from non-admins.
-create or replace function public.viewer_organization_membership_pending()
+create or replace function public.viewer_organization_membership_pending_collection()
   returns setof public.organization_memberships
   language plpgsql
   stable
@@ -2980,11 +3020,11 @@ create or replace function public.viewer_organization_membership_pending()
     end;
   $$;
 
-grant execute on function public.viewer_organization_membership_pending() to authenticated;
+grant execute on function public.viewer_organization_membership_pending_collection() to authenticated;
 
 -- Accept an invite. Sets profile_id to the calling viewer and stamps accepted_at.
 -- Validates that the organization_membership is genuinely pending AND that the caller matches the
--- invite identifier (via viewer_organization_membership_pending). SECURITY DEFINER so it can write
+-- invite identifier (via viewer_organization_membership_pending_collection). SECURITY DEFINER so it can write
 -- through the RLS policy (the policy gates writes on members_manage, which the
 -- invitee does NOT have yet).
 create or replace function public.viewer_organization_membership_accept(organization_membership_id int)
@@ -3000,7 +3040,7 @@ create or replace function public.viewer_organization_membership_accept(organiza
       if _user_id is null then
         raise exception 'not authenticated';
       elsif not exists (
-        select 1 from public.viewer_organization_membership_pending() vmp
+        select 1 from public.viewer_organization_membership_pending_collection() vmp
         where vmp.organization_membership_id = viewer_organization_membership_accept.organization_membership_id
       ) then
         raise exception 'invitation not found or does not match your account';
@@ -3032,7 +3072,7 @@ create or replace function public.viewer_organization_membership_reject(organiza
       if public.viewer_profile_id() is null then
         raise exception 'not authenticated';
       elsif not exists (
-        select 1 from public.viewer_organization_membership_pending() vmp
+        select 1 from public.viewer_organization_membership_pending_collection() vmp
         where vmp.organization_membership_id = viewer_organization_membership_reject.organization_membership_id
       ) then
         raise exception 'invitation not found or does not match your account';
@@ -3052,7 +3092,7 @@ grant execute on function public.viewer_organization_membership_reject(int) to a
 -- Gated by `members_manage` on the membership's org. Grants are added before removals so
 -- swapping one admin slug for another doesn't trip the last-admin trigger mid-operation;
 -- clearing the last admin's grants is still blocked by that trigger. Returns the final set.
-create or replace function public.viewer_organization_membership_set_permissions(
+create or replace function public.viewer_organization_membership_set_permissions_collection(
   organization_membership_id int,
   permission_ids extensions.citext[]
 )
@@ -3067,7 +3107,7 @@ create or replace function public.viewer_organization_membership_set_permissions
     begin
       select m.organization_id into _organization_id
         from public.organization_memberships m
-        where m.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id;
+        where m.organization_membership_id = viewer_organization_membership_set_permissions_collection.organization_membership_id;
 
       if _organization_id is null then
         raise exception 'membership_not_found' using errcode = 'P0001';
@@ -3077,7 +3117,7 @@ create or replace function public.viewer_organization_membership_set_permissions
 
       -- Every requested slug must exist in the catalog.
       if exists (
-        select 1 from unnest(viewer_organization_membership_set_permissions.permission_ids) as s(permission_id)
+        select 1 from unnest(viewer_organization_membership_set_permissions_collection.permission_ids) as s(permission_id)
         where not exists (select 1 from public.permissions p where p.permission_id = s.permission_id)
       ) then
         raise exception 'invalid_permission' using errcode = 'P0001';
@@ -3086,26 +3126,26 @@ create or replace function public.viewer_organization_membership_set_permissions
       -- Add the desired grants that aren't already present (NOT EXISTS rather than ON CONFLICT,
       -- whose conflict-target column would collide with the organization_membership_id param).
       insert into public.organization_membership_permissions (organization_membership_id, permission_id)
-        select viewer_organization_membership_set_permissions.organization_membership_id, s.permission_id
-        from unnest(viewer_organization_membership_set_permissions.permission_ids) as s(permission_id)
+        select viewer_organization_membership_set_permissions_collection.organization_membership_id, s.permission_id
+        from unnest(viewer_organization_membership_set_permissions_collection.permission_ids) as s(permission_id)
         where not exists (
           select 1 from public.organization_membership_permissions existing
-          where existing.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id
+          where existing.organization_membership_id = viewer_organization_membership_set_permissions_collection.organization_membership_id
             and existing.permission_id = s.permission_id
         );
 
       delete from public.organization_membership_permissions mp
-        where mp.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id
-          and mp.permission_id <> all (viewer_organization_membership_set_permissions.permission_ids);
+        where mp.organization_membership_id = viewer_organization_membership_set_permissions_collection.organization_membership_id
+          and mp.permission_id <> all (viewer_organization_membership_set_permissions_collection.permission_ids);
 
       return query
         select mp.*
         from public.organization_membership_permissions mp
-        where mp.organization_membership_id = viewer_organization_membership_set_permissions.organization_membership_id;
+        where mp.organization_membership_id = viewer_organization_membership_set_permissions_collection.organization_membership_id;
     end;
   $$;
 
-grant execute on function public.viewer_organization_membership_set_permissions(int, extensions.citext[]) to authenticated;
+grant execute on function public.viewer_organization_membership_set_permissions_collection(int, extensions.citext[]) to authenticated;
 
 -- Anonymous lookup: given a (country, kind, value), normalize the value and return
 -- the pending organization_memberships that match. Used in /auth/document BEFORE the visitor has
@@ -3429,9 +3469,9 @@ comment on view public.storage_agencies is e'@graphql({"primary_key_columns": ["
 -- Sessions: list and revoke the viewer's own auth sessions.
 -- Uses security definer to read auth.sessions (not exposed to anon/authenticated).
 
-drop function if exists public.viewer_sessions();
+drop function if exists public.viewer_sessions_collection();
 
-create or replace function public.viewer_sessions()
+create or replace function public.viewer_sessions_collection()
   returns setof public.user_sessions
   stable
   security definer
@@ -4636,13 +4676,13 @@ grant execute on function public.conversation_archive(uuid) to authenticated;
 -- RPCs: viewer helpers
 -- ============================================================
 
--- viewer_conversations: list the caller's conversations (excludes archived by default).
+-- viewer_conversations_collection: list the caller's conversations (excludes archived by default).
 -- p_scope filters by conversation scope:
 --   'personal'     → organization_id IS NULL AND agency_id IS NULL
 --   'organization' → organization_id = p_organization_id
 --   'agency'       → agency_id = p_agency_id
 --   NULL (default) → no scope filter (legacy: all caller's conversations)
-create or replace function public.viewer_conversations(
+create or replace function public.viewer_conversations_collection(
   include_archived  boolean default false,
   p_organization_id int     default null,
   p_agency_id       int     default null,
@@ -4658,17 +4698,17 @@ create or replace function public.viewer_conversations(
     select c.*
     from public.conversations c
     where c.profile_id = (select public.viewer_profile_id())
-      and (viewer_conversations.include_archived or c.conversation_status <> 'archived')
+      and (viewer_conversations_collection.include_archived or c.conversation_status <> 'archived')
       and (
-        viewer_conversations.p_scope is null
-        or (viewer_conversations.p_scope = 'personal'      and c.organization_id is null and c.agency_id is null)
-        or (viewer_conversations.p_scope = 'organization'  and c.organization_id = viewer_conversations.p_organization_id)
-        or (viewer_conversations.p_scope = 'agency'        and c.agency_id = viewer_conversations.p_agency_id)
+        viewer_conversations_collection.p_scope is null
+        or (viewer_conversations_collection.p_scope = 'personal'      and c.organization_id is null and c.agency_id is null)
+        or (viewer_conversations_collection.p_scope = 'organization'  and c.organization_id = viewer_conversations_collection.p_organization_id)
+        or (viewer_conversations_collection.p_scope = 'agency'        and c.agency_id = viewer_conversations_collection.p_agency_id)
       )
     order by c.conversation_last_message_at desc;
   $$;
 
-grant execute on function public.viewer_conversations(boolean, int, int, text) to authenticated;
+grant execute on function public.viewer_conversations_collection(boolean, int, int, text) to authenticated;
 
 -- viewer_conversation_by_id: single conversation owned by caller, by id.
 -- `setof ... rows 1` + stable → pg_graphql exposes it as the singular `viewerConversationById`
@@ -4691,8 +4731,8 @@ create or replace function public.viewer_conversation_by_id(conversation_id uuid
 
 grant execute on function public.viewer_conversation_by_id(uuid) to authenticated;
 
--- viewer_conversation_messages: thread messages for a conversation owned by caller.
-create or replace function public.viewer_conversation_messages(p_conversation_id uuid)
+-- viewer_conversation_messages_collection: thread messages for a conversation owned by caller.
+create or replace function public.viewer_conversation_messages_collection(p_conversation_id uuid)
   returns setof public.conversation_messages
   stable
   security definer
@@ -4709,7 +4749,7 @@ create or replace function public.viewer_conversation_messages(p_conversation_id
 
       if not exists (
         select 1 from public.conversations c
-        where c.conversation_id = viewer_conversation_messages.p_conversation_id
+        where c.conversation_id = viewer_conversation_messages_collection.p_conversation_id
           and c.profile_id = _caller_id
       ) then
         return;
@@ -4718,12 +4758,12 @@ create or replace function public.viewer_conversation_messages(p_conversation_id
       return query
         select cm.*
         from public.conversation_messages cm
-        where cm.conversation_id = viewer_conversation_messages.p_conversation_id
+        where cm.conversation_id = viewer_conversation_messages_collection.p_conversation_id
         order by cm.message_created_at;
     end;
   $$;
 
-grant execute on function public.viewer_conversation_messages(uuid) to authenticated;
+grant execute on function public.viewer_conversation_messages_collection(uuid) to authenticated;
 
 -- viewer_unread_count: count of unread outbound messages across non-archived conversations.
 -- p_scope filters by conversation scope:
@@ -5377,3 +5417,47 @@ comment on table public.profile_contacts is e'@graphql({"totalCount": {"enabled"
 comment on table public.profile_push_subscriptions is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
 comment on table public.agent_action_log is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
 comment on table public.tickets is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+
+-- ============================================================
+-- Computed fields on organization_memberships
+-- ============================================================
+
+-- Returns the auth.users email for active members (profile_id set).
+-- Pending invitations return NULL. Security definer to read auth.users.
+create or replace function public.organization_membership_email(this public.organization_memberships)
+  returns text
+  stable strict security definer parallel safe
+  language sql set search_path to ''
+as $$
+  select u.email::text from auth.users u where u.id = this.profile_id;
+$$;
+
+grant execute on function public.organization_membership_email(public.organization_memberships) to anon, authenticated;
+
+-- Returns a human-readable display label:
+--   active  → profile_name_full → auth.users.email → profile_id[:8]
+--   pending → invite_email → invite_phone → country · document
+-- Security definer required to read auth.users.email.
+create or replace function public.organization_membership_label(this public.organization_memberships)
+  returns text
+  stable strict security definer parallel safe
+  language sql set search_path to ''
+as $$
+  select case
+    when this.profile_id is not null then
+      coalesce(
+        (select p.profile_name_full from public.profiles p where p.profile_id = this.profile_id),
+        (select u.email::text        from auth.users u         where u.id        = this.profile_id),
+        left(this.profile_id::text, 8)
+      )
+    when this.organization_membership_invite_email is not null then
+      this.organization_membership_invite_email::text
+    when this.organization_membership_invite_phone is not null then
+      this.organization_membership_invite_phone
+    when this.organization_membership_invite_document_value is not null then
+      coalesce(this.organization_membership_invite_address_level0_id, '') || ' · ' || this.organization_membership_invite_document_value
+    else '—'
+  end;
+$$;
+
+grant execute on function public.organization_membership_label(public.organization_memberships) to anon, authenticated;

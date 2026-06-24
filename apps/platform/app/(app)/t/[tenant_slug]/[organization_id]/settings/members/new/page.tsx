@@ -3,10 +3,11 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { z } from "zod";
 import { getCountries } from "~/hooks/get-countries";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { getRosetta } from "~/lib/i18n.server";
+import { assertParams } from "~/lib/params";
 import { ROUTE } from "~/lib/route";
 import { InviteMemberForm } from "./invite-form";
 
@@ -20,12 +21,13 @@ export async function generateMetadata(
 export default async function NewMemberInvitePage(
   props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members/new">,
 ) {
-  const { tenant_slug, organization_id: organization_id_param } = await props.params;
+  const { tenant_slug, organization_id } = assertParams(
+    await props.params,
+    z.object({ tenant_slug: z.string().min(1), organization_id: z.int().min(1) }),
+    "notFound",
+  );
 
   const { t } = await getRosetta(LOCALES);
-
-  const organization_id = Number(organization_id_param);
-  if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
 
   const [
     {

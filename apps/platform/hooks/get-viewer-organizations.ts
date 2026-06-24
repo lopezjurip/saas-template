@@ -29,7 +29,7 @@ export const ViewerOrganizationsGet = /*#__PURE__*/ gql(`
     $filter: OrganizationsFilter
     $orderBy: [OrganizationsOrderBy!]
   ) {
-    organizations: viewerOrganizations(
+    organizations: viewerOrganizationsCollection(
       first: $first
       last: $last
       after: $after
@@ -56,7 +56,7 @@ export const ViewerOrganizationByIdQuery = /*#__PURE__*/ gql(`
 
 export const ViewerOrganizationBySlugQuery = /*#__PURE__*/ gql(`
   query ViewerOrganizationBySlugQuery($organizationSlug: String!) {
-    organizations: viewerOrganizations(
+    organizations: viewerOrganizationsCollection(
       first: 1
       filter: { organizationSlug: { eq: $organizationSlug } }
     ) {

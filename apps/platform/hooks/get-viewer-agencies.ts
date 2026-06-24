@@ -14,7 +14,7 @@ export const ViewerAgencyGetFragment = /*#__PURE__*/ gql(`
     agencyId
     agencySlug
     agencyName
-    agencyDisabledAt
+    agencyDeletedAt
   }
 `);
 
@@ -29,7 +29,7 @@ export const ViewerAgenciesGet = /*#__PURE__*/ gql(`
     $filter: AgenciesFilter
     $orderBy: [AgenciesOrderBy!]
   ) {
-    agencies: viewerAgencies(
+    agencies: viewerAgenciesCollection(
       first: $first
       last: $last
       after: $after

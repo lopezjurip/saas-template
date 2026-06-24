@@ -14,7 +14,7 @@ const log = debug("app:api:mcp:tools:tenants");
 
 const ListTenantsMcpQuery = /*#__PURE__*/ gql(`
   query ListTenantsMcp {
-    tenants: viewerTenants(orderBy: [{ tenantName: AscNullsLast }]) {
+    tenants: viewerTenantsCollection(orderBy: [{ tenantName: AscNullsLast }]) {
       edges {
         node {
           tenantId
@@ -29,7 +29,7 @@ const ListTenantsMcpQuery = /*#__PURE__*/ gql(`
 
 const ListOrganizationsMcpQuery = /*#__PURE__*/ gql(`
   query ListOrganizationsMcp {
-    organizations: viewerOrganizations(orderBy: [{ organizationName: AscNullsLast }]) {
+    organizations: viewerOrganizationsCollection(orderBy: [{ organizationName: AscNullsLast }]) {
       edges {
         node {
           organizationId

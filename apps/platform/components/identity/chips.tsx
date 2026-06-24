@@ -5,7 +5,7 @@ import { IdCard, Mail, Phone } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import type { ComponentProps } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 type IdentityKind = "email" | "phone" | "document";
 

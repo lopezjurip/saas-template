@@ -18,7 +18,7 @@ const WhoamiMcpQuery = /*#__PURE__*/ gql(`
       profileId
       profileNameFull
       profileOnboardedAt
-      profileDisabledAt
+      profileDeletedAt
       profileCreatedAt
       profileUpdatedAt
     }
@@ -58,7 +58,7 @@ export class WhoamiTool extends McpTool {
               profileId: profile["profileId"],
               profileNameFull: profile["profileNameFull"],
               profileOnboardedAt: profile["profileOnboardedAt"],
-              profileDisabledAt: profile["profileDisabledAt"],
+              profileDeletedAt: profile["profileDeletedAt"],
               profileCreatedAt: profile["profileCreatedAt"],
               profileUpdatedAt: profile["profileUpdatedAt"],
             },

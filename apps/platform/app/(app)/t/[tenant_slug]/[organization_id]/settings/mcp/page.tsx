@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { z } from "zod";
 import { McpConnect } from "~/components/mcp/mcp-connect";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { APP_URL } from "~/lib/constants";
 import { getRosetta } from "~/lib/i18n.server";
+import { assertParams } from "~/lib/params";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getRosetta(LOCALES);
@@ -13,10 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function OrganizationMcpSettingsPage(
   props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/mcp">,
 ) {
-  const { organization_id: organization_id_param } = await props.params;
-
-  const organization_id = Number(organization_id_param);
-  if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
+  const { organization_id } = assertParams(
+    await props.params,
+    z.object({ organization_id: z.int().min(1) }),
+    "notFound",
+  );
 
   // RLS-scoped: gates membership and gives us the org name for the eyebrow.
   const {

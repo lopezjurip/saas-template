@@ -37,7 +37,7 @@ async function fetchBellData(
 
   const [countResult, convsResult] = await Promise.all([
     supabase.rpc("viewer_unread_count", rpcArgs),
-    supabase.rpc("viewer_conversations", { include_archived: false, ...rpcArgs }),
+    supabase.rpc("viewer_conversations_collection", { include_archived: false, ...rpcArgs }),
   ]);
 
   const unread = countResult.data ?? 0;

@@ -18,8 +18,8 @@ import { UserMenu } from "./_components/user-menu";
 
 const HomePickerPageQuery = gql(`
   query HomePickerPageQuery {
-    viewerOrganizations(
-      filter: { organizationDisabledAt: { is: NULL } }
+    organizations: viewerOrganizationsCollection(
+      filter: { organizationDeletedAt: { is: NULL } }
       orderBy: [{ organizationName: AscNullsLast }]
     ) {
       edges {
@@ -54,7 +54,7 @@ export default async function HomePage(props: PageProps<"/home">) {
     graphy.query({ query: HomePickerPageQuery }),
     getViewerAgencies({ orderBy: [{ agencyName: OrderByDirection.AscNullsLast }] }),
   ]);
-  const edges = data?.["viewerOrganizations"]?.["edges"] ?? [];
+  const edges = data?.["organizations"]?.["edges"] ?? [];
   const agencyEdges = agenciesRes.data?.["agencies"]?.["edges"] ?? [];
 
   const state = await getViewerOnboardingState();
@@ -189,7 +189,7 @@ export default async function HomePage(props: PageProps<"/home">) {
         </div>
       </div>
 
-      <UserMenu name={state.profile_name_full} email={state.email ?? user["email"] ?? ""} />
+      <UserMenu name={state.profile_name_full ?? ""} email={state.email ?? user["email"] ?? ""} />
     </div>
   );
 }

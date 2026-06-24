@@ -7,7 +7,7 @@ import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { INITIALS_OF } from "@packages/utils/string";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, type ComponentProps, useRef, useState } from "react";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 const LOGO_ALLOWED_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 const LOGO_MAX_SIZE = 5 * 1024 * 1024;

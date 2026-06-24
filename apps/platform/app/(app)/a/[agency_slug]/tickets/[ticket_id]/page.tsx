@@ -37,7 +37,7 @@ export default async function AgencyTicketDetailPage(props: PageProps<"/a/[agenc
   const row = ticketRes.data;
 
   // Load conversation messages via the viewer RPC.
-  const messagesRes = await supabase.rpc("viewer_conversation_messages", {
+  const messagesRes = await supabase.rpc("viewer_conversation_messages_collection", {
     p_conversation_id: row["conversation_id"],
   });
 

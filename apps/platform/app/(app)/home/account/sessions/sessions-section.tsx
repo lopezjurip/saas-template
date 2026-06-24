@@ -32,7 +32,7 @@ export type SessionsSectionSessionFragmentType = ResultOf<typeof SessionsSection
 
 type SessionsSectionProps = React.ComponentProps<"div"> & {
   currentSessionId: string | null | undefined;
-  sessions: SessionsSectionSessionFragmentType[];
+  sessions: { node: SessionsSectionSessionFragmentType }[];
 };
 
 function SessionRow(props: {
@@ -125,7 +125,9 @@ export function SessionsSection({ className, currentSessionId, sessions, ...prop
   const { t } = useRosetta(LOCALES);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const others = currentSessionId ? sessions.filter((session) => session["id"] !== currentSessionId).length : 0;
+  const others = currentSessionId
+    ? sessions.filter(({ ["node"]: session }) => session["id"] !== currentSessionId).length
+    : 0;
 
   function onRevoke(id: string) {
     setError(null);
@@ -159,15 +161,18 @@ export function SessionsSection({ className, currentSessionId, sessions, ...prop
             {t("no_sessions")}
           </div>
         )}
-        {sessions.map((session) => (
-          <SessionRow
-            key={session["id"]}
-            session={session}
-            currentSessionId={currentSessionId}
-            pending={pending}
-            onRevoke={onRevoke}
-          />
-        ))}
+        {sessions.map((edge) => {
+          const session = edge["node"];
+          return (
+            <SessionRow
+              key={session["id"]}
+              session={session}
+              currentSessionId={currentSessionId}
+              pending={pending}
+              onRevoke={onRevoke}
+            />
+          );
+        })}
       </div>
 
       {error && (

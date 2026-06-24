@@ -15,7 +15,7 @@ export const ViewerProfileUseFragment = /*#__PURE__*/ gql(`
     profileId
     profileNameFull
     profileOnboardedAt
-    profileDisabledAt
+    profileDeletedAt
     profileCreatedAt
     profileUpdatedAt
   }

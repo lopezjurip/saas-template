@@ -1,5 +1,5 @@
 -- conversation_scopes.test.sql
--- Verifies that viewer_conversations() and viewer_unread_count() correctly filter
+-- Verifies that viewer_conversations_collection() and viewer_unread_count() correctly filter
 -- by p_scope: 'personal', 'organization', 'agency', and legacy null (all).
 --
 -- Seed: Alice (00000000-0000-0000-0000-00000000a11c) gets three conversations:
@@ -92,119 +92,119 @@ set local request.jwt.claims to '{
 }';
 
 -- ============================================================
--- viewer_conversations — scope = 'personal'
+-- viewer_conversations_collection — scope = 'personal'
 -- ============================================================
 
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, null, null, 'personal')
+    from public.viewer_conversations_collection(false, null, null, 'personal')
     where conversation_id = (select conv_id from _scope_convs where scope = 'personal')
   ),
   1,
-  'viewer_conversations personal scope returns the personal conversation'
+  'viewer_conversations_collection personal scope returns the personal conversation'
 );
 
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, null, null, 'personal')
+    from public.viewer_conversations_collection(false, null, null, 'personal')
     where conversation_id = (select conv_id from _scope_convs where scope = 'organization')
   ),
   0,
-  'viewer_conversations personal scope excludes org-scoped conversation'
+  'viewer_conversations_collection personal scope excludes org-scoped conversation'
 );
 
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, null, null, 'personal')
+    from public.viewer_conversations_collection(false, null, null, 'personal')
     where conversation_id = (select conv_id from _scope_convs where scope = 'agency')
   ),
   0,
-  'viewer_conversations personal scope excludes agency-scoped conversation'
+  'viewer_conversations_collection personal scope excludes agency-scoped conversation'
 );
 
 -- ============================================================
--- viewer_conversations — scope = 'organization'
+-- viewer_conversations_collection — scope = 'organization'
 -- ============================================================
 
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, 1, null, 'organization')
+    from public.viewer_conversations_collection(false, 1, null, 'organization')
     where conversation_id = (select conv_id from _scope_convs where scope = 'organization')
   ),
   1,
-  'viewer_conversations organization scope returns the org conversation'
+  'viewer_conversations_collection organization scope returns the org conversation'
 );
 
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, 1, null, 'organization')
+    from public.viewer_conversations_collection(false, 1, null, 'organization')
     where conversation_id = (select conv_id from _scope_convs where scope = 'personal')
   ),
   0,
-  'viewer_conversations organization scope excludes personal conversation'
+  'viewer_conversations_collection organization scope excludes personal conversation'
 );
 
 -- Wrong org id returns nothing.
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, 9999, null, 'organization')
+    from public.viewer_conversations_collection(false, 9999, null, 'organization')
     where conversation_id = (select conv_id from _scope_convs where scope = 'organization')
   ),
   0,
-  'viewer_conversations organization scope with foreign org_id returns nothing'
+  'viewer_conversations_collection organization scope with foreign org_id returns nothing'
 );
 
 -- ============================================================
--- viewer_conversations — scope = 'agency'
+-- viewer_conversations_collection — scope = 'agency'
 -- ============================================================
 
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, null, 1, 'agency')
+    from public.viewer_conversations_collection(false, null, 1, 'agency')
     where conversation_id = (select conv_id from _scope_convs where scope = 'agency')
   ),
   1,
-  'viewer_conversations agency scope returns the agency conversation'
+  'viewer_conversations_collection agency scope returns the agency conversation'
 );
 
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, null, 1, 'agency')
+    from public.viewer_conversations_collection(false, null, 1, 'agency')
     where conversation_id = (select conv_id from _scope_convs where scope = 'personal')
   ),
   0,
-  'viewer_conversations agency scope excludes personal conversation'
+  'viewer_conversations_collection agency scope excludes personal conversation'
 );
 
 -- Wrong agency id returns nothing.
 select is(
   (
     select count(*)::int
-    from public.viewer_conversations(false, null, 999999, 'agency')
+    from public.viewer_conversations_collection(false, null, 999999, 'agency')
     where conversation_id = (select conv_id from _scope_convs where scope = 'agency')
   ),
   0,
-  'viewer_conversations agency scope with foreign agency_id returns nothing'
+  'viewer_conversations_collection agency scope with foreign agency_id returns nothing'
 );
 
 -- ============================================================
--- viewer_conversations — scope = null (legacy: all three visible)
+-- viewer_conversations_collection — scope = null (legacy: all three visible)
 -- ============================================================
 
 select ok(
   (
     select count(*)::int
-    from public.viewer_conversations()
+    from public.viewer_conversations_collection()
   ) >= 3,
-  'viewer_conversations with null scope (legacy) returns all scoped conversations'
+  'viewer_conversations_collection with null scope (legacy) returns all scoped conversations'
 );
 
 -- ============================================================
