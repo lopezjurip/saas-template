@@ -56,15 +56,13 @@ export default async function ConversationPage(props: PageProps<"/home/inbox/[co
 
   const messages = (conversation["messages"]?.["edges"] ?? []).map((edge) => edge["node"]);
   const unreadIds = messages
-    .filter((m) => !m["messageReadAt"] && m["messageDirection"] !== "outbound")
+    .filter((m) => !m["messageReadAt"] && m["messageDirection"] === "outbound")
     .map((m) => m["conversationMessageId"]);
   if (unreadIds.length > 0) {
     await actionMarkRead(unreadIds);
   }
 
-  return (
-    <ConversationThread conversation={conversation} viewerId={user.id} backHref={SCOPE_INBOX_HREF(PERSONAL_SCOPE)} />
-  );
+  return <ConversationThread conversation={conversation} backHref={SCOPE_INBOX_HREF(PERSONAL_SCOPE)} />;
 }
 
 const LOCALE_ES_META = {

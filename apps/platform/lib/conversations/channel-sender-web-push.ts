@@ -66,7 +66,6 @@ export const sendWebPushNotification: ChannelSender = async function sendWebPush
     title: input.subject ?? "New notification",
     body: input.body ?? "",
     data: {
-      replyToken: input.replyToken,
       conversationId: input.conversationId,
       messageId: input.messageId,
     },

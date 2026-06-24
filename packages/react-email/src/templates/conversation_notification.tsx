@@ -28,7 +28,7 @@ const LOCALE_ES = {
   preview: "{{subject}}",
   heading: "{{subject}}",
   viewThread: "Ver conversación",
-  footer: "Este mensaje fue enviado por SaaS Template. Puedes responder directamente a este correo.",
+  footer: "Este mensaje fue enviado por SaaS Template.",
 };
 
 function ConversationNotificationEmailContent({
@@ -90,12 +90,12 @@ const LOCALES = {
     preview: "{{subject}}",
     heading: "{{subject}}",
     viewThread: "View conversation",
-    footer: "This message was sent by SaaS Template. You can reply directly to this email.",
+    footer: "This message was sent by SaaS Template.",
   } satisfies typeof LOCALE_ES,
   pt: {
     preview: "{{subject}}",
     heading: "{{subject}}",
     viewThread: "Ver conversa",
-    footer: "Esta mensagem foi enviada pelo SaaS Template. Você pode responder diretamente a este e-mail.",
+    footer: "Esta mensagem foi enviada pelo SaaS Template.",
   } satisfies typeof LOCALE_ES,
 };

@@ -1,9 +1,9 @@
--- conversation_message_deliveries: reply_token uniqueness, per-message/channel uniqueness,
+-- conversation_message_deliveries: per-message/channel uniqueness,
 -- and fan-out to external channels when the recipient has verified contacts.
 
 begin;
 
-select plan(12);
+select plan(8);
 
 -- ============================================================
 -- Setup: create a conversation + message via service_role, capture IDs.
@@ -35,17 +35,6 @@ select ok(
   'conversation_emit creates an in_app delivery row with status queued'
 );
 
--- in_app delivery has no reply_token.
-select ok(
-  (
-    select reply_token is null
-    from public.conversation_message_deliveries cmd
-    join _test_emit e using (conversation_message_id)
-    where cmd.message_channel = 'in_app'
-  ),
-  'in_app delivery has no reply_token'
-);
-
 -- No email delivery for Alice who has no verified contact.
 select is(
   (
@@ -71,36 +60,6 @@ select throws_ok(
   '23505',
   null,
   'duplicate (conversation_message_id, message_channel) is rejected'
-);
-
--- ============================================================
--- reply_token uniqueness (manual insert on a different channel)
--- ============================================================
-
-insert into public.conversation_message_deliveries (
-  conversation_message_id, message_channel, reply_token
-)
-select conversation_message_id, 'email', 'token-abc-123'
-from _test_emit;
-
-select ok(
-  (
-    select count(*)::int = 1
-    from public.conversation_message_deliveries
-    where reply_token = 'token-abc-123'
-  ),
-  'reply_token is stored and retrievable'
-);
-
-select throws_ok(
-  $$ insert into public.conversation_message_deliveries (
-       conversation_message_id, message_channel, reply_token
-     )
-     select conversation_message_id, 'sms', 'token-abc-123'
-     from _test_emit $$,
-  '23505',
-  null,
-  'duplicate reply_token is rejected'
 );
 
 -- ============================================================
@@ -190,18 +149,6 @@ select ok(
       and cmd.delivery_status = 'queued'
   ),
   'fan-out emit: email delivery created when verified contact exists'
-);
-
--- email delivery has a non-null reply_token (48 hex chars = 24 bytes).
-select ok(
-  (
-    select reply_token is not null
-      and length(reply_token) = 48
-    from public.conversation_message_deliveries cmd
-    join _fan_emit e using (conversation_message_id)
-    where cmd.message_channel = 'email'
-  ),
-  'fan-out emit: email delivery has a 48-char hex reply_token'
 );
 
 -- in_app delivery is NOT enqueued in pgmq (only external channels are).

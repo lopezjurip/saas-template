@@ -18,7 +18,7 @@ const log = debug("proxy");
 // /oauth/consent stays PROTECTED — the page itself handles the auth redirect.
 const PUBLIC_PATH_REGEX =
   /^(\/|(\/(?:auth|legal|faq|pricing|mcp|opengraph-image|twitter-image|icon|\.well-known)(?:\/|$)))/;
-// NOTE: /api/* routes (including /api/internal/conversations/* and /api/inbound/*) are
+// NOTE: /api/* routes (including /api/internal/conversations/*) are
 // already excluded from the proxy middleware by the `matcher` config above — they never
 // reach this regex. The auth gate for the drain route is the shared-secret header.
 const GLOBAL_METADATA_ASSET_PATHS = new Set(["/apple-icon", "/icon", "/opengraph-image", "/twitter-image"]);

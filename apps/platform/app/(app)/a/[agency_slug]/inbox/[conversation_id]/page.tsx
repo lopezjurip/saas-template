@@ -1,4 +1,3 @@
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -46,11 +45,6 @@ export async function generateMetadata(
 export default async function AgencyConversationPage(props: PageProps<"/a/[agency_slug]/inbox/[conversation_id]">) {
   const { agency_slug, conversation_id } = await props.params;
 
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   // RLS-scoped gql fetch is itself the active-affiliate gate (viewer_agency_ids()
   // is accepted-and-not-revoked) → non-members get 404. No service-role client.
   const { data } = await getViewerAgencyBySlugAssert(agency_slug);
@@ -65,15 +59,13 @@ export default async function AgencyConversationPage(props: PageProps<"/a/[agenc
 
   const messages = (conversation["messages"]?.["edges"] ?? []).map((edge) => edge["node"]);
   const unreadIds = messages
-    .filter((m) => !m["messageReadAt"] && m["messageDirection"] !== "outbound")
+    .filter((m) => !m["messageReadAt"] && m["messageDirection"] === "outbound")
     .map((m) => m["conversationMessageId"]);
   if (unreadIds.length > 0) {
     await actionMarkRead(unreadIds);
   }
 
-  return (
-    <ConversationThread conversation={conversation} viewerId={user?.id ?? ""} backHref={SCOPE_INBOX_HREF(scope)} />
-  );
+  return <ConversationThread conversation={conversation} backHref={SCOPE_INBOX_HREF(scope)} />;
 }
 
 const LOCALE_ES_META = {

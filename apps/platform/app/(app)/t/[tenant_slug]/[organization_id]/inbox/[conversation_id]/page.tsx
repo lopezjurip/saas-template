@@ -62,13 +62,13 @@ export default async function OrgConversationPage(
 
   const messages = (conversation["messages"]?.["edges"] ?? []).map((edge) => edge["node"]);
   const unreadIds = messages
-    .filter((m) => !m["messageReadAt"] && m["messageDirection"] !== "outbound")
+    .filter((m) => !m["messageReadAt"] && m["messageDirection"] === "outbound")
     .map((m) => m["conversationMessageId"]);
   if (unreadIds.length > 0) {
     await actionMarkRead(unreadIds);
   }
 
-  return <ConversationThread conversation={conversation} viewerId={user.id} backHref={SCOPE_INBOX_HREF(scope)} />;
+  return <ConversationThread conversation={conversation} backHref={SCOPE_INBOX_HREF(scope)} />;
 }
 
 const LOCALE_ES_META = {

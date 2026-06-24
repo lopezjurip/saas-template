@@ -18,8 +18,6 @@ export interface ChannelSenderInput {
   conversationId: string;
   /** UUID of the recipient profile. */
   profileId: string;
-  /** Per-delivery opaque token embedded in reply-to / message ref. */
-  replyToken: string;
   /** Message subject (may be null for non-email channels). */
   subject: string | null;
   /** Plain-text message body. */

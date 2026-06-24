@@ -8,16 +8,12 @@ const log = debug("api:internal:conversations:drain:email");
 
 const RESEND_API_KEY = process.env["RESEND_API_KEY"];
 const RESEND_FROM = process.env["RESEND_FROM"] ?? "notifications@resend.dev";
-const RESEND_INBOUND_DOMAIN = process.env["RESEND_INBOUND_DOMAIN"];
 
 /**
  * Sends an outbound notification email via Resend.
  *
- * Sets the reply-to address to `reply+<replyToken>@<RESEND_INBOUND_DOMAIN>` so that
- * inbound email replies can be correlated back to this delivery and conversation.
- *
  * @example
- * const result = await sendEmailNotification({ deliveryId, messageId, conversationId, profileId, replyToken, subject, body, payload, locale });
+ * const result = await sendEmailNotification({ deliveryId, messageId, conversationId, profileId, subject, body, payload, locale });
  */
 export const sendEmailNotification: ChannelSender = async function sendEmailNotification(
   input: ChannelSenderInput,
@@ -60,9 +56,6 @@ export const sendEmailNotification: ChannelSender = async function sendEmailNoti
     return { status: "failed", error: `template render failed: ${message}` };
   }
 
-  // Reply-to embeds the per-delivery reply_token so inbound handler can correlate.
-  const replyTo = RESEND_INBOUND_DOMAIN ? `reply+${input.replyToken}@${RESEND_INBOUND_DOMAIN}` : undefined;
-
   const resend = new Resend(RESEND_API_KEY);
 
   try {
@@ -71,9 +64,7 @@ export const sendEmailNotification: ChannelSender = async function sendEmailNoti
       to: recipientEmail,
       subject,
       html,
-      ...(replyTo ? { replyTo } : {}),
       headers: {
-        "X-Reply-Token": input.replyToken,
         "X-Conversation-Id": input.conversationId,
         "X-Message-Id": input.messageId,
       },

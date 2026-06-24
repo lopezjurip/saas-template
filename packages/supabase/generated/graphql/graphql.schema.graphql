@@ -1235,6 +1235,15 @@ type Mutation {
     """Restricts the mutation's impact to records matching the criteria"""
     filter: TenantDomainsFilter
   ): TenantDomainsDeleteResponse!
+  """Deletes zero or more records from the `TenantSsoProviders` collection"""
+  deleteFromTenantSsoProvidersCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: TenantSsoProvidersFilter
+  ): TenantSsoProvidersDeleteResponse!
   """
   Adds one or more `AgenciesOrganizationsGrants` records to the collection
   """
@@ -1257,6 +1266,8 @@ type Mutation {
   insertIntoProfileIdentitiesCollection(objects: [ProfileIdentitiesInsertInput!]!): ProfileIdentitiesInsertResponse
   """Adds one or more `TenantDomains` records to the collection"""
   insertIntoTenantDomainsCollection(objects: [TenantDomainsInsertInput!]!): TenantDomainsInsertResponse
+  """Adds one or more `TenantSsoProviders` records to the collection"""
+  insertIntoTenantSsoProvidersCollection(objects: [TenantSsoProvidersInsertInput!]!): TenantSsoProvidersInsertResponse
   revokeSession(sessionId: UUID!): Opaque
   ticketClaim(pTicketId: UUID!): Opaque
   ticketResolve(pTicketId: UUID!, resolution: JSON): Opaque
@@ -2669,6 +2680,7 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [ConversationsOrderBy!]
   ): ConversationsConnection
+  emailDomainHasSso(emailInput: String!): String
   emailExists(emailToCheck: String!): Boolean
   emailHasPassword(emailToCheck: String!): Boolean
   healthCurrentTimestamp: Datetime
@@ -2927,6 +2939,25 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [TenantDomainsOrderBy!]
   ): TenantDomainsConnection
+  """A pagable collection of type `TenantSsoProviders`"""
+  tenantSsoProvidersCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: TenantSsoProvidersFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [TenantSsoProvidersOrderBy!]
+  ): TenantSsoProvidersConnection
   """A pagable collection of type `Tenants`"""
   tenantsCollection(
     """Query values in the collection after the provided cursor"""
@@ -3485,6 +3516,81 @@ type TenantDomainsUpdateResponse {
   affectedCount: Int!
   """Array of records impacted by the mutation"""
   records: [TenantDomains!]!
+}
+
+type TenantSsoProviders implements Node {
+  nodeId: ID!
+  ssoProviderCreatedAt: Datetime!
+  ssoProviderDomains: JSON!
+  ssoProviderEnabled: Boolean!
+  ssoProviderId: String!
+  ssoProviderLabel: String!
+  ssoProviderUpdatedAt: Datetime!
+  tenantId: BigInt!
+}
+
+type TenantSsoProvidersConnection {
+  edges: [TenantSsoProvidersEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type TenantSsoProvidersDeleteResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [TenantSsoProviders!]!
+}
+
+type TenantSsoProvidersEdge {
+  cursor: String!
+  node: TenantSsoProviders!
+}
+
+input TenantSsoProvidersFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [TenantSsoProvidersFilter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: TenantSsoProvidersFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [TenantSsoProvidersFilter!]
+  ssoProviderCreatedAt: DatetimeFilter
+  ssoProviderEnabled: BooleanFilter
+  ssoProviderId: StringFilter
+  ssoProviderLabel: StringFilter
+  ssoProviderUpdatedAt: DatetimeFilter
+  tenantId: BigIntFilter
+}
+
+input TenantSsoProvidersInsertInput {
+  ssoProviderCreatedAt: Datetime
+  ssoProviderDomains: JSON
+  ssoProviderEnabled: Boolean
+  ssoProviderId: String
+  ssoProviderLabel: String
+  ssoProviderUpdatedAt: Datetime
+  tenantId: BigInt
+}
+
+type TenantSsoProvidersInsertResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [TenantSsoProviders!]!
+}
+
+input TenantSsoProvidersOrderBy {
+  ssoProviderCreatedAt: OrderByDirection
+  ssoProviderEnabled: OrderByDirection
+  ssoProviderId: OrderByDirection
+  ssoProviderLabel: OrderByDirection
+  ssoProviderUpdatedAt: OrderByDirection
+  tenantId: OrderByDirection
 }
 
 enum TenantTier {

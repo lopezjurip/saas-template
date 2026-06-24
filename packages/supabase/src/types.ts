@@ -331,84 +331,6 @@ export type Database = {
           },
         ]
       }
-      agent_action_log: {
-        Row: {
-          action_idempotency_key: string | null
-          action_status: string
-          agency_id: number | null
-          agent_action_created_at: string
-          agent_action_log_id: string
-          conversation_message_id: string
-          organization_id: number | null
-          profile_id: string
-          tool_input: Json
-          tool_name: string
-          tool_output: Json | null
-        }
-        Insert: {
-          action_idempotency_key?: string | null
-          action_status: string
-          agency_id?: number | null
-          agent_action_created_at?: string
-          agent_action_log_id?: string
-          conversation_message_id: string
-          organization_id?: number | null
-          profile_id: string
-          tool_input?: Json
-          tool_name: string
-          tool_output?: Json | null
-        }
-        Update: {
-          action_idempotency_key?: string | null
-          action_status?: string
-          agency_id?: number | null
-          agent_action_created_at?: string
-          agent_action_log_id?: string
-          conversation_message_id?: string
-          organization_id?: number | null
-          profile_id?: string
-          tool_input?: Json
-          tool_name?: string
-          tool_output?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agent_action_log_agency_id_fkey"
-            columns: ["agency_id"]
-            isOneToOne: false
-            referencedRelation: "agencies"
-            referencedColumns: ["agency_id"]
-          },
-          {
-            foreignKeyName: "agent_action_log_conversation_message_id_fkey"
-            columns: ["conversation_message_id"]
-            isOneToOne: false
-            referencedRelation: "conversation_messages"
-            referencedColumns: ["conversation_message_id"]
-          },
-          {
-            foreignKeyName: "agent_action_log_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["organization_id"]
-          },
-          {
-            foreignKeyName: "agent_action_log_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "tenants_organizations_profiles"
-            referencedColumns: ["organization_id"]
-          },
-          {
-            foreignKeyName: "agent_action_log_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["profile_id"]
-          },
-        ]
-      }
       conversation_message_deliveries: {
         Row: {
           conversation_message_delivery_id: string
@@ -419,7 +341,6 @@ export type Database = {
           delivery_status: string
           message_channel: Database["public"]["Enums"]["message_channel"]
           provider_message_id: string | null
-          reply_token: string | null
         }
         Insert: {
           conversation_message_delivery_id?: string
@@ -430,7 +351,6 @@ export type Database = {
           delivery_status?: string
           message_channel: Database["public"]["Enums"]["message_channel"]
           provider_message_id?: string | null
-          reply_token?: string | null
         }
         Update: {
           conversation_message_delivery_id?: string
@@ -441,7 +361,6 @@ export type Database = {
           delivery_status?: string
           message_channel?: Database["public"]["Enums"]["message_channel"]
           provider_message_id?: string | null
-          reply_token?: string | null
         }
         Relationships: [
           {
@@ -463,13 +382,11 @@ export type Database = {
           message_channel: Database["public"]["Enums"]["message_channel"] | null
           message_created_at: string
           message_direction: string
-          message_idempotency_key: string | null
           message_payload: Json
           message_priority:
             | Database["public"]["Enums"]["notification_priority"]
             | null
           message_read_at: string | null
-          message_signature_verified: boolean
         }
         Insert: {
           conversation_id: string
@@ -482,13 +399,11 @@ export type Database = {
             | null
           message_created_at?: string
           message_direction: string
-          message_idempotency_key?: string | null
           message_payload?: Json
           message_priority?:
             | Database["public"]["Enums"]["notification_priority"]
             | null
           message_read_at?: string | null
-          message_signature_verified?: boolean
         }
         Update: {
           conversation_id?: string
@@ -501,13 +416,11 @@ export type Database = {
             | null
           message_created_at?: string
           message_direction?: string
-          message_idempotency_key?: string | null
           message_payload?: Json
           message_priority?:
             | Database["public"]["Enums"]["notification_priority"]
             | null
           message_read_at?: string | null
-          message_signature_verified?: boolean
         }
         Relationships: [
           {
@@ -566,11 +479,6 @@ export type Database = {
           conversation_id: string
           conversation_kind: string
           conversation_last_message_at: string
-          conversation_resolution: Json | null
-          conversation_resolved_at: string | null
-          conversation_resolved_channel:
-            | Database["public"]["Enums"]["message_channel"]
-            | null
           conversation_status: string
           conversation_subject: string | null
           conversation_updated_at: string
@@ -584,11 +492,6 @@ export type Database = {
           conversation_id?: string
           conversation_kind?: string
           conversation_last_message_at?: string
-          conversation_resolution?: Json | null
-          conversation_resolved_at?: string | null
-          conversation_resolved_channel?:
-            | Database["public"]["Enums"]["message_channel"]
-            | null
           conversation_status?: string
           conversation_subject?: string | null
           conversation_updated_at?: string
@@ -602,11 +505,6 @@ export type Database = {
           conversation_id?: string
           conversation_kind?: string
           conversation_last_message_at?: string
-          conversation_resolution?: Json | null
-          conversation_resolved_at?: string | null
-          conversation_resolved_channel?:
-            | Database["public"]["Enums"]["message_channel"]
-            | null
           conversation_status?: string
           conversation_subject?: string | null
           conversation_updated_at?: string
@@ -1211,104 +1109,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tickets: {
-        Row: {
-          assigned_agency_id: number | null
-          assigned_profile_id: string | null
-          conversation_id: string
-          organization_id: number | null
-          tenant_id: number
-          ticket_claimed_at: string | null
-          ticket_created_at: string
-          ticket_id: string
-          ticket_priority: Database["public"]["Enums"]["notification_priority"]
-          ticket_resolved_at: string | null
-          ticket_status: Database["public"]["Enums"]["ticket_status"]
-          ticket_subject: string
-          ticket_updated_at: string
-        }
-        Insert: {
-          assigned_agency_id?: number | null
-          assigned_profile_id?: string | null
-          conversation_id: string
-          organization_id?: number | null
-          tenant_id: number
-          ticket_claimed_at?: string | null
-          ticket_created_at?: string
-          ticket_id?: string
-          ticket_priority?: Database["public"]["Enums"]["notification_priority"]
-          ticket_resolved_at?: string | null
-          ticket_status?: Database["public"]["Enums"]["ticket_status"]
-          ticket_subject: string
-          ticket_updated_at?: string
-        }
-        Update: {
-          assigned_agency_id?: number | null
-          assigned_profile_id?: string | null
-          conversation_id?: string
-          organization_id?: number | null
-          tenant_id?: number
-          ticket_claimed_at?: string | null
-          ticket_created_at?: string
-          ticket_id?: string
-          ticket_priority?: Database["public"]["Enums"]["notification_priority"]
-          ticket_resolved_at?: string | null
-          ticket_status?: Database["public"]["Enums"]["ticket_status"]
-          ticket_subject?: string
-          ticket_updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tickets_assigned_agency_id_fkey"
-            columns: ["assigned_agency_id"]
-            isOneToOne: false
-            referencedRelation: "agencies"
-            referencedColumns: ["agency_id"]
-          },
-          {
-            foreignKeyName: "tickets_assigned_profile_id_fkey"
-            columns: ["assigned_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["profile_id"]
-          },
-          {
-            foreignKeyName: "tickets_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: true
-            referencedRelation: "conversations"
-            referencedColumns: ["conversation_id"]
-          },
-          {
-            foreignKeyName: "tickets_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["organization_id"]
-          },
-          {
-            foreignKeyName: "tickets_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "tenants_organizations_profiles"
-            referencedColumns: ["organization_id"]
-          },
-          {
-            foreignKeyName: "tickets_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["tenant_id"]
-          },
-          {
-            foreignKeyName: "tickets_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants_organizations_profiles"
-            referencedColumns: ["tenant_id"]
-          },
-        ]
-      }
     }
     Views: {
       storage_agencies: {
@@ -1560,33 +1360,6 @@ export type Database = {
         Args: { agency_membership_id: number }
         Returns: number
       }
-      agent_action_claim: {
-        Args: {
-          conversation_message_id: string
-          idempotency_key: string
-          organization_id?: number
-          profile_id: string
-          tool_input: Json
-          tool_name: string
-        }
-        Returns: {
-          claimed: boolean
-          prior_output: Json
-          prior_status: string
-        }[]
-      }
-      agent_action_complete: {
-        Args: { idempotency_key: string; status: string; tool_output?: Json }
-        Returns: undefined
-      }
-      caller_has_permission: {
-        Args: {
-          caller_profile_id: string
-          organization_id: number
-          permission_id: string
-        }
-        Returns: boolean
-      }
       cl_rut_normalize: { Args: { value: string }; Returns: string }
       cl_rut_validate: { Args: { value: string }; Returns: boolean }
       conversation_archive: {
@@ -1607,26 +1380,6 @@ export type Database = {
         Returns: {
           out_conversation_id: string
           out_conversation_message_id: string
-        }[]
-      }
-      conversation_ingest_inbound: {
-        Args: {
-          body: string
-          channel: Database["public"]["Enums"]["message_channel"]
-          conversation_id: string
-          payload: Json
-          profile_id: string
-          provider_message_id: string
-          signature_verified?: boolean
-        }
-        Returns: {
-          out_agency_id: number
-          out_already_resolved: boolean
-          out_conversation_id: string
-          out_conversation_message_id: string
-          out_organization_id: number
-          out_profile_id: string
-          out_tenant_id: number
         }[]
       }
       conversation_mark_read: {
@@ -1651,18 +1404,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      conversation_post_user_message: {
-        Args: { body: string; conversation_id: string; payload?: Json }
-        Returns: string
-      }
-      conversation_resolve: {
-        Args: {
-          channel: Database["public"]["Enums"]["message_channel"]
-          p_conversation_id: string
-          resolution?: Json
-        }
-        Returns: undefined
-      }
+      email_domain_has_sso: { Args: { email_input: string }; Returns: string }
       email_exists: { Args: { email_to_check: string }; Returns: boolean }
       email_has_password: { Args: { email_to_check: string }; Returns: boolean }
       health_current_timestamp: { Args: never; Returns: string }
@@ -1752,28 +1494,6 @@ export type Database = {
         }
       }
       revoke_session: { Args: { session_id: string }; Returns: undefined }
-      ticket_claim: { Args: { p_ticket_id: string }; Returns: undefined }
-      ticket_escalate: {
-        Args: {
-          p_conversation_id: string
-          priority?: Database["public"]["Enums"]["notification_priority"]
-          subject: string
-        }
-        Returns: string
-      }
-      ticket_escalate_as: {
-        Args: {
-          caller_id: string
-          p_conversation_id: string
-          priority?: Database["public"]["Enums"]["notification_priority"]
-          subject: string
-        }
-        Returns: string
-      }
-      ticket_resolve: {
-        Args: { p_ticket_id: string; resolution?: Json }
-        Returns: undefined
-      }
       user_auth_hook: { Args: { event: Json }; Returns: Json }
       viewer_agencies: {
         Args: never
@@ -1931,11 +1651,6 @@ export type Database = {
           conversation_id: string
           conversation_kind: string
           conversation_last_message_at: string
-          conversation_resolution: Json | null
-          conversation_resolved_at: string | null
-          conversation_resolved_channel:
-            | Database["public"]["Enums"]["message_channel"]
-            | null
           conversation_status: string
           conversation_subject: string | null
           conversation_updated_at: string
@@ -1961,13 +1676,11 @@ export type Database = {
           message_channel: Database["public"]["Enums"]["message_channel"] | null
           message_created_at: string
           message_direction: string
-          message_idempotency_key: string | null
           message_payload: Json
           message_priority:
             | Database["public"]["Enums"]["notification_priority"]
             | null
           message_read_at: string | null
-          message_signature_verified: boolean
         }[]
         SetofOptions: {
           from: "*"
@@ -1989,11 +1702,6 @@ export type Database = {
           conversation_id: string
           conversation_kind: string
           conversation_last_message_at: string
-          conversation_resolution: Json | null
-          conversation_resolved_at: string | null
-          conversation_resolved_channel:
-            | Database["public"]["Enums"]["message_channel"]
-            | null
           conversation_status: string
           conversation_subject: string | null
           conversation_updated_at: string
@@ -2379,7 +2087,6 @@ export type Database = {
       notification_priority: "low" | "medium" | "high" | "critical"
       profile_identity_document_kind: "nin" | "passport"
       tenant_tier: "free" | "pro" | "enterprise"
-      ticket_status: "open" | "claimed" | "in_progress" | "resolved" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2512,7 +2219,6 @@ export const Constants = {
       notification_priority: ["low", "medium", "high", "critical"],
       profile_identity_document_kind: ["nin", "passport"],
       tenant_tier: ["free", "pro", "enterprise"],
-      ticket_status: ["open", "claimed", "in_progress", "resolved", "closed"],
     },
   },
 } as const

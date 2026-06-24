@@ -1042,7 +1042,6 @@ insert into public.permissions (permission_id, permission_description) values
   ('tenant_manage',        'Edit the tenant (billing entity): name, logo, billing, and domains.'),
   ('members_manage',       'Invite, remove, and reassign permissions to members.'),
   ('presets_manage',       'Create and edit the organization''s permission presets.'),
-  ('tickets_manage',       'View, claim, and resolve support tickets on behalf of the organization.'),
   ('agency_members_manage','Manage the agency team: invite, revoke, reactivate affiliates and reassign their agency permissions.')
 on conflict (permission_id) do nothing;
 
@@ -3951,16 +3950,14 @@ create or replace function public.viewer_agency_membership_respond(
 grant execute on function public.viewer_agency_membership_respond(int, text) to authenticated;
 
 -- ============================================================
--- conversations + messaging + tickets
+-- conversations + messaging
 -- ============================================================
--- Every notification, reply, and support thread is a `conversation`.
+-- Every notification is a `conversation`.
 -- Messages in the thread are `conversation_messages`.
 -- Outbound delivery attempts are tracked in `conversation_message_deliveries`.
 -- Per-profile channel preferences live in `profile_topic_channels`.
 -- Contact addresses (email, phone, push endpoint) in `profile_contacts` /
 -- `profile_push_subscriptions`.
--- Idempotent AI agent side-effects are guarded by `agent_action_log`.
--- Escalated threads become `tickets` for agency-side support.
 
 -- ============================================================
 -- Enums
@@ -3968,10 +3965,6 @@ grant execute on function public.viewer_agency_membership_respond(int, text) to 
 
 do $$ begin
   create type public.message_channel as enum ('in_app', 'email', 'web_push', 'whatsapp', 'sms');
-exception when duplicate_object then null; end $$;
-
-do $$ begin
-  create type public.ticket_status as enum ('open', 'claimed', 'in_progress', 'resolved', 'closed');
 exception when duplicate_object then null; end $$;
 
 -- ============================================================
@@ -3989,9 +3982,6 @@ create table if not exists public.conversations (
                         check (conversation_kind in ('notification', 'agent', 'support', 'system')),
   conversation_status text not null default 'open'
                         check (conversation_status in ('open', 'resolved', 'archived')),
-  conversation_resolved_at      timestamptz,
-  conversation_resolved_channel public.message_channel,
-  conversation_resolution       jsonb,
   conversation_last_message_at  timestamptz not null default current_timestamp,
   conversation_created_at timestamptz not null default current_timestamp,
   conversation_updated_at timestamptz not null default current_timestamp
@@ -4025,8 +4015,6 @@ create table if not exists public.conversation_messages (
   message_payload   jsonb not null default '{}',
   message_priority  public.notification_priority,
   message_read_at   timestamptz,
-  message_signature_verified boolean not null default false,
-  message_idempotency_key     text unique,
   message_created_at timestamptz not null default current_timestamp
 );
 
@@ -4047,12 +4035,7 @@ create or replace function internal.conversation_messages_bump_last_message()
       -- Use greatest(new_ts, clock_timestamp()) so both explicit future timestamps and
       -- same-transaction inserts produce a strictly increasing last_message_at.
       update public.conversations
-        set conversation_last_message_at = greatest(conversation_last_message_at, NEW.message_created_at, clock_timestamp()),
-            conversation_status = case
-              when conversation_status = 'resolved' and NEW.message_direction = 'inbound'
-                then 'open'
-              else conversation_status
-            end
+        set conversation_last_message_at = greatest(conversation_last_message_at, NEW.message_created_at, clock_timestamp())
         where conversation_id = NEW.conversation_id;
       return NEW;
     end;
@@ -4074,7 +4057,6 @@ create table if not exists public.conversation_message_deliveries (
   delivery_status text not null default 'queued'
     check (delivery_status in ('queued', 'sent', 'delivered', 'failed', 'skipped')),
   provider_message_id text,
-  reply_token text unique,
   delivery_error text,
   delivery_created_at timestamptz not null default current_timestamp,
   delivery_sent_at timestamptz,
@@ -4138,52 +4120,6 @@ drop trigger if exists handle_profile_push_subscriptions_updated_at on public.pr
 create trigger handle_profile_push_subscriptions_updated_at
   before update on public.profile_push_subscriptions
   for each row execute procedure extensions.moddatetime(profile_push_subscription_updated_at);
-
--- ============================================================
--- agent_action_log  (idempotency guard for AI agent side-effects)
--- ============================================================
-
-create table if not exists public.agent_action_log (
-  agent_action_log_id uuid primary key default internal.uuid_generate_v7(),
-  conversation_message_id uuid not null references public.conversation_messages (conversation_message_id) on delete cascade,
-  profile_id uuid not null references public.profiles (profile_id),
-  organization_id int references public.organizations (organization_id),
-  agency_id int references public.agencies (agency_id),
-  tool_name text not null,
-  tool_input jsonb not null default '{}',
-  tool_output jsonb,
-  action_status text not null check (action_status in ('claiming', 'executed', 'rejected', 'clarify', 'error')),
-  action_idempotency_key text unique,
-  agent_action_created_at timestamptz not null default current_timestamp
-);
-
--- ============================================================
--- tickets
--- ============================================================
-
-create table if not exists public.tickets (
-  ticket_id uuid primary key default internal.uuid_generate_v7(),
-  conversation_id uuid not null unique references public.conversations (conversation_id) on delete cascade,
-  tenant_id int not null references public.tenants (tenant_id) on delete cascade,
-  organization_id int references public.organizations (organization_id) on delete cascade,
-  ticket_subject  text not null check (char_length(ticket_subject) between 1 and 200),
-  ticket_status   public.ticket_status not null default 'open',
-  ticket_priority public.notification_priority not null default 'medium',
-  assigned_agency_id  int references public.agencies (agency_id) on delete set null,
-  assigned_profile_id uuid references public.profiles (profile_id) on delete set null,
-  ticket_claimed_at  timestamptz,
-  ticket_resolved_at timestamptz,
-  ticket_created_at timestamptz not null default current_timestamp,
-  ticket_updated_at timestamptz not null default current_timestamp
-);
-
-create index if not exists tickets_pool_idx on public.tickets (organization_id, ticket_status)
-  where ticket_status in ('open', 'claimed', 'in_progress');
-
-drop trigger if exists handle_tickets_updated_at on public.tickets;
-create trigger handle_tickets_updated_at
-  before update on public.tickets
-  for each row execute procedure extensions.moddatetime(ticket_updated_at);
 
 -- ============================================================
 -- RLS: conversations + messages + deliveries
@@ -4306,50 +4242,7 @@ create policy "profile_push_subscriptions own"
   with check (profile_id = (select public.viewer_profile_id()));
 
 -- ============================================================
--- RLS: agent_action_log
--- ============================================================
--- No authenticated write policy: inserts happen via security-definer RPC only.
-
-alter table public.agent_action_log enable row level security;
-
-revoke all on table public.agent_action_log from anon, authenticated;
-grant select on table public.agent_action_log to authenticated;
-grant select, insert, update, delete on table public.agent_action_log to service_role;
-
-drop policy if exists "agent_action_log select own" on public.agent_action_log;
-create policy "agent_action_log select own"
-  on public.agent_action_log for select
-  to authenticated
-  using (profile_id = (select public.viewer_profile_id()));
-
--- ============================================================
--- RLS: tickets
--- ============================================================
--- Owner sees own tickets; agency members with tickets_manage see org tickets.
--- Writes (escalate/claim/resolve) go through security-definer RPCs.
-
-alter table public.tickets enable row level security;
-
-revoke all on table public.tickets from anon, authenticated;
-grant select on table public.tickets to authenticated;
-grant select, insert, update, delete on table public.tickets to service_role;
-
-drop policy if exists "tickets select own or agency" on public.tickets;
-create policy "tickets select own or agency"
-  on public.tickets for select
-  to authenticated
-  using (
-    exists (
-      select 1 from public.conversations c
-      where c.conversation_id = public.tickets.conversation_id
-        and c.profile_id = (select public.viewer_profile_id())
-    )
-    or organization_id in (select public.viewer_agency_permission_org_ids('tickets_manage'))
-  );
-
--- ============================================================
--- RPCs: conversation_emit, conversation_post_user_message,
---        conversation_mark_read, conversation_archive
+-- RPCs: conversation_emit, conversation_mark_read, conversation_archive
 -- ============================================================
 
 -- conversation_emit: system/agent emits an outbound notification to a profile.
@@ -4435,7 +4328,7 @@ create or replace function public.conversation_emit(
       )
       returning conversation_messages.conversation_message_id into _msg_id;
 
-      -- Always insert in_app delivery (no reply_token, not enqueued — inbox is the surface).
+      -- Always insert in_app delivery (not enqueued — inbox is the surface).
       insert into public.conversation_message_deliveries (
         conversation_message_id, message_channel, delivery_status
       )
@@ -4466,14 +4359,11 @@ create or replace function public.conversation_emit(
           continue;
         end if;
 
-        -- Insert delivery row with a cryptographically random reply_token.
+        -- Insert delivery row.
         insert into public.conversation_message_deliveries (
-          conversation_message_id, message_channel, delivery_status, reply_token
+          conversation_message_id, message_channel, delivery_status
         )
-        values (
-          _msg_id, _ch, 'queued',
-          encode(extensions.gen_random_bytes(24), 'hex')
-        )
+        values (_msg_id, _ch, 'queued')
         on conflict (conversation_message_id, message_channel) do nothing
         returning conversation_message_delivery_id into _delivery_id;
 
@@ -4502,12 +4392,9 @@ create or replace function public.conversation_emit(
         where pps.profile_id = conversation_emit.recipient_profile_id
       ) then
         insert into public.conversation_message_deliveries (
-          conversation_message_id, message_channel, delivery_status, reply_token
+          conversation_message_id, message_channel, delivery_status
         )
-        values (
-          _msg_id, 'web_push', 'queued',
-          encode(extensions.gen_random_bytes(24), 'hex')
-        )
+        values (_msg_id, 'web_push', 'queued')
         on conflict (conversation_message_id, message_channel) do nothing
         returning conversation_message_delivery_id into _delivery_id;
 
@@ -4528,51 +4415,6 @@ create or replace function public.conversation_emit(
   $$;
 
 grant execute on function public.conversation_emit(uuid, extensions.citext, text, jsonb, text, int, int, uuid) to service_role;
-
--- conversation_post_user_message: a profile replies to a conversation.
-create or replace function public.conversation_post_user_message(
-  conversation_id uuid,
-  body            text,
-  payload         jsonb default '{}'
-)
-  returns uuid
-  security definer
-  language plpgsql
-  set search_path to ''
-  as $$
-    declare
-      _caller_id uuid := public.viewer_profile_id();
-      _msg_id    uuid;
-    begin
-      if _caller_id is null then
-        raise exception 'not_authenticated' using errcode = 'P0001';
-      end if;
-
-      -- Verify ownership.
-      if not exists (
-        select 1 from public.conversations c
-        where c.conversation_id = conversation_post_user_message.conversation_id
-          and c.profile_id = _caller_id
-      ) then
-        raise exception 'conversation_not_found' using errcode = 'P0001';
-      end if;
-
-      insert into public.conversation_messages (
-        conversation_id, message_author, message_direction, message_body, message_payload
-      )
-      values (
-        conversation_post_user_message.conversation_id,
-        'user', 'inbound',
-        conversation_post_user_message.body,
-        coalesce(conversation_post_user_message.payload, '{}')
-      )
-      returning conversation_messages.conversation_message_id into _msg_id;
-
-      return _msg_id;
-    end;
-  $$;
-
-grant execute on function public.conversation_post_user_message(uuid, text, jsonb) to authenticated;
 
 -- conversation_mark_read: mark a set of messages as read (owner only).
 create or replace function public.conversation_mark_read(message_ids uuid[])
@@ -4761,299 +4603,6 @@ create or replace function public.viewer_unread_count(
 grant execute on function public.viewer_unread_count(int, int, text) to authenticated;
 
 -- ============================================================
--- RPC: agent_action_claim  (mutex before AI agent side-effects)
--- ============================================================
-
-create or replace function public.agent_action_claim(
-  idempotency_key         text,
-  conversation_message_id uuid,
-  profile_id              uuid,
-  tool_name               text,
-  tool_input              jsonb,
-  organization_id         int    default null
-)
-  returns table (claimed boolean, prior_status text, prior_output jsonb)
-  security definer
-  language plpgsql
-  set search_path to ''
-  as $$
-    declare
-      _prior public.agent_action_log%rowtype;
-    begin
-      -- Try to find an existing record for this idempotency key (fast path for duplicates).
-      select * into _prior
-        from public.agent_action_log
-        where action_idempotency_key = agent_action_claim.idempotency_key;
-
-      if found then
-        return query select false, _prior.action_status, _prior.tool_output;
-        return;
-      end if;
-
-      -- Insert the claim row. The unique constraint on action_idempotency_key is the mutex:
-      -- exactly one concurrent caller wins the insert; the rest hit unique_violation.
-      begin
-        insert into public.agent_action_log (
-          conversation_message_id, profile_id, organization_id,
-          tool_name, tool_input, action_status, action_idempotency_key
-        )
-        values (
-          agent_action_claim.conversation_message_id,
-          agent_action_claim.profile_id,
-          agent_action_claim.organization_id,
-          agent_action_claim.tool_name,
-          agent_action_claim.tool_input,
-          'claiming',
-          agent_action_claim.idempotency_key
-        );
-      exception when unique_violation then
-        select * into _prior
-          from public.agent_action_log
-          where action_idempotency_key = agent_action_claim.idempotency_key;
-
-        return query select false, _prior.action_status, _prior.tool_output;
-        return;
-      end;
-
-      return query select true, null::text, null::jsonb;
-    end;
-  $$;
-
-grant execute on function public.agent_action_claim(text, uuid, uuid, text, jsonb, int) to service_role;
-
--- ============================================================
--- RPCs: ticket_escalate, ticket_claim, ticket_resolve
--- ============================================================
-
--- ticket_escalate: escalate an existing conversation to a support ticket.
-create or replace function public.ticket_escalate(
-  p_conversation_id uuid,
-  subject           text,
-  priority          public.notification_priority default 'medium'
-)
-  returns uuid
-  security definer
-  language plpgsql
-  set search_path to ''
-  as $$
-    declare
-      _caller_id uuid := public.viewer_profile_id();
-      _conv      public.conversations%rowtype;
-      _ticket_id uuid;
-    begin
-      if _caller_id is null then
-        raise exception 'not_authenticated' using errcode = 'P0001';
-      end if;
-
-      select * into _conv
-        from public.conversations
-        where conversation_id = ticket_escalate.p_conversation_id
-          and profile_id = _caller_id;
-
-      if not found then
-        raise exception 'conversation_not_found' using errcode = 'P0001';
-      end if;
-
-      -- Idempotent: return existing ticket if already escalated.
-      select ticket_id into _ticket_id
-        from public.tickets
-        where conversation_id = ticket_escalate.p_conversation_id;
-
-      if found then
-        return _ticket_id;
-      end if;
-
-      insert into public.tickets (
-        conversation_id, tenant_id, organization_id,
-        ticket_subject, ticket_priority
-      )
-      values (
-        ticket_escalate.p_conversation_id,
-        _conv.tenant_id, _conv.organization_id,
-        ticket_escalate.subject, ticket_escalate.priority
-      )
-      returning tickets.ticket_id into _ticket_id;
-
-      -- Update conversation kind to support.
-      update public.conversations
-        set conversation_kind = 'support'
-        where conversation_id = ticket_escalate.p_conversation_id;
-
-      return _ticket_id;
-    end;
-  $$;
-
-grant execute on function public.ticket_escalate(uuid, text, public.notification_priority) to authenticated;
-
--- ticket_escalate_as: service-role variant of ticket_escalate with explicit caller_id.
--- Used by the AI agent loop which runs under service-role (no JWT/viewer_profile_id).
-create or replace function public.ticket_escalate_as(
-  caller_id         uuid,
-  p_conversation_id uuid,
-  subject           text,
-  priority          public.notification_priority default 'medium'
-)
-  returns uuid
-  security definer
-  language plpgsql
-  set search_path to ''
-  as $$
-    declare
-      _conv      public.conversations%rowtype;
-      _ticket_id uuid;
-    begin
-      if caller_id is null then
-        raise exception 'not_authenticated' using errcode = 'P0001';
-      end if;
-
-      select * into _conv
-        from public.conversations
-        where conversation_id = ticket_escalate_as.p_conversation_id
-          and profile_id = ticket_escalate_as.caller_id;
-
-      if not found then
-        raise exception 'conversation_not_found' using errcode = 'P0001';
-      end if;
-
-      -- Idempotent: return existing ticket if already escalated.
-      select ticket_id into _ticket_id
-        from public.tickets
-        where conversation_id = ticket_escalate_as.p_conversation_id;
-
-      if found then
-        return _ticket_id;
-      end if;
-
-      insert into public.tickets (
-        conversation_id, tenant_id, organization_id,
-        ticket_subject, ticket_priority
-      )
-      values (
-        ticket_escalate_as.p_conversation_id,
-        _conv.tenant_id, _conv.organization_id,
-        ticket_escalate_as.subject, ticket_escalate_as.priority
-      )
-      returning tickets.ticket_id into _ticket_id;
-
-      -- Update conversation kind to support.
-      update public.conversations
-        set conversation_kind = 'support'
-        where conversation_id = ticket_escalate_as.p_conversation_id;
-
-      return _ticket_id;
-    end;
-  $$;
-
-grant execute on function public.ticket_escalate_as(uuid, uuid, text, public.notification_priority) to service_role;
-
--- ticket_claim: agency member claims an open/unclaimed ticket.
-create or replace function public.ticket_claim(p_ticket_id uuid)
-  returns void
-  security definer
-  language plpgsql
-  set search_path to ''
-  as $$
-    declare
-      _caller_id uuid := public.viewer_profile_id();
-      _ticket    public.tickets%rowtype;
-      _agency_id int;
-    begin
-      if _caller_id is null then
-        raise exception 'not_authenticated' using errcode = 'P0001';
-      end if;
-
-      select * into _ticket
-        from public.tickets
-        where ticket_id = ticket_claim.p_ticket_id;
-
-      if not found then
-        raise exception 'ticket_not_found' using errcode = 'P0001';
-      end if;
-
-      -- Permission: caller must have tickets_manage via agency for the ticket's org.
-      if not public.viewer_has_agency_permission(_ticket.organization_id, 'tickets_manage') then
-        raise exception 'no_permission' using errcode = 'P0001';
-      end if;
-
-      -- Resolve the specific agency that grants the caller tickets_manage over this org.
-      -- Picks deterministically (lowest agency_id) when multiple grants exist.
-      select aog.agency_id into _agency_id
-        from public.agencies_organizations_grants aog
-        where aog.agency_id in (select public.viewer_agency_ids())
-          and (aog.organization_id = _ticket.organization_id or aog.organization_id is null)
-          and (aog.permission_id = 'tickets_manage' or aog.permission_id = '*')
-        order by aog.agency_id
-        limit 1;
-
-      -- Mutex: conditional update that fails if already claimed.
-      update public.tickets
-        set ticket_status       = 'claimed',
-            assigned_agency_id  = _agency_id,
-            assigned_profile_id = _caller_id,
-            ticket_claimed_at   = current_timestamp
-        where ticket_id = ticket_claim.p_ticket_id
-          and ticket_status = 'open';
-
-      if not found then
-        raise exception 'ticket_already_claimed' using errcode = 'P0001';
-      end if;
-    end;
-  $$;
-
-grant execute on function public.ticket_claim(uuid) to authenticated;
-
--- ticket_resolve: agency member resolves ticket AND conversation atomically.
-create or replace function public.ticket_resolve(
-  p_ticket_id uuid,
-  resolution  jsonb default '{}'
-)
-  returns void
-  security definer
-  language plpgsql
-  set search_path to ''
-  as $$
-    declare
-      _caller_id uuid := public.viewer_profile_id();
-      _ticket    public.tickets%rowtype;
-    begin
-      if _caller_id is null then
-        raise exception 'not_authenticated' using errcode = 'P0001';
-      end if;
-
-      select * into _ticket
-        from public.tickets
-        where ticket_id = ticket_resolve.p_ticket_id;
-
-      if not found then
-        raise exception 'ticket_not_found' using errcode = 'P0001';
-      end if;
-
-      if not public.viewer_has_agency_permission(_ticket.organization_id, 'tickets_manage') then
-        raise exception 'no_permission' using errcode = 'P0001';
-      end if;
-
-      if _ticket.ticket_status = 'resolved' or _ticket.ticket_status = 'closed' then
-        raise exception 'ticket_already_resolved' using errcode = 'P0001';
-      end if;
-
-      -- Resolve ticket.
-      update public.tickets
-        set ticket_status     = 'resolved',
-            ticket_resolved_at = current_timestamp
-        where ticket_id = ticket_resolve.p_ticket_id;
-
-      -- Resolve conversation atomically.
-      update public.conversations
-        set conversation_status          = 'resolved',
-            conversation_resolved_at     = current_timestamp,
-            conversation_resolution      = coalesce(ticket_resolve.resolution, '{}')
-        where conversation_id = _ticket.conversation_id;
-    end;
-  $$;
-
-grant execute on function public.ticket_resolve(uuid, jsonb) to authenticated;
-
--- ============================================================
 -- pgmq queue helpers (Agent D — dispatch worker)
 -- ============================================================
 -- The `pgmq` schema is not exposed through the Data API / PostgREST by default.
@@ -5114,193 +4663,6 @@ grant execute on function public.conversation_outbound_archive(bigint) to servic
 -- Set APP_DRAIN_URL and CONVERSATIONS_DRAIN_SECRET in the Supabase service env to
 -- activate the schedule.
 -- ============================================================
-
--- ============================================================
--- RPCs: P4 inbound + agentic layer (Agent E)
--- ============================================================
-
--- caller_has_permission: explicit caller_id variant of viewer_has_permission.
--- Used by webhook/service-role paths where there is no authenticated JWT session.
--- Mirrors viewer_has_permission wildcard (`*`) logic exactly.
-create or replace function public.caller_has_permission(
-  caller_profile_id uuid,
-  organization_id   int,
-  permission_id     extensions.citext
-)
-  returns boolean
-  stable
-  security definer
-  parallel safe
-  language sql
-  set search_path to ''
-  as $$
-    select exists (
-      select 1
-      from public.organization_membership_permissions mp
-      join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
-      where m.organization_id = caller_has_permission.organization_id
-        and m.profile_id = caller_has_permission.caller_profile_id
-        and m.organization_membership_accepted_at is not null
-        and m.organization_membership_revoked_at is null
-        and m.organization_membership_rejected_at is null
-        and (mp.permission_id = caller_has_permission.permission_id or mp.permission_id = '*')
-    );
-  $$;
-
-grant execute on function public.caller_has_permission(uuid, int, extensions.citext) to service_role;
-
--- conversation_ingest_inbound: atomically insert an inbound user message.
--- Deduplicates on provider_message_id (message_idempotency_key).
--- Returns the resolved conversation/scope so the agent loop can work without extra queries.
--- Used only via service-role (webhook handlers have no JWT).
-create or replace function public.conversation_ingest_inbound(
-  conversation_id         uuid,
-  profile_id              uuid,
-  channel                 public.message_channel,
-  body                    text,
-  payload                 jsonb,
-  provider_message_id     text,
-  signature_verified      boolean default false
-)
-  returns table (
-    out_conversation_message_id uuid,
-    out_conversation_id         uuid,
-    out_profile_id              uuid,
-    out_organization_id         int,
-    out_agency_id               int,
-    out_tenant_id               int,
-    out_already_resolved        boolean
-  )
-  security definer
-  language plpgsql
-  set search_path to ''
-  as $$
-    declare
-      _conv public.conversations%rowtype;
-      _msg_id uuid;
-      _idempotency_key text;
-    begin
-      -- Build a non-null idempotency key (channel-namespaced).
-      _idempotency_key := channel::text || ':' || provider_message_id;
-
-      -- Dedupe: if we already processed this provider message, return the existing row.
-      select cm.conversation_message_id
-        into _msg_id
-        from public.conversation_messages cm
-        where cm.message_idempotency_key = _idempotency_key;
-
-      if found then
-        select c.* into _conv
-          from public.conversations c
-          where c.conversation_id = conversation_ingest_inbound.conversation_id;
-
-        return query
-          select _msg_id,
-                 _conv.conversation_id,
-                 _conv.profile_id,
-                 _conv.organization_id,
-                 _conv.agency_id,
-                 _conv.tenant_id,
-                 (_conv.conversation_resolved_at is not null);
-        return;
-      end if;
-
-      -- Fetch conversation (validates it exists).
-      select c.* into _conv
-        from public.conversations c
-        where c.conversation_id = conversation_ingest_inbound.conversation_id
-          and c.profile_id = conversation_ingest_inbound.profile_id;
-
-      if not found then
-        raise exception 'conversation_not_found' using errcode = 'P0001';
-      end if;
-
-      -- Insert inbound user message.
-      insert into public.conversation_messages (
-        conversation_id,
-        message_author,
-        message_direction,
-        message_channel,
-        message_body,
-        message_payload,
-        message_signature_verified,
-        message_idempotency_key
-      )
-      values (
-        conversation_ingest_inbound.conversation_id,
-        'user',
-        'inbound',
-        conversation_ingest_inbound.channel,
-        conversation_ingest_inbound.body,
-        coalesce(conversation_ingest_inbound.payload, '{}'),
-        conversation_ingest_inbound.signature_verified,
-        _idempotency_key
-      )
-      returning conversation_messages.conversation_message_id into _msg_id;
-
-      return query
-        select _msg_id,
-               _conv.conversation_id,
-               _conv.profile_id,
-               _conv.organization_id,
-               _conv.agency_id,
-               _conv.tenant_id,
-               (_conv.conversation_resolved_at is not null);
-    end;
-  $$;
-
-grant execute on function public.conversation_ingest_inbound(uuid, uuid, public.message_channel, text, jsonb, text, boolean) to service_role;
-
--- conversation_resolve: mark a conversation resolved from an agent action.
--- Idempotent: if already resolved, does nothing.
-create or replace function public.conversation_resolve(
-  p_conversation_id uuid,
-  channel           public.message_channel,
-  resolution        jsonb default '{}'
-)
-  returns void
-  security definer
-  language plpgsql
-  set search_path to ''
-  as $$
-    begin
-      update public.conversations
-        set conversation_status           = 'resolved',
-            conversation_resolved_at      = current_timestamp,
-            conversation_resolved_channel = conversation_resolve.channel,
-            conversation_resolution       = coalesce(conversation_resolve.resolution, '{}')
-        where conversation_id = conversation_resolve.p_conversation_id
-          and conversation_resolved_at is null;
-    end;
-  $$;
-
-grant execute on function public.conversation_resolve(uuid, public.message_channel, jsonb) to service_role;
-
--- agent_action_complete: finalize a claimed agent action row.
--- Call after the side-effect succeeds or fails, with the resulting status + output.
-create or replace function public.agent_action_complete(
-  idempotency_key text,
-  status          text,
-  tool_output     jsonb default null
-)
-  returns void
-  security definer
-  language plpgsql
-  set search_path to ''
-  as $$
-    begin
-      if status not in ('executed', 'error', 'rejected', 'clarify') then
-        raise exception 'invalid_status' using errcode = 'P0001';
-      end if;
-
-      update public.agent_action_log
-        set action_status = status,
-            tool_output   = agent_action_complete.tool_output
-        where action_idempotency_key = agent_action_complete.idempotency_key;
-    end;
-  $$;
-
-grant execute on function public.agent_action_complete(text, text, jsonb) to service_role;
 
 -- ============================================================
 -- pg_cron + pg_net drain scheduling (Agent D)
@@ -5375,5 +4737,3 @@ comment on table public.conversation_message_deliveries is e'@graphql({"totalCou
 comment on table public.profile_topic_channels is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
 comment on table public.profile_contacts is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
 comment on table public.profile_push_subscriptions is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
-comment on table public.agent_action_log is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
-comment on table public.tickets is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
