@@ -128,6 +128,39 @@ create or replace function internal.column_normalize_text()
     end;
   $$;
 
+-- Reusable soft-delete trigger function — PROJECT-WIDE INVARIANT: rows are not
+-- hard-deleted. A `before delete` trigger calls this to stamp a `*_deleted_at`
+-- column instead of removing the row; RLS policies, partial indexes, and view
+-- functions all rely on deleted rows being *filtered*, not gone.
+--
+-- One definition serves every table: it uses `ctid` (not the PK), and the
+-- target column name is passed as the trigger argument (tg_argv[0]).
+--
+-- Attach per table (the WHEN guard lets a second DELETE on an already-deleted
+-- row purge for real):
+--   drop trigger if exists soft_delete on public.<table>;
+--   create trigger soft_delete
+--     before delete on public.<table>
+--     for each row when (old.<table>_deleted_at is null)
+--     execute function internal.soft_delete('<table>_deleted_at');
+--
+-- Restore = `update ... set <col> = null`. Note: FK `on delete cascade` does NOT
+-- fire (the physical delete is cancelled) — cascade soft-deletes explicitly.
+-- See the "Soft-delete" section of the my-supabase skill.
+create or replace function internal.soft_delete()
+  returns trigger
+  language plpgsql
+  set search_path to ''
+as $$
+  begin
+    execute format(
+      'update %I.%I set %I = current_timestamp where ctid = $1',
+      tg_table_schema, tg_table_name, tg_argv[0]
+    ) using old.ctid;
+    return null;  -- ponytail: cancels the physical DELETE
+  end;
+$$;
+
 -- Slug validation shared by any table with a slug column (tenants, future teams, etc.)
 create or replace function internal.slug_validate(value text)
   returns boolean
@@ -297,21 +330,27 @@ create table if not exists public.profiles (
   profile_id uuid not null primary key references auth.users on delete cascade,
   profile_name_full text,
   profile_onboarded_at timestamptz,
-  profile_disabled_at timestamptz,
+  profile_deleted_at timestamptz,
   profile_created_at timestamptz not null default current_timestamp,
   profile_updated_at timestamptz not null default current_timestamp
 );
 
 -- Indexes
-create index if not exists profiles_disabled_at_idx
-  on public.profiles (profile_disabled_at)
-  where profile_disabled_at is not null;
+create index if not exists profiles_deleted_at_idx
+  on public.profiles (profile_deleted_at)
+  where profile_deleted_at is not null;
 
 -- Auto-update updated_at
 drop trigger if exists handle_profiles_updated_at on public.profiles;
 create trigger handle_profiles_updated_at
   before update on public.profiles
   for each row execute procedure extensions.moddatetime(profile_updated_at);
+
+drop trigger if exists soft_delete on public.profiles;
+create trigger soft_delete
+  before delete on public.profiles
+  for each row when (old.profile_deleted_at is null)
+  execute function internal.soft_delete('profile_deleted_at');
 
 drop trigger if exists profiles_trigger_normalize_name on public.profiles;
 create trigger profiles_trigger_normalize_name
@@ -369,7 +408,7 @@ create policy "Users can update own profiles."
   on public.profiles for update
   to authenticated
   using (
-    profile_disabled_at is null
+    profile_deleted_at is null
     and profile_id = (select public.viewer_profile_id())
   );
 
@@ -415,19 +454,25 @@ create table if not exists public.conversation_topics (
   conversation_topic_description text not null check (char_length(conversation_topic_description) between 1 and 500),
   conversation_topic_priority public.notification_priority not null default 'medium',
   conversation_topic_kind public.notification_kind not null default 'log',
-  conversation_topic_disabled_at timestamptz,
+  conversation_topic_deleted_at timestamptz,
   conversation_topic_created_at timestamptz not null default current_timestamp,
   conversation_topic_updated_at timestamptz not null default current_timestamp
 );
 
 create index if not exists conversation_topics_priority_idx
   on public.conversation_topics (conversation_topic_priority desc)
-  where conversation_topic_disabled_at is null;
+  where conversation_topic_deleted_at is null;
 
 drop trigger if exists handle_conversation_topics_updated_at on public.conversation_topics;
 create trigger handle_conversation_topics_updated_at
   before update on public.conversation_topics
   for each row execute procedure extensions.moddatetime(conversation_topic_updated_at);
+
+drop trigger if exists soft_delete on public.conversation_topics;
+create trigger soft_delete
+  before delete on public.conversation_topics
+  for each row when (old.conversation_topic_deleted_at is null)
+  execute function internal.soft_delete('conversation_topic_deleted_at');
 
 drop trigger if exists conversation_topics_trigger_normalize_text on public.conversation_topics;
 create trigger conversation_topics_trigger_normalize_text
@@ -444,7 +489,7 @@ drop policy if exists "conversation_topics select active catalog" on public.conv
 create policy "conversation_topics select active catalog"
   on public.conversation_topics for select
   to anon, authenticated
-  using (conversation_topic_disabled_at is null);
+  using (conversation_topic_deleted_at is null);
 
 -- ============================================================
 -- tenants + organizations + organization_memberships + permissions
@@ -508,18 +553,24 @@ create table if not exists public.tenants (
   -- derivable — computed at read time from storage/memberships, never stored. `tenant_onboarded_at`
   -- is set when the whole flow is dismissed/finished so the banner stops.
   tenant_onboarded_at timestamptz,
-  tenant_disabled_at timestamptz,
+  tenant_deleted_at timestamptz,
   tenant_created_at timestamptz not null default current_timestamp,
   tenant_updated_at timestamptz not null default current_timestamp
 );
 
-create index if not exists tenants_disabled_at_idx
-  on public.tenants (tenant_disabled_at) where tenant_disabled_at is not null;
+create index if not exists tenants_deleted_at_idx
+  on public.tenants (tenant_deleted_at) where tenant_deleted_at is not null;
 
 drop trigger if exists handle_tenants_updated_at on public.tenants;
 create trigger handle_tenants_updated_at
   before update on public.tenants
   for each row execute procedure extensions.moddatetime(tenant_updated_at);
+
+drop trigger if exists soft_delete on public.tenants;
+create trigger soft_delete
+  before delete on public.tenants
+  for each row when (old.tenant_deleted_at is null)
+  execute function internal.soft_delete('tenant_deleted_at');
 
 drop trigger if exists tenants_trigger_normalize_name on public.tenants;
 create trigger tenants_trigger_normalize_name
@@ -531,19 +582,25 @@ create table if not exists public.organizations (
   tenant_id int not null references public.tenants (tenant_id) on delete cascade,
   organization_slug extensions.citext not null check (internal.slug_validate(organization_slug::text)),
   organization_name text not null check (char_length(organization_name) between 1 and 256),
-  organization_disabled_at timestamptz,
+  organization_deleted_at timestamptz,
   organization_created_at timestamptz not null default current_timestamp,
   organization_updated_at timestamptz not null default current_timestamp,
   unique (tenant_id, organization_slug)
 );
 
 create index if not exists organizations_tenant_idx
-  on public.organizations (tenant_id) where organization_disabled_at is null;
+  on public.organizations (tenant_id) where organization_deleted_at is null;
 
 drop trigger if exists handle_organizations_updated_at on public.organizations;
 create trigger handle_organizations_updated_at
   before update on public.organizations
   for each row execute procedure extensions.moddatetime(organization_updated_at);
+
+drop trigger if exists soft_delete on public.organizations;
+create trigger soft_delete
+  before delete on public.organizations
+  for each row when (old.organization_deleted_at is null)
+  execute function internal.soft_delete('organization_deleted_at');
 
 drop trigger if exists organizations_trigger_normalize_name on public.organizations;
 create trigger organizations_trigger_normalize_name
@@ -600,7 +657,7 @@ create table if not exists public.addresses_level0 (
   address_level0_id text not null check (length(address_level0_id) = 2),
   address_level0_name text not null check (length(address_level0_name) <= 100),
   address_level0_emoji text check (char_length(address_level0_emoji) between 1 and 8),
-  address_level0_disabled_at timestamptz,
+  address_level0_deleted_at timestamptz,
   address_level0_hidden_at timestamptz,
   address_level0_created_at timestamptz not null default current_timestamp,
   address_level0_updated_at timestamptz not null default current_timestamp,
@@ -1007,7 +1064,7 @@ create table if not exists public.agencies (
   agency_id serial primary key,
   agency_name text not null check (char_length(agency_name) between 1 and 100),
   agency_slug extensions.citext not null unique,
-  agency_disabled_at timestamptz,
+  agency_deleted_at timestamptz,
   agency_created_at timestamptz not null default current_timestamp,
   agency_updated_at timestamptz not null default current_timestamp
 );
@@ -1016,6 +1073,12 @@ drop trigger if exists handle_agencies_updated_at on public.agencies;
 create trigger handle_agencies_updated_at
   before update on public.agencies
   for each row execute procedure extensions.moddatetime(agency_updated_at);
+
+drop trigger if exists soft_delete on public.agencies;
+create trigger soft_delete
+  before delete on public.agencies
+  for each row when (old.agency_deleted_at is null)
+  execute function internal.soft_delete('agency_deleted_at');
 
 -- AgencyMemberships: a profile belongs to an agency. Mirrors public.organization_memberships.
 create table if not exists public.agency_memberships (
@@ -1182,7 +1245,7 @@ create or replace function public.viewer_profile(strict boolean default false)
       _user_id := public.viewer_profile_id();
       return query
         select * from public.profiles
-        where profile_id = _user_id and profile_disabled_at is null
+        where profile_id = _user_id and profile_deleted_at is null
         limit 1;
       if not found and $1 is true then
         raise exception '[viewer_profile] not logged-in or profile not found for user_id: %', _user_id;
@@ -1206,8 +1269,8 @@ create or replace function public.viewer_tenant_ids()
       and m.organization_membership_accepted_at is not null
       and m.organization_membership_revoked_at is null
       and m.organization_membership_rejected_at is null
-      and o.organization_disabled_at is null
-      and t.tenant_disabled_at is null;
+      and o.organization_deleted_at is null
+      and t.tenant_deleted_at is null;
   $$;
 
 create or replace function public.viewer_tenant_validate(tenant_id int)
@@ -1239,8 +1302,8 @@ create or replace function public.viewer_organization_ids()
       and m.organization_membership_accepted_at is not null
       and m.organization_membership_revoked_at is null
       and m.organization_membership_rejected_at is null
-      and o.organization_disabled_at is null
-      and t.tenant_disabled_at is null;
+      and o.organization_deleted_at is null
+      and t.tenant_deleted_at is null;
   $$;
 
 create or replace function public.viewer_organization_validate(organization_id int)
@@ -1388,7 +1451,7 @@ create or replace function public.viewer_agency_ids()
       and af.agency_membership_accepted_at is not null
       and af.agency_membership_revoked_at is null
       and af.agency_membership_rejected_at is null
-      and a.agency_disabled_at is null;
+      and a.agency_deleted_at is null;
   $$;
 
 create or replace function public.viewer_is_agency_member()
@@ -1601,7 +1664,7 @@ create or replace function public.viewer_organization_external_agencies(organiza
         and g.permission_id = '*'
       limit 1
     ) gg on true
-    where a.agency_disabled_at is null
+    where a.agency_deleted_at is null
       and public.viewer_has_permission(
         viewer_organization_external_agencies.organization_id, 'organization_manage')
     order by a.agency_name asc;
@@ -1658,7 +1721,7 @@ create or replace function public.viewer_agency_team_permission_ids(permission_i
       and m.agency_membership_accepted_at is not null
       and m.agency_membership_revoked_at is null
       and m.agency_membership_rejected_at is null
-      and a.agency_disabled_at is null
+      and a.agency_deleted_at is null
       and (mp.permission_id = viewer_agency_team_permission_ids.permission_id or mp.permission_id = '*');
   $$;
 
@@ -1809,14 +1872,14 @@ create view public.tenants_organizations_profiles as
     t.tenant_id,
     t.tenant_slug,
     t.tenant_name,
-    t.tenant_disabled_at,
+    t.tenant_deleted_at,
     t.tenant_created_at,
     t.tenant_updated_at,
     o.organization_id,
     o.tenant_id as organization_tenant_id,
     o.organization_slug,
     o.organization_name,
-    o.organization_disabled_at,
+    o.organization_deleted_at,
     o.organization_created_at,
     o.organization_updated_at,
     m.profile_id
@@ -1827,8 +1890,8 @@ create view public.tenants_organizations_profiles as
     and m.organization_membership_accepted_at is not null
     and m.organization_membership_revoked_at is null
     and m.organization_membership_rejected_at is null
-    and o.organization_disabled_at is null
-    and t.tenant_disabled_at is null;
+    and o.organization_deleted_at is null
+    and t.tenant_deleted_at is null;
 
 revoke all on public.tenants_organizations_profiles from anon, authenticated;
 grant select on public.tenants_organizations_profiles to authenticated;
@@ -1959,7 +2022,7 @@ create policy "Profiles visible to self or org co-members or agency affiliates"
   on public.profiles for select
   to authenticated
   using (
-    profile_disabled_at is null
+    profile_deleted_at is null
     and (
       profile_id = (select public.viewer_profile_id())
       or exists (
@@ -2352,7 +2415,7 @@ create table if not exists public.addresses_level0 (
 
   address_level0_name text not null check (length(address_level0_name) <= 100),
   address_level0_emoji text check (char_length(address_level0_emoji) between 1 and 8),
-  address_level0_disabled_at timestamptz,
+  address_level0_deleted_at timestamptz,
   address_level0_hidden_at timestamptz,
   address_level0_created_at timestamptz not null default current_timestamp,
   address_level0_updated_at timestamptz not null default current_timestamp,
@@ -2362,9 +2425,9 @@ create table if not exists public.addresses_level0 (
 
 comment on column public.addresses_level0.address_level0_id is e'ISO 3166-1 alpha-2 country code';
 
-create index if not exists addresses_level0_disabled_at_idx
-  on public.addresses_level0 (address_level0_disabled_at)
-  where address_level0_disabled_at is not null;
+create index if not exists addresses_level0_deleted_at_idx
+  on public.addresses_level0 (address_level0_deleted_at)
+  where address_level0_deleted_at is not null;
 create index if not exists addresses_level0_hidden_at_idx
   on public.addresses_level0 (address_level0_hidden_at)
   where address_level0_hidden_at is not null;
@@ -2376,6 +2439,12 @@ create trigger handle_addresses_level0_updated_at
   before update on public.addresses_level0
   for each row execute procedure extensions.moddatetime(address_level0_updated_at);
 
+drop trigger if exists soft_delete on public.addresses_level0;
+create trigger soft_delete
+  before delete on public.addresses_level0
+  for each row when (old.address_level0_deleted_at is null)
+  execute function internal.soft_delete('address_level0_deleted_at');
+
 revoke all on table public.addresses_level0 from anon, authenticated;
 grant select on table public.addresses_level0 to anon, authenticated;
 
@@ -2384,7 +2453,7 @@ alter table public.addresses_level0 enable row level security;
 drop policy if exists "Anyone can select addresses_level0." on public.addresses_level0;
 create policy "Anyone can select addresses_level0."
   on public.addresses_level0 for select
-  using (address_level0_disabled_at is null);
+  using (address_level0_deleted_at is null);
 
 -- ============================================================
 
@@ -2393,7 +2462,7 @@ create table if not exists public.addresses_level1 (
   address_level1_id text not null check (length(address_level1_id) = 5 or length(address_level1_id) = 6),
 
   address_level1_name text not null check (length(address_level1_name) <= 100),
-  address_level1_disabled_at timestamptz,
+  address_level1_deleted_at timestamptz,
   address_level1_hidden_at timestamptz,
   address_level1_created_at timestamptz not null default current_timestamp,
   address_level1_updated_at timestamptz not null default current_timestamp,
@@ -2406,9 +2475,9 @@ create table if not exists public.addresses_level1 (
 
 comment on column public.addresses_level1.address_level1_id is e'ISO 3166-2 code';
 
-create index if not exists addresses_level1_disabled_at_idx
-  on public.addresses_level1 (address_level1_disabled_at)
-  where address_level1_disabled_at is not null;
+create index if not exists addresses_level1_deleted_at_idx
+  on public.addresses_level1 (address_level1_deleted_at)
+  where address_level1_deleted_at is not null;
 create index if not exists addresses_level1_hidden_at_idx
   on public.addresses_level1 (address_level1_hidden_at)
   where address_level1_hidden_at is not null;
@@ -2422,6 +2491,12 @@ create trigger handle_addresses_level1_updated_at
   before update on public.addresses_level1
   for each row execute procedure extensions.moddatetime(address_level1_updated_at);
 
+drop trigger if exists soft_delete on public.addresses_level1;
+create trigger soft_delete
+  before delete on public.addresses_level1
+  for each row when (old.address_level1_deleted_at is null)
+  execute function internal.soft_delete('address_level1_deleted_at');
+
 revoke all on table public.addresses_level1 from anon, authenticated;
 grant select on table public.addresses_level1 to anon, authenticated;
 
@@ -2430,7 +2505,7 @@ alter table public.addresses_level1 enable row level security;
 drop policy if exists "Anyone can select addresses_level1." on public.addresses_level1;
 create policy "Anyone can select addresses_level1."
   on public.addresses_level1 for select
-  using (address_level1_disabled_at is null);
+  using (address_level1_deleted_at is null);
 
 -- ============================================================
 
@@ -2440,7 +2515,7 @@ create table if not exists public.addresses_level2 (
   address_level2_id text not null check (length(address_level2_id) <= 100),
 
   address_level2_name text not null check (length(address_level2_name) <= 100),
-  address_level2_disabled_at timestamptz,
+  address_level2_deleted_at timestamptz,
   address_level2_hidden_at timestamptz,
   address_level2_created_at timestamptz not null default current_timestamp,
   address_level2_updated_at timestamptz not null default current_timestamp,
@@ -2453,9 +2528,9 @@ create table if not exists public.addresses_level2 (
 
 comment on column public.addresses_level2.address_level2_id is e'Slug';
 
-create index if not exists addresses_level2_disabled_at_idx
-  on public.addresses_level2 (address_level2_disabled_at)
-  where address_level2_disabled_at is not null;
+create index if not exists addresses_level2_deleted_at_idx
+  on public.addresses_level2 (address_level2_deleted_at)
+  where address_level2_deleted_at is not null;
 create index if not exists addresses_level2_hidden_at_idx
   on public.addresses_level2 (address_level2_hidden_at)
   where address_level2_hidden_at is not null;
@@ -2469,6 +2544,12 @@ create trigger handle_addresses_level2_updated_at
   before update on public.addresses_level2
   for each row execute procedure extensions.moddatetime(address_level2_updated_at);
 
+drop trigger if exists soft_delete on public.addresses_level2;
+create trigger soft_delete
+  before delete on public.addresses_level2
+  for each row when (old.address_level2_deleted_at is null)
+  execute function internal.soft_delete('address_level2_deleted_at');
+
 revoke all on table public.addresses_level2 from anon, authenticated;
 grant select on table public.addresses_level2 to anon, authenticated;
 
@@ -2477,7 +2558,7 @@ alter table public.addresses_level2 enable row level security;
 drop policy if exists "Anyone can select addresses_level2." on public.addresses_level2;
 create policy "Anyone can select addresses_level2."
   on public.addresses_level2 for select
-  using (address_level2_disabled_at is null);
+  using (address_level2_deleted_at is null);
 
 -- ============================================================
 
@@ -2488,7 +2569,7 @@ create table if not exists public.addresses_level3 (
   address_level3_id text not null check (length(address_level3_id) <= 100),
 
   address_level3_name text not null check (length(address_level3_name) <= 100),
-  address_level3_disabled_at timestamptz,
+  address_level3_deleted_at timestamptz,
   address_level3_hidden_at timestamptz,
   address_level3_created_at timestamptz not null default current_timestamp,
   address_level3_updated_at timestamptz not null default current_timestamp,
@@ -2499,9 +2580,9 @@ create table if not exists public.addresses_level3 (
     references public.addresses_level2 (address_level0_id, address_level1_id, address_level2_id) on delete no action
 );
 
-create index if not exists addresses_level3_disabled_at_idx
-  on public.addresses_level3 (address_level3_disabled_at)
-  where address_level3_disabled_at is not null;
+create index if not exists addresses_level3_deleted_at_idx
+  on public.addresses_level3 (address_level3_deleted_at)
+  where address_level3_deleted_at is not null;
 create index if not exists addresses_level3_hidden_at_idx
   on public.addresses_level3 (address_level3_hidden_at)
   where address_level3_hidden_at is not null;
@@ -2515,6 +2596,12 @@ create trigger handle_addresses_level3_updated_at
   before update on public.addresses_level3
   for each row execute procedure extensions.moddatetime(address_level3_updated_at);
 
+drop trigger if exists soft_delete on public.addresses_level3;
+create trigger soft_delete
+  before delete on public.addresses_level3
+  for each row when (old.address_level3_deleted_at is null)
+  execute function internal.soft_delete('address_level3_deleted_at');
+
 revoke all on table public.addresses_level3 from anon, authenticated;
 grant select on table public.addresses_level3 to anon, authenticated;
 
@@ -2523,7 +2610,7 @@ alter table public.addresses_level3 enable row level security;
 drop policy if exists "Anyone can select addresses_level3." on public.addresses_level3;
 create policy "Anyone can select addresses_level3."
   on public.addresses_level3 for select
-  using (address_level3_disabled_at is null);
+  using (address_level3_deleted_at is null);
 
 -- ============================================================
 -- profile_identities
@@ -2580,7 +2667,7 @@ create table if not exists public.profile_identities (
   address_level0_id text not null references public.addresses_level0(address_level0_id),
   profile_identity_document_kind public.profile_identity_document_kind not null,
   profile_identity_document_value text not null check (char_length(profile_identity_document_value) between 4 and 32),
-  profile_identity_disabled_at timestamptz,
+  profile_identity_deleted_at timestamptz,
   profile_identity_created_at timestamptz not null default current_timestamp,
   profile_identity_updated_at timestamptz not null default current_timestamp,
   unique (profile_id, address_level0_id, profile_identity_document_kind)
@@ -2589,16 +2676,22 @@ create table if not exists public.profile_identities (
 create unique index if not exists profile_identities_global_unique_idx
   on public.profile_identities (
     address_level0_id, profile_identity_document_kind, profile_identity_document_value
-  ) where profile_identity_disabled_at is null;
+  ) where profile_identity_deleted_at is null;
 
 create index if not exists profile_identities_profile_idx
   on public.profile_identities (profile_id)
-  where profile_identity_disabled_at is null;
+  where profile_identity_deleted_at is null;
 
 drop trigger if exists handle_profile_identities_updated_at on public.profile_identities;
 create trigger handle_profile_identities_updated_at
   before update on public.profile_identities
   for each row execute procedure extensions.moddatetime(profile_identity_updated_at);
+
+drop trigger if exists soft_delete on public.profile_identities;
+create trigger soft_delete
+  before delete on public.profile_identities
+  for each row when (old.profile_identity_deleted_at is null)
+  execute function internal.soft_delete('profile_identity_deleted_at');
 
 -- Normalize+validate trigger. RAISEs for invalid values (e.g. CL+NIN bad check digit).
 create or replace function internal.profile_identities_normalize_value()
@@ -2692,7 +2785,7 @@ create or replace function public.profile_identity_resolve(
       where address_level0_id = country
         and profile_identity_document_kind = kind
         and profile_identity_document_value = _normalized
-        and profile_identity_disabled_at is null
+        and profile_identity_deleted_at is null
       limit 1;
       return _result;
     end;
@@ -2715,7 +2808,7 @@ as $$
   select *
   from public.profile_identities
   where profile_id = this.profile_id
-    and profile_identity_disabled_at is null
+    and profile_identity_deleted_at is null
   order by profile_identity_id desc
   limit 1;
 $$;
@@ -2827,7 +2920,7 @@ create or replace function public.viewer_organization_membership_pending()
               select 1
                 from public.profile_identities pi
                 where pi.profile_id = _user_id
-                  and pi.profile_identity_disabled_at is null
+                  and pi.profile_identity_deleted_at is null
                   and pi.address_level0_id = m.organization_membership_invite_address_level0_id
                   and pi.profile_identity_document_kind = m.organization_membership_invite_document_kind
                   and pi.profile_identity_document_value = m.organization_membership_invite_document_value
@@ -4248,7 +4341,7 @@ create or replace function public.conversation_emit(
         into _topic_priority, _topic_kind
         from public.conversation_topics ct
         where ct.conversation_topic_slug = conversation_emit.slug
-          and ct.conversation_topic_disabled_at is null;
+          and ct.conversation_topic_deleted_at is null;
 
       if not found then
         raise exception 'conversation_topic_not_found' using errcode = 'P0001';

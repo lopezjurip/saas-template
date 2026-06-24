@@ -103,7 +103,7 @@ deallocate bob_steal_rut;
 
 -- Soft-disable Alice's RUT, then Bob can claim it.
 update public.profile_identities
-  set profile_identity_disabled_at = current_timestamp
+  set profile_identity_deleted_at = current_timestamp
   where profile_id = '00000000-0000-0000-0000-00000000a11c'
     and address_level0_id = 'CL'
     and profile_identity_document_kind = 'nin';

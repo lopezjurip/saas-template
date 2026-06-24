@@ -274,7 +274,7 @@ apps/
           actions.ts (4 lines)
           layout.tsx (1 lines)
           page.tsx (25 lines)
-          state.server.ts (9 lines)
+          state.server.ts (12 lines)
           state.ts (23 lines)
         phone/
           actions.ts (5 lines)
@@ -437,7 +437,6 @@ apps/
       globals.css (3 lines)
     test/
       server-only.ts (0 lines)
-    .env.example (89 lines)
     graphql.config.ts (2 lines)
     instrumentation.ts (1 lines)
     next-env.d.ts (0 lines)
@@ -543,7 +542,7 @@ packages/
       react.ts (7 lines)
     supabase/
       migrations/
-        00000000000000_schema.sql (4099 lines)
+        00000000000000_schema.sql (4209 lines)
       templates/
         confirmation.html (4 lines)
         email_change.html (4 lines)
@@ -551,10 +550,10 @@ packages/
       tests/
         README.md (21 lines)
       .gitignore (4 lines)
-      config.toml (338 lines)
+      config.toml (348 lines)
       seed.sql (855 lines)
     graphql.config.ts (3 lines)
-    package.json (52 lines)
+    package.json (54 lines)
     tsconfig.json (6 lines)
   typescript-config/
     base.json (41 lines)
@@ -659,20 +658,20 @@ packages/
 scripts/
   development/
     env-setup.ts (15 lines)
-    exe-dev-setup.sh (71 lines)
+    exe-dev-setup.sh (50 lines)
     https-setup.sh (21 lines)
-    local-setup.sh (30 lines)
+    local-setup.sh (33 lines)
     worktree-archive.sh (29 lines)
-    worktree-setup.sh (79 lines)
+    worktree-setup.sh (64 lines)
   repomix-skill-rename.mjs (19 lines)
-  skills-setup.mjs (26 lines)
+  skills-setup.mjs (24 lines)
 skills/
   my-auth/
     SKILL.md (138 lines)
   my-conventions/
     SKILL.md (212 lines)
   my-graphql/
-    SKILL.md (331 lines)
+    SKILL.md (376 lines)
   my-graphql-codegen/
     SKILL.md (144 lines)
   my-graphy/
@@ -690,26 +689,26 @@ skills/
   my-react-pdf/
     SKILL.md (102 lines)
   my-supabase/
-    SKILL.md (238 lines)
+    SKILL.md (340 lines)
   my-supabase-codegen/
     SKILL.md (126 lines)
   my-supabase-react/
     SKILL.md (137 lines)
   psql-query/
     SKILL.md (138 lines)
-.env.example (130 lines)
 .gitignore (73 lines)
-.mcp.json (8 lines)
+.mcp.json (19 lines)
+.nvmrc (1 lines)
 AGENTS.md (249 lines)
 biome.jsonc (125 lines)
 CLAUDE.md (1 lines)
 graphql.config.ts (1 lines)
 package.json (56 lines)
-pnpm-workspace.yaml (13 lines)
-README.md (66 lines)
+pnpm-workspace.yaml (21 lines)
+README.md (65 lines)
 repomix.config.ts (1 lines)
 skills-lock.json (184 lines)
 tsconfig.json (6 lines)
-turbo.json (68 lines)
-workspace.code-workspace (27 lines)
+turbo.json (75 lines)
+workspace.code-workspace (31 lines)
 ```

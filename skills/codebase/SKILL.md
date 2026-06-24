@@ -5,7 +5,7 @@ description: Reference codebase for SaaS Template. Use this skill when you need 
 
 # SaaS Template Codebase Reference
 
-514 files | 16186 lines | 177184 tokens
+513 files | 16234 lines | 176318 tokens
 
 ## Overview
 

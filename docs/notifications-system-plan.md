@@ -14,7 +14,7 @@
 - **`public.conversation_topics`** — **catalog of system-message *topics*** (renamed from `notifications`).
   Cols: `conversation_topic_slug` citext PK, `conversation_topic_name`, `conversation_topic_description`,
   `conversation_topic_priority` (`notification_priority` enum), `conversation_topic_kind` (`notification_kind`
-  enum), `conversation_topic_disabled_at`. The topic catalog for `system` messages — needed for per-topic
+  enum), `conversation_topic_deleted_at`. The topic catalog for `system` messages — needed for per-topic
   prefs + priority defaults. (Enum *types* `notification_priority` / `notification_kind` keep their names.)
 - `public.profile_notifications` — legacy single-bool prefs. **DELETE entirely** —
   superseded by `profile_topic_channels` (per-channel). Also drop `viewer_profile_notifications()`, the
