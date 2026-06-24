@@ -39,6 +39,7 @@ export function MobileNavDrawer({
     navGeneral: t("navGeneral"),
     navMembers: t("navMembers"),
     navExternalAccess: t("navExternalAccess"),
+    navMcp: t("navMcp"),
     navDomains: t("navDomains"),
   });
   const activeId = PICK_ACTIVE_LEAF_ID(items, activePath);
@@ -174,6 +175,7 @@ const LOCALE_ES = {
   navGeneral: "General",
   navMembers: "Miembros",
   navExternalAccess: "Acceso externo",
+  navMcp: "MCP",
   navDomains: "Dominios",
 };
 
@@ -191,6 +193,7 @@ const LOCALES = {
     navGeneral: "General",
     navMembers: "Members",
     navExternalAccess: "External access",
+    navMcp: "MCP",
     navDomains: "Domains",
   } satisfies typeof LOCALE_ES,
   pt: {
@@ -205,6 +208,7 @@ const LOCALES = {
     navGeneral: "General",
     navMembers: "Membros",
     navExternalAccess: "Acesso externo",
+    navMcp: "MCP",
     navDomains: "Domínios",
   } satisfies typeof LOCALE_ES,
 };
