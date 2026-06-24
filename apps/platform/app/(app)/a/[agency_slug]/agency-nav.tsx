@@ -19,7 +19,6 @@ import {
   Plug,
   Settings,
   ShieldCheck,
-  Ticket,
   Users,
 } from "lucide-react";
 import type { Route } from "next";
@@ -78,13 +77,6 @@ export function AgencyNav({ agency, agencies }: { agency: NavAgency; agencies: N
       href: ROUTE("/a/[agency_slug]/access", { agency_slug }),
       label: t("tab_access"),
       icon: Network,
-      exact: false,
-    },
-    {
-      key: "tickets",
-      href: ROUTE("/a/[agency_slug]/tickets", { agency_slug }),
-      label: t("tab_tickets"),
-      icon: Ticket,
       exact: false,
     },
     {
@@ -241,7 +233,6 @@ const LOCALE_ES = {
   tab_overview: "Resumen",
   tab_team: "Equipo",
   tab_access: "Accesos",
-  tab_tickets: "Tickets",
   tab_inbox: "Bandeja",
   tab_mcp: "MCP",
   tab_settings: "Ajustes",
@@ -256,7 +247,6 @@ const LOCALE_EN: typeof LOCALE_ES = {
   tab_overview: "Overview",
   tab_team: "Team",
   tab_access: "Access",
-  tab_tickets: "Tickets",
   tab_inbox: "Inbox",
   tab_mcp: "MCP",
   tab_settings: "Settings",
@@ -271,7 +261,6 @@ const LOCALE_PT: typeof LOCALE_ES = {
   tab_overview: "Resumo",
   tab_team: "Equipe",
   tab_access: "Acessos",
-  tab_tickets: "Tickets",
   tab_inbox: "Caixa de entrada",
   tab_mcp: "MCP",
   tab_settings: "Configurações",

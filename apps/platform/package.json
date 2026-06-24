@@ -19,7 +19,6 @@
     "generate:graphql": "graphql-codegen -c graphql.config.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.85",
     "@formatjs/intl-localematcher": "^0.8.10",
     "@hookform/resolvers": "^5.2.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
@@ -46,7 +45,6 @@
     "@types/ua-parser-js": "^0.7.39",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
-    "ai": "^6.0.208",
     "clsx": "^2.1.1",
     "lucide-react": "^1.21.0",
     "jose": "^6.0.0",

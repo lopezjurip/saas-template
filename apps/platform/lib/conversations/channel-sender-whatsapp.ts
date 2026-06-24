@@ -9,12 +9,8 @@ const KAPSO_API_KEY = process.env["KAPSO_API_KEY"];
 /**
  * Sends an outbound WhatsApp message via the Kapso BSP client.
  *
- * Embeds the `reply_token` in the message text so the inbound Kapso webhook can
- * correlate replies back to this delivery and conversation.  The token is appended
- * as a compact reference line that is human-readable but out of the way.
- *
  * @example
- * const result = await sendWhatsAppNotification({ deliveryId, replyToken, body, ... });
+ * const result = await sendWhatsAppNotification({ deliveryId, body, ... });
  */
 export const sendWhatsAppNotification: ChannelSender = async function sendWhatsAppNotification(
   input: ChannelSenderInput,
@@ -34,12 +30,7 @@ export const sendWhatsAppNotification: ChannelSender = async function sendWhatsA
     return { status: "skipped", error: "no whatsapp_conversation_id in message payload" };
   }
 
-  const body = input.body ?? "(no content)";
-
-  // Append the reply token as a ref line so inbound can correlate replies.
-  // Format: [ref:XXXXXX] — short enough to not dominate the message.
-  const tokenShort = input.replyToken.slice(0, 12);
-  const messageText = `${body}\n\n[ref:${tokenShort}]`;
+  const messageText = input.body ?? "(no content)";
 
   const client = new KapsoClient({ apiKey: KAPSO_API_KEY });
 
