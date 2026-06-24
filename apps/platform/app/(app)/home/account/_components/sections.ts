@@ -7,7 +7,7 @@
  * translated strings — sidebar.tsx owns all translations for this nav surface.
  */
 
-import { Bell, Globe, Languages, Monitor, Palette, ShieldCheck, Trash2, User } from "lucide-react";
+import { Bell, Globe, Languages, Monitor, Palette, Plug, ShieldCheck, Trash2, User } from "lucide-react";
 import type { ComponentType } from "react";
 import { ROUTE_PATH } from "~/lib/route";
 
@@ -15,6 +15,7 @@ export type AccountSectionId =
   | "profile"
   | "security"
   | "connections"
+  | "mcp"
   | "sessions"
   | "notifications"
   | "theme"
@@ -27,6 +28,7 @@ export type AccountLabelKey =
   | "nav_profile"
   | "nav_security"
   | "nav_connections"
+  | "nav_mcp"
   | "nav_sessions"
   | "nav_notifications"
   | "nav_theme"
@@ -46,6 +48,7 @@ export const ACCOUNT_SECTIONS: readonly AccountSection[] = [
   { id: "profile", labelKey: "nav_profile", groupKey: "account", Icon: User },
   { id: "security", labelKey: "nav_security", groupKey: "account", Icon: ShieldCheck },
   { id: "connections", labelKey: "nav_connections", groupKey: "account", Icon: Globe, todo: true },
+  { id: "mcp", labelKey: "nav_mcp", groupKey: "account", Icon: Plug },
   { id: "sessions", labelKey: "nav_sessions", groupKey: "security_group", Icon: Monitor },
   { id: "notifications", labelKey: "nav_notifications", groupKey: "preferences", Icon: Bell, todo: true },
   { id: "theme", labelKey: "nav_theme", groupKey: "preferences", Icon: Palette },
@@ -57,6 +60,7 @@ const ACCOUNT_SECTION_PATHS = {
   profile: ROUTE_PATH("/home/account/profile"),
   security: ROUTE_PATH("/home/account/security"),
   connections: ROUTE_PATH("/home/account/connections"),
+  mcp: ROUTE_PATH("/home/account/mcp"),
   sessions: ROUTE_PATH("/home/account/sessions"),
   notifications: ROUTE_PATH("/home/account/notifications"),
   theme: ROUTE_PATH("/home/account/theme"),

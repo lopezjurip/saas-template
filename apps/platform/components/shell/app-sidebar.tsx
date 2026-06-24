@@ -89,6 +89,7 @@ export function AppSidebar({
     navGeneral: t("navGeneral"),
     navMembers: t("navMembers"),
     navExternalAccess: t("navExternalAccess"),
+    navMcp: t("navMcp"),
     navDomains: t("navDomains"),
   });
 
@@ -202,6 +203,7 @@ const LOCALE_ES = {
   navGeneral: "General",
   navMembers: "Miembros",
   navExternalAccess: "Acceso externo",
+  navMcp: "MCP",
   navDomains: "Dominios",
   search: "Buscar…",
 };
@@ -214,6 +216,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
   navGeneral: "General",
   navMembers: "Members",
   navExternalAccess: "External access",
+  navMcp: "MCP",
   navDomains: "Domains",
   search: "Search…",
 };
@@ -226,6 +229,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   navGeneral: "General",
   navMembers: "Membros",
   navExternalAccess: "Acesso externo",
+  navMcp: "MCP",
   navDomains: "Domínios",
   search: "Buscar…",
 };
