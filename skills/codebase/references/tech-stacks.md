@@ -10,6 +10,10 @@
 
 - TypeScript
 
+### Runtime Versions
+
+- Node.js: 24
+
 ### Package Manager
 
 - pnpm
@@ -19,7 +23,7 @@
 - @biomejs/biome (2.5.0)
 - @packages/typescript-config (workspace:*)
 - @types/qrcode-terminal (^0.12.2)
-- graphql (^16.9.0)
+- graphql (^16.14.2)
 - graphql-config (^5.1.6)
 - qrcode-terminal (^0.12.0)
 - repomix (^1.15.0)
@@ -31,9 +35,10 @@
 ### Configuration Files
 
 - tsconfig.json
+- .nvmrc
 - turbo.json
-- .gitignore
 - biome.jsonc
+- .gitignore
 - package.json
 
 ## Tech Stack: apps/platform
@@ -416,6 +421,7 @@
 
 ### Dev Dependencies
 
+- @dotenvx/dotenvx (^1.75.1)
 - @graphql-codegen/cli (^7.1.3)
 - @graphql-codegen/introspection (^6.0.1)
 - @graphql-codegen/schema-ast (^6.0.1)

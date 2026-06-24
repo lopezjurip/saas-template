@@ -53,7 +53,7 @@ export function NotificationsChannels() {
         supabase
           .from("conversation_topics")
           .select("conversation_topic_slug")
-          .is("conversation_topic_disabled_at", null)
+          .is("conversation_topic_deleted_at", null)
           .order("conversation_topic_priority"),
         supabase.from("profile_topic_channels").select("message_channel, enabled"),
       ]);

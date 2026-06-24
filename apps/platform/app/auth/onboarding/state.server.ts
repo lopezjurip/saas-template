@@ -36,20 +36,26 @@ export async function getViewerOnboardingState(): Promise<OnboardingState> {
 
   const graphy = await getGraphySession();
   const [{ data }, { data: passkeyList }] = await Promise.all([
-    graphy.query({ query: ViewerOnboardingStateGet, variables: { email: user["email"] ?? "" } }),
+    graphy.query({ query: ViewerOnboardingStateGet, variables: { email: user["email"] || "" } }),
     supabase.auth.passkey.list(),
   ]);
 
+  /** Set by updateUser({email}) flow (NOT by magic link) and is NOT cleared by ConfirmEmailChange, so it persists after completion. */
+  const email_change_sent_at = Boolean(user["email_change_sent_at"]);
+  /** Falsy means the change was completed (or never started). */
+  const user_new_email = !user["new_email"];
+
   const profile = data?.["profile"] ?? null;
-  const avatarSrc = profile?.["avatar"]?.["src"] ?? null;
+  const avatar_src = profile?.["avatar"]?.["src"] ?? null;
 
   const profile_name_full = profile ? profile["profileNameFull"] : null;
-  const profile_avatar_src = avatarSrc ? URL_NEW(avatarSrc, NEXT_PUBLIC_SUPABASE_URL).href : null;
+  const profile_avatar_src = avatar_src ? URL_NEW(avatar_src, NEXT_PUBLIC_SUPABASE_URL).href : null;
+  /** Covers email+password sign-ups (they never go through email_change). */
   const hasPassword = Boolean(data?.["emailHasPassword"]);
   const hasPasskey = passkeyList ? passkeyList.length > 0 : false;
-  const hasEmail = Boolean(user["email_confirmed_at"]);
+  const hasEmail = hasPassword || (email_change_sent_at && user_new_email); // This condition is required to work.
   const hasPhone = Boolean(user["phone_confirmed_at"]);
-  const hasName = profile_name_full ? profile_name_full.trim().length >= 2 : false;
+  const hasName = profile_name_full ? profile_name_full.trim().length >= 1 : false;
 
   return {
     profile_id: user.id,

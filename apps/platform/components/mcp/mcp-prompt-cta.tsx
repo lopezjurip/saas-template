@@ -10,11 +10,13 @@ import Link from "next/link";
 
 interface McpPromptCtaProps {
   endpoint: string;
-  platformHref: Route;
+  /** Omit inside the authenticated shell — the "go to the platform" link only makes sense on marketing. */
+  platformHref?: Route;
 }
 
 /**
- * Renders the MCP landing CTA that copies an agent-ready setup prompt.
+ * Renders the MCP setup CTA that copies an agent-ready prompt. Used on the marketing `/mcp`
+ * page (with a platform link) and inside the dashboard MCP section (without one).
  * @example
  * <McpPromptCta endpoint="https://example.com/api/mcp" platformHref="/home" />
  */
@@ -49,12 +51,14 @@ export function McpPromptCta({ endpoint, platformHref }: McpPromptCtaProps) {
             {copied ? <Check aria-hidden="true" className="size-4" /> : <Copy aria-hidden="true" className="size-4" />}
             {copied ? t("button.copied") : t("button.copy")}
           </Button>
-          <Button asChild variant="ghost" size="sm" className="cursor-pointer">
-            <Link href={platformHref}>
-              {t("button.platform")}
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </Link>
-          </Button>
+          {platformHref ? (
+            <Button asChild variant="ghost" size="sm" className="cursor-pointer">
+              <Link href={platformHref}>
+                {t("button.platform")}
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </Link>
+            </Button>
+          ) : null}
         </div>
 
         {error ? <p className="text-sm text-destructive">{t("error")}</p> : null}

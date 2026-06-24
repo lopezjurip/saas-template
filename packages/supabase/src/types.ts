@@ -1,4 +1,3 @@
-⟐ injected env (43) from ../../.env.development, ../../.env.development.local
 export type Json =
   | string
   | number
@@ -13,7 +12,7 @@ export type Database = {
       addresses_level0: {
         Row: {
           address_level0_created_at: string
-          address_level0_disabled_at: string | null
+          address_level0_deleted_at: string | null
           address_level0_emoji: string | null
           address_level0_hidden_at: string | null
           address_level0_id: string
@@ -22,7 +21,7 @@ export type Database = {
         }
         Insert: {
           address_level0_created_at?: string
-          address_level0_disabled_at?: string | null
+          address_level0_deleted_at?: string | null
           address_level0_emoji?: string | null
           address_level0_hidden_at?: string | null
           address_level0_id: string
@@ -31,7 +30,7 @@ export type Database = {
         }
         Update: {
           address_level0_created_at?: string
-          address_level0_disabled_at?: string | null
+          address_level0_deleted_at?: string | null
           address_level0_emoji?: string | null
           address_level0_hidden_at?: string | null
           address_level0_id?: string
@@ -44,7 +43,7 @@ export type Database = {
         Row: {
           address_level0_id: string
           address_level1_created_at: string
-          address_level1_disabled_at: string | null
+          address_level1_deleted_at: string | null
           address_level1_hidden_at: string | null
           address_level1_id: string
           address_level1_name: string
@@ -53,7 +52,7 @@ export type Database = {
         Insert: {
           address_level0_id: string
           address_level1_created_at?: string
-          address_level1_disabled_at?: string | null
+          address_level1_deleted_at?: string | null
           address_level1_hidden_at?: string | null
           address_level1_id: string
           address_level1_name: string
@@ -62,7 +61,7 @@ export type Database = {
         Update: {
           address_level0_id?: string
           address_level1_created_at?: string
-          address_level1_disabled_at?: string | null
+          address_level1_deleted_at?: string | null
           address_level1_hidden_at?: string | null
           address_level1_id?: string
           address_level1_name?: string
@@ -83,7 +82,7 @@ export type Database = {
           address_level0_id: string
           address_level1_id: string
           address_level2_created_at: string
-          address_level2_disabled_at: string | null
+          address_level2_deleted_at: string | null
           address_level2_hidden_at: string | null
           address_level2_id: string
           address_level2_name: string
@@ -93,7 +92,7 @@ export type Database = {
           address_level0_id: string
           address_level1_id: string
           address_level2_created_at?: string
-          address_level2_disabled_at?: string | null
+          address_level2_deleted_at?: string | null
           address_level2_hidden_at?: string | null
           address_level2_id: string
           address_level2_name: string
@@ -103,7 +102,7 @@ export type Database = {
           address_level0_id?: string
           address_level1_id?: string
           address_level2_created_at?: string
-          address_level2_disabled_at?: string | null
+          address_level2_deleted_at?: string | null
           address_level2_hidden_at?: string | null
           address_level2_id?: string
           address_level2_name?: string
@@ -125,7 +124,7 @@ export type Database = {
           address_level1_id: string
           address_level2_id: string
           address_level3_created_at: string
-          address_level3_disabled_at: string | null
+          address_level3_deleted_at: string | null
           address_level3_hidden_at: string | null
           address_level3_id: string
           address_level3_name: string
@@ -136,7 +135,7 @@ export type Database = {
           address_level1_id: string
           address_level2_id: string
           address_level3_created_at?: string
-          address_level3_disabled_at?: string | null
+          address_level3_deleted_at?: string | null
           address_level3_hidden_at?: string | null
           address_level3_id: string
           address_level3_name: string
@@ -147,7 +146,7 @@ export type Database = {
           address_level1_id?: string
           address_level2_id?: string
           address_level3_created_at?: string
-          address_level3_disabled_at?: string | null
+          address_level3_deleted_at?: string | null
           address_level3_hidden_at?: string | null
           address_level3_id?: string
           address_level3_name?: string
@@ -174,7 +173,7 @@ export type Database = {
       agencies: {
         Row: {
           agency_created_at: string
-          agency_disabled_at: string | null
+          agency_deleted_at: string | null
           agency_id: number
           agency_name: string
           agency_slug: string
@@ -182,7 +181,7 @@ export type Database = {
         }
         Insert: {
           agency_created_at?: string
-          agency_disabled_at?: string | null
+          agency_deleted_at?: string | null
           agency_id?: number
           agency_name: string
           agency_slug: string
@@ -190,7 +189,7 @@ export type Database = {
         }
         Update: {
           agency_created_at?: string
-          agency_disabled_at?: string | null
+          agency_deleted_at?: string | null
           agency_id?: number
           agency_name?: string
           agency_slug?: string
@@ -530,8 +529,8 @@ export type Database = {
       conversation_topics: {
         Row: {
           conversation_topic_created_at: string
+          conversation_topic_deleted_at: string | null
           conversation_topic_description: string
-          conversation_topic_disabled_at: string | null
           conversation_topic_kind: Database["public"]["Enums"]["notification_kind"]
           conversation_topic_name: string
           conversation_topic_priority: Database["public"]["Enums"]["notification_priority"]
@@ -540,8 +539,8 @@ export type Database = {
         }
         Insert: {
           conversation_topic_created_at?: string
+          conversation_topic_deleted_at?: string | null
           conversation_topic_description: string
-          conversation_topic_disabled_at?: string | null
           conversation_topic_kind?: Database["public"]["Enums"]["notification_kind"]
           conversation_topic_name: string
           conversation_topic_priority?: Database["public"]["Enums"]["notification_priority"]
@@ -550,8 +549,8 @@ export type Database = {
         }
         Update: {
           conversation_topic_created_at?: string
+          conversation_topic_deleted_at?: string | null
           conversation_topic_description?: string
-          conversation_topic_disabled_at?: string | null
           conversation_topic_kind?: Database["public"]["Enums"]["notification_kind"]
           conversation_topic_name?: string
           conversation_topic_priority?: Database["public"]["Enums"]["notification_priority"]
@@ -785,7 +784,7 @@ export type Database = {
       organizations: {
         Row: {
           organization_created_at: string
-          organization_disabled_at: string | null
+          organization_deleted_at: string | null
           organization_id: number
           organization_name: string
           organization_slug: string
@@ -794,7 +793,7 @@ export type Database = {
         }
         Insert: {
           organization_created_at?: string
-          organization_disabled_at?: string | null
+          organization_deleted_at?: string | null
           organization_id?: number
           organization_name: string
           organization_slug: string
@@ -803,7 +802,7 @@ export type Database = {
         }
         Update: {
           organization_created_at?: string
-          organization_disabled_at?: string | null
+          organization_deleted_at?: string | null
           organization_id?: number
           organization_name?: string
           organization_slug?: string
@@ -933,7 +932,7 @@ export type Database = {
           address_level0_id: string
           profile_id: string
           profile_identity_created_at: string
-          profile_identity_disabled_at: string | null
+          profile_identity_deleted_at: string | null
           profile_identity_document_kind: Database["public"]["Enums"]["profile_identity_document_kind"]
           profile_identity_document_value: string
           profile_identity_id: string
@@ -943,7 +942,7 @@ export type Database = {
           address_level0_id: string
           profile_id: string
           profile_identity_created_at?: string
-          profile_identity_disabled_at?: string | null
+          profile_identity_deleted_at?: string | null
           profile_identity_document_kind: Database["public"]["Enums"]["profile_identity_document_kind"]
           profile_identity_document_value: string
           profile_identity_id?: string
@@ -953,7 +952,7 @@ export type Database = {
           address_level0_id?: string
           profile_id?: string
           profile_identity_created_at?: string
-          profile_identity_disabled_at?: string | null
+          profile_identity_deleted_at?: string | null
           profile_identity_document_kind?: Database["public"]["Enums"]["profile_identity_document_kind"]
           profile_identity_document_value?: string
           profile_identity_id?: string
@@ -1059,7 +1058,7 @@ export type Database = {
       profiles: {
         Row: {
           profile_created_at: string
-          profile_disabled_at: string | null
+          profile_deleted_at: string | null
           profile_id: string
           profile_name_full: string | null
           profile_onboarded_at: string | null
@@ -1067,7 +1066,7 @@ export type Database = {
         }
         Insert: {
           profile_created_at?: string
-          profile_disabled_at?: string | null
+          profile_deleted_at?: string | null
           profile_id: string
           profile_name_full?: string | null
           profile_onboarded_at?: string | null
@@ -1075,7 +1074,7 @@ export type Database = {
         }
         Update: {
           profile_created_at?: string
-          profile_disabled_at?: string | null
+          profile_deleted_at?: string | null
           profile_id?: string
           profile_name_full?: string | null
           profile_onboarded_at?: string | null
@@ -1182,7 +1181,7 @@ export type Database = {
       tenants: {
         Row: {
           tenant_created_at: string
-          tenant_disabled_at: string | null
+          tenant_deleted_at: string | null
           tenant_id: number
           tenant_name: string
           tenant_onboarded_at: string | null
@@ -1192,7 +1191,7 @@ export type Database = {
         }
         Insert: {
           tenant_created_at?: string
-          tenant_disabled_at?: string | null
+          tenant_deleted_at?: string | null
           tenant_id?: number
           tenant_name: string
           tenant_onboarded_at?: string | null
@@ -1202,7 +1201,7 @@ export type Database = {
         }
         Update: {
           tenant_created_at?: string
-          tenant_disabled_at?: string | null
+          tenant_deleted_at?: string | null
           tenant_id?: number
           tenant_name?: string
           tenant_onboarded_at?: string | null
@@ -1483,7 +1482,7 @@ export type Database = {
       tenants_organizations_profiles: {
         Row: {
           organization_created_at: string | null
-          organization_disabled_at: string | null
+          organization_deleted_at: string | null
           organization_id: number | null
           organization_name: string | null
           organization_slug: string | null
@@ -1491,7 +1490,7 @@ export type Database = {
           organization_updated_at: string | null
           profile_id: string | null
           tenant_created_at: string | null
-          tenant_disabled_at: string | null
+          tenant_deleted_at: string | null
           tenant_id: number | null
           tenant_name: string | null
           tenant_slug: string | null
@@ -1664,7 +1663,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      email_domain_has_sso: { Args: { email_input: string }; Returns: string }
       email_exists: { Args: { email_to_check: string }; Returns: boolean }
       email_has_password: { Args: { email_to_check: string }; Returns: boolean }
       health_current_timestamp: { Args: never; Returns: string }
@@ -1710,7 +1708,7 @@ export type Database = {
           address_level0_id: string
           profile_id: string
           profile_identity_created_at: string
-          profile_identity_disabled_at: string | null
+          profile_identity_deleted_at: string | null
           profile_identity_document_kind: Database["public"]["Enums"]["profile_identity_document_kind"]
           profile_identity_document_value: string
           profile_identity_id: string
@@ -1781,7 +1779,7 @@ export type Database = {
         Args: never
         Returns: {
           agency_created_at: string
-          agency_disabled_at: string | null
+          agency_deleted_at: string | null
           agency_id: number
           agency_name: string
           agency_slug: string
@@ -1798,7 +1796,7 @@ export type Database = {
         Args: { agency_id: number }
         Returns: {
           agency_created_at: string
-          agency_disabled_at: string | null
+          agency_deleted_at: string | null
           agency_id: number
           agency_name: string
           agency_slug: string
@@ -1815,7 +1813,7 @@ export type Database = {
         Args: { agency_slug: string }
         Returns: {
           agency_created_at: string
-          agency_disabled_at: string | null
+          agency_deleted_at: string | null
           agency_id: number
           agency_name: string
           agency_slug: string
@@ -1832,7 +1830,7 @@ export type Database = {
         Args: { agency_name: string; agency_slug: string }
         Returns: {
           agency_created_at: string
-          agency_disabled_at: string | null
+          agency_deleted_at: string | null
           agency_id: number
           agency_name: string
           agency_slug: string
@@ -2031,7 +2029,7 @@ export type Database = {
         Args: { organization_id: number }
         Returns: {
           organization_created_at: string
-          organization_disabled_at: string | null
+          organization_deleted_at: string | null
           organization_id: number
           organization_name: string
           organization_slug: string
@@ -2053,7 +2051,7 @@ export type Database = {
         }
         Returns: {
           organization_created_at: string
-          organization_disabled_at: string | null
+          organization_deleted_at: string | null
           organization_id: number
           organization_name: string
           organization_slug: string
@@ -2192,7 +2190,7 @@ export type Database = {
         Args: never
         Returns: {
           organization_created_at: string
-          organization_disabled_at: string | null
+          organization_deleted_at: string | null
           organization_id: number
           organization_name: string
           organization_slug: string
@@ -2218,7 +2216,7 @@ export type Database = {
         Args: { strict?: boolean }
         Returns: {
           profile_created_at: string
-          profile_disabled_at: string | null
+          profile_deleted_at: string | null
           profile_id: string
           profile_name_full: string | null
           profile_onboarded_at: string | null
@@ -2254,7 +2252,7 @@ export type Database = {
         Args: { tenant_id: number }
         Returns: {
           tenant_created_at: string
-          tenant_disabled_at: string | null
+          tenant_deleted_at: string | null
           tenant_id: number
           tenant_name: string
           tenant_onboarded_at: string | null
@@ -2273,7 +2271,7 @@ export type Database = {
         Args: { tenant_slug: string }
         Returns: {
           tenant_created_at: string
-          tenant_disabled_at: string | null
+          tenant_deleted_at: string | null
           tenant_id: number
           tenant_name: string
           tenant_onboarded_at: string | null
@@ -2292,7 +2290,7 @@ export type Database = {
         Args: { tenant_name: string; tenant_slug: string }
         Returns: {
           tenant_created_at: string
-          tenant_disabled_at: string | null
+          tenant_deleted_at: string | null
           tenant_id: number
           tenant_name: string
           tenant_onboarded_at: string | null
@@ -2312,7 +2310,7 @@ export type Database = {
         Args: { tenant_id: number }
         Returns: {
           tenant_created_at: string
-          tenant_disabled_at: string | null
+          tenant_deleted_at: string | null
           tenant_id: number
           tenant_name: string
           tenant_onboarded_at: string | null
@@ -2331,7 +2329,7 @@ export type Database = {
         Args: { tenant_id: number; tenant_name: string }
         Returns: {
           tenant_created_at: string
-          tenant_disabled_at: string | null
+          tenant_deleted_at: string | null
           tenant_id: number
           tenant_name: string
           tenant_onboarded_at: string | null
@@ -2351,7 +2349,7 @@ export type Database = {
         Args: never
         Returns: {
           tenant_created_at: string
-          tenant_disabled_at: string | null
+          tenant_deleted_at: string | null
           tenant_id: number
           tenant_name: string
           tenant_onboarded_at: string | null
