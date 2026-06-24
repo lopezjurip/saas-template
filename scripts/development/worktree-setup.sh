@@ -3,7 +3,7 @@ set -e
 
 if [ -z "$WORKTREE_NAME" ] || [ -z "$WORKTREE_PORT" ] || [ -z "$WORKTREE_ROOT_PATH" ] || [ -z "$WORKTREE_PROJECT" ]; then
   echo "Required: WORKTREE_NAME, WORKTREE_PORT, WORKTREE_ROOT_PATH, WORKTREE_PROJECT"
-  echo "Example (Paseo):     WORKTREE_NAME=\$PASEO_BRANCH_NAME WORKTREE_PORT=\$PASEO_WORKTREE_PORT WORKTREE_ROOT_PATH=\$PASEO_SOURCE_CHECKOUT_PATH WORKTREE_PROJECT=myproject bash scripts/development/worktree-setup.sh"
+  echo "Example (Paseo):     WORKTREE_NAME=\$PASEO_BRANCH_NAME WORKTREE_PORT=\$PASEO_PORT WORKTREE_ROOT_PATH=\$PASEO_SOURCE_CHECKOUT_PATH WORKTREE_PROJECT=myproject bash scripts/development/worktree-setup.sh"
   echo "Example (Conductor): WORKTREE_NAME=\$CONDUCTOR_WORKSPACE_NAME WORKTREE_PORT=\$CONDUCTOR_PORT WORKTREE_ROOT_PATH=\$CONDUCTOR_ROOT_PATH WORKTREE_PROJECT=myproject bash scripts/development/worktree-setup.sh"
   exit 1
 fi
