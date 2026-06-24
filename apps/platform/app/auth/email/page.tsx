@@ -21,6 +21,8 @@ export default async function AuthEmailPage(props: PageProps<"/auth/email">) {
   const exists = existsParam === "1" ? true : existsParam === "0" ? false : null;
   const hasPasskey = SINGLE(sp["has_passkey"]) === "1";
   const hasPassword = SINGLE(sp["has_password"]) === "1";
+  const hasSso = SINGLE(sp["has_sso"]) === "1";
+  const ssoDomain = SINGLE(sp["sso_domain"]) ?? "";
 
   const { t } = await getRosetta(LOCALES);
 
@@ -41,7 +43,15 @@ export default async function AuthEmailPage(props: PageProps<"/auth/email">) {
             <h1 className="m-0 text-xl/normal font-semibold tracking-tight text-foreground">{title}</h1>
             <p className="m-0 text-sm/normal leading-normal text-muted-foreground text-pretty">{subtitle}</p>
           </div>
-          <EmailStepForm email={email} next={next} exists={exists} hasPasskey={hasPasskey} hasPassword={hasPassword} />
+          <EmailStepForm
+            email={email}
+            next={next}
+            exists={exists}
+            hasPasskey={hasPasskey}
+            hasPassword={hasPassword}
+            hasSso={hasSso}
+            ssoDomain={ssoDomain}
+          />
         </div>
       </div>
     </AuthCard>

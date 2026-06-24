@@ -90,6 +90,7 @@ export function AppSidebar({
     navMembers: t("navMembers"),
     navExternalAccess: t("navExternalAccess"),
     navDomains: t("navDomains"),
+    navSso: t("navSso"),
   });
 
   const settingsHref = ROUTE("/t/[tenant_slug]/[organization_id]/settings", {
@@ -203,6 +204,7 @@ const LOCALE_ES = {
   navMembers: "Miembros",
   navExternalAccess: "Acceso externo",
   navDomains: "Dominios",
+  navSso: "SSO",
   search: "Buscar…",
 };
 
@@ -215,6 +217,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
   navMembers: "Members",
   navExternalAccess: "External access",
   navDomains: "Domains",
+  navSso: "SSO",
   search: "Search…",
 };
 
@@ -227,6 +230,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   navMembers: "Membros",
   navExternalAccess: "Acesso externo",
   navDomains: "Domínios",
+  navSso: "SSO",
   search: "Buscar…",
 };
 

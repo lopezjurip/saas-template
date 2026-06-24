@@ -1,4 +1,4 @@
-import { Building2, ExternalLink, Globe, Home, type LucideIcon, Settings, Users } from "lucide-react";
+import { Building2, ExternalLink, Globe, Home, type LucideIcon, Settings, Shield, Users } from "lucide-react";
 import type { Route } from "next";
 import { ROUTE, ROUTE_HREF } from "~/lib/route";
 
@@ -37,6 +37,7 @@ export type NavLabels = {
   navMembers: string;
   navExternalAccess: string;
   navDomains: string;
+  navSso: string;
 };
 
 /**
@@ -59,6 +60,7 @@ export function BUILD_NAV_TREE(tenant_slug: string, organization_id: number, lab
   const external = ROUTE("/t/[tenant_slug]/[organization_id]/settings/external-access", params);
   const tenantGeneral = ROUTE("/t/[tenant_slug]/[organization_id]/settings/tenant/general", params);
   const domains = ROUTE("/t/[tenant_slug]/[organization_id]/settings/tenant/domains", params);
+  const sso = ROUTE("/t/[tenant_slug]/[organization_id]/settings/tenant/sso", params);
 
   return [
     { id: "home", label: labels.navHome, href: home, path: ROUTE_HREF(home), Icon: Home, exact: true },
@@ -91,6 +93,7 @@ export function BUILD_NAV_TREE(tenant_slug: string, organization_id: number, lab
           Icon: Building2,
         },
         { id: "domains", label: labels.navDomains, href: domains, path: ROUTE_HREF(domains), Icon: Globe },
+        { id: "sso", label: labels.navSso, href: sso, path: ROUTE_HREF(sso), Icon: Shield },
       ],
     },
   ];

@@ -665,6 +665,13 @@ export type UpdateTenantNameMutationMutationVariables = Exact<{
 
 export type UpdateTenantNameMutationMutation = { tenant: { tenantId: number, tenantName: string } | null };
 
+export type TenantSsoPageQueryQueryVariables = Exact<{
+  tenantId: string;
+}>;
+
+
+export type TenantSsoPageQueryQuery = { tenantSsoProvidersCollection: { edges: Array<{ node: { ssoProviderId: string, ssoProviderLabel: string, ssoProviderDomains: string, ssoProviderEnabled: boolean } }> } | null };
+
 export type CreateTenantFormMutationMutationVariables = Exact<{
   tenant_name: string;
   tenant_slug: string;
@@ -672,6 +679,13 @@ export type CreateTenantFormMutationMutationVariables = Exact<{
 
 
 export type CreateTenantFormMutationMutation = { tenant: { tenantId: number } | null };
+
+export type CheckEmailQueryQueryVariables = Exact<{
+  email: string;
+}>;
+
+
+export type CheckEmailQueryQuery = { emailDomainHasSso: string | null, emailExists: boolean | null, emailHasPassword: boolean | null };
 
 export type OnboardingProfileFormUpdateNameMutationMutationVariables = Exact<{
   filter: ProfilesFilter;
@@ -1593,6 +1607,23 @@ export const UpdateTenantNameMutationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<UpdateTenantNameMutationMutation, UpdateTenantNameMutationMutationVariables>;
+export const TenantSsoPageQueryDocument = new TypedDocumentString(`
+    query TenantSsoPageQuery($tenantId: BigInt!) {
+  tenantSsoProvidersCollection(
+    filter: {tenantId: {eq: $tenantId}}
+    orderBy: [{ssoProviderCreatedAt: AscNullsLast}]
+  ) {
+    edges {
+      node {
+        ssoProviderId
+        ssoProviderLabel
+        ssoProviderDomains
+        ssoProviderEnabled
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<TenantSsoPageQueryQuery, TenantSsoPageQueryQueryVariables>;
 export const CreateTenantFormMutationDocument = new TypedDocumentString(`
     mutation CreateTenantFormMutation($tenant_name: String!, $tenant_slug: String!) {
   tenant: viewerTenantCreate(tenantName: $tenant_name, tenantSlug: $tenant_slug) {
@@ -1600,6 +1631,13 @@ export const CreateTenantFormMutationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateTenantFormMutationMutation, CreateTenantFormMutationMutationVariables>;
+export const CheckEmailQueryDocument = new TypedDocumentString(`
+    query CheckEmailQuery($email: String!) {
+  emailDomainHasSso(emailInput: $email)
+  emailExists(emailToCheck: $email)
+  emailHasPassword(emailToCheck: $email)
+}
+    `) as unknown as TypedDocumentString<CheckEmailQueryQuery, CheckEmailQueryQueryVariables>;
 export const OnboardingProfileFormUpdateNameMutationDocument = new TypedDocumentString(`
     mutation OnboardingProfileFormUpdateNameMutation($filter: ProfilesFilter!, $set: ProfilesUpdateInput!, $atMost: Int! = 1000) {
   updateProfilesCollection(filter: $filter, set: $set, atMost: $atMost) {
