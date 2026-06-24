@@ -1,13 +1,15 @@
 "use server";
 import "server-only";
 
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { ENV } from "@packages/utils/env";
 import { createFetch } from "@packages/utils/fetch";
 import { URL_NEW } from "@packages/utils/url";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { gql } from "~/generated/graphql";
 import { debug } from "~/lib/debug";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { getGraphyServiceRole } from "~/lib/graphy/graphy.service";
 import { getRosetta } from "~/lib/i18n.server";
 import { authedAction } from "~/lib/safe-action.server";
 
@@ -39,82 +41,110 @@ function PARSE_DOMAINS(raw: string): string[] {
     .filter(Boolean);
 }
 
-export const actionSSOProviderCreate = authedAction
-  .inputSchema(createSchema)
-  .action(async ({ parsedInput, ctx: { supabase } }) => {
-    const { TError } = await getRosetta(LOCALES);
+const CheckTenantPermissionQuery = gql(`
+  query CheckTenantPermission($tenantId: Int!, $permissionId: String!) {
+    viewerHasTenantPermission(tenantId: $tenantId, permissionId: $permissionId)
+  }
+`);
 
-    const { data: canManage } = await supabase.rpc("viewer_has_tenant_permission", {
-      tenant_id: parsedInput["tenant_id"],
-      permission_id: "tenant_manage",
-    });
-    if (!canManage) throw new TError("no_permission");
-
-    const domains = PARSE_DOMAINS(parsedInput["domains"]);
-    if (domains.length === 0) throw new TError("invalid_domains");
-
-    // Register provider in Supabase GoTrue
-    const gf = SUPABASE_ADMIN_FETCH();
-    const res = await gf("/admin/sso/providers", {
-      method: "POST",
-      body: JSON.stringify({ type: "saml", metadata_xml: parsedInput["metadata_xml"], domains, attribute_mapping: {} }),
-    });
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      log.error("[actionSSOProviderCreate] GoTrue error: %o", body);
-      throw new TError("gotrue_error");
+const InsertSsoProviderMutation = gql(`
+  mutation InsertSsoProvider($tenantId: BigInt!, $ssoProviderId: String!, $label: String!, $domains: JSON!, $enabled: Boolean!) {
+    insertIntoTenantSsoProvidersCollection(objects: [{
+      tenantId: $tenantId
+      ssoProviderId: $ssoProviderId
+      ssoProviderLabel: $label
+      ssoProviderDomains: $domains
+      ssoProviderEnabled: $enabled
+    }]) {
+      affectedCount
     }
+  }
+`);
 
-    const provider = (await res.json()) as { id: string };
+const DeleteSsoProviderMutation = gql(`
+  mutation DeleteSsoProvider($tenantId: BigInt!, $ssoProviderId: String!) {
+    deleteFromTenantSsoProvidersCollection(
+      filter: { tenantId: { eq: $tenantId }, ssoProviderId: { eq: $ssoProviderId } }
+      atMost: 1
+    ) {
+      affectedCount
+    }
+  }
+`);
 
-    // Store mapping in our DB (service role bypasses RLS for inserts)
-    const admin = createSupabaseServiceRoleClient();
-    await admin
-      .from("tenant_sso_providers")
-      .insert({
-        tenant_id: parsedInput["tenant_id"],
-        sso_provider_id: provider["id"],
-        sso_provider_label: parsedInput["label"],
-        sso_provider_domains: domains,
-        sso_provider_enabled: true,
-      })
-      .throwOnError();
+export const actionSSOProviderCreate = authedAction.inputSchema(createSchema).action(async ({ parsedInput }) => {
+  const { TError } = await getRosetta(LOCALES);
 
-    revalidatePath("/t");
+  const graphy = await getGraphySession();
+  const { data: permData } = await graphy.query({
+    query: CheckTenantPermissionQuery,
+    variables: { tenantId: parsedInput["tenant_id"], permissionId: "tenant_manage" },
+  });
+  if (!permData?.["viewerHasTenantPermission"]) throw new TError("no_permission");
+
+  const domains = PARSE_DOMAINS(parsedInput["domains"]);
+  if (domains.length === 0) throw new TError("invalid_domains");
+
+  // Register provider in Supabase GoTrue
+  const gf = SUPABASE_ADMIN_FETCH();
+  const res = await gf("/admin/sso/providers", {
+    method: "POST",
+    body: JSON.stringify({ type: "saml", metadata_xml: parsedInput["metadata_xml"], domains, attribute_mapping: {} }),
   });
 
-export const actionSSOProviderDelete = authedAction
-  .inputSchema(deleteSchema)
-  .action(async ({ parsedInput, ctx: { supabase } }) => {
-    const { TError } = await getRosetta(LOCALES);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    log.error("[actionSSOProviderCreate] GoTrue error: %o", body);
+    throw new TError("gotrue_error");
+  }
 
-    const { data: canManage } = await supabase.rpc("viewer_has_tenant_permission", {
-      tenant_id: parsedInput["tenant_id"],
-      permission_id: "tenant_manage",
-    });
-    if (!canManage) throw new TError("no_permission");
+  const provider = (await res.json()) as { id: string };
 
-    const admin = createSupabaseServiceRoleClient();
-
-    // Remove from GoTrue
-    const gf = SUPABASE_ADMIN_FETCH();
-    const res = await gf(`/admin/sso/providers/${parsedInput["sso_provider_id"]}`, { method: "DELETE" });
-
-    if (!res.ok && res.status !== 404) {
-      log.error("[actionSSOProviderDelete] GoTrue error: %o", { status: res.status });
-      throw new TError("gotrue_error");
-    }
-
-    await admin
-      .from("tenant_sso_providers")
-      .delete()
-      .eq("tenant_id", parsedInput["tenant_id"])
-      .eq("sso_provider_id", parsedInput["sso_provider_id"])
-      .throwOnError();
-
-    revalidatePath("/t");
+  const graphyAdmin = getGraphyServiceRole();
+  await graphyAdmin.mutate({
+    query: InsertSsoProviderMutation,
+    variables: {
+      tenantId: String(parsedInput["tenant_id"]),
+      ssoProviderId: provider["id"],
+      label: parsedInput["label"],
+      domains: JSON.stringify(domains),
+      enabled: true,
+    },
   });
+
+  revalidatePath("/t");
+});
+
+export const actionSSOProviderDelete = authedAction.inputSchema(deleteSchema).action(async ({ parsedInput }) => {
+  const { TError } = await getRosetta(LOCALES);
+
+  const graphy = await getGraphySession();
+  const { data: permData } = await graphy.query({
+    query: CheckTenantPermissionQuery,
+    variables: { tenantId: parsedInput["tenant_id"], permissionId: "tenant_manage" },
+  });
+  if (!permData?.["viewerHasTenantPermission"]) throw new TError("no_permission");
+
+  // Remove from GoTrue
+  const gf = SUPABASE_ADMIN_FETCH();
+  const res = await gf(`/admin/sso/providers/${parsedInput["sso_provider_id"]}`, { method: "DELETE" });
+
+  if (!res.ok && res.status !== 404) {
+    log.error("[actionSSOProviderDelete] GoTrue error: %o", { status: res.status });
+    throw new TError("gotrue_error");
+  }
+
+  const graphyAdmin = getGraphyServiceRole();
+  await graphyAdmin.mutate({
+    query: DeleteSsoProviderMutation,
+    variables: {
+      tenantId: String(parsedInput["tenant_id"]),
+      ssoProviderId: parsedInput["sso_provider_id"],
+    },
+  });
+
+  revalidatePath("/t");
+});
 
 const LOCALES = {
   es: {

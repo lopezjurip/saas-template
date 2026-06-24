@@ -665,6 +665,33 @@ export type UpdateTenantNameMutationMutationVariables = Exact<{
 
 export type UpdateTenantNameMutationMutation = { tenant: { tenantId: number, tenantName: string } | null };
 
+export type CheckTenantPermissionQueryVariables = Exact<{
+  tenantId: number;
+  permissionId: string;
+}>;
+
+
+export type CheckTenantPermissionQuery = { viewerHasTenantPermission: boolean | null };
+
+export type InsertSsoProviderMutationVariables = Exact<{
+  tenantId: string;
+  ssoProviderId: string;
+  label: string;
+  domains: string;
+  enabled: boolean;
+}>;
+
+
+export type InsertSsoProviderMutation = { insertIntoTenantSsoProvidersCollection: { affectedCount: number } | null };
+
+export type DeleteSsoProviderMutationVariables = Exact<{
+  tenantId: string;
+  ssoProviderId: string;
+}>;
+
+
+export type DeleteSsoProviderMutation = { deleteFromTenantSsoProvidersCollection: { affectedCount: number } };
+
 export type TenantSsoPageQueryQueryVariables = Exact<{
   tenantId: string;
 }>;
@@ -1607,6 +1634,30 @@ export const UpdateTenantNameMutationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<UpdateTenantNameMutationMutation, UpdateTenantNameMutationMutationVariables>;
+export const CheckTenantPermissionDocument = new TypedDocumentString(`
+    query CheckTenantPermission($tenantId: Int!, $permissionId: String!) {
+  viewerHasTenantPermission(tenantId: $tenantId, permissionId: $permissionId)
+}
+    `) as unknown as TypedDocumentString<CheckTenantPermissionQuery, CheckTenantPermissionQueryVariables>;
+export const InsertSsoProviderDocument = new TypedDocumentString(`
+    mutation InsertSsoProvider($tenantId: BigInt!, $ssoProviderId: String!, $label: String!, $domains: JSON!, $enabled: Boolean!) {
+  insertIntoTenantSsoProvidersCollection(
+    objects: [{tenantId: $tenantId, ssoProviderId: $ssoProviderId, ssoProviderLabel: $label, ssoProviderDomains: $domains, ssoProviderEnabled: $enabled}]
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<InsertSsoProviderMutation, InsertSsoProviderMutationVariables>;
+export const DeleteSsoProviderDocument = new TypedDocumentString(`
+    mutation DeleteSsoProvider($tenantId: BigInt!, $ssoProviderId: String!) {
+  deleteFromTenantSsoProvidersCollection(
+    filter: {tenantId: {eq: $tenantId}, ssoProviderId: {eq: $ssoProviderId}}
+    atMost: 1
+  ) {
+    affectedCount
+  }
+}
+    `) as unknown as TypedDocumentString<DeleteSsoProviderMutation, DeleteSsoProviderMutationVariables>;
 export const TenantSsoPageQueryDocument = new TypedDocumentString(`
     query TenantSsoPageQuery($tenantId: BigInt!) {
   tenantSsoProvidersCollection(
