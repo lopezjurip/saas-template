@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const TenantSsoPageQuery = gql(`
-  query TenantSsoPageQuery($tenantId: BigInt!) {
+  query TenantSsoPageQuery($tenantId: Int!) {
     tenantSsoProvidersCollection(
       filter: { tenantId: { eq: $tenantId } }
       orderBy: [{ ssoProviderCreatedAt: AscNullsLast }]
@@ -42,7 +42,7 @@ export default async function TenantSsoPage(
   const graphy = await getGraphySession();
   const { data } = await graphy.query({
     query: TenantSsoPageQuery,
-    variables: { tenantId: String(tenant["tenantId"]) },
+    variables: { tenantId: tenant["tenantId"] },
   });
 
   const SsoProviderSchema = z.object({

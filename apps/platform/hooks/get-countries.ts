@@ -53,7 +53,7 @@ export const getCountries = cache(async (options?: CountriesGetVars) => {
     query: CountriesGet,
     variables: {
       first: 250,
-      filter: { addressLevel0DisabledAt: { is: FilterIs.Null } },
+      filter: { addressLevel0DeletedAt: { is: FilterIs.Null } },
       orderBy: [{ addressLevel0Name: OrderByDirection.AscNullsLast }],
       ...options,
     },

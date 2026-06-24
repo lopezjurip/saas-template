@@ -34,7 +34,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel0DisabledAt",
+            "name": "addressLevel0DeletedAt",
             "description": null,
             "args": [],
             "type": {
@@ -592,7 +592,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel0DisabledAt",
+            "name": "addressLevel0DeletedAt",
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
@@ -752,7 +752,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel0DisabledAt",
+            "name": "addressLevel0DeletedAt",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -879,7 +879,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel1DisabledAt",
+            "name": "addressLevel1DeletedAt",
             "description": null,
             "args": [],
             "type": {
@@ -1227,7 +1227,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel1DisabledAt",
+            "name": "addressLevel1DeletedAt",
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
@@ -1387,7 +1387,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel1DisabledAt",
+            "name": "addressLevel1DeletedAt",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -1506,7 +1506,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel2DisabledAt",
+            "name": "addressLevel2DeletedAt",
             "description": null,
             "args": [],
             "type": {
@@ -1878,7 +1878,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel2DisabledAt",
+            "name": "addressLevel2DeletedAt",
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
@@ -2050,7 +2050,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel2DisabledAt",
+            "name": "addressLevel2DeletedAt",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -2185,7 +2185,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel3DisabledAt",
+            "name": "addressLevel3DeletedAt",
             "description": null,
             "args": [],
             "type": {
@@ -2464,7 +2464,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel3DisabledAt",
+            "name": "addressLevel3DeletedAt",
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
@@ -2648,7 +2648,7 @@
             "deprecationReason": null
           },
           {
-            "name": "addressLevel3DisabledAt",
+            "name": "addressLevel3DeletedAt",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -2840,7 +2840,7 @@
             "deprecationReason": null
           },
           {
-            "name": "agencyDisabledAt",
+            "name": "agencyDeletedAt",
             "description": null,
             "args": [],
             "type": {
@@ -3390,7 +3390,7 @@
             "deprecationReason": null
           },
           {
-            "name": "agencyDisabledAt",
+            "name": "agencyDeletedAt",
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
@@ -3538,7 +3538,7 @@
             "deprecationReason": null
           },
           {
-            "name": "agencyDisabledAt",
+            "name": "agencyDeletedAt",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -6413,18 +6413,6 @@
             "deprecationReason": null
           },
           {
-            "name": "messageIdempotencyKey",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "messagePayload",
             "description": null,
             "args": [],
@@ -6460,22 +6448,6 @@
               "kind": "SCALAR",
               "name": "Datetime",
               "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "messageSignatureVerified",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Boolean",
-                "kind": "SCALAR",
-                "ofType": null
-              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -6744,18 +6716,6 @@
             "deprecationReason": null
           },
           {
-            "name": "messageIdempotencyKey",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "StringFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "messagePriority",
             "description": null,
             "type": {
@@ -6773,18 +6733,6 @@
             "type": {
               "kind": "INPUT_OBJECT",
               "name": "DatetimeFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "messageSignatureVerified",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "BooleanFilter",
               "ofType": null
             },
             "defaultValue": null,
@@ -6944,18 +6892,6 @@
             "deprecationReason": null
           },
           {
-            "name": "messageIdempotencyKey",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "messagePriority",
             "description": null,
             "type": {
@@ -6969,18 +6905,6 @@
           },
           {
             "name": "messageReadAt",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "messageSignatureVerified",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -7124,6 +7048,18 @@
             "deprecationReason": null
           },
           {
+            "name": "conversationTopicDeletedAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Datetime",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "conversationTopicDescription",
             "description": null,
             "args": [],
@@ -7135,18 +7071,6 @@
                 "kind": "SCALAR",
                 "ofType": null
               }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "conversationTopicDisabledAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -7411,11 +7335,11 @@
             "deprecationReason": null
           },
           {
-            "name": "conversationTopicDescription",
+            "name": "conversationTopicDeletedAt",
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
-              "name": "StringFilter",
+              "name": "DatetimeFilter",
               "ofType": null
             },
             "defaultValue": null,
@@ -7423,11 +7347,11 @@
             "deprecationReason": null
           },
           {
-            "name": "conversationTopicDisabledAt",
+            "name": "conversationTopicDescription",
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
-              "name": "DatetimeFilter",
+              "name": "StringFilter",
               "ofType": null
             },
             "defaultValue": null,
@@ -7563,7 +7487,7 @@
             "deprecationReason": null
           },
           {
-            "name": "conversationTopicDescription",
+            "name": "conversationTopicDeletedAt",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -7575,7 +7499,7 @@
             "deprecationReason": null
           },
           {
-            "name": "conversationTopicDisabledAt",
+            "name": "conversationTopicDescription",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -7845,42 +7769,6 @@
             "type": {
               "kind": "OBJECT",
               "name": "ConversationMessagesConnection",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "conversationResolution",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "JSON",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "conversationResolvedAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "conversationResolvedChannel",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "ENUM",
-              "name": "MessageChannel",
               "ofType": null
             },
             "isDeprecated": false,
@@ -8234,30 +8122,6 @@
             "deprecationReason": null
           },
           {
-            "name": "conversationResolvedAt",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "DatetimeFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "conversationResolvedChannel",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "MessageChannelFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "conversationStatus",
             "description": null,
             "type": {
@@ -8435,30 +8299,6 @@
           },
           {
             "name": "conversationLastMessageAt",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "conversationResolvedAt",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "conversationResolvedChannel",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -9668,63 +9508,6 @@
         "isOneOf": null,
         "fields": [
           {
-            "name": "agentActionComplete",
-            "description": null,
-            "args": [
-              {
-                "name": "idempotencyKey",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "String",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "status",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "String",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "toolOutput",
-                "description": null,
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "JSON",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Opaque",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "conversationArchive",
             "description": null,
             "args": [
@@ -9839,63 +9622,6 @@
             "type": {
               "kind": "SCALAR",
               "name": "Boolean",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "conversationPostUserMessage",
-            "description": null,
-            "args": [
-              {
-                "name": "body",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "String",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "conversationId",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "UUID",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "payload",
-                "description": null,
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "JSON",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "SCALAR",
-              "name": "UUID",
               "ofType": null
             },
             "isDeprecated": false,
@@ -10609,76 +10335,6 @@
                     "kind": "SCALAR",
                     "ofType": null
                   }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Opaque",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "ticketClaim",
-            "description": null,
-            "args": [
-              {
-                "name": "pTicketId",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "UUID",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Opaque",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "ticketResolve",
-            "description": null,
-            "args": [
-              {
-                "name": "pTicketId",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "UUID",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "resolution",
-                "description": null,
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "JSON",
-                  "ofType": null
                 },
                 "defaultValue": null,
                 "isDeprecated": false,
@@ -11603,7 +11259,7 @@
             "deprecationReason": null
           },
           {
-            "name": "viewerOrganizationMembershipSetPermissions",
+            "name": "viewerOrganizationMembershipSetPermissionsCollection",
             "description": null,
             "args": [
               {
@@ -13044,6 +12700,18 @@
             "deprecationReason": null
           },
           {
+            "name": "organizationMembershipEmail",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "organizationMembershipId",
             "description": null,
             "args": [],
@@ -13145,6 +12813,18 @@
           },
           {
             "name": "organizationMembershipInviteToken",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "organizationMembershipLabel",
             "description": null,
             "args": [],
             "type": {
@@ -14661,7 +14341,7 @@
             "deprecationReason": null
           },
           {
-            "name": "organizationDisabledAt",
+            "name": "organizationDeletedAt",
             "description": null,
             "args": [],
             "type": {
@@ -15287,7 +14967,7 @@
             "deprecationReason": null
           },
           {
-            "name": "organizationDisabledAt",
+            "name": "organizationDeletedAt",
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
@@ -15383,7 +15063,7 @@
             "deprecationReason": null
           },
           {
-            "name": "organizationDisabledAt",
+            "name": "organizationDeletedAt",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -15479,7 +15159,7 @@
             "deprecationReason": null
           },
           {
-            "name": "organizationDisabledAt",
+            "name": "organizationDeletedAt",
             "description": null,
             "type": {
               "kind": "SCALAR",
@@ -17967,7 +17647,7 @@
             "deprecationReason": null
           },
           {
-            "name": "profileIdentityDisabledAt",
+            "name": "profileIdentityDeletedAt",
             "description": null,
             "args": [],
             "type": {
@@ -18274,7 +17954,7 @@
             "deprecationReason": null
           },
           {
-            "name": "profileIdentityDisabledAt",
+            "name": "profileIdentityDeletedAt",
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
@@ -18382,7 +18062,7 @@
             "deprecationReason": null
           },
           {
-            "name": "profileIdentityDisabledAt",
+            "name": "profileIdentityDeletedAt",
             "description": null,
             "type": {
               "kind": "SCALAR",
@@ -18542,7 +18222,7 @@
             "deprecationReason": null
           },
           {
-            "name": "profileIdentityDisabledAt",
+            "name": "profileIdentityDeletedAt",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -18650,7 +18330,7 @@
             "deprecationReason": null
           },
           {
-            "name": "profileIdentityDisabledAt",
+            "name": "profileIdentityDeletedAt",
             "description": null,
             "type": {
               "kind": "SCALAR",
@@ -19317,7 +18997,7 @@
             "deprecationReason": null
           },
           {
-            "name": "profileDisabledAt",
+            "name": "profileDeletedAt",
             "description": null,
             "args": [],
             "type": {
@@ -19826,7 +19506,7 @@
             "deprecationReason": null
           },
           {
-            "name": "profileDisabledAt",
+            "name": "profileDeletedAt",
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
@@ -19910,7 +19590,7 @@
             "deprecationReason": null
           },
           {
-            "name": "profileDisabledAt",
+            "name": "profileDeletedAt",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -19994,7 +19674,7 @@
             "deprecationReason": null
           },
           {
-            "name": "profileDisabledAt",
+            "name": "profileDeletedAt",
             "description": null,
             "type": {
               "kind": "SCALAR",
@@ -20980,67 +20660,6 @@
             "type": {
               "kind": "OBJECT",
               "name": "AgencyMembershipsConnection",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "callerHasPermission",
-            "description": null,
-            "args": [
-              {
-                "name": "callerProfileId",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "UUID",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "organizationId",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "Int",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "permissionId",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "String",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Boolean",
               "ofType": null
             },
             "isDeprecated": false,
@@ -23351,7 +22970,7 @@
             "deprecationReason": null
           },
           {
-            "name": "viewerAgencies",
+            "name": "viewerAgenciesCollection",
             "description": null,
             "args": [
               {
@@ -23514,6 +23133,127 @@
             "deprecationReason": null
           },
           {
+            "name": "viewerAgencyMemberships",
+            "description": null,
+            "args": [
+              {
+                "name": "after",
+                "description": "Query values in the collection after the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "agencyId",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "Int",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "before",
+                "description": "Query values in the collection before the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "filter",
+                "description": "Filters to apply to the results set when querying from the collection",
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "AgencyMembershipsFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "first",
+                "description": "Query the first `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "last",
+                "description": "Query the last `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "offset",
+                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "orderBy",
+                "description": "Sort order to apply to the collection",
+                "type": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "NON_NULL",
+                    "ofType": {
+                      "name": "AgencyMembershipsOrderBy",
+                      "kind": "INPUT_OBJECT",
+                      "ofType": null
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "OBJECT",
+              "name": "AgencyMembershipsConnection",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "viewerConversationById",
             "description": null,
             "args": [
@@ -23543,7 +23283,7 @@
             "deprecationReason": null
           },
           {
-            "name": "viewerConversationMessages",
+            "name": "viewerConversationMessagesCollection",
             "description": null,
             "args": [
               {
@@ -23664,7 +23404,7 @@
             "deprecationReason": null
           },
           {
-            "name": "viewerConversations",
+            "name": "viewerConversationsCollection",
             "description": null,
             "args": [
               {
@@ -24038,7 +23778,36 @@
             "deprecationReason": null
           },
           {
-            "name": "viewerOrganizationMembershipPending",
+            "name": "viewerOrganizationMembershipById",
+            "description": null,
+            "args": [
+              {
+                "name": "organizationMembershipId",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "Int",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "OBJECT",
+              "name": "OrganizationMemberships",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "viewerOrganizationMembershipPendingCollection",
             "description": null,
             "args": [
               {
@@ -24172,7 +23941,7 @@
             "deprecationReason": null
           },
           {
-            "name": "viewerOrganizations",
+            "name": "viewerOrganizationsCollection",
             "description": null,
             "args": [
               {
@@ -24327,7 +24096,7 @@
             "deprecationReason": null
           },
           {
-            "name": "viewerSessions",
+            "name": "viewerSessionsCollection",
             "description": null,
             "args": [
               {
@@ -24519,7 +24288,7 @@
             "deprecationReason": null
           },
           {
-            "name": "viewerTenants",
+            "name": "viewerTenantsCollection",
             "description": null,
             "args": [
               {
@@ -28127,7 +27896,7 @@
         "fields": [
           {
             "name": "nodeId",
-            "description": null,
+            "description": "Globally Unique Record Identifier",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -28165,9 +27934,13 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "JSON",
-                "kind": "SCALAR",
-                "ofType": null
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": "String",
+                  "kind": "SCALAR",
+                  "ofType": null
+                }
               }
             },
             "isDeprecated": false,
@@ -28238,6 +28011,18 @@
             "deprecationReason": null
           },
           {
+            "name": "tenant",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Tenants",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "tenantId",
             "description": null,
             "args": [],
@@ -28245,7 +28030,7 @@
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "name": "BigInt",
+                "name": "Int",
                 "kind": "SCALAR",
                 "ofType": null
               }
@@ -28313,7 +28098,7 @@
           },
           {
             "name": "totalCount",
-            "description": null,
+            "description": "The total number of records matching the `filter` criteria",
             "args": [],
             "type": {
               "kind": "NON_NULL",
@@ -28513,6 +28298,18 @@
             "deprecationReason": null
           },
           {
+            "name": "ssoProviderDomains",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "StringListFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "ssoProviderEnabled",
             "description": null,
             "type": {
@@ -28565,7 +28362,7 @@
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
-              "name": "BigIntFilter",
+              "name": "IntFilter",
               "ofType": null
             },
             "defaultValue": null,
@@ -28600,9 +28397,13 @@
             "name": "ssoProviderDomains",
             "description": null,
             "type": {
-              "kind": "SCALAR",
-              "name": "JSON",
-              "ofType": null
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
             },
             "defaultValue": null,
             "isDeprecated": false,
@@ -28661,7 +28462,7 @@
             "description": null,
             "type": {
               "kind": "SCALAR",
-              "name": "BigInt",
+              "name": "Int",
               "ofType": null
             },
             "defaultValue": null,
@@ -29261,7 +29062,7 @@
             "deprecationReason": null
           },
           {
-            "name": "tenantDisabledAt",
+            "name": "tenantDeletedAt",
             "description": null,
             "args": [],
             "type": {
@@ -29433,6 +29234,111 @@
                 "kind": "SCALAR",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "tenantSsoProvidersCollection",
+            "description": null,
+            "args": [
+              {
+                "name": "after",
+                "description": "Query values in the collection after the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "before",
+                "description": "Query values in the collection before the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "filter",
+                "description": "Filters to apply to the results set when querying from the collection",
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "TenantSsoProvidersFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "first",
+                "description": "Query the first `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "last",
+                "description": "Query the last `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "offset",
+                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "orderBy",
+                "description": "Sort order to apply to the collection",
+                "type": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "NON_NULL",
+                    "ofType": {
+                      "name": "TenantSsoProvidersOrderBy",
+                      "kind": "INPUT_OBJECT",
+                      "ofType": null
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "OBJECT",
+              "name": "TenantSsoProvidersConnection",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -29677,7 +29583,7 @@
             "deprecationReason": null
           },
           {
-            "name": "tenantDisabledAt",
+            "name": "tenantDeletedAt",
             "description": null,
             "type": {
               "kind": "INPUT_OBJECT",
@@ -29785,7 +29691,7 @@
             "deprecationReason": null
           },
           {
-            "name": "tenantDisabledAt",
+            "name": "tenantDeletedAt",
             "description": null,
             "type": {
               "kind": "ENUM",
@@ -29893,7 +29799,7 @@
             "deprecationReason": null
           },
           {
-            "name": "tenantDisabledAt",
+            "name": "tenantDeletedAt",
             "description": null,
             "type": {
               "kind": "SCALAR",
@@ -30018,116 +29924,6 @@
         ],
         "inputFields": null,
         "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "ENUM",
-        "name": "TicketStatus",
-        "description": null,
-        "isOneOf": null,
-        "fields": null,
-        "inputFields": null,
-        "interfaces": null,
-        "enumValues": [
-          {
-            "name": "claimed",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "closed",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "in_progress",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "open",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "resolved",
-            "description": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "TicketStatusFilter",
-        "description": "Boolean expression comparing fields on type \"TicketStatus\"",
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "eq",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "TicketStatus",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "in",
-            "description": null,
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "NON_NULL",
-                "ofType": {
-                  "name": "TicketStatus",
-                  "kind": "ENUM",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "is",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "FilterIs",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "neq",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "TicketStatus",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
         "enumValues": null,
         "possibleTypes": null
       },

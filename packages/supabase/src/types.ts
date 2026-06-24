@@ -1415,6 +1415,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      organization_membership_email: {
+        Args: {
+          this: Database["public"]["Tables"]["organization_memberships"]["Row"]
+        }
+        Returns: string
+      }
+      organization_membership_label: {
+        Args: {
+          this: Database["public"]["Tables"]["organization_memberships"]["Row"]
+        }
+        Returns: string
+      }
       organization_memberships_pending_by_document: {
         Args: {
           country: string
@@ -1495,7 +1507,7 @@ export type Database = {
       }
       revoke_session: { Args: { session_id: string }; Returns: undefined }
       user_auth_hook: { Args: { event: Json }; Returns: Json }
-      viewer_agencies: {
+      viewer_agencies_collection: {
         Args: never
         Returns: {
           agency_created_at: string
@@ -1621,6 +1633,25 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      viewer_agency_memberships: {
+        Args: { agency_id: number }
+        Returns: {
+          agency_id: number
+          agency_membership_accepted_at: string | null
+          agency_membership_created_at: string
+          agency_membership_id: number
+          agency_membership_rejected_at: string | null
+          agency_membership_revoked_at: string | null
+          agency_membership_updated_at: string
+          profile_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "agency_memberships"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       viewer_agency_permission_org_ids: {
         Args: { permission_id: string }
         Returns: number[]
@@ -1665,7 +1696,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      viewer_conversation_messages: {
+      viewer_conversation_messages_collection: {
         Args: { p_conversation_id: string }
         Returns: {
           conversation_id: string
@@ -1689,7 +1720,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      viewer_conversations: {
+      viewer_conversations_collection: {
         Args: {
           include_archived?: boolean
           p_agency_id?: number
@@ -1813,7 +1844,35 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      viewer_organization_membership_pending: {
+      viewer_organization_membership_by_id: {
+        Args: { organization_membership_id: number }
+        Returns: {
+          organization_id: number
+          organization_membership_accepted_at: string | null
+          organization_membership_created_at: string
+          organization_membership_id: number
+          organization_membership_invite_address_level0_id: string | null
+          organization_membership_invite_document_kind:
+            | Database["public"]["Enums"]["profile_identity_document_kind"]
+            | null
+          organization_membership_invite_document_value: string | null
+          organization_membership_invite_email: string | null
+          organization_membership_invite_expires_at: string | null
+          organization_membership_invite_phone: string | null
+          organization_membership_invite_token: string | null
+          organization_membership_rejected_at: string | null
+          organization_membership_revoked_at: string | null
+          organization_membership_updated_at: string
+          profile_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organization_memberships"
+          isOneToOne: true
+          isSetofReturn: true
+        }
+      }
+      viewer_organization_membership_pending_collection: {
         Args: never
         Returns: {
           organization_id: number
@@ -1876,7 +1935,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      viewer_organization_membership_set_permissions: {
+      viewer_organization_membership_set_permissions_collection: {
         Args: { organization_membership_id: number; permission_ids: string[] }
         Returns: {
           organization_membership_id: number
@@ -1894,7 +1953,7 @@ export type Database = {
         Args: { organization_id: number }
         Returns: boolean
       }
-      viewer_organizations: {
+      viewer_organizations_collection: {
         Args: never
         Returns: {
           organization_created_at: string
@@ -1938,7 +1997,7 @@ export type Database = {
         }
       }
       viewer_profile_id: { Args: { strict?: boolean }; Returns: string }
-      viewer_sessions: {
+      viewer_sessions_collection: {
         Args: never
         Returns: {
           created_at: string | null
@@ -2053,7 +2112,7 @@ export type Database = {
         }
       }
       viewer_tenant_validate: { Args: { tenant_id: number }; Returns: boolean }
-      viewer_tenants: {
+      viewer_tenants_collection: {
         Args: never
         Returns: {
           tenant_created_at: string

@@ -7,7 +7,7 @@ import { DeleteAccountDialog } from "./delete-account-dialog";
 
 const DangerPageQuery = gql(`
   query DangerPageQuery {
-    viewerOrganizations(filter: { organizationDisabledAt: { is: NULL } }) {
+    organizations: viewerOrganizationsCollection(filter: { organizationDeletedAt: { is: NULL } }) {
       edges {
         node {
           organizationId
@@ -23,7 +23,7 @@ export default async function DangerPage() {
 
   const graphy = await getGraphySession();
   const { data } = await graphy.query({ query: DangerPageQuery });
-  const orgCount = data?.["viewerOrganizations"]?.["edges"].length ?? 0;
+  const orgCount = data?.["organizations"]?.["edges"].length ?? 0;
   const email = user["email"] ?? "";
 
   const { t } = await getRosetta(LOCALES);

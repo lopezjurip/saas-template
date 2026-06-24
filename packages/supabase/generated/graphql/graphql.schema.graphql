@@ -5,7 +5,7 @@ schema {
 
 type AddressesLevel0 implements Node {
   addressLevel0CreatedAt: Datetime!
-  addressLevel0DisabledAt: Datetime
+  addressLevel0DeletedAt: Datetime
   addressLevel0Emoji: String
   addressLevel0HiddenAt: Datetime
   addressLevel0Id: String!
@@ -83,7 +83,7 @@ type AddressesLevel0Edge {
 
 input AddressesLevel0Filter {
   addressLevel0CreatedAt: DatetimeFilter
-  addressLevel0DisabledAt: DatetimeFilter
+  addressLevel0DeletedAt: DatetimeFilter
   addressLevel0Emoji: StringFilter
   addressLevel0HiddenAt: DatetimeFilter
   addressLevel0Id: StringFilter
@@ -104,7 +104,7 @@ input AddressesLevel0Filter {
 
 input AddressesLevel0OrderBy {
   addressLevel0CreatedAt: OrderByDirection
-  addressLevel0DisabledAt: OrderByDirection
+  addressLevel0DeletedAt: OrderByDirection
   addressLevel0Emoji: OrderByDirection
   addressLevel0HiddenAt: OrderByDirection
   addressLevel0Id: OrderByDirection
@@ -116,7 +116,7 @@ type AddressesLevel1 implements Node {
   addressLevel0: AddressesLevel0
   addressLevel0Id: String!
   addressLevel1CreatedAt: Datetime!
-  addressLevel1DisabledAt: Datetime
+  addressLevel1DeletedAt: Datetime
   addressLevel1HiddenAt: Datetime
   addressLevel1Id: String!
   addressLevel1Name: String!
@@ -158,7 +158,7 @@ type AddressesLevel1Edge {
 input AddressesLevel1Filter {
   addressLevel0Id: StringFilter
   addressLevel1CreatedAt: DatetimeFilter
-  addressLevel1DisabledAt: DatetimeFilter
+  addressLevel1DeletedAt: DatetimeFilter
   addressLevel1HiddenAt: DatetimeFilter
   addressLevel1Id: StringFilter
   addressLevel1Name: StringFilter
@@ -179,7 +179,7 @@ input AddressesLevel1Filter {
 input AddressesLevel1OrderBy {
   addressLevel0Id: OrderByDirection
   addressLevel1CreatedAt: OrderByDirection
-  addressLevel1DisabledAt: OrderByDirection
+  addressLevel1DeletedAt: OrderByDirection
   addressLevel1HiddenAt: OrderByDirection
   addressLevel1Id: OrderByDirection
   addressLevel1Name: OrderByDirection
@@ -190,7 +190,7 @@ type AddressesLevel2 implements Node {
   addressLevel0Id: String!
   addressLevel1Id: String!
   addressLevel2CreatedAt: Datetime!
-  addressLevel2DisabledAt: Datetime
+  addressLevel2DeletedAt: Datetime
   addressLevel2HiddenAt: Datetime
   addressLevel2Id: String!
   addressLevel2Name: String!
@@ -234,7 +234,7 @@ input AddressesLevel2Filter {
   addressLevel0Id: StringFilter
   addressLevel1Id: StringFilter
   addressLevel2CreatedAt: DatetimeFilter
-  addressLevel2DisabledAt: DatetimeFilter
+  addressLevel2DeletedAt: DatetimeFilter
   addressLevel2HiddenAt: DatetimeFilter
   addressLevel2Id: StringFilter
   addressLevel2Name: StringFilter
@@ -256,7 +256,7 @@ input AddressesLevel2OrderBy {
   addressLevel0Id: OrderByDirection
   addressLevel1Id: OrderByDirection
   addressLevel2CreatedAt: OrderByDirection
-  addressLevel2DisabledAt: OrderByDirection
+  addressLevel2DeletedAt: OrderByDirection
   addressLevel2HiddenAt: OrderByDirection
   addressLevel2Id: OrderByDirection
   addressLevel2Name: OrderByDirection
@@ -268,7 +268,7 @@ type AddressesLevel3 implements Node {
   addressLevel1Id: String!
   addressLevel2Id: String!
   addressLevel3CreatedAt: Datetime!
-  addressLevel3DisabledAt: Datetime
+  addressLevel3DeletedAt: Datetime
   addressLevel3HiddenAt: Datetime
   addressLevel3Id: String!
   addressLevel3Name: String!
@@ -295,7 +295,7 @@ input AddressesLevel3Filter {
   addressLevel1Id: StringFilter
   addressLevel2Id: StringFilter
   addressLevel3CreatedAt: DatetimeFilter
-  addressLevel3DisabledAt: DatetimeFilter
+  addressLevel3DeletedAt: DatetimeFilter
   addressLevel3HiddenAt: DatetimeFilter
   addressLevel3Id: StringFilter
   addressLevel3Name: StringFilter
@@ -318,7 +318,7 @@ input AddressesLevel3OrderBy {
   addressLevel1Id: OrderByDirection
   addressLevel2Id: OrderByDirection
   addressLevel3CreatedAt: OrderByDirection
-  addressLevel3DisabledAt: OrderByDirection
+  addressLevel3DeletedAt: OrderByDirection
   addressLevel3HiddenAt: OrderByDirection
   addressLevel3Id: OrderByDirection
   addressLevel3Name: OrderByDirection
@@ -345,7 +345,7 @@ type Agencies implements Node {
     orderBy: [AgenciesOrganizationsGrantsOrderBy!]
   ): AgenciesOrganizationsGrantsConnection
   agencyCreatedAt: Datetime!
-  agencyDisabledAt: Datetime
+  agencyDeletedAt: Datetime
   agencyId: Int!
   agencyMembershipsCollection(
     """Query values in the collection after the provided cursor"""
@@ -422,7 +422,7 @@ type AgenciesEdge {
 
 input AgenciesFilter {
   agencyCreatedAt: DatetimeFilter
-  agencyDisabledAt: DatetimeFilter
+  agencyDeletedAt: DatetimeFilter
   agencyId: IntFilter
   agencyName: StringFilter
   agencySlug: StringFilter
@@ -442,7 +442,7 @@ input AgenciesFilter {
 
 input AgenciesOrderBy {
   agencyCreatedAt: OrderByDirection
-  agencyDisabledAt: OrderByDirection
+  agencyDeletedAt: OrderByDirection
   agencyId: OrderByDirection
   agencyName: OrderByDirection
   agencySlug: OrderByDirection
@@ -778,11 +778,9 @@ type ConversationMessages implements Node {
   messageChannel: MessageChannel
   messageCreatedAt: Datetime!
   messageDirection: String!
-  messageIdempotencyKey: String
   messagePayload: JSON!
   messagePriority: NotificationPriority
   messageReadAt: Datetime
-  messageSignatureVerified: Boolean!
   """Globally Unique Record Identifier"""
   nodeId: ID!
 }
@@ -812,10 +810,8 @@ input ConversationMessagesFilter {
   messageChannel: MessageChannelFilter
   messageCreatedAt: DatetimeFilter
   messageDirection: StringFilter
-  messageIdempotencyKey: StringFilter
   messagePriority: NotificationPriorityFilter
   messageReadAt: DatetimeFilter
-  messageSignatureVerified: BooleanFilter
   nodeId: IDFilter
   """Negates a filter"""
   not: ConversationMessagesFilter
@@ -834,10 +830,8 @@ input ConversationMessagesOrderBy {
   messageChannel: OrderByDirection
   messageCreatedAt: OrderByDirection
   messageDirection: OrderByDirection
-  messageIdempotencyKey: OrderByDirection
   messagePriority: OrderByDirection
   messageReadAt: OrderByDirection
-  messageSignatureVerified: OrderByDirection
 }
 
 type ConversationTopics implements Node {
@@ -860,8 +854,8 @@ type ConversationTopics implements Node {
     orderBy: [ConversationMessagesOrderBy!]
   ): ConversationMessagesConnection
   conversationTopicCreatedAt: Datetime!
+  conversationTopicDeletedAt: Datetime
   conversationTopicDescription: String!
-  conversationTopicDisabledAt: Datetime
   conversationTopicKind: NotificationKind!
   conversationTopicName: String!
   conversationTopicPriority: NotificationPriority!
@@ -889,8 +883,8 @@ input ConversationTopicsFilter {
   """
   and: [ConversationTopicsFilter!]
   conversationTopicCreatedAt: DatetimeFilter
+  conversationTopicDeletedAt: DatetimeFilter
   conversationTopicDescription: StringFilter
-  conversationTopicDisabledAt: DatetimeFilter
   conversationTopicKind: NotificationKindFilter
   conversationTopicName: StringFilter
   conversationTopicPriority: NotificationPriorityFilter
@@ -907,8 +901,8 @@ input ConversationTopicsFilter {
 
 input ConversationTopicsOrderBy {
   conversationTopicCreatedAt: OrderByDirection
+  conversationTopicDeletedAt: OrderByDirection
   conversationTopicDescription: OrderByDirection
-  conversationTopicDisabledAt: OrderByDirection
   conversationTopicKind: OrderByDirection
   conversationTopicName: OrderByDirection
   conversationTopicPriority: OrderByDirection
@@ -941,9 +935,6 @@ type Conversations implements Node {
     """Sort order to apply to the collection"""
     orderBy: [ConversationMessagesOrderBy!]
   ): ConversationMessagesConnection
-  conversationResolution: JSON
-  conversationResolvedAt: Datetime
-  conversationResolvedChannel: MessageChannel
   conversationStatus: String!
   conversationSubject: String
   conversationUpdatedAt: Datetime!
@@ -979,8 +970,6 @@ input ConversationsFilter {
   conversationId: UUIDFilter
   conversationKind: StringFilter
   conversationLastMessageAt: DatetimeFilter
-  conversationResolvedAt: DatetimeFilter
-  conversationResolvedChannel: MessageChannelFilter
   conversationStatus: StringFilter
   conversationSubject: StringFilter
   conversationUpdatedAt: DatetimeFilter
@@ -1002,8 +991,6 @@ input ConversationsOrderBy {
   conversationId: OrderByDirection
   conversationKind: OrderByDirection
   conversationLastMessageAt: OrderByDirection
-  conversationResolvedAt: OrderByDirection
-  conversationResolvedChannel: OrderByDirection
   conversationStatus: OrderByDirection
   conversationSubject: OrderByDirection
   conversationUpdatedAt: OrderByDirection
@@ -1158,12 +1145,10 @@ input MessageChannelFilter {
 
 """The root type for creating and mutating data"""
 type Mutation {
-  agentActionComplete(idempotencyKey: String!, status: String!, toolOutput: JSON): Opaque
   conversationArchive(pConversationId: UUID!): Opaque
   conversationMarkRead(messageIds: [UUID]!): Int
   conversationOutboundArchive(msgId: BigInt!): Boolean
   conversationOutboundDelete(msgId: BigInt!): Boolean
-  conversationPostUserMessage(body: String!, conversationId: UUID!, payload: JSON): UUID
   """
   Deletes zero or more records from the `AgenciesOrganizationsGrants` collection
   """
@@ -1269,8 +1254,6 @@ type Mutation {
   """Adds one or more `TenantSsoProviders` records to the collection"""
   insertIntoTenantSsoProvidersCollection(objects: [TenantSsoProvidersInsertInput!]!): TenantSsoProvidersInsertResponse
   revokeSession(sessionId: UUID!): Opaque
-  ticketClaim(pTicketId: UUID!): Opaque
-  ticketResolve(pTicketId: UUID!, resolution: JSON): Opaque
   """
   Updates zero or more records in the `AgenciesOrganizationsGrants` collection
   """
@@ -1416,7 +1399,7 @@ type Mutation {
   viewerOrganizationCreate(organizationName: String!, organizationSlug: String!, tenantId: Int!): Organizations
   viewerOrganizationMembershipAccept(organizationMembershipId: Int!): OrganizationMemberships
   viewerOrganizationMembershipReject(organizationMembershipId: Int!): OrganizationMemberships
-  viewerOrganizationMembershipSetPermissions(
+  viewerOrganizationMembershipSetPermissionsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
     """Query values in the collection before the provided cursor"""
@@ -1590,6 +1573,7 @@ type OrganizationMemberships implements Node {
   organizationId: Int!
   organizationMembershipAcceptedAt: Datetime
   organizationMembershipCreatedAt: Datetime!
+  organizationMembershipEmail: String
   organizationMembershipId: Int!
   organizationMembershipInviteAddressLevel0: AddressesLevel0
   organizationMembershipInviteAddressLevel0Id: String
@@ -1599,6 +1583,7 @@ type OrganizationMemberships implements Node {
   organizationMembershipInviteExpiresAt: Datetime
   organizationMembershipInvitePhone: String
   organizationMembershipInviteToken: String
+  organizationMembershipLabel: String
   organizationMembershipPermissionsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
@@ -1778,7 +1763,7 @@ type Organizations implements Node {
   """Globally Unique Record Identifier"""
   nodeId: ID!
   organizationCreatedAt: Datetime!
-  organizationDisabledAt: Datetime
+  organizationDeletedAt: Datetime
   organizationId: Int!
   organizationMembershipsCollection(
     """Query values in the collection after the provided cursor"""
@@ -1866,7 +1851,7 @@ input OrganizationsFilter {
   """
   or: [OrganizationsFilter!]
   organizationCreatedAt: DatetimeFilter
-  organizationDisabledAt: DatetimeFilter
+  organizationDeletedAt: DatetimeFilter
   organizationId: IntFilter
   organizationName: StringFilter
   organizationSlug: StringFilter
@@ -1876,7 +1861,7 @@ input OrganizationsFilter {
 
 input OrganizationsOrderBy {
   organizationCreatedAt: OrderByDirection
-  organizationDisabledAt: OrderByDirection
+  organizationDeletedAt: OrderByDirection
   organizationId: OrderByDirection
   organizationName: OrderByDirection
   organizationSlug: OrderByDirection
@@ -1886,7 +1871,7 @@ input OrganizationsOrderBy {
 
 input OrganizationsUpdateInput {
   organizationCreatedAt: Datetime
-  organizationDisabledAt: Datetime
+  organizationDeletedAt: Datetime
   organizationName: String
   organizationSlug: String
   organizationUpdatedAt: Datetime
@@ -2184,7 +2169,7 @@ type ProfileIdentities implements Node {
   profile: Profiles
   profileId: UUID!
   profileIdentityCreatedAt: Datetime!
-  profileIdentityDisabledAt: Datetime
+  profileIdentityDeletedAt: Datetime
   profileIdentityDocumentKind: ProfileIdentityDocumentKind!
   profileIdentityDocumentValue: String!
   profileIdentityId: UUID!
@@ -2218,7 +2203,7 @@ input ProfileIdentitiesFilter {
   or: [ProfileIdentitiesFilter!]
   profileId: UUIDFilter
   profileIdentityCreatedAt: DatetimeFilter
-  profileIdentityDisabledAt: DatetimeFilter
+  profileIdentityDeletedAt: DatetimeFilter
   profileIdentityDocumentKind: ProfileIdentityDocumentKindFilter
   profileIdentityDocumentValue: StringFilter
   profileIdentityId: UUIDFilter
@@ -2229,7 +2214,7 @@ input ProfileIdentitiesInsertInput {
   addressLevel0Id: String
   profileId: UUID
   profileIdentityCreatedAt: Datetime
-  profileIdentityDisabledAt: Datetime
+  profileIdentityDeletedAt: Datetime
   profileIdentityDocumentKind: ProfileIdentityDocumentKind
   profileIdentityDocumentValue: String
   profileIdentityId: UUID
@@ -2247,7 +2232,7 @@ input ProfileIdentitiesOrderBy {
   addressLevel0Id: OrderByDirection
   profileId: OrderByDirection
   profileIdentityCreatedAt: OrderByDirection
-  profileIdentityDisabledAt: OrderByDirection
+  profileIdentityDeletedAt: OrderByDirection
   profileIdentityDocumentKind: OrderByDirection
   profileIdentityDocumentValue: OrderByDirection
   profileIdentityId: OrderByDirection
@@ -2258,7 +2243,7 @@ input ProfileIdentitiesUpdateInput {
   addressLevel0Id: String
   profileId: UUID
   profileIdentityCreatedAt: Datetime
-  profileIdentityDisabledAt: Datetime
+  profileIdentityDeletedAt: Datetime
   profileIdentityDocumentKind: ProfileIdentityDocumentKind
   profileIdentityDocumentValue: String
   profileIdentityId: UUID
@@ -2363,7 +2348,7 @@ type Profiles implements Node {
     orderBy: [ProfileContactsOrderBy!]
   ): ProfileContactsConnection
   profileCreatedAt: Datetime!
-  profileDisabledAt: Datetime
+  profileDeletedAt: Datetime
   profileId: UUID!
   profileIdentitiesCollection(
     """Query values in the collection after the provided cursor"""
@@ -2433,7 +2418,7 @@ input ProfilesFilter {
   """
   or: [ProfilesFilter!]
   profileCreatedAt: DatetimeFilter
-  profileDisabledAt: DatetimeFilter
+  profileDeletedAt: DatetimeFilter
   profileId: UUIDFilter
   profileNameFull: StringFilter
   profileOnboardedAt: DatetimeFilter
@@ -2442,7 +2427,7 @@ input ProfilesFilter {
 
 input ProfilesOrderBy {
   profileCreatedAt: OrderByDirection
-  profileDisabledAt: OrderByDirection
+  profileDeletedAt: OrderByDirection
   profileId: OrderByDirection
   profileNameFull: OrderByDirection
   profileOnboardedAt: OrderByDirection
@@ -2451,7 +2436,7 @@ input ProfilesOrderBy {
 
 input ProfilesUpdateInput {
   profileCreatedAt: Datetime
-  profileDisabledAt: Datetime
+  profileDeletedAt: Datetime
   profileId: UUID
   profileNameFull: String
   profileOnboardedAt: Datetime
@@ -2620,7 +2605,6 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [AgencyMembershipsOrderBy!]
   ): AgencyMembershipsConnection
-  callerHasPermission(callerProfileId: UUID!, organizationId: Int!, permissionId: String!): Boolean
   clRutNormalize(value: String!): String
   clRutValidate(value: String!): Boolean
   """A pagable collection of type `ConversationMessages`"""
@@ -2996,7 +2980,7 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [UserSessionsOrderBy!]
   ): UserSessionsConnection
-  viewerAgencies(
+  viewerAgenciesCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
     """Query values in the collection before the provided cursor"""
@@ -3016,8 +3000,27 @@ type Query {
   ): AgenciesConnection
   viewerAgencyById(agencyId: Int!): Agencies
   viewerAgencyBySlug(agencySlug: String!): Agencies
+  viewerAgencyMemberships(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    agencyId: Int!
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: AgencyMembershipsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [AgencyMembershipsOrderBy!]
+  ): AgencyMembershipsConnection
   viewerConversationById(conversationId: UUID!): Conversations
-  viewerConversationMessages(
+  viewerConversationMessagesCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
     """Query values in the collection before the provided cursor"""
@@ -3036,7 +3039,7 @@ type Query {
     orderBy: [ConversationMessagesOrderBy!]
     pConversationId: UUID!
   ): ConversationMessagesConnection
-  viewerConversations(
+  viewerConversationsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
     """Query values in the collection before the provided cursor"""
@@ -3064,7 +3067,8 @@ type Query {
   viewerHasTenantPermission(permissionId: String!, tenantId: Int!): Boolean
   viewerIsAgencyMember: Boolean
   viewerOrganizationById(organizationId: Int!): Organizations
-  viewerOrganizationMembershipPending(
+  viewerOrganizationMembershipById(organizationMembershipId: Int!): OrganizationMemberships
+  viewerOrganizationMembershipPendingCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
     """Query values in the collection before the provided cursor"""
@@ -3083,7 +3087,7 @@ type Query {
     orderBy: [OrganizationMembershipsOrderBy!]
   ): OrganizationMembershipsConnection
   viewerOrganizationValidate(organizationId: Int!): Boolean
-  viewerOrganizations(
+  viewerOrganizationsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
     """Query values in the collection before the provided cursor"""
@@ -3103,7 +3107,7 @@ type Query {
   ): OrganizationsConnection
   viewerProfile(strict: Boolean = false): Profiles
   viewerProfileId(strict: Boolean = false): UUID
-  viewerSessions(
+  viewerSessionsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
     """Query values in the collection before the provided cursor"""
@@ -3124,7 +3128,7 @@ type Query {
   viewerTenantById(tenantId: Int!): Tenants
   viewerTenantBySlug(tenantSlug: String!): Tenants
   viewerTenantValidate(tenantId: Int!): Boolean
-  viewerTenants(
+  viewerTenantsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
     """Query values in the collection before the provided cursor"""
@@ -3519,19 +3523,22 @@ type TenantDomainsUpdateResponse {
 }
 
 type TenantSsoProviders implements Node {
+  """Globally Unique Record Identifier"""
   nodeId: ID!
   ssoProviderCreatedAt: Datetime!
-  ssoProviderDomains: JSON!
+  ssoProviderDomains: [String]!
   ssoProviderEnabled: Boolean!
   ssoProviderId: String!
   ssoProviderLabel: String!
   ssoProviderUpdatedAt: Datetime!
-  tenantId: BigInt!
+  tenant: Tenants
+  tenantId: Int!
 }
 
 type TenantSsoProvidersConnection {
   edges: [TenantSsoProvidersEdge!]!
   pageInfo: PageInfo!
+  """The total number of records matching the `filter` criteria"""
   totalCount: Int!
 }
 
@@ -3560,21 +3567,22 @@ input TenantSsoProvidersFilter {
   """
   or: [TenantSsoProvidersFilter!]
   ssoProviderCreatedAt: DatetimeFilter
+  ssoProviderDomains: StringListFilter
   ssoProviderEnabled: BooleanFilter
   ssoProviderId: StringFilter
   ssoProviderLabel: StringFilter
   ssoProviderUpdatedAt: DatetimeFilter
-  tenantId: BigIntFilter
+  tenantId: IntFilter
 }
 
 input TenantSsoProvidersInsertInput {
   ssoProviderCreatedAt: Datetime
-  ssoProviderDomains: JSON
+  ssoProviderDomains: [String]
   ssoProviderEnabled: Boolean
   ssoProviderId: String
   ssoProviderLabel: String
   ssoProviderUpdatedAt: Datetime
-  tenantId: BigInt
+  tenantId: Int
 }
 
 type TenantSsoProvidersInsertResponse {
@@ -3667,7 +3675,7 @@ type Tenants implements Node {
     orderBy: [StorageTenantsOrderBy!]
   ): StorageTenantsConnection
   tenantCreatedAt: Datetime!
-  tenantDisabledAt: Datetime
+  tenantDeletedAt: Datetime
   tenantDomainsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
@@ -3690,6 +3698,24 @@ type Tenants implements Node {
   tenantName: String!
   tenantOnboardedAt: Datetime
   tenantSlug: String!
+  tenantSsoProvidersCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: TenantSsoProvidersFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [TenantSsoProvidersOrderBy!]
+  ): TenantSsoProvidersConnection
   tenantTier: TenantTier!
   tenantUpdatedAt: Datetime!
 }
@@ -3719,7 +3745,7 @@ input TenantsFilter {
   """
   or: [TenantsFilter!]
   tenantCreatedAt: DatetimeFilter
-  tenantDisabledAt: DatetimeFilter
+  tenantDeletedAt: DatetimeFilter
   tenantId: IntFilter
   tenantName: StringFilter
   tenantOnboardedAt: DatetimeFilter
@@ -3730,7 +3756,7 @@ input TenantsFilter {
 
 input TenantsOrderBy {
   tenantCreatedAt: OrderByDirection
-  tenantDisabledAt: OrderByDirection
+  tenantDeletedAt: OrderByDirection
   tenantId: OrderByDirection
   tenantName: OrderByDirection
   tenantOnboardedAt: OrderByDirection
@@ -3741,7 +3767,7 @@ input TenantsOrderBy {
 
 input TenantsUpdateInput {
   tenantCreatedAt: Datetime
-  tenantDisabledAt: Datetime
+  tenantDeletedAt: Datetime
   tenantName: String
   tenantOnboardedAt: Datetime
   tenantSlug: String
@@ -3754,24 +3780,6 @@ type TenantsUpdateResponse {
   affectedCount: Int!
   """Array of records impacted by the mutation"""
   records: [Tenants!]!
-}
-
-enum TicketStatus {
-  claimed
-  closed
-  in_progress
-  open
-  resolved
-}
-
-"""
-Boolean expression comparing fields on type "TicketStatus"
-"""
-input TicketStatusFilter {
-  eq: TicketStatus
-  in: [TicketStatus!]
-  is: FilterIs
-  neq: TicketStatus
 }
 
 """A time without date information"""

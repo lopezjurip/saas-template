@@ -1,10 +1,46 @@
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { Eye } from "lucide-react";
 import type { Metadata } from "next";
+import { gql } from "~/generated/graphql";
 import { getViewerAgencyBySlug, getViewerAgencyBySlugAssert } from "~/hooks/get-viewer-agencies";
-import { AFFILIATION_STATE } from "~/lib/agencies";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { getRosetta } from "~/lib/i18n.server";
+
+const AgencyOverviewPageQuery = gql(`
+  query AgencyOverviewPageQuery($agencyId: Int!) {
+    activeMemberships: viewerAgencyMemberships(
+      agencyId: $agencyId
+      filter: {
+        agencyMembershipAcceptedAt: { is: NOT_NULL }
+        agencyMembershipRevokedAt: { is: NULL }
+        agencyMembershipRejectedAt: { is: NULL }
+      }
+    ) {
+      totalCount
+    }
+    pendingMemberships: viewerAgencyMemberships(
+      agencyId: $agencyId
+      filter: {
+        agencyMembershipAcceptedAt: { is: NULL }
+        agencyMembershipRevokedAt: { is: NULL }
+        agencyMembershipRejectedAt: { is: NULL }
+      }
+    ) {
+      totalCount
+    }
+    grants: agenciesOrganizationsGrantsCollection(
+      filter: { agencyId: { eq: $agencyId } }
+      first: 250
+    ) {
+      edges {
+        node {
+          organizationId
+          permissionId
+        }
+      }
+    }
+  }
+`);
 
 export async function generateMetadata(props: PageProps<"/a/[agency_slug]">): Promise<Metadata> {
   const { agency_slug } = await props.params;
@@ -21,25 +57,18 @@ export default async function AgencyOverviewPage(props: PageProps<"/a/[agency_sl
   const { data } = await getViewerAgencyBySlugAssert(agency_slug);
   const agency = data["agency"];
 
-  // Both reads run under the caller's JWT: `viewer_agency_team` is a
-  // security-definer roster gated by `viewer_agency_ids()`, and the grants RLS
-  // policy already scopes to the viewer's agencies — no service-role client.
-  const supabase = await createSupabaseServerClient();
-  const [membershipsRes, grantsRes] = await Promise.all([
-    supabase.rpc("viewer_agency_team", { agency_id: agency["agencyId"] }),
-    supabase
-      .from("agencies_organizations_grants")
-      .select("organization_id, permission_id")
-      .eq("agency_id", agency["agencyId"]),
-  ]);
+  const graphy = await getGraphySession();
+  const { data: statsData } = await graphy.query({
+    query: AgencyOverviewPageQuery,
+    variables: { agencyId: agency["agencyId"] },
+  });
 
-  const memberships = membershipsRes.data ?? [];
-  const active = memberships.filter((m) => AFFILIATION_STATE(m) === "accepted").length;
-  const pending = memberships.filter((m) => AFFILIATION_STATE(m) === "pending").length;
+  const active = statsData?.["activeMemberships"]?.["totalCount"] ?? 0;
+  const pending = statsData?.["pendingMemberships"]?.["totalCount"] ?? 0;
 
-  const grants = grantsRes.data ?? [];
-  const isGlobal = grants.some((g) => g["organization_id"] === null && g["permission_id"] === "*");
-  const orgCount = grants.filter((g) => g["organization_id"] !== null).length;
+  const grantEdges = statsData?.["grants"]?.["edges"] ?? [];
+  const isGlobal = grantEdges.some((e) => e["node"]["organizationId"] === null && e["node"]["permissionId"] === "*");
+  const count = grantEdges.filter((e) => e["node"]["organizationId"] !== null).length;
 
   const stats = [
     {
@@ -49,7 +78,7 @@ export default async function AgencyOverviewPage(props: PageProps<"/a/[agency_sl
     },
     {
       label: t("stat_orgs"),
-      value: isGlobal ? t("stat_all") : String(orgCount),
+      value: isGlobal ? t("stat_all") : String(count),
       sub: isGlobal ? t("stat_global_scope") : t("stat_granted_you"),
     },
     { label: t("stat_access_level"), value: t("stat_read"), sub: t("stat_never_writes") },
@@ -60,7 +89,7 @@ export default async function AgencyOverviewPage(props: PageProps<"/a/[agency_sl
     { label: t("profile_slug"), value: agency["agencySlug"], mono: true },
     {
       label: t("profile_status"),
-      value: agency["agencyDisabledAt"] ? t("profile_disabled") : t("profile_active"),
+      value: agency["agencyDeletedAt"] ? t("profile_disabled") : t("profile_active"),
     },
   ];
 

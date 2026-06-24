@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from "react";
 import { EntityLogoControls } from "~/components/entity-logo-controls";
-import { useRosetta } from "~/hooks/use-rosetta";
+import { useRosetta } from "~/lib/i18n.client";
 
 /**
  * Lets the viewer upload or remove their profile avatar using the public `profiles` storage

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { z } from "zod";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+import { assertParams } from "~/lib/params";
 import { ROUTE } from "~/lib/route";
 import { DashboardOverview } from "./dashboard-overview";
 import { TenantOnboardingBanner } from "./onboarding/onboarding-banner";
@@ -12,11 +13,12 @@ export async function generateMetadata(props: PageProps<"/t/[tenant_slug]/[organ
 }
 
 export default async function OrganizationHomePage(props: PageProps<"/t/[tenant_slug]/[organization_id]">) {
-  const { tenant_slug, organization_id: organization_id_param } = await props.params;
+  const { tenant_slug, organization_id } = assertParams(
+    await props.params,
+    z.object({ tenant_slug: z.string().min(1), organization_id: z.int().min(1) }),
+    "notFound",
+  );
   const locale = await getServerLocale();
-
-  const organization_id = Number(organization_id_param);
-  if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
 
   const {
     data: { organization },

@@ -13,7 +13,7 @@ const PostHogIdentifyQuery = /*#__PURE__*/ gql(`
       profileOnboardedAt
       profileCreatedAt
     }
-    tenants: viewerTenants {
+    tenants: viewerTenantsCollection {
       edges {
         node {
           tenantId
@@ -23,7 +23,7 @@ const PostHogIdentifyQuery = /*#__PURE__*/ gql(`
         }
       }
     }
-    organizations: viewerOrganizations {
+    organizations: viewerOrganizationsCollection {
       edges {
         node {
           organizationId

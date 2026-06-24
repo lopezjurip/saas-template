@@ -15,8 +15,8 @@ import { useRosetta } from "~/lib/i18n.client";
 
 const ScopeSelectorOrgsQuery = /*#__PURE__*/ gql(`
   query ScopeSelectorOrgsQuery {
-    viewerOrganizations(
-      filter: { organizationDisabledAt: { is: NULL } }
+    viewerOrganizationsCollection(
+      filter: { organizationDeletedAt: { is: NULL } }
       orderBy: [{ organizationName: AscNullsLast }]
     ) {
       edges {
@@ -34,7 +34,7 @@ const ScopeSelectorOrgsQuery = /*#__PURE__*/ gql(`
 
 const ScopeSelectorAgenciesQuery = /*#__PURE__*/ gql(`
   query ScopeSelectorAgenciesQuery {
-    agencies: viewerAgencies(
+    agencies: viewerAgenciesCollection(
       orderBy: [{ agencyName: AscNullsLast }]
     ) {
       edges {
@@ -99,11 +99,11 @@ export function ScopeSelector({ currentScope }: { currentScope: InboxScope }) {
   const { data: orgsData } = useGraphyQuery(user ? { query: ScopeSelectorOrgsQuery } : null);
   const { data: agenciesData } = useGraphyQuery(user ? { query: ScopeSelectorAgenciesQuery } : null);
 
-  const orgEdges = orgsData?.["viewerOrganizations"]?.["edges"] ?? [];
+  const orgEdges = orgsData?.["viewerOrganizationsCollection"]?.["edges"] ?? [];
   const agencyEdges = agenciesData?.["agencies"]?.["edges"] ?? [];
 
   const orgs: ScopeOrg[] = orgEdges.flatMap(
-    (edge: NonNullable<ResultOf<typeof ScopeSelectorOrgsQuery>["viewerOrganizations"]>["edges"][number]) => {
+    (edge: NonNullable<ResultOf<typeof ScopeSelectorOrgsQuery>["viewerOrganizationsCollection"]>["edges"][number]) => {
       const node = edge["node"];
       const tenant_slug = node?.["tenant"]?.["tenantSlug"];
       if (!tenant_slug || !node) return [];

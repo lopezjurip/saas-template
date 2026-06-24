@@ -137,6 +137,19 @@ const HomeInboxConversationPageQuery = gql(`
 the spread to resolve — codegen registers every `gql()` fragment globally and inlines it. UUID
 columns map to the `string` scalar, so a `uuid` param is `$x: UUID!` in the doc, `string` in TS.
 
+**No import fragment const in page unless need TS type.** Codegen resolve by name. Import only to use `ResultOf<typeof X>` as TS value — not to make spread work.
+
+```ts
+// ❌ bad — import fragment const just to spread
+import { ConversationThreadFragment } from "./conversation-thread";
+const Query = gql(`query { node { ...ConversationThreadFragment } }`);
+
+// ✅ good — spread by name only; codegen find it globally
+const Query = gql(`query { node { ...ConversationThreadFragment } }`);
+// If page need the type: import { ConversationThreadFragment } from "./conversation-thread";
+// ResultOf<typeof ConversationThreadFragment> — then import justified.
+```
+
 ## Reusable hook pattern (`get-*` / `use-*`)
 
 All `viewer*` collection hooks expose full pagination variables. Server hooks use

@@ -6,7 +6,7 @@ export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' |
 import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
 export type AddressesLevel0Filter = {
   addressLevel0CreatedAt?: DatetimeFilter | null | undefined;
-  addressLevel0DisabledAt?: DatetimeFilter | null | undefined;
+  addressLevel0DeletedAt?: DatetimeFilter | null | undefined;
   addressLevel0Emoji?: StringFilter | null | undefined;
   addressLevel0HiddenAt?: DatetimeFilter | null | undefined;
   addressLevel0Id?: StringFilter | null | undefined;
@@ -23,7 +23,7 @@ export type AddressesLevel0Filter = {
 
 export type AddressesLevel0OrderBy = {
   addressLevel0CreatedAt?: OrderByDirection | null | undefined;
-  addressLevel0DisabledAt?: OrderByDirection | null | undefined;
+  addressLevel0DeletedAt?: OrderByDirection | null | undefined;
   addressLevel0Emoji?: OrderByDirection | null | undefined;
   addressLevel0HiddenAt?: OrderByDirection | null | undefined;
   addressLevel0Id?: OrderByDirection | null | undefined;
@@ -33,7 +33,7 @@ export type AddressesLevel0OrderBy = {
 
 export type AgenciesFilter = {
   agencyCreatedAt?: DatetimeFilter | null | undefined;
-  agencyDisabledAt?: DatetimeFilter | null | undefined;
+  agencyDeletedAt?: DatetimeFilter | null | undefined;
   agencyId?: IntFilter | null | undefined;
   agencyName?: StringFilter | null | undefined;
   agencySlug?: StringFilter | null | undefined;
@@ -49,7 +49,7 @@ export type AgenciesFilter = {
 
 export type AgenciesOrderBy = {
   agencyCreatedAt?: OrderByDirection | null | undefined;
-  agencyDisabledAt?: OrderByDirection | null | undefined;
+  agencyDeletedAt?: OrderByDirection | null | undefined;
   agencyId?: OrderByDirection | null | undefined;
   agencyName?: OrderByDirection | null | undefined;
   agencySlug?: OrderByDirection | null | undefined;
@@ -255,7 +255,7 @@ export type OrganizationsFilter = {
   /** Returns true if at least one of its inner filters is true, otherwise returns false */
   or?: Array<OrganizationsFilter> | null | undefined;
   organizationCreatedAt?: DatetimeFilter | null | undefined;
-  organizationDisabledAt?: DatetimeFilter | null | undefined;
+  organizationDeletedAt?: DatetimeFilter | null | undefined;
   organizationId?: IntFilter | null | undefined;
   organizationName?: StringFilter | null | undefined;
   organizationSlug?: StringFilter | null | undefined;
@@ -265,7 +265,7 @@ export type OrganizationsFilter = {
 
 export type OrganizationsOrderBy = {
   organizationCreatedAt?: OrderByDirection | null | undefined;
-  organizationDisabledAt?: OrderByDirection | null | undefined;
+  organizationDeletedAt?: OrderByDirection | null | undefined;
   organizationId?: OrderByDirection | null | undefined;
   organizationName?: OrderByDirection | null | undefined;
   organizationSlug?: OrderByDirection | null | undefined;
@@ -275,7 +275,7 @@ export type OrganizationsOrderBy = {
 
 export type OrganizationsUpdateInput = {
   organizationCreatedAt?: string | null | undefined;
-  organizationDisabledAt?: string | null | undefined;
+  organizationDeletedAt?: string | null | undefined;
   organizationName?: string | null | undefined;
   organizationSlug?: string | null | undefined;
   organizationUpdatedAt?: string | null | undefined;
@@ -388,7 +388,7 @@ export type ProfilesFilter = {
   /** Returns true if at least one of its inner filters is true, otherwise returns false */
   or?: Array<ProfilesFilter> | null | undefined;
   profileCreatedAt?: DatetimeFilter | null | undefined;
-  profileDisabledAt?: DatetimeFilter | null | undefined;
+  profileDeletedAt?: DatetimeFilter | null | undefined;
   profileId?: UuidFilter | null | undefined;
   profileNameFull?: StringFilter | null | undefined;
   profileOnboardedAt?: DatetimeFilter | null | undefined;
@@ -397,7 +397,7 @@ export type ProfilesFilter = {
 
 export type ProfilesUpdateInput = {
   profileCreatedAt?: string | null | undefined;
-  profileDisabledAt?: string | null | undefined;
+  profileDeletedAt?: string | null | undefined;
   profileId?: string | null | undefined;
   profileNameFull?: string | null | undefined;
   profileOnboardedAt?: string | null | undefined;
@@ -453,7 +453,7 @@ export type TenantsFilter = {
   /** Returns true if at least one of its inner filters is true, otherwise returns false */
   or?: Array<TenantsFilter> | null | undefined;
   tenantCreatedAt?: DatetimeFilter | null | undefined;
-  tenantDisabledAt?: DatetimeFilter | null | undefined;
+  tenantDeletedAt?: DatetimeFilter | null | undefined;
   tenantId?: IntFilter | null | undefined;
   tenantName?: StringFilter | null | undefined;
   tenantOnboardedAt?: DatetimeFilter | null | undefined;
@@ -464,7 +464,7 @@ export type TenantsFilter = {
 
 export type TenantsOrderBy = {
   tenantCreatedAt?: OrderByDirection | null | undefined;
-  tenantDisabledAt?: OrderByDirection | null | undefined;
+  tenantDeletedAt?: OrderByDirection | null | undefined;
   tenantId?: OrderByDirection | null | undefined;
   tenantName?: OrderByDirection | null | undefined;
   tenantOnboardedAt?: OrderByDirection | null | undefined;
@@ -475,7 +475,7 @@ export type TenantsOrderBy = {
 
 export type TenantsUpdateInput = {
   tenantCreatedAt?: string | null | undefined;
-  tenantDisabledAt?: string | null | undefined;
+  tenantDeletedAt?: string | null | undefined;
   tenantName?: string | null | undefined;
   tenantOnboardedAt?: string | null | undefined;
   tenantSlug?: string | null | undefined;
@@ -498,6 +498,13 @@ export type AgencyInboxConversationPageQueryQueryVariables = Exact<{
 
 export type AgencyInboxConversationPageQueryQuery = { conversation: { conversationId: string, conversationSubject: string | null, conversationStatus: string, organizationId: number | null, agencyId: number | null, messages: { edges: Array<{ node: { conversationMessageId: string, messageBody: string | null, messageDirection: string, messageAuthor: string, messageChannel: MessageChannel | null, messagePriority: NotificationPriority | null, messageCreatedAt: string, messageReadAt: string | null } }> } | null } | null };
 
+export type AgencyOverviewPageQueryQueryVariables = Exact<{
+  agencyId: number;
+}>;
+
+
+export type AgencyOverviewPageQueryQuery = { activeMemberships: { totalCount: number } | null, pendingMemberships: { totalCount: number } | null, grants: { edges: Array<{ node: { organizationId: number | null, permissionId: string } }> } | null };
+
 export type AgencyCreateMutationMutationVariables = Exact<{
   agency_name: string;
   agency_slug: string;
@@ -509,7 +516,7 @@ export type AgencyCreateMutationMutation = { agency: { agencyId: number } | null
 export type DangerPageQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type DangerPageQueryQuery = { viewerOrganizations: { edges: Array<{ node: { organizationId: number } }> } | null };
+export type DangerPageQueryQuery = { organizations: { edges: Array<{ node: { organizationId: number } }> } | null };
 
 export type ProfileContactsManageQueryQueryVariables = Exact<{
   orderBy?: Array<ProfileContactsOrderBy> | ProfileContactsOrderBy | null | undefined;
@@ -550,7 +557,7 @@ export type ProfileSectionUpdateNameMutationMutation = { updateProfilesCollectio
 export type SessionsSectionPageQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SessionsSectionPageQueryQuery = { viewerSessions: { edges: Array<{ node: { id: string | null, userAgent: string | null, ip: string | null, createdAt: string | null, refreshedAt: string | null, notAfter: string | null } }> } | null };
+export type SessionsSectionPageQueryQuery = { sessions: { edges: Array<{ node: { id: string | null, userAgent: string | null, ip: string | null, createdAt: string | null, refreshedAt: string | null, notAfter: string | null } }> } | null };
 
 export type SessionsSectionSessionFragmentFragment = { id: string | null, userAgent: string | null, ip: string | null, createdAt: string | null, refreshedAt: string | null, notAfter: string | null };
 
@@ -564,7 +571,7 @@ export type HomeInboxConversationPageQueryQuery = { conversation: { conversation
 export type HomePickerPageQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type HomePickerPageQueryQuery = { viewerOrganizations: { edges: Array<{ node: { organizationId: number, organizationName: string, organizationSlug: string, tenant: { tenantId: number, tenantSlug: string, tenantName: string } | null } }> } | null };
+export type HomePickerPageQueryQuery = { organizations: { edges: Array<{ node: { organizationId: number, organizationName: string, organizationSlug: string, tenant: { tenantId: number, tenantSlug: string, tenantName: string } | null } }> } | null };
 
 export type OrgInboxConversationPageQueryQueryVariables = Exact<{
   conversationId: string;
@@ -626,10 +633,15 @@ export type EditOrganizationMembershipSetPermissionsMutationMutationVariables = 
 }>;
 
 
-export type EditOrganizationMembershipSetPermissionsMutationMutation = { viewerOrganizationMembershipSetPermissions: { edges: Array<{ node: { permissionId: string } }> } | null };
+export type EditOrganizationMembershipSetPermissionsMutationMutation = { viewerOrganizationMembershipSetPermissionsCollection: { edges: Array<{ node: { permissionId: string } }> } | null };
+
+export type EditPermissionsFormPermissionFragmentFragment = { permissionId: string, permissionDescription: string | null };
+
+export type EditPermissionsFormPresetFragmentFragment = { permissionPresetId: number, permissionPresetName: string, permissionPresetSlugs: Array<string | null>, organizationId: number | null };
 
 export type OrganizationMembershipEditPageQueryQueryVariables = Exact<{
-  membershipFilter?: OrganizationMembershipsFilter | null | undefined;
+  organizationId: number;
+  organizationMembershipId: number;
   presetsFilter?: PermissionPresetsFilter | null | undefined;
   permissionsOrderBy?: Array<PermissionsOrderBy> | PermissionsOrderBy | null | undefined;
   presetsOrderBy?: Array<PermissionPresetsOrderBy> | PermissionPresetsOrderBy | null | undefined;
@@ -637,7 +649,7 @@ export type OrganizationMembershipEditPageQueryQueryVariables = Exact<{
 }>;
 
 
-export type OrganizationMembershipEditPageQueryQuery = { memberships: { edges: Array<{ node: { organizationMembershipId: number, profileId: string | null, organizationMembershipInviteEmail: string | null, organizationMembershipInvitePhone: string | null, organizationMembershipInviteAddressLevel0Id: string | null, organizationMembershipInviteDocumentKind: ProfileIdentityDocumentKind | null, organizationMembershipInviteDocumentValue: string | null, organizationMembershipAcceptedAt: string | null, organizationMembershipRevokedAt: string | null, organizationMembershipRejectedAt: string | null, profile: { profileNameFull: string | null } | null, organizationMembershipPermissionsCollection: { edges: Array<{ node: { permissionId: string } }> } | null } }> } | null, permissions: { edges: Array<{ node: { permissionId: string, permissionDescription: string | null } }> } | null, presets: { edges: Array<{ node: { permissionPresetId: number, permissionPresetName: string, permissionPresetSlugs: Array<string | null>, organizationId: number | null } }> } | null };
+export type OrganizationMembershipEditPageQueryQuery = { canManage: boolean | null, organization: { organizationId: number, tenantId: number, organizationSlug: string, organizationName: string } | null, membership: { organizationMembershipId: number, profileId: string | null, organizationMembershipLabel: string | null, organizationMembershipEmail: string | null, organizationMembershipInviteEmail: string | null, organizationMembershipInvitePhone: string | null, organizationMembershipInviteAddressLevel0Id: string | null, organizationMembershipInviteDocumentKind: ProfileIdentityDocumentKind | null, organizationMembershipInviteDocumentValue: string | null, organizationMembershipAcceptedAt: string | null, organizationMembershipRevokedAt: string | null, organizationMembershipRejectedAt: string | null, profile: { profileNameFull: string | null } | null, organizationMembershipPermissionsCollection: { edges: Array<{ node: { permissionId: string } }> } | null } | null, permissions: { edges: Array<{ node: { permissionId: string, permissionDescription: string | null } }> } | null, presets: { edges: Array<{ node: { permissionPresetId: number, permissionPresetName: string, permissionPresetSlugs: Array<string | null>, organizationId: number | null } }> } | null };
 
 export type MembersAdminPageQueryQueryVariables = Exact<{
   filter?: OrganizationMembershipsFilter | null | undefined;
@@ -674,10 +686,10 @@ export type CheckTenantPermissionQueryVariables = Exact<{
 export type CheckTenantPermissionQuery = { viewerHasTenantPermission: boolean | null };
 
 export type InsertSsoProviderMutationVariables = Exact<{
-  tenantId: string;
+  tenantId: number;
   ssoProviderId: string;
   label: string;
-  domains: string;
+  domains: Array<string | null | undefined> | string;
   enabled: boolean;
 }>;
 
@@ -685,7 +697,7 @@ export type InsertSsoProviderMutationVariables = Exact<{
 export type InsertSsoProviderMutation = { insertIntoTenantSsoProvidersCollection: { affectedCount: number } | null };
 
 export type DeleteSsoProviderMutationVariables = Exact<{
-  tenantId: string;
+  tenantId: number;
   ssoProviderId: string;
 }>;
 
@@ -693,11 +705,11 @@ export type DeleteSsoProviderMutationVariables = Exact<{
 export type DeleteSsoProviderMutation = { deleteFromTenantSsoProvidersCollection: { affectedCount: number } };
 
 export type TenantSsoPageQueryQueryVariables = Exact<{
-  tenantId: string;
+  tenantId: number;
 }>;
 
 
-export type TenantSsoPageQueryQuery = { tenantSsoProvidersCollection: { edges: Array<{ node: { ssoProviderId: string, ssoProviderLabel: string, ssoProviderDomains: string, ssoProviderEnabled: boolean } }> } | null };
+export type TenantSsoPageQueryQuery = { tenantSsoProvidersCollection: { edges: Array<{ node: { ssoProviderId: string, ssoProviderLabel: string, ssoProviderDomains: Array<string | null>, ssoProviderEnabled: boolean } }> } | null };
 
 export type CreateTenantFormMutationMutationVariables = Exact<{
   tenant_name: string;
@@ -740,7 +752,7 @@ export type ConversationThreadFragmentFragment = { conversationId: string, conve
 export type ScopeSelectorOrgsQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ScopeSelectorOrgsQueryQuery = { viewerOrganizations: { edges: Array<{ node: { organizationId: number, organizationName: string, tenant: { tenantSlug: string } | null } }> } | null };
+export type ScopeSelectorOrgsQueryQuery = { viewerOrganizationsCollection: { edges: Array<{ node: { organizationId: number, organizationName: string, tenant: { tenantSlug: string } | null } }> } | null };
 
 export type ScopeSelectorAgenciesQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -766,7 +778,7 @@ export type CountriesGetQueryVariables = Exact<{
 
 export type CountriesGetQuery = { addressesLevel0: { edges: Array<{ node: { addressLevel0Id: string, addressLevel0Name: string, addressLevel0Emoji: string | null } }> } | null };
 
-export type ViewerAgencyGetFragmentFragment = { agencyId: number, agencySlug: string, agencyName: string, agencyDisabledAt: string | null };
+export type ViewerAgencyGetFragmentFragment = { agencyId: number, agencySlug: string, agencyName: string, agencyDeletedAt: string | null };
 
 export type ViewerAgenciesGetQueryVariables = Exact<{
   first?: number | null | undefined;
@@ -778,21 +790,21 @@ export type ViewerAgenciesGetQueryVariables = Exact<{
 }>;
 
 
-export type ViewerAgenciesGetQuery = { agencies: { edges: Array<{ node: { agencyId: number, agencySlug: string, agencyName: string, agencyDisabledAt: string | null } }> } | null };
+export type ViewerAgenciesGetQuery = { agencies: { edges: Array<{ node: { agencyId: number, agencySlug: string, agencyName: string, agencyDeletedAt: string | null } }> } | null };
 
 export type ViewerAgencyByIdGetQueryVariables = Exact<{
   agencyId: number;
 }>;
 
 
-export type ViewerAgencyByIdGetQuery = { agency: { agencyId: number, agencySlug: string, agencyName: string, agencyDisabledAt: string | null } | null };
+export type ViewerAgencyByIdGetQuery = { agency: { agencyId: number, agencySlug: string, agencyName: string, agencyDeletedAt: string | null } | null };
 
 export type ViewerAgencyBySlugGetQueryVariables = Exact<{
   agencySlug: string;
 }>;
 
 
-export type ViewerAgencyBySlugGetQuery = { agency: { agencyId: number, agencySlug: string, agencyName: string, agencyDisabledAt: string | null } | null };
+export type ViewerAgencyBySlugGetQuery = { agency: { agencyId: number, agencySlug: string, agencyName: string, agencyDeletedAt: string | null } | null };
 
 export type ViewerOrganizationGetFragmentFragment = { organizationId: number, tenantId: number, organizationSlug: string, organizationName: string };
 
@@ -822,12 +834,12 @@ export type ViewerOrganizationBySlugQueryQueryVariables = Exact<{
 
 export type ViewerOrganizationBySlugQueryQuery = { organizations: { edges: Array<{ node: { organizationId: number, tenantId: number, organizationSlug: string, organizationName: string } }> } | null };
 
-export type ViewerProfileGetFragmentFragment = { profileId: string, profileNameFull: string | null, profileOnboardedAt: string | null, profileDisabledAt: string | null, profileCreatedAt: string, profileUpdatedAt: string };
+export type ViewerProfileGetFragmentFragment = { profileId: string, profileNameFull: string | null, profileOnboardedAt: string | null, profileDeletedAt: string | null, profileCreatedAt: string, profileUpdatedAt: string };
 
 export type ViewerProfileGetQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ViewerProfileGetQuery = { profile: { profileId: string, profileNameFull: string | null, profileOnboardedAt: string | null, profileDisabledAt: string | null, profileCreatedAt: string, profileUpdatedAt: string } | null };
+export type ViewerProfileGetQuery = { profile: { profileId: string, profileNameFull: string | null, profileOnboardedAt: string | null, profileDeletedAt: string | null, profileCreatedAt: string, profileUpdatedAt: string } | null };
 
 export type ViewerTenantGetFragmentFragment = { tenantId: number, tenantSlug: string, tenantName: string, tenantTier: TenantTier };
 
@@ -927,12 +939,12 @@ export type ViewerOrganizationBySlugUseQueryVariables = Exact<{
 
 export type ViewerOrganizationBySlugUseQuery = { organizations: { edges: Array<{ node: { organizationId: number, tenantId: number, organizationSlug: string, organizationName: string } }> } | null };
 
-export type ViewerProfileUseFragmentFragment = { profileId: string, profileNameFull: string | null, profileOnboardedAt: string | null, profileDisabledAt: string | null, profileCreatedAt: string, profileUpdatedAt: string };
+export type ViewerProfileUseFragmentFragment = { profileId: string, profileNameFull: string | null, profileOnboardedAt: string | null, profileDeletedAt: string | null, profileCreatedAt: string, profileUpdatedAt: string };
 
 export type ViewerProfileUseQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ViewerProfileUseQuery = { profile: { profileId: string, profileNameFull: string | null, profileOnboardedAt: string | null, profileDisabledAt: string | null, profileCreatedAt: string, profileUpdatedAt: string } | null };
+export type ViewerProfileUseQuery = { profile: { profileId: string, profileNameFull: string | null, profileOnboardedAt: string | null, profileDeletedAt: string | null, profileCreatedAt: string, profileUpdatedAt: string } | null };
 
 export type ViewerTenantUseFragmentFragment = { tenantId: number, tenantSlug: string, tenantName: string, tenantTier: TenantTier };
 
@@ -1104,7 +1116,7 @@ export type ListOrganizationsMcpQuery = { organizations: { edges: Array<{ node: 
 export type WhoamiMcpQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type WhoamiMcpQuery = { profile: { profileId: string, profileNameFull: string | null, profileOnboardedAt: string | null, profileDisabledAt: string | null, profileCreatedAt: string, profileUpdatedAt: string } | null };
+export type WhoamiMcpQuery = { profile: { profileId: string, profileNameFull: string | null, profileOnboardedAt: string | null, profileDeletedAt: string | null, profileCreatedAt: string, profileUpdatedAt: string } | null };
 
 export class TypedDocumentString<TResult, TVariables>
   extends String
@@ -1134,6 +1146,20 @@ export const SessionsSectionSessionFragmentFragmentDoc = new TypedDocumentString
   notAfter
 }
     `, {"fragmentName":"SessionsSectionSessionFragment"}) as unknown as TypedDocumentString<SessionsSectionSessionFragmentFragment, unknown>;
+export const EditPermissionsFormPermissionFragmentFragmentDoc = new TypedDocumentString(`
+    fragment EditPermissionsFormPermissionFragment on Permissions {
+  permissionId
+  permissionDescription
+}
+    `, {"fragmentName":"EditPermissionsFormPermissionFragment"}) as unknown as TypedDocumentString<EditPermissionsFormPermissionFragmentFragment, unknown>;
+export const EditPermissionsFormPresetFragmentFragmentDoc = new TypedDocumentString(`
+    fragment EditPermissionsFormPresetFragment on PermissionPresets {
+  permissionPresetId
+  permissionPresetName
+  permissionPresetSlugs
+  organizationId
+}
+    `, {"fragmentName":"EditPermissionsFormPresetFragment"}) as unknown as TypedDocumentString<EditPermissionsFormPresetFragmentFragment, unknown>;
 export const ConversationThreadFragmentFragmentDoc = new TypedDocumentString(`
     fragment ConversationThreadFragment on Conversations {
   conversationId
@@ -1172,7 +1198,7 @@ export const ViewerAgencyGetFragmentFragmentDoc = new TypedDocumentString(`
   agencyId
   agencySlug
   agencyName
-  agencyDisabledAt
+  agencyDeletedAt
 }
     `, {"fragmentName":"ViewerAgencyGetFragment"}) as unknown as TypedDocumentString<ViewerAgencyGetFragmentFragment, unknown>;
 export const ViewerOrganizationGetFragmentFragmentDoc = new TypedDocumentString(`
@@ -1188,7 +1214,7 @@ export const ViewerProfileGetFragmentFragmentDoc = new TypedDocumentString(`
   profileId
   profileNameFull
   profileOnboardedAt
-  profileDisabledAt
+  profileDeletedAt
   profileCreatedAt
   profileUpdatedAt
 }
@@ -1228,7 +1254,7 @@ export const ViewerProfileUseFragmentFragmentDoc = new TypedDocumentString(`
   profileId
   profileNameFull
   profileOnboardedAt
-  profileDisabledAt
+  profileDeletedAt
   profileCreatedAt
   profileUpdatedAt
 }
@@ -1271,6 +1297,33 @@ export const AgencyInboxConversationPageQueryDocument = new TypedDocumentString(
     }
   }
 }`) as unknown as TypedDocumentString<AgencyInboxConversationPageQueryQuery, AgencyInboxConversationPageQueryQueryVariables>;
+export const AgencyOverviewPageQueryDocument = new TypedDocumentString(`
+    query AgencyOverviewPageQuery($agencyId: Int!) {
+  activeMemberships: viewerAgencyMemberships(
+    agencyId: $agencyId
+    filter: {agencyMembershipAcceptedAt: {is: NOT_NULL}, agencyMembershipRevokedAt: {is: NULL}, agencyMembershipRejectedAt: {is: NULL}}
+  ) {
+    totalCount
+  }
+  pendingMemberships: viewerAgencyMemberships(
+    agencyId: $agencyId
+    filter: {agencyMembershipAcceptedAt: {is: NULL}, agencyMembershipRevokedAt: {is: NULL}, agencyMembershipRejectedAt: {is: NULL}}
+  ) {
+    totalCount
+  }
+  grants: agenciesOrganizationsGrantsCollection(
+    filter: {agencyId: {eq: $agencyId}}
+    first: 250
+  ) {
+    edges {
+      node {
+        organizationId
+        permissionId
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<AgencyOverviewPageQueryQuery, AgencyOverviewPageQueryQueryVariables>;
 export const AgencyCreateMutationDocument = new TypedDocumentString(`
     mutation AgencyCreateMutation($agency_name: String!, $agency_slug: String!) {
   agency: viewerAgencyCreate(agencyName: $agency_name, agencySlug: $agency_slug) {
@@ -1280,7 +1333,9 @@ export const AgencyCreateMutationDocument = new TypedDocumentString(`
     `) as unknown as TypedDocumentString<AgencyCreateMutationMutation, AgencyCreateMutationMutationVariables>;
 export const DangerPageQueryDocument = new TypedDocumentString(`
     query DangerPageQuery {
-  viewerOrganizations(filter: {organizationDisabledAt: {is: NULL}}) {
+  organizations: viewerOrganizationsCollection(
+    filter: {organizationDeletedAt: {is: NULL}}
+  ) {
     edges {
       node {
         organizationId
@@ -1344,7 +1399,7 @@ export const ProfileSectionUpdateNameMutationDocument = new TypedDocumentString(
     `) as unknown as TypedDocumentString<ProfileSectionUpdateNameMutationMutation, ProfileSectionUpdateNameMutationMutationVariables>;
 export const SessionsSectionPageQueryDocument = new TypedDocumentString(`
     query SessionsSectionPageQuery {
-  viewerSessions {
+  sessions: viewerSessionsCollection {
     edges {
       node {
         ...SessionsSectionSessionFragment
@@ -1392,8 +1447,8 @@ export const HomeInboxConversationPageQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<HomeInboxConversationPageQueryQuery, HomeInboxConversationPageQueryQueryVariables>;
 export const HomePickerPageQueryDocument = new TypedDocumentString(`
     query HomePickerPageQuery {
-  viewerOrganizations(
-    filter: {organizationDisabledAt: {is: NULL}}
+  organizations: viewerOrganizationsCollection(
+    filter: {organizationDeletedAt: {is: NULL}}
     orderBy: [{organizationName: AscNullsLast}]
   ) {
     edges {
@@ -1514,7 +1569,7 @@ export const EditOrganizationMembershipRevokeOrganizationMembershipMutationDocum
     `) as unknown as TypedDocumentString<EditOrganizationMembershipRevokeOrganizationMembershipMutationMutation, EditOrganizationMembershipRevokeOrganizationMembershipMutationMutationVariables>;
 export const EditOrganizationMembershipSetPermissionsMutationDocument = new TypedDocumentString(`
     mutation EditOrganizationMembershipSetPermissionsMutation($organizationMembershipId: Int!, $permissionIds: [String]!) {
-  viewerOrganizationMembershipSetPermissions(
+  viewerOrganizationMembershipSetPermissionsCollection(
     organizationMembershipId: $organizationMembershipId
     permissionIds: $permissionIds
   ) {
@@ -1527,32 +1582,36 @@ export const EditOrganizationMembershipSetPermissionsMutationDocument = new Type
 }
     `) as unknown as TypedDocumentString<EditOrganizationMembershipSetPermissionsMutationMutation, EditOrganizationMembershipSetPermissionsMutationMutationVariables>;
 export const OrganizationMembershipEditPageQueryDocument = new TypedDocumentString(`
-    query OrganizationMembershipEditPageQuery($membershipFilter: OrganizationMembershipsFilter, $presetsFilter: PermissionPresetsFilter, $permissionsOrderBy: [PermissionsOrderBy!] = [{permissionId: AscNullsLast}], $presetsOrderBy: [PermissionPresetsOrderBy!] = [{permissionPresetId: AscNullsLast}], $first: Int = 250) {
-  memberships: organizationMembershipsCollection(
-    first: 1
-    filter: $membershipFilter
+    query OrganizationMembershipEditPageQuery($organizationId: Int!, $organizationMembershipId: Int!, $presetsFilter: PermissionPresetsFilter, $permissionsOrderBy: [PermissionsOrderBy!] = [{permissionId: AscNullsLast}], $presetsOrderBy: [PermissionPresetsOrderBy!] = [{permissionPresetId: AscNullsLast}], $first: Int = 250) {
+  organization: viewerOrganizationById(organizationId: $organizationId) {
+    ...ViewerOrganizationGetFragment
+  }
+  canManage: viewerHasPermission(
+    organizationId: $organizationId
+    permissionId: "members_manage"
+  )
+  membership: viewerOrganizationMembershipById(
+    organizationMembershipId: $organizationMembershipId
   ) {
-    edges {
-      node {
-        organizationMembershipId
-        profileId
-        organizationMembershipInviteEmail
-        organizationMembershipInvitePhone
-        organizationMembershipInviteAddressLevel0Id
-        organizationMembershipInviteDocumentKind
-        organizationMembershipInviteDocumentValue
-        organizationMembershipAcceptedAt
-        organizationMembershipRevokedAt
-        organizationMembershipRejectedAt
-        profile {
-          profileNameFull
-        }
-        organizationMembershipPermissionsCollection(first: 250) {
-          edges {
-            node {
-              permissionId
-            }
-          }
+    organizationMembershipId
+    profileId
+    organizationMembershipLabel
+    organizationMembershipEmail
+    organizationMembershipInviteEmail
+    organizationMembershipInvitePhone
+    organizationMembershipInviteAddressLevel0Id
+    organizationMembershipInviteDocumentKind
+    organizationMembershipInviteDocumentValue
+    organizationMembershipAcceptedAt
+    organizationMembershipRevokedAt
+    organizationMembershipRejectedAt
+    profile {
+      profileNameFull
+    }
+    organizationMembershipPermissionsCollection(first: 250) {
+      edges {
+        node {
+          permissionId
         }
       }
     }
@@ -1560,8 +1619,7 @@ export const OrganizationMembershipEditPageQueryDocument = new TypedDocumentStri
   permissions: permissionsCollection(first: $first, orderBy: $permissionsOrderBy) {
     edges {
       node {
-        permissionId
-        permissionDescription
+        ...EditPermissionsFormPermissionFragment
       }
     }
   }
@@ -1572,15 +1630,27 @@ export const OrganizationMembershipEditPageQueryDocument = new TypedDocumentStri
   ) {
     edges {
       node {
-        permissionPresetId
-        permissionPresetName
-        permissionPresetSlugs
-        organizationId
+        ...EditPermissionsFormPresetFragment
       }
     }
   }
 }
-    `) as unknown as TypedDocumentString<OrganizationMembershipEditPageQueryQuery, OrganizationMembershipEditPageQueryQueryVariables>;
+    fragment EditPermissionsFormPermissionFragment on Permissions {
+  permissionId
+  permissionDescription
+}
+fragment EditPermissionsFormPresetFragment on PermissionPresets {
+  permissionPresetId
+  permissionPresetName
+  permissionPresetSlugs
+  organizationId
+}
+fragment ViewerOrganizationGetFragment on Organizations {
+  organizationId
+  tenantId
+  organizationSlug
+  organizationName
+}`) as unknown as TypedDocumentString<OrganizationMembershipEditPageQueryQuery, OrganizationMembershipEditPageQueryQueryVariables>;
 export const MembersAdminPageQueryDocument = new TypedDocumentString(`
     query MembersAdminPageQuery($filter: OrganizationMembershipsFilter, $orderBy: [OrganizationMembershipsOrderBy!] = [{organizationMembershipCreatedAt: AscNullsLast}], $first: Int = 250) {
   memberships: organizationMembershipsCollection(
@@ -1640,7 +1710,7 @@ export const CheckTenantPermissionDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<CheckTenantPermissionQuery, CheckTenantPermissionQueryVariables>;
 export const InsertSsoProviderDocument = new TypedDocumentString(`
-    mutation InsertSsoProvider($tenantId: BigInt!, $ssoProviderId: String!, $label: String!, $domains: JSON!, $enabled: Boolean!) {
+    mutation InsertSsoProvider($tenantId: Int!, $ssoProviderId: String!, $label: String!, $domains: [String]!, $enabled: Boolean!) {
   insertIntoTenantSsoProvidersCollection(
     objects: [{tenantId: $tenantId, ssoProviderId: $ssoProviderId, ssoProviderLabel: $label, ssoProviderDomains: $domains, ssoProviderEnabled: $enabled}]
   ) {
@@ -1649,7 +1719,7 @@ export const InsertSsoProviderDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<InsertSsoProviderMutation, InsertSsoProviderMutationVariables>;
 export const DeleteSsoProviderDocument = new TypedDocumentString(`
-    mutation DeleteSsoProvider($tenantId: BigInt!, $ssoProviderId: String!) {
+    mutation DeleteSsoProvider($tenantId: Int!, $ssoProviderId: String!) {
   deleteFromTenantSsoProvidersCollection(
     filter: {tenantId: {eq: $tenantId}, ssoProviderId: {eq: $ssoProviderId}}
     atMost: 1
@@ -1659,7 +1729,7 @@ export const DeleteSsoProviderDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<DeleteSsoProviderMutation, DeleteSsoProviderMutationVariables>;
 export const TenantSsoPageQueryDocument = new TypedDocumentString(`
-    query TenantSsoPageQuery($tenantId: BigInt!) {
+    query TenantSsoPageQuery($tenantId: Int!) {
   tenantSsoProvidersCollection(
     filter: {tenantId: {eq: $tenantId}}
     orderBy: [{ssoProviderCreatedAt: AscNullsLast}]
@@ -1718,8 +1788,8 @@ export const HealthQueryDocument = new TypedDocumentString(`
     `) as unknown as TypedDocumentString<HealthQueryQuery, HealthQueryQueryVariables>;
 export const ScopeSelectorOrgsQueryDocument = new TypedDocumentString(`
     query ScopeSelectorOrgsQuery {
-  viewerOrganizations(
-    filter: {organizationDisabledAt: {is: NULL}}
+  viewerOrganizationsCollection(
+    filter: {organizationDeletedAt: {is: NULL}}
     orderBy: [{organizationName: AscNullsLast}]
   ) {
     edges {
@@ -1736,7 +1806,7 @@ export const ScopeSelectorOrgsQueryDocument = new TypedDocumentString(`
     `) as unknown as TypedDocumentString<ScopeSelectorOrgsQueryQuery, ScopeSelectorOrgsQueryQueryVariables>;
 export const ScopeSelectorAgenciesQueryDocument = new TypedDocumentString(`
     query ScopeSelectorAgenciesQuery {
-  agencies: viewerAgencies(orderBy: [{agencyName: AscNullsLast}]) {
+  agencies: viewerAgenciesCollection(orderBy: [{agencyName: AscNullsLast}]) {
     edges {
       node {
         agencyId
@@ -1755,7 +1825,7 @@ export const PostHogIdentifyDocument = new TypedDocumentString(`
     profileOnboardedAt
     profileCreatedAt
   }
-  tenants: viewerTenants {
+  tenants: viewerTenantsCollection {
     edges {
       node {
         tenantId
@@ -1765,7 +1835,7 @@ export const PostHogIdentifyDocument = new TypedDocumentString(`
       }
     }
   }
-  organizations: viewerOrganizations {
+  organizations: viewerOrganizationsCollection {
     edges {
       node {
         organizationId
@@ -1800,7 +1870,7 @@ export const CountriesGetDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<CountriesGetQuery, CountriesGetQueryVariables>;
 export const ViewerAgenciesGetDocument = new TypedDocumentString(`
     query ViewerAgenciesGet($first: Int, $last: Int, $after: Cursor, $before: Cursor, $filter: AgenciesFilter, $orderBy: [AgenciesOrderBy!]) {
-  agencies: viewerAgencies(
+  agencies: viewerAgenciesCollection(
     first: $first
     last: $last
     after: $after
@@ -1819,7 +1889,7 @@ export const ViewerAgenciesGetDocument = new TypedDocumentString(`
   agencyId
   agencySlug
   agencyName
-  agencyDisabledAt
+  agencyDeletedAt
 }`) as unknown as TypedDocumentString<ViewerAgenciesGetQuery, ViewerAgenciesGetQueryVariables>;
 export const ViewerAgencyByIdGetDocument = new TypedDocumentString(`
     query ViewerAgencyByIdGet($agencyId: Int!) {
@@ -1831,7 +1901,7 @@ export const ViewerAgencyByIdGetDocument = new TypedDocumentString(`
   agencyId
   agencySlug
   agencyName
-  agencyDisabledAt
+  agencyDeletedAt
 }`) as unknown as TypedDocumentString<ViewerAgencyByIdGetQuery, ViewerAgencyByIdGetQueryVariables>;
 export const ViewerAgencyBySlugGetDocument = new TypedDocumentString(`
     query ViewerAgencyBySlugGet($agencySlug: String!) {
@@ -1843,11 +1913,11 @@ export const ViewerAgencyBySlugGetDocument = new TypedDocumentString(`
   agencyId
   agencySlug
   agencyName
-  agencyDisabledAt
+  agencyDeletedAt
 }`) as unknown as TypedDocumentString<ViewerAgencyBySlugGetQuery, ViewerAgencyBySlugGetQueryVariables>;
 export const ViewerOrganizationsGetDocument = new TypedDocumentString(`
     query ViewerOrganizationsGet($first: Int, $last: Int, $after: Cursor, $before: Cursor, $filter: OrganizationsFilter, $orderBy: [OrganizationsOrderBy!]) {
-  organizations: viewerOrganizations(
+  organizations: viewerOrganizationsCollection(
     first: $first
     last: $last
     after: $after
@@ -1882,7 +1952,7 @@ export const ViewerOrganizationByIdQueryDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerOrganizationByIdQueryQuery, ViewerOrganizationByIdQueryQueryVariables>;
 export const ViewerOrganizationBySlugQueryDocument = new TypedDocumentString(`
     query ViewerOrganizationBySlugQuery($organizationSlug: String!) {
-  organizations: viewerOrganizations(
+  organizations: viewerOrganizationsCollection(
     first: 1
     filter: {organizationSlug: {eq: $organizationSlug}}
   ) {
@@ -1909,13 +1979,13 @@ export const ViewerProfileGetDocument = new TypedDocumentString(`
   profileId
   profileNameFull
   profileOnboardedAt
-  profileDisabledAt
+  profileDeletedAt
   profileCreatedAt
   profileUpdatedAt
 }`) as unknown as TypedDocumentString<ViewerProfileGetQuery, ViewerProfileGetQueryVariables>;
 export const ViewerTenantsGetDocument = new TypedDocumentString(`
     query ViewerTenantsGet($first: Int, $last: Int, $after: Cursor, $before: Cursor, $filter: TenantsFilter, $orderBy: [TenantsOrderBy!]) {
-  tenants: viewerTenants(
+  tenants: viewerTenantsCollection(
     first: $first
     last: $last
     after: $after
@@ -1984,7 +2054,7 @@ export const CountriesUseDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<CountriesUseQuery, CountriesUseQueryVariables>;
 export const ViewerAgenciesUseDocument = new TypedDocumentString(`
     query ViewerAgenciesUse($first: Int, $last: Int, $after: Cursor, $before: Cursor, $filter: AgenciesFilter, $orderBy: [AgenciesOrderBy!]) {
-  agencies: viewerAgencies(
+  agencies: viewerAgenciesCollection(
     first: $first
     last: $last
     after: $after
@@ -2028,7 +2098,7 @@ export const ViewerAgencyBySlugUseDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerAgencyBySlugUseQuery, ViewerAgencyBySlugUseQueryVariables>;
 export const ViewerOrganizationsUseDocument = new TypedDocumentString(`
     query ViewerOrganizationsUse($first: Int, $last: Int, $after: Cursor, $before: Cursor, $filter: OrganizationsFilter, $orderBy: [OrganizationsOrderBy!]) {
-  organizations: viewerOrganizations(
+  organizations: viewerOrganizationsCollection(
     first: $first
     last: $last
     after: $after
@@ -2063,7 +2133,7 @@ export const ViewerOrganizationByIdUseDocument = new TypedDocumentString(`
 }`) as unknown as TypedDocumentString<ViewerOrganizationByIdUseQuery, ViewerOrganizationByIdUseQueryVariables>;
 export const ViewerOrganizationBySlugUseDocument = new TypedDocumentString(`
     query ViewerOrganizationBySlugUse($organizationSlug: String!) {
-  organizations: viewerOrganizations(
+  organizations: viewerOrganizationsCollection(
     first: 1
     filter: {organizationSlug: {eq: $organizationSlug}}
   ) {
@@ -2090,13 +2160,13 @@ export const ViewerProfileUseDocument = new TypedDocumentString(`
   profileId
   profileNameFull
   profileOnboardedAt
-  profileDisabledAt
+  profileDeletedAt
   profileCreatedAt
   profileUpdatedAt
 }`) as unknown as TypedDocumentString<ViewerProfileUseQuery, ViewerProfileUseQueryVariables>;
 export const ViewerTenantsUseDocument = new TypedDocumentString(`
     query ViewerTenantsUse($first: Int, $last: Int, $after: Cursor, $before: Cursor, $filter: TenantsFilter, $orderBy: [TenantsOrderBy!]) {
-  tenants: viewerTenants(
+  tenants: viewerTenantsCollection(
     first: $first
     last: $last
     after: $after
@@ -2214,7 +2284,7 @@ export const RevokeMemberPermissionMcpDocument = new TypedDocumentString(`
     `) as unknown as TypedDocumentString<RevokeMemberPermissionMcpMutation, RevokeMemberPermissionMcpMutationVariables>;
 export const SetMemberPermissionsMcpDocument = new TypedDocumentString(`
     mutation SetMemberPermissionsMcp($organization_membership_id: Int!, $permission_ids: [String]!) {
-  result: viewerOrganizationMembershipSetPermissions(
+  result: viewerOrganizationMembershipSetPermissionsCollection(
     organizationMembershipId: $organization_membership_id
     permissionIds: $permission_ids
   ) {
@@ -2287,7 +2357,7 @@ export const UpdateOrganizationMcpDocument = new TypedDocumentString(`
     `) as unknown as TypedDocumentString<UpdateOrganizationMcpMutation, UpdateOrganizationMcpMutationVariables>;
 export const ListTenantsMcpDocument = new TypedDocumentString(`
     query ListTenantsMcp {
-  tenants: viewerTenants(orderBy: [{tenantName: AscNullsLast}]) {
+  tenants: viewerTenantsCollection(orderBy: [{tenantName: AscNullsLast}]) {
     edges {
       node {
         tenantId
@@ -2301,7 +2371,9 @@ export const ListTenantsMcpDocument = new TypedDocumentString(`
     `) as unknown as TypedDocumentString<ListTenantsMcpQuery, ListTenantsMcpQueryVariables>;
 export const ListOrganizationsMcpDocument = new TypedDocumentString(`
     query ListOrganizationsMcp {
-  organizations: viewerOrganizations(orderBy: [{organizationName: AscNullsLast}]) {
+  organizations: viewerOrganizationsCollection(
+    orderBy: [{organizationName: AscNullsLast}]
+  ) {
     edges {
       node {
         organizationId
@@ -2319,7 +2391,7 @@ export const WhoamiMcpDocument = new TypedDocumentString(`
     profileId
     profileNameFull
     profileOnboardedAt
-    profileDisabledAt
+    profileDeletedAt
     profileCreatedAt
     profileUpdatedAt
   }

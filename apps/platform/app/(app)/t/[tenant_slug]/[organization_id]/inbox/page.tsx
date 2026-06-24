@@ -1,9 +1,11 @@
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
 import { SINGLE } from "@packages/utils/array";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { InboxList } from "~/components/inbox/inbox-list";
 import { ROSETTA } from "~/lib/i18n";
 import { getServerLocale } from "~/lib/i18n.server";
+import { assertParams } from "~/lib/params";
 
 export async function generateMetadata(props: PageProps<"/t/[tenant_slug]/[organization_id]/inbox">) {
   const locale = await getServerLocale();
@@ -12,14 +14,17 @@ export async function generateMetadata(props: PageProps<"/t/[tenant_slug]/[organ
 }
 
 export default async function OrgInboxPage(props: PageProps<"/t/[tenant_slug]/[organization_id]/inbox">) {
-  const { tenant_slug, organization_id: organization_id_param } = await props.params;
+  const { tenant_slug, organization_id } = assertParams(
+    await props.params,
+    z.object({ tenant_slug: z.string().min(1), organization_id: z.int().min(1) }),
+    "notFound",
+  );
   const sp = await props.searchParams;
   const filter = (SINGLE(sp["filter"]) ?? "open") as "open" | "archived";
-  const organization_id = Number(organization_id_param);
 
   const user = await getSupabaseServerUser();
   if (!user) {
-    redirect(`/auth?next=${encodeURIComponent(`/t/${tenant_slug}/${organization_id_param}/inbox`)}`);
+    redirect(`/auth?next=${encodeURIComponent(`/t/${tenant_slug}/${organization_id}/inbox`)}`);
   }
 
   return <InboxList scope={{ kind: "organization", tenant_slug, organization_id }} filter={filter} />;

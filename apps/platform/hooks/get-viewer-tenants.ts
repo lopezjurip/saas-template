@@ -29,7 +29,7 @@ export const ViewerTenantsGet = /*#__PURE__*/ gql(`
     $filter: TenantsFilter
     $orderBy: [TenantsOrderBy!]
   ) {
-    tenants: viewerTenants(
+    tenants: viewerTenantsCollection(
       first: $first
       last: $last
       after: $after

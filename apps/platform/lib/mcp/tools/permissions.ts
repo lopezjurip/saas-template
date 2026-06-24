@@ -134,7 +134,7 @@ export class RevokeMemberPermissionTool extends McpTool<typeof RevokeSchema> {
 
 const SetMemberPermissionsMcpMutation = /*#__PURE__*/ gql(`
   mutation SetMemberPermissionsMcp($organization_membership_id: Int!, $permission_ids: [String]!) {
-    result: viewerOrganizationMembershipSetPermissions(
+    result: viewerOrganizationMembershipSetPermissionsCollection(
       organizationMembershipId: $organization_membership_id
       permissionIds: $permission_ids
     ) {
@@ -157,7 +157,7 @@ type SetArgs = InferArgs<typeof SetSchema>;
 
 /**
  * `set_member_permissions` — atomically replace a member's whole permission set (preset apply).
- * One round-trip via `viewerOrganizationMembershipSetPermissions`; requires `members_manage`.
+ * One round-trip via `viewerOrganizationMembershipSetPermissionsCollection`; requires `members_manage`.
  *
  * @example
  * await new SetMemberPermissionsTool().run({ organization_membership_id: 3, permission_ids: ["organization_manage","members_manage"] }, ctx);

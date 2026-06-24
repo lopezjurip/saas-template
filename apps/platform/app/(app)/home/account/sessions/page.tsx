@@ -3,11 +3,11 @@ import { SUPABASE_JWT_DECODE_PAYLOAD } from "@packages/supabase/jwt";
 import { gql } from "~/generated/graphql";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { getRosetta } from "~/lib/i18n.server";
-import { SessionsSection, type SessionsSectionSessionFragmentType } from "./sessions-section";
+import { SessionsSection } from "./sessions-section";
 
 const SessionsSectionPageQuery = gql(`
   query SessionsSectionPageQuery {
-    viewerSessions {
+    sessions: viewerSessionsCollection {
       edges {
         node {
           ...SessionsSectionSessionFragment
@@ -22,8 +22,7 @@ export default async function SessionsPage(props: PageProps<"/home/account/sessi
   const { data } = await graphy.query({ query: SessionsSectionPageQuery });
   const serverSession = await getSupabaseServerSession();
   const payload = serverSession?.["access_token"] ? SUPABASE_JWT_DECODE_PAYLOAD(serverSession["access_token"]) : null;
-  const sessions: SessionsSectionSessionFragmentType[] =
-    data?.["viewerSessions"]?.["edges"].map((edge) => edge["node"]) || [];
+  const sessions = data?.["sessions"]?.["edges"] || [];
 
   const { t } = await getRosetta(LOCALES);
 

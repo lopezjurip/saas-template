@@ -1,5 +1,3 @@
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { createSupabaseServiceRoleClient } from "@packages/supabase/client.service";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { INITIALS_OF } from "@packages/utils/string";
@@ -8,113 +6,98 @@ import type { Metadata, Route } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { z } from "zod";
 import { gql } from "~/generated/graphql";
 import { FilterIs } from "~/generated/graphql/graphql";
-import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { getGraphySession } from "~/lib/graphy/graphy.server";
 import { getRosetta } from "~/lib/i18n.server";
+import { assertParams } from "~/lib/params";
 import { ROUTE } from "~/lib/route";
 import { EditPermissionsForm } from "./edit-form";
 
-/**
- * Loads everything the permission editor needs in one typed query: the target membership (with
- * its profile name and current grants nested via FK), the full permission catalog, and the presets
- * available to this org (global + org-scoped). RLS gates rows for a `members_manage` co-member.
- * The member's email lives in `auth.users` and is fetched separately via the auth admin API.
- */
 const OrganizationMembershipEditPageQuery = /*#__PURE__*/ gql(`
   query OrganizationMembershipEditPageQuery(
-    $membershipFilter: OrganizationMembershipsFilter
+    $organizationId: Int!
+    $organizationMembershipId: Int!
     $presetsFilter: PermissionPresetsFilter
     $permissionsOrderBy: [PermissionsOrderBy!] = [{ permissionId: AscNullsLast }]
     $presetsOrderBy: [PermissionPresetsOrderBy!] = [{ permissionPresetId: AscNullsLast }]
     $first: Int = 250
   ) {
-    memberships: organizationMembershipsCollection(first: 1, filter: $membershipFilter) {
-      edges {
-        node {
-          organizationMembershipId
-          profileId
-          organizationMembershipInviteEmail
-          organizationMembershipInvitePhone
-          organizationMembershipInviteAddressLevel0Id
-          organizationMembershipInviteDocumentKind
-          organizationMembershipInviteDocumentValue
-          organizationMembershipAcceptedAt
-          organizationMembershipRevokedAt
-          organizationMembershipRejectedAt
-          profile { profileNameFull }
-          organizationMembershipPermissionsCollection(first: 250) {
-            edges { node { permissionId } }
-          }
-        }
+    organization: viewerOrganizationById(organizationId: $organizationId) {
+      ...ViewerOrganizationGetFragment
+    }
+    canManage: viewerHasPermission(organizationId: $organizationId, permissionId: "members_manage")
+    membership: viewerOrganizationMembershipById(organizationMembershipId: $organizationMembershipId) {
+      organizationMembershipId
+      profileId
+      organizationMembershipLabel
+      organizationMembershipEmail
+      organizationMembershipInviteEmail
+      organizationMembershipInvitePhone
+      organizationMembershipInviteAddressLevel0Id
+      organizationMembershipInviteDocumentKind
+      organizationMembershipInviteDocumentValue
+      organizationMembershipAcceptedAt
+      organizationMembershipRevokedAt
+      organizationMembershipRejectedAt
+      profile { profileNameFull }
+      organizationMembershipPermissionsCollection(first: 250) {
+        edges { node { permissionId } }
       }
     }
     permissions: permissionsCollection(first: $first, orderBy: $permissionsOrderBy) {
-      edges { node { permissionId permissionDescription } }
+      edges { node { ...EditPermissionsFormPermissionFragment } }
     }
     presets: permissionPresetsCollection(first: $first, filter: $presetsFilter, orderBy: $presetsOrderBy) {
-      edges { node { permissionPresetId permissionPresetName permissionPresetSlugs organizationId } }
+      edges { node { ...EditPermissionsFormPresetFragment } }
     }
   }
 `);
 
-function MEMBER_LABEL(row: {
-  profile_id: string | null;
-  profile_name_full: string | null;
-  email: string | null;
-  organization_membership_invite_email: string | null;
-  organization_membership_invite_phone: string | null;
-  organization_membership_invite_document_value: string | null;
-  organization_membership_invite_address_level0_id: string | null;
-}): string {
-  if (row.profile_id) return row.profile_name_full ?? row.email ?? row.profile_id.slice(0, 8);
-  if (row.organization_membership_invite_email) return row.organization_membership_invite_email;
-  if (row.organization_membership_invite_phone) return row.organization_membership_invite_phone;
-  if (row.organization_membership_invite_document_value) {
-    return `${row.organization_membership_invite_address_level0_id ?? ""} · ${row.organization_membership_invite_document_value}`;
-  }
-  return "—";
-}
+const paramsSchema = z.object({
+  tenant_slug: z.string().min(1),
+  organization_id: z.int().min(1),
+  organization_membership_id: z.int().min(1),
+});
 
 export async function generateMetadata(
   props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit">,
 ): Promise<Metadata> {
-  const { t, locale } = await getRosetta(LOCALES);
+  const { t } = await getRosetta(LOCALES);
   return { title: t("page_title") };
 }
 
 export default async function OrganizationMembershipEditPage(
   props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/members/[organization_membership_id]/edit">,
 ) {
-  const {
-    tenant_slug,
-    organization_id: organization_id_param,
-    organization_membership_id: organization_membership_id_param,
-  } = await props.params;
+  const params = await props.params;
+  const { tenant_slug, organization_id, organization_membership_id } = assertParams(params, paramsSchema, "notFound");
 
   const { t } = await getRosetta(LOCALES);
-
-  const organization_id = Number(organization_id_param);
-  if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
-  const organization_membership_id = Number(organization_membership_id_param);
-  if (!Number.isInteger(organization_membership_id) || organization_membership_id <= 0) notFound();
-
-  const {
-    data: { organization },
-  } = await getViewerOrganizationByIdAssert(organization_id);
 
   const membersHref = ROUTE("/t/[tenant_slug]/[organization_id]/settings/members", {
     tenant_slug,
     organization_id,
   });
-  const supabase = await createSupabaseServerClient();
-  const { data: canManage } = await supabase.rpc("viewer_has_permission", {
-    organization_id: organization_id,
-    permission_id: "members_manage",
-  });
 
-  if (!canManage) {
+  const graphy = await getGraphySession();
+  const { data, error } = await graphy.query({
+    query: OrganizationMembershipEditPageQuery,
+    variables: {
+      organizationId: organization_id,
+      organizationMembershipId: organization_membership_id,
+      presetsFilter: {
+        or: [{ organizationId: { is: FilterIs.Null } }, { organizationId: { eq: organization_id } }],
+      },
+    },
+  });
+  if (error) throw error;
+
+  const organization = data?.["organization"] ?? null;
+  if (!organization) notFound();
+
+  if (!data?.["canManage"]) {
     return (
       <EditShell membersHref={membersHref} backLabel={t("back")}>
         <Alert variant="destructive">
@@ -124,22 +107,7 @@ export default async function OrganizationMembershipEditPage(
     );
   }
 
-  const graphy = await getGraphySession();
-  const { data, error } = await graphy.query({
-    query: OrganizationMembershipEditPageQuery,
-    variables: {
-      membershipFilter: {
-        organizationMembershipId: { eq: organization_membership_id },
-        organizationId: { eq: organization_id },
-      },
-      presetsFilter: {
-        or: [{ organizationId: { is: FilterIs.Null } }, { organizationId: { eq: organization_id } }],
-      },
-    },
-  });
-  if (error) throw error;
-
-  const organization_membership = data?.["memberships"]?.["edges"]?.[0]?.["node"] ?? null;
+  const organization_membership = data?.["membership"] ?? null;
   if (
     !organization_membership ||
     organization_membership["organizationMembershipRevokedAt"] ||
@@ -154,25 +122,8 @@ export default async function OrganizationMembershipEditPage(
     );
   }
 
-  /** Email for active members lives in auth.users (not profiles) — auth admin API, not GraphQL. */
-  let email: string | null = null;
-  if (organization_membership["profileId"]) {
-    const admin = createSupabaseServiceRoleClient();
-    const userRes = await admin.auth.admin.getUserById(organization_membership["profileId"]);
-    email = userRes.data?.user?.email ?? null;
-  }
-
-  const memberLabel = MEMBER_LABEL({
-    profile_id: organization_membership["profileId"] ?? null,
-    profile_name_full: organization_membership["profile"]?.["profileNameFull"] ?? null,
-    email,
-    organization_membership_invite_email: organization_membership["organizationMembershipInviteEmail"] ?? null,
-    organization_membership_invite_phone: organization_membership["organizationMembershipInvitePhone"] ?? null,
-    organization_membership_invite_document_value:
-      organization_membership["organizationMembershipInviteDocumentValue"] ?? null,
-    organization_membership_invite_address_level0_id:
-      organization_membership["organizationMembershipInviteAddressLevel0Id"] ?? null,
-  });
+  const memberLabel = organization_membership["organizationMembershipLabel"] ?? "—";
+  const email = organization_membership["organizationMembershipEmail"] ?? null;
   const isPending = !organization_membership["profileId"];
   const channel = organization_membership["organizationMembershipInvitePhone"]
     ? "phone"
@@ -184,19 +135,11 @@ export default async function OrganizationMembershipEditPage(
 
   const permissionsCatalog = (data?.["permissions"]?.["edges"] ?? [])
     .filter((e) => e["node"]["permissionId"] !== "*")
-    .map((e) => ({
-      permission_id: e["node"]["permissionId"],
-      permission_description: e["node"]["permissionDescription"] ?? null,
-    }));
+    .map((e) => e["node"]);
   const grantedSlugs = (organization_membership["organizationMembershipPermissionsCollection"]?.["edges"] ?? []).map(
     (e) => e["node"]["permissionId"],
   );
-  const presets = (data?.["presets"]?.["edges"] ?? []).map((e) => ({
-    permission_preset_id: e["node"]["permissionPresetId"],
-    permission_preset_name: e["node"]["permissionPresetName"],
-    permission_preset_slugs: e["node"]["permissionPresetSlugs"] ?? null,
-    organization_id: e["node"]["organizationId"] ?? null,
-  }));
+  const presets = (data?.["presets"]?.["edges"] ?? []).map((e) => e["node"]);
 
   return (
     <EditShell membersHref={membersHref} backLabel={t("back")}>

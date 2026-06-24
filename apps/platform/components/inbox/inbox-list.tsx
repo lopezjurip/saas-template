@@ -23,14 +23,14 @@ export async function InboxList({ scope, filter }: { scope: InboxScope; filter: 
   const includeArchived = filter === "archived";
 
   const supabase = await createSupabaseServerClient();
-  const { data: rows, error } = await supabase.rpc("viewer_conversations", {
+  const { data: rows, error } = await supabase.rpc("viewer_conversations_collection", {
     include_archived: includeArchived,
     ...SCOPE_RPC_ARGS(scope),
   });
 
   const { t } = ROSETTA(LOCALES, locale);
 
-  type ConversationRow = Database["public"]["Functions"]["viewer_conversations"]["Returns"][number];
+  type ConversationRow = Database["public"]["Functions"]["viewer_conversations_collection"]["Returns"][number];
   const conversations: ConversationRow[] = rows ?? [];
 
   const inboxHref = SCOPE_INBOX_HREF(scope);

@@ -29,7 +29,7 @@ export const ViewerAgenciesUse = /*#__PURE__*/ gql(`
     $filter: AgenciesFilter
     $orderBy: [AgenciesOrderBy!]
   ) {
-    agencies: viewerAgencies(
+    agencies: viewerAgenciesCollection(
       first: $first
       last: $last
       after: $after

@@ -107,8 +107,7 @@ const SUPABASE_CLI_KEYS = [
   "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION",
 ] as const;
 
-const supabaseCliLines = SUPABASE_CLI_KEYS
-  .map((k) => [k, process.env[k]] as const)
+const supabaseCliLines = SUPABASE_CLI_KEYS.map((k) => [k, process.env[k]] as const)
   .filter(([, v]) => v !== undefined)
   .map(([k, v]) => `${k}=${v}`);
 

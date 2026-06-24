@@ -1,9 +1,10 @@
 import { createSupabaseServerClient } from "@packages/supabase/client.server";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { z } from "zod";
 import { getViewerOrganizationByIdAssert } from "~/hooks/get-viewer-organizations";
 import { getRosetta } from "~/lib/i18n.server";
+import { assertParams } from "~/lib/params";
 import { ExternalAccess, type ExternalAccessAgency } from "./external-access";
 
 export async function generateMetadata(
@@ -16,11 +17,12 @@ export async function generateMetadata(
 export default async function OrganizationExternalAccessPage(
   props: PageProps<"/t/[tenant_slug]/[organization_id]/settings/external-access">,
 ) {
-  const { organization_id: organization_id_param } = await props.params;
+  const { organization_id } = assertParams(
+    await props.params,
+    z.object({ organization_id: z.int().min(1) }),
+    "notFound",
+  );
   const { t } = await getRosetta(LOCALES);
-
-  const organization_id = Number(organization_id_param);
-  if (!Number.isInteger(organization_id) || organization_id <= 0) notFound();
 
   const {
     data: { organization },

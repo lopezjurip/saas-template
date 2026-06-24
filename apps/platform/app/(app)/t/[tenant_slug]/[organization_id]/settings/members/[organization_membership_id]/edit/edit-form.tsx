@@ -1,5 +1,6 @@
 "use client";
 
+import type { ResultOf } from "@graphql-typed-document-node/core";
 import type { GraphyError } from "@packages/graphy/graphy";
 import { useGraphyMutation } from "@packages/graphy/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
@@ -60,7 +61,7 @@ const RevokeOrganizationMembershipMutation = /*#__PURE__*/ gql(`
  */
 const SetPermissionsMutation = /*#__PURE__*/ gql(`
   mutation EditOrganizationMembershipSetPermissionsMutation($organizationMembershipId: Int!, $permissionIds: [String]!) {
-    viewerOrganizationMembershipSetPermissions(
+    viewerOrganizationMembershipSetPermissionsCollection(
       organizationMembershipId: $organizationMembershipId
       permissionIds: $permissionIds
     ) {
@@ -69,22 +70,26 @@ const SetPermissionsMutation = /*#__PURE__*/ gql(`
   }
 `);
 
-interface PermissionRow {
-  permission_id: string;
-  permission_description: string | null;
-}
+export const EditPermissionsFormPermissionFragment = /*#__PURE__*/ gql(`
+  fragment EditPermissionsFormPermissionFragment on Permissions {
+    permissionId
+    permissionDescription
+  }
+`);
 
-interface PresetRow {
-  permission_preset_id: number;
-  permission_preset_name: string;
-  permission_preset_slugs: (string | null)[] | null;
-  organization_id: number | null;
-}
+export const EditPermissionsFormPresetFragment = /*#__PURE__*/ gql(`
+  fragment EditPermissionsFormPresetFragment on PermissionPresets {
+    permissionPresetId
+    permissionPresetName
+    permissionPresetSlugs
+    organizationId
+  }
+`);
 
 interface Props {
   organization_membership_id: number;
-  permissions: PermissionRow[];
-  presets: PresetRow[];
+  permissions: ResultOf<typeof EditPermissionsFormPermissionFragment>[];
+  presets: ResultOf<typeof EditPermissionsFormPresetFragment>[];
   grantedSlugs: string[];
   membersHref: Route;
 }
@@ -93,28 +98,6 @@ type OptimisticAction =
   | { kind: "set_wildcard"; value: boolean }
   | { kind: "set_permission"; permission_id: string; granted: boolean }
   | { kind: "apply_preset"; slugs: string[] };
-
-function APPLY_OPTIMISTIC(state: { wildcard: boolean; slugs: Set<string> }, action: OptimisticAction) {
-  switch (action.kind) {
-    case "set_wildcard":
-      return { ...state, wildcard: action.value };
-    case "set_permission": {
-      const slugs = new Set(state.slugs);
-      if (action.granted) slugs.add(action.permission_id);
-      else slugs.delete(action.permission_id);
-      return { ...state, slugs };
-    }
-    case "apply_preset": {
-      const next = new Set<string>();
-      let wildcard = false;
-      for (const s of action.slugs) {
-        if (s === PERMISSION_SLUG_WILDCARD) wildcard = true;
-        else next.add(s);
-      }
-      return { wildcard, slugs: next };
-    }
-  }
-}
 
 export function EditPermissionsForm({
   organization_membership_id,
@@ -190,8 +173,8 @@ export function EditPermissionsForm({
    * @example
    * <Button onClick={() => applyPreset(preset)}>{preset.permission_preset_name}</Button>
    */
-  function applyPreset(preset: PresetRow) {
-    const slugs = (preset["permission_preset_slugs"] ?? []).filter((s): s is string => typeof s === "string");
+  function applyPreset(preset: ResultOf<typeof EditPermissionsFormPresetFragment>) {
+    const slugs = (preset["permissionPresetSlugs"] ?? []).filter((s): s is string => typeof s === "string");
     setError(null);
     startTransition(async () => {
       applyOptimistic({ kind: "apply_preset", slugs });
@@ -232,14 +215,14 @@ export function EditPermissionsForm({
           <div className="flex flex-wrap gap-2">
             {presets.map((preset) => (
               <Button
-                key={preset["permission_preset_id"]}
+                key={preset["permissionPresetId"]}
                 type="button"
                 variant="outline"
                 size="sm"
                 disabled={pending}
                 onClick={() => applyPreset(preset)}
               >
-                {preset["permission_preset_name"]}
+                {preset["permissionPresetName"]}
               </Button>
             ))}
           </div>
@@ -286,7 +269,7 @@ export function EditPermissionsForm({
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {permissions.map((perm) => {
-            const slug = perm["permission_id"];
+            const slug = perm["permissionId"];
             const on = state.wildcard || state.slugs.has(slug);
             return (
               <div
@@ -308,9 +291,9 @@ export function EditPermissionsForm({
                   <Label htmlFor={`perm_${slug}`} className="cursor-pointer">
                     <code className="text-foreground font-mono text-xs">{slug}</code>
                   </Label>
-                  {perm["permission_description"] && (
+                  {perm["permissionDescription"] && (
                     <span className="text-muted-foreground text-xs leading-[1.4] text-pretty">
-                      {perm["permission_description"]}
+                      {perm["permissionDescription"]}
                     </span>
                   )}
                 </div>
@@ -344,6 +327,28 @@ export function EditPermissionsForm({
       </div>
     </div>
   );
+}
+
+function APPLY_OPTIMISTIC(state: { wildcard: boolean; slugs: Set<string> }, action: OptimisticAction) {
+  switch (action.kind) {
+    case "set_wildcard":
+      return { ...state, wildcard: action.value };
+    case "set_permission": {
+      const slugs = new Set(state.slugs);
+      if (action.granted) slugs.add(action.permission_id);
+      else slugs.delete(action.permission_id);
+      return { ...state, slugs };
+    }
+    case "apply_preset": {
+      const next = new Set<string>();
+      let wildcard = false;
+      for (const s of action.slugs) {
+        if (s === PERMISSION_SLUG_WILDCARD) wildcard = true;
+        else next.add(s);
+      }
+      return { wildcard, slugs: next };
+    }
+  }
 }
 
 const LOCALE_ES = {

@@ -248,7 +248,7 @@ select throws_ok(
 deallocate insert_partial_doc;
 
 -- ============================================================
--- 7. viewer_organization_membership_pending RPC
+-- 7. viewer_organization_membership_pending_collection RPC
 -- ============================================================
 -- Carol is an auth.users + profile created via the users_handle_created trigger.
 -- She owns CL/nin/5126663-3 (normalized: 51266633).
@@ -293,9 +293,9 @@ set local request.jwt.claims to '{
 }';
 
 select is(
-  (select count(*) from public.viewer_organization_membership_pending()),
+  (select count(*) from public.viewer_organization_membership_pending_collection()),
   2::bigint,
-  'viewer_organization_membership_pending returns both matches (email + document)'
+  'viewer_organization_membership_pending_collection returns both matches (email + document)'
 );
 
 reset role;
@@ -312,9 +312,9 @@ set local request.jwt.claims to '{
 }';
 
 select is(
-  (select count(*) from public.viewer_organization_membership_pending()),
+  (select count(*) from public.viewer_organization_membership_pending_collection()),
   1::bigint,
-  'viewer_organization_membership_pending excludes revoked invites'
+  'viewer_organization_membership_pending_collection excludes revoked invites'
 );
 
 reset role;

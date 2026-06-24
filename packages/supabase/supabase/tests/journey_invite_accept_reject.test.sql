@@ -1,7 +1,7 @@
 -- Journey: pending-invite lifecycle (accept / reject) + identity-mismatch attacks.
 --
 -- Covers the surface exposed by:
---   public.viewer_organization_membership_pending()          -- "what invites match my identity?"
+--   public.viewer_organization_membership_pending_collection()          -- "what invites match my identity?"
 --   public.viewer_organization_membership_accept(int)        -- "claim invite N"
 --   public.viewer_organization_membership_reject(int)        -- "decline invite N"
 --
@@ -10,7 +10,7 @@
 --   * Invitee accepts the same invite twice (double-claim).
 --   * Invitee accepts a revoked / rejected / expired invite.
 --   * Unauthenticated session (no JWT sub) cannot drive these RPCs.
---   * Pending row gates: lifecycle stamps actually drive `viewer_organization_membership_pending`.
+--   * Pending row gates: lifecycle stamps actually drive `viewer_organization_membership_pending_collection`.
 
 begin;
 
@@ -112,7 +112,7 @@ set local role anon;
 set local request.jwt.claims to '';
 
 select is(
-  (select count(*) from public.viewer_organization_membership_pending()),
+  (select count(*) from public.viewer_organization_membership_pending_collection()),
   0::bigint,
   'anon caller gets zero pending invites (auth.uid is null short-circuits)'
 );
@@ -144,7 +144,7 @@ deallocate nosub_accept;
 reset role;
 
 -- ============================================================
--- 2. Carol authenticates. viewer_organization_membership_pending returns only the matches that
+-- 2. Carol authenticates. viewer_organization_membership_pending_collection returns only the matches that
 --    match her identity AND are still genuinely pending.
 --
 --    Of the five seeded rows, only the two ACTIVE ones for Carol must surface;
@@ -158,7 +158,7 @@ set local request.jwt.claims to '{
 }';
 
 select set_eq(
-  $$ select organization_membership_invite_token from public.viewer_organization_membership_pending() order by 1 $$,
+  $$ select organization_membership_invite_token from public.viewer_organization_membership_pending_collection() order by 1 $$,
   $$ values ('tok-carol-doc'::text), ('tok-carol-email'::text) $$,
   'Carol sees exactly her two live invites (expired + revoked + Dave excluded)'
 );
@@ -262,16 +262,16 @@ select throws_ok(
 );
 deallocate carol_accept_twice;
 
--- The accepted invite is also no longer returned by viewer_organization_membership_pending.
+-- The accepted invite is also no longer returned by viewer_organization_membership_pending_collection.
 select is(
-  (select count(*) from public.viewer_organization_membership_pending() where organization_membership_id = (select carol_email from _invites)),
+  (select count(*) from public.viewer_organization_membership_pending_collection() where organization_membership_id = (select carol_email from _invites)),
   0::bigint,
-  'accepted invite is excluded from viewer_organization_membership_pending'
+  'accepted invite is excluded from viewer_organization_membership_pending_collection'
 );
 
 -- The document-matched invite is still pending and visible.
 select is(
-  (select count(*) from public.viewer_organization_membership_pending() where organization_membership_id = (select carol_doc from _invites)),
+  (select count(*) from public.viewer_organization_membership_pending_collection() where organization_membership_id = (select carol_doc from _invites)),
   1::bigint,
   'Carol''s doc invite is still pending after accepting the email one'
 );
