@@ -1133,6 +1133,51 @@ export type Database = {
           },
         ]
       }
+      tenant_sso_providers: {
+        Row: {
+          sso_provider_created_at: string
+          sso_provider_domains: string[]
+          sso_provider_enabled: boolean
+          sso_provider_id: string
+          sso_provider_label: string
+          sso_provider_updated_at: string
+          tenant_id: number
+        }
+        Insert: {
+          sso_provider_created_at?: string
+          sso_provider_domains?: string[]
+          sso_provider_enabled?: boolean
+          sso_provider_id: string
+          sso_provider_label?: string
+          sso_provider_updated_at?: string
+          tenant_id: number
+        }
+        Update: {
+          sso_provider_created_at?: string
+          sso_provider_domains?: string[]
+          sso_provider_enabled?: boolean
+          sso_provider_id?: string
+          sso_provider_label?: string
+          sso_provider_updated_at?: string
+          tenant_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_sso_providers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_sso_providers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_organizations_profiles"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           tenant_created_at: string

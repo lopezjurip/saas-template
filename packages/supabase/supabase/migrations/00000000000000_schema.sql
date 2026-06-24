@@ -2874,6 +2874,57 @@ create policy "Allow auth admin to read tenant_domains."
   on public.tenant_domains as permissive for select to supabase_auth_admin using (true);
 
 -- ============================================================
+-- tenant_sso_providers — SAML 2.0 SSO provider per tenant
+-- ============================================================
+
+create table if not exists public.tenant_sso_providers (
+  tenant_id int not null references public.tenants (tenant_id) on delete cascade,
+  sso_provider_id text not null, -- UUID assigned by Supabase GoTrue on creation
+  sso_provider_label text not null default '',
+  sso_provider_domains text[] not null default '{}',
+  sso_provider_enabled bool not null default true,
+  sso_provider_created_at timestamptz not null default current_timestamp,
+  sso_provider_updated_at timestamptz not null default current_timestamp,
+  primary key (tenant_id, sso_provider_id)
+);
+
+drop trigger if exists handle_tenant_sso_providers_updated_at on public.tenant_sso_providers;
+create trigger handle_tenant_sso_providers_updated_at
+  before update on public.tenant_sso_providers
+  for each row execute procedure extensions.moddatetime(sso_provider_updated_at);
+
+alter table public.tenant_sso_providers enable row level security;
+
+revoke all on table public.tenant_sso_providers from anon, authenticated;
+-- Reads via RLS; writes go through service-role server actions only.
+grant select on table public.tenant_sso_providers to authenticated;
+
+drop policy if exists "tenant_sso_providers select by members" on public.tenant_sso_providers;
+create policy "tenant_sso_providers select by members"
+  on public.tenant_sso_providers for select to authenticated
+  using (tenant_id in (select public.viewer_tenant_ids()));
+
+-- ============================================================
+-- email_domain_has_sso — anon-accessible SSO domain lookup for login flow
+-- ============================================================
+
+create or replace function public.email_domain_has_sso(email_input text)
+  returns text
+  language sql
+  stable
+  security definer
+  set search_path to ''
+  as $$
+    select ssp.sso_provider_id
+    from public.tenant_sso_providers ssp
+    where ssp.sso_provider_enabled = true
+      and lower(split_part(email_input, '@', 2)) = any(ssp.sso_provider_domains)
+    limit 1;
+  $$;
+
+grant execute on function public.email_domain_has_sso(text) to anon, authenticated;
+
+-- ============================================================
 -- organization_memberships — viewer-facing RPCs (pending / accept / reject)
 -- ============================================================
 -- The legacy `public.invitations` table was folded into `public.organization_memberships` so a single
@@ -5317,6 +5368,7 @@ comment on table public.agency_memberships is e'@graphql({"totalCount": {"enable
 comment on table public.agencies_organizations_grants is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
 comment on table public.profile_identities is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
 comment on table public.tenant_domains is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+comment on table public.tenant_sso_providers is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
 comment on table public.conversations is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
 comment on table public.conversation_messages is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
 comment on table public.conversation_message_deliveries is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';

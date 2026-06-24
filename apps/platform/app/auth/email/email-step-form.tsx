@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/u
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import { Input } from "@packages/ui-common/shadcn/components/ui/input";
 import { Label } from "@packages/ui-common/shadcn/components/ui/label";
-import { ArrowRight, Eye, EyeOff, Fingerprint, KeyRound, Lock, Mail } from "lucide-react";
+import { ArrowRight, Building2, Eye, EyeOff, Fingerprint, KeyRound, Lock, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { debug } from "~/lib/debug";
@@ -22,9 +22,11 @@ type Props = {
   exists: boolean | null;
   hasPasskey: boolean;
   hasPassword: boolean;
+  hasSso: boolean;
+  ssoDomain: string;
 };
 
-export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: Props) {
+export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword, hasSso, ssoDomain }: Props) {
   const { t } = useRosetta(LOCALES);
   const router = useRouter();
   const supabase = useSupabase();
@@ -98,6 +100,23 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
     });
   }
 
+  function onSso() {
+    setError(null);
+    startTransition(async () => {
+      const { data, error: err } = await supabase.auth.signInWithSSO({
+        domain: ssoDomain,
+        options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+      });
+      if (err) {
+        setError(err.message);
+        return;
+      }
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    });
+  }
+
   function onPasskey() {
     setError(null);
     startTransition(async () => {
@@ -162,6 +181,21 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
   // Step 2a: pick a method.
   return (
     <div className="flex flex-col gap-3">
+      {hasSso && (
+        <Button type="button" onClick={onSso} disabled={pending} className="h-10 w-full">
+          <Building2 size={16} />
+          <span>{pending ? t("sso_btn_verifying") : t("sso_btn")}</span>
+        </Button>
+      )}
+
+      {hasSso && (showPasskey || showPasswordOption) && (
+        <div className="flex items-center gap-3 text-tiny font-medium uppercase tracking-widest text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
+          {t("divider_or")}
+          <span className="h-px flex-1 bg-border" />
+        </div>
+      )}
+
       {showPasskey && (
         <Button type="button" onClick={onPasskey} disabled={pending} className="h-10 w-full">
           <Fingerprint size={16} />
@@ -235,6 +269,8 @@ export function EmailStepForm({ email, next, exists, hasPasskey, hasPassword }: 
 }
 
 const LOCALE_ES = {
+  sso_btn: "Continuar con SSO empresarial",
+  sso_btn_verifying: "Redirigiendo…",
   sent_to_prefix: "Enviado a",
   sent_expires: "Caduca en 10 minutos.",
   verifying: "Verificando…",
@@ -261,6 +297,8 @@ const LOCALE_ES = {
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
+  sso_btn: "Continue with enterprise SSO",
+  sso_btn_verifying: "Redirecting…",
   sent_to_prefix: "Sent to",
   sent_expires: "Expires in 10 minutes.",
   verifying: "Verifying…",
@@ -287,6 +325,8 @@ const LOCALE_EN: typeof LOCALE_ES = {
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
+  sso_btn: "Continuar com SSO empresarial",
+  sso_btn_verifying: "A redirecionar…",
   sent_to_prefix: "Enviado para",
   sent_expires: "Expira em 10 minutos.",
   verifying: "A verificar…",
