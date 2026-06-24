@@ -1167,37 +1167,6 @@ import type { IGraphQLConfig } from "graphql-config";
 }
 ````
 
-## File: workspace.code-workspace
-````
-{
-  "folders": [
-    { "name": "@apps/platform", "path": "apps/platform" },
-    { "name": "@packages/debug", "path": "packages/debug" },
-    { "name": "@packages/graphy", "path": "packages/graphy" },
-    { "name": "@packages/kapso", "path": "packages/kapso" },
-    { "name": "@packages/react-email", "path": "packages/react-email" },
-    { "name": "@packages/react-hooks", "path": "packages/react-hooks" },
-    { "name": "@packages/react-pdf", "path": "packages/react-pdf" },
-    { "name": "@packages/rosetta", "path": "packages/rosetta" },
-    { "name": "@packages/supabase", "path": "packages/supabase" },
-    { "name": "@packages/typescript-config", "path": "packages/typescript-config" },
-    { "name": "@packages/ui-common", "path": "packages/ui-common" },
-    { "name": "@packages/utils", "path": "packages/utils" }
-  ],
-  "extensions": {
-    "recommendations": [
-      "biomejs.biome",
-      "bradlc.vscode-tailwindcss",
-      "graphql.vscode-graphql",
-      "graphql.vscode-graphql-syntax",
-      "streetsidesoftware.code-spell-checker",
-      "streetsidesoftware.code-spell-checker-spanish"
-    ],
-    "unwantedRecommendations": []
-  }
-}
-````
-
 ## File: .claude/commands/i18n.md
 ````markdown
 ---
@@ -1964,33 +1933,6 @@ import { authedAction, formAction } from "~/lib/safe-action.server";
 export default function OnboardingLayout(props: LayoutProps<"/auth/onboarding">)
 ````
 
-## File: apps/platform/app/auth/onboarding/state.ts
-````typescript
-import { ROUTE_PATH } from "~/lib/route";
-⋮----
-export type OnboardingMethodId = "passkey" | "password" | "phone" | "email" | "document" | "profile";
-export type OnboardingMethodStatus = "pending" | "done" | "skipped";
-⋮----
-export type OnboardingMethod = {
-  id: OnboardingMethodId;
-  status: OnboardingMethodStatus;
-};
-⋮----
-export type OnboardingState = {
-  profile_id: string;
-  email: string | null;
-  phone: string | null;
-  profile_name_full: string;
-  profile_avatar_src: string | null;
-  profile_onboarded_at: string | null;
-  methods: Record<OnboardingMethodId, OnboardingMethodStatus>;
-};
-⋮----
-export function ONBOARDING_METHOD_PATH(id: OnboardingMethodId): (typeof METHOD_PATHS)[OnboardingMethodId]
-⋮----
-export function COUNT_DONE(methods: OnboardingState["methods"]): number
-````
-
 ## File: apps/platform/app/auth/phone/schemas.ts
 ````typescript
 import { z } from "zod";
@@ -2307,6 +2249,28 @@ _Última atualização: 26 de maio de 2026_
 Este documento descreve as regras de uso da plataforma SaaS Template, as obrigações recíprocas entre a SaaS Template e seus clientes (empresas e trabalhadores), e os limites de responsabilidade. O texto definitivo será publicado antes do lançamento em produção.
 ````
 
+## File: apps/platform/hooks/use-onboarding.ts
+````typescript
+import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
+import { useState } from "react";
+⋮----
+export function useOnboardingEmailOtp()
+⋮----
+async function sendEmailOtp(email: string)
+⋮----
+async function verifyEmailOtp(email: string, token: string)
+⋮----
+export function useOnboardingPassword()
+⋮----
+async function setPassword(password: string)
+⋮----
+export function useOnboardingPhoneOtp()
+⋮----
+async function sendPhoneOtp(phone: string)
+⋮----
+async function verifyPhoneOtp(phone: string, token: string)
+````
+
 ## File: apps/platform/lib/conversations/channel-sender-email.ts
 ````typescript
 import { ConversationNotificationEmail } from "@packages/react-email/templates/conversation_notification";
@@ -2534,6 +2498,15 @@ import { APP_HOST } from "~/lib/constants";
 export async function isApexHost(): Promise<boolean>
 ````
 
+## File: apps/platform/lib/auth-tweaks.ts
+````typescript
+export type SectionOrder = "oauth-first" | "local-first";
+export type ObProgressKind = "chips" | "bar";
+export type Density = "compact" | "regular" | "comfy";
+export type Step1Variant = "selector" | "smart";
+export type RecommendedMethod = "passkey" | "password" | "phone" | "email" | "document" | "profile" | "none";
+````
+
 ## File: apps/platform/lib/avatar.ts
 ````typescript
 import { NextResponse } from "next/server";
@@ -2596,7 +2569,7 @@ export async function register()
 - **`public.conversation_topics`** — **catalog of system-message *topics*** (renamed from `notifications`).
   Cols: `conversation_topic_slug` citext PK, `conversation_topic_name`, `conversation_topic_description`,
   `conversation_topic_priority` (`notification_priority` enum), `conversation_topic_kind` (`notification_kind`
-  enum), `conversation_topic_disabled_at`. The topic catalog for `system` messages — needed for per-topic
+  enum), `conversation_topic_deleted_at`. The topic catalog for `system` messages — needed for per-topic
   prefs + priority defaults. (Enum *types* `notification_priority` / `notification_kind` keep their names.)
 - `public.profile_notifications` — legacy single-bool prefs. **DELETE entirely** —
   superseded by `profile_topic_channels` (per-channel). Also drop `viewer_profile_notifications()`, the
@@ -3432,6 +3405,29 @@ export function useSupabaseUser()
 <p>O ingresa el código: <strong>{{ .Token }}</strong></p>
 ````
 
+## File: packages/ui-common/src/shadcn/components/ui/accordion.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { Accordion as AccordionPrimitive } from "radix-ui";
+⋮----
+function Accordion(
+⋮----
+function AccordionItem(
+⋮----
+function AccordionTrigger(
+⋮----
+function AccordionContent(
+````
+
+## File: packages/ui-common/src/shadcn/components/ui/avatar.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { Avatar as AvatarPrimitive } from "radix-ui";
+⋮----
+className=
+````
+
 ## File: packages/ui-common/src/shadcn/components/ui/badge.tsx
 ````typescript
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
@@ -3610,6 +3606,33 @@ className=
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 ⋮----
 return <div data-slot="skeleton" className=
+````
+
+## File: packages/ui-common/src/shadcn/components/ui/switch.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { Switch as SwitchPrimitive } from "radix-ui";
+⋮----
+function Switch({
+  className,
+  size = "default",
+  ...props
+}: React.ComponentProps<typeof SwitchPrimitive.Root> & {
+  size?: "sm" | "default";
+})
+⋮----
+className=
+````
+
+## File: packages/ui-common/src/shadcn/components/ui/tabs.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { cva, type VariantProps } from "class-variance-authority";
+import { Tabs as TabsPrimitive } from "radix-ui";
+⋮----
+function Tabs(
+⋮----
+className=
 ````
 
 ## File: packages/ui-common/src/shadcn/components/ui/tooltip.tsx
@@ -3990,81 +4013,6 @@ export function FIBONACCI_BACKOFF(
 ): Temporal.Instant
 ````
 
-## File: scripts/development/exe-dev-setup.sh
-````bash
-set -e
-cd "$(git rev-parse --show-toplevel)"
-if [ -z "${EXE_HOST:-}" ]; then
-  HN="$(hostname | tr '[:upper:]' '[:lower:]')"
-  case "$HN" in
-    *.exe.xyz) EXE_HOST="$HN" ;;
-    *)         EXE_HOST="${HN}.exe.xyz" ;;
-  esac
-fi
-echo "→ exe.dev host: ${EXE_HOST}"
-BASE=3000
-APP_PORT=$((BASE + 0))
-STUDIO_PORT=$((BASE + 4))
-INSTANCE_KEY="exe-$(printf '%s' "$EXE_HOST" | tr -cd 'a-z0-9-' | cut -c1-40)"
-# Site URL embedded in auth emails / used as redirect allow-list base.
-export SUPABASE_AUTH_SITE_URL="https://${EXE_HOST}:${APP_PORT}"
-# --- Patch supabase/config.toml: ports into the 3000-range, project_id, redirect allow-list ---
-BASE=$BASE INSTANCE_KEY=$INSTANCE_KEY EXE_HOST=$EXE_HOST python3 - <<'PYEOF'
-import re, os
-base = int(os.environ['BASE'])
-instance_key = os.environ['INSTANCE_KEY']
-exe_host = os.environ['EXE_HOST']
-path = 'packages/supabase/supabase/config.toml'
-with open(path) as f:
-    lines = f.readlines()
-section = None
-out = []
-for line in lines:
-    m = re.match(r'^\[([a-z_.]+)\]\s*$', line)
-    if m:
-        section = m.group(1)
-    if re.match(r'^project_id\s*=', line):
-        line = f'project_id = "{instance_key}"\n'
-    elif section == 'api'       and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+1}\n'
-    elif section == 'db'        and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+2}\n'
-    elif section == 'db'        and re.match(r'^shadow_port\s*=', line): line = f'shadow_port = {base+3}\n'
-    elif section == 'studio'    and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+4}\n'
-    elif section == 'inbucket'  and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+5}\n'
-    elif section == 'analytics' and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+6}\n'
-    out.append(line)
-    # Add this VM's host to the auth redirect allow-list (idempotent vs the whole
-    # file, since config.toml is skip-worktree'd and this script re-runs). Sits right
-    # after the existing lvh.me entry so the local default keeps working too.
-    redirect = f'  "https://{exe_host}:*/**",\n'
-    already = any(f'"https://{exe_host}:*/**"' in l for l in lines)
-    if '"https://lvh.me:*/**"' in line and not already:
-        out.append(redirect)
-with open(path, 'w') as f:
-    f.writelines(out)
-print(f"config.toml patched: project={instance_key} API:{base+1} DB:{base+2} Studio:{base+4}")
-print(f"  redirect allow-list += https://{exe_host}:*/**")
-PYEOF
-# Per-VM port/project edits are intentional; keep them out of `git status`.
-git update-index --skip-worktree packages/supabase/supabase/config.toml || true
-# --- Start Supabase (fresh project_id => migrations + seed applied on init) ---
-RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null | wc -l | tr -d ' ')
-if [ "$RUNNING" -gt 0 ]; then
-  echo "Supabase ${INSTANCE_KEY} already running, skipping db:start"
-else
-  PORT=$BASE pnpm db:start
-fi
-EXE_HOST=$EXE_HOST PORT=$BASE pnpm run -w db:env:development
-cat <<EOF
-✅ exe.dev dev environment ready.
-  App     →  https://${EXE_HOST}:${APP_PORT}      (run: pnpm --filter @apps/platform dev:exe)
-  Studio  →  https://${EXE_HOST}:${STUDIO_PORT}
-  Mailbox →  https://${EXE_HOST}:$((BASE + 5))
-Ports are PRIVATE by default (only users with VM access, logged into exe.dev).
-To expose the app publicly:  ssh exe.dev share set-public ${EXE_HOST%%.*} && ssh exe.dev share port ${EXE_HOST%%.*} ${APP_PORT}
-Raw psql (proxy is HTTP-only): ssh -L 5432:localhost:$((BASE + 2)) ${EXE_HOST} -l exedev
-EOF
-````
-
 ## File: scripts/repomix-skill-rename.mjs
 ````javascript
 // Rewrites the project name in the generated `codebase` reference skill.
@@ -4086,36 +4034,6 @@ EOF
 // (`generateSkillDescription` in repomix `skillUtils.ts`).
 ⋮----
 continue; // references/* set may vary by repomix version
-````
-
-## File: scripts/skills-setup.mjs
-````javascript
-/**
- * Materializes skills into the agent stores on install — no network, no cloning.
- *
- * Sources are committed: first-party `my-*` + `codebase` in `skills/`, vendored
- * third-party in `skills-third-party/`. Each is symlinked into both agent stores
- * (`.agents/skills/` for Codex/Cursor/Copilot/OpenCode/Zed, `.claude/skills/` for
- * Claude Code), which stay gitignored. Also seeds `.env.local` from `.env.example`.
- *
- * We vendor third-party skills (committed) instead of `skills experimental_install`
- * because that clones every repo serially — slow. Refresh them with the `skills`
- * CLI and copy the result back into `skills-third-party/` (see AGENTS.md).
- *
- * TODO: once `skills install` is stable (no `experimental_` prefix) and clones in
- * parallel / fast enough, reconsider dropping the vendored `skills-third-party/`
- * and restoring third-party from `skills-lock.json` at install instead.
- *
- * Usage: pnpm skills:install (runs automatically via postinstall)
- */
-⋮----
-// Seed .env.local once — never clobber an existing one.
-⋮----
-continue; // source dir may not exist (e.g. no third-party yet)
-⋮----
-await fs.rm(link, { recursive: true, force: true }); // replace stale symlink or copy
-⋮----
-// ponytail: cheap self-check — a broken target means the symlink web is wrong.
 ````
 
 ## File: skills/my-conventions/SKILL.md
@@ -4727,33 +4645,44 @@ psql "$DATABASE_URL" -f path/to/file.sql
 - When showing query results to the user, paste only the rows that matter; don't dump the whole table.
 ````
 
-## File: .mcp.json
-````json
-{
-  "mcpServers": {
-    "next-devtools": {
-      "command": "npx",
-      "args": ["-y", "next-devtools-mcp@latest"]
-    }
-  }
-}
+## File: .nvmrc
+````
+24
 ````
 
-## File: pnpm-workspace.yaml
-````yaml
-packages:
-  - apps/*
-  - packages/*
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - '@vercel/speed-insights'
-  - core-js
-  - esbuild
-  - protobufjs
-  - sharp
-  - supabase
-overrides:
-  zod: ^4.4.3
+## File: workspace.code-workspace
+````
+{
+  "folders": [
+    { "name": "saas-template", "path": "." },
+    { "name": "@apps/platform", "path": "apps/platform" },
+    { "name": "@packages/debug", "path": "packages/debug" },
+    { "name": "@packages/graphy", "path": "packages/graphy" },
+    { "name": "@packages/kapso", "path": "packages/kapso" },
+    { "name": "@packages/react-email", "path": "packages/react-email" },
+    { "name": "@packages/react-hooks", "path": "packages/react-hooks" },
+    { "name": "@packages/react-pdf", "path": "packages/react-pdf" },
+    { "name": "@packages/rosetta", "path": "packages/rosetta" },
+    { "name": "@packages/supabase", "path": "packages/supabase" },
+    { "name": "@packages/typescript-config", "path": "packages/typescript-config" },
+    { "name": "@packages/ui-common", "path": "packages/ui-common" },
+    { "name": "@packages/utils", "path": "packages/utils" }
+  ],
+  "settings": {
+    "graphql-config.load.rootDir": "${workspaceFolder:saas-template}"
+  },
+  "extensions": {
+    "recommendations": [
+      "biomejs.biome",
+      "bradlc.vscode-tailwindcss",
+      "graphql.vscode-graphql",
+      "graphql.vscode-graphql-syntax",
+      "streetsidesoftware.code-spell-checker",
+      "streetsidesoftware.code-spell-checker-spanish"
+    ],
+    "unwantedRecommendations": []
+  }
+}
 ````
 
 ## File: apps/platform/app/(app)/a/[agency_slug]/access/page.tsx
@@ -5394,6 +5323,33 @@ import { getViewerOnboardingState } from "../state.server";
 import { ProfileForm } from "./profile-form";
 ````
 
+## File: apps/platform/app/auth/onboarding/state.ts
+````typescript
+import { ROUTE_PATH } from "~/lib/route";
+⋮----
+export type OnboardingMethodId = "passkey" | "password" | "phone" | "email" | "document" | "profile";
+export type OnboardingMethodStatus = "pending" | "done" | "skipped";
+⋮----
+export type OnboardingMethod = {
+  id: OnboardingMethodId;
+  status: OnboardingMethodStatus;
+};
+⋮----
+export type OnboardingState = {
+  profile_id: string;
+  email: string | null;
+  phone: string | null;
+  profile_name_full: string | null;
+  profile_avatar_src: string | null;
+  profile_onboarded_at: string | null;
+  methods: Record<OnboardingMethodId, OnboardingMethodStatus>;
+};
+⋮----
+export function ONBOARDING_METHOD_PATH(id: OnboardingMethodId): (typeof METHOD_PATHS)[OnboardingMethodId]
+⋮----
+export function COUNT_DONE(methods: OnboardingState["methods"]): number
+````
+
 ## File: apps/platform/app/auth/phone/page.tsx
 ````typescript
 import { SINGLE } from "@packages/utils/array";
@@ -5525,28 +5481,6 @@ export function useIntlCollator(options?: Intl.CollatorOptions): Intl.Collator
 export function useIntlSegmenter(options?: Intl.SegmenterOptions): Intl.Segmenter
 ⋮----
 export function useIntlDisplayNames(options: Intl.DisplayNamesOptions): Intl.DisplayNames
-````
-
-## File: apps/platform/hooks/use-onboarding.ts
-````typescript
-import { createSupabaseBrowserClient } from "@packages/supabase/client.browser";
-import { useState } from "react";
-⋮----
-export function useOnboardingEmailOtp()
-⋮----
-async function sendEmailOtp(email: string)
-⋮----
-async function verifyEmailOtp(email: string, token: string)
-⋮----
-export function useOnboardingPassword()
-⋮----
-async function setPassword(password: string)
-⋮----
-export function useOnboardingPhoneOtp()
-⋮----
-async function sendPhoneOtp(phone: string)
-⋮----
-async function verifyPhoneOtp(phone: string, token: string)
 ````
 
 ## File: apps/platform/lib/conversations/agent/tool-registry.ts
@@ -5781,15 +5715,6 @@ export type MembershipTimestamps = {
 export function AFFILIATION_STATE(m: MembershipTimestamps): AffiliationState
 ⋮----
 export function IS_ACTIVE_MEMBERSHIP(m: MembershipTimestamps): boolean
-````
-
-## File: apps/platform/lib/auth-tweaks.ts
-````typescript
-export type SectionOrder = "oauth-first" | "local-first";
-export type ObProgressKind = "chips" | "bar";
-export type Density = "compact" | "regular" | "comfy";
-export type Step1Variant = "selector" | "smart";
-export type RecommendedMethod = "passkey" | "password" | "phone" | "email" | "document" | "profile" | "none";
 ````
 
 ## File: apps/platform/lib/dev-mailbox-toast.client.ts
@@ -6215,35 +6140,12 @@ isSupported(value: unknown): value is L
 extractFromPath(pathname: string):
 ````
 
-## File: packages/ui-common/src/shadcn/components/ui/accordion.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import { Accordion as AccordionPrimitive } from "radix-ui";
-⋮----
-function Accordion(
-⋮----
-function AccordionItem(
-⋮----
-function AccordionTrigger(
-⋮----
-function AccordionContent(
-````
-
 ## File: packages/ui-common/src/shadcn/components/ui/alert.tsx
 ````typescript
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 ⋮----
 function Alert(
-⋮----
-className=
-````
-
-## File: packages/ui-common/src/shadcn/components/ui/avatar.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { Avatar as AvatarPrimitive } from "radix-ui";
 ⋮----
 className=
 ````
@@ -6255,6 +6157,16 @@ import { CheckIcon } from "lucide-react";
 import { Checkbox as CheckboxPrimitive } from "radix-ui";
 ⋮----
 function Checkbox(
+````
+
+## File: packages/ui-common/src/shadcn/components/ui/input-otp.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { OTPInput, OTPInputContext } from "input-otp";
+import { MinusIcon } from "lucide-react";
+⋮----
+containerClassName=
+className=
 ````
 
 ## File: packages/ui-common/src/shadcn/components/ui/select.tsx
@@ -6297,22 +6209,6 @@ import { Loader2Icon } from "lucide-react";
 return <Loader2Icon role="status" aria-label="Loading" className=
 ````
 
-## File: packages/ui-common/src/shadcn/components/ui/switch.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { Switch as SwitchPrimitive } from "radix-ui";
-⋮----
-function Switch({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<typeof SwitchPrimitive.Root> & {
-  size?: "sm" | "default";
-})
-⋮----
-className=
-````
-
 ## File: packages/ui-common/src/shadcn/components/ui/table.tsx
 ````typescript
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
@@ -6326,17 +6222,6 @@ function TableBody(
 className=
 ⋮----
 <caption data-slot="table-caption" className=
-````
-
-## File: packages/ui-common/src/shadcn/components/ui/tabs.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { cva, type VariantProps } from "class-variance-authority";
-import { Tabs as TabsPrimitive } from "radix-ui";
-⋮----
-function Tabs(
-⋮----
-className=
 ````
 
 ## File: packages/ui-common/src/shadcn/components/ui/textarea.tsx
@@ -6388,6 +6273,60 @@ export function Logo<T extends React.ElementType = "span">(
 className=
 ````
 
+## File: scripts/development/exe-dev-setup.sh
+````bash
+set -e
+cd "$(git rev-parse --show-toplevel)"
+if [ -z "${EXE_HOST:-}" ]; then
+  HN="$(hostname | tr '[:upper:]' '[:lower:]')"
+  case "$HN" in
+    *.exe.xyz) EXE_HOST="$HN" ;;
+    *)         EXE_HOST="${HN}.exe.xyz" ;;
+  esac
+fi
+echo "→ exe.dev host: ${EXE_HOST}"
+BASE=3000
+APP_PORT=$((BASE + 0))
+STUDIO_PORT=$((BASE + 4))
+INSTANCE_KEY="exe-$(printf '%s' "$EXE_HOST" | tr -cd 'a-z0-9-' | cut -c1-40)"
+# Site URL embedded in auth emails / used as redirect allow-list base.
+export SUPABASE_AUTH_SITE_URL="https://${EXE_HOST}:${APP_PORT}"
+# --- Write per-VM Supabase env (ports + project_id) ---
+# config.toml reads these via env() — no file patching needed.
+# redirect allow-list in config.toml covers *.exe.xyz:*/** statically.
+cat > packages/supabase/.env.supabase <<EOF
+SUPABASE_PROJECT_ID=${INSTANCE_KEY}
+SUPABASE_API_PORT=$((BASE+1))
+SUPABASE_DB_PORT=$((BASE+2))
+SUPABASE_SHADOW_PORT=$((BASE+3))
+SUPABASE_STUDIO_PORT=$((BASE+4))
+SUPABASE_INBUCKET_PORT=$((BASE+5))
+SUPABASE_ANALYTICS_PORT=$((BASE+6))
+SUPABASE_AUTH_SITE_URL=https://${EXE_HOST}:${BASE}
+SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=https://${EXE_HOST}:${BASE}
+SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=true
+EOF
+echo "Supabase env written: project=${INSTANCE_KEY} API:$((BASE+1)) DB:$((BASE+2)) Studio:$((BASE+4))"
+# --- Start Supabase (fresh project_id => migrations + seed applied on init) ---
+RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$RUNNING" -gt 0 ]; then
+  echo "Supabase ${INSTANCE_KEY} already running, skipping db:start"
+else
+  PORT=$BASE pnpm db:start
+fi
+set -a; source packages/supabase/.env.supabase; set +a
+EXE_HOST=$EXE_HOST PORT=$BASE pnpm run -w db:env:development
+cat <<EOF
+✅ exe.dev dev environment ready.
+  App     →  https://${EXE_HOST}:${APP_PORT}      (run: pnpm --filter @apps/platform dev:exe)
+  Studio  →  https://${EXE_HOST}:${STUDIO_PORT}
+  Mailbox →  https://${EXE_HOST}:$((BASE + 5))
+Ports are PRIVATE by default (only users with VM access, logged into exe.dev).
+To expose the app publicly:  ssh exe.dev share set-public ${EXE_HOST%%.*} && ssh exe.dev share port ${EXE_HOST%%.*} ${APP_PORT}
+Raw psql (proxy is HTTP-only): ssh -L 5432:localhost:$((BASE + 2)) ${EXE_HOST} -l exedev
+EOF
+````
+
 ## File: scripts/development/https-setup.sh
 ````bash
 set -euo pipefail
@@ -6413,115 +6352,85 @@ echo "✅ Certs written to apps/platform/certificates/"
 echo "   Run 'pnpm dev' and open https://lvh.me:7003"
 ````
 
-## File: scripts/development/local-setup.sh
-````bash
-set -euo pipefail
-cd "$(git rev-parse --show-toplevel)"
-if [ -n "${CONDUCTOR_PORT:-}" ]; then
-  echo "CONDUCTOR_PORT set → use the Conductor flow (worktree-setup.sh), not local-setup.sh." >&2
-  exit 1
-fi
-if [ -n "${EXE_HOST:-}" ]; then
-  echo "EXE_HOST set → use exe-dev-setup.sh, not local-setup.sh." >&2
-  exit 1
-fi
-if [ -f apps/platform/certificates/lvh.me-key.pem ] && [ -f apps/platform/certificates/lvh.me-cert.pem ]; then
-  echo "✓ TLS certs present"
-else
-  echo "→ generating local TLS certs (mkcert)…"
-  bash scripts/development/https-setup.sh
-fi
-PROJECT="$(sed -n 's/^project_id[[:space:]]*=[[:space:]]*"\(.*\)".*/\1/p' packages/supabase/supabase/config.toml | head -1)"
-RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${PROJECT}" 2>/dev/null | wc -l | tr -d ' ')
-if [ "$RUNNING" -gt 0 ]; then
-  echo "✓ Supabase '${PROJECT}' already running"
-else
-  echo "→ starting Supabase '${PROJECT}'…"
-  pnpm db:start
-fi
-echo "→ writing .env.development.local…"
-pnpm run -w db:env:development
-cat <<'EOF'
-✅ Local dev environment ready. Start the app with:
-   pnpm dev
-EOF
+## File: scripts/skills-setup.mjs
+````javascript
+/**
+ * Materializes skills into the agent stores on install — no network, no cloning.
+ *
+ * Sources are committed: first-party `my-*` + `codebase` in `skills/`, vendored
+ * third-party in `skills-third-party/`. Each is symlinked into both agent stores
+ * (`.agents/skills/` for Codex/Cursor/Copilot/OpenCode/Zed, `.claude/skills/` for
+ * Claude Code), which stay gitignored.
+ *
+ * We vendor third-party skills (committed) instead of `skills experimental_install`
+ * because that clones every repo serially — slow. Refresh them with the `skills`
+ * CLI and copy the result back into `skills-third-party/` (see AGENTS.md).
+ *
+ * TODO: once `skills install` is stable (no `experimental_` prefix) and clones in
+ * parallel / fast enough, reconsider dropping the vendored `skills-third-party/`
+ * and restoring third-party from `skills-lock.json` at install instead.
+ *
+ * Usage: pnpm skills:install (runs automatically via postinstall)
+ */
+⋮----
+continue; // source dir may not exist (e.g. no third-party yet)
+⋮----
+await fs.rm(link, { recursive: true, force: true }); // replace stale symlink or copy
+⋮----
+// ponytail: cheap self-check — a broken target means the symlink web is wrong.
+````
+
+## File: .mcp.json
+````json
+{
+  "mcpServers": {
+    "next-devtools": {
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    },
+    "vercel": {
+      "type": "http",
+      "url": "https://mcp.vercel.com"
+    }
+  }
+}
+````
+
+## File: pnpm-workspace.yaml
+````yaml
+packages:
+  - apps/*
+  - packages/*
+allowBuilds:
+  core-js: false
+  esbuild: false
+  protobufjs: false
+  sharp: false
+minimumReleaseAgeExclude:
+  - '@dotenvx/dotenvx@1.75.1'
+  - '@dotenvx/primitives@0.8.0'
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@vercel/speed-insights'
+  - core-js
+  - esbuild
+  - protobufjs
+  - sharp
+  - supabase
+overrides:
+  zod: ^4.4.3
 ````
 
 ## File: repomix.config.ts
 ````typescript
 import { defineConfig } from "repomix";
-````
-
-## File: turbo.json
-````json
-{
-  "$schema": "./node_modules/turbo/schema.json",
-  "globalDependencies": ["package.json", "pnpm-workspace.yaml", ".env.local"],
-  "globalEnv": [
-    "__NEXT_EXPERIMENTAL_HTTPS",
-    "CONVERSATIONS_DRAIN_SECRET",
-    "DEBUG",
-    "EXE_HOST",
-    "KAPSO_API_KEY",
-    "KAPSO_WEBHOOK_SECRET",
-    "NEXT_RUNTIME",
-    "PORT",
-    "RESEND_API_KEY",
-    "RESEND_FROM",
-    "RESEND_INBOUND_DOMAIN",
-    "RESEND_WEBHOOK_SECRET",
-    "TWILIO_ACCOUNT_SID",
-    "TWILIO_AUTH_TOKEN",
-    "TWILIO_FROM",
-    "VAPID_PRIVATE_KEY",
-    "VAPID_PUBLIC_KEY",
-    "VAPID_SUBJECT"
-  ],
-  "ui": "stream",
-  "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**", "build/**"],
-      "inputs": ["$TURBO_DEFAULT$", ".env.*local"]
-    },
-    "test": {
-      "outputs": ["coverage/**", "test-results/**"],
-      "inputs": ["$TURBO_DEFAULT$"]
-    },
-    "format": {
-      "outputs": []
-    },
-    "generate": {
-      "outputs": []
-    },
-    "build:dry": {
-      "dependsOn": ["^build:dry"],
-      "outputs": [],
-      "inputs": ["$TURBO_DEFAULT$"]
-    },
-    "generate:graphql": {
-      "dependsOn": ["@packages/supabase#generate:graphql:schema"],
-      "cache": false,
-      "outputs": ["generated/graphql/**"]
-    },
-    "generate:graphql:schema": {
-      "cache": false,
-      "outputs": ["generated/graphql/graphql.schema.json", "generated/graphql/graphql.schema.graphql"]
-    },
-    "generate:types": {
-      "cache": false,
-      "outputs": ["src/types.ts"]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "dev:debug": {
-      "cache": false,
-      "persistent": true
-    }
-  }
-}
 ````
 
 ## File: apps/platform/app/(app)/a/[agency_slug]/inbox/page.tsx
@@ -7172,6 +7081,36 @@ import { AuthHeader } from "./_components/auth-header";
 import { OAuthSection } from "./_components/oauth-section";
 ````
 
+## File: apps/platform/app/robots.ts
+````typescript
+import type { MetadataRoute } from "next";
+import { isApexHost } from "~/lib/apex";
+import { APP_HOST } from "~/lib/constants";
+⋮----
+export default async function robots(): Promise<MetadataRoute.Robots>
+````
+
+## File: apps/platform/components/identity/chips.tsx
+````typescript
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { IdCard, Mail, Phone } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+import type { ComponentProps } from "react";
+⋮----
+type IdentityKind = "email" | "phone" | "document";
+⋮----
+export function IdentityChip({
+  kind,
+  value,
+  className,
+  ...props
+}: {
+  kind: IdentityKind;
+  value: string;
+} & ComponentProps<"div">)
+````
+
 ## File: apps/platform/components/inbox/scope.ts
 ````typescript
 import type { Route } from "next";
@@ -7461,6 +7400,13 @@ export class UpdateProfileTool extends McpTool<typeof UpdateProfileSchema>
 async *handle(args: UpdateProfileArgs, ctx: McpContext): McpToolStream
 ````
 
+## File: apps/platform/lib/auth-next.ts
+````typescript
+import { URL_NEW } from "@packages/utils/url";
+⋮----
+export function RESOLVE_AUTH_NEXT(raw: string | null, origin: string): string
+````
+
 ## File: apps/platform/lib/i18n.ts
 ````typescript
 import { LocaleConfig } from "@packages/rosetta/locale-config";
@@ -7521,6 +7467,13 @@ export function ROUTE<const Pathname extends string>(
 export function UNSAFE_ROUTE(pathname: string, query?: RouteQuery, hash?: string): AppRoute
 ⋮----
 export function ROUTE_HREF(route: AppRoute | Route): Route
+````
+
+## File: apps/platform/styles/globals.css
+````css
+@source "../../../packages/ui-common/src";
+⋮----
+@theme {
 ````
 
 ## File: apps/platform/test/server-only.ts
@@ -7671,16 +7624,6 @@ import type { Database } from "./types.ts";
 export function createSupabaseServiceRoleClient()
 ````
 
-## File: packages/ui-common/src/shadcn/components/ui/input-otp.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { OTPInput, OTPInputContext } from "input-otp";
-import { MinusIcon } from "lucide-react";
-⋮----
-containerClassName=
-className=
-````
-
 ## File: packages/utils/src/url.ts
 ````typescript
 import type { Maybe } from "./maybe";
@@ -7754,87 +7697,116 @@ export function IS_EXTERNAL(href: string): boolean
 export function URL_PARSE_HASH(url: URL): URLSearchParams
 ````
 
-## File: scripts/development/worktree-setup.sh
+## File: scripts/development/worktree-archive.sh
 ````bash
 set -e
-if [ -z "$WORKTREE_NAME" ] || [ -z "$WORKTREE_PORT" ] || [ -z "$WORKTREE_ROOT_PATH" ] || [ -z "$WORKTREE_PROJECT" ]; then
-  echo "Required: WORKTREE_NAME, WORKTREE_PORT, WORKTREE_ROOT_PATH, WORKTREE_PROJECT"
-  echo "Example (Conductor): WORKTREE_NAME=\$CONDUCTOR_WORKSPACE_NAME WORKTREE_PORT=\$CONDUCTOR_PORT WORKTREE_ROOT_PATH=\$CONDUCTOR_ROOT_PATH WORKTREE_PROJECT=myproject bash scripts/development/worktree-setup.sh"
-  exit 1
-fi
-copy_if_exists() {
-  local src="$1"
-  local dst="$2"
-  if [ -f "$src" ]; then
-    cp "$src" "$dst"
-  else
-    echo "Warning: $src not found, skipping."
-  fi
-}
-export BASE=${WORKTREE_PORT}
-export WS=$(echo "${WORKTREE_NAME}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
-export PROJECT=$(echo "${WORKTREE_PROJECT}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
-export PROJECT_PREFIX=$(printf '%s' "${PROJECT}" | cut -c1-20 | sed 's/-$//')
-export WS_HASH=$(printf '%s' "${PROJECT}:${WS}" | shasum -a 256 | cut -c1-12)
+WS=$(echo "${WORKTREE_NAME:-local}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+PROJECT=$(printf '%s' "${WORKTREE_PROJECT:-}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+PROJECT_PREFIX=$(printf '%s' "${PROJECT}" | cut -c1-20 | sed 's/-$//')
+WS_HASH=$(printf '%s' "${PROJECT}:${WS}" | shasum -a 256 | cut -c1-12)
 if [ -z "$PROJECT_PREFIX" ]; then
-  export PROJECT_PREFIX="workspace"
+  PROJECT_PREFIX="workspace"
 fi
-export INSTANCE_KEY="${PROJECT_PREFIX}-${WS_HASH}"
-python3 - <<PYEOF
-import re, os, sys
-base = int(os.environ['BASE'])
-instance_key = os.environ['INSTANCE_KEY']
-path = 'packages/supabase/supabase/config.toml'
-with open(path) as f:
-    lines = f.readlines()
-section = None
-result = []
-for line in lines:
-    m = re.match(r'^\[([a-z_.]+)\]\s*$', line)
-    if m:
-        section = m.group(1)
-    if re.match(r'^project_id\s*=', line):
-        line = f'project_id = "{instance_key}"\n'
-    elif section == 'api'       and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+1}\n'
-    elif section == 'db'        and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+2}\n'
-    elif section == 'db'        and re.match(r'^shadow_port\s*=', line): line = f'shadow_port = {base+3}\n'
-    elif section == 'studio'    and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+4}\n'
-    elif section == 'inbucket'  and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+5}\n'
-    elif section == 'analytics' and re.match(r'^port\s*=\s*\d+', line): line = f'port = {base+6}\n'
-    result.append(line)
-with open(path, 'w') as f:
-    f.writelines(result)
-print(f"Supabase config patched: project={instance_key}")
-print(f"  API:{base+1}  DB:{base+2}  shadow:{base+3}  Studio:{base+4}  Inbucket:{base+5}  Analytics:{base+6}")
-PYEOF
-# Hide the patched config.toml from git status in this worktree (changes are intentional per-workspace)
-git update-index --skip-worktree packages/supabase/supabase/config.toml
-# --- Copy gitignored files from root workspace ---
-copy_if_exists "$WORKTREE_ROOT_PATH/.env.local" ./.env.local
-copy_if_exists "$WORKTREE_ROOT_PATH/apps/platform/.env.local" ./apps/platform/.env.local
-mkdir -p apps/platform/certificates
-ROOT_CERT="$WORKTREE_ROOT_PATH/apps/platform/certificates/lvh.me-cert.pem"
-ROOT_KEY="$WORKTREE_ROOT_PATH/apps/platform/certificates/lvh.me-key.pem"
-if [ -f "$ROOT_CERT" ] && [ -f "$ROOT_KEY" ]; then
-  cp "$ROOT_CERT" ./apps/platform/certificates/lvh.me-cert.pem
-  cp "$ROOT_KEY" ./apps/platform/certificates/lvh.me-key.pem
-else
-  bash scripts/development/https-setup.sh
-fi
-mkdir -p .claude
-copy_if_exists "$WORKTREE_ROOT_PATH/.claude/settings.local.json" ./.claude/settings.local.json
-pnpm install
+INSTANCE_KEY="${PROJECT_PREFIX}-${WS_HASH}"
 REF_DIR="$HOME/.worktree-refs/${INSTANCE_KEY}"
 REF_FILE="$REF_DIR/$(pwd | tr '/' '_')"
-mkdir -p "$REF_DIR"
-touch "$REF_FILE"
-RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null | wc -l | tr -d ' ')
-if [ "$RUNNING" -gt 0 ]; then
-  echo "Supabase ${INSTANCE_KEY} already running, skipping db:start"
+rm -f "$REF_FILE"
+for _stale_ref in "$REF_DIR"/*; do
+  [ -f "$_stale_ref" ] || continue
+  _stale_dir=$(basename "$_stale_ref" | tr '_' '/')
+  [ -d "$_stale_dir" ] || rm -f "$_stale_ref"
+done
+REF_COUNT=$(ls "$REF_DIR" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$REF_COUNT" -gt 0 ]; then
+  echo "Supabase ${INSTANCE_KEY} still used by ${REF_COUNT} other worktree(s), skipping shutdown"
 else
-  PORT=$WORKTREE_PORT pnpm db:start
+  rmdir "$REF_DIR" 2>/dev/null || true
+  CIDS=$(docker ps -aq --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null)
+  [ -n "$CIDS" ] && docker rm -f $CIDS >/dev/null 2>&1 || true
+  VOLS=$(docker volume ls -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null)
+  [ -n "$VOLS" ] && docker volume rm $VOLS >/dev/null 2>&1 || true
+  docker network rm "supabase_network_${INSTANCE_KEY}" >/dev/null 2>&1 || true
 fi
-PORT=$WORKTREE_PORT pnpm run -w db:env:development
+rm -rf node_modules
+````
+
+## File: turbo.json
+````json
+{
+  "$schema": "./node_modules/turbo/schema.json",
+  "globalDependencies": [
+    "package.json",
+    "pnpm-workspace.yaml",
+    ".env.local",
+    ".env.development",
+    ".env.development.local",
+    ".env"
+  ],
+  "globalEnv": [
+    "__NEXT_EXPERIMENTAL_HTTPS",
+    "CONVERSATIONS_DRAIN_SECRET",
+    "DEBUG",
+    "EXE_HOST",
+    "KAPSO_API_KEY",
+    "KAPSO_WEBHOOK_SECRET",
+    "NEXT_RUNTIME",
+    "PORT",
+    "RESEND_API_KEY",
+    "RESEND_FROM",
+    "RESEND_INBOUND_DOMAIN",
+    "RESEND_WEBHOOK_SECRET",
+    "TWILIO_ACCOUNT_SID",
+    "TWILIO_AUTH_TOKEN",
+    "TWILIO_FROM",
+    "VAPID_PRIVATE_KEY",
+    "VAPID_PUBLIC_KEY",
+    "VAPID_SUBJECT"
+  ],
+  "ui": "stream",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**", "build/**"],
+      "inputs": ["$TURBO_DEFAULT$", ".env.*local"]
+    },
+    "test": {
+      "outputs": ["coverage/**", "test-results/**"],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "format": {
+      "outputs": []
+    },
+    "generate": {
+      "outputs": []
+    },
+    "build:dry": {
+      "dependsOn": ["^build:dry"],
+      "outputs": [],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "generate:graphql": {
+      "dependsOn": ["@packages/supabase#generate:graphql:schema"],
+      "cache": false,
+      "outputs": ["generated/graphql/**"]
+    },
+    "generate:graphql:schema": {
+      "cache": false,
+      "outputs": ["generated/graphql/graphql.schema.json", "generated/graphql/graphql.schema.graphql"]
+    },
+    "generate:types": {
+      "cache": false,
+      "outputs": ["src/types.ts"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:debug": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
 ````
 
 ## File: apps/platform/app/(app)/home/_components/user-menu.tsx
@@ -7847,39 +7819,6 @@ import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 ⋮----
 href=
-````
-
-## File: apps/platform/app/(app)/home/account/notifications/contacts-manage.tsx
-````typescript
-import { isGraphyGraphQLError } from "@packages/graphy/graphy";
-import { useGraphyMutation, useGraphyQuery } from "@packages/graphy/react";
-import { useSupabaseUser } from "@packages/supabase/react";
-import type { Database } from "@packages/supabase/types";
-import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Input } from "@packages/ui-common/shadcn/components/ui/input";
-import { useState } from "react";
-import { gql } from "~/generated/graphql";
-import type { MessageChannel as MessageChannelEnum } from "~/generated/graphql/graphql";
-import { debug } from "~/lib/debug";
-import { useRosetta } from "~/lib/i18n.client";
-⋮----
-type MessageChannel = Database["public"]["Enums"]["message_channel"];
-⋮----
-function ADD_FORM_ID(channel: MessageChannel): string
-⋮----
-function startAdding(channel: MessageChannel)
-⋮----
-function cancelAdding()
-⋮----
-async function submitContact()
-⋮----
-async function deleteContact(contactId: string)
-⋮----
-onClick=
-⋮----
-aria-label=
-⋮----
-id=
 ````
 
 ## File: apps/platform/app/(app)/home/account/profile/page.tsx
@@ -8156,19 +8095,6 @@ import { ROUTE, ROUTE_HREF } from "~/lib/route";
 type Values = z.infer<typeof schema>;
 ````
 
-## File: apps/platform/app/auth/onboarding/state.server.ts
-````typescript
-import { createSupabaseServerClient } from "@packages/supabase/client.server";
-import { redirect } from "next/navigation";
-import { gql } from "~/generated/graphql";
-import { getGraphySession } from "~/lib/graphy/graphy.server";
-import { METHOD_ORDER, type OnboardingState } from "./state";
-⋮----
-export async function getViewerOnboardingState(): Promise<OnboardingState>
-⋮----
-export function ASSERT_KNOWN_METHOD(id: string): id is (typeof METHOD_ORDER)[number]
-````
-
 ## File: apps/platform/app/auth/phone/phone-step-form.tsx
 ````typescript
 import { useSupabase } from "@packages/supabase/react";
@@ -8194,13 +8120,16 @@ function onSend(channel: Channel)
 function onVerify(e: React.FormEvent)
 ````
 
-## File: apps/platform/app/robots.ts
+## File: apps/platform/app/llms.txt/route.ts
 ````typescript
-import type { MetadataRoute } from "next";
-import { isApexHost } from "~/lib/apex";
+import { type NextRequest, NextResponse } from "next/server";
 import { APP_HOST } from "~/lib/constants";
 ⋮----
-export default async function robots(): Promise<MetadataRoute.Robots>
+export async function GET(request: NextRequest, ctx: RouteContext<"/llms.txt">)
+⋮----
+/**
+   * Tenant subdomains are private app instances — no public surface for LLMs.
+   */
 ````
 
 ## File: apps/platform/app/sitemap.ts
@@ -8403,13 +8332,6 @@ export function useViewerAgencyById(agency_id: number, config?: SWRConfiguration
 export function useViewerAgencyBySlug(agency_slug: string, config?: SWRConfiguration<ViewerAgencyBySlugUseData>)
 ````
 
-## File: apps/platform/lib/auth-next.ts
-````typescript
-import { URL_NEW } from "@packages/utils/url";
-⋮----
-export function RESOLVE_AUTH_NEXT(raw: string | null, origin: string): string
-````
-
 ## File: apps/platform/lib/i18n.server.ts
 ````typescript
 import { match } from "@formatjs/intl-localematcher";
@@ -8437,6 +8359,40 @@ export function LOCALE_FROM_REQUEST(request: NextRequest): SupportedLocale
 export function HEADER_ACCEPT_LANGUAGE_PARSE(header: string | null): SupportedLocale | null
 ⋮----
 export async function getRosetta<T>(dict: RosettaDict<T>, locale?: string)
+````
+
+## File: packages/react-email/package.json
+````json
+{
+  "name": "@packages/react-email",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "dev": "PORT=${PORT:-7101} email dev --port ${PORT:-7101} --dir src/templates",
+    "build:dry": "tsc --noEmit",
+    "format": "biome check --diagnostic-level=error ."
+  },
+  "exports": {
+    "./templates/*": "./src/templates/*.tsx"
+  },
+  "dependencies": {
+    "@packages/rosetta": "workspace:*",
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "2.0.9"
+  },
+  "devDependencies": {
+    "@packages/typescript-config": "workspace:*",
+    "@react-email/ui": "6.6.3",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.17",
+    "react-email": "^6.6.3",
+    "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}
 ````
 
 ## File: packages/react-hooks/package.json
@@ -8472,37 +8428,94 @@ export async function getRosetta<T>(dict: RosettaDict<T>, locale?: string)
 }
 ````
 
-## File: scripts/development/worktree-archive.sh
+## File: packages/react-pdf/package.json
+````json
+{
+  "name": "@packages/react-pdf",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "dev": "PORT=${PORT:-7102} webpack serve --mode development",
+    "dev:open": "PORT=${PORT:-7102} webpack serve --mode development --open",
+    "build:dry": "tsc --noEmit",
+    "format": "biome check --diagnostic-level=error ."
+  },
+  "exports": {
+    "./*": "./src/*.ts",
+    "./templates/*": "./src/templates/*.tsx"
+  },
+  "dependencies": {
+    "@packages/rosetta": "workspace:*",
+    "@react-pdf/renderer": "^4.3.0",
+    "@types/mdast": "^4.0.4",
+    "clsx": "^2.1.1",
+    "react-pdf-tailwind": "^3.0.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^8.0.1",
+    "@babel/preset-env": "^8.0.2",
+    "@babel/preset-react": "^8.0.1",
+    "@packages/typescript-config": "workspace:*",
+    "@react-pdf/types": "^2.11.1",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "babel-loader": "^10.1.1",
+    "css-loader": "^7.1.2",
+    "html-webpack-plugin": "^5.6.3",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.6.1",
+    "typescript": "^6.0.3",
+    "webpack": "^5.107.2",
+    "webpack-cli": "^7.0.3",
+    "webpack-dev-server": "^5.2.5"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  }
+}
+````
+
+## File: scripts/development/local-setup.sh
 ````bash
-set -e
-WS=$(echo "${WORKTREE_NAME:-local}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
-PROJECT=$(printf '%s' "${WORKTREE_PROJECT:-}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
-PROJECT_PREFIX=$(printf '%s' "${PROJECT}" | cut -c1-20 | sed 's/-$//')
-WS_HASH=$(printf '%s' "${PROJECT}:${WS}" | shasum -a 256 | cut -c1-12)
-if [ -z "$PROJECT_PREFIX" ]; then
-  PROJECT_PREFIX="workspace"
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+if [ -n "${CONDUCTOR_PORT:-}" ]; then
+  echo "CONDUCTOR_PORT set → use the Conductor flow (worktree-setup.sh), not local-setup.sh." >&2
+  exit 1
 fi
-INSTANCE_KEY="${PROJECT_PREFIX}-${WS_HASH}"
-REF_DIR="$HOME/.worktree-refs/${INSTANCE_KEY}"
-REF_FILE="$REF_DIR/$(pwd | tr '/' '_')"
-rm -f "$REF_FILE"
-for _stale_ref in "$REF_DIR"/*; do
-  [ -f "$_stale_ref" ] || continue
-  _stale_dir=$(basename "$_stale_ref" | tr '_' '/')
-  [ -d "$_stale_dir" ] || rm -f "$_stale_ref"
-done
-REF_COUNT=$(ls "$REF_DIR" 2>/dev/null | wc -l | tr -d ' ')
-if [ "$REF_COUNT" -gt 0 ]; then
-  echo "Supabase ${INSTANCE_KEY} still used by ${REF_COUNT} other worktree(s), skipping shutdown"
+if [ -n "${EXE_HOST:-}" ]; then
+  echo "EXE_HOST set → use exe-dev-setup.sh, not local-setup.sh." >&2
+  exit 1
+fi
+if [ -f apps/platform/certificates/lvh.me-key.pem ] && [ -f apps/platform/certificates/lvh.me-cert.pem ]; then
+  echo "✓ TLS certs present"
 else
-  rmdir "$REF_DIR" 2>/dev/null || true
-  CIDS=$(docker ps -aq --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null)
-  [ -n "$CIDS" ] && docker rm -f $CIDS >/dev/null 2>&1 || true
-  VOLS=$(docker volume ls -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null)
-  [ -n "$VOLS" ] && docker volume rm $VOLS >/dev/null 2>&1 || true
-  docker network rm "supabase_network_${INSTANCE_KEY}" >/dev/null 2>&1 || true
+  echo "→ generating local TLS certs (mkcert)…"
+  bash scripts/development/https-setup.sh
 fi
-rm -rf node_modules
+set -a; source .env.development; set +a
+if [ -f .env.development.local ]; then
+  set -a; source .env.development.local; set +a
+fi
+RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${SUPABASE_PROJECT_ID}" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$RUNNING" -gt 0 ]; then
+  echo "✓ Supabase '${SUPABASE_PROJECT_ID}' already running"
+else
+  echo "→ starting Supabase '${SUPABASE_PROJECT_ID}'…"
+  pnpm db:start
+fi
+echo "→ writing .env.development.local…"
+pnpm run -w db:env:development
+cat <<'EOF'
+✅ Local dev environment ready. Start the app with:
+   pnpm dev
+EOF
 ````
 
 ## File: skills/my-proxy/SKILL.md
@@ -8594,210 +8607,6 @@ hostname → tenant slug → path `/t/{slug}/...`.
 
 Routing/auth changes need Playwright journeys. Cover apex, tenant path access, unauthenticated
 redirect, forbidden tenant, public path, and cookie preservation.
-````
-
-## File: .env.example
-````
-# Supabase Local Development
-# Default values from `pnpm db:start`. Not secrets — only work locally.
-# Copy to apps/platform/.env.local and apps/tenant/.env.local
-
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54421
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
-
-# Cookie domain so the apex (lvh.me:7003) and any tenant subdomain ({slug}.lvh.me:7003) share the session.
-# `lvh.me` is a public DNS wildcard that resolves every name (including subdomains) to 127.0.0.1 —
-# no /etc/hosts edits required. Browsers accept cookies on it because it has a real TLD.
-# Local dev: "lvh.me". Production: "example.com". Leave blank to fall back to host-only cookies.
-NEXT_PUBLIC_COOKIE_DOMAIN=lvh.me
-
-# The apex hostname for this deployment (no port — port comes from `PORT`, which the
-# dev script binds to via `--port ${PORT:-7003}` and Conductor assigns per parallel instance).
-# Local dev: "lvh.me". Production: "example.com".
-NEXT_PUBLIC_APEX_HOSTNAME=lvh.me
-
-# Dev-only mailbox (Inbucket from `pnpm db:start`). Surfaced as a "Development only"
-# link on the signup success state so you can grab the magic-link confirmation email
-# without leaving the browser. Leave blank in production.
-NEXT_PUBLIC_DEV_MAILBOX_URL=http://localhost:54424
-
-# Server-side log namespaces (diary via @packages/debug, wired in apps/platform/lib/debug.ts).
-# Default in dev shows everything under "platform:*". Narrow to a slice while debugging, e.g.
-#   DEBUG="platform:passkeys:*"
-#   DEBUG="platform:auth:*,-platform:auth:login"   # exclude noise with a leading "-"
-# Empty or unset = silent.
-DEBUG=platform:*
-
-# ------------------------------------------------------------
-# OAuth providers (read by supabase/config.toml on `pnpm db:start`)
-# Create credentials at the provider console; configure each callback as:
-#   http://127.0.0.1:54421/auth/v1/callback   (local)
-#   https://<project>.supabase.co/auth/v1/callback   (prod)
-# Leave any unused provider blank — `pnpm db:start` will skip it.
-# ------------------------------------------------------------
-
-# Google — https://console.cloud.google.com/apis/credentials
-SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=
-
-# Microsoft (Azure / Entra) — https://portal.azure.com (App registrations)
-SUPABASE_AUTH_EXTERNAL_AZURE_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_AZURE_SECRET=
-
-# LinkedIn — https://www.linkedin.com/developers/apps (use the OIDC product)
-SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_SECRET=
-
-# GitHub — https://github.com/settings/developers (OAuth Apps)
-SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=
-
-# Facebook — https://developers.facebook.com/apps
-SUPABASE_AUTH_EXTERNAL_FACEBOOK_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_FACEBOOK_SECRET=
-
-# ------------------------------------------------------------
-# Twilio (phone OTP for onboarding step + future MFA via SMS)
-# Flip [auth.sms.twilio].enabled = true in config.toml after filling these in.
-# https://console.twilio.com
-# ------------------------------------------------------------
-SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID=
-SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID=
-SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN=
-
-# ------------------------------------------------------------
-# OpenTelemetry (optional — traces exported only when set)
-# ------------------------------------------------------------
-# OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
-# OTEL_SERVICE_NAME=saas-template
-# OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=YOUR_API_KEY
-
-# ------------------------------------------------------------
-# PostHog (optional — analytics and feature flags)
-# Create a project at https://app.posthog.com and copy the key from Project Settings.
-# ------------------------------------------------------------
-# NEXT_PUBLIC_POSTHOG_KEY=phc_xxxxx
-# NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
-
-# ------------------------------------------------------------
-# Conversations / outbound delivery (Agent D — drain worker)
-# ------------------------------------------------------------
-
-# Resend — email delivery
-# https://resend.com/api-keys
-RESEND_API_KEY=
-# The "from" address for outbound notification emails. Must be a verified domain in Resend.
-RESEND_FROM=notifications@example.com
-# Domain Resend uses for inbound email parsing (e.g. reply+<token>@<RESEND_INBOUND_DOMAIN>).
-# Set up in Resend dashboard → Domains → Inbound. Used for reply-to correlation.
-RESEND_INBOUND_DOMAIN=
-# Svix webhook signing secret for Resend inbound events (Resend dashboard → Webhooks → Signing Secret).
-# Required: inbound emails are rejected without this.
-RESEND_WEBHOOK_SECRET=
-
-# Conversations drain worker — shared secret for the internal POST route.
-# Must be a long random string (e.g. `openssl rand -hex 32`).
-# Set the same value in pg_cron / pg_net via app.drain_secret in supabase config.
-# Manual trigger: curl -X POST https://<host>/api/internal/conversations/drain -H "x-drain-secret: <value>"
-CONVERSATIONS_DRAIN_SECRET=
-
-# Web Push — VAPID keys for browser push notifications
-# Generate once: npx web-push generate-vapid-keys
-# NEXT_PUBLIC_VAPID_PUBLIC_KEY is exposed to the browser (service worker subscription).
-VAPID_PUBLIC_KEY=
-VAPID_PRIVATE_KEY=
-VAPID_SUBJECT=mailto:admin@example.com
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=
-
-# Anthropic API key — required for the inbound agent loop (P4).
-# https://console.anthropic.com/settings/keys
-ANTHROPIC_API_KEY=
-
-# WhatsApp via Kapso BSP
-# https://kapso.io
-KAPSO_API_KEY=
-# Webhook signing secret for Kapso inbound webhooks (Kapso dashboard → Webhooks).
-# Used to verify X-Kapso-Signature header. Required for WhatsApp inbound.
-# NOTE: If Kapso does not expose a formal signing secret, contact Kapso support.
-KAPSO_WEBHOOK_SECRET=
-
-# SMS via Twilio (optional — skipped if not set; provider is isolated in channel-sender-twilio.ts)
-# To enable: pnpm --filter @apps/platform add twilio  — then fill in values below.
-# https://console.twilio.com
-# TWILIO_ACCOUNT_SID=
-# TWILIO_AUTH_TOKEN=
-# TWILIO_FROM=+1555XXXXXXX
-````
-
-## File: README.md
-````markdown
-# SaaS Template
-
-A production-grade starter for building a multi-tenant SaaS: Next.js 16 + React 19 +
-Supabase + Turborepo, with authentication (email/password, OAuth, phone OTP, WebAuthn
-passkeys), two-level multi-tenancy with Postgres RLS, capability-based permissions, i18n,
-React Email/PDF template packages, and a shadcn design system already wired together.
-
-The repo ships with example product surfaces as reference implementations — replace them with
-your own product; the infrastructure under `packages/*` is the part meant to be reused.
-
-## Getting started
-
-```bash
-pnpm install
-pnpm db:start                                       # starts local Supabase (Docker required)
-cp .env.example apps/platform/.env.local            # copy local-dev defaults
-bash scripts/development/https-setup.sh             # generate mkcert TLS certs (one-time)
-pnpm dev                                            # runs all apps and packages in parallel
-```
-
-Open `https://lvh.me:7003`. (See HTTPS section below — passkeys / WebAuthn require it.)
-
-## Local dev ports
-
-| Service | Default port | URL |
-|---|---|---|
-| `apps/platform` | 7003 | https://lvh.me:7003 |
-| Supabase Studio | 7100 | http://localhost:7100 |
-| Supabase Inbucket (mailbox) | 54424 | http://localhost:54424 |
-| `packages/react-email` | 7101 | http://localhost:7101 |
-| `packages/react-pdf` | 7102 | http://localhost:7102 |
-
-## Local HTTPS (required for passkeys)
-
-`apps/platform` runs over HTTPS in dev because WebAuthn (`navigator.credentials.create` / `.get`) only works in a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) — and the browser's secure-context allowlist matches the literal strings `localhost` / `127.0.0.1` / `[::1]`, not DNS aliases that resolve there. `lvh.me` resolves to `127.0.0.1` but is *not* on the allowlist, so plain HTTP fails with `window.PublicKeyCredential === undefined`.
-
-The fix: [mkcert](https://github.com/FiloSottile/mkcert) + Next's `--experimental-https` flag. Install mkcert (`brew install mkcert` on macOS), then:
-
-```bash
-bash scripts/development/https-setup.sh
-```
-
-That script runs `mkcert -install` (adds the local CA to your system + Firefox trust stores) and generates `apps/platform/certs/lvh.me-{cert,key}.pem` covering `lvh.me`, `*.lvh.me`, `localhost`, and `127.0.0.1`. The `apps/platform` dev script picks those up automatically. Certs expire in ~2.5 years; re-run the script to refresh.
-
-Files under `apps/platform/certs/` are gitignored (private keys, machine-specific). Each contributor runs `https-setup.sh` once on their own machine.
-
-If you skip HTTPS setup: OAuth and email/password still work over plain `http://lvh.me:7003` (you'd also need to flip `WEBAUTHN_RELYING_PARTY_ORIGIN`, `site_url`, and `additional_redirect_urls` back to `http://`), but passkey registration and sign-in will fail silently in the browser.
-
-## Useful commands
-
-```bash
-pnpm dev                  # start all services
-pnpm build                # build all packages and apps
-pnpm db:start             # start local Supabase
-pnpm db:stop              # stop local Supabase
-pnpm db:reset             # drop + replay schema + seed
-pnpm generate:types       # regenerate Supabase TS types
-```
-
-## Docs
-
-- `AGENTS.md` — full architecture, stack, and coding rules
-- `skills/my-*` — source-backed per-subsystem agent guides
-
-`pnpm install` symlinks bundled skills into `.agents/skills/` and `.claude/skills/`.
-`my-proxy` documents `apps/platform/proxy.ts`; it is not a residential/SOCKS proxy skill.
 ````
 
 ## File: apps/platform/app/(app)/a/[agency_slug]/inbox/[conversation_id]/page.tsx
@@ -8965,6 +8774,39 @@ import { actionLinkProvider } from "../actions";
 pendingChildren=
 ````
 
+## File: apps/platform/app/(app)/home/account/notifications/contacts-manage.tsx
+````typescript
+import { isGraphyGraphQLError } from "@packages/graphy/graphy";
+import { useGraphyMutation, useGraphyQuery } from "@packages/graphy/react";
+import { useSupabaseUser } from "@packages/supabase/react";
+import type { Database } from "@packages/supabase/types";
+import { Button } from "@packages/ui-common/shadcn/components/ui/button";
+import { Input } from "@packages/ui-common/shadcn/components/ui/input";
+import { useState } from "react";
+import { gql } from "~/generated/graphql";
+import type { MessageChannel as MessageChannelEnum } from "~/generated/graphql/graphql";
+import { debug } from "~/lib/debug";
+import { useRosetta } from "~/lib/i18n.client";
+⋮----
+type MessageChannel = Database["public"]["Enums"]["message_channel"];
+⋮----
+function ADD_FORM_ID(channel: MessageChannel): string
+⋮----
+function startAdding(channel: MessageChannel)
+⋮----
+function cancelAdding()
+⋮----
+async function submitContact()
+⋮----
+async function deleteContact(contactId: string)
+⋮----
+onClick=
+⋮----
+aria-label=
+⋮----
+id=
+````
+
 ## File: apps/platform/app/(app)/home/inbox/[conversation_id]/page.tsx
 ````typescript
 import { getSupabaseServerUser } from "@packages/supabase/client.server";
@@ -9062,39 +8904,6 @@ function onBlur()
 className=
 ⋮----
 <ButtonSpinner type="submit" pendingChildren=
-````
-
-## File: apps/platform/app/llms.txt/route.ts
-````typescript
-import { type NextRequest, NextResponse } from "next/server";
-import { APP_HOST } from "~/lib/constants";
-⋮----
-export async function GET(request: NextRequest, ctx: RouteContext<"/llms.txt">)
-⋮----
-/**
-   * Tenant subdomains are private app instances — no public surface for LLMs.
-   */
-````
-
-## File: apps/platform/components/identity/chips.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { IdCard, Mail, Phone } from "lucide-react";
-import type { Route } from "next";
-import Link from "next/link";
-import type { ComponentProps } from "react";
-⋮----
-type IdentityKind = "email" | "phone" | "document";
-⋮----
-export function IdentityChip({
-  kind,
-  value,
-  className,
-  ...props
-}: {
-  kind: IdentityKind;
-  value: string;
-} & ComponentProps<"div">)
 ````
 
 ## File: apps/platform/components/inbox/conversation-thread.tsx
@@ -9207,100 +9016,6 @@ handleServerError(e)
 export function formAction<TInput>(run: (input: TInput) => Promise<unknown>, parse: (formData: FormData) => TInput)
 ````
 
-## File: apps/platform/styles/globals.css
-````css
-@source "../../../packages/ui-common/src";
-⋮----
-@theme {
-````
-
-## File: packages/react-email/package.json
-````json
-{
-  "name": "@packages/react-email",
-  "version": "0.0.0",
-  "private": true,
-  "sideEffects": false,
-  "scripts": {
-    "dev": "PORT=${PORT:-7101} email dev --port ${PORT:-7101} --dir src/templates",
-    "build:dry": "tsc --noEmit",
-    "format": "biome check --diagnostic-level=error ."
-  },
-  "exports": {
-    "./templates/*": "./src/templates/*.tsx"
-  },
-  "dependencies": {
-    "@packages/rosetta": "workspace:*",
-    "@react-email/components": "^1.0.12",
-    "@react-email/render": "2.0.9"
-  },
-  "devDependencies": {
-    "@packages/typescript-config": "workspace:*",
-    "@react-email/ui": "6.6.3",
-    "@types/node": "^24.12.4",
-    "@types/react": "^19.2.17",
-    "react-email": "^6.6.3",
-    "typescript": "^6.0.3"
-  },
-  "peerDependencies": {
-    "react": "^19.0.0"
-  }
-}
-````
-
-## File: packages/react-pdf/package.json
-````json
-{
-  "name": "@packages/react-pdf",
-  "version": "0.0.0",
-  "private": true,
-  "sideEffects": false,
-  "scripts": {
-    "dev": "PORT=${PORT:-7102} webpack serve --mode development",
-    "dev:open": "PORT=${PORT:-7102} webpack serve --mode development --open",
-    "build:dry": "tsc --noEmit",
-    "format": "biome check --diagnostic-level=error ."
-  },
-  "exports": {
-    "./*": "./src/*.ts",
-    "./templates/*": "./src/templates/*.tsx"
-  },
-  "dependencies": {
-    "@packages/rosetta": "workspace:*",
-    "@react-pdf/renderer": "^4.3.0",
-    "@types/mdast": "^4.0.4",
-    "clsx": "^2.1.1",
-    "react-pdf-tailwind": "^3.0.0",
-    "remark-parse": "^11.0.0",
-    "unified": "^11.0.5"
-  },
-  "devDependencies": {
-    "@babel/core": "^8.0.1",
-    "@babel/preset-env": "^8.0.2",
-    "@babel/preset-react": "^8.0.1",
-    "@packages/typescript-config": "workspace:*",
-    "@react-pdf/types": "^2.11.1",
-    "@types/node": "^24.12.4",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "babel-loader": "^10.1.1",
-    "css-loader": "^7.1.2",
-    "html-webpack-plugin": "^5.6.3",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "style-loader": "^4.0.0",
-    "ts-loader": "^9.6.1",
-    "typescript": "^6.0.3",
-    "webpack": "^5.107.2",
-    "webpack-cli": "^7.0.3",
-    "webpack-dev-server": "^5.2.5"
-  },
-  "peerDependencies": {
-    "react": "^19.0.0"
-  }
-}
-````
-
 ## File: packages/rosetta/package.json
 ````json
 {
@@ -9335,348 +9050,6 @@ export function formAction<TInput>(run: (input: TInput) => Promise<unknown>, par
     "react": "^19.0.0"
   }
 }
-````
-
-## File: packages/supabase/supabase/config.toml
-````toml
-# For detailed configuration reference documentation, visit:
-# https://supabase.com/docs/guides/local-development/cli/config
-# A string used to distinguish different Supabase projects on the same host. Defaults to the
-# working directory name when running `supabase init`.
-project_id = "saas-template-62fa76d3861e"
-
-[api]
-enabled = true
-# Port to use for the API URL.
-port = 55221
-# Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
-# endpoints. `public` is always included.
-schemas = ["public", "graphql_public", "protected"]
-# Extra schemas to add to the search_path of every request. `public` is always included.
-extra_search_path = ["public", "extensions"]
-# The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
-# for accidental or malicious requests.
-max_rows = 1000
-
-[api.tls]
-enabled = false
-
-[db]
-# Port to use for the local database URL.
-port = 55222
-# Port used by db diff command to initialize the shadow database.
-shadow_port = 55223
-# The database major version to use. This has to be the same as your remote database's. Run `SHOW
-# server_version;` on the remote database to check.
-major_version = 15
-
-[db.pooler]
-enabled = false
-# Port to use for the local connection pooler.
-port = 54429
-# Specifies when a server connection can be reused by other clients.
-# Configure one of the supported pooler modes: `transaction`, `session`.
-pool_mode = "transaction"
-# How many server connections to allow per user/database pair.
-default_pool_size = 20
-# Maximum number of client connections allowed.
-max_client_conn = 100
-
-[db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
-# Specifies an ordered list of seed files to load during db reset.
-# Supports glob patterns relative to supabase directory. For example:
-# sql_paths = ['./seeds/*.sql', '../project-src/seeds/*-load-testing.sql']
-sql_paths = ['./seed.sql']
-
-[realtime]
-enabled = true
-# Bind realtime via either IPv4 or IPv6. (default: IPv4)
-# ip_version = "IPv6"
-# The maximum length in bytes of HTTP request headers. (default: 4096)
-# max_header_length = 4096
-
-[studio]
-enabled = false
-# Port to use for Supabase Studio.
-port = 55224
-# External URL of the API server that frontend connects to.
-api_url = "http://127.0.0.1"
-# OpenAI API Key to use for Supabase AI in the Supabase Studio.
-openai_api_key = "env(OPENAI_API_KEY)"
-
-# Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
-# are monitored, and you can view the emails that would have been sent from the web interface.
-[inbucket]
-enabled = true
-# Port to use for the email testing server web interface.
-port = 55225
-# Uncomment to expose additional ports for testing user applications that send emails.
-# smtp_port = 54325
-# pop3_port = 54326
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
-
-[storage]
-enabled = true
-# The maximum file size allowed (e.g. "5MB", "500KB").
-file_size_limit = "50MiB"
-
-[storage.image_transformation]
-enabled = true
-
-# Uncomment to configure local storage buckets
-# [storage.buckets.images]
-# public = false
-# file_size_limit = "50MiB"
-# allowed_mime_types = ["image/png", "image/jpeg"]
-# objects_path = "./images"
-
-[auth]
-enabled = true
-# The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
-# in emails. Dev runs HTTPS (mkcert + Next --experimental-https) so WebAuthn has a secure context.
-# site_url is embedded in confirmation/recovery emails as a concrete URL, so it must be a
-# fully-resolved host:port. Conductor reassigns PORT per parallel instance; the npm scripts
-# (db:start / db:reset) inject SUPABASE_AUTH_SITE_URL from $PORT, defaulting to 7003.
-site_url = "env(SUPABASE_AUTH_SITE_URL)"
-# The allow-list uses wildcards. `*` matches any sequence of non-separator chars (separators
-# are `.` and `/` only — see https://supabase.com/docs/guides/auth/redirect-urls), so `:55000`
-# is covered. Apex on any dev port (tenant routing is path-based, no subdomains needed).
-additional_redirect_urls = [
-  "https://lvh.me:*/**",
-]
-# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
-jwt_expiry = 3600
-# If disabled, the refresh token will never expire.
-enable_refresh_token_rotation = true
-# Allows refresh tokens to be reused after expiry, up to the specified interval in seconds.
-# Requires enable_refresh_token_rotation = true.
-refresh_token_reuse_interval = 10
-# Allow/disallow new user signups to your project.
-enable_signup = true
-# Allow/disallow anonymous sign-ins to your project.
-enable_anonymous_sign_ins = false
-# Allow/disallow testing manual linking of accounts
-enable_manual_linking = true
-# Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
-minimum_password_length = 6
-# Passwords that do not meet the following requirements will be rejected as weak. Supported values
-# are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
-password_requirements = ""
-
-# OAuth 2.1 authorization server (GoTrue). Required for MCP clients to authenticate as the user.
-# When disabled, /.well-known/oauth-authorization-server returns "OAuth server is disabled" and
-# clients that rely on Dynamic Client Registration (e.g. Claude Code) fail to connect.
-# `authorization_url_path` is the in-app consent screen GoTrue redirects to (see app/oauth/consent).
-# `allow_dynamic_registration`: true = MCP clients self-register via RFC 7591 (dev); false = prod
-# (pre-register clients to prevent anonymous OAuth app creation). Set via env — see .env.example.
-[auth.oauth_server]
-enabled = true
-authorization_url_path = "/oauth/consent"
-allow_dynamic_registration = "env(SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION)"
-
-[auth.email]
-# Allow/disallow new user signups via email to your project.
-enable_signup = true
-# If enabled, a user will be required to confirm any email change on both the old, and new email
-# addresses. If disabled, only the new email is required to confirm.
-double_confirm_changes = true
-# If enabled, users need to confirm their email address before signing in.
-enable_confirmations = true
-# If enabled, users will need to reauthenticate or have logged in recently to change their password.
-secure_password_change = false
-# Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
-max_frequency = "1s"
-# Number of characters used in the email OTP.
-otp_length = 6
-# Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
-
-# Use a production-ready SMTP server
-# [auth.email.smtp]
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
-
-# Custom templates use {{ .TokenHash }} and route through our app at /auth/confirm so the link
-# in the email lands on lvh.me (the app origin) instead of the GoTrue verify endpoint at 127.0.0.1.
-# The confirm route calls supabase.auth.verifyOtp({ token_hash, type }) and redirects to `next`.
-[auth.email.template.confirmation]
-subject = "Confirma tu correo en SaaS Template"
-content_path = "./supabase/templates/confirmation.html"
-
-[auth.email.template.magic_link]
-subject = "Tu enlace para iniciar sesión en SaaS Template"
-content_path = "./supabase/templates/magic_link.html"
-
-[auth.email.template.email_change]
-subject = "Confirma tu nuevo correo en SaaS Template"
-content_path = "./supabase/templates/email_change.html"
-
-[auth.sms]
-# Allow/disallow new user signups via SMS to your project.
-enable_signup = true
-# If enabled, users need to confirm their phone number before signing in.
-enable_confirmations = true
-# Template for sending OTP to users
-template = "Tu código de SaaS Template es {{ .Code }}"
-# Controls the minimum amount of time that must pass before sending another sms otp.
-max_frequency = "5s"
-
-# Pre-defined phone → OTP map for local development. Without a real SMS provider, gotrue logs
-# the OTP to docker logs but won't actually deliver. The test_otp map shortcuts that: any OTP
-# request to one of these numbers is "delivered" as the configured code. Uncomment and add the
-# numbers your team tests with.
-# [auth.sms.test_otp]
-# 56990511003 = "123456"
-
-# Configure logged in session timeouts.
-# [auth.sessions]
-# Force log out after the specified duration.
-# timebox = "24h"
-# Force log out if the user has been inactive longer than the specified duration.
-# inactivity_timeout = "8h"
-
-# This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
-[auth.hook.custom_access_token]
-enabled = true
-uri = "pg-functions://postgres/public/user_auth_hook"
-
-# Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
-# Flip enabled = true once the SUPABASE_AUTH_SMS_TWILIO_* vars are in .env.local. Without them
-# `pnpm db:start` will refuse to start, so we keep it disabled by default for local dev.
-[auth.sms.twilio]
-enabled = false
-account_sid = "env(SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID)"
-message_service_sid = "env(SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID)"
-# DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
-auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
-
-[auth.mfa]
-# Control how many MFA factors can be enrolled at once per user.
-max_enrolled_factors = 10
-
-# Control use of MFA via App Authenticator (TOTP)
-[auth.mfa.totp]
-enroll_enabled = true
-verify_enabled = true
-
-# Configure Multi-factor-authentication via Phone Messaging
-[auth.mfa.phone]
-enroll_enabled = false
-verify_enabled = false
-otp_length = 6
-template = "Your code is {{ .Code }}"
-max_frequency = "5s"
-
-# Passkeys are not implemented via Supabase MFA — they're a custom SimpleWebAuthn-backed
-# flow with its own public.profile_webauthn_credentials / profile_webauthn_challenges tables. See
-# apps/platform/lib/passkeys.* (server actions, no dedicated routes).
-
-# Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
-# `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
-# `twitter`, `slack`, `spotify`, `workos`, `zoom`.
-[auth.external.apple]
-enabled = false
-client_id = ""
-# DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
-secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
-# Overrides the default auth redirectUrl.
-redirect_uri = ""
-# Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
-# or any other third-party OIDC providers.
-url = ""
-# If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
-skip_nonce_check = false
-
-# Flip enabled = true once you've added the credentials in .env.local.
-[auth.external.google]
-enabled   = false
-client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
-secret    = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
-# Required for local sign in with Google (Google enforces nonce in prod, can't replay locally).
-skip_nonce_check = true
-
-[auth.external.azure]
-enabled   = false
-client_id = "env(SUPABASE_AUTH_EXTERNAL_AZURE_CLIENT_ID)"
-secret    = "env(SUPABASE_AUTH_EXTERNAL_AZURE_SECRET)"
-# For multi-tenant apps use "https://login.microsoftonline.com/common/v2.0".
-# For single-tenant, replace `common` with the Entra tenant id.
-url = "https://login.microsoftonline.com/common/v2.0"
-
-[auth.external.linkedin_oidc]
-enabled   = false
-client_id = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID)"
-secret    = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_SECRET)"
-
-[auth.external.github]
-enabled   = false
-client_id = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID)"
-secret    = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET)"
-
-[auth.external.facebook]
-enabled   = false
-client_id = "env(SUPABASE_AUTH_EXTERNAL_FACEBOOK_CLIENT_ID)"
-secret    = "env(SUPABASE_AUTH_EXTERNAL_FACEBOOK_SECRET)"
-
-# Use Firebase Auth as a third-party provider alongside Supabase Auth.
-[auth.third_party.firebase]
-enabled = false
-# project_id = "my-firebase-project"
-
-# Use Auth0 as a third-party provider alongside Supabase Auth.
-[auth.third_party.auth0]
-enabled = false
-# tenant = "my-auth0-tenant"
-# tenant_region = "us"
-
-# Use AWS Cognito (Amplify) as a third-party provider alongside Supabase Auth.
-[auth.third_party.aws_cognito]
-enabled = false
-# user_pool_id = "my-user-pool-id"
-# user_pool_region = "us-east-1"
-
-[edge_runtime]
-enabled = false
-# Configure one of the supported request policies: `oneshot`, `per_worker`.
-# Use `oneshot` for hot reload, or `per_worker` for load testing.
-policy = "oneshot"
-# Port to attach the Chrome inspector for debugging edge functions.
-inspector_port = 8183
-
-# Use these configurations to customize your Edge Function.
-# [functions.MY_FUNCTION_NAME]
-# enabled = true
-# verify_jwt = true
-# import_map = "./functions/MY_FUNCTION_NAME/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-# entrypoint = "./functions/MY_FUNCTION_NAME/index.ts"
-
-[analytics]
-enabled = false
-port = 55226
-# Configure one of the supported backends: `postgres`, `bigquery`.
-backend = "postgres"
-
-# Experimental features may be deprecated any time
-[experimental]
-# Configures Postgres storage engine to use OrioleDB (S3)
-orioledb_version = ""
-# Configures S3 bucket URL, eg. <bucket_name>.s3-<region>.amazonaws.com
-s3_host = "env(S3_HOST)"
-# Configures S3 bucket region, eg. us-east-1
-s3_region = "env(S3_REGION)"
-# Configures AWS_ACCESS_KEY_ID for S3 bucket
-s3_access_key = "env(S3_ACCESS_KEY)"
-# Configures AWS_SECRET_ACCESS_KEY for S3 bucket
-s3_secret_key = "env(S3_SECRET_KEY)"
 ````
 
 ## File: packages/ui-common/src/shadcn/globals.css
@@ -9730,6 +9103,74 @@ button:not(:disabled),
     "temporal-polyfill": "^1.0.1"
   }
 }
+````
+
+## File: scripts/development/worktree-setup.sh
+````bash
+set -e
+if [ -z "$WORKTREE_NAME" ] || [ -z "$WORKTREE_PORT" ] || [ -z "$WORKTREE_ROOT_PATH" ] || [ -z "$WORKTREE_PROJECT" ]; then
+  echo "Required: WORKTREE_NAME, WORKTREE_PORT, WORKTREE_ROOT_PATH, WORKTREE_PROJECT"
+  echo "Example (Conductor): WORKTREE_NAME=\$CONDUCTOR_WORKSPACE_NAME WORKTREE_PORT=\$CONDUCTOR_PORT WORKTREE_ROOT_PATH=\$CONDUCTOR_ROOT_PATH WORKTREE_PROJECT=myproject bash scripts/development/worktree-setup.sh"
+  exit 1
+fi
+copy_if_exists() {
+  local src="$1"
+  local dst="$2"
+  if [ -f "$src" ]; then
+    cp "$src" "$dst"
+  else
+    echo "Warning: $src not found, skipping."
+  fi
+}
+export BASE=${WORKTREE_PORT}
+export WS=$(echo "${WORKTREE_NAME}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+export PROJECT=$(echo "${WORKTREE_PROJECT}" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
+export PROJECT_PREFIX=$(printf '%s' "${PROJECT}" | cut -c1-20 | sed 's/-$//')
+export WS_HASH=$(printf '%s' "${PROJECT}:${WS}" | shasum -a 256 | cut -c1-12)
+if [ -z "$PROJECT_PREFIX" ]; then
+  export PROJECT_PREFIX="workspace"
+fi
+export INSTANCE_KEY="${PROJECT_PREFIX}-${WS_HASH}"
+cat > .env.development.local <<EOF
+SUPABASE_PROJECT_ID=${INSTANCE_KEY}
+SUPABASE_SHADOW_PORT=$((BASE+0))
+SUPABASE_API_PORT=$((BASE+1))
+SUPABASE_DB_PORT=$((BASE+2))
+SUPABASE_STUDIO_PORT=$((BASE+3))
+SUPABASE_INBUCKET_PORT=$((BASE+4))
+SUPABASE_ANALYTICS_PORT=$((BASE+5))
+SUPABASE_AUTH_SITE_URL=https://lvh.me:${WORKTREE_PORT}
+SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=https://lvh.me:${WORKTREE_PORT}
+SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}
+EOF
+echo "Supabase env written to .env.development.local: project=${INSTANCE_KEY}"
+echo "  shadow:$((BASE+0))  API:$((BASE+1))  DB:$((BASE+2))  Studio:$((BASE+3))  Inbucket:$((BASE+4))  Analytics:$((BASE+5))"
+copy_if_exists "$WORKTREE_ROOT_PATH/.env.local" ./.env.local
+copy_if_exists "$WORKTREE_ROOT_PATH/apps/platform/.env.local" ./apps/platform/.env.local
+mkdir -p apps/platform/certificates
+ROOT_CERT="$WORKTREE_ROOT_PATH/apps/platform/certificates/lvh.me-cert.pem"
+ROOT_KEY="$WORKTREE_ROOT_PATH/apps/platform/certificates/lvh.me-key.pem"
+if [ -f "$ROOT_CERT" ] && [ -f "$ROOT_KEY" ]; then
+  cp "$ROOT_CERT" ./apps/platform/certificates/lvh.me-cert.pem
+  cp "$ROOT_KEY" ./apps/platform/certificates/lvh.me-key.pem
+else
+  bash scripts/development/https-setup.sh
+fi
+mkdir -p .claude
+copy_if_exists "$WORKTREE_ROOT_PATH/.claude/settings.local.json" ./.claude/settings.local.json
+pnpm install
+REF_DIR="$HOME/.worktree-refs/${INSTANCE_KEY}"
+REF_FILE="$REF_DIR/$(pwd | tr '/' '_')"
+mkdir -p "$REF_DIR"
+touch "$REF_FILE"
+RUNNING=$(docker ps -q --filter "label=com.supabase.cli.project=${INSTANCE_KEY}" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$RUNNING" -gt 0 ]; then
+  echo "Supabase ${INSTANCE_KEY} already running, stopping first..."
+  PORT=$WORKTREE_PORT pnpm db:stop
+fi
+PORT=$WORKTREE_PORT pnpm db:start
+set -a; source .env.development; source .env.development.local; set +a
+PORT=$WORKTREE_PORT pnpm run -w db:env:development
 ````
 
 ## File: skills/my-graphy/SKILL.md
@@ -10011,6 +9452,263 @@ Without `set local role authenticated`, postgres bypasses RLS and test is invali
 
 Relevant tests: `viewer_permissions`, `rls_memberships`, `membership_invariants`,
 `permission_presets_validate`, `journey_escalation_attempts`.
+````
+
+## File: README.md
+````markdown
+# SaaS Template
+
+A production-grade starter for building a multi-tenant SaaS: Next.js 16 + React 19 +
+Supabase + Turborepo, with authentication (email/password, OAuth, phone OTP, WebAuthn
+passkeys), two-level multi-tenancy with Postgres RLS, capability-based permissions, i18n,
+React Email/PDF template packages, and a shadcn design system already wired together.
+
+The repo ships with example product surfaces as reference implementations — replace them with
+your own product; the infrastructure under `packages/*` is the part meant to be reused.
+
+## Getting started
+
+```bash
+pnpm install
+pnpm db:start                                       # starts local Supabase (Docker required)
+bash scripts/development/https-setup.sh             # generate mkcert TLS certs (one-time)
+pnpm dev                                            # runs all apps and packages in parallel
+```
+
+Open `https://lvh.me:7003`. (See HTTPS section below — passkeys / WebAuthn require it.)
+
+## Local dev ports
+
+| Service | Default port | URL |
+|---|---|---|
+| `apps/platform` | 7003 | https://lvh.me:7003 |
+| Supabase Studio | 7100 | http://localhost:7100 |
+| Supabase Inbucket (mailbox) | 54424 | http://localhost:54424 |
+| `packages/react-email` | 7101 | http://localhost:7101 |
+| `packages/react-pdf` | 7102 | http://localhost:7102 |
+
+## Local HTTPS (required for passkeys)
+
+`apps/platform` runs over HTTPS in dev because WebAuthn (`navigator.credentials.create` / `.get`) only works in a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) — and the browser's secure-context allowlist matches the literal strings `localhost` / `127.0.0.1` / `[::1]`, not DNS aliases that resolve there. `lvh.me` resolves to `127.0.0.1` but is *not* on the allowlist, so plain HTTP fails with `window.PublicKeyCredential === undefined`.
+
+The fix: [mkcert](https://github.com/FiloSottile/mkcert) + Next's `--experimental-https` flag. Install mkcert (`brew install mkcert` on macOS), then:
+
+```bash
+bash scripts/development/https-setup.sh
+```
+
+That script runs `mkcert -install` (adds the local CA to your system + Firefox trust stores) and generates `apps/platform/certs/lvh.me-{cert,key}.pem` covering `lvh.me`, `*.lvh.me`, `localhost`, and `127.0.0.1`. The `apps/platform` dev script picks those up automatically. Certs expire in ~2.5 years; re-run the script to refresh.
+
+Files under `apps/platform/certs/` are gitignored (private keys, machine-specific). Each contributor runs `https-setup.sh` once on their own machine.
+
+If you skip HTTPS setup: OAuth and email/password still work over plain `http://lvh.me:7003` (you'd also need to flip `WEBAUTHN_RELYING_PARTY_ORIGIN`, `site_url`, and `additional_redirect_urls` back to `http://`), but passkey registration and sign-in will fail silently in the browser.
+
+## Useful commands
+
+```bash
+pnpm dev                  # start all services
+pnpm build                # build all packages and apps
+pnpm db:start             # start local Supabase
+pnpm db:stop              # stop local Supabase
+pnpm db:reset             # drop + replay schema + seed
+pnpm generate:types       # regenerate Supabase TS types
+```
+
+## Docs
+
+- `AGENTS.md` — full architecture, stack, and coding rules
+- `skills/my-*` — source-backed per-subsystem agent guides
+
+`pnpm install` symlinks bundled skills into `.agents/skills/` and `.claude/skills/`.
+`my-proxy` documents `apps/platform/proxy.ts`; it is not a residential/SOCKS proxy skill.
+````
+
+## File: skills-lock.json
+````json
+{
+  "version": 1,
+  "skills": {
+    "caveman": {
+      "source": "juliusbrussee/caveman",
+      "sourceType": "github",
+      "skillPath": "skills/caveman/SKILL.md",
+      "computedHash": "1902fa0b569912d0c05736d8d98a72097d9b82719aac88c0c1d03bb546f9176d"
+    },
+    "caveman-compress": {
+      "source": "juliusbrussee/caveman",
+      "sourceType": "github",
+      "skillPath": "skills/caveman-compress/SKILL.md",
+      "computedHash": "1e9b3e2bf68b75dc0252c4328c8514bea79d4d8f7d7259da616ba7d12cad6865"
+    },
+    "codebase": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "307eb561d25575f5543a8f86fbf4ede14d793bab69ec42952cc8e9fb5973440e"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
+    },
+    "integrate-whatsapp": {
+      "source": "gokapso/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/integrate-whatsapp/SKILL.md",
+      "computedHash": "acd8594565afb7b28c5490ce1d52fbb2fd99d998c2d500c70a8bbade56f710aa"
+    },
+    "karpathy-guidelines": {
+      "source": "multica-ai/andrej-karpathy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/karpathy-guidelines/SKILL.md",
+      "computedHash": "41e8ca055bbde13d240776a14a076a59614057200340c243130a76ba4e64cac8"
+    },
+    "my-auth": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "73579054f3516c54d06c4c780dd1578cb0ada0c5f2da01a18505e7f9e11426ab"
+    },
+    "my-conventions": {
+      "source": "./skills",
+      "sourceType": "local"
+    },
+    "my-graphql": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "05734408341dcf11e66c80088a667d29ef76406d490de276de19c549af6f1c2b"
+    },
+    "my-graphql-codegen": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "046943e6da5b6fbf251ea4041fa419306e942617cbb4e90ccf208a5e3662d5fe"
+    },
+    "my-graphy": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "681d8b924a96306dc1b52dc551e1ead5673e8b117971586c86b8860464738d74"
+    },
+    "my-i18n": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "aff4ee43fcd01ac799433a4ea1d21847a8e2e042b8f27cbbe1c540e61fc0c420"
+    },
+    "my-permissions": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "52bb4895847b36032372be2ee00e12714ae176444acbdb149ffb17fb9fd70b67"
+    },
+    "my-pr-quick": {
+      "source": "./skills",
+      "sourceType": "local"
+    },
+    "my-proxy": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "06e8fa802550ce4c8d90720a9df1da1e0690660cf6428e41fe1a76fe939ec675"
+    },
+    "my-react-email": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "918aab053edeb5c8112f722b2c699bbe394589f06bae777eac208bc0f2db9529"
+    },
+    "my-react-pdf": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "7d35ff51a21e115ac4a678d9927bf571c7caec4fd2b08d296ec71db541c1e853"
+    },
+    "my-supabase": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "1bcf79df6b74a1628110aa61e187b00471d912637eeaf852c0ed3598e9bd3937"
+    },
+    "my-supabase-codegen": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "c2e587ac302c16c23aec3c3dd4437e60c8bcd7a15e618e64d50bf4edf8a89c4f"
+    },
+    "my-supabase-react": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "3764287c3c7997f2bef6e2b69c8c13a5274cadb65b8e7f3d4627b2d4bfe1b130"
+    },
+    "ponytail": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail/SKILL.md",
+      "computedHash": "55e888f9d81f873068de13d44f4f963595aa2c2c6bb0f9024160bea79f756618"
+    },
+    "ponytail-audit": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail-audit/SKILL.md",
+      "computedHash": "8b8d72e6ff70b65b6c9518d470fcf29dc696eea93d28f3efa10fdcc60cbd696d"
+    },
+    "ponytail-review": {
+      "source": "dietrichgebert/ponytail",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail-review/SKILL.md",
+      "computedHash": "4646594fcd75455533f7ff1425f4f1c5ba0fa65f88241bf262b1c4fc275f049a"
+    },
+    "psql": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "0b9883674249303a60a52964b9a9b170ee40d65f80b2120a108338de467fee37"
+    },
+    "psql-query": {
+      "source": "./skills",
+      "sourceType": "local",
+      "computedHash": "737dfbf7866e81d489cb489bfeecb64284ab1bfc3b88b2a557f9d26b59c9a9f7"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "ac9d0d69caac7de1d1e5647f3db3bcd2f13af355d6b3a78780fbf7fc80e8dca0"
+    },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md",
+      "computedHash": "d414d598b9428b3e851c4ce61898649906b19e55aa7415bb42a286bd9ca2ab32"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
+      "computedHash": "0d2c4857a7d6fdcd3fbc46e458fa4c497f029cab89a01548b3defce203003932"
+    },
+    "turborepo": {
+      "source": "vercel/turborepo",
+      "sourceType": "github",
+      "skillPath": "skills/turborepo/SKILL.md",
+      "computedHash": "b7c3165ae67a2892d6195a5b2cba15c8d96341f5c64ddd0d3ce4225c94a2ae83"
+    },
+    "vercel-cli": {
+      "source": "vercel/vercel",
+      "sourceType": "github",
+      "skillPath": "skills/vercel-cli/SKILL.md",
+      "computedHash": "1e5e86ed5327851f2ab1ed08652c61cc9b194b904d7d44c2c74aa99ad3f5b919"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    }
+  }
+}
 ````
 
 ## File: apps/platform/app/(app)/a/[agency_slug]/actions.ts
@@ -10302,6 +10000,43 @@ className=
 ⋮----
 ````
 
+## File: apps/platform/app/auth/onboarding/state.server.ts
+````typescript
+import { createSupabaseServerClient } from "@packages/supabase/client.server";
+import { URL_NEW } from "@packages/utils/url";
+import { redirect } from "next/navigation";
+import { gql } from "~/generated/graphql";
+import { getGraphySession } from "~/lib/graphy/graphy.server";
+import { METHOD_ORDER, type OnboardingState } from "./state";
+⋮----
+export async function getViewerOnboardingState(): Promise<OnboardingState>
+⋮----
+/** Set by updateUser({email}) flow (NOT by magic link) and is NOT cleared by ConfirmEmailChange, so it persists after completion. */
+⋮----
+export function ASSERT_KNOWN_METHOD(id: string): id is (typeof METHOD_ORDER)[number]
+````
+
+## File: apps/platform/app/layout.tsx
+````typescript
+import { Toaster } from "@packages/ui-common/shadcn/components/ui/sonner";
+import { TooltipProvider } from "@packages/ui-common/shadcn/components/ui/tooltip";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import type { Metadata, Viewport } from "next";
+import { DevEnvConsole } from "~/components/dev-env-console";
+import { GraphyClientProvider } from "~/components/graphy-provider";
+import { PostHogIdentify } from "~/components/posthog-identify";
+import { PostHogProvider } from "~/components/posthog-provider";
+import { PwaRegister } from "~/components/pwa-register";
+import { ThemeProvider } from "~/components/theme-provider";
+import { APP_URL, DEV_ENV_SNAPSHOT, NODE_ENV } from "~/lib/constants";
+import { LocaleProvider } from "~/lib/i18n.client";
+import { getRosetta, getServerLocale } from "~/lib/i18n.server";
+⋮----
+export async function generateMetadata(): Promise<Metadata>
+⋮----
+````
+
 ## File: apps/platform/components/shell/app-sidebar.tsx
 ````typescript
 import { useDeviceInfo } from "@packages/react-hooks/use-device-info";
@@ -10364,99 +10099,6 @@ import type { ShellOrganization, ShellTenant } from "~/components/shell/org-swit
 import type { ShellViewer } from "~/components/shell/profile-menu";
 ⋮----
 initials=
-````
-
-## File: apps/platform/.env.example
-````
-# Supabase Local Development
-# Default values from `pnpm db:start`. Not secrets — only work locally.
-# Copy to apps/platform/.env.local and apps/tenant/.env.local
-
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54421
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
-
-# Cookie domain so the apex (lvh.me:7003) and any tenant subdomain ({slug}.lvh.me:7003) share the session.
-# `lvh.me` is a public DNS wildcard that resolves every name to 127.0.0.1 —
-# no /etc/hosts edits required. Browsers accept cookies on it because it has a real TLD.
-# Local dev: "lvh.me". Production: "example.com". Leave blank to fall back to host-only cookies.
-NEXT_PUBLIC_COOKIE_DOMAIN=lvh.me
-
-# The apex hostname for this deployment (no port — port comes from `PORT`, which the
-# dev script binds to via `--port ${PORT:-7003}` and Conductor assigns per parallel instance).
-# Local dev: "lvh.me". Production: "example.com".
-NEXT_PUBLIC_APEX_HOSTNAME=lvh.me
-
-# Dev-only mailbox (Inbucket from `pnpm db:start`). Surfaced as a "Development only"
-# link on the signup success state so you can grab the magic-link confirmation email
-# without leaving the browser. Leave blank in production.
-NEXT_PUBLIC_DEV_MAILBOX_URL=http://localhost:54424
-
-# Server-side log namespaces (diary via @packages/debug, wired in apps/platform/lib/debug.ts).
-# Default in dev shows everything under "platform:*". Narrow to a slice while debugging, e.g.
-#   DEBUG="platform:passkeys:*"
-#   DEBUG="platform:auth:*,-platform:auth:login"   # exclude noise with a leading "-"
-# Empty or unset = silent.
-DEBUG=platform:*
-
-# ------------------------------------------------------------
-# OAuth providers (read by supabase/config.toml on `pnpm db:start`)
-# Create credentials at the provider console; configure each callback as:
-#   http://127.0.0.1:54421/auth/v1/callback   (local)
-#   https://<project>.supabase.co/auth/v1/callback   (prod)
-# Leave any unused provider blank — `pnpm db:start` will skip it.
-# ------------------------------------------------------------
-
-# Google — https://console.cloud.google.com/apis/credentials
-SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=
-
-# Microsoft (Azure / Entra) — https://portal.azure.com (App registrations)
-SUPABASE_AUTH_EXTERNAL_AZURE_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_AZURE_SECRET=
-
-# LinkedIn — https://www.linkedin.com/developers/apps (use the OIDC product)
-SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_SECRET=
-
-# GitHub — https://github.com/settings/developers (OAuth Apps)
-SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=
-
-# Facebook — https://developers.facebook.com/apps
-SUPABASE_AUTH_EXTERNAL_FACEBOOK_CLIENT_ID=
-SUPABASE_AUTH_EXTERNAL_FACEBOOK_SECRET=
-
-# ------------------------------------------------------------
-# Twilio (phone OTP for onboarding step + future MFA via SMS)
-# Flip [auth.sms.twilio].enabled = true in config.toml after filling these in.
-# https://console.twilio.com
-# ------------------------------------------------------------
-SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID=
-SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID=
-SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN=
-
-# ------------------------------------------------------------
-# OpenTelemetry (optional — traces exported only when set)
-# ------------------------------------------------------------
-# OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
-# OTEL_SERVICE_NAME=saas-template
-# OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=YOUR_API_KEY
-
-# ------------------------------------------------------------
-# PostHog (optional — analytics and feature flags)
-# Create a project at https://app.posthog.com and copy the key from Project Settings.
-# ------------------------------------------------------------
-# NEXT_PUBLIC_POSTHOG_KEY=phc_xxxxx
-# NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
-
-# ------------------------------------------------------------
-# MCP OAuth — Dynamic Client Registration (RFC 7591)
-# Read by config.toml [auth.oauth_server].allow_dynamic_registration on `pnpm db:start`.
-# true  → MCP clients (Claude Code, etc.) can self-register in dev — required locally.
-# false → production default; pre-register clients via Supabase dashboard instead.
-# ------------------------------------------------------------
-SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=true
 ````
 
 ## File: apps/platform/next.config.ts
@@ -11087,192 +10729,9 @@ shape, remove channel on cleanup. Do not cast payload with `as any`.
   feature, auth API is needed, or current code already uses SDK.
 ````
 
-## File: skills-lock.json
-````json
-{
-  "version": 1,
-  "skills": {
-    "caveman": {
-      "source": "juliusbrussee/caveman",
-      "sourceType": "github",
-      "skillPath": "skills/caveman/SKILL.md",
-      "computedHash": "1902fa0b569912d0c05736d8d98a72097d9b82719aac88c0c1d03bb546f9176d"
-    },
-    "caveman-compress": {
-      "source": "juliusbrussee/caveman",
-      "sourceType": "github",
-      "skillPath": "skills/caveman-compress/SKILL.md",
-      "computedHash": "1e9b3e2bf68b75dc0252c4328c8514bea79d4d8f7d7259da616ba7d12cad6865"
-    },
-    "codebase": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "307eb561d25575f5543a8f86fbf4ede14d793bab69ec42952cc8e9fb5973440e"
-    },
-    "find-skills": {
-      "source": "vercel-labs/skills",
-      "sourceType": "github",
-      "skillPath": "skills/find-skills/SKILL.md",
-      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
-    },
-    "frontend-design": {
-      "source": "anthropics/skills",
-      "sourceType": "github",
-      "skillPath": "skills/frontend-design/SKILL.md",
-      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
-    },
-    "integrate-whatsapp": {
-      "source": "gokapso/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/integrate-whatsapp/SKILL.md",
-      "computedHash": "acd8594565afb7b28c5490ce1d52fbb2fd99d998c2d500c70a8bbade56f710aa"
-    },
-    "karpathy-guidelines": {
-      "source": "multica-ai/andrej-karpathy-skills",
-      "sourceType": "github",
-      "skillPath": "skills/karpathy-guidelines/SKILL.md",
-      "computedHash": "41e8ca055bbde13d240776a14a076a59614057200340c243130a76ba4e64cac8"
-    },
-    "my-auth": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "73579054f3516c54d06c4c780dd1578cb0ada0c5f2da01a18505e7f9e11426ab"
-    },
-    "my-conventions": {
-      "source": "./skills",
-      "sourceType": "local"
-    },
-    "my-graphql": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "05734408341dcf11e66c80088a667d29ef76406d490de276de19c549af6f1c2b"
-    },
-    "my-graphql-codegen": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "046943e6da5b6fbf251ea4041fa419306e942617cbb4e90ccf208a5e3662d5fe"
-    },
-    "my-graphy": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "681d8b924a96306dc1b52dc551e1ead5673e8b117971586c86b8860464738d74"
-    },
-    "my-i18n": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "aff4ee43fcd01ac799433a4ea1d21847a8e2e042b8f27cbbe1c540e61fc0c420"
-    },
-    "my-permissions": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "52bb4895847b36032372be2ee00e12714ae176444acbdb149ffb17fb9fd70b67"
-    },
-    "my-pr-quick": {
-      "source": "./skills",
-      "sourceType": "local"
-    },
-    "my-proxy": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "06e8fa802550ce4c8d90720a9df1da1e0690660cf6428e41fe1a76fe939ec675"
-    },
-    "my-react-email": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "918aab053edeb5c8112f722b2c699bbe394589f06bae777eac208bc0f2db9529"
-    },
-    "my-react-pdf": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "7d35ff51a21e115ac4a678d9927bf571c7caec4fd2b08d296ec71db541c1e853"
-    },
-    "my-supabase": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "1bcf79df6b74a1628110aa61e187b00471d912637eeaf852c0ed3598e9bd3937"
-    },
-    "my-supabase-codegen": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "c2e587ac302c16c23aec3c3dd4437e60c8bcd7a15e618e64d50bf4edf8a89c4f"
-    },
-    "my-supabase-react": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "3764287c3c7997f2bef6e2b69c8c13a5274cadb65b8e7f3d4627b2d4bfe1b130"
-    },
-    "ponytail": {
-      "source": "dietrichgebert/ponytail",
-      "sourceType": "github",
-      "skillPath": "skills/ponytail/SKILL.md",
-      "computedHash": "55e888f9d81f873068de13d44f4f963595aa2c2c6bb0f9024160bea79f756618"
-    },
-    "ponytail-audit": {
-      "source": "dietrichgebert/ponytail",
-      "sourceType": "github",
-      "skillPath": "skills/ponytail-audit/SKILL.md",
-      "computedHash": "8b8d72e6ff70b65b6c9518d470fcf29dc696eea93d28f3efa10fdcc60cbd696d"
-    },
-    "ponytail-review": {
-      "source": "dietrichgebert/ponytail",
-      "sourceType": "github",
-      "skillPath": "skills/ponytail-review/SKILL.md",
-      "computedHash": "4646594fcd75455533f7ff1425f4f1c5ba0fa65f88241bf262b1c4fc275f049a"
-    },
-    "psql": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "0b9883674249303a60a52964b9a9b170ee40d65f80b2120a108338de467fee37"
-    },
-    "psql-query": {
-      "source": "./skills",
-      "sourceType": "local",
-      "computedHash": "737dfbf7866e81d489cb489bfeecb64284ab1bfc3b88b2a557f9d26b59c9a9f7"
-    },
-    "shadcn": {
-      "source": "shadcn/ui",
-      "sourceType": "github",
-      "skillPath": "skills/shadcn/SKILL.md",
-      "computedHash": "ac9d0d69caac7de1d1e5647f3db3bcd2f13af355d6b3a78780fbf7fc80e8dca0"
-    },
-    "supabase": {
-      "source": "supabase/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/supabase/SKILL.md",
-      "computedHash": "d414d598b9428b3e851c4ce61898649906b19e55aa7415bb42a286bd9ca2ab32"
-    },
-    "supabase-postgres-best-practices": {
-      "source": "supabase/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
-      "computedHash": "0d2c4857a7d6fdcd3fbc46e458fa4c497f029cab89a01548b3defce203003932"
-    },
-    "turborepo": {
-      "source": "vercel/turborepo",
-      "sourceType": "github",
-      "skillPath": "skills/turborepo/SKILL.md",
-      "computedHash": "b7c3165ae67a2892d6195a5b2cba15c8d96341f5c64ddd0d3ce4225c94a2ae83"
-    },
-    "vercel-cli": {
-      "source": "vercel/vercel",
-      "sourceType": "github",
-      "skillPath": "skills/vercel-cli/SKILL.md",
-      "computedHash": "1e5e86ed5327851f2ab1ed08652c61cc9b194b904d7d44c2c74aa99ad3f5b919"
-    },
-    "vercel-react-best-practices": {
-      "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/react-best-practices/SKILL.md",
-      "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
-    },
-    "web-design-guidelines": {
-      "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/web-design-guidelines/SKILL.md",
-      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
-    }
-  }
-}
+## File: CLAUDE.md
+````markdown
+@AGENTS.md
 ````
 
 ## File: apps/platform/app/(app)/home/page.tsx
@@ -11436,6 +10895,358 @@ import { URL_NEW } from "@packages/utils/url";
 export function DEV_ENV_SNAPSHOT(): Record<string, string>
 ````
 
+## File: packages/supabase/supabase/config.toml
+````toml
+# For detailed configuration reference documentation, visit:
+# https://supabase.com/docs/guides/local-development/cli/config
+# A string used to distinguish different Supabase projects on the same host. Defaults to the
+# working directory name when running `supabase init`.
+project_id = "env(SUPABASE_PROJECT_ID)"
+
+[api]
+enabled = true
+# Port to use for the API URL.
+port = "env(SUPABASE_API_PORT)"
+# Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
+# endpoints. `public` is always included.
+schemas = ["public", "graphql_public", "protected"]
+# Extra schemas to add to the search_path of every request. `public` is always included.
+extra_search_path = ["public", "extensions"]
+# The maximum number of rows returns from a view, table, or stored procedure. Limits payload size
+# for accidental or malicious requests.
+max_rows = 1000
+
+[api.tls]
+enabled = false
+
+[db]
+# Port to use for the local database URL.
+port = "env(SUPABASE_DB_PORT)"
+# Port used by db diff command to initialize the shadow database.
+shadow_port = "env(SUPABASE_SHADOW_PORT)"
+# The database major version to use. This has to be the same as your remote database's. Run `SHOW
+# server_version;` on the remote database to check.
+major_version = 15
+
+[db.pooler]
+enabled = false
+# Port to use for the local connection pooler.
+port = 54429
+# Specifies when a server connection can be reused by other clients.
+# Configure one of the supported pooler modes: `transaction`, `session`.
+pool_mode = "transaction"
+# How many server connections to allow per user/database pair.
+default_pool_size = 20
+# Maximum number of client connections allowed.
+max_client_conn = 100
+
+[db.seed]
+# If enabled, seeds the database after migrations during a db reset.
+enabled = true
+# Specifies an ordered list of seed files to load during db reset.
+# Supports glob patterns relative to supabase directory. For example:
+# sql_paths = ['./seeds/*.sql', '../project-src/seeds/*-load-testing.sql']
+sql_paths = ['./seed.sql']
+
+[realtime]
+enabled = true
+# Bind realtime via either IPv4 or IPv6. (default: IPv4)
+# ip_version = "IPv6"
+# The maximum length in bytes of HTTP request headers. (default: 4096)
+# max_header_length = 4096
+
+[studio]
+enabled = false
+# Port to use for Supabase Studio.
+port = "env(SUPABASE_STUDIO_PORT)"
+# External URL of the API server that frontend connects to.
+api_url = "http://127.0.0.1"
+# OpenAI API Key to use for Supabase AI in the Supabase Studio.
+openai_api_key = "env(OPENAI_API_KEY)"
+
+# Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
+# are monitored, and you can view the emails that would have been sent from the web interface.
+[inbucket]
+enabled = true
+# Port to use for the email testing server web interface.
+port = "env(SUPABASE_INBUCKET_PORT)"
+# Uncomment to expose additional ports for testing user applications that send emails.
+# smtp_port = 54325
+# pop3_port = 54326
+# admin_email = "admin@email.com"
+# sender_name = "Admin"
+
+[storage]
+enabled = true
+# The maximum file size allowed (e.g. "5MB", "500KB").
+file_size_limit = "50MiB"
+
+[storage.image_transformation]
+enabled = true
+
+# Uncomment to configure local storage buckets
+# [storage.buckets.images]
+# public = false
+# file_size_limit = "50MiB"
+# allowed_mime_types = ["image/png", "image/jpeg"]
+# objects_path = "./images"
+
+[auth]
+enabled = true
+# The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
+# in emails. Dev runs HTTPS (mkcert + Next --experimental-https) so WebAuthn has a secure context.
+# site_url is embedded in confirmation/recovery emails as a concrete URL, so it must be a
+# fully-resolved host:port. Conductor reassigns PORT per parallel instance; the npm scripts
+# (db:start / db:reset) inject SUPABASE_AUTH_SITE_URL from $PORT, defaulting to 7003.
+site_url = "env(SUPABASE_AUTH_SITE_URL)"
+# The allow-list uses wildcards. `*` matches any sequence of non-separator chars (separators
+# are `.` and `/` only — see https://supabase.com/docs/guides/auth/redirect-urls), so `:55000`
+# is covered. Apex on any dev port (tenant routing is path-based, no subdomains needed).
+additional_redirect_urls = [
+  "https://lvh.me:*/**",
+  "https://*.exe.xyz:*/**",
+]
+# How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
+jwt_expiry = 3600
+# If disabled, the refresh token will never expire.
+enable_refresh_token_rotation = true
+# Allows refresh tokens to be reused after expiry, up to the specified interval in seconds.
+# Requires enable_refresh_token_rotation = true.
+refresh_token_reuse_interval = 10
+# Allow/disallow new user signups to your project.
+enable_signup = true
+# Allow/disallow anonymous sign-ins to your project.
+enable_anonymous_sign_ins = false
+# Allow/disallow testing manual linking of accounts
+enable_manual_linking = true
+# Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
+minimum_password_length = 6
+# Passwords that do not meet the following requirements will be rejected as weak. Supported values
+# are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
+password_requirements = ""
+
+# OAuth 2.1 authorization server (GoTrue). Required for MCP clients to authenticate as the user.
+# When disabled, /.well-known/oauth-authorization-server returns "OAuth server is disabled" and
+# clients that rely on Dynamic Client Registration (e.g. Claude Code) fail to connect.
+# `authorization_url_path` is the in-app consent screen GoTrue redirects to (see app/oauth/consent).
+# `allow_dynamic_registration`: true = MCP clients self-register via RFC 7591 (dev); false = prod
+# (pre-register clients to prevent anonymous OAuth app creation). Set via env — see .env.example.
+[auth.oauth_server]
+enabled = true
+authorization_url_path = "/oauth/consent"
+allow_dynamic_registration = "env(SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION)"
+
+[auth.email]
+# Allow/disallow new user signups via email to your project.
+enable_signup = true
+# If enabled, a user will be required to confirm any email change on both the old, and new email
+# addresses. If disabled, only the new email is required to confirm.
+double_confirm_changes = true
+# If enabled, users need to confirm their email address before signing in.
+enable_confirmations = true
+# If enabled, users will need to reauthenticate or have logged in recently to change their password.
+secure_password_change = false
+# Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
+max_frequency = "1s"
+# Number of characters used in the email OTP.
+otp_length = 6
+# Number of seconds before the email OTP expires (defaults to 1 hour).
+otp_expiry = 3600
+
+# Use a production-ready SMTP server
+# [auth.email.smtp]
+# host = "smtp.sendgrid.net"
+# port = 587
+# user = "apikey"
+# pass = "env(SENDGRID_API_KEY)"
+# admin_email = "admin@email.com"
+# sender_name = "Admin"
+
+# Custom templates use {{ .TokenHash }} and route through our app at /auth/confirm so the link
+# in the email lands on lvh.me (the app origin) instead of the GoTrue verify endpoint at 127.0.0.1.
+# The confirm route calls supabase.auth.verifyOtp({ token_hash, type }) and redirects to `next`.
+[auth.email.template.confirmation]
+subject = "Confirma tu correo en SaaS Template"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.magic_link]
+subject = "Tu enlace para iniciar sesión en SaaS Template"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.email_change]
+subject = "Confirma tu nuevo correo en SaaS Template"
+content_path = "./supabase/templates/email_change.html"
+
+[auth.sms]
+# Allow/disallow new user signups via SMS to your project.
+enable_signup = true
+# If enabled, users need to confirm their phone number before signing in.
+enable_confirmations = true
+# Template for sending OTP to users
+template = "Tu código de SaaS Template es {{ .Code }}"
+# Controls the minimum amount of time that must pass before sending another sms otp.
+max_frequency = "5s"
+
+# Pre-defined phone → OTP map for local development. Without a real SMS provider, gotrue logs
+# the OTP to docker logs but won't actually deliver. The test_otp map shortcuts that: any OTP
+# request to one of these numbers is "delivered" as the configured code. Uncomment and add the
+# numbers your team tests with.
+# [auth.sms.test_otp]
+# 56990511003 = "123456"
+
+# Configure logged in session timeouts.
+# [auth.sessions]
+# Force log out after the specified duration.
+# timebox = "24h"
+# Force log out if the user has been inactive longer than the specified duration.
+# inactivity_timeout = "8h"
+
+# This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/user_auth_hook"
+
+# Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
+# Flip enabled = true once the SUPABASE_AUTH_SMS_TWILIO_* vars are in .env.local. Without them
+# `pnpm db:start` will refuse to start, so we keep it disabled by default for local dev.
+[auth.sms.twilio]
+enabled = false
+account_sid = "env(SUPABASE_AUTH_SMS_TWILIO_ACCOUNT_SID)"
+message_service_sid = "env(SUPABASE_AUTH_SMS_TWILIO_MESSAGE_SERVICE_SID)"
+# DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
+auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
+
+[auth.mfa]
+# Control how many MFA factors can be enrolled at once per user.
+max_enrolled_factors = 10
+
+# Control use of MFA via App Authenticator (TOTP)
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+# Configure Multi-factor-authentication via Phone Messaging
+[auth.mfa.phone]
+enroll_enabled = false
+verify_enabled = false
+otp_length = 6
+template = "Your code is {{ .Code }}"
+max_frequency = "5s"
+
+# Passkeys via Supabase native WebAuthn MFA — supabase.auth.registerPasskey() / signInWithPasskey().
+[auth.mfa.web_authn]
+enroll_enabled = true
+verify_enabled = true
+
+# Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
+# `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin_oidc`, `notion`, `twitch`,
+# `twitter`, `slack`, `spotify`, `workos`, `zoom`.
+[auth.external.apple]
+enabled = false
+client_id = ""
+# DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
+secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
+# Overrides the default auth redirectUrl.
+redirect_uri = ""
+# Overrides the default auth provider URL. Used to support self-hosted gitlab, single-tenant Azure,
+# or any other third-party OIDC providers.
+url = ""
+# If enabled, the nonce check will be skipped. Required for local sign in with Google auth.
+skip_nonce_check = false
+
+# Flip enabled = true once you've added the credentials in .env.local.
+[auth.external.google]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+# Required for local sign in with Google (Google enforces nonce in prod, can't replay locally).
+skip_nonce_check = true
+
+[auth.external.azure]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_AZURE_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_AZURE_SECRET)"
+# For multi-tenant apps use "https://login.microsoftonline.com/common/v2.0".
+# For single-tenant, replace `common` with the Entra tenant id.
+url = "https://login.microsoftonline.com/common/v2.0"
+
+[auth.external.linkedin_oidc]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_LINKEDIN_OIDC_SECRET)"
+
+[auth.external.github]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET)"
+
+[auth.external.facebook]
+enabled   = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_FACEBOOK_CLIENT_ID)"
+secret    = "env(SUPABASE_AUTH_EXTERNAL_FACEBOOK_SECRET)"
+
+# Use Firebase Auth as a third-party provider alongside Supabase Auth.
+[auth.third_party.firebase]
+enabled = false
+# project_id = "my-firebase-project"
+
+# Use Auth0 as a third-party provider alongside Supabase Auth.
+[auth.third_party.auth0]
+enabled = false
+# tenant = "my-auth0-tenant"
+# tenant_region = "us"
+
+# Use AWS Cognito (Amplify) as a third-party provider alongside Supabase Auth.
+[auth.third_party.aws_cognito]
+enabled = false
+# user_pool_id = "my-user-pool-id"
+# user_pool_region = "us-east-1"
+
+[auth.passkey]
+enabled = true
+
+[auth.webauthn]
+rp_display_name = "SaaS Template"
+rp_id = "env(NEXT_PUBLIC_APEX_HOSTNAME)"
+rp_origins = ["env(SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS)"]
+
+[edge_runtime]
+enabled = false
+# Configure one of the supported request policies: `oneshot`, `per_worker`.
+# Use `oneshot` for hot reload, or `per_worker` for load testing.
+policy = "oneshot"
+# Port to attach the Chrome inspector for debugging edge functions.
+inspector_port = 8183
+
+# Use these configurations to customize your Edge Function.
+# [functions.MY_FUNCTION_NAME]
+# enabled = true
+# verify_jwt = true
+# import_map = "./functions/MY_FUNCTION_NAME/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+# entrypoint = "./functions/MY_FUNCTION_NAME/index.ts"
+
+[analytics]
+enabled = false
+port = "env(SUPABASE_ANALYTICS_PORT)"
+# Configure one of the supported backends: `postgres`, `bigquery`.
+backend = "postgres"
+
+# Experimental features may be deprecated any time
+[experimental]
+# Configures Postgres storage engine to use OrioleDB (S3)
+orioledb_version = ""
+# Configures S3 bucket URL, eg. <bucket_name>.s3-<region>.amazonaws.com
+s3_host = "env(S3_HOST)"
+# Configures S3 bucket region, eg. us-east-1
+s3_region = "env(S3_REGION)"
+# Configures AWS_ACCESS_KEY_ID for S3 bucket
+s3_access_key = "env(S3_ACCESS_KEY)"
+# Configures AWS_SECRET_ACCESS_KEY for S3 bucket
+s3_secret_key = "env(S3_SECRET_KEY)"
+````
+
 ## File: skills/my-i18n/SKILL.md
 ````markdown
 ---
@@ -11590,325 +11401,6 @@ needing the same key each duplicate it (colocation beats DRY).
 - Avoid `IS_SUPPORTED_LOCALE`, trust Rosetta.
 - HTML `lang` uses BCP47 mapping from `LOCALE_TO_BCP47` when full tag needed.
 - `generateStaticParams` for locale-parameterized pages must include `locale`: `SUPPORTED_LOCALES.flatMap(locale => items.map(item => ({ locale, ...item })))`.
-````
-
-## File: skills/my-supabase/SKILL.md
-````markdown
----
-name: my-supabase
-description: Repository-specific Supabase Postgres schema, multi-tenancy, RLS, SQL naming, functions, triggers, storage, seed, and pgTAP workflow.
----
-
-# Supabase SQL
-
-Source of truth:
-
-```text
-packages/supabase/supabase/migrations/00000000000000_schema.sql
-```
-
-Prototype workflow: edit this file directly, then `pnpm db:reset`. Never `DROP ... CASCADE`.
-
-## Core model
-
-```sql
-tenants(
-  tenant_id serial,
-  tenant_slug citext,
-  tenant_name text
-)
-
-organizations(
-  organization_id serial,
-  tenant_id int,
-  organization_slug citext,
-  organization_name text
-)
-
-organization_memberships(
-  organization_membership_id serial,
-  organization_id int,
-  profile_id uuid,
-  organization_membership_accepted_at timestamptz,
-  organization_membership_rejected_at timestamptz,
-  organization_membership_revoked_at timestamptz,
-  ...
-)
-```
-
-Tenant-scoped product tables carry `tenant_id int`; org-scoped tables also carry
-`organization_id int`. Use indexed filters plus RLS.
-
-## Naming
-
-- `snake_case` only.
-- No hyphens in identifiers or enum values. pg_graphql can lose whole schema.
-- External spec hyphen literal: `text` + `check`, not enum.
-- PK/columns use semantic prefixes already present (`tenant_id`, `profile_created_at`).
-- `timestamptz`, not timestamp without timezone.
-- plpgsql locals start `_`.
-- Pure SQL/TS helpers follow repository uppercase convention where applicable.
-
-## RLS
-
-Every exposed table:
-
-```sql
-alter table public.example enable row level security;
-revoke all on table public.example from anon, authenticated;
-grant select, insert, update, delete
-  on table public.example to anon, authenticated;
-```
-
-`anon` grants may be needed for GraphQL schema visibility. RLS still gates rows.
-
-Prefer viewer helpers:
-
-```sql
-tenant_id in (select public.viewer_tenant_ids())
-organization_id in (select public.viewer_organization_ids())
-organization_id in (
-  select public.viewer_permission_org_ids('members_manage')
-)
-```
-
-Do not parse JWT ad hoc in each policy. Do not rely on app filtering.
-
-## Security-definer functions
-
-Use `set search_path to ''` and schema-qualify objects:
-
-```sql
-create or replace function public.example(...)
-returns ...
-security definer
-language sql
-set search_path to ''
-as $$
-  select ... from public.table_name;
-$$;
-```
-
-Grant execute narrowly. Review privilege escalation and recursive RLS.
-
-For a mutation that creates one table row, return the complete composite row:
-
-```sql
-create or replace function protected.tenant_create(
-  profile_id uuid,
-  tenant_slug text,
-  tenant_name text
-)
-  returns setof public.tenants rows 1
-  volatile
-  security definer
-  language plpgsql
-  set search_path to ''
-  as $$
-    -- Perform the complete transactional workflow.
-  $$;
-
-create or replace function public.viewer_tenant_create(
-  tenant_slug text,
-  tenant_name text
-)
-  returns setof public.tenants rows 1
-  volatile
-  security definer
-  language sql
-  set search_path to ''
-  as $$
-    select tenant.*
-    from protected.tenant_create(
-      public.viewer_profile_id(true),
-      $1,
-      $2
-    ) tenant;
-  $$;
-```
-
-- `protected.*_create(profile_id, ...)` owns the transaction and is the single source of truth.
-- `public.viewer_*_create(...)` only resolves the current profile and delegates.
-- Declare mutation functions explicitly `volatile`.
-- Use `returns setof public.<table> rows 1`, not a scalar ID. Supabase types preserve the
-  complete row and mark the result one-to-one.
-- Revoke protected execution from `public`; grant it only to trusted server roles.
-- Grant the viewer wrapper to `anon, authenticated` when pg_graphql needs anon visibility.
-
-## plpgsql style
-
-Prefer `if / elsif` over consecutive `if … end if; if … end if;` blocks. Consecutive guards
-waste lines and force the reader to scan more `end if`s. Chain with `elsif`, or combine with `or`
-when the body is identical:
-
-```sql
--- ❌ Two separate blocks
-if public.viewer_profile_id() is null then
-  return old;
-end if;
-if old.permission_id not in ('members_manage', '*') then
-  return old;
-end if;
-
--- ✅ Single block, elsif
-if public.viewer_profile_id() is null then
-  return old;
-elsif old.permission_id not in ('members_manage', '*') then
-  return old;
-end if;
-
--- ✅ Same action → combine with `or`
-if old.organization_membership_revoked_at is not null or new.organization_membership_revoked_at is null then
-  return new;
-end if;
-```
-
-## Multi-step DB writes must be a single RPC
-
-Never sequence multiple `.from().insert()` / `.update()` for one logical operation — each call is
-its own round-trip and transaction; a crash or race between them leaves the DB partial. Write one
-`security definer` plpgsql function doing read-check + write atomically, call via `.rpc()`.
-
-- DB mutations (insert, update, upsert, permission checks) → SQL RPC, `security definer`.
-- External side effects (`auth.admin.*`, GoTrue user creation, email send) → stay in the action; can't be transactional.
-- RPCs raise with a stable locale key as the message; the action matches `rpcError.message` against
-  LOCALES keys — never parse prose:
-  ```sql
-  raise exception 'already_member' using errcode = 'P0001';
-  ```
-
-**Client choice** (which client calls the RPC):
-- **Service-role client** — RPCs requiring `caller_id` passed explicitly (service role has no JWT `sub`).
-- **Authenticated server client** — RPCs calling `viewer_profile_id()` internally (e.g. `actionRespondInvitation`).
-- **`useGraphyMutation` from the client component — DEFAULT for viewer-scoped mutations.** If the whole
-  workflow is transactional SQL, calls `viewer_*` internally, and needs no server-only API/secret,
-  expose it through pg_graphql and call it as a GraphQL mutation. Do NOT wrap it in a pass-through
-  Server Action. (GraphQL exposure + return shape: see `my-graphql`.)
-
-## Lifecycle/invariants
-
-Use constraints/triggers for facts that must survive every caller. Current schema protects
-membership claim consistency, last admin, self-revocation, permission preset slugs, normalized
-identity/invite values, reserved tenant slugs.
-
-## Storage
-
-Bucket name matches owner table (`profiles`, `organizations`). First object path segment is row
-PK. Public buckets allow URL reads; `storage.objects` RLS gates writes. Add storage pgTAP when
-changing policies.
-
-## Seed
-
-`packages/supabase/supabase/seed.sql` owns reserved slugs, permission catalog/presets, local
-fixtures. Make reset idempotent.
-
-## Tests
-
-```bash
-pnpm db:start
-pnpm test:db
-```
-
-Test file:
-
-```sql
-begin;
-select plan(N);
-set local role authenticated;
-set local request.jwt.claims to '...'::jsonb::text;
--- assertions
-select * from finish();
-rollback;
-```
-
-Without authenticated role, postgres bypasses RLS.
-
-## After schema change
-
-```bash
-pnpm db:reset
-pnpm generate:types
-pnpm generate:graphql:schema
-pnpm --filter @apps/platform run generate:graphql
-pnpm test:db
-```
-````
-
-## File: .gitignore
-````
-# Dependencies
-node_modules/
-
-# Next.js
-.next/
-out/
-
-# Build outputs
-dist/
-build/
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Per-worktree dev URL/port map (generated by pnpm db:env:development)
-.dev-env.md
-
-# Local TLS certs (mkcert-generated, machine-specific, never commit private keys)
-**/certificates/
-
-# Turbo
-.turbo/
-
-# Vercel
-.vercel/
-
-# Supabase
-**/supabase/.branches
-**/supabase/.temp
-
-# Playwright
-**/test-results/
-**/playwright-report/
-**/playwright/.cache/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-
-# Editor
-.idea/
-*.swp
-*.swo
-
-# Playwright
-.playwright-mcp
-.claude/worktrees/
-
-# Skills — third-party vendored (committed), but runtime artifacts are not
-skills-third-party/**/__pycache__/
-skills-third-party/**/*.pyc
-skills-third-party/**/*.pyo
-skills-third-party/**/.pytest_cache/
-skills-third-party/**/.mypy_cache/
-skills-third-party/**/*.egg-info/
-skills-third-party/**/dist/
-skills-third-party/**/.ruff_cache/
-
-# Agent skill stores — generated symlinks, not committed.
-# Rebuilt on `pnpm install` via postinstall (scripts/skills-setup.mjs): every dir
-# in skills/ (first-party) and skills-third-party/ (vendored) is symlinked here.
-# Source of truth: skills/ + skills-third-party/ (both committed).
-# .agents/skills/ is the universal store read by Codex, Cursor, Copilot, OpenCode, Zed.
-.agents/skills/
-agent/skills/
-.claude/skills/
 ````
 
 ## File: biome.jsonc
@@ -12153,27 +11645,6 @@ import { AuthCard } from "../_components/auth-card";
 import { signOutForm } from "./actions";
 ````
 
-## File: apps/platform/app/layout.tsx
-````typescript
-import { Toaster } from "@packages/ui-common/shadcn/components/ui/sonner";
-import { TooltipProvider } from "@packages/ui-common/shadcn/components/ui/tooltip";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import type { Metadata, Viewport } from "next";
-import { DevEnvConsole } from "~/components/dev-env-console";
-import { GraphyClientProvider } from "~/components/graphy-provider";
-import { PostHogIdentify } from "~/components/posthog-identify";
-import { PostHogProvider } from "~/components/posthog-provider";
-import { PwaRegister } from "~/components/pwa-register";
-import { ThemeProvider } from "~/components/theme-provider";
-import { APP_URL, DEV_ENV_SNAPSHOT, NODE_ENV } from "~/lib/constants";
-import { LocaleProvider } from "~/lib/i18n.client";
-import { getRosetta, getServerLocale } from "~/lib/i18n.server";
-⋮----
-export async function generateMetadata(): Promise<Metadata>
-⋮----
-````
-
 ## File: apps/platform/components/shell/settings-menu.tsx
 ````typescript
 import { useMounted } from "@packages/react-hooks/use-mounted";
@@ -12236,11 +11707,6 @@ className=
 <Button variant="outline" className="h-9" onClick=
 ⋮----
 function RESOLVE_COPY(locale: string): Record<SystemKind, Copy>
-````
-
-## File: CLAUDE.md
-````markdown
-@AGENTS.md
 ````
 
 ## File: packages/supabase/supabase/seed.sql
@@ -13102,23 +12568,500 @@ insert into public.addresses_level3 (address_level0_id, address_level1_id, addre
 on conflict (address_level0_id, address_level1_id, address_level2_id, address_level3_id) do nothing;
 ````
 
-## File: scripts/development/env-setup.ts
+## File: packages/ui-common/package.json
+````json
+{
+  "name": "@packages/ui-common",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build:dry": "tsc --noEmit",
+    "format": "biome check --diagnostic-level=error .",
+    "test": "vitest run"
+  },
+  "exports": {
+    "./shadcn/globals.css": "./src/shadcn/globals.css",
+    "./shadcn/lib/*": "./src/shadcn/lib/*.ts",
+    "./shadcn/components/*": "./src/shadcn/components/*.tsx",
+    "./shadcn/hooks/*": "./src/shadcn/hooks/*.ts",
+    "./*": "./src/*.tsx"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "input-otp": "^1.4.2",
+    "lucide-react": "^1.21.0",
+    "next-themes": "^0.4.6",
+    "radix-ui": "^1.6.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss-safe-area": "^1.3.0"
+  },
+  "devDependencies": {
+    "@packages/typescript-config": "workspace:*",
+    "@tailwindcss/typography": "^0.5.20",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "jsdom": "^29.1.1",
+    "shadcn": "^4.11.0",
+    "tailwindcss": "^4.3.1",
+    "tw-animate-css": "^1.4.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
+````
+
+## File: skills/my-supabase/SKILL.md
+````markdown
+---
+name: my-supabase
+description: Repository-specific Supabase Postgres schema, multi-tenancy, RLS, SQL naming, functions, triggers, storage, seed, and pgTAP workflow.
+---
+
+# Supabase SQL
+
+Source of truth:
+
+```text
+packages/supabase/supabase/migrations/00000000000000_schema.sql
+```
+
+Prototype workflow: edit this file directly, then `pnpm db:reset`. Never `DROP ... CASCADE`.
+
+## Core model
+
+```sql
+tenants(
+  tenant_id serial,
+  tenant_slug citext,
+  tenant_name text
+)
+
+organizations(
+  organization_id serial,
+  tenant_id int,
+  organization_slug citext,
+  organization_name text
+)
+
+organization_memberships(
+  organization_membership_id serial,
+  organization_id int,
+  profile_id uuid,
+  organization_membership_accepted_at timestamptz,
+  organization_membership_rejected_at timestamptz,
+  organization_membership_revoked_at timestamptz,
+  ...
+)
+```
+
+Tenant-scoped product tables carry `tenant_id int`; org-scoped tables also carry
+`organization_id int`. Use indexed filters plus RLS.
+
+## Naming
+
+- `snake_case` only.
+- No hyphens in identifiers or enum values. pg_graphql can lose whole schema.
+- External spec hyphen literal: `text` + `check`, not enum.
+- PK/columns use semantic prefixes already present (`tenant_id`, `profile_created_at`).
+- `timestamptz`, not timestamp without timezone.
+- plpgsql locals start `_`.
+- Pure SQL/TS helpers follow repository uppercase convention where applicable.
+
+## RLS
+
+Every exposed table:
+
+```sql
+alter table public.example enable row level security;
+revoke all on table public.example from anon, authenticated;
+grant select, insert, update, delete
+  on table public.example to anon, authenticated;
+```
+
+`anon` grants may be needed for GraphQL schema visibility. RLS still gates rows.
+
+Prefer viewer helpers:
+
+```sql
+tenant_id in (select public.viewer_tenant_ids())
+organization_id in (select public.viewer_organization_ids())
+organization_id in (
+  select public.viewer_permission_org_ids('members_manage')
+)
+```
+
+Do not parse JWT ad hoc in each policy. Do not rely on app filtering.
+
+## Security-definer functions
+
+Use `set search_path to ''` and schema-qualify objects:
+
+```sql
+create or replace function public.example(...)
+returns ...
+security definer
+language sql
+set search_path to ''
+as $$
+  select ... from public.table_name;
+$$;
+```
+
+Grant execute narrowly. Review privilege escalation and recursive RLS.
+
+For a mutation that creates one table row, return the complete composite row:
+
+```sql
+create or replace function protected.tenant_create(
+  profile_id uuid,
+  tenant_slug text,
+  tenant_name text
+)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    -- Perform the complete transactional workflow.
+  $$;
+
+create or replace function public.viewer_tenant_create(
+  tenant_slug text,
+  tenant_name text
+)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language sql
+  set search_path to ''
+  as $$
+    select tenant.*
+    from protected.tenant_create(
+      public.viewer_profile_id(true),
+      $1,
+      $2
+    ) tenant;
+  $$;
+```
+
+- `protected.*_create(profile_id, ...)` owns the transaction and is the single source of truth.
+- `public.viewer_*_create(...)` only resolves the current profile and delegates.
+- Declare mutation functions explicitly `volatile`.
+- Use `returns setof public.<table> rows 1`, not a scalar ID. Supabase types preserve the
+  complete row and mark the result one-to-one.
+- Revoke protected execution from `public`; grant it only to trusted server roles.
+- Grant the viewer wrapper to `anon, authenticated` when pg_graphql needs anon visibility.
+
+## plpgsql style
+
+Prefer `if / elsif` over consecutive `if … end if; if … end if;` blocks. Consecutive guards
+waste lines and force the reader to scan more `end if`s. Chain with `elsif`, or combine with `or`
+when the body is identical:
+
+```sql
+-- ❌ Two separate blocks
+if public.viewer_profile_id() is null then
+  return old;
+end if;
+if old.permission_id not in ('members_manage', '*') then
+  return old;
+end if;
+
+-- ✅ Single block, elsif
+if public.viewer_profile_id() is null then
+  return old;
+elsif old.permission_id not in ('members_manage', '*') then
+  return old;
+end if;
+
+-- ✅ Same action → combine with `or`
+if old.organization_membership_revoked_at is not null or new.organization_membership_revoked_at is null then
+  return new;
+end if;
+```
+
+## Multi-step DB writes must be a single RPC
+
+Never sequence multiple `.from().insert()` / `.update()` for one logical operation — each call is
+its own round-trip and transaction; a crash or race between them leaves the DB partial. Write one
+`security definer` plpgsql function doing read-check + write atomically, call via `.rpc()`.
+
+- DB mutations (insert, update, upsert, permission checks) → SQL RPC, `security definer`.
+- External side effects (`auth.admin.*`, GoTrue user creation, email send) → stay in the action; can't be transactional.
+- RPCs raise with a stable locale key as the message; the action matches `rpcError.message` against
+  LOCALES keys — never parse prose:
+  ```sql
+  raise exception 'already_member' using errcode = 'P0001';
+  ```
+
+**Client choice** (which client calls the RPC):
+- **Service-role client** — RPCs requiring `caller_id` passed explicitly (service role has no JWT `sub`).
+- **Authenticated server client** — RPCs calling `viewer_profile_id()` internally (e.g. `actionRespondInvitation`).
+- **`useGraphyMutation` from the client component — DEFAULT for viewer-scoped mutations.** If the whole
+  workflow is transactional SQL, calls `viewer_*` internally, and needs no server-only API/secret,
+  expose it through pg_graphql and call it as a GraphQL mutation. Do NOT wrap it in a pass-through
+  Server Action. (GraphQL exposure + return shape: see `my-graphql`.)
+
+## pg_graphql computed relationships
+
+Use a computed relationship to expose a related row as a single object field on a parent type,
+avoiding an extra SDK call. pg_graphql detects functions whose first argument is a row type.
+
+```sql
+create or replace function public.profile_identity(this public.profiles)
+  returns setof public.profile_identities rows 1
+  stable
+  strict
+  security invoker
+  parallel safe
+  language sql
+  set search_path to ''
+as $$
+  select *
+  from public.profile_identities
+  where profile_id = this.profile_id
+    and profile_identity_deleted_at is null
+  limit 1;
+$$;
+
+grant execute on function public.profile_identity(public.profiles) to anon, authenticated;
+```
+
+Works equally well for views — if the target is a `security_invoker` view (e.g. `storage_profiles`),
+the view's own RLS applies through the caller. Example: `profile_avatar` returns the latest avatar
+from the `storage_profiles` view with `folder = 'avatar' order by created_at desc limit 1`,
+replacing a verbose connection query (`edges[0].node.src`) with a plain object field (`avatar { src }`).
+
+Key attributes:
+- `rows 1` — tells pg_graphql to expose the result as a single object (not a connection).
+- `strict` — returns NULL automatically when `this` is NULL; no defensive null-check needed.
+- `security invoker` — runs as the calling user so RLS on the target table still applies; prefer over `security definer` unless you explicitly need to bypass RLS.
+- `parallel safe` — lets the planner parallelize queries that include this function.
+- Grant `execute` to `anon, authenticated` so pg_graphql can introspect and call it.
+
+After adding the function run `pnpm generate:graphql:schema` then `pnpm --filter @apps/platform run generate:graphql` to pick up the new field.
+
+## Lifecycle/invariants
+
+Use constraints/triggers for facts that must survive every caller. Current schema protects
+membership claim consistency, last admin, self-revocation, permission preset slugs, normalized
+identity/invite values, reserved tenant slugs.
+
+## Soft-delete (`deleted_at` + `internal.soft_delete()`)
+
+**No hard-delete by default.** Reusable `before delete` trigger → every `DELETE` becomes a stamp
+on `*_deleted_at timestamptz`. Load-bearing: RLS, partial indexes, view fns all assume deleted
+rows filtered out, not gone. Project-wide invariant for any new table.
+
+Trigger fn generic (one def, all tables) — uses `ctid`, never needs PK:
+
+```sql
+create or replace function internal.soft_delete()
+  returns trigger
+  language plpgsql
+  set search_path to ''
+as $$
+  begin
+    execute format(
+      'update %I.%I set %I = current_timestamp where ctid = $1',
+      tg_table_schema, tg_table_name, tg_argv[0]
+    ) using old.ctid;
+    return null;  -- cancels the physical DELETE
+  end;
+$$;
+```
+
+**New table soft-delete** — 3 pieces, all named after table:
+
+```sql
+-- 1. column
+example_deleted_at timestamptz,
+
+-- 2. partial index (choose by intent)
+create index if not exists examples_deleted_at_idx           -- archive lookups
+  on public.examples (example_deleted_at) where example_deleted_at is not null;
+-- or, to scope a UNIQUE / hot-path index to live rows only:
+--   ... where example_deleted_at is null;
+
+-- 3. trigger (the WHEN guard makes a second DELETE on an already-deleted row purge for real)
+drop trigger if exists soft_delete on public.examples;
+create trigger soft_delete
+  before delete on public.examples
+  for each row when (old.example_deleted_at is null)
+  execute function internal.soft_delete('example_deleted_at');
+```
+
+**RLS must filter deleted rows.** Add `example_deleted_at is null` to SELECT policy `using`
+clause (and any view fn joining table). Trigger only stops delete, does not hide row:
+
+```sql
+create policy "examples select live"
+  on public.examples for select
+  using (example_deleted_at is null and ...);
+```
+
+Rules:
+- **Restore** = `update ... set example_deleted_at = null`.
+- **Purge** = `DELETE` row whose `example_deleted_at` already set (`WHEN` guard lets it through).
+- **FK `on delete cascade` does not fire** (physical delete cancelled). Child must follow parent →
+  soft-delete it explicitly in same RPC.
+- Tables with `deleted_at` today: `profiles`, `conversation_topics`, `tenants`,
+  `organizations`, `agencies`, `addresses_level0..3`, `profile_identities`.
+
+## Storage
+
+Bucket name matches owner table (`profiles`, `organizations`). First object path segment is row
+PK. Public buckets allow URL reads; `storage.objects` RLS gates writes. Add storage pgTAP when
+changing policies.
+
+## Seed
+
+`packages/supabase/supabase/seed.sql` owns reserved slugs, permission catalog/presets, local
+fixtures. Make reset idempotent.
+
+## Tests
+
+```bash
+pnpm db:start
+pnpm test:db
+```
+
+Test file:
+
+```sql
+begin;
+select plan(N);
+set local role authenticated;
+set local request.jwt.claims to '...'::jsonb::text;
+-- assertions
+select * from finish();
+rollback;
+```
+
+Without authenticated role, postgres bypasses RLS.
+
+## After schema change
+
+```bash
+pnpm db:reset
+pnpm generate:types                               # Supabase TS types from DB
+pnpm generate:graphql:schema                      # GraphQL schema JSON/SDL from live DB
+pnpm --filter @apps/platform run generate:graphql # TS operation types from schema + operations
+pnpm test:db
+```
+
+`generate:graphql:schema` must run before `generate:graphql` — the latter reads the schema JSON output of the former.
+````
+
+## File: .gitignore
+````
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Build outputs
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Per-worktree dev URL/port map (generated by pnpm db:env:development)
+.dev-env.md
+
+# Local TLS certs (mkcert-generated, machine-specific, never commit private keys)
+**/certificates/
+
+# Turbo
+.turbo/
+
+# Vercel
+.vercel/
+
+# Supabase
+**/supabase/.branches
+**/supabase/.temp
+
+# Playwright
+**/test-results/
+**/playwright-report/
+**/playwright/.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor
+.idea/
+*.swp
+*.swo
+
+# Playwright
+.playwright-mcp
+.claude/worktrees/
+
+# Skills — third-party vendored (committed), but runtime artifacts are not
+skills-third-party/**/__pycache__/
+skills-third-party/**/*.pyc
+skills-third-party/**/*.pyo
+skills-third-party/**/.pytest_cache/
+skills-third-party/**/.mypy_cache/
+skills-third-party/**/*.egg-info/
+skills-third-party/**/dist/
+skills-third-party/**/.ruff_cache/
+
+# Agent skill stores — generated symlinks, not committed.
+# Rebuilt on `pnpm install` via postinstall (scripts/skills-setup.mjs): every dir
+# in skills/ (first-party) and skills-third-party/ (vendored) is symlinked here.
+# Source of truth: skills/ + skills-third-party/ (both committed).
+# .agents/skills/ is the universal store read by Codex, Cursor, Copilot, OpenCode, Zed.
+.agents/skills/
+agent/skills/
+.claude/skills/
+````
+
+## File: apps/platform/components/shell/org-switcher.tsx
 ````typescript
-import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { dedent } from "ts-dedent";
+import { cn } from "@packages/ui-common/shadcn/lib/utils";
+import { ArrowLeftRight, Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
+import Link from "next/link";
+import { useRef, useState } from "react";
 ⋮----
-// When running on an exe.dev VM, browser-facing URLs must use the VM's public host
-// `<vm>.exe.xyz` (TLS terminated by exe.dev's proxy, ports forwarded in 3000-9999) instead
-// of `127.0.0.1`/lvh.me. Set by exe-dev-setup.sh. Server-only URLs (DATABASE_URL) stay local
-// because the app runs ON the VM. See scripts/development/exe-dev-setup.sh.
+import { EntityAvatar } from "~/components/entity-avatar";
+import { Tip, useClickOutside } from "~/components/shell/atoms";
+import type { ViewerOrganizationUseFragmentType } from "~/hooks/use-viewer-organizations";
+import type { ViewerTenantUseFragmentType } from "~/hooks/use-viewer-tenants";
+import { useRosetta } from "~/lib/i18n.client";
+import { ROUTE } from "~/lib/route";
 ⋮----
-function PUBLIC_URL(localUrl: string): string
+export type ShellOrganization = ViewerOrganizationUseFragmentType;
+export type ShellTenant = ViewerTenantUseFragmentType;
 ⋮----
-// Mirror into apps/platform so graphql-codegen (via @next/env loadEnvConfig) picks up dynamic ports.
-// apps/platform/.env.local has default fallback values; this .env.development.local overrides them.
+className=
+⋮----
+onClick=
+⋮----
+href=
 ````
 
 ## File: skills/my-graphql/SKILL.md
@@ -13417,6 +13360,51 @@ mutation CreateTenant($tenant_name: String!, $tenant_slug: String!) {
   `viewer_conversation_by_id(conversation_id uuid)` → `viewerConversationById(conversationId: UUID!)`.
 - Relationships follow DB foreign keys; FK cardinality determines singular vs plural field name.
 
+### Computed relationships
+
+A SQL function whose first argument is a row type is exposed as a field on that type in GraphQL.
+Use `returns setof public.<table> rows 1` to get a singular nullable object (no `edges[0].node`
+unwrapping). Works for both tables and views.
+
+**Naming**: `public.profile_storage_avatar(this public.profiles)` → `profileStorageAvatar` on `Profiles`.
+
+**In GraphQL** — replaces a verbose collection query:
+
+```graphql
+# ❌ Before: collection with filter/orderBy + edges unwrap
+avatar: storage_profiles(
+  filter: { folder: { eq: "avatar" } }
+  orderBy: [{ createdAt: DescNullsLast }]
+  first: 1
+) {
+  edges { node { src } }
+}
+
+# ✅ After: computed relationship, plain object
+avatar: profileStorageAvatar {
+  src
+}
+```
+
+**SQL template** (full attribute rationale in `my-supabase`):
+
+```sql
+create or replace function public.<name>(this public.<parent_table>)
+  returns setof public.<child_table> rows 1
+  stable strict security invoker parallel safe
+  language sql set search_path to ''
+as $$
+  select * from public.<child_table>
+  where <fk_col> = this.<pk_col>
+    and <active_condition>
+  order by <pk_col> desc
+  limit 1;
+$$;
+grant execute on function public.<name>(public.<parent_table>) to anon, authenticated;
+```
+
+After adding: `generate:graphql:schema` → `generate:graphql`.
+
 ## SQL compatibility
 
 - No hyphens in identifiers or enum values. One invalid enum can break whole introspection.
@@ -13456,79 +13444,43 @@ All steps required in order when changing SQL schema. Skipping `generate:graphql
 the SDL stale and codegen may silently pass with wrong field names.
 ````
 
-## File: apps/platform/components/shell/org-switcher.tsx
+## File: apps/platform/components/shell/profile-menu.tsx
 ````typescript
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { ArrowLeftRight, Check, ChevronsUpDown, Plus, Settings } from "lucide-react";
+import { INITIALS_OF } from "@packages/utils/string";
+import { Bell, ChevronsUpDown, KeyRound, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 ⋮----
-import { EntityAvatar } from "~/components/entity-avatar";
-import { Tip, useClickOutside } from "~/components/shell/atoms";
-import type { ViewerOrganizationUseFragmentType } from "~/hooks/use-viewer-organizations";
-import type { ViewerTenantUseFragmentType } from "~/hooks/use-viewer-tenants";
+import { InitialsAvatar, Tip, useClickOutside } from "~/components/shell/atoms";
+import type { ViewerProfileUseFragmentType } from "~/hooks/use-viewer-profile";
 import { useRosetta } from "~/lib/i18n.client";
 import { ROUTE } from "~/lib/route";
 ⋮----
-export type ShellOrganization = ViewerOrganizationUseFragmentType;
-export type ShellTenant = ViewerTenantUseFragmentType;
+export type ShellViewer = ViewerProfileUseFragmentType & { email: string };
 ⋮----
 className=
-⋮----
-onClick=
 ⋮----
 href=
 ````
 
-## File: packages/ui-common/package.json
-````json
-{
-  "name": "@packages/ui-common",
-  "version": "0.0.0",
-  "private": true,
-  "sideEffects": false,
-  "scripts": {
-    "build:dry": "tsc --noEmit",
-    "format": "biome check --diagnostic-level=error .",
-    "test": "vitest run"
-  },
-  "exports": {
-    "./shadcn/globals.css": "./src/shadcn/globals.css",
-    "./shadcn/lib/*": "./src/shadcn/lib/*.ts",
-    "./shadcn/components/*": "./src/shadcn/components/*.tsx",
-    "./shadcn/hooks/*": "./src/shadcn/hooks/*.ts",
-    "./*": "./src/*.tsx"
-  },
-  "dependencies": {
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "input-otp": "^1.4.2",
-    "lucide-react": "^1.21.0",
-    "next-themes": "^0.4.6",
-    "radix-ui": "^1.6.0",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.6.0",
-    "tailwindcss-safe-area": "^1.3.0"
-  },
-  "devDependencies": {
-    "@packages/typescript-config": "workspace:*",
-    "@tailwindcss/typography": "^0.5.20",
-    "@testing-library/react": "^16.3.0",
-    "@types/node": "^24.12.4",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "jsdom": "^29.1.1",
-    "shadcn": "^4.11.0",
-    "tailwindcss": "^4.3.1",
-    "tw-animate-css": "^1.4.0",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
-  },
-  "peerDependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  }
-}
+## File: scripts/development/env-setup.ts
+````typescript
+import { execSync } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { dedent } from "ts-dedent";
+⋮----
+// When running on an exe.dev VM, browser-facing URLs must use the VM's public host
+// `<vm>.exe.xyz` (TLS terminated by exe.dev's proxy, ports forwarded in 3000-9999) instead
+// of `127.0.0.1`/lvh.me. Set by exe-dev-setup.sh. Server-only URLs (DATABASE_URL) stay local
+// because the app runs ON the VM. See scripts/development/exe-dev-setup.sh.
+⋮----
+function PUBLIC_URL(localUrl: string): string
+⋮----
+// Mirror into apps/platform so graphql-codegen (via @next/env loadEnvConfig) picks up dynamic ports.
+// apps/platform/.env.local has default fallback values; this .env.development.local overrides them.
 ````
 
 ## File: apps/platform/components/shell/command-palette.tsx
@@ -13577,82 +13529,6 @@ import { BUILD_NAV_TREE, IS_NAV_GROUP, type NavLeaf, PICK_ACTIVE_LEAF_ID } from 
 import type { ShellOrganization, ShellTenant } from "~/components/shell/org-switcher";
 import type { ShellViewer } from "~/components/shell/profile-menu";
 import { useRosetta } from "~/lib/i18n.client";
-````
-
-## File: apps/platform/components/shell/profile-menu.tsx
-````typescript
-import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { INITIALS_OF } from "@packages/utils/string";
-import { Bell, ChevronsUpDown, KeyRound, LogOut, User } from "lucide-react";
-import Link from "next/link";
-import { useRef, useState } from "react";
-⋮----
-import { InitialsAvatar, Tip, useClickOutside } from "~/components/shell/atoms";
-import type { ViewerProfileUseFragmentType } from "~/hooks/use-viewer-profile";
-import { useRosetta } from "~/lib/i18n.client";
-import { ROUTE } from "~/lib/route";
-⋮----
-export type ShellViewer = ViewerProfileUseFragmentType & { email: string };
-⋮----
-className=
-⋮----
-href=
-````
-
-## File: packages/supabase/package.json
-````json
-{
-  "name": "@packages/supabase",
-  "version": "0.0.0",
-  "private": true,
-  "sideEffects": false,
-  "scripts": {
-    "build:dry": "tsc --noEmit",
-    "db:start": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase start",
-    "db:stop": "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase stop",
-    "db:reset": "SUPABASE_AUTH_SITE_URL=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_WEBAUTHN_RP_ORIGINS=\"https://lvh.me:${PORT:-7003}\" SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase db reset",
-    "db:status": "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase status",
-    "db:migrate:new": "supabase migration new",
-    "db:migrate:up": "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase migration up",
-    "generate:types": "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase gen types --lang=typescript --local --schema public > src/types.ts",
-    "generate:graphql:schema": "graphql-codegen -c graphql.config.ts",
-    "generate:graphql:schema:local": "graphql-codegen -c graphql.config.ts --local",
-    "format": "biome check --diagnostic-level=error .",
-    "test:db": "SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION=\"${SUPABASE_AUTH_ALLOW_DYNAMIC_REGISTRATION:-true}\" supabase test db --local"
-  },
-  "exports": {
-    "./*": "./src/*.ts"
-  },
-  "peerDependencies": {
-    "@supabase/ssr": "^0.5.0",
-    "@supabase/supabase-js": "^2.4.0",
-    "next": "^16.0.0",
-    "react": "^19.0.0",
-    "swr": "^2.0.0",
-    "zod": "^4.4.3"
-  },
-  "dependencies": {
-    "@packages/utils": "workspace:*"
-  },
-  "devDependencies": {
-    "@graphql-codegen/cli": "^7.1.3",
-    "@graphql-codegen/introspection": "^6.0.1",
-    "@graphql-codegen/schema-ast": "^6.0.1",
-    "@next/env": "^16.2.9",
-    "@packages/typescript-config": "workspace:*",
-    "@supabase/ssr": "^0.12.0",
-    "@supabase/supabase-js": "^2.108.2",
-    "@types/node": "^24.12.4",
-    "@types/react": "^19.2.17",
-    "graphql": "^16.9.0",
-    "next": "^16.2.9",
-    "react": "^19.2.7",
-    "supabase": "^2.107.0",
-    "swr": "^2.4.1",
-    "typescript": "^6.0.3",
-    "zod": "^4.4.3"
-  }
-}
 ````
 
 ## File: apps/platform/components/shell/mobile-sheets.tsx
@@ -13704,6 +13580,87 @@ function goTo(item: SearchItem)
 placeholder=
 ````
 
+## File: apps/platform/proxy.ts
+````typescript
+import { updateSession } from "@packages/supabase/client.middleware";
+import { URL_NEW } from "@packages/utils/url";
+import { type NextRequest, NextResponse, userAgent } from "next/server";
+import { APEX_HOSTNAME, APP_HOST, PROXY_LOG_ENABLED } from "~/lib/constants";
+import { debug } from "~/lib/debug";
+import { LOCALE_COOKIE, LOCALE_SUPPORTED_RESOLVE, type SupportedLocale } from "~/lib/i18n";
+import { LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
+⋮----
+export async function proxy(request: NextRequest)
+⋮----
+function withLocale(response: NextResponse): NextResponse
+⋮----
+function isPublicPath(pathname: string): boolean
+⋮----
+function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse
+⋮----
+function isGlobalMetadataAssetPath(pathname: string): boolean
+⋮----
+async function setPostHogBootstrap(request: NextRequest, response: NextResponse): Promise<void>
+````
+
+## File: packages/supabase/package.json
+````json
+{
+  "name": "@packages/supabase",
+  "version": "0.0.0",
+  "private": true,
+  "sideEffects": false,
+  "scripts": {
+    "build:dry": "tsc --noEmit",
+    "db:start": "dotenvx run --overload -f ../../.env.development -f ../../.env.development.local -- supabase start",
+    "db:stop": "dotenvx run --overload -f ../../.env.development -f ../../.env.development.local -- supabase stop",
+    "db:reset": "dotenvx run --overload -f ../../.env.development -f ../../.env.development.local -- supabase db reset",
+    "db:status": "dotenvx run --overload -f ../../.env.development -f ../../.env.development.local -- supabase status",
+    "db:status:env": "dotenvx run --overload -f ../../.env.development -f ../../.env.development.local -- supabase status -o env",
+    "db:migrate:new": "supabase migration new",
+    "db:migrate:up": "dotenvx run --overload -f ../../.env.development -f ../../.env.development.local -- supabase migration up",
+    "generate:types": "dotenvx run --overload -f ../../.env.development -f ../../.env.development.local -- supabase gen types --lang=typescript --local --schema public > src/types.ts",
+    "generate:graphql:schema": "graphql-codegen -c graphql.config.ts",
+    "generate:graphql:schema:local": "graphql-codegen -c graphql.config.ts --local",
+    "format": "biome check --diagnostic-level=error .",
+    "test:db": "dotenvx run --overload -f ../../.env.development -f ../../.env.development.local -- supabase test db --local"
+  },
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "peerDependencies": {
+    "@supabase/ssr": "^0.5.0",
+    "@supabase/supabase-js": "^2.4.0",
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "swr": "^2.0.0",
+    "zod": "^4.4.3"
+  },
+  "dependencies": {
+    "@packages/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@dotenvx/dotenvx": "^1.75.1",
+    "@graphql-codegen/cli": "^7.1.3",
+    "@graphql-codegen/introspection": "^6.0.1",
+    "@graphql-codegen/schema-ast": "^6.0.1",
+    "@next/env": "^16.2.9",
+    "@packages/typescript-config": "workspace:*",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.2",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.17",
+    "graphql": "^16.9.0",
+    "next": "^16.2.9",
+    "react": "^19.2.7",
+    "supabase": "^2.107.0",
+    "swr": "^2.4.1",
+    "typescript": "^6.0.3",
+    "zod": "^4.4.3"
+  }
+}
+````
+
 ## File: apps/platform/next-env.d.ts
 ````typescript
 
@@ -13715,7 +13672,7 @@ placeholder=
   "name": "saas-template",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.20.0",
+  "packageManager": "pnpm@11.8.0",
   "engines": {
     "node": "24.x"
   },
@@ -13754,7 +13711,7 @@ placeholder=
     "@biomejs/biome": "2.5.0",
     "@packages/typescript-config": "workspace:*",
     "@types/qrcode-terminal": "^0.12.2",
-    "graphql": "^16.9.0",
+    "graphql": "^16.14.2",
     "graphql-config": "^5.1.6",
     "qrcode-terminal": "^0.12.0",
     "repomix": "^1.15.0",
@@ -13767,29 +13724,6 @@ placeholder=
     "ms-vscode.vscode-claude-sdk"
   ]
 }
-````
-
-## File: apps/platform/proxy.ts
-````typescript
-import { updateSession } from "@packages/supabase/client.middleware";
-import { URL_NEW } from "@packages/utils/url";
-import { type NextRequest, NextResponse, userAgent } from "next/server";
-import { APEX_HOSTNAME, APP_HOST, PROXY_LOG_ENABLED } from "~/lib/constants";
-import { debug } from "~/lib/debug";
-import { LOCALE_COOKIE, LOCALE_SUPPORTED_RESOLVE, type SupportedLocale } from "~/lib/i18n";
-import { LOCALE_FROM_REQUEST } from "~/lib/i18n.server";
-⋮----
-export async function proxy(request: NextRequest)
-⋮----
-function withLocale(response: NextResponse): NextResponse
-⋮----
-function isPublicPath(pathname: string): boolean
-⋮----
-function setLocaleCookieOnResponse(response: NextResponse, locale: SupportedLocale): NextResponse
-⋮----
-function isGlobalMetadataAssetPath(pathname: string): boolean
-⋮----
-async function setPostHogBootstrap(request: NextRequest, response: NextResponse): Promise<void>
 ````
 
 ## File: packages/supabase/supabase/migrations/00000000000000_schema.sql
@@ -13874,7 +13808,34 @@ create or replace function internal.column_normalize_text()
       return NEW;
     end;
   $$;
--- Slug validation shared by any table with a slug column (tenants, future teams, etc.)
+-- Reusable soft-delete trigger function — PROJECT-WIDE INVARIANT: rows are not
+-- hard-deleted. A `before delete` trigger calls this to stamp a `*_deleted_at`
+-- column instead of removing the row; RLS policies, partial indexes, and view
+-- functions all rely on deleted rows being *filtered*, not gone.
+--
+-- One definition serves every table: it uses `ctid` (not the PK), and the
+-- target column name is passed as the trigger argument (tg_argv[0]).
+--
+-- Attach per table (the WHEN guard lets a second DELETE on an already-deleted
+-- row purge for real):
+--   drop trigger if exists soft_delete on public.<table>;
+--   create trigger soft_delete
+--     before delete on public.<table>
+--     for each row when (old.<table>_deleted_at is null)
+--     execute function internal.soft_delete('<table>_deleted_at');
+create or replace function internal.soft_delete()
+  returns trigger
+  language plpgsql
+  set search_path to ''
+as $$
+  begin
+    execute format(
+      'update %I.%I set %I = current_timestamp where ctid = $1',
+      tg_table_schema, tg_table_name, tg_argv[0]
+    ) using old.ctid;
+    return null;
+  end;
+$$;
 create or replace function internal.slug_validate(value text)
   returns boolean
   language sql
@@ -14028,24 +13989,28 @@ create table if not exists public.profiles (
   profile_id uuid not null primary key references auth.users on delete cascade,
   profile_name_full text,
   profile_onboarded_at timestamptz,
-  profile_disabled_at timestamptz,
+  profile_deleted_at timestamptz,
   profile_created_at timestamptz not null default current_timestamp,
   profile_updated_at timestamptz not null default current_timestamp
 );
 -- Indexes
-create index if not exists profiles_disabled_at_idx
-  on public.profiles (profile_disabled_at)
-  where profile_disabled_at is not null;
+create index if not exists profiles_deleted_at_idx
+  on public.profiles (profile_deleted_at)
+  where profile_deleted_at is not null;
 -- Auto-update updated_at
 drop trigger if exists handle_profiles_updated_at on public.profiles;
 create trigger handle_profiles_updated_at
   before update on public.profiles
   for each row execute procedure extensions.moddatetime(profile_updated_at);
+drop trigger if exists soft_delete on public.profiles;
+create trigger soft_delete
+  before delete on public.profiles
+  for each row when (old.profile_deleted_at is null)
+  execute function internal.soft_delete('profile_deleted_at');
 drop trigger if exists profiles_trigger_normalize_name on public.profiles;
 create trigger profiles_trigger_normalize_name
   before insert or update of profile_name_full on public.profiles
   for each row execute procedure internal.column_normalize_text(profile_name_full);
--- Auto-create profile on new auth user
 create or replace function public.users_handle_created()
   returns trigger
   language plpgsql
@@ -14087,7 +14052,7 @@ create policy "Users can update own profiles."
   on public.profiles for update
   to authenticated
   using (
-    profile_disabled_at is null
+    profile_deleted_at is null
     and profile_id = (select public.viewer_profile_id())
   );
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -14115,17 +14080,22 @@ create table if not exists public.conversation_topics (
   conversation_topic_description text not null check (char_length(conversation_topic_description) between 1 and 500),
   conversation_topic_priority public.notification_priority not null default 'medium',
   conversation_topic_kind public.notification_kind not null default 'log',
-  conversation_topic_disabled_at timestamptz,
+  conversation_topic_deleted_at timestamptz,
   conversation_topic_created_at timestamptz not null default current_timestamp,
   conversation_topic_updated_at timestamptz not null default current_timestamp
 );
 create index if not exists conversation_topics_priority_idx
   on public.conversation_topics (conversation_topic_priority desc)
-  where conversation_topic_disabled_at is null;
+  where conversation_topic_deleted_at is null;
 drop trigger if exists handle_conversation_topics_updated_at on public.conversation_topics;
 create trigger handle_conversation_topics_updated_at
   before update on public.conversation_topics
   for each row execute procedure extensions.moddatetime(conversation_topic_updated_at);
+drop trigger if exists soft_delete on public.conversation_topics;
+create trigger soft_delete
+  before delete on public.conversation_topics
+  for each row when (old.conversation_topic_deleted_at is null)
+  execute function internal.soft_delete('conversation_topic_deleted_at');
 drop trigger if exists conversation_topics_trigger_normalize_text on public.conversation_topics;
 create trigger conversation_topics_trigger_normalize_text
   before insert or update of conversation_topic_name, conversation_topic_description on public.conversation_topics
@@ -14138,7 +14108,7 @@ drop policy if exists "conversation_topics select active catalog" on public.conv
 create policy "conversation_topics select active catalog"
   on public.conversation_topics for select
   to anon, authenticated
-  using (conversation_topic_disabled_at is null);
+  using (conversation_topic_deleted_at is null);
 create table if not exists public.reserved_slugs (
   reserved_slug extensions.citext primary key check (char_length(reserved_slug) between 1 and 39)
 );
@@ -14169,16 +14139,21 @@ create table if not exists public.tenants (
   -- derivable — computed at read time from storage/memberships, never stored. `tenant_onboarded_at`
   -- is set when the whole flow is dismissed/finished so the banner stops.
   tenant_onboarded_at timestamptz,
-  tenant_disabled_at timestamptz,
+  tenant_deleted_at timestamptz,
   tenant_created_at timestamptz not null default current_timestamp,
   tenant_updated_at timestamptz not null default current_timestamp
 );
-create index if not exists tenants_disabled_at_idx
-  on public.tenants (tenant_disabled_at) where tenant_disabled_at is not null;
+create index if not exists tenants_deleted_at_idx
+  on public.tenants (tenant_deleted_at) where tenant_deleted_at is not null;
 drop trigger if exists handle_tenants_updated_at on public.tenants;
 create trigger handle_tenants_updated_at
   before update on public.tenants
   for each row execute procedure extensions.moddatetime(tenant_updated_at);
+drop trigger if exists soft_delete on public.tenants;
+create trigger soft_delete
+  before delete on public.tenants
+  for each row when (old.tenant_deleted_at is null)
+  execute function internal.soft_delete('tenant_deleted_at');
 drop trigger if exists tenants_trigger_normalize_name on public.tenants;
 create trigger tenants_trigger_normalize_name
   before insert or update of tenant_name on public.tenants
@@ -14188,23 +14163,26 @@ create table if not exists public.organizations (
   tenant_id int not null references public.tenants (tenant_id) on delete cascade,
   organization_slug extensions.citext not null check (internal.slug_validate(organization_slug::text)),
   organization_name text not null check (char_length(organization_name) between 1 and 256),
-  organization_disabled_at timestamptz,
+  organization_deleted_at timestamptz,
   organization_created_at timestamptz not null default current_timestamp,
   organization_updated_at timestamptz not null default current_timestamp,
   unique (tenant_id, organization_slug)
 );
 create index if not exists organizations_tenant_idx
-  on public.organizations (tenant_id) where organization_disabled_at is null;
+  on public.organizations (tenant_id) where organization_deleted_at is null;
 drop trigger if exists handle_organizations_updated_at on public.organizations;
 create trigger handle_organizations_updated_at
   before update on public.organizations
   for each row execute procedure extensions.moddatetime(organization_updated_at);
+drop trigger if exists soft_delete on public.organizations;
+create trigger soft_delete
+  before delete on public.organizations
+  for each row when (old.organization_deleted_at is null)
+  execute function internal.soft_delete('organization_deleted_at');
 drop trigger if exists organizations_trigger_normalize_name on public.organizations;
 create trigger organizations_trigger_normalize_name
   before insert or update of organization_name on public.organizations
   for each row execute procedure internal.column_normalize_text(organization_name);
--- Storage (same convention as the `profiles` bucket above: bucket name === table name,
--- first path segment === organization_id, app-level subfolder beneath it: `<id>/avatar/<filename>`).
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
   values (
     'organizations',
@@ -14245,7 +14223,7 @@ create table if not exists public.addresses_level0 (
   address_level0_id text not null check (length(address_level0_id) = 2),
   address_level0_name text not null check (length(address_level0_name) <= 100),
   address_level0_emoji text check (char_length(address_level0_emoji) between 1 and 8),
-  address_level0_disabled_at timestamptz,
+  address_level0_deleted_at timestamptz,
   address_level0_hidden_at timestamptz,
   address_level0_created_at timestamptz not null default current_timestamp,
   address_level0_updated_at timestamptz not null default current_timestamp,
@@ -14582,7 +14560,7 @@ create table if not exists public.agencies (
   agency_id serial primary key,
   agency_name text not null check (char_length(agency_name) between 1 and 100),
   agency_slug extensions.citext not null unique,
-  agency_disabled_at timestamptz,
+  agency_deleted_at timestamptz,
   agency_created_at timestamptz not null default current_timestamp,
   agency_updated_at timestamptz not null default current_timestamp
 );
@@ -14590,6 +14568,11 @@ drop trigger if exists handle_agencies_updated_at on public.agencies;
 create trigger handle_agencies_updated_at
   before update on public.agencies
   for each row execute procedure extensions.moddatetime(agency_updated_at);
+drop trigger if exists soft_delete on public.agencies;
+create trigger soft_delete
+  before delete on public.agencies
+  for each row when (old.agency_deleted_at is null)
+  execute function internal.soft_delete('agency_deleted_at');
 create table if not exists public.agency_memberships (
   agency_membership_id serial primary key,
   agency_id int not null references public.agencies (agency_id) on delete cascade,
@@ -14711,7 +14694,7 @@ create or replace function public.viewer_profile(strict boolean default false)
       _user_id := public.viewer_profile_id();
       return query
         select * from public.profiles
-        where profile_id = _user_id and profile_disabled_at is null
+        where profile_id = _user_id and profile_deleted_at is null
         limit 1;
       if not found and $1 is true then
         raise exception '[viewer_profile] not logged-in or profile not found for user_id: %', _user_id;
@@ -14734,8 +14717,8 @@ create or replace function public.viewer_tenant_ids()
       and m.organization_membership_accepted_at is not null
       and m.organization_membership_revoked_at is null
       and m.organization_membership_rejected_at is null
-      and o.organization_disabled_at is null
-      and t.tenant_disabled_at is null;
+      and o.organization_deleted_at is null
+      and t.tenant_deleted_at is null;
   $$;
 create or replace function public.viewer_tenant_validate(tenant_id int)
   returns boolean
@@ -14765,8 +14748,8 @@ create or replace function public.viewer_organization_ids()
       and m.organization_membership_accepted_at is not null
       and m.organization_membership_revoked_at is null
       and m.organization_membership_rejected_at is null
-      and o.organization_disabled_at is null
-      and t.tenant_disabled_at is null;
+      and o.organization_deleted_at is null
+      and t.tenant_deleted_at is null;
   $$;
 create or replace function public.viewer_organization_validate(organization_id int)
   returns boolean
@@ -14901,7 +14884,7 @@ create or replace function public.viewer_agency_ids()
       and af.agency_membership_accepted_at is not null
       and af.agency_membership_revoked_at is null
       and af.agency_membership_rejected_at is null
-      and a.agency_disabled_at is null;
+      and a.agency_deleted_at is null;
   $$;
 create or replace function public.viewer_is_agency_member()
   returns boolean
@@ -15092,7 +15075,7 @@ create or replace function public.viewer_organization_external_agencies(organiza
         and g.permission_id = '*'
       limit 1
     ) gg on true
-    where a.agency_disabled_at is null
+    where a.agency_deleted_at is null
       and public.viewer_has_permission(
         viewer_organization_external_agencies.organization_id, 'organization_manage')
     order by a.agency_name asc;
@@ -15128,7 +15111,7 @@ create or replace function public.viewer_agency_team_permission_ids(permission_i
       and m.agency_membership_accepted_at is not null
       and m.agency_membership_revoked_at is null
       and m.agency_membership_rejected_at is null
-      and a.agency_disabled_at is null
+      and a.agency_deleted_at is null
       and (mp.permission_id = viewer_agency_team_permission_ids.permission_id or mp.permission_id = '*');
   $$;
 create or replace function public.viewer_has_agency_team_permission(
@@ -15252,14 +15235,14 @@ create view public.tenants_organizations_profiles as
     t.tenant_id,
     t.tenant_slug,
     t.tenant_name,
-    t.tenant_disabled_at,
+    t.tenant_deleted_at,
     t.tenant_created_at,
     t.tenant_updated_at,
     o.organization_id,
     o.tenant_id as organization_tenant_id,
     o.organization_slug,
     o.organization_name,
-    o.organization_disabled_at,
+    o.organization_deleted_at,
     o.organization_created_at,
     o.organization_updated_at,
     m.profile_id
@@ -15270,8 +15253,8 @@ create view public.tenants_organizations_profiles as
     and m.organization_membership_accepted_at is not null
     and m.organization_membership_revoked_at is null
     and m.organization_membership_rejected_at is null
-    and o.organization_disabled_at is null
-    and t.tenant_disabled_at is null;
+    and o.organization_deleted_at is null
+    and t.tenant_deleted_at is null;
 revoke all on public.tenants_organizations_profiles from anon, authenticated;
 grant select on public.tenants_organizations_profiles to authenticated;
 create view public.user_sessions with (security_invoker = true, security_barrier = true) as (
@@ -15387,7 +15370,7 @@ create policy "Profiles visible to self or org co-members or agency affiliates"
   on public.profiles for select
   to authenticated
   using (
-    profile_disabled_at is null
+    profile_deleted_at is null
     and (
       profile_id = (select public.viewer_profile_id())
       or exists (
@@ -15677,16 +15660,16 @@ create table if not exists public.addresses_level0 (
   address_level0_id text not null check (length(address_level0_id) = 2),
   address_level0_name text not null check (length(address_level0_name) <= 100),
   address_level0_emoji text check (char_length(address_level0_emoji) between 1 and 8),
-  address_level0_disabled_at timestamptz,
+  address_level0_deleted_at timestamptz,
   address_level0_hidden_at timestamptz,
   address_level0_created_at timestamptz not null default current_timestamp,
   address_level0_updated_at timestamptz not null default current_timestamp,
   primary key (address_level0_id)
 );
 comment on column public.addresses_level0.address_level0_id is e'ISO 3166-1 alpha-2 country code';
-create index if not exists addresses_level0_disabled_at_idx
-  on public.addresses_level0 (address_level0_disabled_at)
-  where address_level0_disabled_at is not null;
+create index if not exists addresses_level0_deleted_at_idx
+  on public.addresses_level0 (address_level0_deleted_at)
+  where address_level0_deleted_at is not null;
 create index if not exists addresses_level0_hidden_at_idx
   on public.addresses_level0 (address_level0_hidden_at)
   where address_level0_hidden_at is not null;
@@ -15696,18 +15679,23 @@ drop trigger if exists handle_addresses_level0_updated_at on public.addresses_le
 create trigger handle_addresses_level0_updated_at
   before update on public.addresses_level0
   for each row execute procedure extensions.moddatetime(address_level0_updated_at);
+drop trigger if exists soft_delete on public.addresses_level0;
+create trigger soft_delete
+  before delete on public.addresses_level0
+  for each row when (old.address_level0_deleted_at is null)
+  execute function internal.soft_delete('address_level0_deleted_at');
 revoke all on table public.addresses_level0 from anon, authenticated;
 grant select on table public.addresses_level0 to anon, authenticated;
 alter table public.addresses_level0 enable row level security;
 drop policy if exists "Anyone can select addresses_level0." on public.addresses_level0;
 create policy "Anyone can select addresses_level0."
   on public.addresses_level0 for select
-  using (address_level0_disabled_at is null);
+  using (address_level0_deleted_at is null);
 create table if not exists public.addresses_level1 (
   address_level0_id text not null check (length(address_level0_id) = 2),
   address_level1_id text not null check (length(address_level1_id) = 5 or length(address_level1_id) = 6),
   address_level1_name text not null check (length(address_level1_name) <= 100),
-  address_level1_disabled_at timestamptz,
+  address_level1_deleted_at timestamptz,
   address_level1_hidden_at timestamptz,
   address_level1_created_at timestamptz not null default current_timestamp,
   address_level1_updated_at timestamptz not null default current_timestamp,
@@ -15716,9 +15704,9 @@ create table if not exists public.addresses_level1 (
     references public.addresses_level0 (address_level0_id) on delete no action
 );
 comment on column public.addresses_level1.address_level1_id is e'ISO 3166-2 code';
-create index if not exists addresses_level1_disabled_at_idx
-  on public.addresses_level1 (address_level1_disabled_at)
-  where address_level1_disabled_at is not null;
+create index if not exists addresses_level1_deleted_at_idx
+  on public.addresses_level1 (address_level1_deleted_at)
+  where address_level1_deleted_at is not null;
 create index if not exists addresses_level1_hidden_at_idx
   on public.addresses_level1 (address_level1_hidden_at)
   where address_level1_hidden_at is not null;
@@ -15730,19 +15718,24 @@ drop trigger if exists handle_addresses_level1_updated_at on public.addresses_le
 create trigger handle_addresses_level1_updated_at
   before update on public.addresses_level1
   for each row execute procedure extensions.moddatetime(address_level1_updated_at);
+drop trigger if exists soft_delete on public.addresses_level1;
+create trigger soft_delete
+  before delete on public.addresses_level1
+  for each row when (old.address_level1_deleted_at is null)
+  execute function internal.soft_delete('address_level1_deleted_at');
 revoke all on table public.addresses_level1 from anon, authenticated;
 grant select on table public.addresses_level1 to anon, authenticated;
 alter table public.addresses_level1 enable row level security;
 drop policy if exists "Anyone can select addresses_level1." on public.addresses_level1;
 create policy "Anyone can select addresses_level1."
   on public.addresses_level1 for select
-  using (address_level1_disabled_at is null);
+  using (address_level1_deleted_at is null);
 create table if not exists public.addresses_level2 (
   address_level0_id text not null check (length(address_level0_id) = 2),
   address_level1_id text not null check (length(address_level1_id) = 5 or length(address_level1_id) = 6),
   address_level2_id text not null check (length(address_level2_id) <= 100),
   address_level2_name text not null check (length(address_level2_name) <= 100),
-  address_level2_disabled_at timestamptz,
+  address_level2_deleted_at timestamptz,
   address_level2_hidden_at timestamptz,
   address_level2_created_at timestamptz not null default current_timestamp,
   address_level2_updated_at timestamptz not null default current_timestamp,
@@ -15751,9 +15744,9 @@ create table if not exists public.addresses_level2 (
     references public.addresses_level1 (address_level0_id, address_level1_id) on delete no action
 );
 comment on column public.addresses_level2.address_level2_id is e'Slug';
-create index if not exists addresses_level2_disabled_at_idx
-  on public.addresses_level2 (address_level2_disabled_at)
-  where address_level2_disabled_at is not null;
+create index if not exists addresses_level2_deleted_at_idx
+  on public.addresses_level2 (address_level2_deleted_at)
+  where address_level2_deleted_at is not null;
 create index if not exists addresses_level2_hidden_at_idx
   on public.addresses_level2 (address_level2_hidden_at)
   where address_level2_hidden_at is not null;
@@ -15765,20 +15758,25 @@ drop trigger if exists handle_addresses_level2_updated_at on public.addresses_le
 create trigger handle_addresses_level2_updated_at
   before update on public.addresses_level2
   for each row execute procedure extensions.moddatetime(address_level2_updated_at);
+drop trigger if exists soft_delete on public.addresses_level2;
+create trigger soft_delete
+  before delete on public.addresses_level2
+  for each row when (old.address_level2_deleted_at is null)
+  execute function internal.soft_delete('address_level2_deleted_at');
 revoke all on table public.addresses_level2 from anon, authenticated;
 grant select on table public.addresses_level2 to anon, authenticated;
 alter table public.addresses_level2 enable row level security;
 drop policy if exists "Anyone can select addresses_level2." on public.addresses_level2;
 create policy "Anyone can select addresses_level2."
   on public.addresses_level2 for select
-  using (address_level2_disabled_at is null);
+  using (address_level2_deleted_at is null);
 create table if not exists public.addresses_level3 (
   address_level0_id text not null check (length(address_level0_id) = 2),
   address_level1_id text not null check (length(address_level1_id) = 5 or length(address_level1_id) = 6),
   address_level2_id text not null check (length(address_level2_id) <= 100),
   address_level3_id text not null check (length(address_level3_id) <= 100),
   address_level3_name text not null check (length(address_level3_name) <= 100),
-  address_level3_disabled_at timestamptz,
+  address_level3_deleted_at timestamptz,
   address_level3_hidden_at timestamptz,
   address_level3_created_at timestamptz not null default current_timestamp,
   address_level3_updated_at timestamptz not null default current_timestamp,
@@ -15786,9 +15784,9 @@ create table if not exists public.addresses_level3 (
   constraint fk_addresses_level3_addresses_level2 foreign key (address_level0_id, address_level1_id, address_level2_id)
     references public.addresses_level2 (address_level0_id, address_level1_id, address_level2_id) on delete no action
 );
-create index if not exists addresses_level3_disabled_at_idx
-  on public.addresses_level3 (address_level3_disabled_at)
-  where address_level3_disabled_at is not null;
+create index if not exists addresses_level3_deleted_at_idx
+  on public.addresses_level3 (address_level3_deleted_at)
+  where address_level3_deleted_at is not null;
 create index if not exists addresses_level3_hidden_at_idx
   on public.addresses_level3 (address_level3_hidden_at)
   where address_level3_hidden_at is not null;
@@ -15800,13 +15798,18 @@ drop trigger if exists handle_addresses_level3_updated_at on public.addresses_le
 create trigger handle_addresses_level3_updated_at
   before update on public.addresses_level3
   for each row execute procedure extensions.moddatetime(address_level3_updated_at);
+drop trigger if exists soft_delete on public.addresses_level3;
+create trigger soft_delete
+  before delete on public.addresses_level3
+  for each row when (old.address_level3_deleted_at is null)
+  execute function internal.soft_delete('address_level3_deleted_at');
 revoke all on table public.addresses_level3 from anon, authenticated;
 grant select on table public.addresses_level3 to anon, authenticated;
 alter table public.addresses_level3 enable row level security;
 drop policy if exists "Anyone can select addresses_level3." on public.addresses_level3;
 create policy "Anyone can select addresses_level3."
   on public.addresses_level3 for select
-  using (address_level3_disabled_at is null);
+  using (address_level3_deleted_at is null);
 do $$ begin
   create type public.profile_identity_document_kind as enum ('nin', 'passport');
 exception when duplicate_object then null; end $$;
@@ -15843,7 +15846,7 @@ create table if not exists public.profile_identities (
   address_level0_id text not null references public.addresses_level0(address_level0_id),
   profile_identity_document_kind public.profile_identity_document_kind not null,
   profile_identity_document_value text not null check (char_length(profile_identity_document_value) between 4 and 32),
-  profile_identity_disabled_at timestamptz,
+  profile_identity_deleted_at timestamptz,
   profile_identity_created_at timestamptz not null default current_timestamp,
   profile_identity_updated_at timestamptz not null default current_timestamp,
   unique (profile_id, address_level0_id, profile_identity_document_kind)
@@ -15851,14 +15854,19 @@ create table if not exists public.profile_identities (
 create unique index if not exists profile_identities_global_unique_idx
   on public.profile_identities (
     address_level0_id, profile_identity_document_kind, profile_identity_document_value
-  ) where profile_identity_disabled_at is null;
+  ) where profile_identity_deleted_at is null;
 create index if not exists profile_identities_profile_idx
   on public.profile_identities (profile_id)
-  where profile_identity_disabled_at is null;
+  where profile_identity_deleted_at is null;
 drop trigger if exists handle_profile_identities_updated_at on public.profile_identities;
 create trigger handle_profile_identities_updated_at
   before update on public.profile_identities
   for each row execute procedure extensions.moddatetime(profile_identity_updated_at);
+drop trigger if exists soft_delete on public.profile_identities;
+create trigger soft_delete
+  before delete on public.profile_identities
+  for each row when (old.profile_identity_deleted_at is null)
+  execute function internal.soft_delete('profile_identity_deleted_at');
 create or replace function internal.profile_identities_normalize_value()
   returns trigger
   language plpgsql
@@ -15939,12 +15947,30 @@ create or replace function public.profile_identity_resolve(
       where address_level0_id = country
         and profile_identity_document_kind = kind
         and profile_identity_document_value = _normalized
-        and profile_identity_disabled_at is null
+        and profile_identity_deleted_at is null
       limit 1;
       return _result;
     end;
   $$;
 grant execute on function public.profile_identity_resolve(text, public.profile_identity_document_kind, text) to anon, authenticated;
+-- Computed relationship: exposes a profile's first active identity document via pg_graphql
+create or replace function public.profile_identity(this public.profiles)
+  returns setof public.profile_identities rows 1
+  stable
+  language sql
+  strict
+  security invoker
+  parallel safe
+  set search_path to ''
+as $$
+  select *
+  from public.profile_identities
+  where profile_id = this.profile_id
+    and profile_identity_deleted_at is null
+  order by profile_identity_id desc
+  limit 1;
+$$;
+grant execute on function public.profile_identity(public.profiles) to anon, authenticated;
 -- ============================================================
 -- tenant tier + custom domains
 -- ============================================================
@@ -16024,7 +16050,7 @@ create or replace function public.viewer_organization_membership_pending()
               select 1
                 from public.profile_identities pi
                 where pi.profile_id = _user_id
-                  and pi.profile_identity_disabled_at is null
+                  and pi.profile_identity_deleted_at is null
                   and pi.address_level0_id = m.organization_membership_invite_address_level0_id
                   and pi.profile_identity_document_kind = m.organization_membership_invite_document_kind
                   and pi.profile_identity_document_value = m.organization_membership_invite_document_value
@@ -16319,6 +16345,24 @@ create or replace view public.storage_profiles
     and internal.is_uuid(obj.path_tokens[1]);
 grant select on public.storage_profiles to authenticated, anon, service_role;
 comment on view public.storage_profiles is e'@graphql({"primary_key_columns": ["storage_profile_id"], "foreign_keys": [{"local_name": "storage_profiles", "local_columns": ["profile_id"], "foreign_name": "profile", "foreign_schema": "public", "foreign_table": "profiles", "foreign_columns": ["profile_id"]}]})';
+-- Computed relationship: exposes the viewer's latest avatar as a single object on Profile,
+create or replace function public.profile_storage_avatar(this public.profiles)
+  returns setof public.storage_profiles rows 1
+  stable
+  strict
+  security invoker
+  parallel safe
+  language sql
+  set search_path to ''
+as $$
+  select *
+  from public.storage_profiles
+  where profile_id = this.profile_id
+    and folder = 'avatar'
+  order by created_at desc
+  limit 1;
+$$;
+grant execute on function public.profile_storage_avatar(public.profiles) to anon, authenticated;
 create or replace view public.storage_organizations
   with (security_invoker = on) as
   select
@@ -17119,7 +17163,7 @@ create or replace function public.conversation_emit(
         into _topic_priority, _topic_kind
         from public.conversation_topics ct
         where ct.conversation_topic_slug = conversation_emit.slug
-          and ct.conversation_topic_disabled_at is null;
+          and ct.conversation_topic_deleted_at is null;
       if not found then
         raise exception 'conversation_topic_not_found' using errcode = 'P0001';
       end if;
@@ -18123,7 +18167,7 @@ TLS cert from [mkcert](https://github.com/FiloSottile/mkcert). One-time setup: `
 
 Keep these aligned with the HTTPS dev origin — flipping any to `http://` breaks OAuth callbacks and passkey verification:
 
-- `WEBAUTHN_RELYING_PARTY_ORIGIN` (in `.env.example` + `apps/platform/.env.local`): `https://lvh.me:7003`
+- `WEBAUTHN_RELYING_PARTY_ORIGIN` (in `.env.development`): `https://lvh.me:7003`
 - `supabase/config.toml` `[auth].site_url`: `https://lvh.me:7003`
 - `supabase/config.toml` `[auth].additional_redirect_urls`: `https://lvh.me:7003/**` + `https://*.lvh.me:7003/**`
 

@@ -207,7 +207,7 @@ as $$
   select *
   from public.profile_identities
   where profile_id = this.profile_id
-    and profile_identity_disabled_at is null
+    and profile_identity_deleted_at is null
   limit 1;
 $$;
 
@@ -233,6 +233,67 @@ After adding the function run `pnpm generate:graphql:schema` then `pnpm --filter
 Use constraints/triggers for facts that must survive every caller. Current schema protects
 membership claim consistency, last admin, self-revocation, permission preset slugs, normalized
 identity/invite values, reserved tenant slugs.
+
+## Soft-delete (`deleted_at` + `internal.soft_delete()`)
+
+**No hard-delete by default.** Reusable `before delete` trigger → every `DELETE` becomes a stamp
+on `*_deleted_at timestamptz`. Load-bearing: RLS, partial indexes, view fns all assume deleted
+rows filtered out, not gone. Project-wide invariant for any new table.
+
+Trigger fn generic (one def, all tables) — uses `ctid`, never needs PK:
+
+```sql
+create or replace function internal.soft_delete()
+  returns trigger
+  language plpgsql
+  set search_path to ''
+as $$
+  begin
+    execute format(
+      'update %I.%I set %I = current_timestamp where ctid = $1',
+      tg_table_schema, tg_table_name, tg_argv[0]
+    ) using old.ctid;
+    return null;  -- cancels the physical DELETE
+  end;
+$$;
+```
+
+**New table soft-delete** — 3 pieces, all named after table:
+
+```sql
+-- 1. column
+example_deleted_at timestamptz,
+
+-- 2. partial index (choose by intent)
+create index if not exists examples_deleted_at_idx           -- archive lookups
+  on public.examples (example_deleted_at) where example_deleted_at is not null;
+-- or, to scope a UNIQUE / hot-path index to live rows only:
+--   ... where example_deleted_at is null;
+
+-- 3. trigger (the WHEN guard makes a second DELETE on an already-deleted row purge for real)
+drop trigger if exists soft_delete on public.examples;
+create trigger soft_delete
+  before delete on public.examples
+  for each row when (old.example_deleted_at is null)
+  execute function internal.soft_delete('example_deleted_at');
+```
+
+**RLS must filter deleted rows.** Add `example_deleted_at is null` to SELECT policy `using`
+clause (and any view fn joining table). Trigger only stops delete, does not hide row:
+
+```sql
+create policy "examples select live"
+  on public.examples for select
+  using (example_deleted_at is null and ...);
+```
+
+Rules:
+- **Restore** = `update ... set example_deleted_at = null`.
+- **Purge** = `DELETE` row whose `example_deleted_at` already set (`WHEN` guard lets it through).
+- **FK `on delete cascade` does not fire** (physical delete cancelled). Child must follow parent →
+  soft-delete it explicitly in same RPC.
+- Tables with `deleted_at` today: `profiles`, `conversation_topics`, `tenants`,
+  `organizations`, `agencies`, `addresses_level0..3`, `profile_identities`.
 
 ## Storage
 

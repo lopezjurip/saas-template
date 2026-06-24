@@ -43,30 +43,30 @@ This skill contains the following reference files:
 
 ## Statistics
 
-514 files | 16,186 lines
+513 files | 16,234 lines
 
 | Language | Files | Lines |
 |----------|------:|------:|
 | TypeScript (TSX) | 218 | 3,174 |
-| TypeScript | 196 | 2,702 |
-| JSON | 39 | 1,027 |
-| Markdown | 30 | 3,164 |
-| Shell | 5 | 230 |
+| TypeScript | 196 | 2,705 |
+| JSON | 39 | 1,047 |
+| Markdown | 30 | 3,310 |
+| Shell | 5 | 197 |
+| No Extension | 4 | 81 |
 | HTML | 4 | 35 |
-| JavaScript (ESM) | 3 | 46 |
+| JavaScript (ESM) | 3 | 44 |
 | JSONC | 3 | 141 |
-| No Extension | 3 | 80 |
-| TOML | 3 | 351 |
-| Other | 10 | 5,236 |
+| TOML | 3 | 361 |
+| Other | 8 | 5,139 |
 
 **Largest files:**
-- `packages/supabase/supabase/migrations/00000000000000_schema.sql` (4,099 lines)
+- `packages/supabase/supabase/migrations/00000000000000_schema.sql` (4,209 lines)
 - `packages/supabase/supabase/seed.sql` (855 lines)
 - `docs/notifications-system-plan.md` (437 lines)
-- `packages/supabase/supabase/config.toml` (338 lines)
-- `skills/my-graphql/SKILL.md` (331 lines)
+- `skills/my-graphql/SKILL.md` (376 lines)
+- `packages/supabase/supabase/config.toml` (348 lines)
+- `skills/my-supabase/SKILL.md` (340 lines)
 - `AGENTS.md` (249 lines)
-- `skills/my-supabase/SKILL.md` (238 lines)
 - `skills/my-conventions/SKILL.md` (212 lines)
 - `skills-lock.json` (184 lines)
 - `packages/intl/src/intl.ts` (163 lines)
