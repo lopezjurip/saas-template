@@ -36,7 +36,7 @@ type CreateArgs = InferArgs<typeof CreateSchema>;
  * RLS requires `presets_manage` on the org; the slug-validation trigger rejects unknown slugs.
  *
  * @example
- * await new CreatePresetTool().run({ organization_id: 1, permission_preset_name: "Auditor", permission_preset_slugs: ["tickets_manage"] }, ctx);
+ * await new CreatePresetTool().run({ organization_id: 1, permission_preset_name: "Auditor", permission_preset_slugs: ["members_manage"] }, ctx);
  */
 export class CreatePresetTool extends McpTool<typeof CreateSchema> {
   readonly name = "create_preset";

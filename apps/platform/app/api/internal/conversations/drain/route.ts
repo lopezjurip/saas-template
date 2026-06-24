@@ -162,7 +162,6 @@ export async function POST(request: NextRequest): Promise<Response> {
         conversation_message_delivery_id,
         message_channel,
         delivery_status,
-        reply_token,
         conversation_messages (
           conversation_message_id,
           message_body,
@@ -251,7 +250,6 @@ export async function POST(request: NextRequest): Promise<Response> {
     const conversation = convMessage?.["conversations"];
     const profileId = conversation?.["profile_id"] ?? "";
     const conversationId = conversation?.["conversation_id"] ?? "";
-    const replyToken = delivery["reply_token"] ?? "";
     const body = convMessage?.["message_body"] ?? null;
     const rawPayload = convMessage?.["message_payload"];
     const subject = conversation?.["conversation_subject"] ?? null;
@@ -272,7 +270,6 @@ export async function POST(request: NextRequest): Promise<Response> {
         messageId,
         conversationId,
         profileId,
-        replyToken,
         subject,
         body,
         payload: resolvedPayload,

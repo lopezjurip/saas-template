@@ -778,11 +778,9 @@ type ConversationMessages implements Node {
   messageChannel: MessageChannel
   messageCreatedAt: Datetime!
   messageDirection: String!
-  messageIdempotencyKey: String
   messagePayload: JSON!
   messagePriority: NotificationPriority
   messageReadAt: Datetime
-  messageSignatureVerified: Boolean!
   """Globally Unique Record Identifier"""
   nodeId: ID!
 }
@@ -812,10 +810,8 @@ input ConversationMessagesFilter {
   messageChannel: MessageChannelFilter
   messageCreatedAt: DatetimeFilter
   messageDirection: StringFilter
-  messageIdempotencyKey: StringFilter
   messagePriority: NotificationPriorityFilter
   messageReadAt: DatetimeFilter
-  messageSignatureVerified: BooleanFilter
   nodeId: IDFilter
   """Negates a filter"""
   not: ConversationMessagesFilter
@@ -834,10 +830,8 @@ input ConversationMessagesOrderBy {
   messageChannel: OrderByDirection
   messageCreatedAt: OrderByDirection
   messageDirection: OrderByDirection
-  messageIdempotencyKey: OrderByDirection
   messagePriority: OrderByDirection
   messageReadAt: OrderByDirection
-  messageSignatureVerified: OrderByDirection
 }
 
 type ConversationTopics implements Node {
@@ -941,9 +935,6 @@ type Conversations implements Node {
     """Sort order to apply to the collection"""
     orderBy: [ConversationMessagesOrderBy!]
   ): ConversationMessagesConnection
-  conversationResolution: JSON
-  conversationResolvedAt: Datetime
-  conversationResolvedChannel: MessageChannel
   conversationStatus: String!
   conversationSubject: String
   conversationUpdatedAt: Datetime!
@@ -979,8 +970,6 @@ input ConversationsFilter {
   conversationId: UUIDFilter
   conversationKind: StringFilter
   conversationLastMessageAt: DatetimeFilter
-  conversationResolvedAt: DatetimeFilter
-  conversationResolvedChannel: MessageChannelFilter
   conversationStatus: StringFilter
   conversationSubject: StringFilter
   conversationUpdatedAt: DatetimeFilter
@@ -1002,8 +991,6 @@ input ConversationsOrderBy {
   conversationId: OrderByDirection
   conversationKind: OrderByDirection
   conversationLastMessageAt: OrderByDirection
-  conversationResolvedAt: OrderByDirection
-  conversationResolvedChannel: OrderByDirection
   conversationStatus: OrderByDirection
   conversationSubject: OrderByDirection
   conversationUpdatedAt: OrderByDirection
@@ -1158,12 +1145,10 @@ input MessageChannelFilter {
 
 """The root type for creating and mutating data"""
 type Mutation {
-  agentActionComplete(idempotencyKey: String!, status: String!, toolOutput: JSON): Opaque
   conversationArchive(pConversationId: UUID!): Opaque
   conversationMarkRead(messageIds: [UUID]!): Int
   conversationOutboundArchive(msgId: BigInt!): Boolean
   conversationOutboundDelete(msgId: BigInt!): Boolean
-  conversationPostUserMessage(body: String!, conversationId: UUID!, payload: JSON): UUID
   """
   Deletes zero or more records from the `AgenciesOrganizationsGrants` collection
   """
@@ -1269,8 +1254,6 @@ type Mutation {
   """Adds one or more `TenantSsoProviders` records to the collection"""
   insertIntoTenantSsoProvidersCollection(objects: [TenantSsoProvidersInsertInput!]!): TenantSsoProvidersInsertResponse
   revokeSession(sessionId: UUID!): Opaque
-  ticketClaim(pTicketId: UUID!): Opaque
-  ticketResolve(pTicketId: UUID!, resolution: JSON): Opaque
   """
   Updates zero or more records in the `AgenciesOrganizationsGrants` collection
   """
@@ -2622,7 +2605,6 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [AgencyMembershipsOrderBy!]
   ): AgencyMembershipsConnection
-  callerHasPermission(callerProfileId: UUID!, organizationId: Int!, permissionId: String!): Boolean
   clRutNormalize(value: String!): String
   clRutValidate(value: String!): Boolean
   """A pagable collection of type `ConversationMessages`"""
@@ -3798,24 +3780,6 @@ type TenantsUpdateResponse {
   affectedCount: Int!
   """Array of records impacted by the mutation"""
   records: [Tenants!]!
-}
-
-enum TicketStatus {
-  claimed
-  closed
-  in_progress
-  open
-  resolved
-}
-
-"""
-Boolean expression comparing fields on type "TicketStatus"
-"""
-input TicketStatusFilter {
-  eq: TicketStatus
-  in: [TicketStatus!]
-  is: FilterIs
-  neq: TicketStatus
 }
 
 """A time without date information"""

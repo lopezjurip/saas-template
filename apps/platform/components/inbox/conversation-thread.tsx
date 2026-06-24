@@ -3,15 +3,14 @@
 import type { ResultOf } from "@graphql-typed-document-node/core";
 import { Badge } from "@packages/ui-common/shadcn/components/ui/badge";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
-import { Textarea } from "@packages/ui-common/shadcn/components/ui/textarea";
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
-import { Archive, ArrowLeft, MessageSquare, Send } from "lucide-react";
+import { Archive, ArrowLeft, MessageSquare } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { gql } from "~/generated/graphql";
 import { useLocale, useRosetta } from "~/lib/i18n.client";
-import { actionArchive, actionPostMessage } from "./actions";
+import { actionArchive } from "./actions";
 
 /**
  * Everything <ConversationThread/> renders: the conversation scalars plus its full message
@@ -82,34 +81,23 @@ function PRIORITY_VARIANT(priority: string | null): "default" | "secondary" | "d
 }
 
 /**
- * Client-side conversation thread view with optimistic reply append and archive action.
+ * Read-only conversation thread view with an archive action.
  * Owns its own localization — no `t` prop threading.
  *
  * @example
- * <ConversationThread
- *   conversation={conv}
- *   viewerId={user.id}
- *   backHref={SCOPE_INBOX_HREF(scope)}
- * />
+ * <ConversationThread conversation={conv} backHref={SCOPE_INBOX_HREF(scope)} />
  */
 export function ConversationThread({
   conversation,
-  viewerId,
   backHref,
 }: {
   conversation: ConversationThreadFragmentType;
-  viewerId: string;
   backHref: Route;
 }) {
   const { t } = useRosetta(LOCALES);
   const locale = useLocale();
 
-  const [messages, setMessages] = useState<Message[]>(() =>
-    (conversation["messages"]?.["edges"] ?? []).map((edge) => edge["node"]),
-  );
-  const [replyBody, setReplyBody] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
+  const messages: Message[] = (conversation["messages"]?.["edges"] ?? []).map((edge) => edge["node"]);
   const [archiving, setArchiving] = useState(false);
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [isArchived, setIsArchived] = useState(conversation["conversationStatus"] === "archived");
@@ -120,43 +108,6 @@ export function ConversationThread({
   const orgId = conversation["organizationId"];
   const agencyId = conversation["agencyId"];
   const scopeLabel = orgId ? t("scopeOrg") : agencyId ? t("scopeAgency") : t("scopePersonal");
-
-  async function handleSend() {
-    const body = replyBody.trim();
-    if (!body || sending) return;
-    setSending(true);
-    setSendError(null);
-
-    const optimisticId = `optimistic-${Date.now()}`;
-    const optimisticMsg: Message = {
-      conversationMessageId: optimisticId,
-      messageBody: body,
-      // The viewer's own reply persists as `inbound` (user → system); match it here so the
-      // bubble doesn't flip sides on reload.
-      messageDirection: "inbound",
-      messageAuthor: viewerId,
-      messageChannel: "in_app",
-      messagePriority: null,
-      messageCreatedAt: new Date().toISOString(),
-      messageReadAt: null,
-    };
-    setMessages((prev) => [...prev, optimisticMsg]);
-    setReplyBody("");
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-
-    try {
-      const realId = await actionPostMessage(conversationId, body);
-      setMessages((prev) =>
-        prev.map((m) => (m.conversationMessageId === optimisticId ? { ...m, conversationMessageId: realId } : m)),
-      );
-    } catch {
-      setSendError(t("sendError"));
-      setMessages((prev) => prev.filter((m) => m.conversationMessageId !== optimisticId));
-      setReplyBody(body);
-    } finally {
-      setSending(false);
-    }
-  }
 
   async function handleArchive() {
     if (archiving || isArchived) return;
@@ -169,13 +120,6 @@ export function ConversationThread({
       setArchiveError(t("archiveError"));
     } finally {
       setArchiving(false);
-    }
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      void handleSend();
     }
   }
 
@@ -285,34 +229,6 @@ export function ConversationThread({
           </div>
         )}
       </div>
-
-      {/* Reply box */}
-      {!isArchived && (
-        <div className="border-border shrink-0 border-t px-6 py-4">
-          {sendError && <p className="text-destructive mb-2 text-xs">{sendError}</p>}
-          <div className="flex items-end gap-2">
-            <Textarea
-              value={replyBody}
-              onChange={(e) => setReplyBody(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={t("replyPlaceholder")}
-              rows={3}
-              disabled={sending}
-              className="min-h-0 resize-none text-sm"
-            />
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleSend}
-              disabled={sending || !replyBody.trim()}
-              className="shrink-0 gap-1.5"
-            >
-              <Send size={13} />
-              {sending ? t("sending") : t("send")}
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -326,10 +242,6 @@ const LOCALE_ES = {
   statusArchived: "Archivada",
   archive: "Archivar",
   archiveError: "Error al archivar la conversación",
-  replyPlaceholder: "Escribe tu respuesta…",
-  send: "Enviar",
-  sending: "Enviando…",
-  sendError: "Error al enviar el mensaje",
   emptyThread: "No hay mensajes aún",
   backToInbox: "Bandeja de entrada",
   channelEmail: "Email",
@@ -351,10 +263,6 @@ const LOCALE_EN: typeof LOCALE_ES = {
   statusArchived: "Archived",
   archive: "Archive",
   archiveError: "Error archiving conversation",
-  replyPlaceholder: "Write your reply…",
-  send: "Send",
-  sending: "Sending…",
-  sendError: "Error sending message",
   emptyThread: "No messages yet",
   backToInbox: "Inbox",
   channelEmail: "Email",
@@ -376,10 +284,6 @@ const LOCALE_PT: typeof LOCALE_ES = {
   statusArchived: "Arquivada",
   archive: "Arquivar",
   archiveError: "Erro ao arquivar a conversa",
-  replyPlaceholder: "Escreva sua resposta…",
-  send: "Enviar",
-  sending: "Enviando…",
-  sendError: "Erro ao enviar a mensagem",
   emptyThread: "Sem mensagens ainda",
   backToInbox: "Caixa de entrada",
   channelEmail: "Email",

@@ -23,11 +23,8 @@ const TWILIO_FROM = process.env["TWILIO_FROM"];
  * Requires `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_FROM` to be set.
  * Returns `skipped` if any env var is missing so the drain worker continues safely.
  *
- * Embeds a short reply-token ref in the message body so inbound SMS can correlate
- * replies: `[ref:XXXXXXXXXXXX]` appended at the end.
- *
  * @example
- * const result = await sendSmsNotification({ deliveryId, replyToken, body, payload, ... });
+ * const result = await sendSmsNotification({ deliveryId, body, payload, ... });
  */
 export const sendSmsNotification: ChannelSender = async function sendSmsNotification(
   input: ChannelSenderInput,
@@ -47,9 +44,7 @@ export const sendSmsNotification: ChannelSender = async function sendSmsNotifica
     return { status: "skipped", error: "no recipient_phone resolved" };
   }
 
-  const body = input.body ?? "(no content)";
-  const tokenShort = input.replyToken.slice(0, 12);
-  const smsBody = `${body}\n[ref:${tokenShort}]`;
+  const smsBody = input.body ?? "(no content)";
 
   // Dynamic import so that twilio is only loaded when env vars are present.
   // The `twilio` package is an optional dependency — do not add it unconditionally.

@@ -2,7 +2,7 @@
 
 begin;
 
-select plan(19);
+select plan(17);
 
 -- ============================================================
 -- Setup: emit a conversation for Alice, capture the IDs
@@ -231,53 +231,6 @@ select ok(
     where conversation_id = (select conversation_id from _c_ids)
   ),
   'viewer_conversations_collection includes archived when include_archived = true'
-);
-
-reset role;
-
--- ============================================================
--- Bob cannot post to Alice conversation
--- ============================================================
-
-set local role authenticated;
-set local request.jwt.claims to '{
-  "sub": "00000000-0000-0000-0000-00000000b00b",
-  "app_metadata": {}
-}';
-
-select throws_ok(
-  $$ select public.conversation_post_user_message(
-       (select conversation_id from _c_ids),
-       'Injected by Bob'
-     ) $$,
-  'P0001',
-  'conversation_not_found',
-  'Bob cannot post to Alice conversation'
-);
-
-reset role;
-
--- ============================================================
--- conversation_post_user_message: Alice can reply to own conversation
--- ============================================================
-
--- Unarchive Alice test conversation first (via service_role).
-update public.conversations
-  set conversation_status = 'open'
-  where conversation_id = (select conversation_id from _c_ids);
-
-set local role authenticated;
-set local request.jwt.claims to '{
-  "sub": "00000000-0000-0000-0000-00000000a11c",
-  "app_metadata": {}
-}';
-
-select lives_ok(
-  $$ select public.conversation_post_user_message(
-       (select conversation_id from _c_ids),
-       'Hello, I have a question about my account.'
-     ) $$,
-  'Alice can post a user message to her own conversation'
 );
 
 reset role;
