@@ -4896,6 +4896,7 @@ create or replace function authz._is_active_agency_member(_profile uuid, _agency
   returns boolean stable security definer parallel safe language sql set search_path to '' as $$
     select exists (
       select 1 from public.agency_memberships am
+      join public.agencies a on a.agency_id = am.agency_id and a.agency_deleted_at is null
       where am.profile_id = _profile
         and am.agency_id = _agency
         and am.agency_membership_accepted_at is not null
@@ -4925,6 +4926,7 @@ create or replace function authz.member_objects(_profile uuid, _object_type auth
     union
     select am.agency_id::bigint
     from public.agency_memberships am
+    join public.agencies a on a.agency_id = am.agency_id and a.agency_deleted_at is null
     where _object_type = 'agency'
       and am.profile_id = _profile
       and am.agency_membership_accepted_at is not null
@@ -4957,7 +4959,6 @@ create or replace function authz.check(
         -- via an agency the profile actively belongs to that reaches this org
         exists (
           select 1 from authz.grants g
-          join public.agency_memberships am on am.agency_id = g.subject_agency_id
           where g.subject_agency_id is not null
             and (
               g.object_organization_id = _object_id::int
@@ -4965,10 +4966,7 @@ create or replace function authz.check(
               or (g.object_organization_id is null and g.object_tenant_id is null and g.object_agency_id is null)
             )
             and (g.permission_id = _relation or g.permission_id = '*')
-            and am.profile_id = _profile
-            and am.agency_membership_accepted_at is not null
-            and am.agency_membership_revoked_at is null
-            and am.agency_membership_rejected_at is null
+            and authz._is_active_agency_member(_profile, g.subject_agency_id)
         )
       )
       when 'tenant' then (

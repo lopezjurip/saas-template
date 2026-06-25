@@ -1,5 +1,5 @@
 begin;
-select plan(5);
+select plan(6);
 
 -- need payrolls_read/payrolls_write in the catalog for FK
 insert into public.permissions (permission_id) values ('payrolls_read'), ('payrolls_write')
@@ -63,6 +63,15 @@ insert into authz.grants (subject_profile_id, object_organization_id, permission
 select ok(
   authz.check('00000000-0000-0000-0000-0000000000b1', 'payrolls_write', 'organization', 1),
   'P1 with * now has payrolls_write on org 1');
+
+-- (6) soft-deleting the agency denies the affiliate even with a valid grant
+update public.agencies
+  set agency_deleted_at = current_timestamp
+  where agency_slug = 'test-agency-authz-check';
+
+select ok(
+  not authz.check('00000000-0000-0000-0000-0000000000b2', 'payrolls_write', 'organization', 1),
+  'soft-deleted agency denies the bridge');
 
 select * from finish();
 rollback;
