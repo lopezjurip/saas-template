@@ -4932,3 +4932,73 @@ create or replace function authz.member_objects(_profile uuid, _object_type auth
       and am.agency_membership_rejected_at is null;
   $$;
 
+-- ------------------------------------------------------------
+-- authz.check — core resolution (direct + agency bridge + wildcard)
+-- ------------------------------------------------------------
+
+create or replace function authz.check(
+  _profile uuid,
+  _relation extensions.citext,
+  _object_type authz.object_type,
+  _object_id bigint
+)
+  returns boolean stable security definer parallel safe language sql set search_path to '' as $$
+    select case _object_type
+      when 'organization' then (
+        -- direct profile grant on this org (requires active membership)
+        exists (
+          select 1 from authz.grants g
+          where g.subject_profile_id = _profile
+            and g.object_organization_id = _object_id::int
+            and (g.permission_id = _relation or g.permission_id = '*')
+            and authz._is_active_org_member(_profile, _object_id::int)
+        )
+        or
+        -- via an agency the profile actively belongs to that reaches this org
+        exists (
+          select 1 from authz.grants g
+          join public.agency_memberships am on am.agency_id = g.subject_agency_id
+          where g.subject_agency_id is not null
+            and (
+              g.object_organization_id = _object_id::int
+              -- all-orgs wildcard: agency grant with no object set
+              or (g.object_organization_id is null and g.object_tenant_id is null and g.object_agency_id is null)
+            )
+            and (g.permission_id = _relation or g.permission_id = '*')
+            and am.profile_id = _profile
+            and am.agency_membership_accepted_at is not null
+            and am.agency_membership_revoked_at is null
+            and am.agency_membership_rejected_at is null
+        )
+      )
+      when 'tenant' then (
+        -- tenant authority rides on org grants of orgs inside the tenant
+        exists (
+          select 1 from authz.grants g
+          join public.organizations o on o.organization_id = g.object_organization_id
+          where g.subject_profile_id = _profile
+            and o.tenant_id = _object_id::int
+            and (g.permission_id = _relation or g.permission_id = '*')
+            and authz._is_active_org_member(_profile, g.object_organization_id)
+        )
+        or
+        -- explicit tenant-object grants (future-proofing)
+        exists (
+          select 1 from authz.grants g
+          where g.subject_profile_id = _profile
+            and g.object_tenant_id = _object_id::int
+            and (g.permission_id = _relation or g.permission_id = '*')
+        )
+      )
+      when 'agency' then (
+        -- manage-the-agency-itself: direct profile grant on the agency, active affiliate
+        exists (
+          select 1 from authz.grants g
+          where g.subject_profile_id = _profile
+            and g.object_agency_id = _object_id::int
+            and (g.permission_id = _relation or g.permission_id = '*')
+            and authz._is_active_agency_member(_profile, _object_id::int)
+        )
+      )
+    end;
+  $$;
