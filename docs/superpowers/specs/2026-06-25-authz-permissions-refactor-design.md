@@ -136,7 +136,7 @@ Read y write son **ejes independientes por bucket**, cada uno resuelto entre `{p
 |---|---|---|
 | `avatars` | público (bucket `public=true`) | dueño del namespace |
 | `profiles` (docs privados) | hereda RLS de `public.profiles` (EXISTS) | dueño del namespace |
-| `payrolls` (org-scoped, futuro) | `viewer_can('payrolls:read', org)` | `viewer_can('payrolls:write', org)` |
+| `payrolls` (org-scoped, futuro) | `viewer_can('payrolls_read', org)` | `viewer_can('payrolls_write', org)` |
 
 ```sql
 -- profiles: lectura delega a la RLS de public.profiles
