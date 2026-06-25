@@ -745,3 +745,9 @@ Each is its own `docs/superpowers/plans/` file, written against the green founda
 4. **Teardown.** Drop the 3 legacy grant tables, the ~15 legacy `viewer_has_*`/`viewer_permission_*_ids` helpers, and their tests, once nothing references them.
 
 **Open decision carried into Cutover:** keep `authz.grants.object_organization_id = NULL` as the agency "all orgs" wildcard, or force every agency grant to name its org. The foundation supports both; Cutover picks one.
+
+**Carried Minor findings (from the foundation's final review — address during Cutover/Teardown):**
+- Add a regression test proving a soft-deleted agency denies the `authz.lookup` org-bridge branch (today only `authz.check` and `agency_reachable_objects` have that regression; `lookup`'s bridge is correct but untested).
+- Reword the `authz.grants` "lock down for now" comment: the table is privilege-open (`grant select,insert,update,delete to authenticated`) and gated only by RLS-enabled-with-no-policies; the comment misleads. Reword when the Cutover adds RLS policies.
+- Optional data-hygiene CHECK: agency-subject grants should only carry `object_organization_id` or all-null (today the constraints structurally permit an agency subject with `object_tenant_id`/`object_agency_id`; no code path reads that shape, so it is dead-but-harmless).
+- Switch `authz.grants`/`authz_check` test fixtures off hardcoded `agency_id=1` to a subquery, and reuse `authz._is_active_agency_member` inside `authz.lookup`'s agency bridge (drift hygiene).
