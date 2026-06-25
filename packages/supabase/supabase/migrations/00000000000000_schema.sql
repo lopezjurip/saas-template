@@ -4875,3 +4875,60 @@ create index if not exists authz_grants_object_org_idx
 alter table authz.grants enable row level security;
 revoke all on table authz.grants from anon, authenticated;
 grant select, insert, update, delete on table authz.grants to anon, authenticated;
+
+-- ------------------------------------------------------------
+-- authz: active-membership helpers
+-- ------------------------------------------------------------
+
+create or replace function authz._is_active_org_member(_profile uuid, _org int)
+  returns boolean stable security definer parallel safe language sql set search_path to '' as $$
+    select exists (
+      select 1 from public.organization_memberships m
+      where m.profile_id = _profile
+        and m.organization_id = _org
+        and m.organization_membership_accepted_at is not null
+        and m.organization_membership_revoked_at is null
+        and m.organization_membership_rejected_at is null
+    );
+  $$;
+
+create or replace function authz._is_active_agency_member(_profile uuid, _agency int)
+  returns boolean stable security definer parallel safe language sql set search_path to '' as $$
+    select exists (
+      select 1 from public.agency_memberships am
+      where am.profile_id = _profile
+        and am.agency_id = _agency
+        and am.agency_membership_accepted_at is not null
+        and am.agency_membership_revoked_at is null
+        and am.agency_membership_rejected_at is null
+    );
+  $$;
+
+create or replace function authz.member_objects(_profile uuid, _object_type authz.object_type)
+  returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
+    select m.organization_id::bigint
+    from public.organization_memberships m
+    where _object_type = 'organization'
+      and m.profile_id = _profile
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null
+    union
+    select o.tenant_id::bigint
+    from public.organization_memberships m
+    join public.organizations o on o.organization_id = m.organization_id
+    where _object_type = 'tenant'
+      and m.profile_id = _profile
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null
+    union
+    select am.agency_id::bigint
+    from public.agency_memberships am
+    where _object_type = 'agency'
+      and am.profile_id = _profile
+      and am.agency_membership_accepted_at is not null
+      and am.agency_membership_revoked_at is null
+      and am.agency_membership_rejected_at is null;
+  $$;
+
