@@ -50,8 +50,8 @@ internal.is_active_agency_member(profile_id, agency_id)→boolean
 ```
 
 - `object_type` = enum `public.permission_object_type` = `('organization','tenant','agency')` (tipado, no `text`).
-- `relation` = slug del catálogo `public.permissions`. Incluye verbos por recurso (ej. `payrolls:read`,
-  `payrolls:write`); el **objeto sigue siendo la org/tenant/agency** (org-scoped, no row-level).
+- `relation` = slug del catálogo `public.permissions`. Incluye verbos por recurso (ej. `payrolls_read`,
+  `payrolls_write`); el **objeto sigue siendo la org/tenant/agency** (org-scoped, no row-level).
 - El wildcard `'*'` y la indirección agencia→org se resuelven **dentro** del núcleo, una sola vez.
 - Funciones `STABLE`, `SECURITY DEFINER`, apoyadas en índices, compatibles con InitPlan.
 
@@ -114,11 +114,11 @@ using ( organization_id in (select viewer_member_objects('organization'))
 
 -- acción / recurso org-scoped
 create policy "payrolls_select" on public.payrolls for select to authenticated
-using ( organization_id in (select viewer_can_objects('payrolls:read','organization')) );
+using ( organization_id in (select viewer_can_objects('payrolls_read','organization')) );
 
 create policy "payrolls_modify" on public.payrolls for all to authenticated
-using      ( organization_id in (select viewer_can_objects('payrolls:write','organization')) )
-with check ( organization_id in (select viewer_can_objects('payrolls:write','organization')) );
+using      ( organization_id in (select viewer_can_objects('payrolls_write','organization')) )
+with check ( organization_id in (select viewer_can_objects('payrolls_write','organization')) );
 
 -- gestionar la agencia misma (object_type = 'agency', sin bridge)
 create policy "agency_memberships_manage" on public.agency_memberships for all to authenticated
