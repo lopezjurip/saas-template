@@ -4833,3 +4833,45 @@ do $$ begin
   create type authz.object_type as enum ('organization', 'tenant', 'agency');
 exception when duplicate_object then null;
 end $$;
+
+create table if not exists authz.grants (
+  grant_id bigint generated always as identity primary key,
+  -- subject: exactly one of these is set
+  subject_profile_id uuid references public.profiles (profile_id) on delete cascade,
+  subject_agency_id  int  references public.agencies (agency_id) on delete cascade,
+  -- object: at most one is set. All-null is the agency "all orgs" wildcard (see CHECK below).
+  object_organization_id int references public.organizations (organization_id) on delete cascade,
+  object_tenant_id       int references public.tenants (tenant_id) on delete cascade,
+  object_agency_id       int references public.agencies (agency_id) on delete cascade,
+  permission_id extensions.citext not null
+    references public.permissions (permission_id) on delete cascade,
+  grant_created_at timestamptz not null default current_timestamp,
+  constraint authz_grants_one_subject check (
+    (subject_profile_id is not null)::int + (subject_agency_id is not null)::int = 1
+  ),
+  constraint authz_grants_one_object check (
+    (object_organization_id is not null)::int
+    + (object_tenant_id is not null)::int
+    + (object_agency_id is not null)::int <= 1
+  ),
+  -- all-null object (= "all orgs") only when the subject is an agency
+  constraint authz_grants_all_orgs_only_agency check (
+    object_organization_id is not null
+    or object_tenant_id is not null
+    or object_agency_id is not null
+    or subject_agency_id is not null
+  )
+);
+
+-- lookup indexes (mirror the legacy *_permission_idx pattern)
+create index if not exists authz_grants_subject_profile_idx
+  on authz.grants (subject_profile_id, permission_id) where subject_profile_id is not null;
+create index if not exists authz_grants_subject_agency_idx
+  on authz.grants (subject_agency_id, permission_id) where subject_agency_id is not null;
+create index if not exists authz_grants_object_org_idx
+  on authz.grants (object_organization_id) where object_organization_id is not null;
+
+-- RLS: managed by viewer_* checks in the cutover plan. Enable + lock down for now.
+alter table authz.grants enable row level security;
+revoke all on table authz.grants from anon, authenticated;
+grant select, insert, update, delete on table authz.grants to anon, authenticated;
