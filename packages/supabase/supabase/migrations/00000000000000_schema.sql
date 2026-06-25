@@ -5000,3 +5000,121 @@ create or replace function authz.check(
       )
     end;
   $$;
+
+-- ------------------------------------------------------------
+-- authz.lookup — set form of check (object ids where check is true)
+-- ------------------------------------------------------------
+
+create or replace function authz.lookup(
+  _profile uuid,
+  _relation extensions.citext,
+  _object_type authz.object_type
+)
+  returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
+    -- organization: direct profile grants
+    select g.object_organization_id::bigint
+    from authz.grants g
+    where _object_type = 'organization'
+      and g.subject_profile_id = _profile
+      and g.object_organization_id is not null
+      and (g.permission_id = _relation or g.permission_id = '*')
+      and authz._is_active_org_member(_profile, g.object_organization_id)
+    union
+    -- organization: via agency bridge (specific org grant OR all-orgs wildcard)
+    -- CRITICAL: exclude soft-deleted agencies (agency_deleted_at is null)
+    select o.organization_id::bigint
+    from authz.grants g
+    join public.agency_memberships am on am.agency_id = g.subject_agency_id
+    join public.agencies a on a.agency_id = g.subject_agency_id and a.agency_deleted_at is null
+    join public.organizations o on (
+      o.organization_id = g.object_organization_id
+      -- all-orgs wildcard: agency grant with no object set → matches every org
+      or (g.object_organization_id is null and g.object_tenant_id is null and g.object_agency_id is null)
+    )
+    where _object_type = 'organization'
+      and g.subject_agency_id is not null
+      and (g.permission_id = _relation or g.permission_id = '*')
+      and am.profile_id = _profile
+      and am.agency_membership_accepted_at is not null
+      and am.agency_membership_revoked_at is null
+      and am.agency_membership_rejected_at is null
+    union
+    -- tenant: ride on org grants of orgs inside the tenant
+    select o.tenant_id::bigint
+    from authz.grants g
+    join public.organizations o on o.organization_id = g.object_organization_id
+    where _object_type = 'tenant'
+      and g.subject_profile_id = _profile
+      and (g.permission_id = _relation or g.permission_id = '*')
+      and authz._is_active_org_member(_profile, g.object_organization_id)
+    union
+    -- tenant: explicit tenant-object grants
+    select g.object_tenant_id::bigint
+    from authz.grants g
+    where _object_type = 'tenant'
+      and g.subject_profile_id = _profile
+      and g.object_tenant_id is not null
+      and (g.permission_id = _relation or g.permission_id = '*')
+    union
+    -- agency: manage-the-agency-itself grants
+    select g.object_agency_id::bigint
+    from authz.grants g
+    where _object_type = 'agency'
+      and g.subject_profile_id = _profile
+      and g.object_agency_id is not null
+      and (g.permission_id = _relation or g.permission_id = '*')
+      and authz._is_active_agency_member(_profile, g.object_agency_id);
+  $$;
+
+-- ------------------------------------------------------------
+-- authz.relations — slugs the profile holds on one object (UI)
+-- ------------------------------------------------------------
+
+create or replace function authz.relations(
+  _profile uuid,
+  _object_type authz.object_type,
+  _object_id bigint
+)
+  returns setof extensions.citext stable security definer parallel safe language sql set search_path to '' as $$
+    select distinct p.permission_id
+    from public.permissions p
+    where authz.check(_profile, p.permission_id, _object_type, _object_id);
+  $$;
+
+-- ------------------------------------------------------------
+-- authz.agency_reachable_objects — objects where the profile's
+-- active (non-deleted) agency has ≥1 grant (visibility, not action)
+-- ------------------------------------------------------------
+
+create or replace function authz.agency_reachable_objects(
+  _profile uuid,
+  _object_type authz.object_type
+)
+  returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
+    -- organization: explicit per-org agency grants (soft-deleted agencies excluded)
+    select distinct g.object_organization_id::bigint
+    from authz.grants g
+    join public.agency_memberships am on am.agency_id = g.subject_agency_id
+    join public.agencies a on a.agency_id = g.subject_agency_id and a.agency_deleted_at is null
+    where _object_type = 'organization'
+      and g.subject_agency_id is not null
+      and g.object_organization_id is not null
+      and am.profile_id = _profile
+      and am.agency_membership_accepted_at is not null
+      and am.agency_membership_revoked_at is null
+      and am.agency_membership_rejected_at is null
+    union
+    -- tenant: via orgs in the tenant that the agency reaches
+    select distinct o.tenant_id::bigint
+    from authz.grants g
+    join public.agency_memberships am on am.agency_id = g.subject_agency_id
+    join public.agencies a on a.agency_id = g.subject_agency_id and a.agency_deleted_at is null
+    join public.organizations o on o.organization_id = g.object_organization_id
+    where _object_type = 'tenant'
+      and g.subject_agency_id is not null
+      and g.object_organization_id is not null
+      and am.profile_id = _profile
+      and am.agency_membership_accepted_at is not null
+      and am.agency_membership_revoked_at is null
+      and am.agency_membership_rejected_at is null;
+  $$;
