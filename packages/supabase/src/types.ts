@@ -724,6 +724,96 @@ export type Database = {
           },
         ]
       }
+      permission_grants: {
+        Row: {
+          object_agency_id: number | null
+          object_organization_id: number | null
+          object_tenant_id: number | null
+          permission_grant_created_at: string
+          permission_grant_id: number
+          permission_id: string
+          subject_agency_id: number | null
+          subject_profile_id: string | null
+        }
+        Insert: {
+          object_agency_id?: number | null
+          object_organization_id?: number | null
+          object_tenant_id?: number | null
+          permission_grant_created_at?: string
+          permission_grant_id?: never
+          permission_id: string
+          subject_agency_id?: number | null
+          subject_profile_id?: string | null
+        }
+        Update: {
+          object_agency_id?: number | null
+          object_organization_id?: number | null
+          object_tenant_id?: number | null
+          permission_grant_created_at?: string
+          permission_grant_id?: never
+          permission_id?: string
+          subject_agency_id?: number | null
+          subject_profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_grants_object_agency_id_fkey"
+            columns: ["object_agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "permission_grants_object_organization_id_fkey"
+            columns: ["object_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "permission_grants_object_organization_id_fkey"
+            columns: ["object_organization_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_organizations_profiles"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "permission_grants_object_tenant_id_fkey"
+            columns: ["object_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "permission_grants_object_tenant_id_fkey"
+            columns: ["object_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_organizations_profiles"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "permission_grants_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["permission_id"]
+          },
+          {
+            foreignKeyName: "permission_grants_subject_agency_id_fkey"
+            columns: ["subject_agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["agency_id"]
+          },
+          {
+            foreignKeyName: "permission_grants_subject_profile_id_fkey"
+            columns: ["subject_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["profile_id"]
+          },
+        ]
+      }
       permission_presets: {
         Row: {
           organization_id: number | null
@@ -1657,7 +1747,9 @@ export type Database = {
         Returns: number[]
       }
       viewer_agency_reachable_objects: {
-        Args: { _object_type: "organization" | "tenant" | "agency" }
+        Args: {
+          object_type: Database["public"]["Enums"]["permission_object_type"]
+        }
         Returns: number[]
       }
       viewer_agency_team: {
@@ -1680,16 +1772,16 @@ export type Database = {
       viewer_agency_tenant_ids: { Args: never; Returns: number[] }
       viewer_can: {
         Args: {
-          _object_id: number
-          _object_type: "organization" | "tenant" | "agency"
-          _relation: string
+          object_id: number
+          object_type: Database["public"]["Enums"]["permission_object_type"]
+          permission_id: string
         }
         Returns: boolean
       }
       viewer_can_objects: {
         Args: {
-          _object_type: "organization" | "tenant" | "agency"
-          _relation: string
+          object_type: Database["public"]["Enums"]["permission_object_type"]
+          permission_id: string
         }
         Returns: number[]
       }
@@ -1784,8 +1876,17 @@ export type Database = {
       }
       viewer_is_agency_member: { Args: never; Returns: boolean }
       viewer_member_objects: {
-        Args: { _object_type: "organization" | "tenant" | "agency" }
+        Args: {
+          object_type: Database["public"]["Enums"]["permission_object_type"]
+        }
         Returns: number[]
+      }
+      viewer_object_permissions: {
+        Args: {
+          object_id: number
+          object_type: Database["public"]["Enums"]["permission_object_type"]
+        }
+        Returns: string[]
       }
       viewer_organization_by_id: {
         Args: { organization_id: number }
@@ -2020,13 +2121,6 @@ export type Database = {
         }
       }
       viewer_profile_id: { Args: { strict?: boolean }; Returns: string }
-      viewer_relations: {
-        Args: {
-          _object_id: number
-          _object_type: "organization" | "tenant" | "agency"
-        }
-        Returns: string[]
-      }
       viewer_sessions_collection: {
         Args: never
         Returns: {
@@ -2174,6 +2268,7 @@ export type Database = {
       message_channel: "in_app" | "email" | "web_push" | "whatsapp" | "sms"
       notification_kind: "info" | "warn" | "fatal" | "error" | "debug" | "log"
       notification_priority: "low" | "medium" | "high" | "critical"
+      permission_object_type: "organization" | "tenant" | "agency"
       profile_identity_document_kind: "nin" | "passport"
       tenant_tier: "free" | "pro" | "enterprise"
     }
@@ -2306,6 +2401,7 @@ export const Constants = {
       message_channel: ["in_app", "email", "web_push", "whatsapp", "sms"],
       notification_kind: ["info", "warn", "fatal", "error", "debug", "log"],
       notification_priority: ["low", "medium", "high", "critical"],
+      permission_object_type: ["organization", "tenant", "agency"],
       profile_identity_document_kind: ["nin", "passport"],
       tenant_tier: ["free", "pro", "enterprise"],
     },

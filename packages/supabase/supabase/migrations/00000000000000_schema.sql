@@ -4822,20 +4822,19 @@ $$;
 grant execute on function public.organization_membership_label(public.organization_memberships) to anon, authenticated;
 
 -- ============================================================
--- authz — uniform, two-layer authorization (Zanzibar-lite, in-Postgres)
+-- Uniform, two-layer authorization (Zanzibar-lite, in-Postgres)
 -- Core functions take an explicit profile_id; viewer_* wrappers inject the JWT's own.
 -- Coexists with the legacy viewer_*/grant tables until the cutover plan migrates RLS.
 -- ============================================================
-create schema if not exists authz;
-grant usage on schema authz to anon, authenticated;
 
+-- Enum: permission_object_type
 do $$ begin
-  create type authz.object_type as enum ('organization', 'tenant', 'agency');
+  create type public.permission_object_type as enum ('organization', 'tenant', 'agency');
 exception when duplicate_object then null;
 end $$;
 
-create table if not exists authz.grants (
-  grant_id bigint generated always as identity primary key,
+create table if not exists public.permission_grants (
+  permission_grant_id bigint generated always as identity primary key,
   -- subject: exactly one of these is set
   subject_profile_id uuid references public.profiles (profile_id) on delete cascade,
   subject_agency_id  int  references public.agencies (agency_id) on delete cascade,
@@ -4845,17 +4844,17 @@ create table if not exists authz.grants (
   object_agency_id       int references public.agencies (agency_id) on delete cascade,
   permission_id extensions.citext not null
     references public.permissions (permission_id) on delete cascade,
-  grant_created_at timestamptz not null default current_timestamp,
-  constraint authz_grants_one_subject check (
+  permission_grant_created_at timestamptz not null default current_timestamp,
+  constraint permission_grants_one_subject check (
     (subject_profile_id is not null)::int + (subject_agency_id is not null)::int = 1
   ),
-  constraint authz_grants_one_object check (
+  constraint permission_grants_one_object check (
     (object_organization_id is not null)::int
     + (object_tenant_id is not null)::int
     + (object_agency_id is not null)::int <= 1
   ),
   -- all-null object (= "all orgs") only when the subject is an agency
-  constraint authz_grants_all_orgs_only_agency check (
+  constraint permission_grants_all_orgs_only_agency check (
     object_organization_id is not null
     or object_tenant_id is not null
     or object_agency_id is not null
@@ -4863,54 +4862,58 @@ create table if not exists authz.grants (
   )
 );
 
--- lookup indexes (mirror the legacy *_permission_idx pattern)
-create index if not exists authz_grants_subject_profile_idx
-  on authz.grants (subject_profile_id, permission_id) where subject_profile_id is not null;
-create index if not exists authz_grants_subject_agency_idx
-  on authz.grants (subject_agency_id, permission_id) where subject_agency_id is not null;
-create index if not exists authz_grants_object_org_idx
-  on authz.grants (object_organization_id) where object_organization_id is not null;
+-- lookup indexes
+create index if not exists permission_grants_subject_profile_idx
+  on public.permission_grants (subject_profile_id, permission_id) where subject_profile_id is not null;
+create index if not exists permission_grants_subject_agency_idx
+  on public.permission_grants (subject_agency_id, permission_id) where subject_agency_id is not null;
+create index if not exists permission_grants_object_org_idx
+  on public.permission_grants (object_organization_id) where object_organization_id is not null;
 
 -- RLS: managed by viewer_* checks in the cutover plan. Enable + lock down for now.
-alter table authz.grants enable row level security;
-revoke all on table authz.grants from anon, authenticated;
-grant select, insert, update, delete on table authz.grants to anon, authenticated;
+alter table public.permission_grants enable row level security;
+revoke all on table public.permission_grants from anon, authenticated;
+grant select, insert, update, delete on table public.permission_grants to anon, authenticated;
 
 -- ------------------------------------------------------------
--- authz: active-membership helpers
+-- internal: active-membership helpers
 -- ------------------------------------------------------------
 
-create or replace function authz._is_active_org_member(_profile uuid, _org int)
+create or replace function internal.is_active_org_member(profile_id uuid, organization_id int)
   returns boolean stable security definer parallel safe language sql set search_path to '' as $$
     select exists (
       select 1 from public.organization_memberships m
-      where m.profile_id = _profile
-        and m.organization_id = _org
+      where m.profile_id = is_active_org_member.profile_id
+        and m.organization_id = is_active_org_member.organization_id
         and m.organization_membership_accepted_at is not null
         and m.organization_membership_revoked_at is null
         and m.organization_membership_rejected_at is null
     );
   $$;
 
-create or replace function authz._is_active_agency_member(_profile uuid, _agency int)
+create or replace function internal.is_active_agency_member(profile_id uuid, agency_id int)
   returns boolean stable security definer parallel safe language sql set search_path to '' as $$
     select exists (
       select 1 from public.agency_memberships am
       join public.agencies a on a.agency_id = am.agency_id and a.agency_deleted_at is null
-      where am.profile_id = _profile
-        and am.agency_id = _agency
+      where am.profile_id = is_active_agency_member.profile_id
+        and am.agency_id = is_active_agency_member.agency_id
         and am.agency_membership_accepted_at is not null
         and am.agency_membership_revoked_at is null
         and am.agency_membership_rejected_at is null
     );
   $$;
 
-create or replace function authz.member_objects(_profile uuid, _object_type authz.object_type)
+-- ------------------------------------------------------------
+-- protected.member_objects — orgs/tenants/agencies the profile actively belongs to
+-- ------------------------------------------------------------
+
+create or replace function protected.member_objects(profile_id uuid, object_type public.permission_object_type)
   returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
     select m.organization_id::bigint
     from public.organization_memberships m
-    where _object_type = 'organization'
-      and m.profile_id = _profile
+    where member_objects.object_type = 'organization'
+      and m.profile_id = member_objects.profile_id
       and m.organization_membership_accepted_at is not null
       and m.organization_membership_revoked_at is null
       and m.organization_membership_rejected_at is null
@@ -4918,8 +4921,8 @@ create or replace function authz.member_objects(_profile uuid, _object_type auth
     select o.tenant_id::bigint
     from public.organization_memberships m
     join public.organizations o on o.organization_id = m.organization_id
-    where _object_type = 'tenant'
-      and m.profile_id = _profile
+    where member_objects.object_type = 'tenant'
+      and m.profile_id = member_objects.profile_id
       and m.organization_membership_accepted_at is not null
       and m.organization_membership_revoked_at is null
       and m.organization_membership_rejected_at is null
@@ -4927,103 +4930,111 @@ create or replace function authz.member_objects(_profile uuid, _object_type auth
     select am.agency_id::bigint
     from public.agency_memberships am
     join public.agencies a on a.agency_id = am.agency_id and a.agency_deleted_at is null
-    where _object_type = 'agency'
-      and am.profile_id = _profile
+    where member_objects.object_type = 'agency'
+      and am.profile_id = member_objects.profile_id
       and am.agency_membership_accepted_at is not null
       and am.agency_membership_revoked_at is null
       and am.agency_membership_rejected_at is null;
   $$;
 
+revoke execute on function protected.member_objects(uuid, public.permission_object_type) from public;
+revoke execute on function protected.member_objects(uuid, public.permission_object_type) from anon, authenticated;
+grant execute on function protected.member_objects(uuid, public.permission_object_type) to service_role;
+
 -- ------------------------------------------------------------
--- authz.check — core resolution (direct + agency bridge + wildcard)
+-- protected.check_permission — core resolution (direct + agency bridge + wildcard)
 -- ------------------------------------------------------------
 
-create or replace function authz.check(
-  _profile uuid,
-  _relation extensions.citext,
-  _object_type authz.object_type,
-  _object_id bigint
+create or replace function protected.check_permission(
+  profile_id uuid,
+  permission_id extensions.citext,
+  object_type public.permission_object_type,
+  object_id bigint
 )
   returns boolean stable security definer parallel safe language sql set search_path to '' as $$
-    select case _object_type
+    select case check_permission.object_type
       when 'organization' then (
         -- direct profile grant on this org (requires active membership)
         exists (
-          select 1 from authz.grants g
-          where g.subject_profile_id = _profile
-            and g.object_organization_id = _object_id::int
-            and (g.permission_id = _relation or g.permission_id = '*')
-            and authz._is_active_org_member(_profile, _object_id::int)
+          select 1 from public.permission_grants g
+          where g.subject_profile_id = check_permission.profile_id
+            and g.object_organization_id = check_permission.object_id::int
+            and (g.permission_id = check_permission.permission_id or g.permission_id = '*')
+            and internal.is_active_org_member(check_permission.profile_id, check_permission.object_id::int)
         )
         or
         -- via an agency the profile actively belongs to that reaches this org
         exists (
-          select 1 from authz.grants g
+          select 1 from public.permission_grants g
           where g.subject_agency_id is not null
             and (
-              g.object_organization_id = _object_id::int
+              g.object_organization_id = check_permission.object_id::int
               -- all-orgs wildcard: agency grant with no object set
               or (g.object_organization_id is null and g.object_tenant_id is null and g.object_agency_id is null)
             )
-            and (g.permission_id = _relation or g.permission_id = '*')
-            and authz._is_active_agency_member(_profile, g.subject_agency_id)
+            and (g.permission_id = check_permission.permission_id or g.permission_id = '*')
+            and internal.is_active_agency_member(check_permission.profile_id, g.subject_agency_id)
         )
       )
       when 'tenant' then (
         -- tenant authority rides on org grants of orgs inside the tenant
         exists (
-          select 1 from authz.grants g
+          select 1 from public.permission_grants g
           join public.organizations o on o.organization_id = g.object_organization_id
-          where g.subject_profile_id = _profile
-            and o.tenant_id = _object_id::int
-            and (g.permission_id = _relation or g.permission_id = '*')
-            and authz._is_active_org_member(_profile, g.object_organization_id)
+          where g.subject_profile_id = check_permission.profile_id
+            and o.tenant_id = check_permission.object_id::int
+            and (g.permission_id = check_permission.permission_id or g.permission_id = '*')
+            and internal.is_active_org_member(check_permission.profile_id, g.object_organization_id)
         )
         or
         -- explicit tenant-object grants (future-proofing)
         exists (
-          select 1 from authz.grants g
-          where g.subject_profile_id = _profile
-            and g.object_tenant_id = _object_id::int
-            and (g.permission_id = _relation or g.permission_id = '*')
+          select 1 from public.permission_grants g
+          where g.subject_profile_id = check_permission.profile_id
+            and g.object_tenant_id = check_permission.object_id::int
+            and (g.permission_id = check_permission.permission_id or g.permission_id = '*')
         )
       )
       when 'agency' then (
         -- manage-the-agency-itself: direct profile grant on the agency, active affiliate
         exists (
-          select 1 from authz.grants g
-          where g.subject_profile_id = _profile
-            and g.object_agency_id = _object_id::int
-            and (g.permission_id = _relation or g.permission_id = '*')
-            and authz._is_active_agency_member(_profile, _object_id::int)
+          select 1 from public.permission_grants g
+          where g.subject_profile_id = check_permission.profile_id
+            and g.object_agency_id = check_permission.object_id::int
+            and (g.permission_id = check_permission.permission_id or g.permission_id = '*')
+            and internal.is_active_agency_member(check_permission.profile_id, check_permission.object_id::int)
         )
       )
     end;
   $$;
 
+revoke execute on function protected.check_permission(uuid, extensions.citext, public.permission_object_type, bigint) from public;
+revoke execute on function protected.check_permission(uuid, extensions.citext, public.permission_object_type, bigint) from anon, authenticated;
+grant execute on function protected.check_permission(uuid, extensions.citext, public.permission_object_type, bigint) to service_role;
+
 -- ------------------------------------------------------------
--- authz.lookup — set form of check (object ids where check is true)
+-- protected.lookup_objects — set form of check_permission (object ids where check_permission is true)
 -- ------------------------------------------------------------
 
-create or replace function authz.lookup(
-  _profile uuid,
-  _relation extensions.citext,
-  _object_type authz.object_type
+create or replace function protected.lookup_objects(
+  profile_id uuid,
+  permission_id extensions.citext,
+  object_type public.permission_object_type
 )
   returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
     -- organization: direct profile grants
     select g.object_organization_id::bigint
-    from authz.grants g
-    where _object_type = 'organization'
-      and g.subject_profile_id = _profile
+    from public.permission_grants g
+    where lookup_objects.object_type = 'organization'
+      and g.subject_profile_id = lookup_objects.profile_id
       and g.object_organization_id is not null
-      and (g.permission_id = _relation or g.permission_id = '*')
-      and authz._is_active_org_member(_profile, g.object_organization_id)
+      and (g.permission_id = lookup_objects.permission_id or g.permission_id = '*')
+      and internal.is_active_org_member(lookup_objects.profile_id, g.object_organization_id)
     union
     -- organization: via agency bridge (specific org grant OR all-orgs wildcard)
     -- CRITICAL: exclude soft-deleted agencies (agency_deleted_at is null)
     select o.organization_id::bigint
-    from authz.grants g
+    from public.permission_grants g
     join public.agency_memberships am on am.agency_id = g.subject_agency_id
     join public.agencies a on a.agency_id = g.subject_agency_id and a.agency_deleted_at is null
     join public.organizations o on (
@@ -5031,93 +5042,105 @@ create or replace function authz.lookup(
       -- all-orgs wildcard: agency grant with no object set → matches every org
       or (g.object_organization_id is null and g.object_tenant_id is null and g.object_agency_id is null)
     )
-    where _object_type = 'organization'
+    where lookup_objects.object_type = 'organization'
       and g.subject_agency_id is not null
-      and (g.permission_id = _relation or g.permission_id = '*')
-      and am.profile_id = _profile
+      and (g.permission_id = lookup_objects.permission_id or g.permission_id = '*')
+      and am.profile_id = lookup_objects.profile_id
       and am.agency_membership_accepted_at is not null
       and am.agency_membership_revoked_at is null
       and am.agency_membership_rejected_at is null
     union
     -- tenant: ride on org grants of orgs inside the tenant
     select o.tenant_id::bigint
-    from authz.grants g
+    from public.permission_grants g
     join public.organizations o on o.organization_id = g.object_organization_id
-    where _object_type = 'tenant'
-      and g.subject_profile_id = _profile
-      and (g.permission_id = _relation or g.permission_id = '*')
-      and authz._is_active_org_member(_profile, g.object_organization_id)
+    where lookup_objects.object_type = 'tenant'
+      and g.subject_profile_id = lookup_objects.profile_id
+      and (g.permission_id = lookup_objects.permission_id or g.permission_id = '*')
+      and internal.is_active_org_member(lookup_objects.profile_id, g.object_organization_id)
     union
     -- tenant: explicit tenant-object grants
     select g.object_tenant_id::bigint
-    from authz.grants g
-    where _object_type = 'tenant'
-      and g.subject_profile_id = _profile
+    from public.permission_grants g
+    where lookup_objects.object_type = 'tenant'
+      and g.subject_profile_id = lookup_objects.profile_id
       and g.object_tenant_id is not null
-      and (g.permission_id = _relation or g.permission_id = '*')
+      and (g.permission_id = lookup_objects.permission_id or g.permission_id = '*')
     union
     -- agency: manage-the-agency-itself grants
     select g.object_agency_id::bigint
-    from authz.grants g
-    where _object_type = 'agency'
-      and g.subject_profile_id = _profile
+    from public.permission_grants g
+    where lookup_objects.object_type = 'agency'
+      and g.subject_profile_id = lookup_objects.profile_id
       and g.object_agency_id is not null
-      and (g.permission_id = _relation or g.permission_id = '*')
-      and authz._is_active_agency_member(_profile, g.object_agency_id);
+      and (g.permission_id = lookup_objects.permission_id or g.permission_id = '*')
+      and internal.is_active_agency_member(lookup_objects.profile_id, g.object_agency_id);
   $$;
 
+revoke execute on function protected.lookup_objects(uuid, extensions.citext, public.permission_object_type) from public;
+revoke execute on function protected.lookup_objects(uuid, extensions.citext, public.permission_object_type) from anon, authenticated;
+grant execute on function protected.lookup_objects(uuid, extensions.citext, public.permission_object_type) to service_role;
+
 -- ------------------------------------------------------------
--- authz.relations — slugs the profile holds on one object (UI)
+-- protected.list_object_permissions — slugs the profile holds on one object (UI)
 -- ------------------------------------------------------------
 
-create or replace function authz.relations(
-  _profile uuid,
-  _object_type authz.object_type,
-  _object_id bigint
+create or replace function protected.list_object_permissions(
+  profile_id uuid,
+  object_type public.permission_object_type,
+  object_id bigint
 )
   returns setof extensions.citext stable security definer parallel safe language sql set search_path to '' as $$
     select distinct p.permission_id
     from public.permissions p
-    where authz.check(_profile, p.permission_id, _object_type, _object_id);
+    where protected.check_permission(list_object_permissions.profile_id, p.permission_id, list_object_permissions.object_type, list_object_permissions.object_id);
   $$;
 
+revoke execute on function protected.list_object_permissions(uuid, public.permission_object_type, bigint) from public;
+revoke execute on function protected.list_object_permissions(uuid, public.permission_object_type, bigint) from anon, authenticated;
+grant execute on function protected.list_object_permissions(uuid, public.permission_object_type, bigint) to service_role;
+
 -- ------------------------------------------------------------
--- authz.agency_reachable_objects — objects where the profile's
+-- protected.agency_reachable_objects — objects where the profile's
 -- active (non-deleted) agency has ≥1 grant (visibility, not action)
 -- ------------------------------------------------------------
 
-create or replace function authz.agency_reachable_objects(
-  _profile uuid,
-  _object_type authz.object_type
+create or replace function protected.agency_reachable_objects(
+  profile_id uuid,
+  object_type public.permission_object_type
 )
   returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
     -- organization: explicit per-org agency grants (soft-deleted agencies excluded)
     select distinct g.object_organization_id::bigint
-    from authz.grants g
+    from public.permission_grants g
     join public.agency_memberships am on am.agency_id = g.subject_agency_id
     join public.agencies a on a.agency_id = g.subject_agency_id and a.agency_deleted_at is null
-    where _object_type = 'organization'
+    where agency_reachable_objects.object_type = 'organization'
       and g.subject_agency_id is not null
       and g.object_organization_id is not null
-      and am.profile_id = _profile
+      and am.profile_id = agency_reachable_objects.profile_id
       and am.agency_membership_accepted_at is not null
       and am.agency_membership_revoked_at is null
       and am.agency_membership_rejected_at is null
     union
     -- tenant: via orgs in the tenant that the agency reaches
     select distinct o.tenant_id::bigint
-    from authz.grants g
+    from public.permission_grants g
     join public.agency_memberships am on am.agency_id = g.subject_agency_id
     join public.agencies a on a.agency_id = g.subject_agency_id and a.agency_deleted_at is null
     join public.organizations o on o.organization_id = g.object_organization_id
-    where _object_type = 'tenant'
+    where agency_reachable_objects.object_type = 'tenant'
       and g.subject_agency_id is not null
       and g.object_organization_id is not null
-      and am.profile_id = _profile
+      and am.profile_id = agency_reachable_objects.profile_id
       and am.agency_membership_accepted_at is not null
       and am.agency_membership_revoked_at is null
       and am.agency_membership_rejected_at is null;
   $$;
+
+revoke execute on function protected.agency_reachable_objects(uuid, public.permission_object_type) from public;
+revoke execute on function protected.agency_reachable_objects(uuid, public.permission_object_type) from anon, authenticated;
+grant execute on function protected.agency_reachable_objects(uuid, public.permission_object_type) to service_role;
 
 -- ------------------------------------------------------------
 -- public.viewer_* wrappers — inject the JWT's own profile_id
@@ -5125,50 +5148,50 @@ create or replace function authz.agency_reachable_objects(
 -- ------------------------------------------------------------
 
 create or replace function public.viewer_can(
-  _relation extensions.citext,
-  _object_type authz.object_type,
-  _object_id bigint
+  permission_id extensions.citext,
+  object_type public.permission_object_type,
+  object_id bigint
 )
   returns boolean stable security definer parallel safe language sql set search_path to '' as $$
-    select authz.check(public.viewer_profile_id(true), _relation, _object_type, _object_id);
+    select protected.check_permission(public.viewer_profile_id(true), viewer_can.permission_id, viewer_can.object_type, viewer_can.object_id);
   $$;
 
-grant execute on function public.viewer_can(extensions.citext, authz.object_type, bigint) to anon, authenticated;
+grant execute on function public.viewer_can(extensions.citext, public.permission_object_type, bigint) to anon, authenticated;
 
 create or replace function public.viewer_can_objects(
-  _relation extensions.citext,
-  _object_type authz.object_type
+  permission_id extensions.citext,
+  object_type public.permission_object_type
 )
   returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
-    select authz.lookup(public.viewer_profile_id(true), _relation, _object_type);
+    select protected.lookup_objects(public.viewer_profile_id(true), viewer_can_objects.permission_id, viewer_can_objects.object_type);
   $$;
 
-grant execute on function public.viewer_can_objects(extensions.citext, authz.object_type) to anon, authenticated;
+grant execute on function public.viewer_can_objects(extensions.citext, public.permission_object_type) to anon, authenticated;
 
-create or replace function public.viewer_relations(
-  _object_type authz.object_type,
-  _object_id bigint
+create or replace function public.viewer_object_permissions(
+  object_type public.permission_object_type,
+  object_id bigint
 )
   returns setof extensions.citext stable security definer parallel safe language sql set search_path to '' as $$
-    select authz.relations(public.viewer_profile_id(true), _object_type, _object_id);
+    select protected.list_object_permissions(public.viewer_profile_id(true), viewer_object_permissions.object_type, viewer_object_permissions.object_id);
   $$;
 
-grant execute on function public.viewer_relations(authz.object_type, bigint) to anon, authenticated;
+grant execute on function public.viewer_object_permissions(public.permission_object_type, bigint) to anon, authenticated;
 
 create or replace function public.viewer_member_objects(
-  _object_type authz.object_type
+  object_type public.permission_object_type
 )
   returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
-    select authz.member_objects(public.viewer_profile_id(true), _object_type);
+    select protected.member_objects(public.viewer_profile_id(true), viewer_member_objects.object_type);
   $$;
 
-grant execute on function public.viewer_member_objects(authz.object_type) to anon, authenticated;
+grant execute on function public.viewer_member_objects(public.permission_object_type) to anon, authenticated;
 
 create or replace function public.viewer_agency_reachable_objects(
-  _object_type authz.object_type
+  object_type public.permission_object_type
 )
   returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
-    select authz.agency_reachable_objects(public.viewer_profile_id(true), _object_type);
+    select protected.agency_reachable_objects(public.viewer_profile_id(true), viewer_agency_reachable_objects.object_type);
   $$;
 
-grant execute on function public.viewer_agency_reachable_objects(authz.object_type) to anon, authenticated;
+grant execute on function public.viewer_agency_reachable_objects(public.permission_object_type) to anon, authenticated;

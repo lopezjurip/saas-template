@@ -15,62 +15,62 @@ insert into public.organization_memberships (organization_id, profile_id, organi
   values (1, '00000000-0000-0000-0000-0000000000b1', current_timestamp);
 
 -- P1 gets a direct payrolls_read grant on org 1
-insert into authz.grants (subject_profile_id, object_organization_id, permission_id)
+insert into public.permission_grants (subject_profile_id, object_organization_id, permission_id)
   values ('00000000-0000-0000-0000-0000000000b1', 1, 'payrolls_read');
 
 -- agency A reaching org 1 with payrolls_write; P2 an active affiliate of A
 insert into public.agencies (agency_name, agency_slug)
-  values ('Test Agency', 'test-agency-authz-check');
+  values ('Test Agency', 'test-agency-check-permission');
 
 insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
   values (
-    (select agency_id from public.agencies where agency_slug = 'test-agency-authz-check'),
+    (select agency_id from public.agencies where agency_slug = 'test-agency-check-permission'),
     '00000000-0000-0000-0000-0000000000b2',
     current_timestamp
   );
 
-insert into authz.grants (subject_agency_id, object_organization_id, permission_id)
+insert into public.permission_grants (subject_agency_id, object_organization_id, permission_id)
   values (
-    (select agency_id from public.agencies where agency_slug = 'test-agency-authz-check'),
+    (select agency_id from public.agencies where agency_slug = 'test-agency-check-permission'),
     1,
     'payrolls_write'
   );
 
 -- (1) direct member has the directly-granted permission on the org → true
 select ok(
-  authz.check('00000000-0000-0000-0000-0000000000b1', 'payrolls_read', 'organization', 1),
+  protected.check_permission('00000000-0000-0000-0000-0000000000b1', 'payrolls_read', 'organization', 1),
   'P1 has direct payrolls_read on org 1');
 
 -- (2) same member lacks a different permission → false
 select ok(
-  not authz.check('00000000-0000-0000-0000-0000000000b1', 'payrolls_write', 'organization', 1),
+  not protected.check_permission('00000000-0000-0000-0000-0000000000b1', 'payrolls_write', 'organization', 1),
   'P1 lacks payrolls_write on org 1 (not granted)');
 
 -- (3) an active agency affiliate reaches the agency's granted permission on the org → true
 select ok(
-  authz.check('00000000-0000-0000-0000-0000000000b2', 'payrolls_write', 'organization', 1),
+  protected.check_permission('00000000-0000-0000-0000-0000000000b2', 'payrolls_write', 'organization', 1),
   'P2 reaches payrolls_write on org 1 via agency');
 
 -- (4) that affiliate does NOT have a permission the agency was not granted → false
 select ok(
-  not authz.check('00000000-0000-0000-0000-0000000000b2', 'payrolls_read', 'organization', 1),
+  not protected.check_permission('00000000-0000-0000-0000-0000000000b2', 'payrolls_read', 'organization', 1),
   'P2 lacks payrolls_read on org 1 (agency grant is write-only)');
 
 -- (5) a member with '*' wildcard has an arbitrary permission on the org → true
-insert into authz.grants (subject_profile_id, object_organization_id, permission_id)
+insert into public.permission_grants (subject_profile_id, object_organization_id, permission_id)
   values ('00000000-0000-0000-0000-0000000000b1', 1, '*');
 
 select ok(
-  authz.check('00000000-0000-0000-0000-0000000000b1', 'payrolls_write', 'organization', 1),
+  protected.check_permission('00000000-0000-0000-0000-0000000000b1', 'payrolls_write', 'organization', 1),
   'P1 with * now has payrolls_write on org 1');
 
 -- (6) soft-deleting the agency denies the affiliate even with a valid grant
 update public.agencies
   set agency_deleted_at = current_timestamp
-  where agency_slug = 'test-agency-authz-check';
+  where agency_slug = 'test-agency-check-permission';
 
 select ok(
-  not authz.check('00000000-0000-0000-0000-0000000000b2', 'payrolls_write', 'organization', 1),
+  not protected.check_permission('00000000-0000-0000-0000-0000000000b2', 'payrolls_write', 'organization', 1),
   'soft-deleted agency denies the bridge');
 
 select * from finish();

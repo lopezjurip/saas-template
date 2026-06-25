@@ -1,4 +1,4 @@
-# Refactor de autorización estilo Zanzibar-lite (capa `authz`)
+# Refactor de autorización estilo Zanzibar-lite (capa `internal`/`protected`/`public`)
 
 > Fecha: 2026-06-25 · Branch: `zanzibar-permissions` · Estado: diseño aprobado, pendiente de plan de implementación.
 > Contexto: prototipo, **sin usuarios productivos** → cambios breaking permitidos. Esquema único en
@@ -26,8 +26,8 @@ zoo actual de ~15 helpers `viewer_*` + 3 tablas de grants.
      **intactas**.
    - *Permiso (grant):* `(sujeto, relación, objeto)`. Se consolida.
 2. **Dos capas:**
-   - *Núcleo* `authz.*`: recibe `profile_id` **siempre explícito**. Puro, no depende de `auth.uid()`.
-     Testeable y reusable sobre terceros.
+   - *Núcleo* `protected.*`: recibe `profile_id` **siempre explícito**. Puro, no depende de `auth.uid()`.
+     Testeable y reusable sobre terceros. Helpers de pertenencia en `internal.*`.
    - *Viewer* `viewer_*`: inyecta el `profile_id` propio del JWT (`viewer_profile_id(true)`). Única frontera
      con el JWT. **RLS usa esta capa.**
 3. **Una sola verdad por concepto:** el predicado "membresía activa", la expansión del wildcard `'*'`, y las
@@ -38,15 +38,18 @@ zoo actual de ~15 helpers `viewer_*` + 3 tablas de grants.
 ## Superficie de funciones
 
 ```
--- NÚCLEO (profile_id explícito)                              -- VIEWER (inyecta el propio profile_id)
-authz.check(profile_id, relation, object_type, object_id)→bool   viewer_can(relation, object_type, object_id)
-authz.lookup(profile_id, relation, object_type)→setof bigint     viewer_can_objects(relation, object_type)
-authz.relations(profile_id, object_type, object_id)→setof citext viewer_relations(object_type, object_id)
-authz.member_objects(profile_id, object_type)→setof bigint       viewer_member_objects(object_type)
-authz.agency_reachable_objects(profile_id, object_type)→setof id viewer_agency_reachable_objects(object_type)
+-- NÚCLEO (profile_id explícito)                                             -- VIEWER (inyecta el propio profile_id)
+protected.check_permission(profile_id, permission_id, object_type, object_id)→bool   viewer_can(permission_id, object_type, object_id)
+protected.lookup_objects(profile_id, permission_id, object_type)→setof bigint         viewer_can_objects(permission_id, object_type)
+protected.list_object_permissions(profile_id, object_type, object_id)→setof citext   viewer_object_permissions(object_type, object_id)
+protected.member_objects(profile_id, object_type)→setof bigint                        viewer_member_objects(object_type)
+protected.agency_reachable_objects(profile_id, object_type)→setof bigint              viewer_agency_reachable_objects(object_type)
+-- helpers de pertenencia (plumbing)
+internal.is_active_org_member(profile_id, organization_id)→boolean
+internal.is_active_agency_member(profile_id, agency_id)→boolean
 ```
 
-- `object_type` = enum `authz.object_type` = `('organization','tenant','agency')` (tipado, no `text`).
+- `object_type` = enum `public.permission_object_type` = `('organization','tenant','agency')` (tipado, no `text`).
 - `relation` = slug del catálogo `public.permissions`. Incluye verbos por recurso (ej. `payrolls:read`,
   `payrolls:write`); el **objeto sigue siendo la org/tenant/agency** (org-scoped, no row-level).
 - El wildcard `'*'` y la indirección agencia→org se resuelven **dentro** del núcleo, una sola vez.
@@ -54,7 +57,7 @@ authz.agency_reachable_objects(profile_id, object_type)→setof id viewer_agency
 
 ### Resolución (núcleo)
 
-`authz.check(P, relation, 'organization', O)` =
+`protected.check_permission(P, permission_id, 'organization', O)` =
 - **camino directo:** existe grant `subject=P, object_org=O, permission ∈ {relation, '*'}` **y** `P` es
   miembro activo de `O`; **o**
 - **camino agencia (bridge):** `P` es miembro activo de una agencia `A` **y** existe grant
@@ -65,12 +68,12 @@ sobre la org. Ninguna sola alcanza.
 
 ## Storage de grants — decisión **A2** (tipado unificado)
 
-Una tabla `authz.grants` con sujeto y objeto como **uniones discriminadas vía FK + CHECK "exactamente uno"**.
+Una tabla `public.permission_grants` con sujeto y objeto como **uniones discriminadas vía FK + CHECK "exactamente uno"**.
 Colapsa `organization_membership_permissions` + `agency_membership_permissions` + `agencies_organizations_grants`.
 
 ```sql
-authz.grants(
-  grant_id               bigint generated always as identity primary key,
+public.permission_grants(
+  permission_grant_id    bigint generated always as identity primary key,
   -- sujeto: exactamente uno
   subject_profile_id     uuid references public.profiles,
   subject_agency_id      int  references public.agencies,
@@ -80,7 +83,7 @@ authz.grants(
   object_agency_id       int  references public.agencies,
   permission_id          citext not null references public.permissions,
   -- lifecycle mínimo (sin audit-log en este alcance)
-  ...
+  permission_grant_created_at timestamptz not null default current_timestamp,
   -- CHECKs: exactamente un subject_*; exactamente un object_* (con la excepción NULL=todas para agencia)
 )
 ```
@@ -163,7 +166,7 @@ el shape `profiles/[profile_id]/**` y `avatars/[profile_id]/**`.
   `viewer_agency_reachable_objects`).
 - **TS/React:** hooks/GraphQL que exponen permisos → superficie nueva. Los assert-wrappers
   (`getViewer*Assert`) **se mantienen** (son intencionales).
-- **MCP** (`apps/platform/lib/mcp/tools/permissions.ts`): grant/revoke/set → escriben en `authz.grants`.
+- **MCP** (`apps/platform/lib/mcp/tools/permissions.ts`): grant/revoke/set → escriben en `public.permission_grants`.
 - **Seed + presets:** `permission_presets` sigue.
 - **pgTAP:** portar la suite de permisos a la API nueva; tests del núcleo con `profile_id` explícito (sin
   falsear JWT claims) + tests de RLS con rol `authenticated` + claims.
@@ -173,10 +176,10 @@ el shape `profiles/[profile_id]/**` y `avatars/[profile_id]/**`.
 
 Cada paso termina con `pnpm db:reset && pnpm generate:types` + pgTAP en **verde** antes del siguiente:
 
-1. Crear schema `authz` + enum + funciones núcleo/viewer **leyendo de las tablas viejas** (sin tocar storage).
+1. Crear enum `public.permission_object_type` + tabla `public.permission_grants` + funciones núcleo `protected.*` + helpers `internal.*` + viewer wrappers `public.viewer_*` **leyendo de las tablas viejas** (sin tocar storage).
 2. Migrar RLS de todas las tablas a la API nueva.
 3. Migrar TS/React + MCP a la API nueva.
-4. Colapsar storage de grants a `authz.grants` (migrar datos de las 3 tablas; resolver el wrinkle del
+4. Colapsar storage de grants a `public.permission_grants` (migrar datos de las 3 tablas; resolver el wrinkle del
    `object_organization_id = NULL`).
 5. Agregar policies de `storage.objects` (buckets `profiles` + `avatars`).
 6. Borrar helpers/tablas muertos.

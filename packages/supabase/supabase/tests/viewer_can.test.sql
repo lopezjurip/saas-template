@@ -7,7 +7,7 @@ insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000c1
 insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)
   values (1, '00000000-0000-0000-0000-0000000000c1', current_timestamp);
 insert into public.permissions (permission_id) values ('payrolls_read') on conflict do nothing;
-insert into authz.grants (subject_profile_id, object_organization_id, permission_id)
+insert into public.permission_grants (subject_profile_id, object_organization_id, permission_id)
   values ('00000000-0000-0000-0000-0000000000c1', 1, 'payrolls_read');
 
 -- act as this user via JWT claims (mirrors viewer_permissions.test.sql style)
