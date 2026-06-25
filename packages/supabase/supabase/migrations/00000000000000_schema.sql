@@ -4820,3 +4820,16 @@ as $$
 $$;
 
 grant execute on function public.organization_membership_label(public.organization_memberships) to anon, authenticated;
+
+-- ============================================================
+-- authz — uniform, two-layer authorization (Zanzibar-lite, in-Postgres)
+-- Core functions take an explicit profile_id; viewer_* wrappers inject the JWT's own.
+-- Coexists with the legacy viewer_*/grant tables until the cutover plan migrates RLS.
+-- ============================================================
+create schema if not exists authz;
+grant usage on schema authz to anon, authenticated;
+
+do $$ begin
+  create type authz.object_type as enum ('organization', 'tenant', 'agency');
+exception when duplicate_object then null;
+end $$;
