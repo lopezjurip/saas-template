@@ -1656,6 +1656,10 @@ export type Database = {
         Args: { permission_id: string }
         Returns: number[]
       }
+      viewer_agency_reachable_objects: {
+        Args: { _object_type: "organization" | "tenant" | "agency" }
+        Returns: number[]
+      }
       viewer_agency_team: {
         Args: { agency_id: number }
         Returns: {
@@ -1674,6 +1678,21 @@ export type Database = {
         Returns: number[]
       }
       viewer_agency_tenant_ids: { Args: never; Returns: number[] }
+      viewer_can: {
+        Args: {
+          _object_id: number
+          _object_type: "organization" | "tenant" | "agency"
+          _relation: string
+        }
+        Returns: boolean
+      }
+      viewer_can_objects: {
+        Args: {
+          _object_type: "organization" | "tenant" | "agency"
+          _relation: string
+        }
+        Returns: number[]
+      }
       viewer_conversation_by_id: {
         Args: { conversation_id: string }
         Returns: {
@@ -1764,6 +1783,10 @@ export type Database = {
         Returns: boolean
       }
       viewer_is_agency_member: { Args: never; Returns: boolean }
+      viewer_member_objects: {
+        Args: { _object_type: "organization" | "tenant" | "agency" }
+        Returns: number[]
+      }
       viewer_organization_by_id: {
         Args: { organization_id: number }
         Returns: {
@@ -1997,6 +2020,13 @@ export type Database = {
         }
       }
       viewer_profile_id: { Args: { strict?: boolean }; Returns: string }
+      viewer_relations: {
+        Args: {
+          _object_id: number
+          _object_type: "organization" | "tenant" | "agency"
+        }
+        Returns: string[]
+      }
       viewer_sessions_collection: {
         Args: never
         Returns: {

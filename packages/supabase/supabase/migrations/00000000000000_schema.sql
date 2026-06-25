@@ -5118,3 +5118,57 @@ create or replace function authz.agency_reachable_objects(
       and am.agency_membership_revoked_at is null
       and am.agency_membership_rejected_at is null;
   $$;
+
+-- ------------------------------------------------------------
+-- public.viewer_* wrappers — inject the JWT's own profile_id
+-- (in public so GraphQL and RLS can reach them)
+-- ------------------------------------------------------------
+
+create or replace function public.viewer_can(
+  _relation extensions.citext,
+  _object_type authz.object_type,
+  _object_id bigint
+)
+  returns boolean stable security definer parallel safe language sql set search_path to '' as $$
+    select authz.check(public.viewer_profile_id(true), _relation, _object_type, _object_id);
+  $$;
+
+grant execute on function public.viewer_can(extensions.citext, authz.object_type, bigint) to anon, authenticated;
+
+create or replace function public.viewer_can_objects(
+  _relation extensions.citext,
+  _object_type authz.object_type
+)
+  returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
+    select authz.lookup(public.viewer_profile_id(true), _relation, _object_type);
+  $$;
+
+grant execute on function public.viewer_can_objects(extensions.citext, authz.object_type) to anon, authenticated;
+
+create or replace function public.viewer_relations(
+  _object_type authz.object_type,
+  _object_id bigint
+)
+  returns setof extensions.citext stable security definer parallel safe language sql set search_path to '' as $$
+    select authz.relations(public.viewer_profile_id(true), _object_type, _object_id);
+  $$;
+
+grant execute on function public.viewer_relations(authz.object_type, bigint) to anon, authenticated;
+
+create or replace function public.viewer_member_objects(
+  _object_type authz.object_type
+)
+  returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
+    select authz.member_objects(public.viewer_profile_id(true), _object_type);
+  $$;
+
+grant execute on function public.viewer_member_objects(authz.object_type) to anon, authenticated;
+
+create or replace function public.viewer_agency_reachable_objects(
+  _object_type authz.object_type
+)
+  returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
+    select authz.agency_reachable_objects(public.viewer_profile_id(true), _object_type);
+  $$;
+
+grant execute on function public.viewer_agency_reachable_objects(authz.object_type) to anon, authenticated;
