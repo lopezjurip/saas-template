@@ -4885,6 +4885,7 @@ create unique index if not exists permission_grants_agency_all_orgs_unique
 alter table public.permission_grants enable row level security;
 revoke all on table public.permission_grants from anon, authenticated;
 grant select, insert, update, delete on table public.permission_grants to anon, authenticated;
+grant select, insert, update, delete on table public.permission_grants to service_role;
 
 -- ------------------------------------------------------------
 -- internal: active-membership helpers
@@ -5503,7 +5504,7 @@ create policy "permission_grants write by permission holders"
     or (subject_agency_membership_id is not null and exists (
       select 1 from public.agency_memberships am
       where am.agency_membership_id = public.permission_grants.subject_agency_membership_id
-        and am.agency_id in (select public.viewer_agency_team_permission_ids('agency_members_manage'))
+        and public.viewer_can('agency_members_manage', 'agency', am.agency_id)
     ))
   )
   with check (
@@ -5518,7 +5519,7 @@ create policy "permission_grants write by permission holders"
     or (subject_agency_membership_id is not null and exists (
       select 1 from public.agency_memberships am
       where am.agency_membership_id = public.permission_grants.subject_agency_membership_id
-        and am.agency_id in (select public.viewer_agency_team_permission_ids('agency_members_manage'))
+        and public.viewer_can('agency_members_manage', 'agency', am.agency_id)
     ))
   );
 
@@ -5642,7 +5643,7 @@ create function public.viewer_organization_membership_set_permissions_collection
 
       if _organization_id is null then
         raise exception 'membership_not_found' using errcode = 'P0001';
-      elsif not public.viewer_has_permission(_organization_id, 'members_manage') then
+      elsif not public.viewer_can('members_manage', 'organization', _organization_id) then
         raise exception 'no_permission' using errcode = 'P0001';
       end if;
 
@@ -5677,3 +5678,48 @@ create function public.viewer_organization_membership_set_permissions_collection
   $$;
 
 grant execute on function public.viewer_organization_membership_set_permissions_collection(int, extensions.citext[]) to authenticated;
+
+-- ============================================================
+-- D2d: Repoint organization_memberships_protect_revoke to permission_grants
+-- The original definition (~line 2326) calls org_has_other_active_admin which reads
+-- legacy organization_membership_permissions. Override it here (after permission_grants
+-- and org_has_other_active_admin_from_grants are defined) to use the new store.
+-- Preserves: self-revoke block ('self_remove_blocked'), last-admin block ('last_admin_protected'),
+-- service_role bypass (viewer_profile_id() is null), pending-invite pass-through (profile_id IS NOT NULL guard).
+-- ============================================================
+
+create or replace function public.organization_memberships_protect_revoke()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path to ''
+as $$
+declare
+  _viewer uuid;
+begin
+  -- Only fire when revoked_at transitions from NULL → not NULL.
+  if old.organization_membership_revoked_at is not null or new.organization_membership_revoked_at is null then
+    return new;
+  end if;
+
+  _viewer := public.viewer_profile_id();
+
+  -- service_role bypass.
+  if _viewer is null then
+    return new;
+  end if;
+
+  -- Self-remove: caller cannot revoke their own organization_membership row.
+  if new.profile_id is not null and new.profile_id = _viewer then
+    raise exception 'self_remove_blocked'
+      using hint = 'cannot revoke your own organization_membership';
+  -- Last-admin: pending invites carry no live access, only claimed seats lock the org.
+  elsif new.profile_id is not null
+     and not public.org_has_other_active_admin_from_grants(new.organization_id, new.organization_membership_id) then
+    raise exception 'last_admin_protected'
+      using hint = 'cannot revoke the last admin of the organization';
+  end if;
+
+  return new;
+end;
+$$;
