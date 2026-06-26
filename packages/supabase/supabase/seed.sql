@@ -259,6 +259,31 @@ values ((select agency_id from public.agencies where agency_slug = 'demo-auditor
 on conflict do nothing;
 
 -- ------------------------------------------------------------
+-- permission_grants — dual-write (coexistence).
+-- Derive new-model rows FROM the 3 legacy grant tables so they can't drift.
+-- Legacy inserts above are KEPT (Phase E removes them). These inserts populate
+-- the new model so new-model tests and helpers stay green throughout the cutover.
+-- ------------------------------------------------------------
+
+-- org-membership grants
+insert into public.permission_grants (subject_organization_membership_id, permission_id)
+select organization_membership_id, permission_id
+from public.organization_membership_permissions
+on conflict do nothing;
+
+-- agency-membership grants
+insert into public.permission_grants (subject_agency_membership_id, permission_id)
+select agency_membership_id, permission_id
+from public.agency_membership_permissions
+on conflict do nothing;
+
+-- agency→org grants (organization_id IS NULL = all-orgs wildcard, preserved as-is)
+insert into public.permission_grants (subject_agency_id, object_organization_id, permission_id)
+select agency_id, organization_id, permission_id
+from public.agencies_organizations_grants
+on conflict do nothing;
+
+-- ------------------------------------------------------------
 -- addresses — Chile administrative hierarchy (CL)
 -- level0 = country, level1 = region (ISO 3166-2), level2 = province, level3 = commune
 -- 1 country · 16 regions · 56 provinces · 345 communes
