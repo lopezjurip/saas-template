@@ -4881,6 +4881,8 @@ create unique index if not exists permission_grants_agency_all_orgs_unique
   on public.permission_grants (subject_agency_id, permission_id)
   where subject_agency_id is not null and object_organization_id is null;
 
+comment on table public.permission_grants is e'@graphql({"totalCount": {"enabled": true}, "aggregate": {"enabled": true}})';
+
 -- RLS: managed by viewer_* checks in the cutover plan. Enable + lock down for now.
 alter table public.permission_grants enable row level security;
 revoke all on table public.permission_grants from anon, authenticated;

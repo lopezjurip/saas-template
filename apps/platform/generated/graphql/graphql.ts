@@ -98,6 +98,18 @@ export type AgencyMembershipPermissionsInsertInput = {
   permissionId?: string | null | undefined;
 };
 
+/** Boolean expression comparing fields on type "BigInt" */
+export type BigIntFilter = {
+  eq?: string | null | undefined;
+  gt?: string | null | undefined;
+  gte?: string | null | undefined;
+  in?: Array<string> | null | undefined;
+  is?: FilterIs | null | undefined;
+  lt?: string | null | undefined;
+  lte?: string | null | undefined;
+  neq?: string | null | undefined;
+};
+
 /** Boolean expression comparing fields on type "Datetime" */
 export type DatetimeFilter = {
   eq?: string | null | undefined;
@@ -166,25 +178,6 @@ export enum OrderByDirection {
   /** Descending order, nulls last */
   DescNullsLast = 'DescNullsLast'
 }
-
-export type OrganizationMembershipPermissionsFilter = {
-  /** Returns true only if all its inner filters are true, otherwise returns false */
-  and?: Array<OrganizationMembershipPermissionsFilter> | null | undefined;
-  nodeId?: IdFilter | null | undefined;
-  /** Negates a filter */
-  not?: OrganizationMembershipPermissionsFilter | null | undefined;
-  /** Returns true if at least one of its inner filters is true, otherwise returns false */
-  or?: Array<OrganizationMembershipPermissionsFilter> | null | undefined;
-  organizationMembershipId?: IntFilter | null | undefined;
-  organizationMembershipPermissionCreatedAt?: DatetimeFilter | null | undefined;
-  permissionId?: StringFilter | null | undefined;
-};
-
-export type OrganizationMembershipPermissionsInsertInput = {
-  organizationMembershipId?: number | null | undefined;
-  organizationMembershipPermissionCreatedAt?: string | null | undefined;
-  permissionId?: string | null | undefined;
-};
 
 export type OrganizationMembershipsFilter = {
   /** Returns true only if all its inner filters are true, otherwise returns false */
@@ -280,6 +273,32 @@ export type OrganizationsUpdateInput = {
   organizationSlug?: string | null | undefined;
   organizationUpdatedAt?: string | null | undefined;
   tenantId?: number | null | undefined;
+};
+
+export type PermissionGrantsFilter = {
+  /** Returns true only if all its inner filters are true, otherwise returns false */
+  and?: Array<PermissionGrantsFilter> | null | undefined;
+  nodeId?: IdFilter | null | undefined;
+  /** Negates a filter */
+  not?: PermissionGrantsFilter | null | undefined;
+  objectOrganizationId?: IntFilter | null | undefined;
+  /** Returns true if at least one of its inner filters is true, otherwise returns false */
+  or?: Array<PermissionGrantsFilter> | null | undefined;
+  permissionGrantCreatedAt?: DatetimeFilter | null | undefined;
+  permissionGrantId?: BigIntFilter | null | undefined;
+  permissionId?: StringFilter | null | undefined;
+  subjectAgencyId?: IntFilter | null | undefined;
+  subjectAgencyMembershipId?: IntFilter | null | undefined;
+  subjectOrganizationMembershipId?: IntFilter | null | undefined;
+};
+
+export type PermissionGrantsInsertInput = {
+  objectOrganizationId?: number | null | undefined;
+  permissionGrantCreatedAt?: string | null | undefined;
+  permissionId?: string | null | undefined;
+  subjectAgencyId?: number | null | undefined;
+  subjectAgencyMembershipId?: number | null | undefined;
+  subjectOrganizationMembershipId?: number | null | undefined;
 };
 
 export type PermissionPresetsFilter = {
@@ -604,19 +623,19 @@ export type CreateOrganizationFormMutationMutationVariables = Exact<{
 export type CreateOrganizationFormMutationMutation = { organization: { organizationId: number, organizationSlug: string } | null };
 
 export type EditOrganizationMembershipGrantPermissionMutationMutationVariables = Exact<{
-  objects: Array<OrganizationMembershipPermissionsInsertInput> | OrganizationMembershipPermissionsInsertInput;
+  objects: Array<PermissionGrantsInsertInput> | PermissionGrantsInsertInput;
 }>;
 
 
-export type EditOrganizationMembershipGrantPermissionMutationMutation = { insertIntoOrganizationMembershipPermissionsCollection: { affectedCount: number } | null };
+export type EditOrganizationMembershipGrantPermissionMutationMutation = { insertIntoPermissionGrantsCollection: { affectedCount: number } | null };
 
 export type EditOrganizationMembershipRevokePermissionMutationMutationVariables = Exact<{
-  filter: OrganizationMembershipPermissionsFilter;
+  filter: PermissionGrantsFilter;
   atMost?: number;
 }>;
 
 
-export type EditOrganizationMembershipRevokePermissionMutationMutation = { deleteFromOrganizationMembershipPermissionsCollection: { affectedCount: number } };
+export type EditOrganizationMembershipRevokePermissionMutationMutation = { deleteFromPermissionGrantsCollection: { affectedCount: number } };
 
 export type EditOrganizationMembershipRevokeOrganizationMembershipMutationMutationVariables = Exact<{
   filter: OrganizationMembershipsFilter;
@@ -1021,19 +1040,19 @@ export type RevokeAgencyMemberPermissionMcpMutationVariables = Exact<{
 export type RevokeAgencyMemberPermissionMcpMutation = { deleteFromAgencyMembershipPermissionsCollection: { affectedCount: number } };
 
 export type GrantMemberPermissionMcpMutationVariables = Exact<{
-  objects: Array<OrganizationMembershipPermissionsInsertInput> | OrganizationMembershipPermissionsInsertInput;
+  objects: Array<PermissionGrantsInsertInput> | PermissionGrantsInsertInput;
 }>;
 
 
-export type GrantMemberPermissionMcpMutation = { insertIntoOrganizationMembershipPermissionsCollection: { affectedCount: number } | null };
+export type GrantMemberPermissionMcpMutation = { insertIntoPermissionGrantsCollection: { affectedCount: number } | null };
 
 export type RevokeMemberPermissionMcpMutationVariables = Exact<{
-  filter: OrganizationMembershipPermissionsFilter;
+  filter: PermissionGrantsFilter;
   atMost?: number;
 }>;
 
 
-export type RevokeMemberPermissionMcpMutation = { deleteFromOrganizationMembershipPermissionsCollection: { affectedCount: number } };
+export type RevokeMemberPermissionMcpMutation = { deleteFromPermissionGrantsCollection: { affectedCount: number } };
 
 export type SetMemberPermissionsMcpMutationVariables = Exact<{
   organization_membership_id: number;
@@ -1540,18 +1559,15 @@ export const CreateOrganizationFormMutationDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<CreateOrganizationFormMutationMutation, CreateOrganizationFormMutationMutationVariables>;
 export const EditOrganizationMembershipGrantPermissionMutationDocument = new TypedDocumentString(`
-    mutation EditOrganizationMembershipGrantPermissionMutation($objects: [OrganizationMembershipPermissionsInsertInput!]!) {
-  insertIntoOrganizationMembershipPermissionsCollection(objects: $objects) {
+    mutation EditOrganizationMembershipGrantPermissionMutation($objects: [PermissionGrantsInsertInput!]!) {
+  insertIntoPermissionGrantsCollection(objects: $objects) {
     affectedCount
   }
 }
     `) as unknown as TypedDocumentString<EditOrganizationMembershipGrantPermissionMutationMutation, EditOrganizationMembershipGrantPermissionMutationMutationVariables>;
 export const EditOrganizationMembershipRevokePermissionMutationDocument = new TypedDocumentString(`
-    mutation EditOrganizationMembershipRevokePermissionMutation($filter: OrganizationMembershipPermissionsFilter!, $atMost: Int! = 1000) {
-  deleteFromOrganizationMembershipPermissionsCollection(
-    filter: $filter
-    atMost: $atMost
-  ) {
+    mutation EditOrganizationMembershipRevokePermissionMutation($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {
+  deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {
     affectedCount
   }
 }
@@ -2266,18 +2282,15 @@ export const RevokeAgencyMemberPermissionMcpDocument = new TypedDocumentString(`
 }
     `) as unknown as TypedDocumentString<RevokeAgencyMemberPermissionMcpMutation, RevokeAgencyMemberPermissionMcpMutationVariables>;
 export const GrantMemberPermissionMcpDocument = new TypedDocumentString(`
-    mutation GrantMemberPermissionMcp($objects: [OrganizationMembershipPermissionsInsertInput!]!) {
-  insertIntoOrganizationMembershipPermissionsCollection(objects: $objects) {
+    mutation GrantMemberPermissionMcp($objects: [PermissionGrantsInsertInput!]!) {
+  insertIntoPermissionGrantsCollection(objects: $objects) {
     affectedCount
   }
 }
     `) as unknown as TypedDocumentString<GrantMemberPermissionMcpMutation, GrantMemberPermissionMcpMutationVariables>;
 export const RevokeMemberPermissionMcpDocument = new TypedDocumentString(`
-    mutation RevokeMemberPermissionMcp($filter: OrganizationMembershipPermissionsFilter!, $atMost: Int! = 1000) {
-  deleteFromOrganizationMembershipPermissionsCollection(
-    filter: $filter
-    atMost: $atMost
-  ) {
+    mutation RevokeMemberPermissionMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {
+  deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {
     affectedCount
   }
 }

@@ -31,16 +31,16 @@ function MAP_PG_ERROR_KEY(err: GraphyError): "last_admin_protected" | "self_remo
 }
 
 const GrantPermissionMutation = /*#__PURE__*/ gql(`
-  mutation EditOrganizationMembershipGrantPermissionMutation($objects: [OrganizationMembershipPermissionsInsertInput!]!) {
-    insertIntoOrganizationMembershipPermissionsCollection(objects: $objects) {
+  mutation EditOrganizationMembershipGrantPermissionMutation($objects: [PermissionGrantsInsertInput!]!) {
+    insertIntoPermissionGrantsCollection(objects: $objects) {
       affectedCount
     }
   }
 `);
 
 const RevokePermissionMutation = /*#__PURE__*/ gql(`
-  mutation EditOrganizationMembershipRevokePermissionMutation($filter: OrganizationMembershipPermissionsFilter!, $atMost: Int! = 1000) {
-    deleteFromOrganizationMembershipPermissionsCollection(filter: $filter, atMost: $atMost) {
+  mutation EditOrganizationMembershipRevokePermissionMutation($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {
+    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {
       affectedCount
     }
   }
@@ -128,7 +128,7 @@ export function EditPermissionsForm({
   async function writePermission(permission_id: string, granted: boolean): Promise<boolean> {
     if (granted) {
       const { error: err } = await grantPermission({
-        objects: [{ organizationMembershipId: organization_membership_id, permissionId: permission_id }],
+        objects: [{ subjectOrganizationMembershipId: organization_membership_id, permissionId: permission_id }],
       });
       if (err) {
         setError(t(MAP_PG_ERROR_KEY(err)));
@@ -137,7 +137,7 @@ export function EditPermissionsForm({
     } else {
       const { error: err } = await revokePermission({
         filter: {
-          organizationMembershipId: { eq: organization_membership_id },
+          subjectOrganizationMembershipId: { eq: organization_membership_id },
           permissionId: { eq: permission_id },
         },
       });

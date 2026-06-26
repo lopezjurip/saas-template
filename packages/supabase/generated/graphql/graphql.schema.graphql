@@ -388,6 +388,24 @@ type Agencies implements Node {
   ): ConversationsConnection
   """Globally Unique Record Identifier"""
   nodeId: ID!
+  permissionGrantsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: PermissionGrantsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [PermissionGrantsOrderBy!]
+  ): PermissionGrantsConnection
   storage_agencies(
     """Query values in the collection after the provided cursor"""
     after: Cursor
@@ -643,6 +661,24 @@ type AgencyMemberships implements Node {
   agencyMembershipUpdatedAt: Datetime!
   """Globally Unique Record Identifier"""
   nodeId: ID!
+  permissionGrantsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: PermissionGrantsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [PermissionGrantsOrderBy!]
+  ): PermissionGrantsConnection
   profile: Profiles
   profileId: UUID!
 }
@@ -1193,6 +1229,15 @@ type Mutation {
     """Restricts the mutation's impact to records matching the criteria"""
     filter: OrganizationMembershipsFilter
   ): OrganizationMembershipsDeleteResponse!
+  """Deletes zero or more records from the `PermissionGrants` collection"""
+  deleteFromPermissionGrantsCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: PermissionGrantsFilter
+  ): PermissionGrantsDeleteResponse!
   """Deletes zero or more records from the `PermissionPresets` collection"""
   deleteFromPermissionPresetsCollection(
     """
@@ -1243,6 +1288,8 @@ type Mutation {
   insertIntoOrganizationMembershipPermissionsCollection(objects: [OrganizationMembershipPermissionsInsertInput!]!): OrganizationMembershipPermissionsInsertResponse
   """Adds one or more `OrganizationMemberships` records to the collection"""
   insertIntoOrganizationMembershipsCollection(objects: [OrganizationMembershipsInsertInput!]!): OrganizationMembershipsInsertResponse
+  """Adds one or more `PermissionGrants` records to the collection"""
+  insertIntoPermissionGrantsCollection(objects: [PermissionGrantsInsertInput!]!): PermissionGrantsInsertResponse
   """Adds one or more `PermissionPresets` records to the collection"""
   insertIntoPermissionPresetsCollection(objects: [PermissionPresetsInsertInput!]!): PermissionPresetsInsertResponse
   """Adds one or more `ProfileContacts` records to the collection"""
@@ -1327,6 +1374,19 @@ type Mutation {
     """
     set: OrganizationsUpdateInput!
   ): OrganizationsUpdateResponse!
+  """Updates zero or more records in the `PermissionGrants` collection"""
+  updatePermissionGrantsCollection(
+    """
+    The maximum number of records in the collection permitted to be affected
+    """
+    atMost: Int! = 1
+    """Restricts the mutation's impact to records matching the criteria"""
+    filter: PermissionGrantsFilter
+    """
+    Fields that are set will be updated for all records matching the `filter`
+    """
+    set: PermissionGrantsUpdateInput!
+  ): PermissionGrantsUpdateResponse!
   """Updates zero or more records in the `PermissionPresets` collection"""
   updatePermissionPresetsCollection(
     """
@@ -1405,7 +1465,7 @@ type Mutation {
     """Query values in the collection before the provided cursor"""
     before: Cursor
     """Filters to apply to the results set when querying from the collection"""
-    filter: OrganizationMembershipPermissionsFilter
+    filter: PermissionGrantsFilter
     """Query the first `n` records in the collection"""
     first: Int
     """Query the last `n` records in the collection"""
@@ -1415,10 +1475,10 @@ type Mutation {
     """
     offset: Int
     """Sort order to apply to the collection"""
-    orderBy: [OrganizationMembershipPermissionsOrderBy!]
+    orderBy: [PermissionGrantsOrderBy!]
     organizationMembershipId: Int!
     permissionIds: [String]!
-  ): OrganizationMembershipPermissionsConnection
+  ): PermissionGrantsConnection
   viewerTenantCreate(tenantName: String!, tenantSlug: String!): Tenants
   viewerTenantOnboardingFinish(tenantId: Int!): Tenants
   viewerTenantUpdate(tenantId: Int!, tenantName: String!): Tenants
@@ -1605,6 +1665,24 @@ type OrganizationMemberships implements Node {
   organizationMembershipRejectedAt: Datetime
   organizationMembershipRevokedAt: Datetime
   organizationMembershipUpdatedAt: Datetime!
+  permissionGrantsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: PermissionGrantsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [PermissionGrantsOrderBy!]
+  ): PermissionGrantsConnection
   profile: Profiles
   profileId: UUID
 }
@@ -1786,6 +1864,24 @@ type Organizations implements Node {
   organizationName: String!
   organizationSlug: String!
   organizationUpdatedAt: Datetime!
+  permissionGrantsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: PermissionGrantsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [PermissionGrantsOrderBy!]
+  ): PermissionGrantsConnection
   permissionPresetsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
@@ -1890,6 +1986,105 @@ type PageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   startCursor: String
+}
+
+type PermissionGrants implements Node {
+  """Globally Unique Record Identifier"""
+  nodeId: ID!
+  objectOrganization: Organizations
+  objectOrganizationId: Int
+  permission: Permissions
+  permissionGrantCreatedAt: Datetime!
+  permissionGrantId: BigInt!
+  permissionId: String!
+  subjectAgency: Agencies
+  subjectAgencyId: Int
+  subjectAgencyMembership: AgencyMemberships
+  subjectAgencyMembershipId: Int
+  subjectOrganizationMembership: OrganizationMemberships
+  subjectOrganizationMembershipId: Int
+}
+
+type PermissionGrantsConnection {
+  edges: [PermissionGrantsEdge!]!
+  pageInfo: PageInfo!
+  """The total number of records matching the `filter` criteria"""
+  totalCount: Int!
+}
+
+type PermissionGrantsDeleteResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [PermissionGrants!]!
+}
+
+type PermissionGrantsEdge {
+  cursor: String!
+  node: PermissionGrants!
+}
+
+input PermissionGrantsFilter {
+  """
+  Returns true only if all its inner filters are true, otherwise returns false
+  """
+  and: [PermissionGrantsFilter!]
+  nodeId: IDFilter
+  """Negates a filter"""
+  not: PermissionGrantsFilter
+  objectOrganizationId: IntFilter
+  """
+  Returns true if at least one of its inner filters is true, otherwise returns false
+  """
+  or: [PermissionGrantsFilter!]
+  permissionGrantCreatedAt: DatetimeFilter
+  permissionGrantId: BigIntFilter
+  permissionId: StringFilter
+  subjectAgencyId: IntFilter
+  subjectAgencyMembershipId: IntFilter
+  subjectOrganizationMembershipId: IntFilter
+}
+
+input PermissionGrantsInsertInput {
+  objectOrganizationId: Int
+  permissionGrantCreatedAt: Datetime
+  permissionId: String
+  subjectAgencyId: Int
+  subjectAgencyMembershipId: Int
+  subjectOrganizationMembershipId: Int
+}
+
+type PermissionGrantsInsertResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [PermissionGrants!]!
+}
+
+input PermissionGrantsOrderBy {
+  objectOrganizationId: OrderByDirection
+  permissionGrantCreatedAt: OrderByDirection
+  permissionGrantId: OrderByDirection
+  permissionId: OrderByDirection
+  subjectAgencyId: OrderByDirection
+  subjectAgencyMembershipId: OrderByDirection
+  subjectOrganizationMembershipId: OrderByDirection
+}
+
+input PermissionGrantsUpdateInput {
+  objectOrganizationId: Int
+  permissionGrantCreatedAt: Datetime
+  permissionId: String
+  subjectAgencyId: Int
+  subjectAgencyMembershipId: Int
+  subjectOrganizationMembershipId: Int
+}
+
+type PermissionGrantsUpdateResponse {
+  """Count of the records impacted by the mutation"""
+  affectedCount: Int!
+  """Array of records impacted by the mutation"""
+  records: [PermissionGrants!]!
 }
 
 type PermissionPresets implements Node {
@@ -2040,6 +2235,24 @@ type Permissions implements Node {
   ): OrganizationMembershipPermissionsConnection
   permissionCreatedAt: Datetime!
   permissionDescription: String
+  permissionGrantsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: PermissionGrantsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [PermissionGrantsOrderBy!]
+  ): PermissionGrantsConnection
   permissionId: String!
   permissionUpdatedAt: Datetime!
 }
@@ -2730,6 +2943,25 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [OrganizationsOrderBy!]
   ): OrganizationsConnection
+  """A pagable collection of type `PermissionGrants`"""
+  permissionGrantsCollection(
+    """Query values in the collection after the provided cursor"""
+    after: Cursor
+    """Query values in the collection before the provided cursor"""
+    before: Cursor
+    """Filters to apply to the results set when querying from the collection"""
+    filter: PermissionGrantsFilter
+    """Query the first `n` records in the collection"""
+    first: Int
+    """Query the last `n` records in the collection"""
+    last: Int
+    """
+    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
+    """
+    offset: Int
+    """Sort order to apply to the collection"""
+    orderBy: [PermissionGrantsOrderBy!]
+  ): PermissionGrantsConnection
   """A pagable collection of type `PermissionPresets`"""
   permissionPresetsCollection(
     """Query values in the collection after the provided cursor"""
