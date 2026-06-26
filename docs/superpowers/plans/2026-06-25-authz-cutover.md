@@ -247,17 +247,17 @@ create or replace function protected.check_permission(
   - `organization_membership_permissions(organization_membership_id, permission_id)` → `permission_grants(subject_organization_membership_id, permission_id)`.
   - `agency_membership_permissions(agency_membership_id, permission_id)` → `permission_grants(subject_agency_membership_id, permission_id)`.
   - `agencies_organizations_grants(agency_id, organization_id, permission_id)` → `permission_grants(subject_agency_id, object_organization_id, permission_id)` (keep `organization_id IS NULL` as the all-orgs form).
-- [ ] STOP inserting into the 3 legacy tables in seed (they stay defined but unseeded; legacy RLS still reads them but returns nothing — harmless until Phase C migrates reads; legacy pgTAP that relied on these is migrated in Phase C).
-- [ ] `pnpm db:reset`; confirm reset is clean and `select count(*) from public.permission_grants` is non-zero.
-- [ ] Commit `feat(authz): seed permission_grants instead of legacy grant tables`
+- [ ] **Coexistence (dual-write) — KEEP the legacy inserts too.** Do NOT remove the legacy seed inserts. Seed BOTH the legacy tables AND `permission_grants` with the same grants. This keeps the whole suite green throughout the cutover: legacy RLS+tests still read seeded legacy tables until Phase C migrates each table's reads, and the new model is populated for the new-model tests. Phase E removes the legacy seeding.
+- [ ] `pnpm db:reset`; confirm reset is clean and `select count(*) from public.permission_grants` matches the legacy grant count. Full suite stays green (nothing removed).
+- [ ] Commit `feat(authz): dual-write permission_grants in seed (coexistence)`
 
 ### Task B2: `protected.tenant_create` grants `*` via `permission_grants`
 
 **Files:** Modify `schema.sql` (`protected.tenant_create`; grep for its `insert into public.organization_membership_permissions`).
 
-- [ ] Find where `tenant_create` (and any `organization_create`/espejo flow) inserts the founder's `*` grant into `organization_membership_permissions`. Replace with an insert into `permission_grants(subject_organization_membership_id, permission_id) values (<the membership it just created>, '*')`. The membership id is the row the same function just inserted — return/capture it.
-- [ ] Port the relevant pgTAP (`viewer_tenant_create`, `viewer_organization_create`) assertions to expect the founder's grant in `permission_grants`.
-- [ ] `pnpm db:reset` + psql those tests green. Commit `feat(authz): tenant_create grants founder permission via permission_grants`.
+- [ ] Find where `tenant_create` (and any `organization_create`/espejo flow) inserts the founder's `*` grant into `organization_membership_permissions`. **Dual-write:** ADD an insert into `permission_grants(subject_organization_membership_id, permission_id) values (<the membership it just created>, '*')` while KEEPING the legacy insert (coexistence, same rationale as B1). The membership id is the row the same function just inserted — capture it.
+- [ ] Add a pgTAP assertion (extend `viewer_tenant_create`) that the founder's `*` grant lands in `permission_grants`; keep the existing legacy assertion (still valid — dual-write).
+- [ ] `pnpm db:reset` + full suite green (nothing removed). Commit `feat(authz): tenant_create dual-writes founder grant to permission_grants`.
 
 ---
 
@@ -284,7 +284,7 @@ create or replace function protected.check_permission(
 
 - [ ] Enumerate every `create policy` whose `using`/`with check` references a legacy helper: `grep -nE "<the legacy helpers>" schema.sql`. Group by table.
 - [ ] For EACH table's policies: apply the mapping; collapse the now-redundant `or … agency …` branches; keep `*_deleted_at is null` filters. One commit per table (or per small group), each followed by `pnpm db:reset` + the table's pgTAP green.
-- [ ] **Port legacy permission pgTAP** (`viewer_permissions`, `viewer_tenant_permissions`, `permission_admin_rls`, `rls_memberships`) to seed grants via `permission_grants` and assert via the new helpers. These tests currently seed legacy grants (now unseeded) — update their fixtures, don't leave them red.
+- [ ] **Update each migrated table's pgTAP** (`viewer_permissions`, `viewer_tenant_permissions`, `permission_admin_rls`, `rls_memberships`) to seed grants via `permission_grants` and assert via the new helpers. Under coexistence the legacy tables are STILL seeded (dual-write), so these tests stay green even before you touch them — but once a table's RLS reads the new model, its test must exercise the NEW path (add/repoint the fixture to `permission_grants`), or it would still pass via legacy seed and give a false green. Confirm each migrated policy by seeding ONLY a `permission_grants` grant (no legacy) inside the test txn and asserting access.
 - [ ] After the whole sweep: full suite green. `pnpm generate:types` (no public surface change expected, but RLS changes are invisible to types — skip unless a function signature changed). Commit. Update PR.
 
 > Verification gate for C: a profile with only an org-membership grant of `members_manage` can do exactly what the legacy model allowed; an agency affiliate reaches exactly the orgs its agency was granted — confirmed by the ported pgTAP, not by inspection.
