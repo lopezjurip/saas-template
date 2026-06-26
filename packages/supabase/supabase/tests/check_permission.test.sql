@@ -1,5 +1,5 @@
 begin;
-select plan(6);
+select plan(9);
 
 -- need payrolls_read/payrolls_write in the catalog for FK
 insert into public.permissions (permission_id) values ('payrolls_read'), ('payrolls_write')
@@ -80,6 +80,87 @@ update public.agencies
 select ok(
   not protected.check_permission('00000000-0000-0000-0000-0000000000b2', 'payrolls_write', 'organization', 1),
   'soft-deleted agency denies the bridge');
+
+-- ── Phase-A regression: membership-keyed permission grants ───────────────────
+
+-- (7) Pending-invite isolation: a grant on a pending membership must not
+--     bleed to any real profile, because check_permission requires
+--     organization_membership_accepted_at IS NOT NULL.
+--     Use a fresh profile that has no other grants in org 1.
+insert into auth.users (id, email) values
+  ('00000000-0000-0000-0000-0000000000e1', 'e1@test.dev')
+  on conflict do nothing;
+
+insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)
+  values (1, '00000000-0000-0000-0000-0000000000e1', current_timestamp);
+
+do $$
+declare v_pending_id int;
+begin
+  insert into public.organization_memberships
+    (organization_id, organization_membership_invite_email)
+  values (1, 'pending-invite@test.dev')
+  returning organization_membership_id into v_pending_id;
+
+  insert into public.permission_grants (subject_organization_membership_id, permission_id)
+  values (v_pending_id, 'members_manage');
+end $$;
+
+select ok(
+  not protected.check_permission('00000000-0000-0000-0000-0000000000e1', 'members_manage', 'organization', 1),
+  'pending invite grant does not grant access to any real profile');
+
+-- (8) Cross-member isolation: grant on member X must not bleed to member Y
+--     in the same org.
+insert into auth.users (id, email) values
+  ('00000000-0000-0000-0000-0000000000c1', 'c1@test.dev'),
+  ('00000000-0000-0000-0000-0000000000c2', 'c2@test.dev')
+  on conflict do nothing;
+
+-- C1 gets an accepted membership + members_manage grant
+insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)
+  values (1, '00000000-0000-0000-0000-0000000000c1', current_timestamp);
+
+insert into public.permission_grants (subject_organization_membership_id, permission_id)
+  values (
+    (select organization_membership_id from public.organization_memberships
+     where organization_id = 1 and profile_id = '00000000-0000-0000-0000-0000000000c1'),
+    'members_manage'
+  );
+
+-- C2 is also an accepted member of org 1 but has no grant
+insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)
+  values (1, '00000000-0000-0000-0000-0000000000c2', current_timestamp);
+
+select ok(
+  not protected.check_permission('00000000-0000-0000-0000-0000000000c2', 'members_manage', 'organization', 1),
+  'grant on another member does not leak to the viewer');
+
+-- (9) Agency all-orgs grant (NULL object_organization_id) resolves on a specific org.
+insert into public.agencies (agency_name, agency_slug)
+  values ('All-Orgs Agency', 'all-orgs-agency-check-permission');
+
+insert into auth.users (id, email) values
+  ('00000000-0000-0000-0000-0000000000d1', 'd1@test.dev')
+  on conflict do nothing;
+
+insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
+  values (
+    (select agency_id from public.agencies where agency_slug = 'all-orgs-agency-check-permission'),
+    '00000000-0000-0000-0000-0000000000d1',
+    current_timestamp
+  );
+
+-- NULL object_organization_id = all orgs
+insert into public.permission_grants (subject_agency_id, permission_id)
+  values (
+    (select agency_id from public.agencies where agency_slug = 'all-orgs-agency-check-permission'),
+    'members_manage'
+  );
+
+select ok(
+  protected.check_permission('00000000-0000-0000-0000-0000000000d1', 'members_manage', 'organization', 1),
+  'agency all-orgs grant (NULL object) resolves on a specific org');
 
 select * from finish();
 rollback;
