@@ -96,10 +96,10 @@ select lives_ok(
 );
 
 select set_eq(
-  $$ select permission_id::text from public.organization_membership_permissions
-       where organization_membership_id = (select bob_org1 from _g) $$,
+  $$ select permission_id::text from public.permission_grants
+       where subject_organization_membership_id = (select bob_org1 from _g) $$,
   $$ values ('members_manage') $$,
-  'set_permissions replaced Bob''s grants atomically'
+  'set_permissions replaced Bob''s grants atomically (permission_grants)'
 );
 
 -- Swapping one admin slug for another does NOT trip the last-admin trigger (grant-before-revoke).
@@ -109,10 +109,10 @@ select lives_ok(
 );
 
 select set_eq(
-  $$ select permission_id::text from public.organization_membership_permissions
-       where organization_membership_id = (select alice_org1 from _g) $$,
+  $$ select permission_id::text from public.permission_grants
+       where subject_organization_membership_id = (select alice_org1 from _g) $$,
   $$ values ('members_manage') $$,
-  'the wildcard was swapped for members_manage atomically'
+  'the wildcard was swapped for members_manage atomically (permission_grants)'
 );
 
 reset role;
