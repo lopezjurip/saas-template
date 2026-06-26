@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "format": "biome check --diagnostic-level=error .",
-    "generate:graphql": "graphql-codegen -c graphql.config.ts"
+    "generate:graphql": "graphql-codegen -c graphql.config.ts && biome format --write generated/graphql/"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.8.10",
