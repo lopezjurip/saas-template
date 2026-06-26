@@ -10,9 +10,11 @@
 --      preset (even one referencing valid slugs) into their own org. Verifies the
 --      preset trigger does NOT shadow the RLS write policy.
 --
---   C. Agency affiliate read/write split. An agency affiliate with a global grant
---      sees every tenant via the agency SELECT bypass, but every write policy is
---      permission-backed (organization_membership grants) — agencies are not a write shortcut.
+--   C. Homogeneous agency writes. An agency affiliate with a global ('*') grant
+--      sees every tenant + all org memberships via SELECT bypass, AND can perform
+--      org-scoped writes (grant permissions, invite members) via viewer_can_objects.
+--      The real boundary: no agency bridge for the 'tenant' object type, so Eve
+--      cannot update tenant metadata regardless of what the agency was granted.
 
 begin;
 
@@ -182,13 +184,23 @@ select isnt(
 reset role;
 
 -- ============================================================
--- C. Agency affiliate read/write split
+-- C. Homogeneous: affiliate writes what the agency was granted (org-scoped);
+--    no implicit tenant-object power.
 --
--- Eve is affiliated with the "Humane Platform" agency, which has a global grant ('*').
--- She must:
---   - SEE every tenant + every organization_membership (SELECT policies bypass via viewer_agency_permission_org_ids)
---   - NOT be able to write anywhere (write policies gate on DB-backed permission slugs;
---     being an agency affiliate is not itself a write permission)
+-- Eve is affiliated with "Humane Platform" agency (id 9001), which holds a
+-- global all-orgs wildcard grant ('*') in permission_grants.
+-- Under the homogeneous (option B) decision viewer_can_objects IS the single
+-- write gate — no special-case that subtracts agencies. Therefore:
+--
+--   - Eve SEES every tenant + every organization_membership (SELECT bypass).
+--   - Eve CAN perform any org-scoped write the agency holds: she can grant
+--     permissions on org members and invite new org members (org_memberships).
+--   - Eve CANNOT update tenant metadata: the tenants UPDATE gate uses
+--     viewer_can_objects('tenant_manage','tenant'), and lookup_objects has NO
+--     agency bridge for the 'tenant' object type (only direct org-membership
+--     grants ride on 'tenant'). The agency's '*' grant never resolves to any
+--     tenant id — so Eve has no tenant-object power. This is the real, meaningful
+--     boundary: agency power == exactly the (org-scoped) grants the agency holds.
 -- ============================================================
 
 set local role service_role;
@@ -238,19 +250,37 @@ select ok(
   'agency affiliate sees all organization_memberships across orgs (>=3 from seed)'
 );
 
--- Write: agency affiliate cannot grant permissions anywhere (no DB-backed members_manage).
-prepare eve_grant_alice as
-  insert into public.organization_membership_permissions (organization_membership_id, permission_id)
-  values ((select alice_org2 from _mids), 'members_manage');
-select throws_ok(
-  'execute eve_grant_alice',
-  '42501',
-  null,
-  'agency affiliate cannot insert organization_membership_permissions (write policy is permission-backed, not agency-backed)'
+-- Write (org-scoped, allowed): Eve grants members_manage on Bob's acme membership.
+-- Bob has only 'presets_manage' — granting him members_manage is permitted and does
+-- not touch any last-admin boundary (Alice still holds '*' in org 1).
+prepare eve_grant_bob as
+  insert into public.permission_grants (subject_organization_membership_id, permission_id)
+  values ((select bob_org1 from _mids), 'members_manage');
+select lives_ok(
+  'execute eve_grant_bob',
+  'agency affiliate CAN grant members_manage on an org member (viewer_can_objects includes agency bridge)'
 );
-deallocate eve_grant_alice;
+deallocate eve_grant_bob;
 
--- Write: agency affiliate cannot UPDATE tenant metadata.
+-- Write (org-scoped, allowed): Eve invites a new address into org 2.
+-- Targets org 2 (globex) using a fresh token. No last-admin boundary touched.
+prepare eve_invite_new as
+  insert into public.organization_memberships (
+    organization_id, organization_membership_invite_email, organization_membership_invite_token, organization_membership_invite_expires_at
+  ) values (
+    2, 'new-hire@humane.test', 'tok-eve-new-hire-c1', current_timestamp + interval '7 days'
+  );
+select lives_ok(
+  'execute eve_invite_new',
+  'agency affiliate CAN insert an organization_membership invite (viewer_can_objects includes agency bridge)'
+);
+deallocate eve_invite_new;
+
+-- Boundary: Eve CANNOT update tenant metadata.
+-- The tenants UPDATE gate is viewer_can_objects('tenant_manage','tenant').
+-- lookup_objects has no agency bridge for the ''tenant'' object type — the
+-- 'tenant' branch only rides on direct org-membership grants, not agency grants.
+-- Eve holds no org memberships, so the set is empty → UPDATE silently no-ops.
 update public.tenants set tenant_name = 'Agency Hijack' where tenant_id = 1;
 
 reset role;
@@ -259,34 +289,8 @@ set local role service_role;
 select is(
   (select tenant_name from public.tenants where tenant_id = 1),
   'Acme SpA',
-  'agency affiliate UPDATE on tenants is filtered by USING (organization_manage), name unchanged'
+  'agency affiliate UPDATE on tenants is filtered by USING (no agency bridge for tenant object) — name unchanged'
 );
-
--- Write: agency affiliate cannot insert a new organization_membership (e.g. invite themselves into acme).
-reset role;
-set local role authenticated;
-set local request.jwt.claims to '{
-  "sub": "00000000-0000-0000-0000-00000000eee0",
-  "app_metadata": {
-    "tenants": [],
-    "organizations": [],
-    "agencies": [{"id": 9001}]
-  }
-}';
-
-prepare eve_invite_self as
-  insert into public.organization_memberships (
-    organization_id, organization_membership_invite_email, organization_membership_invite_token, organization_membership_invite_expires_at
-  ) values (
-    1, 'eve-affiliate@humane.test', 'tok-eve-self', current_timestamp + interval '7 days'
-  );
-select throws_ok(
-  'execute eve_invite_self',
-  '42501',
-  null,
-  'agency affiliate cannot insert a new organization_membership (write policy gates on members_manage)'
-);
-deallocate eve_invite_self;
 
 reset role;
 
