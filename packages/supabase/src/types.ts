@@ -197,92 +197,6 @@ export type Database = {
         }
         Relationships: []
       }
-      agencies_organizations_grants: {
-        Row: {
-          agencies_organizations_grant_created_at: string
-          agencies_organizations_grant_id: string
-          agency_id: number
-          organization_id: number | null
-          permission_id: string
-        }
-        Insert: {
-          agencies_organizations_grant_created_at?: string
-          agencies_organizations_grant_id?: string
-          agency_id: number
-          organization_id?: number | null
-          permission_id: string
-        }
-        Update: {
-          agencies_organizations_grant_created_at?: string
-          agencies_organizations_grant_id?: string
-          agency_id?: number
-          organization_id?: number | null
-          permission_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agencies_organizations_grants_agency_id_fkey"
-            columns: ["agency_id"]
-            isOneToOne: false
-            referencedRelation: "agencies"
-            referencedColumns: ["agency_id"]
-          },
-          {
-            foreignKeyName: "agencies_organizations_grants_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["organization_id"]
-          },
-          {
-            foreignKeyName: "agencies_organizations_grants_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "tenants_organizations_profiles"
-            referencedColumns: ["organization_id"]
-          },
-          {
-            foreignKeyName: "agencies_organizations_grants_permission_id_fkey"
-            columns: ["permission_id"]
-            isOneToOne: false
-            referencedRelation: "permissions"
-            referencedColumns: ["permission_id"]
-          },
-        ]
-      }
-      agency_membership_permissions: {
-        Row: {
-          agency_membership_id: number
-          agency_membership_permission_created_at: string
-          permission_id: string
-        }
-        Insert: {
-          agency_membership_id: number
-          agency_membership_permission_created_at?: string
-          permission_id: string
-        }
-        Update: {
-          agency_membership_id?: number
-          agency_membership_permission_created_at?: string
-          permission_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agency_membership_permissions_agency_membership_id_fkey"
-            columns: ["agency_membership_id"]
-            isOneToOne: false
-            referencedRelation: "agency_memberships"
-            referencedColumns: ["agency_membership_id"]
-          },
-          {
-            foreignKeyName: "agency_membership_permissions_permission_id_fkey"
-            columns: ["permission_id"]
-            isOneToOne: false
-            referencedRelation: "permissions"
-            referencedColumns: ["permission_id"]
-          },
-        ]
-      }
       agency_memberships: {
         Row: {
           agency_id: number
@@ -554,39 +468,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants_organizations_profiles"
             referencedColumns: ["tenant_id"]
-          },
-        ]
-      }
-      organization_membership_permissions: {
-        Row: {
-          organization_membership_id: number
-          organization_membership_permission_created_at: string
-          permission_id: string
-        }
-        Insert: {
-          organization_membership_id: number
-          organization_membership_permission_created_at?: string
-          permission_id: string
-        }
-        Update: {
-          organization_membership_id?: number
-          organization_membership_permission_created_at?: string
-          permission_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "organization_membership_permiss_organization_membership_id_fkey"
-            columns: ["organization_membership_id"]
-            isOneToOne: false
-            referencedRelation: "organization_memberships"
-            referencedColumns: ["organization_membership_id"]
-          },
-          {
-            foreignKeyName: "organization_membership_permissions_permission_id_fkey"
-            columns: ["permission_id"]
-            isOneToOne: false
-            referencedRelation: "permissions"
-            referencedColumns: ["permission_id"]
           },
         ]
       }
@@ -1488,6 +1369,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      org_has_other_active_admin_from_grants: {
+        Args: {
+          _excluded_organization_membership_id: number
+          _organization_id: number
+        }
+        Returns: boolean
+      }
       organization_membership_email: {
         Args: {
           this: Database["public"]["Tables"]["organization_memberships"]["Row"]
@@ -2045,13 +1933,17 @@ export type Database = {
       viewer_organization_membership_set_permissions_collection: {
         Args: { organization_membership_id: number; permission_ids: string[] }
         Returns: {
-          organization_membership_id: number
-          organization_membership_permission_created_at: string
+          object_organization_id: number | null
+          permission_grant_created_at: string
+          permission_grant_id: number
           permission_id: string
+          subject_agency_id: number | null
+          subject_agency_membership_id: number | null
+          subject_organization_membership_id: number | null
         }[]
         SetofOptions: {
           from: "*"
-          to: "organization_membership_permissions"
+          to: "permission_grants"
           isOneToOne: false
           isSetofReturn: true
         }

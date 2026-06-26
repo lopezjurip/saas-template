@@ -480,7 +480,7 @@ export type AgencyOverviewPageQueryQueryVariables = Exact<{
 }>;
 
 
-export type AgencyOverviewPageQueryQuery = { activeMemberships: { totalCount: number } | null, pendingMemberships: { totalCount: number } | null, grants: { edges: Array<{ node: { organizationId: number | null, permissionId: string } }> } | null };
+export type AgencyOverviewPageQueryQuery = { activeMemberships: { totalCount: number } | null, pendingMemberships: { totalCount: number } | null, grants: { edges: Array<{ node: { objectOrganizationId: number | null, permissionId: string } }> } | null };
 
 export type AgencyCreateMutationMutationVariables = Exact<{
   agency_name: string;
@@ -626,7 +626,7 @@ export type OrganizationMembershipEditPageQueryQueryVariables = Exact<{
 }>;
 
 
-export type OrganizationMembershipEditPageQueryQuery = { canManage: boolean | null, organization: { organizationId: number, tenantId: number, organizationSlug: string, organizationName: string } | null, membership: { organizationMembershipId: number, profileId: string | null, organizationMembershipLabel: string | null, organizationMembershipEmail: string | null, organizationMembershipInviteEmail: string | null, organizationMembershipInvitePhone: string | null, organizationMembershipInviteAddressLevel0Id: string | null, organizationMembershipInviteDocumentKind: ProfileIdentityDocumentKind | null, organizationMembershipInviteDocumentValue: string | null, organizationMembershipAcceptedAt: string | null, organizationMembershipRevokedAt: string | null, organizationMembershipRejectedAt: string | null, profile: { profileNameFull: string | null } | null, organizationMembershipPermissionsCollection: { edges: Array<{ node: { permissionId: string } }> } | null } | null, permissions: { edges: Array<{ node: { permissionId: string, permissionDescription: string | null } }> } | null, presets: { edges: Array<{ node: { permissionPresetId: number, permissionPresetName: string, permissionPresetSlugs: Array<string | null>, organizationId: number | null } }> } | null };
+export type OrganizationMembershipEditPageQueryQuery = { canManage: boolean | null, organization: { organizationId: number, tenantId: number, organizationSlug: string, organizationName: string } | null, membership: { organizationMembershipId: number, profileId: string | null, organizationMembershipLabel: string | null, organizationMembershipEmail: string | null, organizationMembershipInviteEmail: string | null, organizationMembershipInvitePhone: string | null, organizationMembershipInviteAddressLevel0Id: string | null, organizationMembershipInviteDocumentKind: ProfileIdentityDocumentKind | null, organizationMembershipInviteDocumentValue: string | null, organizationMembershipAcceptedAt: string | null, organizationMembershipRevokedAt: string | null, organizationMembershipRejectedAt: string | null, profile: { profileNameFull: string | null } | null, permissionGrantsCollection: { edges: Array<{ node: { permissionId: string } }> } | null } | null, permissions: { edges: Array<{ node: { permissionId: string, permissionDescription: string | null } }> } | null, presets: { edges: Array<{ node: { permissionPresetId: number, permissionPresetName: string, permissionPresetSlugs: Array<string | null>, organizationId: number | null } }> } | null };
 
 export type MembersAdminPageQueryQueryVariables = Exact<{
   filter?: OrganizationMembershipsFilter | null | undefined;
@@ -635,7 +635,7 @@ export type MembersAdminPageQueryQueryVariables = Exact<{
 }>;
 
 
-export type MembersAdminPageQueryQuery = { memberships: { edges: Array<{ node: { organizationMembershipId: number, profileId: string | null, organizationMembershipInviteEmail: string | null, organizationMembershipInvitePhone: string | null, organizationMembershipInviteAddressLevel0Id: string | null, organizationMembershipInviteDocumentKind: ProfileIdentityDocumentKind | null, organizationMembershipInviteDocumentValue: string | null, organizationMembershipInviteExpiresAt: string | null, organizationMembershipAcceptedAt: string | null, organizationMembershipCreatedAt: string, profile: { profileNameFull: string | null } | null, organizationMembershipPermissionsCollection: { edges: Array<{ node: { permissionId: string } }> } | null } }> } | null };
+export type MembersAdminPageQueryQuery = { memberships: { edges: Array<{ node: { organizationMembershipId: number, profileId: string | null, organizationMembershipInviteEmail: string | null, organizationMembershipInvitePhone: string | null, organizationMembershipInviteAddressLevel0Id: string | null, organizationMembershipInviteDocumentKind: ProfileIdentityDocumentKind | null, organizationMembershipInviteDocumentValue: string | null, organizationMembershipInviteExpiresAt: string | null, organizationMembershipAcceptedAt: string | null, organizationMembershipCreatedAt: string, profile: { profileNameFull: string | null } | null, permissionGrantsCollection: { edges: Array<{ node: { permissionId: string } }> } | null } }> } | null };
 
 export type MembersPendingInvitationsCancelMutationMutationVariables = Exact<{
   filter: OrganizationMembershipsFilter;
@@ -1288,13 +1288,13 @@ export const AgencyOverviewPageQueryDocument = new TypedDocumentString(`
   ) {
     totalCount
   }
-  grants: agenciesOrganizationsGrantsCollection(
-    filter: {agencyId: {eq: $agencyId}}
+  grants: permissionGrantsCollection(
+    filter: {subjectAgencyId: {eq: $agencyId}}
     first: 250
   ) {
     edges {
       node {
-        organizationId
+        objectOrganizationId
         permissionId
       }
     }
@@ -1582,7 +1582,7 @@ export const OrganizationMembershipEditPageQueryDocument = new TypedDocumentStri
     profile {
       profileNameFull
     }
-    organizationMembershipPermissionsCollection(first: 250) {
+    permissionGrantsCollection(first: 250) {
       edges {
         node {
           permissionId
@@ -1647,7 +1647,7 @@ export const MembersAdminPageQueryDocument = new TypedDocumentString(`
         profile {
           profileNameFull
         }
-        organizationMembershipPermissionsCollection(first: 250) {
+        permissionGrantsCollection(first: 250) {
           edges {
             node {
               permissionId

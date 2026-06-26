@@ -326,24 +326,6 @@ input AddressesLevel3OrderBy {
 }
 
 type Agencies implements Node {
-  agenciesOrganizationsGrantsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: AgenciesOrganizationsGrantsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [AgenciesOrganizationsGrantsOrderBy!]
-  ): AgenciesOrganizationsGrantsConnection
   agencyCreatedAt: Datetime!
   agencyDeletedAt: Datetime
   agencyId: Int!
@@ -467,195 +449,12 @@ input AgenciesOrderBy {
   agencyUpdatedAt: OrderByDirection
 }
 
-type AgenciesOrganizationsGrants implements Node {
-  agenciesOrganizationsGrantCreatedAt: Datetime!
-  agenciesOrganizationsGrantId: UUID!
-  agency: Agencies
-  agencyId: Int!
-  """Globally Unique Record Identifier"""
-  nodeId: ID!
-  organization: Organizations
-  organizationId: Int
-  permission: Permissions
-  permissionId: String!
-}
-
-type AgenciesOrganizationsGrantsConnection {
-  edges: [AgenciesOrganizationsGrantsEdge!]!
-  pageInfo: PageInfo!
-  """The total number of records matching the `filter` criteria"""
-  totalCount: Int!
-}
-
-type AgenciesOrganizationsGrantsDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [AgenciesOrganizationsGrants!]!
-}
-
-type AgenciesOrganizationsGrantsEdge {
-  cursor: String!
-  node: AgenciesOrganizationsGrants!
-}
-
-input AgenciesOrganizationsGrantsFilter {
-  agenciesOrganizationsGrantCreatedAt: DatetimeFilter
-  agenciesOrganizationsGrantId: UUIDFilter
-  agencyId: IntFilter
-  """
-  Returns true only if all its inner filters are true, otherwise returns false
-  """
-  and: [AgenciesOrganizationsGrantsFilter!]
-  nodeId: IDFilter
-  """Negates a filter"""
-  not: AgenciesOrganizationsGrantsFilter
-  """
-  Returns true if at least one of its inner filters is true, otherwise returns false
-  """
-  or: [AgenciesOrganizationsGrantsFilter!]
-  organizationId: IntFilter
-  permissionId: StringFilter
-}
-
-input AgenciesOrganizationsGrantsInsertInput {
-  agenciesOrganizationsGrantCreatedAt: Datetime
-  agenciesOrganizationsGrantId: UUID
-  agencyId: Int
-  organizationId: Int
-  permissionId: String
-}
-
-type AgenciesOrganizationsGrantsInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [AgenciesOrganizationsGrants!]!
-}
-
-input AgenciesOrganizationsGrantsOrderBy {
-  agenciesOrganizationsGrantCreatedAt: OrderByDirection
-  agenciesOrganizationsGrantId: OrderByDirection
-  agencyId: OrderByDirection
-  organizationId: OrderByDirection
-  permissionId: OrderByDirection
-}
-
-input AgenciesOrganizationsGrantsUpdateInput {
-  agenciesOrganizationsGrantCreatedAt: Datetime
-  agenciesOrganizationsGrantId: UUID
-  agencyId: Int
-  organizationId: Int
-  permissionId: String
-}
-
-type AgenciesOrganizationsGrantsUpdateResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [AgenciesOrganizationsGrants!]!
-}
-
-type AgencyMembershipPermissions implements Node {
-  agencyMembership: AgencyMemberships
-  agencyMembershipId: Int!
-  agencyMembershipPermissionCreatedAt: Datetime!
-  """Globally Unique Record Identifier"""
-  nodeId: ID!
-  permission: Permissions
-  permissionId: String!
-}
-
-type AgencyMembershipPermissionsConnection {
-  edges: [AgencyMembershipPermissionsEdge!]!
-  pageInfo: PageInfo!
-}
-
-type AgencyMembershipPermissionsDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [AgencyMembershipPermissions!]!
-}
-
-type AgencyMembershipPermissionsEdge {
-  cursor: String!
-  node: AgencyMembershipPermissions!
-}
-
-input AgencyMembershipPermissionsFilter {
-  agencyMembershipId: IntFilter
-  agencyMembershipPermissionCreatedAt: DatetimeFilter
-  """
-  Returns true only if all its inner filters are true, otherwise returns false
-  """
-  and: [AgencyMembershipPermissionsFilter!]
-  nodeId: IDFilter
-  """Negates a filter"""
-  not: AgencyMembershipPermissionsFilter
-  """
-  Returns true if at least one of its inner filters is true, otherwise returns false
-  """
-  or: [AgencyMembershipPermissionsFilter!]
-  permissionId: StringFilter
-}
-
-input AgencyMembershipPermissionsInsertInput {
-  agencyMembershipId: Int
-  agencyMembershipPermissionCreatedAt: Datetime
-  permissionId: String
-}
-
-type AgencyMembershipPermissionsInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [AgencyMembershipPermissions!]!
-}
-
-input AgencyMembershipPermissionsOrderBy {
-  agencyMembershipId: OrderByDirection
-  agencyMembershipPermissionCreatedAt: OrderByDirection
-  permissionId: OrderByDirection
-}
-
-input AgencyMembershipPermissionsUpdateInput {
-  agencyMembershipId: Int
-  agencyMembershipPermissionCreatedAt: Datetime
-  permissionId: String
-}
-
-type AgencyMembershipPermissionsUpdateResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [AgencyMembershipPermissions!]!
-}
-
 type AgencyMemberships implements Node {
   agency: Agencies
   agencyId: Int!
   agencyMembershipAcceptedAt: Datetime
   agencyMembershipCreatedAt: Datetime!
   agencyMembershipId: Int!
-  agencyMembershipPermissionsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: AgencyMembershipPermissionsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [AgencyMembershipPermissionsOrderBy!]
-  ): AgencyMembershipPermissionsConnection
   agencyMembershipRejectedAt: Datetime
   agencyMembershipRevokedAt: Datetime
   agencyMembershipUpdatedAt: Datetime!
@@ -1186,39 +985,6 @@ type Mutation {
   conversationOutboundArchive(msgId: BigInt!): Boolean
   conversationOutboundDelete(msgId: BigInt!): Boolean
   """
-  Deletes zero or more records from the `AgenciesOrganizationsGrants` collection
-  """
-  deleteFromAgenciesOrganizationsGrantsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: AgenciesOrganizationsGrantsFilter
-  ): AgenciesOrganizationsGrantsDeleteResponse!
-  """
-  Deletes zero or more records from the `AgencyMembershipPermissions` collection
-  """
-  deleteFromAgencyMembershipPermissionsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: AgencyMembershipPermissionsFilter
-  ): AgencyMembershipPermissionsDeleteResponse!
-  """
-  Deletes zero or more records from the `OrganizationMembershipPermissions` collection
-  """
-  deleteFromOrganizationMembershipPermissionsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: OrganizationMembershipPermissionsFilter
-  ): OrganizationMembershipPermissionsDeleteResponse!
-  """
   Deletes zero or more records from the `OrganizationMemberships` collection
   """
   deleteFromOrganizationMembershipsCollection(
@@ -1274,18 +1040,6 @@ type Mutation {
     """Restricts the mutation's impact to records matching the criteria"""
     filter: TenantSsoProvidersFilter
   ): TenantSsoProvidersDeleteResponse!
-  """
-  Adds one or more `AgenciesOrganizationsGrants` records to the collection
-  """
-  insertIntoAgenciesOrganizationsGrantsCollection(objects: [AgenciesOrganizationsGrantsInsertInput!]!): AgenciesOrganizationsGrantsInsertResponse
-  """
-  Adds one or more `AgencyMembershipPermissions` records to the collection
-  """
-  insertIntoAgencyMembershipPermissionsCollection(objects: [AgencyMembershipPermissionsInsertInput!]!): AgencyMembershipPermissionsInsertResponse
-  """
-  Adds one or more `OrganizationMembershipPermissions` records to the collection
-  """
-  insertIntoOrganizationMembershipPermissionsCollection(objects: [OrganizationMembershipPermissionsInsertInput!]!): OrganizationMembershipPermissionsInsertResponse
   """Adds one or more `OrganizationMemberships` records to the collection"""
   insertIntoOrganizationMembershipsCollection(objects: [OrganizationMembershipsInsertInput!]!): OrganizationMembershipsInsertResponse
   """Adds one or more `PermissionGrants` records to the collection"""
@@ -1301,51 +1055,6 @@ type Mutation {
   """Adds one or more `TenantSsoProviders` records to the collection"""
   insertIntoTenantSsoProvidersCollection(objects: [TenantSsoProvidersInsertInput!]!): TenantSsoProvidersInsertResponse
   revokeSession(sessionId: UUID!): Opaque
-  """
-  Updates zero or more records in the `AgenciesOrganizationsGrants` collection
-  """
-  updateAgenciesOrganizationsGrantsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: AgenciesOrganizationsGrantsFilter
-    """
-    Fields that are set will be updated for all records matching the `filter`
-    """
-    set: AgenciesOrganizationsGrantsUpdateInput!
-  ): AgenciesOrganizationsGrantsUpdateResponse!
-  """
-  Updates zero or more records in the `AgencyMembershipPermissions` collection
-  """
-  updateAgencyMembershipPermissionsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: AgencyMembershipPermissionsFilter
-    """
-    Fields that are set will be updated for all records matching the `filter`
-    """
-    set: AgencyMembershipPermissionsUpdateInput!
-  ): AgencyMembershipPermissionsUpdateResponse!
-  """
-  Updates zero or more records in the `OrganizationMembershipPermissions` collection
-  """
-  updateOrganizationMembershipPermissionsCollection(
-    """
-    The maximum number of records in the collection permitted to be affected
-    """
-    atMost: Int! = 1
-    """Restricts the mutation's impact to records matching the criteria"""
-    filter: OrganizationMembershipPermissionsFilter
-    """
-    Fields that are set will be updated for all records matching the `filter`
-    """
-    set: OrganizationMembershipPermissionsUpdateInput!
-  ): OrganizationMembershipPermissionsUpdateResponse!
   """
   Updates zero or more records in the `OrganizationMemberships` collection
   """
@@ -1548,84 +1257,6 @@ enum OrderByDirection {
   DescNullsLast
 }
 
-type OrganizationMembershipPermissions implements Node {
-  """Globally Unique Record Identifier"""
-  nodeId: ID!
-  organizationMembership: OrganizationMemberships
-  organizationMembershipId: Int!
-  organizationMembershipPermissionCreatedAt: Datetime!
-  permission: Permissions
-  permissionId: String!
-}
-
-type OrganizationMembershipPermissionsConnection {
-  edges: [OrganizationMembershipPermissionsEdge!]!
-  pageInfo: PageInfo!
-  """The total number of records matching the `filter` criteria"""
-  totalCount: Int!
-}
-
-type OrganizationMembershipPermissionsDeleteResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [OrganizationMembershipPermissions!]!
-}
-
-type OrganizationMembershipPermissionsEdge {
-  cursor: String!
-  node: OrganizationMembershipPermissions!
-}
-
-input OrganizationMembershipPermissionsFilter {
-  """
-  Returns true only if all its inner filters are true, otherwise returns false
-  """
-  and: [OrganizationMembershipPermissionsFilter!]
-  nodeId: IDFilter
-  """Negates a filter"""
-  not: OrganizationMembershipPermissionsFilter
-  """
-  Returns true if at least one of its inner filters is true, otherwise returns false
-  """
-  or: [OrganizationMembershipPermissionsFilter!]
-  organizationMembershipId: IntFilter
-  organizationMembershipPermissionCreatedAt: DatetimeFilter
-  permissionId: StringFilter
-}
-
-input OrganizationMembershipPermissionsInsertInput {
-  organizationMembershipId: Int
-  organizationMembershipPermissionCreatedAt: Datetime
-  permissionId: String
-}
-
-type OrganizationMembershipPermissionsInsertResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [OrganizationMembershipPermissions!]!
-}
-
-input OrganizationMembershipPermissionsOrderBy {
-  organizationMembershipId: OrderByDirection
-  organizationMembershipPermissionCreatedAt: OrderByDirection
-  permissionId: OrderByDirection
-}
-
-input OrganizationMembershipPermissionsUpdateInput {
-  organizationMembershipId: Int
-  organizationMembershipPermissionCreatedAt: Datetime
-  permissionId: String
-}
-
-type OrganizationMembershipPermissionsUpdateResponse {
-  """Count of the records impacted by the mutation"""
-  affectedCount: Int!
-  """Array of records impacted by the mutation"""
-  records: [OrganizationMembershipPermissions!]!
-}
-
 type OrganizationMemberships implements Node {
   """Globally Unique Record Identifier"""
   nodeId: ID!
@@ -1644,24 +1275,6 @@ type OrganizationMemberships implements Node {
   organizationMembershipInvitePhone: String
   organizationMembershipInviteToken: String
   organizationMembershipLabel: String
-  organizationMembershipPermissionsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: OrganizationMembershipPermissionsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [OrganizationMembershipPermissionsOrderBy!]
-  ): OrganizationMembershipPermissionsConnection
   organizationMembershipRejectedAt: Datetime
   organizationMembershipRevokedAt: Datetime
   organizationMembershipUpdatedAt: Datetime!
@@ -1802,24 +1415,6 @@ type OrganizationMembershipsUpdateResponse {
 }
 
 type Organizations implements Node {
-  agenciesOrganizationsGrantsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: AgenciesOrganizationsGrantsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [AgenciesOrganizationsGrantsOrderBy!]
-  ): AgenciesOrganizationsGrantsConnection
   conversationsCollection(
     """Query values in the collection after the provided cursor"""
     after: Cursor
@@ -2193,62 +1788,8 @@ type PermissionPresetsUpdateResponse {
 }
 
 type Permissions implements Node {
-  agenciesOrganizationsGrantsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: AgenciesOrganizationsGrantsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [AgenciesOrganizationsGrantsOrderBy!]
-  ): AgenciesOrganizationsGrantsConnection
-  agencyMembershipPermissionsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: AgencyMembershipPermissionsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [AgencyMembershipPermissionsOrderBy!]
-  ): AgencyMembershipPermissionsConnection
   """Globally Unique Record Identifier"""
   nodeId: ID!
-  organizationMembershipPermissionsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: OrganizationMembershipPermissionsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [OrganizationMembershipPermissionsOrderBy!]
-  ): OrganizationMembershipPermissionsConnection
   permissionCreatedAt: Datetime!
   permissionDescription: String
   permissionGrantsCollection(
@@ -2776,45 +2317,7 @@ type Query {
     """Sort order to apply to the collection"""
     orderBy: [AgenciesOrderBy!]
   ): AgenciesConnection
-  """A pagable collection of type `AgenciesOrganizationsGrants`"""
-  agenciesOrganizationsGrantsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: AgenciesOrganizationsGrantsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [AgenciesOrganizationsGrantsOrderBy!]
-  ): AgenciesOrganizationsGrantsConnection
   agencyIdOfMembership(agencyMembershipId: Int!): Int
-  """A pagable collection of type `AgencyMembershipPermissions`"""
-  agencyMembershipPermissionsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: AgencyMembershipPermissionsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [AgencyMembershipPermissionsOrderBy!]
-  ): AgencyMembershipPermissionsConnection
   """A pagable collection of type `AgencyMemberships`"""
   agencyMembershipsCollection(
     """Query values in the collection after the provided cursor"""
@@ -2902,25 +2405,6 @@ type Query {
     """The record's `ID`"""
     nodeId: ID!
   ): Node
-  """A pagable collection of type `OrganizationMembershipPermissions`"""
-  organizationMembershipPermissionsCollection(
-    """Query values in the collection after the provided cursor"""
-    after: Cursor
-    """Query values in the collection before the provided cursor"""
-    before: Cursor
-    """Filters to apply to the results set when querying from the collection"""
-    filter: OrganizationMembershipPermissionsFilter
-    """Query the first `n` records in the collection"""
-    first: Int
-    """Query the last `n` records in the collection"""
-    last: Int
-    """
-    Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.
-    """
-    offset: Int
-    """Sort order to apply to the collection"""
-    orderBy: [OrganizationMembershipPermissionsOrderBy!]
-  ): OrganizationMembershipPermissionsConnection
   """A pagable collection of type `OrganizationMemberships`"""
   organizationMembershipsCollection(
     """Query values in the collection after the provided cursor"""

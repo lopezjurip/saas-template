@@ -42,7 +42,7 @@ const OrganizationMembershipEditPageQuery = /*#__PURE__*/ gql(`
       organizationMembershipRevokedAt
       organizationMembershipRejectedAt
       profile { profileNameFull }
-      organizationMembershipPermissionsCollection(first: 250) {
+      permissionGrantsCollection(first: 250) {
         edges { node { permissionId } }
       }
     }
@@ -136,7 +136,7 @@ export default async function OrganizationMembershipEditPage(
   const permissionsCatalog = (data?.["permissions"]?.["edges"] ?? [])
     .filter((e) => e["node"]["permissionId"] !== "*")
     .map((e) => e["node"]);
-  const grantedSlugs = (organization_membership["organizationMembershipPermissionsCollection"]?.["edges"] ?? []).map(
+  const grantedSlugs = (organization_membership["permissionGrantsCollection"]?.["edges"] ?? []).map(
     (e) => e["node"]["permissionId"],
   );
   const presets = (data?.["presets"]?.["edges"] ?? []).map((e) => e["node"]);

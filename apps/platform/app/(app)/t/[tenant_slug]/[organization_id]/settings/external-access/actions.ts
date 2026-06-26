@@ -26,7 +26,7 @@ type GrantAgencyAccessValues = z.infer<typeof grantAgencyAccessSchema>;
 
 /**
  * Grant an agency's read access to one organization. The write goes through the
- * authenticated (RLS) client — the `agencies_organizations_grants` write policy enforces
+ * authenticated (RLS) client — the `permission_grants` write policy enforces
  * `organization_manage` on the org, so no separate pre-check is needed. The FK enforces a
  * real agency (`23503` → not found); the unique index rejects duplicates (`23505`).
  */
@@ -36,13 +36,13 @@ export const actionGrantAgencyAccess = authedAction
     const { TError } = await getRosetta(LOCALES);
 
     const insertRes = await supabase
-      .from("agencies_organizations_grants")
+      .from("permission_grants")
       .insert({
-        agency_id: parsedInput.agency_id,
-        organization_id: parsedInput.organization_id,
+        subject_agency_id: parsedInput.agency_id,
+        object_organization_id: parsedInput.organization_id,
         permission_id: GRANT_PERMISSION,
       })
-      .select("agencies_organizations_grant_id")
+      .select("permission_grant_id")
       .single();
 
     if (insertRes.error) {
@@ -66,7 +66,7 @@ export const actionGrantAgencyAccess = authedAction
     }
 
     revalidatePath("/t");
-    return { agencies_organizations_grant_id: insertRes.data.agencies_organizations_grant_id };
+    return { permission_grant_id: insertRes.data.permission_grant_id };
   });
 
 const revokeAgencyAccessSchema = baseSchema;
@@ -79,14 +79,14 @@ export const actionRevokeAgencyAccess = authedAction
 
     /**
      * Authenticated (RLS) client: the write policy enforces `organization_manage`. Only
-     * org-scoped grants are matched here — global grants (organization_id IS NULL) are
+     * org-scoped grants are matched here — global grants (object_organization_id IS NULL) are
      * platform-managed and excluded by the policy, so they're never touched from this surface.
      */
     const deleteRes = await supabase
-      .from("agencies_organizations_grants")
+      .from("permission_grants")
       .delete()
-      .eq("agency_id", parsedInput.agency_id)
-      .eq("organization_id", parsedInput.organization_id);
+      .eq("subject_agency_id", parsedInput.agency_id)
+      .eq("object_organization_id", parsedInput.organization_id);
 
     if (deleteRes.error) {
       log.error("[actionRevokeAgencyAccess] grant delete failed", {

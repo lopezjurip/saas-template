@@ -28,13 +28,13 @@ const AgencyOverviewPageQuery = gql(`
     ) {
       totalCount
     }
-    grants: agenciesOrganizationsGrantsCollection(
-      filter: { agencyId: { eq: $agencyId } }
+    grants: permissionGrantsCollection(
+      filter: { subjectAgencyId: { eq: $agencyId } }
       first: 250
     ) {
       edges {
         node {
-          organizationId
+          objectOrganizationId
           permissionId
         }
       }
@@ -67,8 +67,8 @@ export default async function AgencyOverviewPage(props: PageProps<"/a/[agency_sl
   const pending = statsData?.["pendingMemberships"]?.["totalCount"] ?? 0;
 
   const grantEdges = statsData?.["grants"]?.["edges"] ?? [];
-  const isGlobal = grantEdges.some((e) => e["node"]["organizationId"] === null && e["node"]["permissionId"] === "*");
-  const count = grantEdges.filter((e) => e["node"]["organizationId"] !== null).length;
+  const isGlobal = grantEdges.some((e) => e["node"]["objectOrganizationId"] === null && e["node"]["permissionId"] === "*");
+  const count = grantEdges.filter((e) => e["node"]["objectOrganizationId"] !== null).length;
 
   const stats = [
     {
