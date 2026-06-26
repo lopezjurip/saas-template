@@ -3551,15 +3551,8 @@ create or replace function protected.tenant_create(
         returning organization_membership_id into _organization_membership_id;
 
       -- Founder gets the org wildcard plus an explicit tenant_manage grant on the espejo org, so
-      -- tenant-level authority (viewer_permission_tenant_ids) is real and grantable, not only a
+      -- tenant-level authority (viewer_can for tenant) is real and grantable, not only a
       -- side effect of holding '*'.
-      insert into public.organization_membership_permissions (organization_membership_id, permission_id)
-        values
-          (_organization_membership_id, '*'),
-          (_organization_membership_id, 'tenant_manage');
-
-      -- Dual-write: also populate the new permission_grants model (coexistence).
-      -- Legacy insert above is KEPT until Phase E teardown.
       insert into public.permission_grants (subject_organization_membership_id, permission_id)
         values
           (_organization_membership_id, '*'),
@@ -3670,13 +3663,13 @@ create or replace function protected.organization_create(
         select 1
         from public.organization_memberships m
         join public.organizations o using (organization_id)
-        join public.organization_membership_permissions p using (organization_membership_id)
+        join public.permission_grants g on g.subject_organization_membership_id = m.organization_membership_id
         where o.tenant_id = $2
           and m.profile_id = $1
           and m.organization_membership_accepted_at is not null
           and m.organization_membership_revoked_at is null
           and m.organization_membership_rejected_at is null
-          and p.permission_id in ('organization_manage', '*')
+          and g.permission_id in ('organization_manage', '*')
       ) then
         raise exception 'no_permission' using errcode = 'P0001';
       end if;
@@ -3697,7 +3690,7 @@ create or replace function protected.organization_create(
         values (_organization.organization_id, $1, current_timestamp)
         returning organization_membership_id into _organization_membership_id;
 
-      insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+      insert into public.permission_grants (subject_organization_membership_id, permission_id)
         values (_organization_membership_id, '*');
 
       return next _organization;
@@ -3766,7 +3759,7 @@ create or replace function protected.agency_create(
         returning agency_membership_id into _agency_membership_id;
 
       -- Founder gets the wildcard so they can manage the agency team from day one.
-      insert into public.agency_membership_permissions (agency_membership_id, permission_id)
+      insert into public.permission_grants (subject_agency_membership_id, permission_id)
         values (_agency_membership_id, '*');
 
       return next _agency;
@@ -5503,11 +5496,10 @@ create policy "permission_grants write by permission holders"
         and object_organization_id is not null
         and object_organization_id in (select public.viewer_can_objects('organization_manage','organization')))
     -- agency-membership grant: require agency_members_manage on that membership's agency
-    or (subject_agency_membership_id is not null and exists (
-      select 1 from public.agency_memberships am
-      where am.agency_membership_id = public.permission_grants.subject_agency_membership_id
-        and public.viewer_can('agency_members_manage', 'agency', am.agency_id)
-    ))
+    -- Use agency_id_of_membership() (SECURITY DEFINER) to bypass own-row-only RLS on agency_memberships.
+    or (subject_agency_membership_id is not null
+        and public.viewer_can('agency_members_manage', 'agency',
+              public.agency_id_of_membership(subject_agency_membership_id)))
   )
   with check (
     (subject_organization_membership_id is not null and exists (
@@ -5518,11 +5510,9 @@ create policy "permission_grants write by permission holders"
     or (subject_agency_id is not null
         and object_organization_id is not null
         and object_organization_id in (select public.viewer_can_objects('organization_manage','organization')))
-    or (subject_agency_membership_id is not null and exists (
-      select 1 from public.agency_memberships am
-      where am.agency_membership_id = public.permission_grants.subject_agency_membership_id
-        and public.viewer_can('agency_members_manage', 'agency', am.agency_id)
-    ))
+    or (subject_agency_membership_id is not null
+        and public.viewer_can('agency_members_manage', 'agency',
+              public.agency_id_of_membership(subject_agency_membership_id)))
   );
 
 -- ============================================================
@@ -5727,6 +5717,286 @@ end;
 $$;
 
 -- ============================================================
+-- E3: Re-point legacy viewer_* helpers to viewer_can / viewer_can_objects
+-- (must run after viewer_can / viewer_can_objects are defined above)
+-- ============================================================
+
+create or replace function public.viewer_permission_org_ids(permission_id extensions.citext)
+  returns setof int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select public.viewer_can_objects(viewer_permission_org_ids.permission_id, 'organization')::int
+    where public.viewer_profile_id() is not null;
+  $$;
+
+create or replace function public.viewer_has_permission(
+  organization_id int,
+  permission_id extensions.citext
+)
+  returns boolean
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select coalesce(
+      (select public.viewer_can(viewer_has_permission.permission_id, 'organization', viewer_has_permission.organization_id)
+       where public.viewer_profile_id() is not null),
+      false
+    );
+  $$;
+
+create or replace function public.viewer_permission_tenant_ids(permission_id extensions.citext)
+  returns setof int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select public.viewer_can_objects(viewer_permission_tenant_ids.permission_id, 'tenant')::int
+    where public.viewer_profile_id() is not null;
+  $$;
+
+create or replace function public.viewer_has_tenant_permission(
+  tenant_id int,
+  permission_id extensions.citext
+)
+  returns boolean
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select coalesce(
+      (select public.viewer_can(viewer_has_tenant_permission.permission_id, 'tenant', viewer_has_tenant_permission.tenant_id)
+       where public.viewer_profile_id() is not null),
+      false
+    );
+  $$;
+
+create or replace function public.viewer_organization_membership_permissions()
+  returns table (organization_id int, permission_id extensions.citext)
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select m.organization_id, g.permission_id
+    from public.permission_grants g
+    join public.organization_memberships m on m.organization_membership_id = g.subject_organization_membership_id
+    where m.profile_id = (select public.viewer_profile_id())
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null;
+  $$;
+
+create or replace function public.viewer_agency_team_permission_ids(permission_id extensions.citext)
+  returns setof int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select public.viewer_can_objects(viewer_agency_team_permission_ids.permission_id, 'agency')::int
+    where public.viewer_profile_id() is not null;
+  $$;
+
+create or replace function public.viewer_agency_permission_org_ids(
+  permission_id extensions.citext
+)
+  returns setof int
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    -- explicit per-org grants
+    select distinct g.object_organization_id
+    from public.permission_grants g
+    where g.subject_agency_id in (select public.viewer_agency_ids())
+      and g.object_organization_id is not null
+      and (g.permission_id = viewer_agency_permission_org_ids.permission_id or g.permission_id = '*')
+
+    union
+
+    -- global grants (object_organization_id IS NULL) → expand to all orgs
+    select org.organization_id
+    from public.organizations org
+    where exists (
+      select 1 from public.permission_grants g
+      where g.subject_agency_id in (select public.viewer_agency_ids())
+        and g.object_organization_id is null
+        and (g.permission_id = viewer_agency_permission_org_ids.permission_id or g.permission_id = '*')
+    );
+  $$;
+
+
+create or replace function public.agency_has_other_active_admin(
+  _agency_id int,
+  _excluded_agency_membership_id int
+) returns boolean
+  language sql
+  stable
+  security definer
+  set search_path to ''
+as $$
+  select exists (
+    select 1
+    from public.agency_memberships m
+    join public.permission_grants g on g.subject_agency_membership_id = m.agency_membership_id
+    where m.agency_id = _agency_id
+      and m.agency_membership_id <> _excluded_agency_membership_id
+      and m.agency_membership_accepted_at is not null
+      and m.agency_membership_revoked_at is null
+      and m.agency_membership_rejected_at is null
+      and g.permission_id in ('agency_members_manage', '*')
+  );
+$$;
+
+create or replace function public.agency_membership_permissions_protect_last_admin()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path to ''
+as $$
+declare
+  _agency_id int;
+  _mid int;
+begin
+  -- This trigger now fires on permission_grants (subject_agency_membership_id IS NOT NULL rows).
+  -- Short-circuit if this is not an agency-membership grant.
+  _mid := old.subject_agency_membership_id;
+  if _mid is null then
+    return old;
+  end if;
+
+  if public.viewer_profile_id() is null then
+    return old;
+  elsif old.permission_id not in ('agency_members_manage', '*') then
+    return old;
+  end if;
+
+  select am.agency_id into _agency_id
+  from public.agency_memberships am
+  where am.agency_membership_id = _mid;
+
+  -- If the membership keeps the OTHER admin permission, it stays an admin — no lockout.
+  if exists (
+    select 1 from public.permission_grants
+    where subject_agency_membership_id = _mid
+      and permission_id in ('agency_members_manage', '*')
+      and permission_id <> old.permission_id
+  ) then
+    return old;
+  end if;
+
+  if not public.agency_has_other_active_admin(_agency_id, _mid) then
+    raise exception 'last_admin_protected'
+      using hint = 'cannot revoke the last admin permission in the agency';
+  end if;
+
+  return old;
+end;
+$$;
+
+create or replace function public.org_has_other_active_admin(
+  _organization_id int,
+  _excluded_organization_membership_id int
+) returns boolean
+  language sql
+  stable
+  security definer
+  set search_path to ''
+as $$
+  select exists (
+    select 1
+    from public.organization_memberships m
+    join public.permission_grants g on g.subject_organization_membership_id = m.organization_membership_id
+    where m.organization_id = _organization_id
+      and m.organization_membership_id <> _excluded_organization_membership_id
+      and m.profile_id is not null
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null
+      and g.permission_id in ('members_manage', '*')
+  );
+$$;
+
+create or replace function public.organization_membership_permissions_protect_last_admin()
+  returns trigger
+  language plpgsql
+  security definer
+  set search_path to ''
+as $$
+declare
+  _organization_id int;
+  _profile_id uuid;
+  _mid int;
+begin
+  -- This trigger now fires on permission_grants (subject_organization_membership_id IS NOT NULL rows).
+  -- Short-circuit if this is not an org-membership grant.
+  _mid := old.subject_organization_membership_id;
+  if _mid is null then
+    return old;
+  end if;
+
+  -- service_role bypass: auth.uid() is NULL when called outside an authenticated session.
+  if public.viewer_profile_id() is null then
+    return old;
+  elsif old.permission_id not in ('members_manage', '*') then
+    return old;
+  end if;
+
+  select organization_id, profile_id into _organization_id, _profile_id
+  from public.organization_memberships
+  where organization_membership_id = _mid;
+
+  -- Pending invites carry no live access — they cannot lock anyone out.
+  -- If the organization_membership keeps the OTHER admin permission, it remains active — no lockout.
+  if _profile_id is null then
+    return old;
+  elsif exists (
+    select 1 from public.permission_grants
+    where subject_organization_membership_id = _mid
+      and permission_id in ('members_manage', '*')
+      and permission_id <> old.permission_id
+  ) then
+    return old;
+  end if;
+
+  -- This deletion does strip admin status from the organization_membership. Ensure another
+  -- claimed, accepted, active admin exists in the org.
+  if not public.org_has_other_active_admin(_organization_id, _mid) then
+    raise exception 'last_admin_protected'
+      using hint = 'cannot revoke the last admin permission in the organization';
+  end if;
+
+  return old;
+end;
+$$;
+
+-- Re-attach permission_grants trigger for last-admin protection (now on permission_grants)
+drop trigger if exists permission_grants_trigger_protect_last_admin_agency on public.permission_grants;
+create trigger permission_grants_trigger_protect_last_admin_agency
+  before delete on public.permission_grants
+  for each row execute procedure public.agency_membership_permissions_protect_last_admin();
+
+drop trigger if exists permission_grants_trigger_protect_last_admin_org on public.permission_grants;
+create trigger permission_grants_trigger_protect_last_admin_org
+  before delete on public.permission_grants
+  for each row execute procedure public.organization_membership_permissions_protect_last_admin();
+
+-- ============================================================
 -- D2e: Repoint security-definer functions to permission_grants
 -- Five functions still authorized against legacy grant tables.
 -- Replace their permission checks with viewer_can / viewer_can_objects.
@@ -5820,16 +6090,16 @@ create or replace function public.viewer_organization_external_agencies(organiza
     ) m on true
     left join lateral (
       select true as granted
-      from public.agencies_organizations_grants g
-      where g.agency_id = a.agency_id
-        and g.organization_id = viewer_organization_external_agencies.organization_id
+      from public.permission_grants g
+      where g.subject_agency_id = a.agency_id
+        and g.object_organization_id = viewer_organization_external_agencies.organization_id
       limit 1
     ) gh on true
     left join lateral (
       select true as granted
-      from public.agencies_organizations_grants g
-      where g.agency_id = a.agency_id
-        and g.organization_id is null
+      from public.permission_grants g
+      where g.subject_agency_id = a.agency_id
+        and g.object_organization_id is null
         and g.permission_id = '*'
       limit 1
     ) gg on true
@@ -5961,3 +6231,10 @@ create or replace function public.viewer_agency_membership_update(
       return next _row;
     end;
   $$;
+
+-- ============================================================
+-- E4: Drop legacy grant tables (now orphaned — permission_grants is authoritative)
+-- ============================================================
+drop table if exists public.organization_membership_permissions cascade;
+drop table if exists public.agency_membership_permissions cascade;
+drop table if exists public.agencies_organizations_grants cascade;
