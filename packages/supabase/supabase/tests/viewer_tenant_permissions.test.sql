@@ -58,7 +58,7 @@ reset role;
 -- Grant runs as the test superuser (RLS bypassed) between role switches.
 -- ============================================================
 
-insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+insert into public.permission_grants (subject_organization_membership_id, permission_id)
   select organization_membership_id, 'organization_manage'
   from public.organization_memberships
   where profile_id = '00000000-0000-0000-0000-00000000b00b' and organization_id = 1;
@@ -77,7 +77,7 @@ reset role;
 -- An EXPLICIT tenant_manage grant passes — the capability is real, not vestigial.
 -- ============================================================
 
-insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+insert into public.permission_grants (subject_organization_membership_id, permission_id)
   select organization_membership_id, 'tenant_manage'
   from public.organization_memberships
   where profile_id = '00000000-0000-0000-0000-00000000b00b' and organization_id = 1;

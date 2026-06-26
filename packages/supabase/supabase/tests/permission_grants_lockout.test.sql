@@ -64,13 +64,8 @@ insert into public.organizations (organization_id, tenant_id, organization_slug,
 insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)
   values (101, '00000000-0000-0000-0000-0000000000c3', current_timestamp);
 
--- C3's admin grant: organization_membership_permissions ONLY — no permission_grants row.
-insert into public.organization_membership_permissions (organization_membership_id, permission_id)
-  values (
-    (select organization_membership_id from public.organization_memberships
-     where organization_id = 101 and profile_id = '00000000-0000-0000-0000-0000000000c3'),
-    'members_manage'
-  );
+-- C3 has NO grant in permission_grants (post-E4: legacy table dropped).
+-- Assertion 3 confirms set-RPC is denied when there is no grant at all.
 
 -- Also add a non-admin member to org 100 so the set-RPC has a target.
 insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)

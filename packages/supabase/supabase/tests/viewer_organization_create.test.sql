@@ -108,8 +108,8 @@ select ok(
 select ok(
   exists (
     select 1
-    from public.organization_membership_permissions p
-    join public.organization_memberships m using (organization_membership_id)
+    from public.permission_grants p
+    join public.organization_memberships m on m.organization_membership_id = p.subject_organization_membership_id
     join public.organizations o using (organization_id)
     where o.tenant_id = 1
       and o.organization_slug = 'viewer-organization'

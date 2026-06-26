@@ -78,8 +78,8 @@ select isnt(
 
 reset role;
 
--- [NEW-PATH] legacy-only grant is NOT sufficient for viewer_tenant_onboarding_finish.
--- Eve gets a legacy organization_membership_permissions row but NO permission_grants row.
+-- [E4-PATH] legacy-only grant is NOT sufficient for viewer_tenant_onboarding_finish.
+-- Post-E4: legacy table dropped. Eve gets NO permission_grants row → denied.
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,
@@ -101,17 +101,13 @@ insert into auth.users (
 insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)
   values (1, '00000000-0000-0000-0000-00000000e2e1', current_timestamp);
 
--- Grant tenant_manage via LEGACY table ONLY (no permission_grants row)
-insert into public.organization_membership_permissions (organization_membership_id, permission_id)
-  select organization_membership_id, 'tenant_manage'
-  from public.organization_memberships
-  where profile_id = '00000000-0000-0000-0000-00000000e2e1' and organization_id = 1;
+-- No grant inserted — Eve has no permission_grants row, so viewer_tenant_onboarding_finish must deny.
 
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-00000000e2e1"}';
 
 prepare eve_finish as select * from public.viewer_tenant_onboarding_finish(1);
-select throws_ok('execute eve_finish', 'P0001', null, '[new-path] legacy-only tenant_manage is NOT sufficient for viewer_tenant_onboarding_finish');
+select throws_ok('execute eve_finish', 'P0001', null, '[e4-path] no permission_grants row → viewer_tenant_onboarding_finish denied');
 deallocate eve_finish;
 
 reset role;

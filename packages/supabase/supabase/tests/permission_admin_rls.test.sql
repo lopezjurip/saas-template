@@ -1,5 +1,5 @@
 -- Public-SDK + RLS permission administration that MCP relies on:
---   1. agencies_organizations_grants write policy (the ORG side, gated by organization_manage)
+--   1. permission_grants agency→org write policy (the ORG side, gated by organization_manage)
 --   2. viewer_organization_membership_set_permissions_collection (atomic preset apply, gated by members_manage)
 -- Seed (seed.sql):
 --   Alice (a11c): org 1 wildcard '*' (so organization_manage + members_manage), org 2 presets_manage.
@@ -20,34 +20,38 @@ create temporary table _g on commit drop as
 grant select on _g to authenticated;
 
 -- ============================================================
--- agencies_organizations_grants — Alice (organization_manage on org 1 via wildcard)
+-- permission_grants agency→org — Alice (organization_manage on org 1 via wildcard)
 -- ============================================================
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-00000000a11c"}';
 
 select lives_ok(
-  $$ insert into public.agencies_organizations_grants (agency_id, organization_id, permission_id)
+  $$ insert into public.permission_grants (subject_agency_id, object_organization_id, permission_id)
      values ((select agency_id from _g), 1, 'members_manage') $$,
   'an org admin can grant an agency access to their organization'
 );
 
 select throws_ok(
-  $$ insert into public.agencies_organizations_grants (agency_id, organization_id, permission_id)
+  $$ insert into public.permission_grants (subject_agency_id, object_organization_id, permission_id)
      values ((select agency_id from _g), null, 'members_manage') $$,
   '42501',
   null,
-  'global grants (organization_id IS NULL) remain denied to authenticated users'
+  'global grants (object_organization_id IS NULL) remain denied to authenticated users'
 );
 
 select lives_ok(
-  $$ delete from public.agencies_organizations_grants
-       where agency_id = (select agency_id from _g) and organization_id = 1 and permission_id = '*' $$,
+  $$ delete from public.permission_grants
+       where subject_agency_id = (select agency_id from _g)
+         and object_organization_id = 1
+         and permission_id = '*' $$,
   'an org admin can revoke an agency''s access to their organization'
 );
 
 select is(
-  (select count(*) from public.agencies_organizations_grants
-     where agency_id = (select agency_id from _g) and organization_id = 1 and permission_id = '*'),
+  (select count(*) from public.permission_grants
+     where subject_agency_id = (select agency_id from _g)
+       and object_organization_id = 1
+       and permission_id = '*'),
   0::bigint,
   'the revoked grant is gone'
 );
@@ -59,7 +63,7 @@ set local role authenticated;
 set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-00000000b00b"}';
 
 select throws_ok(
-  $$ insert into public.agencies_organizations_grants (agency_id, organization_id, permission_id)
+  $$ insert into public.permission_grants (subject_agency_id, object_organization_id, permission_id)
      values ((select agency_id from _g), 1, 'tenant_manage') $$,
   '42501',
   null,

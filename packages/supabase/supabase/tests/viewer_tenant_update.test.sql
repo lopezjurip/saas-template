@@ -102,17 +102,13 @@ insert into auth.users (
 insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)
   values (1, '00000000-0000-0000-0000-00000000e2e2', current_timestamp);
 
--- Grant tenant_manage via LEGACY table ONLY (no permission_grants row)
-insert into public.organization_membership_permissions (organization_membership_id, permission_id)
-  select organization_membership_id, 'tenant_manage'
-  from public.organization_memberships
-  where profile_id = '00000000-0000-0000-0000-00000000e2e2' and organization_id = 1;
+-- No grant inserted — Eve has no permission_grants row, so viewer_tenant_update must deny.
 
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-00000000e2e2"}';
 
 prepare eve_update as select * from public.viewer_tenant_update(1, 'Eve Legacy Fail');
-select throws_ok('execute eve_update', 'P0001', null, '[new-path] legacy-only tenant_manage is NOT sufficient for viewer_tenant_update');
+select throws_ok('execute eve_update', 'P0001', null, '[e4-path] no permission_grants row → viewer_tenant_update denied');
 deallocate eve_update;
 
 reset role;

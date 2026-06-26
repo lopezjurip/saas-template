@@ -1,12 +1,12 @@
--- RLS isolation for public.organization_memberships and public.organization_membership_permissions.
+-- RLS isolation for public.organization_memberships and public.permission_grants.
 -- Verifies the security boundary that keeps tenant data from leaking across orgs.
 --
--- New schema (post-invitations-merge): organization_membership_permissions references organization_membership_id
--- only; resolve org via JOIN. Helper variables `alice_org1_id` / `alice_org2_id` /
--- `bob_org1_id` capture the seeded serial PKs so we can write predictable inserts.
+-- New schema (post-invitations-merge): permission_grants references organization_membership_id
+-- only; resolve org via JOIN. Helper variables `alice_org1` / `alice_org2` /
+-- `bob_org1` capture the seeded serial PKs so we can write predictable inserts.
 --
 -- Phase C anti-false-green: sections marked [NEW-PATH] seed a grant only via permission_grants
--- (no matching organization_membership_permissions row) and assert new-model RLS still works.
+-- (no matching legacy row) and assert new-model RLS still works.
 
 begin;
 
@@ -47,11 +47,11 @@ select set_eq(
 );
 
 select set_eq(
-  $$ select m.organization_id, mp.permission_id::text
-       from public.organization_membership_permissions mp
-       join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
+  $$ select m.organization_id, g.permission_id::text
+       from public.permission_grants g
+       join public.organization_memberships m on m.organization_membership_id = g.subject_organization_membership_id
        where m.profile_id = '00000000-0000-0000-0000-00000000a11c'
-       order by m.organization_id, mp.permission_id $$,
+       order by m.organization_id, g.permission_id $$,
   $$ values (1, '*'),
          (2, 'presets_manage') $$,
   'Alice sees her own grants in orgs 1 and 2'
@@ -86,18 +86,16 @@ select is(
 
 select is(
   (select count(*)
-     from public.organization_membership_permissions mp
-     join public.organization_memberships m on m.organization_membership_id = mp.organization_membership_id
+     from public.permission_grants g
+     join public.organization_memberships m on m.organization_membership_id = g.subject_organization_membership_id
      where m.organization_id = 2),
   0::bigint,
   'Bob cannot see grants in org 2'
 );
 
 -- Bob lacks members_manage in org 1 — INSERT must be denied.
--- The new_organization_membership_permissions row references bob's own organization_membership; he can SELECT-RLS-see
--- it but the write policy `using (... viewer_permission_org_ids('members_manage'))` denies him.
 prepare bob_insert_grant as
-  insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+  insert into public.permission_grants (subject_organization_membership_id, permission_id)
   values ((select bob_org1 from _mids), 'organization_manage');
 
 select throws_ok(
@@ -125,14 +123,14 @@ set local request.jwt.claims to '{
 }';
 
 select lives_ok(
-  $$ insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+  $$ insert into public.permission_grants (subject_organization_membership_id, permission_id)
      values ((select bob_org1 from _mids), 'organization_manage') $$,
   'Alice can grant organization_manage to Bob in org 1 (wildcard satisfies members_manage)'
 );
 
 -- But she cannot grant in org 2 (her org-2 grants do NOT include members_manage)
 prepare alice_grant_org2 as
-  insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+  insert into public.permission_grants (subject_organization_membership_id, permission_id)
   values ((select alice_org2 from _mids), 'members_manage');
 
 select throws_ok(
@@ -159,9 +157,9 @@ select is(
 );
 
 select is(
-  (select count(*) from public.organization_membership_permissions),
+  (select count(*) from public.permission_grants where subject_organization_membership_id is not null),
   0::bigint,
-  'anon sees no organization_membership_permissions'
+  'anon sees no permission_grants'
 );
 
 reset role;
@@ -193,7 +191,7 @@ insert into auth.users (
 insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)
 values (1, '00000000-0000-0000-0000-0000000ee0e0', current_timestamp);
 
--- Grant members_manage to Eve via permission_grants ONLY — no legacy organization_membership_permissions row
+-- Grant members_manage to Eve via permission_grants
 insert into public.permission_grants (subject_organization_membership_id, permission_id)
 select organization_membership_id, 'members_manage'
 from public.organization_memberships
@@ -207,7 +205,7 @@ set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-0000000ee0e0"}
 
 select ok(
   (select count(*) from public.organization_memberships where organization_id = 1) > 0,
-  '[new-path] Eve (permission_grants-only grant) can see org 1 memberships via new RLS'
+  '[new-path] Eve (permission_grants grant) can see org 1 memberships via RLS'
 );
 
 -- Eve should be able to write into org 1 memberships (write policy: members_manage)
@@ -215,10 +213,10 @@ select ok(
 select lives_ok(
   $$ insert into public.organization_memberships (organization_id, organization_membership_invite_email)
      values (1, 'pending@humane.test') $$,
-  '[new-path] Eve (permission_grants-only members_manage) can write org 1 memberships'
+  '[new-path] Eve (permission_grants members_manage) can write org 1 memberships'
 );
 
--- A profile with zero grants (no legacy, no permission_grants) should see nothing
+-- A profile with zero grants should see nothing
 reset role;
 
 insert into auth.users (
@@ -244,7 +242,7 @@ set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-0000000ff0f0"}
 select is(
   (select count(*) from public.organization_memberships)::int,
   0,
-  '[new-path] Frank (no grants at all) sees zero memberships — confirms new RLS gates correctly'
+  '[new-path] Frank (no grants at all) sees zero memberships — confirms RLS gates correctly'
 );
 
 reset role;

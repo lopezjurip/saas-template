@@ -2,8 +2,8 @@
 -- Seed (seed.sql):
 --   demo-auditores agency, Iris (ca401) = accepted affiliate holding '*' (team admin),
 --   Alice (a11c) = pending affiliate with no agency capabilities.
--- [NEW-PATH] Frank: permission_grants-only agency_members_manage (no legacy row).
--- [NEW-PATH] Gina: legacy-only agency_members_manage (no permission_grants row) — must be denied.
+-- [NEW-PATH] Frank: permission_grants-only agency_members_manage — must be allowed.
+-- [NEW-PATH] Gina: no grant at all — must be denied (table dropped in E4).
 
 begin;
 
@@ -21,7 +21,7 @@ create temporary table _af on commit drop as
   where a.agency_slug = 'demo-auditores';
 grant select on _af to authenticated;
 
-select has_table('public', 'agency_membership_permissions', 'agency_membership_permissions table exists');
+select hasnt_table('public', 'agency_membership_permissions', 'agency_membership_permissions table dropped in E4');
 
 -- ============================================================
 -- Iris: accepted team admin via wildcard '*'
@@ -57,9 +57,9 @@ select lives_ok(
 );
 
 select lives_ok(
-  $$ insert into public.agency_membership_permissions (agency_membership_id, permission_id)
+  $$ insert into public.permission_grants (subject_agency_membership_id, permission_id)
      values ((select alice_mid from _af), 'agency_members_manage') $$,
-  'a team admin can grant an agency capability to another affiliate (RLS write)'
+  'a team admin can grant an agency capability to another affiliate (permission_grants write)'
 );
 
 select throws_ok(
@@ -70,8 +70,8 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ delete from public.agency_membership_permissions
-       where agency_membership_id = (select iris_mid from _af) and permission_id = '*' $$,
+  $$ delete from public.permission_grants
+       where subject_agency_membership_id = (select iris_mid from _af) and permission_id = '*' $$,
   'P0001',
   'last_admin_protected',
   'removing the last admin''s wildcard grant is blocked by the trigger'
@@ -80,7 +80,7 @@ select throws_ok(
 reset role;
 
 -- ============================================================
--- Alice: pending affiliate — no team authority, even though she was granted the slug above
+-- Alice: pending affiliate — no team authority
 -- ============================================================
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-00000000a11c"}';
@@ -98,7 +98,7 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$ insert into public.agency_membership_permissions (agency_membership_id, permission_id)
+  $$ insert into public.permission_grants (subject_agency_membership_id, permission_id)
      values ((select iris_mid from _af), 'agency_members_manage') $$,
   '42501',
   null,
@@ -109,7 +109,6 @@ reset role;
 
 -- ============================================================
 -- [NEW-PATH] Frank: permission_grants-only agency_members_manage — must be allowed.
--- No legacy agency_membership_permissions row; only a permission_grants row.
 -- ============================================================
 
 insert into auth.users (
@@ -132,7 +131,7 @@ insert into auth.users (
 insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
   values ((select agency_id from _af), '00000000-0000-0000-0000-00000000f2e1', current_timestamp);
 
--- Grant agency_members_manage via permission_grants ONLY (no legacy row)
+-- Grant agency_members_manage via permission_grants
 insert into public.permission_grants (subject_agency_membership_id, permission_id)
   values (
     (select agency_membership_id from public.agency_memberships
@@ -155,7 +154,8 @@ select throws_ok(
 reset role;
 
 -- ============================================================
--- [NEW-PATH] Gina: legacy-only agency_members_manage — must be denied.
+-- [NEW-PATH] Gina: no grant at all — must be denied.
+-- (Legacy table dropped in E4; absence of any grant is sufficient for this test.)
 -- ============================================================
 
 insert into auth.users (
@@ -170,7 +170,7 @@ insert into auth.users (
   crypt('password123', gen_salt('bf')),
   current_timestamp,
   '{"provider":"email","providers":["email"]}'::jsonb,
-  '{"full_name":"Gina Legacy"}'::jsonb,
+  '{"full_name":"Gina NoGrant"}'::jsonb,
   current_timestamp, current_timestamp,
   '', '', '', ''
 );
@@ -178,14 +178,7 @@ insert into auth.users (
 insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
   values ((select agency_id from _af), '00000000-0000-0000-0000-00000000920a', current_timestamp);
 
--- Grant agency_members_manage via LEGACY table ONLY (no permission_grants row)
-insert into public.agency_membership_permissions (agency_membership_id, permission_id)
-  values (
-    (select agency_membership_id from public.agency_memberships
-     where agency_id = (select agency_id from _af)
-       and profile_id = '00000000-0000-0000-0000-00000000920a'),
-    'agency_members_manage'
-  );
+-- No permission_grants row inserted — Gina has zero agency capability grants.
 
 set local role authenticated;
 set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-00000000920a"}';
@@ -195,7 +188,7 @@ select throws_ok(
        (select agency_id from _af), 'nobody@unregistered.test') $$,
   'P0001',
   'no_permission',
-  '[new-path] legacy-only agency_members_manage is NOT sufficient for viewer_agency_membership_invite_by_email'
+  '[new-path] no grant = no permission for viewer_agency_membership_invite_by_email'
 );
 
 reset role;
