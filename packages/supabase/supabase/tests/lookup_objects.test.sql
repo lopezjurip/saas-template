@@ -1,5 +1,5 @@
 begin;
-select plan(8);
+select plan(11);
 
 -- ============================================================
 -- Task 3 fixtures: profile A1 with active org 1 membership
@@ -100,6 +100,57 @@ select is(
   (select count(*) from protected.agency_reachable_objects('00000000-0000-0000-0000-0000000000b2', 'organization')),
   0::bigint,
   'agency_reachable_objects returns nothing after agency is soft-deleted');
+
+-- ============================================================
+-- Regression: all-orgs agency grant (object_organization_id IS NULL)
+-- expands to ALL organizations in agency_reachable_objects
+-- ============================================================
+
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000c1', 'c1@test.dev')
+  on conflict do nothing;
+
+insert into public.agencies (agency_name, agency_slug)
+  values ('All-Orgs Agency', 'test-agency-all-orgs');
+
+insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
+  values (
+    (select agency_id from public.agencies where agency_slug = 'test-agency-all-orgs'),
+    '00000000-0000-0000-0000-0000000000c1',
+    current_timestamp
+  );
+
+-- all-orgs grant: object_organization_id intentionally left NULL
+insert into public.permission_grants (subject_agency_id, permission_id)
+  values (
+    (select agency_id from public.agencies where agency_slug = 'test-agency-all-orgs'),
+    'members_manage'
+  );
+
+-- (6) all-orgs grant → org 1 visible
+select ok(
+  exists(
+    select 1 from protected.agency_reachable_objects('00000000-0000-0000-0000-0000000000c1', 'organization')
+    where agency_reachable_objects = 1
+  ),
+  'agency_reachable_objects(organization) includes org 1 when agency holds all-orgs grant (NULL object_organization_id)');
+
+-- (7) all-orgs grant → tenant 1 (via org 1) visible
+select ok(
+  exists(
+    select 1 from protected.agency_reachable_objects('00000000-0000-0000-0000-0000000000c1', 'tenant')
+    where agency_reachable_objects = 1
+  ),
+  'agency_reachable_objects(tenant) includes tenant 1 when agency holds all-orgs grant (NULL object_organization_id)');
+
+-- (8) soft-deleting the all-orgs agency removes visibility
+update public.agencies
+  set agency_deleted_at = current_timestamp
+  where agency_slug = 'test-agency-all-orgs';
+
+select is(
+  (select count(*) from protected.agency_reachable_objects('00000000-0000-0000-0000-0000000000c1', 'organization')),
+  0::bigint,
+  'agency_reachable_objects returns nothing after all-orgs agency is soft-deleted');
 
 select * from finish();
 rollback;

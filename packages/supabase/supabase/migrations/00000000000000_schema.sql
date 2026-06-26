@@ -5131,28 +5131,36 @@ create or replace function protected.agency_reachable_objects(
   object_type public.permission_object_type
 )
   returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
-    -- organization: explicit per-org agency grants (soft-deleted agencies excluded)
-    select distinct g.object_organization_id::bigint
+    -- organization: specific-org grant OR all-orgs wildcard (object_organization_id IS NULL)
+    -- mirrors lookup_objects agency branch; soft-deleted agencies excluded
+    select distinct o.organization_id::bigint
     from public.permission_grants g
     join public.agency_memberships am on am.agency_id = g.subject_agency_id
     join public.agencies a on a.agency_id = g.subject_agency_id and a.agency_deleted_at is null
+    join public.organizations o on (
+      o.organization_id = g.object_organization_id
+      -- all-orgs wildcard: grant with no object set → matches every org
+      or g.object_organization_id is null
+    )
     where agency_reachable_objects.object_type = 'organization'
       and g.subject_agency_id is not null
-      and g.object_organization_id is not null
       and am.profile_id = agency_reachable_objects.profile_id
       and am.agency_membership_accepted_at is not null
       and am.agency_membership_revoked_at is null
       and am.agency_membership_rejected_at is null
     union
-    -- tenant: via orgs in the tenant that the agency reaches
+    -- tenant: via orgs in the tenant that the agency reaches (same all-orgs handling)
     select distinct o.tenant_id::bigint
     from public.permission_grants g
     join public.agency_memberships am on am.agency_id = g.subject_agency_id
     join public.agencies a on a.agency_id = g.subject_agency_id and a.agency_deleted_at is null
-    join public.organizations o on o.organization_id = g.object_organization_id
+    join public.organizations o on (
+      o.organization_id = g.object_organization_id
+      -- all-orgs wildcard: agency grant with no object set → every org's tenant reachable
+      or g.object_organization_id is null
+    )
     where agency_reachable_objects.object_type = 'tenant'
       and g.subject_agency_id is not null
-      and g.object_organization_id is not null
       and am.profile_id = agency_reachable_objects.profile_id
       and am.agency_membership_accepted_at is not null
       and am.agency_membership_revoked_at is null
