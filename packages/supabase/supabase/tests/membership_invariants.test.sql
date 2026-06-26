@@ -84,6 +84,11 @@ select lives_ok(
   ),
   'admin with * can add members_manage to themselves'
 );
+-- Mirror insert into permission_grants so the new-model helpers see Alice's members_manage.
+-- (Still authenticated as Alice, who has '*' in permission_grants → RLS write policy passes.)
+insert into public.permission_grants (subject_organization_membership_id, permission_id)
+  values ((select alice_org1 from _mids), 'members_manage')
+  on conflict do nothing;
 
 -- Now Alice holds both. She can delete '*' because members_manage keeps her admin.
 select lives_ok(
@@ -94,6 +99,11 @@ select lives_ok(
   ),
   'admin with both can drop * while keeping members_manage'
 );
+-- Mirror delete from permission_grants: '*' no longer held by Alice in the new model.
+-- (Still authenticated as Alice, who retains members_manage in permission_grants → RLS passes.)
+delete from public.permission_grants
+  where subject_organization_membership_id = (select alice_org1 from _mids)
+    and permission_id = '*';
 
 -- With only members_manage left, deleting it would strip admin entirely — blocked.
 select throws_ok(
@@ -113,13 +123,16 @@ reset role;
 -- Add a second admin to org 1, then verify Alice CAN demote herself
 -- ============================================================
 
--- We need service_role here to bypass RLS for the setup insert.
+-- service_role for the legacy OMP insert (bypasses RLS that would require members_manage).
+-- permission_grants insert is done as Alice (authenticated) because service_role lacks
+-- insert privileges on permission_grants — Alice still holds members_manage in PG here.
 set local request.jwt.claims to '';
 set local role service_role;
 insert into public.organization_membership_permissions (organization_membership_id, permission_id)
 values ((select bob_org1 from _mids), '*');
 reset role;
 
+-- Alice inserts Bob's '*' into permission_grants; she has members_manage → write policy passes.
 set local role authenticated;
 set local request.jwt.claims to '{
   "sub": "00000000-0000-0000-0000-00000000a11c",
@@ -128,6 +141,9 @@ set local request.jwt.claims to '{
     "organizations": [{"id": 1}, {"id": 2}]
   }
 }';
+insert into public.permission_grants (subject_organization_membership_id, permission_id)
+values ((select bob_org1 from _mids), '*')
+on conflict do nothing;
 
 -- Now Bob holds '*' too — Alice can drop her remaining members_manage without locking the org.
 select lives_ok(
@@ -138,7 +154,11 @@ select lives_ok(
   ),
   'last admin permission delete succeeds when another admin remains'
 );
-
+-- Mirror delete from permission_grants: Alice now holds no admin grants in either model.
+-- Still authenticated as Alice with members_manage in permission_grants → delete allowed.
+delete from public.permission_grants
+  where subject_organization_membership_id = (select alice_org1 from _mids)
+    and permission_id = 'members_manage';
 reset role;
 
 -- ============================================================

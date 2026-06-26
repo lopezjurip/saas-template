@@ -203,9 +203,17 @@ insert into public.agency_memberships (agency_id, profile_id, agency_membership_
 insert into public.agencies_organizations_grants (agency_id, organization_id, permission_id)
   values (9001, null, '*');
 
+-- Dual-write: also seed the global grant into permission_grants so viewer_agency_reachable_objects
+-- (which reads permission_grants after Phase C migration) returns all orgs/tenants for Eve.
+-- service_role lacks insert privileges on permission_grants, so use postgres (superuser).
 reset role;
+set local role postgres;
+insert into public.permission_grants (subject_agency_id, permission_id)
+  values (9001, '*')
+  on conflict do nothing;
 
 -- Agency affiliate JWT: no orgs / tenants as member, but agencies claim with the agency.
+reset role;
 set local role authenticated;
 set local request.jwt.claims to '{
   "sub": "00000000-0000-0000-0000-00000000eee0",

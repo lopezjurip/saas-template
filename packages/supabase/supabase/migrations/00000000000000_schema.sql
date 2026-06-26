@@ -5327,8 +5327,16 @@ drop policy if exists "organization_memberships write with members_manage" on pu
 create policy "organization_memberships write with members_manage"
   on public.organization_memberships for all
   to authenticated
-  using (organization_id in (select public.viewer_can_objects('members_manage','organization')))
-  with check (organization_id in (select public.viewer_can_objects('members_manage','organization')));
+  -- Intersect membership (viewer_member_objects) with permission check (viewer_can_objects) so
+  -- agency-only grants do not confer write access — agencies are a read-reach mechanism only.
+  using (
+    organization_id in (select public.viewer_member_objects('organization'))
+    and organization_id in (select public.viewer_can_objects('members_manage','organization'))
+  )
+  with check (
+    organization_id in (select public.viewer_member_objects('organization'))
+    and organization_id in (select public.viewer_can_objects('members_manage','organization'))
+  );
 
 -- ------------------------------------------------------------
 -- permission_presets
