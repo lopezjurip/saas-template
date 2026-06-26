@@ -3556,6 +3556,13 @@ create or replace function protected.tenant_create(
           (_organization_membership_id, '*'),
           (_organization_membership_id, 'tenant_manage');
 
+      -- Dual-write: also populate the new permission_grants model (coexistence).
+      -- Legacy insert above is KEPT until Phase E teardown.
+      insert into public.permission_grants (subject_organization_membership_id, permission_id)
+        values
+          (_organization_membership_id, '*'),
+          (_organization_membership_id, 'tenant_manage');
+
       return next _tenant;
     end;
   $$;

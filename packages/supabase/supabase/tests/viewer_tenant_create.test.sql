@@ -1,6 +1,6 @@
 begin;
 
-select plan(13);
+select plan(14);
 
 select has_function(
   'protected',
@@ -120,7 +120,23 @@ select ok(
     where o.organization_slug = 'viewer-created'
       and p.permission_id = '*'
   ),
-  'the viewer receives the wildcard permission'
+  'the viewer receives the wildcard permission (legacy organization_membership_permissions)'
+);
+
+-- Check the new model as superuser: permission_grants has no SELECT policy yet (Phase D).
+-- This assertion verifies the row was written, not that it is visible under RLS.
+reset role;
+select ok(
+  exists (
+    select 1
+    from public.permission_grants g
+    join public.organization_memberships m
+      on m.organization_membership_id = g.subject_organization_membership_id
+    join public.organizations o using (organization_id)
+    where o.organization_slug = 'viewer-created'
+      and g.permission_id = '*'
+  ),
+  'the founder wildcard grant is dual-written to permission_grants'
 );
 
 select * from finish();
