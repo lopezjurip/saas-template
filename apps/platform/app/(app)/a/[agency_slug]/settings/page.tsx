@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EntityLogoControls } from "~/components/entity-logo-controls";
+import { AgencyNameForm } from "./agency-name-form";
 import { getRosetta } from "~/lib/i18n.server";
 import { ROUTE } from "~/lib/route";
 
@@ -51,6 +52,10 @@ export default async function AgencySettingsPage(props: PageProps<"/a/[agency_sl
         </header>
 
         <section className="border-border bg-background flex flex-col gap-4 rounded-xl border p-5">
+          <AgencyNameForm agencyId={agency["agency_id"]} agencyName={agency["agency_name"]} />
+        </section>
+
+        <section className="border-border bg-background flex flex-col gap-4 rounded-xl border p-5">
           <EntityLogoControls
             bucket="agencies"
             ownerKey={String(agency["agency_id"])}
@@ -69,7 +74,7 @@ const LOCALE_ES = {
   page_title: "Agencia",
   eyebrow: "Agencia",
   title: "Ajustes de la agencia",
-  subtitle: "El logo de la agencia. Aparece en el selector de inicio y en la consola.",
+  subtitle: "El nombre y el logo de la agencia. Aparecen en el selector de inicio y en la consola.",
   logo_hint: "Usa una imagen cuadrada. Si no subes una, mostramos las iniciales.",
   back: "Volver a la consola",
 };
@@ -78,7 +83,7 @@ const LOCALE_EN: typeof LOCALE_ES = {
   page_title: "Agency",
   eyebrow: "Agency",
   title: "Agency settings",
-  subtitle: "The agency logo. It shows in the home picker and the console.",
+  subtitle: "The agency name and logo. They show in the home picker and the console.",
   logo_hint: "Use a square image. If you don't upload one, we show the initials.",
   back: "Back to the console",
 };
@@ -87,7 +92,7 @@ const LOCALE_PT: typeof LOCALE_ES = {
   page_title: "Agência",
   eyebrow: "Agência",
   title: "Configurações da agência",
-  subtitle: "O logo da agência. Aparece no seletor inicial e no console.",
+  subtitle: "O nome e o logo da agência. Aparecem no seletor inicial e no console.",
   logo_hint: "Use uma imagem quadrada. Se você não enviar uma, mostramos as iniciais.",
   back: "Voltar ao console",
 };
