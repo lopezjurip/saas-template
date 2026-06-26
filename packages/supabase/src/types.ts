@@ -726,43 +726,33 @@ export type Database = {
       }
       permission_grants: {
         Row: {
-          object_agency_id: number | null
           object_organization_id: number | null
-          object_tenant_id: number | null
           permission_grant_created_at: string
           permission_grant_id: number
           permission_id: string
           subject_agency_id: number | null
-          subject_profile_id: string | null
+          subject_agency_membership_id: number | null
+          subject_organization_membership_id: number | null
         }
         Insert: {
-          object_agency_id?: number | null
           object_organization_id?: number | null
-          object_tenant_id?: number | null
           permission_grant_created_at?: string
           permission_grant_id?: never
           permission_id: string
           subject_agency_id?: number | null
-          subject_profile_id?: string | null
+          subject_agency_membership_id?: number | null
+          subject_organization_membership_id?: number | null
         }
         Update: {
-          object_agency_id?: number | null
           object_organization_id?: number | null
-          object_tenant_id?: number | null
           permission_grant_created_at?: string
           permission_grant_id?: never
           permission_id?: string
           subject_agency_id?: number | null
-          subject_profile_id?: string | null
+          subject_agency_membership_id?: number | null
+          subject_organization_membership_id?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "permission_grants_object_agency_id_fkey"
-            columns: ["object_agency_id"]
-            isOneToOne: false
-            referencedRelation: "agencies"
-            referencedColumns: ["agency_id"]
-          },
           {
             foreignKeyName: "permission_grants_object_organization_id_fkey"
             columns: ["object_organization_id"]
@@ -776,20 +766,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tenants_organizations_profiles"
             referencedColumns: ["organization_id"]
-          },
-          {
-            foreignKeyName: "permission_grants_object_tenant_id_fkey"
-            columns: ["object_tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["tenant_id"]
-          },
-          {
-            foreignKeyName: "permission_grants_object_tenant_id_fkey"
-            columns: ["object_tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants_organizations_profiles"
-            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "permission_grants_permission_id_fkey"
@@ -806,11 +782,18 @@ export type Database = {
             referencedColumns: ["agency_id"]
           },
           {
-            foreignKeyName: "permission_grants_subject_profile_id_fkey"
-            columns: ["subject_profile_id"]
+            foreignKeyName: "permission_grants_subject_agency_membership_id_fkey"
+            columns: ["subject_agency_membership_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["profile_id"]
+            referencedRelation: "agency_memberships"
+            referencedColumns: ["agency_membership_id"]
+          },
+          {
+            foreignKeyName: "permission_grants_subject_organization_membership_id_fkey"
+            columns: ["subject_organization_membership_id"]
+            isOneToOne: false
+            referencedRelation: "organization_memberships"
+            referencedColumns: ["organization_membership_id"]
           },
         ]
       }

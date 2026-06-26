@@ -4835,40 +4835,42 @@ end $$;
 
 create table if not exists public.permission_grants (
   permission_grant_id bigint generated always as identity primary key,
-  -- subject: exactly one of these is set
-  subject_profile_id uuid references public.profiles (profile_id) on delete cascade,
-  subject_agency_id  int  references public.agencies (agency_id) on delete cascade,
-  -- object: at most one is set. All-null is the agency "all orgs" wildcard (see CHECK below).
-  object_organization_id int references public.organizations (organization_id) on delete cascade,
-  object_tenant_id       int references public.tenants (tenant_id) on delete cascade,
-  object_agency_id       int references public.agencies (agency_id) on delete cascade,
+  -- subject: exactly one (mirrors the 3 legacy grant tables)
+  subject_organization_membership_id int
+    references public.organization_memberships (organization_membership_id) on delete cascade,
+  subject_agency_membership_id int
+    references public.agency_memberships (agency_membership_id) on delete cascade,
+  subject_agency_id int
+    references public.agencies (agency_id) on delete cascade,
+  -- object: only the agency->org reach carries one; NULL with an agency subject = "all orgs"
+  object_organization_id int
+    references public.organizations (organization_id) on delete cascade,
   permission_id extensions.citext not null
     references public.permissions (permission_id) on delete cascade,
   permission_grant_created_at timestamptz not null default current_timestamp,
   constraint permission_grants_one_subject check (
-    (subject_profile_id is not null)::int + (subject_agency_id is not null)::int = 1
+    (subject_organization_membership_id is not null)::int
+    + (subject_agency_membership_id is not null)::int
+    + (subject_agency_id is not null)::int = 1
   ),
-  constraint permission_grants_one_object check (
-    (object_organization_id is not null)::int
-    + (object_tenant_id is not null)::int
-    + (object_agency_id is not null)::int <= 1
-  ),
-  -- all-null object (= "all orgs") only when the subject is an agency
-  constraint permission_grants_all_orgs_only_agency check (
-    object_organization_id is not null
-    or object_tenant_id is not null
-    or object_agency_id is not null
-    or subject_agency_id is not null
+  constraint permission_grants_object_only_for_agency check (
+    object_organization_id is null or subject_agency_id is not null
   )
 );
 
--- lookup indexes
-create index if not exists permission_grants_subject_profile_idx
-  on public.permission_grants (subject_profile_id, permission_id) where subject_profile_id is not null;
-create index if not exists permission_grants_subject_agency_idx
-  on public.permission_grants (subject_agency_id, permission_id) where subject_agency_id is not null;
-create index if not exists permission_grants_object_org_idx
-  on public.permission_grants (object_organization_id) where object_organization_id is not null;
+-- uniqueness per legacy table (NULL-safe partial uniques for the agency reach)
+create unique index if not exists permission_grants_org_membership_unique
+  on public.permission_grants (subject_organization_membership_id, permission_id)
+  where subject_organization_membership_id is not null;
+create unique index if not exists permission_grants_agency_membership_unique
+  on public.permission_grants (subject_agency_membership_id, permission_id)
+  where subject_agency_membership_id is not null;
+create unique index if not exists permission_grants_agency_org_unique
+  on public.permission_grants (subject_agency_id, object_organization_id, permission_id)
+  where subject_agency_id is not null and object_organization_id is not null;
+create unique index if not exists permission_grants_agency_all_orgs_unique
+  on public.permission_grants (subject_agency_id, permission_id)
+  where subject_agency_id is not null and object_organization_id is null;
 
 -- RLS: managed by viewer_* checks in the cutover plan. Enable + lock down for now.
 alter table public.permission_grants enable row level security;
@@ -4954,55 +4956,64 @@ create or replace function protected.check_permission(
   returns boolean stable security definer parallel safe language sql set search_path to '' as $$
     select case check_permission.object_type
       when 'organization' then (
-        -- direct profile grant on this org (requires active membership)
+        -- direct: a grant on the viewer's active org membership in this org
         exists (
-          select 1 from public.permission_grants g
-          where g.subject_profile_id = check_permission.profile_id
-            and g.object_organization_id = check_permission.object_id::int
+          select 1
+          from public.permission_grants g
+          join public.organization_memberships m
+            on m.organization_membership_id = g.subject_organization_membership_id
+          where m.organization_id = check_permission.object_id::int
+            and m.profile_id = check_permission.profile_id
+            and m.organization_membership_accepted_at is not null
+            and m.organization_membership_revoked_at is null
+            and m.organization_membership_rejected_at is null
             and (g.permission_id = check_permission.permission_id or g.permission_id = '*')
-            and internal.is_active_org_member(check_permission.profile_id, check_permission.object_id::int)
         )
-        or
-        -- via an agency the profile actively belongs to that reaches this org
-        exists (
-          select 1 from public.permission_grants g
+        or exists ( -- agency reach
+          select 1
+          from public.permission_grants g
+          join public.agency_memberships am on am.agency_id = g.subject_agency_id
+          join public.agencies a on a.agency_id = g.subject_agency_id and a.agency_deleted_at is null
           where g.subject_agency_id is not null
-            and (
-              g.object_organization_id = check_permission.object_id::int
-              -- all-orgs wildcard: agency grant with no object set
-              or (g.object_organization_id is null and g.object_tenant_id is null and g.object_agency_id is null)
-            )
+            and (g.object_organization_id = check_permission.object_id::int
+                 or g.object_organization_id is null)
             and (g.permission_id = check_permission.permission_id or g.permission_id = '*')
-            and internal.is_active_agency_member(check_permission.profile_id, g.subject_agency_id)
+            and am.profile_id = check_permission.profile_id
+            and am.agency_membership_accepted_at is not null
+            and am.agency_membership_revoked_at is null
+            and am.agency_membership_rejected_at is null
         )
       )
       when 'tenant' then (
         -- tenant authority rides on org grants of orgs inside the tenant
         exists (
-          select 1 from public.permission_grants g
-          join public.organizations o on o.organization_id = g.object_organization_id
-          where g.subject_profile_id = check_permission.profile_id
-            and o.tenant_id = check_permission.object_id::int
-            and (g.permission_id = check_permission.permission_id or g.permission_id = '*')
-            and internal.is_active_org_member(check_permission.profile_id, g.object_organization_id)
-        )
-        or
-        -- explicit tenant-object grants (future-proofing)
-        exists (
-          select 1 from public.permission_grants g
-          where g.subject_profile_id = check_permission.profile_id
-            and g.object_tenant_id = check_permission.object_id::int
+          select 1
+          from public.permission_grants g
+          join public.organization_memberships m
+            on m.organization_membership_id = g.subject_organization_membership_id
+          join public.organizations o on o.organization_id = m.organization_id
+          where o.tenant_id = check_permission.object_id::int
+            and m.profile_id = check_permission.profile_id
+            and m.organization_membership_accepted_at is not null
+            and m.organization_membership_revoked_at is null
+            and m.organization_membership_rejected_at is null
             and (g.permission_id = check_permission.permission_id or g.permission_id = '*')
         )
       )
       when 'agency' then (
-        -- manage-the-agency-itself: direct profile grant on the agency, active affiliate
+        -- manage-the-agency-itself: active agency-membership grant
         exists (
-          select 1 from public.permission_grants g
-          where g.subject_profile_id = check_permission.profile_id
-            and g.object_agency_id = check_permission.object_id::int
+          select 1
+          from public.permission_grants g
+          join public.agency_memberships am
+            on am.agency_membership_id = g.subject_agency_membership_id
+          join public.agencies a on a.agency_id = am.agency_id and a.agency_deleted_at is null
+          where am.agency_id = check_permission.object_id::int
+            and am.profile_id = check_permission.profile_id
+            and am.agency_membership_accepted_at is not null
+            and am.agency_membership_revoked_at is null
+            and am.agency_membership_rejected_at is null
             and (g.permission_id = check_permission.permission_id or g.permission_id = '*')
-            and internal.is_active_agency_member(check_permission.profile_id, check_permission.object_id::int)
         )
       )
     end;
@@ -5022,14 +5033,17 @@ create or replace function protected.lookup_objects(
   object_type public.permission_object_type
 )
   returns setof bigint stable security definer parallel safe language sql set search_path to '' as $$
-    -- organization: direct profile grants
-    select g.object_organization_id::bigint
+    -- organization: direct org-membership grants
+    select m.organization_id::bigint
     from public.permission_grants g
+    join public.organization_memberships m
+      on m.organization_membership_id = g.subject_organization_membership_id
     where lookup_objects.object_type = 'organization'
-      and g.subject_profile_id = lookup_objects.profile_id
-      and g.object_organization_id is not null
+      and m.profile_id = lookup_objects.profile_id
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null
       and (g.permission_id = lookup_objects.permission_id or g.permission_id = '*')
-      and internal.is_active_org_member(lookup_objects.profile_id, g.object_organization_id)
     union
     -- organization: via agency bridge (specific org grant OR all-orgs wildcard)
     -- CRITICAL: exclude soft-deleted agencies (agency_deleted_at is null)
@@ -5040,7 +5054,7 @@ create or replace function protected.lookup_objects(
     join public.organizations o on (
       o.organization_id = g.object_organization_id
       -- all-orgs wildcard: agency grant with no object set → matches every org
-      or (g.object_organization_id is null and g.object_tenant_id is null and g.object_agency_id is null)
+      or g.object_organization_id is null
     )
     where lookup_objects.object_type = 'organization'
       and g.subject_agency_id is not null
@@ -5053,28 +5067,28 @@ create or replace function protected.lookup_objects(
     -- tenant: ride on org grants of orgs inside the tenant
     select o.tenant_id::bigint
     from public.permission_grants g
-    join public.organizations o on o.organization_id = g.object_organization_id
+    join public.organization_memberships m
+      on m.organization_membership_id = g.subject_organization_membership_id
+    join public.organizations o on o.organization_id = m.organization_id
     where lookup_objects.object_type = 'tenant'
-      and g.subject_profile_id = lookup_objects.profile_id
-      and (g.permission_id = lookup_objects.permission_id or g.permission_id = '*')
-      and internal.is_active_org_member(lookup_objects.profile_id, g.object_organization_id)
-    union
-    -- tenant: explicit tenant-object grants
-    select g.object_tenant_id::bigint
-    from public.permission_grants g
-    where lookup_objects.object_type = 'tenant'
-      and g.subject_profile_id = lookup_objects.profile_id
-      and g.object_tenant_id is not null
+      and m.profile_id = lookup_objects.profile_id
+      and m.organization_membership_accepted_at is not null
+      and m.organization_membership_revoked_at is null
+      and m.organization_membership_rejected_at is null
       and (g.permission_id = lookup_objects.permission_id or g.permission_id = '*')
     union
-    -- agency: manage-the-agency-itself grants
-    select g.object_agency_id::bigint
+    -- agency: active agency-membership grants
+    select am.agency_id::bigint
     from public.permission_grants g
+    join public.agency_memberships am
+      on am.agency_membership_id = g.subject_agency_membership_id
+    join public.agencies a on a.agency_id = am.agency_id and a.agency_deleted_at is null
     where lookup_objects.object_type = 'agency'
-      and g.subject_profile_id = lookup_objects.profile_id
-      and g.object_agency_id is not null
-      and (g.permission_id = lookup_objects.permission_id or g.permission_id = '*')
-      and internal.is_active_agency_member(lookup_objects.profile_id, g.object_agency_id);
+      and am.profile_id = lookup_objects.profile_id
+      and am.agency_membership_accepted_at is not null
+      and am.agency_membership_revoked_at is null
+      and am.agency_membership_rejected_at is null
+      and (g.permission_id = lookup_objects.permission_id or g.permission_id = '*');
   $$;
 
 revoke execute on function protected.lookup_objects(uuid, extensions.citext, public.permission_object_type) from public;

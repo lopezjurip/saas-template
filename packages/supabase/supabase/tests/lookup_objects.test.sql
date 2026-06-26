@@ -41,9 +41,13 @@ insert into public.organization_memberships (organization_id, profile_id, organi
 insert into public.permissions (permission_id) values ('payrolls_read'), ('payrolls_write')
   on conflict do nothing;
 
--- P1 direct payrolls_read grant on org 1
-insert into public.permission_grants (subject_profile_id, object_organization_id, permission_id)
-  values ('00000000-0000-0000-0000-0000000000b1', 1, 'payrolls_read');
+-- P1 direct payrolls_read grant via org membership
+insert into public.permission_grants (subject_organization_membership_id, permission_id)
+  values (
+    (select organization_membership_id from public.organization_memberships
+     where organization_id = 1 and profile_id = '00000000-0000-0000-0000-0000000000b1'),
+    'payrolls_read'
+  );
 
 -- agency reaching org 1 with payrolls_write; B2 active affiliate
 insert into public.agencies (agency_name, agency_slug)
@@ -75,7 +79,7 @@ select set_eq(
   $$ values (1::bigint) $$,
   'lookup_objects(payrolls_write, organization) returns org 1 for B2 (via agency)');
 
--- (3) list_object_permissions lists B1's slugs on org 1 (only payrolls_read — not payrolls_write)
+-- (3) list_object_permissions lists B1''s slugs on org 1 (only payrolls_read — not payrolls_write)
 select set_eq(
   $$ select protected.list_object_permissions('00000000-0000-0000-0000-0000000000b1', 'organization', 1) $$,
   $$ values ('payrolls_read'::extensions.citext) $$,

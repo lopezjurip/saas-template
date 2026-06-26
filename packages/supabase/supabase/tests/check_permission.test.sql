@@ -14,9 +14,13 @@ insert into auth.users (id, email) values
 insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)
   values (1, '00000000-0000-0000-0000-0000000000b1', current_timestamp);
 
--- P1 gets a direct payrolls_read grant on org 1
-insert into public.permission_grants (subject_profile_id, object_organization_id, permission_id)
-  values ('00000000-0000-0000-0000-0000000000b1', 1, 'payrolls_read');
+-- P1 gets a direct payrolls_read grant via org membership
+insert into public.permission_grants (subject_organization_membership_id, permission_id)
+  values (
+    (select organization_membership_id from public.organization_memberships
+     where organization_id = 1 and profile_id = '00000000-0000-0000-0000-0000000000b1'),
+    'payrolls_read'
+  );
 
 -- agency A reaching org 1 with payrolls_write; P2 an active affiliate of A
 insert into public.agencies (agency_name, agency_slug)
@@ -46,7 +50,7 @@ select ok(
   not protected.check_permission('00000000-0000-0000-0000-0000000000b1', 'payrolls_write', 'organization', 1),
   'P1 lacks payrolls_write on org 1 (not granted)');
 
--- (3) an active agency affiliate reaches the agency's granted permission on the org → true
+-- (3) an active agency affiliate reaches the agency''s granted permission on the org → true
 select ok(
   protected.check_permission('00000000-0000-0000-0000-0000000000b2', 'payrolls_write', 'organization', 1),
   'P2 reaches payrolls_write on org 1 via agency');
@@ -57,8 +61,12 @@ select ok(
   'P2 lacks payrolls_read on org 1 (agency grant is write-only)');
 
 -- (5) a member with '*' wildcard has an arbitrary permission on the org → true
-insert into public.permission_grants (subject_profile_id, object_organization_id, permission_id)
-  values ('00000000-0000-0000-0000-0000000000b1', 1, '*');
+insert into public.permission_grants (subject_organization_membership_id, permission_id)
+  values (
+    (select organization_membership_id from public.organization_memberships
+     where organization_id = 1 and profile_id = '00000000-0000-0000-0000-0000000000b1'),
+    '*'
+  );
 
 select ok(
   protected.check_permission('00000000-0000-0000-0000-0000000000b1', 'payrolls_write', 'organization', 1),
