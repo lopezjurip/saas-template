@@ -3,10 +3,11 @@
  *
  * Two surfaces, both through pg_graphql via the authenticated (user-token) graphy client so RLS is
  * the only gate:
- *  - Agency↔org access grants (`agencies_organizations_grants`) — the ORG side decides, so the write
- *    policy requires `organization_manage` on the organization.
+ *  - Agency↔org access grants (`permission_grants` with `subjectAgencyId`) — the ORG side decides,
+ *    so the write policy requires `organization_manage` on the organization.
  *  - The agency's own team — affiliate lifecycle (`viewerAgencyMembership*` RPCs) and per-affiliate
- *    capabilities (`agency_membership_permissions`), both gated by `agency_members_manage`.
+ *    capabilities (`permission_grants` with `subjectAgencyMembershipId`), both gated by
+ *    `agency_members_manage`.
  *
  * Inviting only attaches an EXISTING registered user; creating a brand-new auth user + sending the
  * invite email is a server-only side effect kept in the web action (GoTrue can't run under RLS).
@@ -29,8 +30,8 @@ function IS_DUPLICATE(message: string): boolean {
 }
 
 const GrantAgencyOrgAccessMcpMutation = /*#__PURE__*/ gql(`
-  mutation GrantAgencyOrgAccessMcp($objects: [AgenciesOrganizationsGrantsInsertInput!]!) {
-    insertIntoAgenciesOrganizationsGrantsCollection(objects: $objects) {
+  mutation GrantAgencyOrgAccessMcp($objects: [PermissionGrantsInsertInput!]!) {
+    insertIntoPermissionGrantsCollection(objects: $objects) {
       affectedCount
     }
   }
@@ -64,7 +65,11 @@ export class GrantAgencyOrgAccessTool extends McpTool<typeof OrgAccessSchema> {
       query: GrantAgencyOrgAccessMcpMutation,
       variables: {
         objects: [
-          { agencyId: args["agency_id"], organizationId: args["organization_id"], permissionId: GRANT_PERMISSION },
+          {
+            subjectAgencyId: args["agency_id"],
+            objectOrganizationId: args["organization_id"],
+            permissionId: GRANT_PERMISSION,
+          },
         ],
       },
     });
@@ -77,14 +82,14 @@ export class GrantAgencyOrgAccessTool extends McpTool<typeof OrgAccessSchema> {
       return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
     }
 
-    const granted = (data?.["insertIntoAgenciesOrganizationsGrantsCollection"]?.["affectedCount"] ?? 0) > 0;
+    const granted = (data?.["insertIntoPermissionGrantsCollection"]?.["affectedCount"] ?? 0) > 0;
     return { content: [{ type: "text", text: JSON.stringify({ ok: true, granted }, null, 2) }] };
   }
 }
 
 const RevokeAgencyOrgAccessMcpMutation = /*#__PURE__*/ gql(`
-  mutation RevokeAgencyOrgAccessMcp($filter: AgenciesOrganizationsGrantsFilter!, $atMost: Int! = 1000) {
-    deleteFromAgenciesOrganizationsGrantsCollection(filter: $filter, atMost: $atMost) {
+  mutation RevokeAgencyOrgAccessMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {
+    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {
       affectedCount
     }
   }
@@ -110,7 +115,11 @@ export class RevokeAgencyOrgAccessTool extends McpTool<typeof OrgAccessSchema> {
     const { data, error } = await graphy.mutate({
       query: RevokeAgencyOrgAccessMcpMutation,
       variables: {
-        filter: { agencyId: { eq: args["agency_id"] }, organizationId: { eq: args["organization_id"] } },
+        filter: {
+          subjectAgencyId: { eq: args["agency_id"] },
+          objectOrganizationId: { eq: args["organization_id"] },
+          permissionId: { eq: GRANT_PERMISSION },
+        },
       },
     });
 
@@ -119,7 +128,7 @@ export class RevokeAgencyOrgAccessTool extends McpTool<typeof OrgAccessSchema> {
       return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
     }
 
-    const revoked = (data?.["deleteFromAgenciesOrganizationsGrantsCollection"]?.["affectedCount"] ?? 0) > 0;
+    const revoked = (data?.["deleteFromPermissionGrantsCollection"]?.["affectedCount"] ?? 0) > 0;
     return { content: [{ type: "text", text: JSON.stringify({ ok: true, revoked }, null, 2) }] };
   }
 }
@@ -226,8 +235,8 @@ export class UpdateAffiliateTool extends McpTool<typeof UpdateAffiliateSchema> {
 }
 
 const GrantAgencyMemberPermissionMcpMutation = /*#__PURE__*/ gql(`
-  mutation GrantAgencyMemberPermissionMcp($objects: [AgencyMembershipPermissionsInsertInput!]!) {
-    insertIntoAgencyMembershipPermissionsCollection(objects: $objects) {
+  mutation GrantAgencyMemberPermissionMcp($objects: [PermissionGrantsInsertInput!]!) {
+    insertIntoPermissionGrantsCollection(objects: $objects) {
       affectedCount
     }
   }
@@ -259,7 +268,7 @@ export class GrantAgencyMemberPermissionTool extends McpTool<typeof AgencyMember
     const { data, error } = await graphy.mutate({
       query: GrantAgencyMemberPermissionMcpMutation,
       variables: {
-        objects: [{ agencyMembershipId: args["agency_membership_id"], permissionId: args["permission_id"] }],
+        objects: [{ subjectAgencyMembershipId: args["agency_membership_id"], permissionId: args["permission_id"] }],
       },
     });
 
@@ -271,7 +280,7 @@ export class GrantAgencyMemberPermissionTool extends McpTool<typeof AgencyMember
       return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
     }
 
-    const granted = (data?.["insertIntoAgencyMembershipPermissionsCollection"]?.["affectedCount"] ?? 0) > 0;
+    const granted = (data?.["insertIntoPermissionGrantsCollection"]?.["affectedCount"] ?? 0) > 0;
     return {
       content: [
         { type: "text", text: JSON.stringify({ ok: true, granted, permission_id: args["permission_id"] }, null, 2) },
@@ -281,8 +290,8 @@ export class GrantAgencyMemberPermissionTool extends McpTool<typeof AgencyMember
 }
 
 const RevokeAgencyMemberPermissionMcpMutation = /*#__PURE__*/ gql(`
-  mutation RevokeAgencyMemberPermissionMcp($filter: AgencyMembershipPermissionsFilter!, $atMost: Int! = 1000) {
-    deleteFromAgencyMembershipPermissionsCollection(filter: $filter, atMost: $atMost) {
+  mutation RevokeAgencyMemberPermissionMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {
+    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {
       affectedCount
     }
   }
@@ -310,7 +319,7 @@ export class RevokeAgencyMemberPermissionTool extends McpTool<typeof AgencyMembe
       query: RevokeAgencyMemberPermissionMcpMutation,
       variables: {
         filter: {
-          agencyMembershipId: { eq: args["agency_membership_id"] },
+          subjectAgencyMembershipId: { eq: args["agency_membership_id"] },
           permissionId: { eq: args["permission_id"] },
         },
       },
@@ -321,7 +330,7 @@ export class RevokeAgencyMemberPermissionTool extends McpTool<typeof AgencyMembe
       return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
     }
 
-    const removed = (data?.["deleteFromAgencyMembershipPermissionsCollection"]?.["affectedCount"] ?? 0) > 0;
+    const removed = (data?.["deleteFromPermissionGrantsCollection"]?.["affectedCount"] ?? 0) > 0;
     return {
       content: [
         { type: "text", text: JSON.stringify({ ok: true, removed, permission_id: args["permission_id"] }, null, 2) },

@@ -87,12 +87,12 @@ type Documents = {
     "\n  query ViewerTenantsUse(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: TenantsFilter\n    $orderBy: [TenantsOrderBy!]\n  ) {\n    tenants: viewerTenantsCollection(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...ViewerTenantUseFragment\n        }\n      }\n    }\n  }\n": typeof types.ViewerTenantsUseDocument,
     "\n  query ViewerTenantByIdUse($tenantId: Int!) {\n    tenant: viewerTenantById(tenantId: $tenantId) {\n      ...ViewerTenantUseFragment\n    }\n  }\n": typeof types.ViewerTenantByIdUseDocument,
     "\n  query ViewerTenantBySlugUse($tenantSlug: String!) {\n    tenant: viewerTenantBySlug(tenantSlug: $tenantSlug) {\n      ...ViewerTenantUseFragment\n    }\n  }\n": typeof types.ViewerTenantBySlugUseDocument,
-    "\n  mutation GrantAgencyOrgAccessMcp($objects: [AgenciesOrganizationsGrantsInsertInput!]!) {\n    insertIntoAgenciesOrganizationsGrantsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n": typeof types.GrantAgencyOrgAccessMcpDocument,
-    "\n  mutation RevokeAgencyOrgAccessMcp($filter: AgenciesOrganizationsGrantsFilter!, $atMost: Int! = 1000) {\n    deleteFromAgenciesOrganizationsGrantsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": typeof types.RevokeAgencyOrgAccessMcpDocument,
+    "\n  mutation GrantAgencyOrgAccessMcp($objects: [PermissionGrantsInsertInput!]!) {\n    insertIntoPermissionGrantsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n": typeof types.GrantAgencyOrgAccessMcpDocument,
+    "\n  mutation RevokeAgencyOrgAccessMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {\n    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": typeof types.RevokeAgencyOrgAccessMcpDocument,
     "\n  mutation InviteAffiliateMcp($agency_id: Int!, $email: String!) {\n    membership: viewerAgencyMembershipInviteByEmail(agencyId: $agency_id, email: $email) {\n      agencyMembershipId\n    }\n  }\n": typeof types.InviteAffiliateMcpDocument,
     "\n  mutation UpdateAffiliateMcp($agency_membership_id: Int!, $operation: String!) {\n    membership: viewerAgencyMembershipUpdate(agencyMembershipId: $agency_membership_id, operation: $operation) {\n      agencyMembershipId\n    }\n  }\n": typeof types.UpdateAffiliateMcpDocument,
-    "\n  mutation GrantAgencyMemberPermissionMcp($objects: [AgencyMembershipPermissionsInsertInput!]!) {\n    insertIntoAgencyMembershipPermissionsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n": typeof types.GrantAgencyMemberPermissionMcpDocument,
-    "\n  mutation RevokeAgencyMemberPermissionMcp($filter: AgencyMembershipPermissionsFilter!, $atMost: Int! = 1000) {\n    deleteFromAgencyMembershipPermissionsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": typeof types.RevokeAgencyMemberPermissionMcpDocument,
+    "\n  mutation GrantAgencyMemberPermissionMcp($objects: [PermissionGrantsInsertInput!]!) {\n    insertIntoPermissionGrantsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n": typeof types.GrantAgencyMemberPermissionMcpDocument,
+    "\n  mutation RevokeAgencyMemberPermissionMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {\n    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": typeof types.RevokeAgencyMemberPermissionMcpDocument,
     "\n  mutation GrantMemberPermissionMcp($objects: [PermissionGrantsInsertInput!]!) {\n    insertIntoPermissionGrantsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n": typeof types.GrantMemberPermissionMcpDocument,
     "\n  mutation RevokeMemberPermissionMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {\n    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": typeof types.RevokeMemberPermissionMcpDocument,
     "\n  mutation SetMemberPermissionsMcp($organization_membership_id: Int!, $permission_ids: [String]!) {\n    result: viewerOrganizationMembershipSetPermissionsCollection(\n      organizationMembershipId: $organization_membership_id\n      permissionIds: $permission_ids\n    ) {\n      edges { node { permissionId } }\n    }\n  }\n": typeof types.SetMemberPermissionsMcpDocument,
@@ -180,12 +180,12 @@ const documents: Documents = {
     "\n  query ViewerTenantsUse(\n    $first: Int\n    $last: Int\n    $after: Cursor\n    $before: Cursor\n    $filter: TenantsFilter\n    $orderBy: [TenantsOrderBy!]\n  ) {\n    tenants: viewerTenantsCollection(\n      first: $first\n      last: $last\n      after: $after\n      before: $before\n      filter: $filter\n      orderBy: $orderBy\n    ) {\n      edges {\n        node {\n          ...ViewerTenantUseFragment\n        }\n      }\n    }\n  }\n": types.ViewerTenantsUseDocument,
     "\n  query ViewerTenantByIdUse($tenantId: Int!) {\n    tenant: viewerTenantById(tenantId: $tenantId) {\n      ...ViewerTenantUseFragment\n    }\n  }\n": types.ViewerTenantByIdUseDocument,
     "\n  query ViewerTenantBySlugUse($tenantSlug: String!) {\n    tenant: viewerTenantBySlug(tenantSlug: $tenantSlug) {\n      ...ViewerTenantUseFragment\n    }\n  }\n": types.ViewerTenantBySlugUseDocument,
-    "\n  mutation GrantAgencyOrgAccessMcp($objects: [AgenciesOrganizationsGrantsInsertInput!]!) {\n    insertIntoAgenciesOrganizationsGrantsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n": types.GrantAgencyOrgAccessMcpDocument,
-    "\n  mutation RevokeAgencyOrgAccessMcp($filter: AgenciesOrganizationsGrantsFilter!, $atMost: Int! = 1000) {\n    deleteFromAgenciesOrganizationsGrantsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": types.RevokeAgencyOrgAccessMcpDocument,
+    "\n  mutation GrantAgencyOrgAccessMcp($objects: [PermissionGrantsInsertInput!]!) {\n    insertIntoPermissionGrantsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n": types.GrantAgencyOrgAccessMcpDocument,
+    "\n  mutation RevokeAgencyOrgAccessMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {\n    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": types.RevokeAgencyOrgAccessMcpDocument,
     "\n  mutation InviteAffiliateMcp($agency_id: Int!, $email: String!) {\n    membership: viewerAgencyMembershipInviteByEmail(agencyId: $agency_id, email: $email) {\n      agencyMembershipId\n    }\n  }\n": types.InviteAffiliateMcpDocument,
     "\n  mutation UpdateAffiliateMcp($agency_membership_id: Int!, $operation: String!) {\n    membership: viewerAgencyMembershipUpdate(agencyMembershipId: $agency_membership_id, operation: $operation) {\n      agencyMembershipId\n    }\n  }\n": types.UpdateAffiliateMcpDocument,
-    "\n  mutation GrantAgencyMemberPermissionMcp($objects: [AgencyMembershipPermissionsInsertInput!]!) {\n    insertIntoAgencyMembershipPermissionsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n": types.GrantAgencyMemberPermissionMcpDocument,
-    "\n  mutation RevokeAgencyMemberPermissionMcp($filter: AgencyMembershipPermissionsFilter!, $atMost: Int! = 1000) {\n    deleteFromAgencyMembershipPermissionsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": types.RevokeAgencyMemberPermissionMcpDocument,
+    "\n  mutation GrantAgencyMemberPermissionMcp($objects: [PermissionGrantsInsertInput!]!) {\n    insertIntoPermissionGrantsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n": types.GrantAgencyMemberPermissionMcpDocument,
+    "\n  mutation RevokeAgencyMemberPermissionMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {\n    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": types.RevokeAgencyMemberPermissionMcpDocument,
     "\n  mutation GrantMemberPermissionMcp($objects: [PermissionGrantsInsertInput!]!) {\n    insertIntoPermissionGrantsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n": types.GrantMemberPermissionMcpDocument,
     "\n  mutation RevokeMemberPermissionMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {\n    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n": types.RevokeMemberPermissionMcpDocument,
     "\n  mutation SetMemberPermissionsMcp($organization_membership_id: Int!, $permission_ids: [String]!) {\n    result: viewerOrganizationMembershipSetPermissionsCollection(\n      organizationMembershipId: $organization_membership_id\n      permissionIds: $permission_ids\n    ) {\n      edges { node { permissionId } }\n    }\n  }\n": types.SetMemberPermissionsMcpDocument,
@@ -492,11 +492,11 @@ export function gql(source: "\n  query ViewerTenantBySlugUse($tenantSlug: String
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  mutation GrantAgencyOrgAccessMcp($objects: [AgenciesOrganizationsGrantsInsertInput!]!) {\n    insertIntoAgenciesOrganizationsGrantsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').GrantAgencyOrgAccessMcpDocument;
+export function gql(source: "\n  mutation GrantAgencyOrgAccessMcp($objects: [PermissionGrantsInsertInput!]!) {\n    insertIntoPermissionGrantsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').GrantAgencyOrgAccessMcpDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  mutation RevokeAgencyOrgAccessMcp($filter: AgenciesOrganizationsGrantsFilter!, $atMost: Int! = 1000) {\n    deleteFromAgenciesOrganizationsGrantsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').RevokeAgencyOrgAccessMcpDocument;
+export function gql(source: "\n  mutation RevokeAgencyOrgAccessMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {\n    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').RevokeAgencyOrgAccessMcpDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -508,11 +508,11 @@ export function gql(source: "\n  mutation UpdateAffiliateMcp($agency_membership_
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  mutation GrantAgencyMemberPermissionMcp($objects: [AgencyMembershipPermissionsInsertInput!]!) {\n    insertIntoAgencyMembershipPermissionsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').GrantAgencyMemberPermissionMcpDocument;
+export function gql(source: "\n  mutation GrantAgencyMemberPermissionMcp($objects: [PermissionGrantsInsertInput!]!) {\n    insertIntoPermissionGrantsCollection(objects: $objects) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').GrantAgencyMemberPermissionMcpDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  mutation RevokeAgencyMemberPermissionMcp($filter: AgencyMembershipPermissionsFilter!, $atMost: Int! = 1000) {\n    deleteFromAgencyMembershipPermissionsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').RevokeAgencyMemberPermissionMcpDocument;
+export function gql(source: "\n  mutation RevokeAgencyMemberPermissionMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {\n    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {\n      affectedCount\n    }\n  }\n"): typeof import('./graphql').RevokeAgencyMemberPermissionMcpDocument;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -2087,6 +2087,22 @@ type PermissionGrantsUpdateResponse {
   records: [PermissionGrants!]!
 }
 
+enum PermissionObjectType {
+  agency
+  organization
+  tenant
+}
+
+"""
+Boolean expression comparing fields on type "PermissionObjectType"
+"""
+input PermissionObjectTypeFilter {
+  eq: PermissionObjectType
+  in: [PermissionObjectType!]
+  is: FilterIs
+  neq: PermissionObjectType
+}
+
 type PermissionPresets implements Node {
   """Globally Unique Record Identifier"""
   nodeId: ID!
