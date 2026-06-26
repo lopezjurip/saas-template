@@ -4,10 +4,13 @@
 -- New schema (post-invitations-merge): organization_membership_permissions references organization_membership_id
 -- only; resolve org via JOIN. Helper variables `alice_org1_id` / `alice_org2_id` /
 -- `bob_org1_id` capture the seeded serial PKs so we can write predictable inserts.
+--
+-- Phase C anti-false-green: sections marked [NEW-PATH] seed a grant only via permission_grants
+-- (no matching organization_membership_permissions row) and assert new-model RLS still works.
 
 begin;
 
-select plan(10);
+select plan(13);
 
 -- ============================================================
 -- Capture seeded organization_membership IDs (needed because PKs are serial)
@@ -159,6 +162,89 @@ select is(
   (select count(*) from public.organization_membership_permissions),
   0::bigint,
   'anon sees no organization_membership_permissions'
+);
+
+reset role;
+
+-- ============================================================
+-- [NEW-PATH] Eve: permission_grants-only grant, no legacy row
+-- Asserts that the migrated RLS policies read via permission_grants.
+-- ============================================================
+
+-- Create an auth user for Eve (no profile trigger runs in SQL; insert profile directly)
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token
+) values (
+  '00000000-0000-0000-0000-000000000000',
+  '00000000-0000-0000-0000-0000000ee0e0',
+  'authenticated', 'authenticated',
+  'eve@humane.test',
+  crypt('password123', gen_salt('bf')),
+  current_timestamp,
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"full_name":"Eve Tester"}'::jsonb,
+  current_timestamp, current_timestamp,
+  '', '', '', ''
+);
+
+-- Create org membership for Eve in org 1 (accepted)
+insert into public.organization_memberships (organization_id, profile_id, organization_membership_accepted_at)
+values (1, '00000000-0000-0000-0000-0000000ee0e0', current_timestamp);
+
+-- Grant members_manage to Eve via permission_grants ONLY — no legacy organization_membership_permissions row
+insert into public.permission_grants (subject_organization_membership_id, permission_id)
+select organization_membership_id, 'members_manage'
+from public.organization_memberships
+where profile_id = '00000000-0000-0000-0000-0000000ee0e0' and organization_id = 1;
+
+grant select on _mids to authenticated;
+
+-- Eve should be able to see org 1 memberships (new-path select policy)
+set local role authenticated;
+set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-0000000ee0e0"}';
+
+select ok(
+  (select count(*) from public.organization_memberships where organization_id = 1) > 0,
+  '[new-path] Eve (permission_grants-only grant) can see org 1 memberships via new RLS'
+);
+
+-- Eve should be able to write into org 1 memberships (write policy: members_manage)
+-- profile_id NULL = pending invite (no FK to profiles required for pending rows)
+select lives_ok(
+  $$ insert into public.organization_memberships (organization_id, organization_membership_invite_email)
+     values (1, 'pending@humane.test') $$,
+  '[new-path] Eve (permission_grants-only members_manage) can write org 1 memberships'
+);
+
+-- A profile with zero grants (no legacy, no permission_grants) should see nothing
+reset role;
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token
+) values (
+  '00000000-0000-0000-0000-000000000000',
+  '00000000-0000-0000-0000-0000000ff0f0',
+  'authenticated', 'authenticated',
+  'frank@humane.test',
+  crypt('password123', gen_salt('bf')),
+  current_timestamp,
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"full_name":"Frank NoGrant"}'::jsonb,
+  current_timestamp, current_timestamp,
+  '', '', '', ''
+);
+
+set local role authenticated;
+set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-0000000ff0f0"}';
+
+select is(
+  (select count(*) from public.organization_memberships)::int,
+  0,
+  '[new-path] Frank (no grants at all) sees zero memberships — confirms new RLS gates correctly'
 );
 
 reset role;

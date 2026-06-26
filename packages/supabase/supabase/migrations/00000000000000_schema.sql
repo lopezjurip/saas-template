@@ -5216,3 +5216,234 @@ create or replace function public.viewer_agency_reachable_objects(
   $$;
 
 grant execute on function public.viewer_agency_reachable_objects(public.permission_object_type) to anon, authenticated;
+
+-- ============================================================
+-- PHASE C: Migrate resource RLS policies to permission_grants helpers
+-- (Defined here — after viewer_can/viewer_can_objects/viewer_member_objects/
+--  viewer_agency_reachable_objects — so those functions exist at create time.
+--  Each block re-drops the legacy version and creates the new one. Idempotent.)
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- agencies
+-- ------------------------------------------------------------
+drop policy if exists "agencies select by affiliates" on public.agencies;
+create policy "agencies select by affiliates"
+  on public.agencies for select to authenticated
+  using (agency_id in (select public.viewer_member_objects('agency')));
+
+-- ------------------------------------------------------------
+-- profiles
+-- ------------------------------------------------------------
+drop policy if exists "Profiles visible to self or org co-members or agency affiliates" on public.profiles;
+create policy "Profiles visible to self or org co-members or agency affiliates"
+  on public.profiles for select
+  to authenticated
+  using (
+    profile_deleted_at is null
+    and (
+      profile_id = (select public.viewer_profile_id())
+      or exists (
+        select 1
+        from public.organization_memberships me
+        join public.organization_memberships them using (organization_id)
+        where me.profile_id = (select public.viewer_profile_id())
+          and them.profile_id = public.profiles.profile_id
+          and me.organization_membership_accepted_at is not null
+          and me.organization_membership_revoked_at is null
+          and me.organization_membership_rejected_at is null
+          and them.organization_membership_accepted_at is not null
+          and them.organization_membership_revoked_at is null
+          and them.organization_membership_rejected_at is null
+      )
+      or exists (
+        select 1 from public.organization_memberships m
+        where m.profile_id = public.profiles.profile_id
+          and m.organization_id in (select public.viewer_agency_reachable_objects('organization'))
+      )
+    )
+  );
+
+-- ------------------------------------------------------------
+-- tenants
+-- ------------------------------------------------------------
+drop policy if exists "tenants select by members or agency affiliates" on public.tenants;
+create policy "tenants select by members or agency affiliates"
+  on public.tenants for select
+  to authenticated
+  using (
+    tenant_id in (select public.viewer_member_objects('tenant'))
+    or tenant_id in (select public.viewer_agency_reachable_objects('tenant'))
+  );
+
+drop policy if exists "tenants update with tenant_manage" on public.tenants;
+create policy "tenants update with tenant_manage"
+  on public.tenants for update
+  to authenticated
+  using (tenant_id in (select public.viewer_can_objects('tenant_manage','tenant')))
+  with check (tenant_id in (select public.viewer_can_objects('tenant_manage','tenant')));
+
+-- ------------------------------------------------------------
+-- organizations
+-- ------------------------------------------------------------
+drop policy if exists "organizations select by members or agency affiliates" on public.organizations;
+create policy "organizations select by members or agency affiliates"
+  on public.organizations for select
+  to authenticated
+  using (
+    organization_id in (select public.viewer_member_objects('organization'))
+    or organization_id in (select public.viewer_agency_reachable_objects('organization'))
+  );
+
+drop policy if exists "organizations update with organization_manage" on public.organizations;
+create policy "organizations update with organization_manage"
+  on public.organizations for update
+  to authenticated
+  using (organization_id in (select public.viewer_can_objects('organization_manage','organization')));
+
+-- ------------------------------------------------------------
+-- organization_memberships
+-- ------------------------------------------------------------
+drop policy if exists "organization_memberships select by co-members or agency affiliates" on public.organization_memberships;
+create policy "organization_memberships select by co-members or agency affiliates"
+  on public.organization_memberships for select
+  to authenticated
+  using (
+    organization_id in (select public.viewer_member_objects('organization'))
+    or organization_id in (select public.viewer_agency_reachable_objects('organization'))
+  );
+
+drop policy if exists "organization_memberships write with members_manage" on public.organization_memberships;
+create policy "organization_memberships write with members_manage"
+  on public.organization_memberships for all
+  to authenticated
+  using (organization_id in (select public.viewer_can_objects('members_manage','organization')))
+  with check (organization_id in (select public.viewer_can_objects('members_manage','organization')));
+
+-- ------------------------------------------------------------
+-- permission_presets
+-- ------------------------------------------------------------
+drop policy if exists "permission_presets select globals or own org or agency affiliates" on public.permission_presets;
+create policy "permission_presets select globals or own org or agency affiliates"
+  on public.permission_presets for select
+  to authenticated
+  using (
+    organization_id is null
+    or organization_id in (select public.viewer_member_objects('organization'))
+    or organization_id in (select public.viewer_agency_reachable_objects('organization'))
+  );
+
+drop policy if exists "permission_presets write with presets_manage" on public.permission_presets;
+create policy "permission_presets write with presets_manage"
+  on public.permission_presets for all
+  to authenticated
+  using (
+    organization_id is not null
+    and organization_id in (select public.viewer_can_objects('presets_manage','organization'))
+  )
+  with check (
+    organization_id is not null
+    and organization_id in (select public.viewer_can_objects('presets_manage','organization'))
+  );
+
+-- ------------------------------------------------------------
+-- profile_identities
+-- ------------------------------------------------------------
+drop policy if exists "profile_identities select" on public.profile_identities;
+create policy "profile_identities select"
+  on public.profile_identities for select
+  to authenticated
+  using (
+    profile_id = (select public.viewer_profile_id())
+    or exists (
+      select 1 from public.organization_memberships m
+      where m.profile_id = public.profile_identities.profile_id
+        and m.organization_id in (select public.viewer_can_objects('members_manage','organization'))
+    )
+    or exists (
+      select 1 from public.organization_memberships m
+      where m.profile_id = public.profile_identities.profile_id
+        and m.organization_id in (select public.viewer_agency_reachable_objects('organization'))
+    )
+  );
+
+-- ------------------------------------------------------------
+-- tenant_domains
+-- ------------------------------------------------------------
+drop policy if exists "tenant_domains select by members" on public.tenant_domains;
+create policy "tenant_domains select by members"
+  on public.tenant_domains for select to authenticated
+  using (tenant_id in (select public.viewer_member_objects('tenant')));
+
+drop policy if exists "tenant_domains write with organization_manage" on public.tenant_domains;
+create policy "tenant_domains write with organization_manage"
+  on public.tenant_domains for all to authenticated
+  using (
+    exists (
+      select 1 from public.organizations o
+      where o.tenant_id = public.tenant_domains.tenant_id
+        and o.organization_id in (select public.viewer_can_objects('organization_manage','organization'))
+    )
+  );
+
+-- ------------------------------------------------------------
+-- tenant_sso_providers
+-- ------------------------------------------------------------
+drop policy if exists "tenant_sso_providers select by members" on public.tenant_sso_providers;
+create policy "tenant_sso_providers select by members"
+  on public.tenant_sso_providers for select to authenticated
+  using (tenant_id in (select public.viewer_member_objects('tenant')));
+
+-- ------------------------------------------------------------
+-- storage.objects
+-- ------------------------------------------------------------
+drop policy if exists "organizations bucket: organization_manage avatar" on storage.objects;
+create policy "organizations bucket: organization_manage avatar"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id = 'organizations'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_can_objects('organization_manage','organization'))
+  )
+  with check (
+    bucket_id = 'organizations'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_can_objects('organization_manage','organization'))
+  );
+
+drop policy if exists "tenants bucket: tenant_manage avatar" on storage.objects;
+create policy "tenants bucket: tenant_manage avatar"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id = 'tenants'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_can_objects('tenant_manage','tenant'))
+  )
+  with check (
+    bucket_id = 'tenants'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_can_objects('tenant_manage','tenant'))
+  );
+
+drop policy if exists "agencies bucket: member avatar" on storage.objects;
+create policy "agencies bucket: member avatar"
+  on storage.objects for all
+  to authenticated
+  using (
+    bucket_id = 'agencies'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_member_objects('agency'))
+  )
+  with check (
+    bucket_id = 'agencies'
+    and path_tokens[2] = 'avatar'
+    and path_tokens[1] ~ '^[0-9]+$'
+    and path_tokens[1]::int in (select public.viewer_member_objects('agency'))
+  );
