@@ -334,3 +334,11 @@ create or replace function protected.check_permission(
 - **Deferred to Phase E (separate):** drop legacy tables + ~15 legacy helpers + legacy-only tests.
 - **Placeholder check:** Phase C is intentionally a mapping-driven sweep (the mapping table makes each rewrite deterministic); execution enumerates the live `create policy` set rather than this plan pasting 42 near-identical rewrites (DRY). The B2/D2 exact line targets are located by grep at execution (their line numbers drift as the file changes).
 - **Open decision (kept):** `object_organization_id = NULL` = agency "all orgs". Carried from the foundation; kept (mirrors legacy `agencies_organizations_grants`).
+
+---
+
+## Phase E prerequisites (teardown — SEPARATE plan, but record here so it isn't lost)
+
+Phase C migrated resource RLS by **appending** `drop policy if exists` + `create policy` overrides at the END of `schema.sql` (the new policies win at `db:reset` replay; verified via `pg_policies` — 0 live resource policies use legacy helpers). This leaves the ORIGINAL legacy resource-policy definitions earlier in the file, still referencing legacy helpers. **Landmine:** when Phase E drops the legacy helpers (`viewer_permission_org_ids`, `viewer_has_permission`, `viewer_permission_tenant_ids`, `viewer_has_tenant_permission`, `viewer_organization_ids`, `viewer_tenant_ids`, `viewer_agency_permission_org_ids`, `viewer_has_agency_permission`, `viewer_agency_tenant_ids`, `viewer_agency_ids`), `db:reset` will FAIL on the early `create policy ... using (<legacy helper>)` statements unless those early defs are ALSO removed.
+
+**Phase E must therefore:** (1) DELETE the original legacy resource-policy definitions (enumerate at E-time via `grep -nE '<legacy helpers>' schema.sql` — they sit BEFORE the EOF authz override block; the EOF overrides stay); (2) drop the 3 legacy grant tables + their policies; (3) drop the legacy helpers; (4) remove the seed/tenant_create dual-writes (Phase B) and the now-unused `internal.is_active_org_member`/`is_active_agency_member` (profile,org) helpers; (5) retire legacy-only tests. Optionally, a cleaner alternative to (1) is to edit the Phase C policies in place now (removing the EOF override block), eliminating the dead defs.
