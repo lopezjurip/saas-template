@@ -5723,3 +5723,239 @@ begin
   return new;
 end;
 $$;
+
+-- ============================================================
+-- D2e: Repoint security-definer functions to permission_grants
+-- Five functions still authorized against legacy grant tables.
+-- Replace their permission checks with viewer_can / viewer_can_objects.
+-- Preserves: signatures, security/volatility attributes, error keys, return shapes.
+-- ============================================================
+
+-- viewer_tenant_update: tenant_manage gate → viewer_can
+create or replace function public.viewer_tenant_update(
+  tenant_id    int,
+  tenant_name  text
+)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _tenant public.tenants;
+    begin
+      if not public.viewer_can('tenant_manage', 'tenant', $1) then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      update public.tenants
+        set tenant_name = $2,
+            tenant_updated_at = current_timestamp
+        where public.tenants.tenant_id = $1
+        returning * into _tenant;
+
+      return next _tenant;
+    end;
+  $$;
+
+-- viewer_tenant_onboarding_finish: tenant_manage gate → viewer_can
+create or replace function public.viewer_tenant_onboarding_finish(tenant_id int)
+  returns setof public.tenants rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _tenant public.tenants;
+    begin
+      if not public.viewer_can('tenant_manage', 'tenant', $1) then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      update public.tenants
+        set tenant_onboarded_at = current_timestamp,
+            tenant_updated_at = current_timestamp
+        where public.tenants.tenant_id = $1
+        returning * into _tenant;
+
+      return next _tenant;
+    end;
+  $$;
+
+-- viewer_organization_external_agencies: organization_manage gate → viewer_can
+create or replace function public.viewer_organization_external_agencies(organization_id int)
+  returns table (
+    agency_id int,
+    agency_name text,
+    agency_slug text,
+    active_affiliates int,
+    granted_here boolean,
+    is_global boolean
+  )
+  stable
+  security definer
+  parallel safe
+  language sql
+  set search_path to ''
+  as $$
+    select
+      a.agency_id,
+      a.agency_name,
+      a.agency_slug,
+      coalesce(m.active_count, 0)::int as active_affiliates,
+      coalesce(gh.granted, false) as granted_here,
+      coalesce(gg.granted, false) as is_global
+    from public.agencies a
+    left join lateral (
+      select count(*) as active_count
+      from public.agency_memberships am
+      where am.agency_id = a.agency_id
+        and am.agency_membership_accepted_at is not null
+        and am.agency_membership_revoked_at is null
+        and am.agency_membership_rejected_at is null
+    ) m on true
+    left join lateral (
+      select true as granted
+      from public.agencies_organizations_grants g
+      where g.agency_id = a.agency_id
+        and g.organization_id = viewer_organization_external_agencies.organization_id
+      limit 1
+    ) gh on true
+    left join lateral (
+      select true as granted
+      from public.agencies_organizations_grants g
+      where g.agency_id = a.agency_id
+        and g.organization_id is null
+        and g.permission_id = '*'
+      limit 1
+    ) gg on true
+    where a.agency_deleted_at is null
+      and public.viewer_can(
+        'organization_manage', 'organization',
+        viewer_organization_external_agencies.organization_id)
+    order by a.agency_name asc;
+  $$;
+
+-- viewer_agency_membership_invite_by_email: agency_members_manage gate → viewer_can
+create or replace function public.viewer_agency_membership_invite_by_email(
+  agency_id int,
+  email     text
+)
+  returns setof public.agency_memberships rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _profile_id uuid;
+      _row        public.agency_memberships;
+    begin
+      if not public.viewer_can(
+           'agency_members_manage', 'agency',
+           viewer_agency_membership_invite_by_email.agency_id) then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      if not exists (
+        select 1 from public.agencies a
+        where a.agency_id = viewer_agency_membership_invite_by_email.agency_id
+      ) then
+        raise exception 'agency_not_found' using errcode = 'P0001';
+      end if;
+
+      select u.id into _profile_id
+        from auth.users u
+        where lower(u.email) = lower(viewer_agency_membership_invite_by_email.email)
+        limit 1;
+
+      if _profile_id is null then
+        raise exception 'user_not_found' using errcode = 'P0001';
+      end if;
+
+      -- Already an active member (not revoked/rejected)?
+      if exists (
+        select 1 from public.agency_memberships af
+        where af.agency_id = viewer_agency_membership_invite_by_email.agency_id
+          and af.profile_id = _profile_id
+          and af.agency_membership_accepted_at is not null
+          and af.agency_membership_revoked_at is null
+          and af.agency_membership_rejected_at is null
+      ) then
+        raise exception 'already_member' using errcode = 'P0001';
+      end if;
+
+      -- Reset any prior (pending/revoked/rejected) row to a fresh pending invite; else insert.
+      -- Not ON CONFLICT because the conflict-target column would collide with the agency_id param.
+      -- ponytail: tiny update-then-insert race; the unique (agency_id, profile_id) constraint backstops it.
+      update public.agency_memberships
+        set agency_membership_accepted_at = null,
+            agency_membership_revoked_at  = null,
+            agency_membership_rejected_at = null
+        where public.agency_memberships.agency_id = viewer_agency_membership_invite_by_email.agency_id
+          and public.agency_memberships.profile_id = _profile_id
+        returning * into _row;
+
+      if not found then
+        insert into public.agency_memberships (agency_id, profile_id)
+          values (viewer_agency_membership_invite_by_email.agency_id, _profile_id)
+          returning * into _row;
+      end if;
+
+      return next _row;
+    end;
+  $$;
+
+-- viewer_agency_membership_update: agency_members_manage gate → viewer_can
+create or replace function public.viewer_agency_membership_update(
+  agency_membership_id int,
+  operation            text  -- 'revoke' | 'reactivate'
+)
+  returns setof public.agency_memberships rows 1
+  volatile
+  security definer
+  language plpgsql
+  set search_path to ''
+  as $$
+    declare
+      _agency_id int;
+      _row       public.agency_memberships;
+    begin
+      if viewer_agency_membership_update.operation not in ('revoke', 'reactivate') then
+        raise exception 'invalid_operation' using errcode = 'P0001';
+      end if;
+
+      select m.agency_id into _agency_id
+        from public.agency_memberships m
+        where m.agency_membership_id = viewer_agency_membership_update.agency_membership_id;
+
+      if _agency_id is null then
+        raise exception 'membership_not_found' using errcode = 'P0001';
+      end if;
+
+      if not public.viewer_can('agency_members_manage', 'agency', _agency_id) then
+        raise exception 'no_permission' using errcode = 'P0001';
+      end if;
+
+      if viewer_agency_membership_update.operation = 'revoke' then
+        if not public.agency_has_other_active_admin(_agency_id, viewer_agency_membership_update.agency_membership_id) then
+          raise exception 'last_admin_protected' using errcode = 'P0001';
+        end if;
+        update public.agency_memberships
+          set agency_membership_revoked_at = current_timestamp
+          where public.agency_memberships.agency_membership_id = viewer_agency_membership_update.agency_membership_id
+          returning * into _row;
+      else
+        update public.agency_memberships
+          set agency_membership_revoked_at  = null,
+              agency_membership_rejected_at = null,
+              agency_membership_accepted_at = current_timestamp
+          where public.agency_memberships.agency_membership_id = viewer_agency_membership_update.agency_membership_id
+          returning * into _row;
+      end if;
+
+      return next _row;
+    end;
+  $$;

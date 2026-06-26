@@ -2,10 +2,12 @@
 -- Seed (seed.sql):
 --   demo-auditores agency, Iris (ca401) = accepted affiliate holding '*' (team admin),
 --   Alice (a11c) = pending affiliate with no agency capabilities.
+-- [NEW-PATH] Frank: permission_grants-only agency_members_manage (no legacy row).
+-- [NEW-PATH] Gina: legacy-only agency_members_manage (no permission_grants row) — must be denied.
 
 begin;
 
-select plan(12);
+select plan(14);
 
 -- Capture seeded serial ids while privileged (RLS bypassed); share with the authenticated role.
 create temporary table _af on commit drop as
@@ -101,6 +103,99 @@ select throws_ok(
   '42501',
   null,
   'a non-admin affiliate cannot grant agency capabilities (RLS denies the write)'
+);
+
+reset role;
+
+-- ============================================================
+-- [NEW-PATH] Frank: permission_grants-only agency_members_manage — must be allowed.
+-- No legacy agency_membership_permissions row; only a permission_grants row.
+-- ============================================================
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token
+) values (
+  '00000000-0000-0000-0000-000000000000',
+  '00000000-0000-0000-0000-00000000f2e1',
+  'authenticated', 'authenticated',
+  'frank-agency@humane.test',
+  crypt('password123', gen_salt('bf')),
+  current_timestamp,
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"full_name":"Frank Agency"}'::jsonb,
+  current_timestamp, current_timestamp,
+  '', '', '', ''
+);
+
+insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
+  values ((select agency_id from _af), '00000000-0000-0000-0000-00000000f2e1', current_timestamp);
+
+-- Grant agency_members_manage via permission_grants ONLY (no legacy row)
+insert into public.permission_grants (subject_agency_membership_id, permission_id)
+  values (
+    (select agency_membership_id from public.agency_memberships
+     where agency_id = (select agency_id from _af)
+       and profile_id = '00000000-0000-0000-0000-00000000f2e1'),
+    'agency_members_manage'
+  );
+
+set local role authenticated;
+set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-00000000f2e1"}';
+
+select throws_ok(
+  $$ select public.viewer_agency_membership_invite_by_email(
+       (select agency_id from _af), 'nobody@unregistered.test') $$,
+  'P0001',
+  'user_not_found',
+  '[new-path] Frank (permission_grants-only) passes the gate — error is user_not_found, not no_permission'
+);
+
+reset role;
+
+-- ============================================================
+-- [NEW-PATH] Gina: legacy-only agency_members_manage — must be denied.
+-- ============================================================
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token
+) values (
+  '00000000-0000-0000-0000-000000000000',
+  '00000000-0000-0000-0000-00000000920a',
+  'authenticated', 'authenticated',
+  'gina-legacy@humane.test',
+  crypt('password123', gen_salt('bf')),
+  current_timestamp,
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{"full_name":"Gina Legacy"}'::jsonb,
+  current_timestamp, current_timestamp,
+  '', '', '', ''
+);
+
+insert into public.agency_memberships (agency_id, profile_id, agency_membership_accepted_at)
+  values ((select agency_id from _af), '00000000-0000-0000-0000-00000000920a', current_timestamp);
+
+-- Grant agency_members_manage via LEGACY table ONLY (no permission_grants row)
+insert into public.agency_membership_permissions (agency_membership_id, permission_id)
+  values (
+    (select agency_membership_id from public.agency_memberships
+     where agency_id = (select agency_id from _af)
+       and profile_id = '00000000-0000-0000-0000-00000000920a'),
+    'agency_members_manage'
+  );
+
+set local role authenticated;
+set local request.jwt.claims to '{"sub": "00000000-0000-0000-0000-00000000920a"}';
+
+select throws_ok(
+  $$ select public.viewer_agency_membership_invite_by_email(
+       (select agency_id from _af), 'nobody@unregistered.test') $$,
+  'P0001',
+  'no_permission',
+  '[new-path] legacy-only agency_members_manage is NOT sufficient for viewer_agency_membership_invite_by_email'
 );
 
 reset role;
