@@ -57,44 +57,51 @@ internal.is_active_agency_member(profile_id, agency_id)→boolean
 
 ### Resolución (núcleo)
 
-`protected.check_permission(P, permission_id, 'organization', O)` =
-- **camino directo:** existe grant `subject=P, object_org=O, permission ∈ {relation, '*'}` **y** `P` es
-  miembro activo de `O`; **o**
-- **camino agencia (bridge):** `P` es miembro activo de una agencia `A` **y** existe grant
+`protected.check_permission(profile_id, permission_id, 'organization', O)` =
+- **camino directo:** existe grant cuyo `subject_organization_membership` es la membership **activa** de
+  `profile_id` en `O`, con `permission ∈ {relation, '*'}`; **o**
+- **camino agencia (bridge):** `profile_id` es miembro activo de una agencia `A` **y** existe grant
   `subject_agency=A, object_org ∈ {O, NULL=todas}, permission ∈ {relation, '*'}`.
 
 Las dos condiciones del camino agencia son los dos ejes: *pertenencia* a la agencia + *permiso* de la agencia
-sobre la org. Ninguna sola alcanza.
+sobre la org. Ninguna sola alcanza. El núcleo toma `profile_id` como query y resuelve **profile → membership
+activa → grant** con un join.
 
-## Storage de grants — decisión **A2** (tipado unificado)
+## Storage de grants — decisión **A2**, keyed por **membership**
 
-Una tabla `public.permission_grants` con sujeto y objeto como **uniones discriminadas vía FK + CHECK "exactamente uno"**.
-Colapsa `organization_membership_permissions` + `agency_membership_permissions` + `agencies_organizations_grants`.
+Una tabla `public.permission_grants` que es la unión tipada de las 3 tablas viejas, keyed por **membership**
+(no por profile), con FKs reales. Esto soporta **invites pendientes** (la membership existe con `profile_id`
+NULL hasta aceptar; el grant la referencia por id) y espeja exacto las 3 tablas.
 
 ```sql
 public.permission_grants(
-  permission_grant_id    bigint generated always as identity primary key,
-  -- sujeto: exactamente uno
-  subject_profile_id     uuid references public.profiles,
-  subject_agency_id      int  references public.agencies,
-  -- objeto: exactamente uno (object_organization_id NULL = "todas las orgs" SOLO cuando subject es agencia)
-  object_organization_id int  references public.organizations,
-  object_tenant_id       int  references public.tenants,
-  object_agency_id       int  references public.agencies,
-  permission_id          citext not null references public.permissions,
-  -- lifecycle mínimo (sin audit-log en este alcance)
-  permission_grant_created_at timestamptz not null default current_timestamp,
-  -- CHECKs: exactamente un subject_*; exactamente un object_* (con la excepción NULL=todas para agencia)
+  permission_grant_id                bigint generated always as identity primary key,
+  -- sujeto: exactamente UNO (espeja organization_membership_permissions / agency_membership_permissions /
+  --          agencies_organizations_grants respectivamente)
+  subject_organization_membership_id int references public.organization_memberships,  -- perm en la org de la membership
+  subject_agency_membership_id       int references public.agency_memberships,         -- perm para gestionar esa agencia
+  subject_agency_id                  int references public.agencies,                   -- la agencia alcanza una org
+  -- objeto: SOLO para el grant agencia→org (los otros lo tienen implícito en la membership)
+  object_organization_id             int references public.organizations,             -- NULL = todas las orgs
+  permission_id                      citext not null references public.permissions,
+  permission_grant_created_at        timestamptz not null default current_timestamp
+  -- CHECK exactamente-un-subject; CHECK object_organization_id solo cuando subject_agency_id
 )
 ```
 
-- Mantiene FK al catálogo `permissions` y a `organizations`/`tenants`/`agencies`/`profiles`.
-- El grant exige pertenencia (invariante "no hay permiso sin pertenencia") — el núcleo lo valida.
-- **Wrinkle pendiente de implementación:** `object_organization_id = NULL` = "todas las orgs" (wildcard a
-  nivel objeto, distinto de `permission_id='*'`). Se modela con índices únicos parciales (como hoy). Decidir
-  en implementación si se mantiene o si todo grant de agencia debe nombrar su org. No bloquea el plan.
+- El objeto es **implícito** salvo para el grant agencia→org: la org de un `subject_organization_membership`
+  sale de la membership; la agencia de un `subject_agency_membership` sale de la membership; el tenant se
+  resuelve subiendo por la org de la membership. Por eso **no** hay `object_tenant_id` ni `object_agency_id`.
+- El grant exige pertenencia por construcción (el sujeto ES una membership). Invariante "no hay permiso sin
+  pertenencia" garantizado por FK, no por validación.
+- **Wildcard a nivel objeto:** `object_organization_id = NULL` (con `subject_agency_id`) = "todas las orgs".
+  Se mantiene (espeja `agencies_organizations_grants`), con índices únicos parciales.
 
 `public.permission_presets` (bundles UX) se mantiene apuntando al catálogo.
+
+> **Nota de evolución:** la fundación (PR #83) construyó esta tabla keyed por `subject_profile_id`. El cutover
+> la re-keyea por membership (Phase A del plan de cutover) porque keyear por profile impedía pre-asignar
+> permisos a invites pendientes (`profile_id` NULL hasta aceptar) — una regresión vs. el modelo viejo.
 
 ## RLS resultante (uniforme)
 
