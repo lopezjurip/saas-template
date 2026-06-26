@@ -1729,6 +1729,24 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      viewer_grant_agency_access: {
+        Args: { agency_id: number; organization_id: number }
+        Returns: {
+          object_organization_id: number | null
+          permission_grant_created_at: string
+          permission_grant_id: number
+          permission_id: string
+          subject_agency_id: number | null
+          subject_agency_membership_id: number | null
+          subject_organization_membership_id: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "permission_grants"
+          isOneToOne: true
+          isSetofReturn: true
+        }
+      }
       viewer_has_agency_permission: {
         Args: { organization_id: number; permission_id: string }
         Returns: boolean
@@ -1996,6 +2014,24 @@ export type Database = {
         }
       }
       viewer_profile_id: { Args: { strict?: boolean }; Returns: string }
+      viewer_revoke_agency_access: {
+        Args: { agency_id: number; organization_id: number }
+        Returns: {
+          object_organization_id: number | null
+          permission_grant_created_at: string
+          permission_grant_id: number
+          permission_id: string
+          subject_agency_id: number | null
+          subject_agency_membership_id: number | null
+          subject_organization_membership_id: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "permission_grants"
+          isOneToOne: true
+          isSetofReturn: true
+        }
+      }
       viewer_sessions_collection: {
         Args: never
         Returns: {

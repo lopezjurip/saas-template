@@ -580,6 +580,22 @@ export type CreateOrganizationFormMutationMutationVariables = Exact<{
 
 export type CreateOrganizationFormMutationMutation = { organization: { organizationId: number, organizationSlug: string } | null };
 
+export type ExternalAccessGrantMutationMutationVariables = Exact<{
+  organization_id: number;
+  agency_id: number;
+}>;
+
+
+export type ExternalAccessGrantMutationMutation = { grant: { permissionGrantId: string } | null };
+
+export type ExternalAccessRevokeMutationMutationVariables = Exact<{
+  organization_id: number;
+  agency_id: number;
+}>;
+
+
+export type ExternalAccessRevokeMutationMutation = { revoke: { permissionGrantId: string } | null };
+
 export type EditOrganizationMembershipGrantPermissionMutationMutationVariables = Exact<{
   objects: Array<PermissionGrantsInsertInput> | PermissionGrantsInsertInput;
 }>;
@@ -1516,6 +1532,26 @@ export const CreateOrganizationFormMutationDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<CreateOrganizationFormMutationMutation, CreateOrganizationFormMutationMutationVariables>;
+export const ExternalAccessGrantMutationDocument = new TypedDocumentString(`
+    mutation ExternalAccessGrantMutation($organization_id: Int!, $agency_id: Int!) {
+  grant: viewerGrantAgencyAccess(
+    organizationId: $organization_id
+    agencyId: $agency_id
+  ) {
+    permissionGrantId
+  }
+}
+    `) as unknown as TypedDocumentString<ExternalAccessGrantMutationMutation, ExternalAccessGrantMutationMutationVariables>;
+export const ExternalAccessRevokeMutationDocument = new TypedDocumentString(`
+    mutation ExternalAccessRevokeMutation($organization_id: Int!, $agency_id: Int!) {
+  revoke: viewerRevokeAgencyAccess(
+    organizationId: $organization_id
+    agencyId: $agency_id
+  ) {
+    permissionGrantId
+  }
+}
+    `) as unknown as TypedDocumentString<ExternalAccessRevokeMutationMutation, ExternalAccessRevokeMutationMutationVariables>;
 export const EditOrganizationMembershipGrantPermissionMutationDocument = new TypedDocumentString(`
     mutation EditOrganizationMembershipGrantPermissionMutation($objects: [PermissionGrantsInsertInput!]!) {
   insertIntoPermissionGrantsCollection(objects: $objects) {

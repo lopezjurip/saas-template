@@ -1165,6 +1165,7 @@ type Mutation {
   viewerAgencyMembershipInviteByEmail(agencyId: Int!, email: String!): AgencyMemberships
   viewerAgencyMembershipRespond(agencyMembershipId: Int!, response: String!): AgencyMemberships
   viewerAgencyMembershipUpdate(agencyMembershipId: Int!, operation: String!): AgencyMemberships
+  viewerGrantAgencyAccess(agencyId: Int!, organizationId: Int!): PermissionGrants
   viewerOrganizationCreate(organizationName: String!, organizationSlug: String!, tenantId: Int!): Organizations
   viewerOrganizationMembershipAccept(organizationMembershipId: Int!): OrganizationMemberships
   viewerOrganizationMembershipReject(organizationMembershipId: Int!): OrganizationMemberships
@@ -1188,6 +1189,7 @@ type Mutation {
     organizationMembershipId: Int!
     permissionIds: [String]!
   ): PermissionGrantsConnection
+  viewerRevokeAgencyAccess(agencyId: Int!, organizationId: Int!): PermissionGrants
   viewerTenantCreate(tenantName: String!, tenantSlug: String!): Tenants
   viewerTenantOnboardingFinish(tenantId: Int!): Tenants
   viewerTenantUpdate(tenantId: Int!, tenantName: String!): Tenants

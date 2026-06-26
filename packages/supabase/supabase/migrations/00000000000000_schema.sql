@@ -6110,6 +6110,45 @@ create or replace function public.viewer_organization_external_agencies(organiza
     order by a.agency_name asc;
   $$;
 
+-- viewer_grant_agency_access: grant an agency org-scoped read access (organization_manage gate)
+create or replace function public.viewer_grant_agency_access(organization_id int, agency_id int)
+  returns setof public.permission_grants rows 1
+  volatile security definer language plpgsql set search_path to '' as $$
+  declare _grant_id bigint;
+  begin
+    if not public.viewer_can('organization_manage', 'organization', viewer_grant_agency_access.organization_id) then
+      raise exception 'no_permission' using errcode = 'P0001';
+    end if;
+    begin
+      insert into public.permission_grants (subject_agency_id, object_organization_id, permission_id)
+      values (viewer_grant_agency_access.agency_id, viewer_grant_agency_access.organization_id, '*')
+      returning permission_grant_id into _grant_id;
+    exception
+      when unique_violation then raise exception 'already_granted' using errcode = 'P0001';
+      when foreign_key_violation then raise exception 'agency_not_found' using errcode = 'P0001';
+    end;
+    return query select * from public.permission_grants where permission_grant_id = _grant_id;
+  end;
+  $$;
+grant execute on function public.viewer_grant_agency_access(int, int) to anon, authenticated;
+
+-- viewer_revoke_agency_access: revoke an agency's org-scoped access (organization_manage gate)
+create or replace function public.viewer_revoke_agency_access(organization_id int, agency_id int)
+  returns setof public.permission_grants rows 1
+  volatile security definer language plpgsql set search_path to '' as $$
+  begin
+    if not public.viewer_can('organization_manage', 'organization', viewer_revoke_agency_access.organization_id) then
+      raise exception 'no_permission' using errcode = 'P0001';
+    end if;
+    return query
+      delete from public.permission_grants
+      where subject_agency_id = viewer_revoke_agency_access.agency_id
+        and object_organization_id = viewer_revoke_agency_access.organization_id
+      returning *;
+  end;
+  $$;
+grant execute on function public.viewer_revoke_agency_access(int, int) to anon, authenticated;
+
 -- viewer_agency_membership_invite_by_email: agency_members_manage gate → viewer_can
 create or replace function public.viewer_agency_membership_invite_by_email(
   agency_id int,
