@@ -119,7 +119,7 @@ on conflict (organization_id) do nothing;
 select setval(pg_get_serial_sequence('public.organizations', 'organization_id'), (select max(organization_id) from public.organizations));
 
 -- ------------------------------------------------------------
--- organization_memberships + organization_membership_permissions
+-- organization_memberships + permission_grants
 -- ------------------------------------------------------------
 -- OrganizationMemberships now carry their own serial PK. Seed inserts are accepted out of the
 -- gate (profile_id set + organization_membership_accepted_at = now) so the seeded users skip the
@@ -138,7 +138,7 @@ with seeded_organization_memberships as (
 -- Bob: one non-admin capability (presets_manage) on acme org — a regular member, no admin rights.
 -- The catalog only ships admin capabilities now, so `presets_manage` doubles as the generic
 -- "non-admin capability" fixture (it is neither '*' nor members_manage/organization_manage).
-insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+insert into public.permission_grants (subject_organization_membership_id, permission_id)
 select sm.organization_membership_id, perm.permission_id
 from seeded_organization_memberships sm
 join (values
@@ -243,19 +243,25 @@ values
 on conflict (agency_id, profile_id) do nothing;
 
 -- Founding affiliate (Iris) gets the wildcard so she can manage the demo agency's team.
-insert into public.agency_membership_permissions (agency_membership_id, permission_id)
+with seeded_agency_membership as (
+  select am.agency_membership_id
+  from public.agency_memberships am
+  join public.agencies a using (agency_id)
+  where a.agency_slug = 'demo-auditores'
+    and am.profile_id = '00000000-0000-0000-0000-0000000ca401'
+)
+insert into public.permission_grants (subject_agency_membership_id, permission_id)
+select agency_membership_id, '*'
+from seeded_agency_membership
+on conflict do nothing;
+
+-- Agency→org grant: demo-auditores gets '*' access to acme org (id 1).
+insert into public.permission_grants (subject_agency_id, object_organization_id, permission_id)
 values (
-  (select am.agency_membership_id
-   from public.agency_memberships am
-   join public.agencies a using (agency_id)
-   where a.agency_slug = 'demo-auditores'
-     and am.profile_id = '00000000-0000-0000-0000-0000000ca401'),
+  (select agency_id from public.agencies where agency_slug = 'demo-auditores'),
+  1,
   '*'
 )
-on conflict (agency_membership_id, permission_id) do nothing;
-
-insert into public.agencies_organizations_grants (agency_id, organization_id, permission_id)
-values ((select agency_id from public.agencies where agency_slug = 'demo-auditores'), 1, '*')
 on conflict do nothing;
 
 -- ------------------------------------------------------------

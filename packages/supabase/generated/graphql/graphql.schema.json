@@ -2719,111 +2719,6 @@
         "isOneOf": null,
         "fields": [
           {
-            "name": "agenciesOrganizationsGrantsCollection",
-            "description": null,
-            "args": [
-              {
-                "name": "after",
-                "description": "Query values in the collection after the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "before",
-                "description": "Query values in the collection before the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Filters to apply to the results set when querying from the collection",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "AgenciesOrganizationsGrantsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "first",
-                "description": "Query the first `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "last",
-                "description": "Query the last `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "offset",
-                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "orderBy",
-                "description": "Sort order to apply to the collection",
-                "type": {
-                  "kind": "LIST",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "NON_NULL",
-                    "ofType": {
-                      "name": "AgenciesOrganizationsGrantsOrderBy",
-                      "kind": "INPUT_OBJECT",
-                      "ofType": null
-                    }
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "OBJECT",
-              "name": "AgenciesOrganizationsGrantsConnection",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "agencyCreatedAt",
             "description": null,
             "args": [],
@@ -3137,6 +3032,111 @@
                 "kind": "SCALAR",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantsCollection",
+            "description": null,
+            "args": [
+              {
+                "name": "after",
+                "description": "Query values in the collection after the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "before",
+                "description": "Query values in the collection before the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "filter",
+                "description": "Filters to apply to the results set when querying from the collection",
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PermissionGrantsFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "first",
+                "description": "Query the first `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "last",
+                "description": "Query the last `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "offset",
+                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "orderBy",
+                "description": "Sort order to apply to the collection",
+                "type": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "NON_NULL",
+                    "ofType": {
+                      "name": "PermissionGrantsOrderBy",
+                      "kind": "INPUT_OBJECT",
+                      "ofType": null
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "OBJECT",
+              "name": "PermissionGrantsConnection",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -3604,1386 +3604,6 @@
       },
       {
         "kind": "OBJECT",
-        "name": "AgenciesOrganizationsGrants",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "agenciesOrganizationsGrantCreatedAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Datetime",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agenciesOrganizationsGrantId",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "UUID",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agency",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "OBJECT",
-              "name": "Agencies",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyId",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "nodeId",
-            "description": "Globally Unique Record Identifier",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "ID",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organization",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "OBJECT",
-              "name": "Organizations",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationId",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permission",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "OBJECT",
-              "name": "Permissions",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [
-          {
-            "kind": "INTERFACE",
-            "name": "Node",
-            "ofType": null
-          }
-        ],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "AgenciesOrganizationsGrantsConnection",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "edges",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "AgenciesOrganizationsGrantsEdge",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "pageInfo",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "PageInfo",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "totalCount",
-            "description": "The total number of records matching the `filter` criteria",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "AgenciesOrganizationsGrantsDeleteResponse",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "affectedCount",
-            "description": "Count of the records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "records",
-            "description": "Array of records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "AgenciesOrganizationsGrants",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "AgenciesOrganizationsGrantsEdge",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "cursor",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "node",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "AgenciesOrganizationsGrants",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "AgenciesOrganizationsGrantsFilter",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "agenciesOrganizationsGrantCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "DatetimeFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agenciesOrganizationsGrantId",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "UUIDFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyId",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "IntFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "and",
-            "description": "Returns true only if all its inner filters are true, otherwise returns false",
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "NON_NULL",
-                "ofType": {
-                  "name": "AgenciesOrganizationsGrantsFilter",
-                  "kind": "INPUT_OBJECT",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "nodeId",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "IDFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "not",
-            "description": "Negates a filter",
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "AgenciesOrganizationsGrantsFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "or",
-            "description": "Returns true if at least one of its inner filters is true, otherwise returns false",
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "NON_NULL",
-                "ofType": {
-                  "name": "AgenciesOrganizationsGrantsFilter",
-                  "kind": "INPUT_OBJECT",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationId",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "IntFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "StringFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "AgenciesOrganizationsGrantsInsertInput",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "agenciesOrganizationsGrantCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agenciesOrganizationsGrantId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "UUID",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "AgenciesOrganizationsGrantsInsertResponse",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "affectedCount",
-            "description": "Count of the records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "records",
-            "description": "Array of records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "AgenciesOrganizationsGrants",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "AgenciesOrganizationsGrantsOrderBy",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "agenciesOrganizationsGrantCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agenciesOrganizationsGrantId",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyId",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationId",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "AgenciesOrganizationsGrantsUpdateInput",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "agenciesOrganizationsGrantCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agenciesOrganizationsGrantId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "UUID",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "AgenciesOrganizationsGrantsUpdateResponse",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "affectedCount",
-            "description": "Count of the records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "records",
-            "description": "Array of records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "AgenciesOrganizationsGrants",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "AgencyMembershipPermissions",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "agencyMembership",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "OBJECT",
-              "name": "AgencyMemberships",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyMembershipId",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyMembershipPermissionCreatedAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Datetime",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "nodeId",
-            "description": "Globally Unique Record Identifier",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "ID",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permission",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "OBJECT",
-              "name": "Permissions",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [
-          {
-            "kind": "INTERFACE",
-            "name": "Node",
-            "ofType": null
-          }
-        ],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "AgencyMembershipPermissionsConnection",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "edges",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "AgencyMembershipPermissionsEdge",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "pageInfo",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "PageInfo",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "AgencyMembershipPermissionsDeleteResponse",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "affectedCount",
-            "description": "Count of the records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "records",
-            "description": "Array of records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "AgencyMembershipPermissions",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "AgencyMembershipPermissionsEdge",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "cursor",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "node",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "AgencyMembershipPermissions",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "AgencyMembershipPermissionsFilter",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "agencyMembershipId",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "IntFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyMembershipPermissionCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "DatetimeFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "and",
-            "description": "Returns true only if all its inner filters are true, otherwise returns false",
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "NON_NULL",
-                "ofType": {
-                  "name": "AgencyMembershipPermissionsFilter",
-                  "kind": "INPUT_OBJECT",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "nodeId",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "IDFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "not",
-            "description": "Negates a filter",
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "AgencyMembershipPermissionsFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "or",
-            "description": "Returns true if at least one of its inner filters is true, otherwise returns false",
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "NON_NULL",
-                "ofType": {
-                  "name": "AgencyMembershipPermissionsFilter",
-                  "kind": "INPUT_OBJECT",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "StringFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "AgencyMembershipPermissionsInsertInput",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "agencyMembershipId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyMembershipPermissionCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "AgencyMembershipPermissionsInsertResponse",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "affectedCount",
-            "description": "Count of the records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "records",
-            "description": "Array of records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "AgencyMembershipPermissions",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "AgencyMembershipPermissionsOrderBy",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "agencyMembershipId",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyMembershipPermissionCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "AgencyMembershipPermissionsUpdateInput",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "agencyMembershipId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyMembershipPermissionCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "AgencyMembershipPermissionsUpdateResponse",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "affectedCount",
-            "description": "Count of the records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "records",
-            "description": "Array of records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "AgencyMembershipPermissions",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
         "name": "AgencyMemberships",
         "description": null,
         "isOneOf": null,
@@ -5061,7 +3681,63 @@
             "deprecationReason": null
           },
           {
-            "name": "agencyMembershipPermissionsCollection",
+            "name": "agencyMembershipRejectedAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Datetime",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "agencyMembershipRevokedAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Datetime",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "agencyMembershipUpdatedAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Datetime",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "nodeId",
+            "description": "Globally Unique Record Identifier",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantsCollection",
             "description": null,
             "args": [
               {
@@ -5093,7 +3769,7 @@
                 "description": "Filters to apply to the results set when querying from the collection",
                 "type": {
                   "kind": "INPUT_OBJECT",
-                  "name": "AgencyMembershipPermissionsFilter",
+                  "name": "PermissionGrantsFilter",
                   "ofType": null
                 },
                 "defaultValue": null,
@@ -5146,7 +3822,7 @@
                     "name": null,
                     "kind": "NON_NULL",
                     "ofType": {
-                      "name": "AgencyMembershipPermissionsOrderBy",
+                      "name": "PermissionGrantsOrderBy",
                       "kind": "INPUT_OBJECT",
                       "ofType": null
                     }
@@ -5159,64 +3835,8 @@
             ],
             "type": {
               "kind": "OBJECT",
-              "name": "AgencyMembershipPermissionsConnection",
+              "name": "PermissionGrantsConnection",
               "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyMembershipRejectedAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyMembershipRevokedAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyMembershipUpdatedAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Datetime",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "nodeId",
-            "description": "Globally Unique Record Identifier",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "ID",
-                "kind": "SCALAR",
-                "ofType": null
-              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -9628,141 +8248,6 @@
             "deprecationReason": null
           },
           {
-            "name": "deleteFromAgenciesOrganizationsGrantsCollection",
-            "description": "Deletes zero or more records from the `AgenciesOrganizationsGrants` collection",
-            "args": [
-              {
-                "name": "atMost",
-                "description": "The maximum number of records in the collection permitted to be affected",
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "Int",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": "1",
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Restricts the mutation's impact to records matching the criteria",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "AgenciesOrganizationsGrantsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "AgenciesOrganizationsGrantsDeleteResponse",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "deleteFromAgencyMembershipPermissionsCollection",
-            "description": "Deletes zero or more records from the `AgencyMembershipPermissions` collection",
-            "args": [
-              {
-                "name": "atMost",
-                "description": "The maximum number of records in the collection permitted to be affected",
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "Int",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": "1",
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Restricts the mutation's impact to records matching the criteria",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "AgencyMembershipPermissionsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "AgencyMembershipPermissionsDeleteResponse",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "deleteFromOrganizationMembershipPermissionsCollection",
-            "description": "Deletes zero or more records from the `OrganizationMembershipPermissions` collection",
-            "args": [
-              {
-                "name": "atMost",
-                "description": "The maximum number of records in the collection permitted to be affected",
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "Int",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": "1",
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Restricts the mutation's impact to records matching the criteria",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "OrganizationMembershipPermissionsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "OrganizationMembershipPermissionsDeleteResponse",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "deleteFromOrganizationMembershipsCollection",
             "description": "Deletes zero or more records from the `OrganizationMemberships` collection",
             "args": [
@@ -9800,6 +8285,51 @@
               "name": null,
               "ofType": {
                 "name": "OrganizationMembershipsDeleteResponse",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "deleteFromPermissionGrantsCollection",
+            "description": "Deletes zero or more records from the `PermissionGrants` collection",
+            "args": [
+              {
+                "name": "atMost",
+                "description": "The maximum number of records in the collection permitted to be affected",
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "Int",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": "1",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "filter",
+                "description": "Restricts the mutation's impact to records matching the criteria",
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PermissionGrantsFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "PermissionGrantsDeleteResponse",
                 "kind": "OBJECT",
                 "ofType": null
               }
@@ -9988,117 +8518,6 @@
             "deprecationReason": null
           },
           {
-            "name": "insertIntoAgenciesOrganizationsGrantsCollection",
-            "description": "Adds one or more `AgenciesOrganizationsGrants` records to the collection",
-            "args": [
-              {
-                "name": "objects",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "LIST",
-                    "ofType": {
-                      "name": null,
-                      "kind": "NON_NULL",
-                      "ofType": {
-                        "name": "AgenciesOrganizationsGrantsInsertInput",
-                        "kind": "INPUT_OBJECT",
-                        "ofType": null
-                      }
-                    }
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "OBJECT",
-              "name": "AgenciesOrganizationsGrantsInsertResponse",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "insertIntoAgencyMembershipPermissionsCollection",
-            "description": "Adds one or more `AgencyMembershipPermissions` records to the collection",
-            "args": [
-              {
-                "name": "objects",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "LIST",
-                    "ofType": {
-                      "name": null,
-                      "kind": "NON_NULL",
-                      "ofType": {
-                        "name": "AgencyMembershipPermissionsInsertInput",
-                        "kind": "INPUT_OBJECT",
-                        "ofType": null
-                      }
-                    }
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "OBJECT",
-              "name": "AgencyMembershipPermissionsInsertResponse",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "insertIntoOrganizationMembershipPermissionsCollection",
-            "description": "Adds one or more `OrganizationMembershipPermissions` records to the collection",
-            "args": [
-              {
-                "name": "objects",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "LIST",
-                    "ofType": {
-                      "name": null,
-                      "kind": "NON_NULL",
-                      "ofType": {
-                        "name": "OrganizationMembershipPermissionsInsertInput",
-                        "kind": "INPUT_OBJECT",
-                        "ofType": null
-                      }
-                    }
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "OBJECT",
-              "name": "OrganizationMembershipPermissionsInsertResponse",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "insertIntoOrganizationMembershipsCollection",
             "description": "Adds one or more `OrganizationMemberships` records to the collection",
             "args": [
@@ -10130,6 +8549,43 @@
             "type": {
               "kind": "OBJECT",
               "name": "OrganizationMembershipsInsertResponse",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "insertIntoPermissionGrantsCollection",
+            "description": "Adds one or more `PermissionGrants` records to the collection",
+            "args": [
+              {
+                "name": "objects",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "LIST",
+                    "ofType": {
+                      "name": null,
+                      "kind": "NON_NULL",
+                      "ofType": {
+                        "name": "PermissionGrantsInsertInput",
+                        "kind": "INPUT_OBJECT",
+                        "ofType": null
+                      }
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "OBJECT",
+              "name": "PermissionGrantsInsertResponse",
               "ofType": null
             },
             "isDeprecated": false,
@@ -10350,189 +8806,6 @@
             "deprecationReason": null
           },
           {
-            "name": "updateAgenciesOrganizationsGrantsCollection",
-            "description": "Updates zero or more records in the `AgenciesOrganizationsGrants` collection",
-            "args": [
-              {
-                "name": "atMost",
-                "description": "The maximum number of records in the collection permitted to be affected",
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "Int",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": "1",
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Restricts the mutation's impact to records matching the criteria",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "AgenciesOrganizationsGrantsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "set",
-                "description": "Fields that are set will be updated for all records matching the `filter`",
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "AgenciesOrganizationsGrantsUpdateInput",
-                    "kind": "INPUT_OBJECT",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "AgenciesOrganizationsGrantsUpdateResponse",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "updateAgencyMembershipPermissionsCollection",
-            "description": "Updates zero or more records in the `AgencyMembershipPermissions` collection",
-            "args": [
-              {
-                "name": "atMost",
-                "description": "The maximum number of records in the collection permitted to be affected",
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "Int",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": "1",
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Restricts the mutation's impact to records matching the criteria",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "AgencyMembershipPermissionsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "set",
-                "description": "Fields that are set will be updated for all records matching the `filter`",
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "AgencyMembershipPermissionsUpdateInput",
-                    "kind": "INPUT_OBJECT",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "AgencyMembershipPermissionsUpdateResponse",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "updateOrganizationMembershipPermissionsCollection",
-            "description": "Updates zero or more records in the `OrganizationMembershipPermissions` collection",
-            "args": [
-              {
-                "name": "atMost",
-                "description": "The maximum number of records in the collection permitted to be affected",
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "Int",
-                    "kind": "SCALAR",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": "1",
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Restricts the mutation's impact to records matching the criteria",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "OrganizationMembershipPermissionsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "set",
-                "description": "Fields that are set will be updated for all records matching the `filter`",
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "name": "OrganizationMembershipPermissionsUpdateInput",
-                    "kind": "INPUT_OBJECT",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "OrganizationMembershipPermissionsUpdateResponse",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "updateOrganizationMembershipsCollection",
             "description": "Updates zero or more records in the `OrganizationMemberships` collection",
             "args": [
@@ -10647,6 +8920,67 @@
               "name": null,
               "ofType": {
                 "name": "OrganizationsUpdateResponse",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "updatePermissionGrantsCollection",
+            "description": "Updates zero or more records in the `PermissionGrants` collection",
+            "args": [
+              {
+                "name": "atMost",
+                "description": "The maximum number of records in the collection permitted to be affected",
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "Int",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": "1",
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "filter",
+                "description": "Restricts the mutation's impact to records matching the criteria",
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PermissionGrantsFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "set",
+                "description": "Fields that are set will be updated for all records matching the `filter`",
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "PermissionGrantsUpdateInput",
+                    "kind": "INPUT_OBJECT",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "PermissionGrantsUpdateResponse",
                 "kind": "OBJECT",
                 "ofType": null
               }
@@ -11140,6 +9474,51 @@
             "deprecationReason": null
           },
           {
+            "name": "viewerGrantAgencyAccess",
+            "description": null,
+            "args": [
+              {
+                "name": "agencyId",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "Int",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "organizationId",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "Int",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "OBJECT",
+              "name": "PermissionGrants",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "viewerOrganizationCreate",
             "description": null,
             "args": [
@@ -11291,7 +9670,7 @@
                 "description": "Filters to apply to the results set when querying from the collection",
                 "type": {
                   "kind": "INPUT_OBJECT",
-                  "name": "OrganizationMembershipPermissionsFilter",
+                  "name": "PermissionGrantsFilter",
                   "ofType": null
                 },
                 "defaultValue": null,
@@ -11344,7 +9723,7 @@
                     "name": null,
                     "kind": "NON_NULL",
                     "ofType": {
-                      "name": "OrganizationMembershipPermissionsOrderBy",
+                      "name": "PermissionGrantsOrderBy",
                       "kind": "INPUT_OBJECT",
                       "ofType": null
                     }
@@ -11393,7 +9772,52 @@
             ],
             "type": {
               "kind": "OBJECT",
-              "name": "OrganizationMembershipPermissionsConnection",
+              "name": "PermissionGrantsConnection",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "viewerRevokeAgencyAccess",
+            "description": null,
+            "args": [
+              {
+                "name": "agencyId",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "Int",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "organizationId",
+                "description": null,
+                "type": {
+                  "kind": "NON_NULL",
+                  "name": null,
+                  "ofType": {
+                    "name": "Int",
+                    "kind": "SCALAR",
+                    "ofType": null
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "OBJECT",
+              "name": "PermissionGrants",
               "ofType": null
             },
             "isDeprecated": false,
@@ -11578,16 +10002,6 @@
           },
           {
             "kind": "OBJECT",
-            "name": "AgenciesOrganizationsGrants",
-            "ofType": null
-          },
-          {
-            "kind": "OBJECT",
-            "name": "AgencyMembershipPermissions",
-            "ofType": null
-          },
-          {
-            "kind": "OBJECT",
             "name": "AgencyMemberships",
             "ofType": null
           },
@@ -11608,17 +10022,17 @@
           },
           {
             "kind": "OBJECT",
-            "name": "OrganizationMembershipPermissions",
-            "ofType": null
-          },
-          {
-            "kind": "OBJECT",
             "name": "OrganizationMemberships",
             "ofType": null
           },
           {
             "kind": "OBJECT",
             "name": "Organizations",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "PermissionGrants",
             "ofType": null
           },
           {
@@ -11993,636 +10407,6 @@
       },
       {
         "kind": "OBJECT",
-        "name": "OrganizationMembershipPermissions",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "nodeId",
-            "description": "Globally Unique Record Identifier",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "ID",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembership",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "OBJECT",
-              "name": "OrganizationMemberships",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembershipId",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembershipPermissionCreatedAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Datetime",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permission",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "OBJECT",
-              "name": "Permissions",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [
-          {
-            "kind": "INTERFACE",
-            "name": "Node",
-            "ofType": null
-          }
-        ],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "OrganizationMembershipPermissionsConnection",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "edges",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "OrganizationMembershipPermissionsEdge",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "pageInfo",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "PageInfo",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "totalCount",
-            "description": "The total number of records matching the `filter` criteria",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "OrganizationMembershipPermissionsDeleteResponse",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "affectedCount",
-            "description": "Count of the records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "records",
-            "description": "Array of records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "OrganizationMembershipPermissions",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "OrganizationMembershipPermissionsEdge",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "cursor",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "String",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "node",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "OrganizationMembershipPermissions",
-                "kind": "OBJECT",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "OrganizationMembershipPermissionsFilter",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "and",
-            "description": "Returns true only if all its inner filters are true, otherwise returns false",
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "NON_NULL",
-                "ofType": {
-                  "name": "OrganizationMembershipPermissionsFilter",
-                  "kind": "INPUT_OBJECT",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "nodeId",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "IDFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "not",
-            "description": "Negates a filter",
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "OrganizationMembershipPermissionsFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "or",
-            "description": "Returns true if at least one of its inner filters is true, otherwise returns false",
-            "type": {
-              "kind": "LIST",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "NON_NULL",
-                "ofType": {
-                  "name": "OrganizationMembershipPermissionsFilter",
-                  "kind": "INPUT_OBJECT",
-                  "ofType": null
-                }
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembershipId",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "IntFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembershipPermissionCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "DatetimeFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "INPUT_OBJECT",
-              "name": "StringFilter",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "OrganizationMembershipPermissionsInsertInput",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "organizationMembershipId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembershipPermissionCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "OrganizationMembershipPermissionsInsertResponse",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "affectedCount",
-            "description": "Count of the records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "records",
-            "description": "Array of records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "OrganizationMembershipPermissions",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "OrganizationMembershipPermissionsOrderBy",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "organizationMembershipId",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembershipPermissionCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "ENUM",
-              "name": "OrderByDirection",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "INPUT_OBJECT",
-        "name": "OrganizationMembershipPermissionsUpdateInput",
-        "description": null,
-        "isOneOf": false,
-        "fields": null,
-        "inputFields": [
-          {
-            "name": "organizationMembershipId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Int",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembershipPermissionCreatedAt",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "permissionId",
-            "description": null,
-            "type": {
-              "kind": "SCALAR",
-              "name": "String",
-              "ofType": null
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "interfaces": null,
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
-        "name": "OrganizationMembershipPermissionsUpdateResponse",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "affectedCount",
-            "description": "Count of the records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Int",
-                "kind": "SCALAR",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "records",
-            "description": "Array of records impacted by the mutation",
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": null,
-                "kind": "LIST",
-                "ofType": {
-                  "name": null,
-                  "kind": "NON_NULL",
-                  "ofType": {
-                    "name": "OrganizationMembershipPermissions",
-                    "kind": "OBJECT",
-                    "ofType": null
-                  }
-                }
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
         "name": "OrganizationMemberships",
         "description": null,
         "isOneOf": null,
@@ -12836,7 +10620,47 @@
             "deprecationReason": null
           },
           {
-            "name": "organizationMembershipPermissionsCollection",
+            "name": "organizationMembershipRejectedAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Datetime",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "organizationMembershipRevokedAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Datetime",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "organizationMembershipUpdatedAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Datetime",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantsCollection",
             "description": null,
             "args": [
               {
@@ -12868,7 +10692,7 @@
                 "description": "Filters to apply to the results set when querying from the collection",
                 "type": {
                   "kind": "INPUT_OBJECT",
-                  "name": "OrganizationMembershipPermissionsFilter",
+                  "name": "PermissionGrantsFilter",
                   "ofType": null
                 },
                 "defaultValue": null,
@@ -12921,7 +10745,7 @@
                     "name": null,
                     "kind": "NON_NULL",
                     "ofType": {
-                      "name": "OrganizationMembershipPermissionsOrderBy",
+                      "name": "PermissionGrantsOrderBy",
                       "kind": "INPUT_OBJECT",
                       "ofType": null
                     }
@@ -12934,48 +10758,8 @@
             ],
             "type": {
               "kind": "OBJECT",
-              "name": "OrganizationMembershipPermissionsConnection",
+              "name": "PermissionGrantsConnection",
               "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembershipRejectedAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembershipRevokedAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "SCALAR",
-              "name": "Datetime",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembershipUpdatedAt",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "name": "Datetime",
-                "kind": "SCALAR",
-                "ofType": null
-              }
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -14099,111 +11883,6 @@
         "isOneOf": null,
         "fields": [
           {
-            "name": "agenciesOrganizationsGrantsCollection",
-            "description": null,
-            "args": [
-              {
-                "name": "after",
-                "description": "Query values in the collection after the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "before",
-                "description": "Query values in the collection before the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Filters to apply to the results set when querying from the collection",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "AgenciesOrganizationsGrantsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "first",
-                "description": "Query the first `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "last",
-                "description": "Query the last `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "offset",
-                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "orderBy",
-                "description": "Sort order to apply to the collection",
-                "type": {
-                  "kind": "LIST",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "NON_NULL",
-                    "ofType": {
-                      "name": "AgenciesOrganizationsGrantsOrderBy",
-                      "kind": "INPUT_OBJECT",
-                      "ofType": null
-                    }
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "OBJECT",
-              "name": "AgenciesOrganizationsGrantsConnection",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "conversationsCollection",
             "description": null,
             "args": [
@@ -14517,6 +12196,111 @@
                 "kind": "SCALAR",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantsCollection",
+            "description": null,
+            "args": [
+              {
+                "name": "after",
+                "description": "Query values in the collection after the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "before",
+                "description": "Query values in the collection before the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "filter",
+                "description": "Filters to apply to the results set when querying from the collection",
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PermissionGrantsFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "first",
+                "description": "Query the first `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "last",
+                "description": "Query the last `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "offset",
+                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "orderBy",
+                "description": "Sort order to apply to the collection",
+                "type": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "NON_NULL",
+                    "ofType": {
+                      "name": "PermissionGrantsOrderBy",
+                      "kind": "INPUT_OBJECT",
+                      "ofType": null
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "OBJECT",
+              "name": "PermissionGrantsConnection",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -15345,6 +13129,986 @@
       },
       {
         "kind": "OBJECT",
+        "name": "PermissionGrants",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "nodeId",
+            "description": "Globally Unique Record Identifier",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "ID",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "objectOrganization",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Organizations",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "objectOrganizationId",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permission",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Permissions",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantCreatedAt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Datetime",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantId",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "BigInt",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionId",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgency",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "Agencies",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgencyId",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgencyMembership",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "AgencyMemberships",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgencyMembershipId",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectOrganizationMembership",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "OrganizationMemberships",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectOrganizationMembershipId",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "Node",
+            "ofType": null
+          }
+        ],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "PermissionGrantsConnection",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "edges",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "PermissionGrantsEdge",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "pageInfo",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "PageInfo",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "totalCount",
+            "description": "The total number of records matching the `filter` criteria",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Int",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "PermissionGrantsDeleteResponse",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "affectedCount",
+            "description": "Count of the records impacted by the mutation",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Int",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "records",
+            "description": "Array of records impacted by the mutation",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "PermissionGrants",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "PermissionGrantsEdge",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "cursor",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "String",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "node",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "PermissionGrants",
+                "kind": "OBJECT",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "PermissionGrantsFilter",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "and",
+            "description": "Returns true only if all its inner filters are true, otherwise returns false",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "PermissionGrantsFilter",
+                  "kind": "INPUT_OBJECT",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "nodeId",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "IDFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "not",
+            "description": "Negates a filter",
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "PermissionGrantsFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "objectOrganizationId",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "IntFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "or",
+            "description": "Returns true if at least one of its inner filters is true, otherwise returns false",
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "PermissionGrantsFilter",
+                  "kind": "INPUT_OBJECT",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantCreatedAt",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "DatetimeFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantId",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "BigIntFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionId",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "StringFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgencyId",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "IntFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgencyMembershipId",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "IntFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectOrganizationMembershipId",
+            "description": null,
+            "type": {
+              "kind": "INPUT_OBJECT",
+              "name": "IntFilter",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "PermissionGrantsInsertInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "objectOrganizationId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantCreatedAt",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Datetime",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgencyId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgencyMembershipId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectOrganizationMembershipId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "PermissionGrantsInsertResponse",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "affectedCount",
+            "description": "Count of the records impacted by the mutation",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Int",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "records",
+            "description": "Array of records impacted by the mutation",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "PermissionGrants",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "PermissionGrantsOrderBy",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "objectOrganizationId",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "OrderByDirection",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantCreatedAt",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "OrderByDirection",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantId",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "OrderByDirection",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionId",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "OrderByDirection",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgencyId",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "OrderByDirection",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgencyMembershipId",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "OrderByDirection",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectOrganizationMembershipId",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "OrderByDirection",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "PermissionGrantsUpdateInput",
+        "description": null,
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "objectOrganizationId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantCreatedAt",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Datetime",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgencyId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectAgencyMembershipId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "subjectOrganizationMembershipId",
+            "description": null,
+            "type": {
+              "kind": "SCALAR",
+              "name": "Int",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "PermissionGrantsUpdateResponse",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "affectedCount",
+            "description": "Count of the records impacted by the mutation",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": "Int",
+                "kind": "SCALAR",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "records",
+            "description": "Array of records impacted by the mutation",
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "LIST",
+                "ofType": {
+                  "name": null,
+                  "kind": "NON_NULL",
+                  "ofType": {
+                    "name": "PermissionGrants",
+                    "kind": "OBJECT",
+                    "ofType": null
+                  }
+                }
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "ENUM",
+        "name": "PermissionObjectType",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": [
+          {
+            "name": "agency",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "organization",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "tenant",
+            "description": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "possibleTypes": null
+      },
+      {
+        "kind": "INPUT_OBJECT",
+        "name": "PermissionObjectTypeFilter",
+        "description": "Boolean expression comparing fields on type \"PermissionObjectType\"",
+        "isOneOf": false,
+        "fields": null,
+        "inputFields": [
+          {
+            "name": "eq",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "PermissionObjectType",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "in",
+            "description": null,
+            "type": {
+              "kind": "LIST",
+              "name": null,
+              "ofType": {
+                "name": null,
+                "kind": "NON_NULL",
+                "ofType": {
+                  "name": "PermissionObjectType",
+                  "kind": "ENUM",
+                  "ofType": null
+                }
+              }
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "is",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "FilterIs",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "neq",
+            "description": null,
+            "type": {
+              "kind": "ENUM",
+              "name": "PermissionObjectType",
+              "ofType": null
+            },
+            "defaultValue": null,
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
         "name": "PermissionPresets",
         "description": null,
         "isOneOf": null,
@@ -16132,216 +14896,6 @@
         "isOneOf": null,
         "fields": [
           {
-            "name": "agenciesOrganizationsGrantsCollection",
-            "description": null,
-            "args": [
-              {
-                "name": "after",
-                "description": "Query values in the collection after the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "before",
-                "description": "Query values in the collection before the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Filters to apply to the results set when querying from the collection",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "AgenciesOrganizationsGrantsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "first",
-                "description": "Query the first `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "last",
-                "description": "Query the last `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "offset",
-                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "orderBy",
-                "description": "Sort order to apply to the collection",
-                "type": {
-                  "kind": "LIST",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "NON_NULL",
-                    "ofType": {
-                      "name": "AgenciesOrganizationsGrantsOrderBy",
-                      "kind": "INPUT_OBJECT",
-                      "ofType": null
-                    }
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "OBJECT",
-              "name": "AgenciesOrganizationsGrantsConnection",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyMembershipPermissionsCollection",
-            "description": null,
-            "args": [
-              {
-                "name": "after",
-                "description": "Query values in the collection after the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "before",
-                "description": "Query values in the collection before the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Filters to apply to the results set when querying from the collection",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "AgencyMembershipPermissionsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "first",
-                "description": "Query the first `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "last",
-                "description": "Query the last `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "offset",
-                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "orderBy",
-                "description": "Sort order to apply to the collection",
-                "type": {
-                  "kind": "LIST",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "NON_NULL",
-                    "ofType": {
-                      "name": "AgencyMembershipPermissionsOrderBy",
-                      "kind": "INPUT_OBJECT",
-                      "ofType": null
-                    }
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "OBJECT",
-              "name": "AgencyMembershipPermissionsConnection",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "nodeId",
             "description": "Globally Unique Record Identifier",
             "args": [],
@@ -16353,111 +14907,6 @@
                 "kind": "SCALAR",
                 "ofType": null
               }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "organizationMembershipPermissionsCollection",
-            "description": null,
-            "args": [
-              {
-                "name": "after",
-                "description": "Query values in the collection after the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "before",
-                "description": "Query values in the collection before the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Filters to apply to the results set when querying from the collection",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "OrganizationMembershipPermissionsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "first",
-                "description": "Query the first `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "last",
-                "description": "Query the last `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "offset",
-                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "orderBy",
-                "description": "Sort order to apply to the collection",
-                "type": {
-                  "kind": "LIST",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "NON_NULL",
-                    "ofType": {
-                      "name": "OrganizationMembershipPermissionsOrderBy",
-                      "kind": "INPUT_OBJECT",
-                      "ofType": null
-                    }
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "OBJECT",
-              "name": "OrganizationMembershipPermissionsConnection",
-              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null
@@ -16485,6 +14934,111 @@
             "type": {
               "kind": "SCALAR",
               "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantsCollection",
+            "description": null,
+            "args": [
+              {
+                "name": "after",
+                "description": "Query values in the collection after the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "before",
+                "description": "Query values in the collection before the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "filter",
+                "description": "Filters to apply to the results set when querying from the collection",
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PermissionGrantsFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "first",
+                "description": "Query the first `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "last",
+                "description": "Query the last `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "offset",
+                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "orderBy",
+                "description": "Sort order to apply to the collection",
+                "type": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "NON_NULL",
+                    "ofType": {
+                      "name": "PermissionGrantsOrderBy",
+                      "kind": "INPUT_OBJECT",
+                      "ofType": null
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "OBJECT",
+              "name": "PermissionGrantsConnection",
               "ofType": null
             },
             "isDeprecated": false,
@@ -20322,111 +18876,6 @@
             "deprecationReason": null
           },
           {
-            "name": "agenciesOrganizationsGrantsCollection",
-            "description": "A pagable collection of type `AgenciesOrganizationsGrants`",
-            "args": [
-              {
-                "name": "after",
-                "description": "Query values in the collection after the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "before",
-                "description": "Query values in the collection before the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Filters to apply to the results set when querying from the collection",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "AgenciesOrganizationsGrantsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "first",
-                "description": "Query the first `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "last",
-                "description": "Query the last `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "offset",
-                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "orderBy",
-                "description": "Sort order to apply to the collection",
-                "type": {
-                  "kind": "LIST",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "NON_NULL",
-                    "ofType": {
-                      "name": "AgenciesOrganizationsGrantsOrderBy",
-                      "kind": "INPUT_OBJECT",
-                      "ofType": null
-                    }
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "OBJECT",
-              "name": "AgenciesOrganizationsGrantsConnection",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "agencyIdOfMembership",
             "description": null,
             "args": [
@@ -20450,111 +18899,6 @@
             "type": {
               "kind": "SCALAR",
               "name": "Int",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "agencyMembershipPermissionsCollection",
-            "description": "A pagable collection of type `AgencyMembershipPermissions`",
-            "args": [
-              {
-                "name": "after",
-                "description": "Query values in the collection after the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "before",
-                "description": "Query values in the collection before the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Filters to apply to the results set when querying from the collection",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "AgencyMembershipPermissionsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "first",
-                "description": "Query the first `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "last",
-                "description": "Query the last `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "offset",
-                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "orderBy",
-                "description": "Sort order to apply to the collection",
-                "type": {
-                  "kind": "LIST",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "NON_NULL",
-                    "ofType": {
-                      "name": "AgencyMembershipPermissionsOrderBy",
-                      "kind": "INPUT_OBJECT",
-                      "ofType": null
-                    }
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "OBJECT",
-              "name": "AgencyMembershipPermissionsConnection",
               "ofType": null
             },
             "isDeprecated": false,
@@ -21167,111 +19511,6 @@
             "deprecationReason": null
           },
           {
-            "name": "organizationMembershipPermissionsCollection",
-            "description": "A pagable collection of type `OrganizationMembershipPermissions`",
-            "args": [
-              {
-                "name": "after",
-                "description": "Query values in the collection after the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "before",
-                "description": "Query values in the collection before the provided cursor",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Cursor",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "filter",
-                "description": "Filters to apply to the results set when querying from the collection",
-                "type": {
-                  "kind": "INPUT_OBJECT",
-                  "name": "OrganizationMembershipPermissionsFilter",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "first",
-                "description": "Query the first `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "last",
-                "description": "Query the last `n` records in the collection",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "offset",
-                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
-                "type": {
-                  "kind": "SCALAR",
-                  "name": "Int",
-                  "ofType": null
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              },
-              {
-                "name": "orderBy",
-                "description": "Sort order to apply to the collection",
-                "type": {
-                  "kind": "LIST",
-                  "name": null,
-                  "ofType": {
-                    "name": null,
-                    "kind": "NON_NULL",
-                    "ofType": {
-                      "name": "OrganizationMembershipPermissionsOrderBy",
-                      "kind": "INPUT_OBJECT",
-                      "ofType": null
-                    }
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "OBJECT",
-              "name": "OrganizationMembershipPermissionsConnection",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "organizationMembershipsCollection",
             "description": "A pagable collection of type `OrganizationMemberships`",
             "args": [
@@ -21476,6 +19715,111 @@
             "type": {
               "kind": "OBJECT",
               "name": "OrganizationsConnection",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "permissionGrantsCollection",
+            "description": "A pagable collection of type `PermissionGrants`",
+            "args": [
+              {
+                "name": "after",
+                "description": "Query values in the collection after the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "before",
+                "description": "Query values in the collection before the provided cursor",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Cursor",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "filter",
+                "description": "Filters to apply to the results set when querying from the collection",
+                "type": {
+                  "kind": "INPUT_OBJECT",
+                  "name": "PermissionGrantsFilter",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "first",
+                "description": "Query the first `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "last",
+                "description": "Query the last `n` records in the collection",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "offset",
+                "description": "Skip n values from the after cursor. Alternative to cursor pagination. Backward pagination not supported.",
+                "type": {
+                  "kind": "SCALAR",
+                  "name": "Int",
+                  "ofType": null
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              },
+              {
+                "name": "orderBy",
+                "description": "Sort order to apply to the collection",
+                "type": {
+                  "kind": "LIST",
+                  "name": null,
+                  "ofType": {
+                    "name": null,
+                    "kind": "NON_NULL",
+                    "ofType": {
+                      "name": "PermissionGrantsOrderBy",
+                      "kind": "INPUT_OBJECT",
+                      "ofType": null
+                    }
+                  }
+                },
+                "defaultValue": null,
+                "isDeprecated": false,
+                "deprecationReason": null
+              }
+            ],
+            "type": {
+              "kind": "OBJECT",
+              "name": "PermissionGrantsConnection",
               "ofType": null
             },
             "isDeprecated": false,

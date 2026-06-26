@@ -1,5 +1,6 @@
 "use client";
 
+import { useGraphyMutation } from "@packages/graphy/react";
 import { Alert, AlertDescription } from "@packages/ui-common/shadcn/components/ui/alert";
 import { Button } from "@packages/ui-common/shadcn/components/ui/button";
 import {
@@ -12,10 +13,26 @@ import {
 import { cn } from "@packages/ui-common/shadcn/lib/utils";
 import { INITIALS_OF } from "@packages/utils/string";
 import { Ban, Building2, Eye, Globe, Lock, Plus, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { gql } from "~/generated/graphql";
 import { useRosetta } from "~/lib/i18n.client";
-import { ErrorSafeAction, ErrorSafeActionServer } from "~/lib/safe-action.client";
-import { actionGrantAgencyAccess, actionRevokeAgencyAccess } from "./actions";
+
+const ExternalAccessGrantMutation = /*#__PURE__*/ gql(`
+  mutation ExternalAccessGrantMutation($organization_id: Int!, $agency_id: Int!) {
+    grant: viewerGrantAgencyAccess(organizationId: $organization_id, agencyId: $agency_id) {
+      permissionGrantId
+    }
+  }
+`);
+
+const ExternalAccessRevokeMutation = /*#__PURE__*/ gql(`
+  mutation ExternalAccessRevokeMutation($organization_id: Int!, $agency_id: Int!) {
+    revoke: viewerRevokeAgencyAccess(organizationId: $organization_id, agencyId: $agency_id) {
+      permissionGrantId
+    }
+  }
+`);
 
 export type ExternalAccessAgency = {
   agency_id: number;
@@ -37,22 +54,30 @@ export function ExternalAccess({
   available: ExternalAccessAgency[];
 }) {
   const { t } = useRosetta(LOCALES);
+  const router = useRouter();
   const [selected, setSelected] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [, grantAccess] = useGraphyMutation(ExternalAccessGrantMutation);
   const [pending, startTransition] = useTransition();
 
   function grant() {
     if (!selected) return;
     setError(null);
     startTransition(async () => {
-      const [, err] = await ErrorSafeAction.unwrap(
-        actionGrantAgencyAccess({ organization_id: organizationId, agency_id: selected }),
-      );
-      if (err instanceof ErrorSafeActionServer) {
-        setError(err.serverError);
+      const { error: mutError } = await grantAccess({
+        organization_id: organizationId,
+        agency_id: Number(selected),
+      });
+      if (mutError) {
+        const msg = mutError.message ?? "";
+        if (msg.includes("no_permission")) setError(t("no_permission"));
+        else if (msg.includes("already_granted")) setError(t("already_granted"));
+        else if (msg.includes("agency_not_found")) setError(t("agency_not_found"));
+        else setError(t("grant_failed"));
         return;
       }
       setSelected("");
+      router.refresh();
     });
   }
 
@@ -155,16 +180,25 @@ function AgencyAccessCard({
   orgName: string;
   t: Translate;
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [, revokeAccess] = useGraphyMutation(ExternalAccessRevokeMutation);
 
   function revoke() {
     setError(null);
     startTransition(async () => {
-      const [, err] = await ErrorSafeAction.unwrap(
-        actionRevokeAgencyAccess({ organization_id: organizationId, agency_id: agency.agency_id }),
-      );
-      if (err instanceof ErrorSafeActionServer) setError(err.serverError);
+      const { error: mutError } = await revokeAccess({
+        organization_id: organizationId,
+        agency_id: agency.agency_id,
+      });
+      if (mutError) {
+        const msg = mutError.message ?? "";
+        if (msg.includes("no_permission")) setError(t("no_permission"));
+        else setError(t("revoke_failed"));
+        return;
+      }
+      router.refresh();
     });
   }
 
@@ -243,6 +277,11 @@ const LOCALE_ES = {
   revoke: "Revocar",
   read_access: "Acceso de lectura",
   read_only_note: "Todo el acceso externo es de solo lectura. Las agencias nunca pueden modificar nada.",
+  no_permission: "No tienes permiso para administrar el acceso externo de esta organización",
+  agency_not_found: "Agencia no encontrada",
+  already_granted: "Esa agencia ya tiene acceso a esta organización",
+  grant_failed: "No pudimos otorgar el acceso",
+  revoke_failed: "No pudimos revocar el acceso",
 };
 
 const LOCALE_EN: typeof LOCALE_ES = {
@@ -263,6 +302,11 @@ const LOCALE_EN: typeof LOCALE_ES = {
   revoke: "Revoke",
   read_access: "Read access",
   read_only_note: "All external access is read-only. Agencies can never modify anything.",
+  no_permission: "You don't have permission to manage external access for this organization",
+  agency_not_found: "Agency not found",
+  already_granted: "That agency already has access to this organization",
+  grant_failed: "We couldn't grant access",
+  revoke_failed: "We couldn't revoke access",
 };
 
 const LOCALE_PT: typeof LOCALE_ES = {
@@ -283,6 +327,11 @@ const LOCALE_PT: typeof LOCALE_ES = {
   revoke: "Revogar",
   read_access: "Acesso de leitura",
   read_only_note: "Todo acesso externo é somente leitura. As agências nunca podem modificar nada.",
+  no_permission: "Você não tem permissão para administrar o acesso externo desta organização",
+  agency_not_found: "Agência não encontrada",
+  already_granted: "Essa agência já tem acesso a esta organização",
+  grant_failed: "Não conseguimos conceder o acesso",
+  revoke_failed: "Não conseguimos revogar o acesso",
 };
 
 const LOCALES = { es: LOCALE_ES, en: LOCALE_EN, pt: LOCALE_PT };

@@ -235,20 +235,20 @@ set local request.jwt.claims to '{
 -- Attempt 1: insert a permission grant into org 2 (Alice's organization_membership). Forged JWT
 -- claims org 2 organization_membership, but Bob has no real members_manage anywhere → write blocked.
 prepare forged_grant as
-  insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+  insert into public.permission_grants (subject_organization_membership_id, permission_id)
   values ((select alice_org2 from _targets), 'presets_manage');
 select throws_ok(
   'execute forged_grant',
   '42501',
   null,
-  'forged JWT cannot insert organization_membership_permissions in org 2 (DB-backed members_manage check)'
+  'forged JWT cannot insert permission_grants in org 2 (DB-backed members_manage check)'
 );
 deallocate forged_grant;
 
 -- Attempt 2: forge a self-elevation in org 1 (Bob's real org). Bob has only
 -- vacations_request, no members_manage → also blocked.
 prepare self_elevate as
-  insert into public.organization_membership_permissions (organization_membership_id, permission_id)
+  insert into public.permission_grants (subject_organization_membership_id, permission_id)
   values ((select bob_org1 from _targets), '*');
 select throws_ok(
   'execute self_elevate',

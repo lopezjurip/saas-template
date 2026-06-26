@@ -2,7 +2,7 @@
  * MCP tools: organization member permission administration.
  *
  * All four go through pg_graphql via the authenticated (user-token) graphy client, so Postgres RLS
- * is the only enforcement — no service-role escalation. The `organization_membership_permissions`
+ * is the only enforcement — no service-role escalation. The `permission_grants`
  * and `organization_memberships` write policies require `members_manage` (or `*`) on the membership's
  * organization; the last-admin triggers protect against lockout. This mirrors exactly what the web
  * member-edit form does (same GraphQL mutations), just exposed as MCP tools.
@@ -22,8 +22,8 @@ function IS_DUPLICATE(message: string): boolean {
 }
 
 const GrantMemberPermissionMcpMutation = /*#__PURE__*/ gql(`
-  mutation GrantMemberPermissionMcp($objects: [OrganizationMembershipPermissionsInsertInput!]!) {
-    insertIntoOrganizationMembershipPermissionsCollection(objects: $objects) {
+  mutation GrantMemberPermissionMcp($objects: [PermissionGrantsInsertInput!]!) {
+    insertIntoPermissionGrantsCollection(objects: $objects) {
       affectedCount
     }
   }
@@ -57,7 +57,7 @@ export class GrantMemberPermissionTool extends McpTool<typeof GrantSchema> {
       query: GrantMemberPermissionMcpMutation,
       variables: {
         objects: [
-          { organizationMembershipId: args["organization_membership_id"], permissionId: args["permission_id"] },
+          { subjectOrganizationMembershipId: args["organization_membership_id"], permissionId: args["permission_id"] },
         ],
       },
     });
@@ -70,7 +70,7 @@ export class GrantMemberPermissionTool extends McpTool<typeof GrantSchema> {
       return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
     }
 
-    const affected = data?.["insertIntoOrganizationMembershipPermissionsCollection"]?.["affectedCount"] ?? 0;
+    const affected = data?.["insertIntoPermissionGrantsCollection"]?.["affectedCount"] ?? 0;
     return {
       content: [
         { type: "text", text: JSON.stringify({ ok: true, granted: args["permission_id"], affected }, null, 2) },
@@ -80,8 +80,8 @@ export class GrantMemberPermissionTool extends McpTool<typeof GrantSchema> {
 }
 
 const RevokeMemberPermissionMcpMutation = /*#__PURE__*/ gql(`
-  mutation RevokeMemberPermissionMcp($filter: OrganizationMembershipPermissionsFilter!, $atMost: Int! = 1000) {
-    deleteFromOrganizationMembershipPermissionsCollection(filter: $filter, atMost: $atMost) {
+  mutation RevokeMemberPermissionMcp($filter: PermissionGrantsFilter!, $atMost: Int! = 1000) {
+    deleteFromPermissionGrantsCollection(filter: $filter, atMost: $atMost) {
       affectedCount
     }
   }
@@ -112,7 +112,7 @@ export class RevokeMemberPermissionTool extends McpTool<typeof RevokeSchema> {
       query: RevokeMemberPermissionMcpMutation,
       variables: {
         filter: {
-          organizationMembershipId: { eq: args["organization_membership_id"] },
+          subjectOrganizationMembershipId: { eq: args["organization_membership_id"] },
           permissionId: { eq: args["permission_id"] },
         },
       },
@@ -123,7 +123,7 @@ export class RevokeMemberPermissionTool extends McpTool<typeof RevokeSchema> {
       return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
     }
 
-    const removed = (data?.["deleteFromOrganizationMembershipPermissionsCollection"]?.["affectedCount"] ?? 0) > 0;
+    const removed = (data?.["deleteFromPermissionGrantsCollection"]?.["affectedCount"] ?? 0) > 0;
     return {
       content: [
         { type: "text", text: JSON.stringify({ ok: true, removed, permission_id: args["permission_id"] }, null, 2) },

@@ -45,7 +45,7 @@ const MembersAdminPageQuery = /*#__PURE__*/ gql(`
           organizationMembershipAcceptedAt
           organizationMembershipCreatedAt
           profile { profileNameFull }
-          organizationMembershipPermissionsCollection(first: 250) {
+          permissionGrantsCollection(first: 250) {
             edges { node { permissionId } }
           }
         }
@@ -56,9 +56,9 @@ const MembersAdminPageQuery = /*#__PURE__*/ gql(`
 
 /** Flattens a membership node's nested permission grants into a slug list. */
 function GRANTS_OF(node: {
-  organizationMembershipPermissionsCollection?: { edges: { node: { permissionId: string } }[] } | null;
+  permissionGrantsCollection?: { edges: { node: { permissionId: string } }[] } | null;
 }): string[] {
-  return (node["organizationMembershipPermissionsCollection"]?.["edges"] ?? []).map((e) => e["node"]["permissionId"]);
+  return (node["permissionGrantsCollection"]?.["edges"] ?? []).map((e) => e["node"]["permissionId"]);
 }
 
 export async function generateMetadata(

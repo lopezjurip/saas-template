@@ -21,22 +21,21 @@ export default async function AgencyAccessPage(props: PageProps<"/a/[agency_slug
   const { data } = await getViewerAgencyBySlugAssert(agency_slug);
   const agency = data["agency"];
 
-  // RLS `agencies_organizations_grants select` already scopes grants to the
-  // viewer's agencies, so the authenticated client suffices — no service role.
+  // RLS on permission_grants scopes grants to the viewer's agencies, so the authenticated client suffices — no service role.
   const supabase = await createSupabaseServerClient();
   const grantsRes = await supabase
-    .from("agencies_organizations_grants")
-    .select("organization_id, permission_id, organizations(organization_name, organization_slug)")
-    .eq("agency_id", agency["agencyId"]);
+    .from("permission_grants")
+    .select("object_organization_id, permission_id, objectOrganization:organizations!permission_grants_object_organization_id_fkey(organization_name, organization_slug)")
+    .eq("subject_agency_id", agency["agencyId"]);
 
   const grants = grantsRes.data ?? [];
-  const isGlobal = grants.some((g) => g["organization_id"] === null && g["permission_id"] === "*");
+  const isGlobal = grants.some((g) => g["object_organization_id"] === null && g["permission_id"] === "*");
   const orgs: AccessOrg[] = grants
-    .filter((g) => g["organization_id"] !== null)
+    .filter((g) => g["object_organization_id"] !== null)
     .map((g) => ({
-      organization_id: g["organization_id"] as number,
-      organization_name: g["organizations"]?.["organization_name"] ?? String(g["organization_id"]),
-      organization_slug: g["organizations"]?.["organization_slug"] ?? null,
+      organization_id: g["object_organization_id"] as number,
+      organization_name: g["objectOrganization"]?.["organization_name"] ?? String(g["object_organization_id"]),
+      organization_slug: g["objectOrganization"]?.["organization_slug"] ?? null,
     }));
 
   return (
